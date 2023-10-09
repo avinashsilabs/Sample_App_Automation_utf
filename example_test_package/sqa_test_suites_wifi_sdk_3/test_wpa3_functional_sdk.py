@@ -3,7 +3,8 @@ import pytest
 from utf.utils.time_measurer import TimeMeasurer
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
-    Si91xCustomFeatureBitMap, Si91xOperatingMode, Si91xExtCustomFeatureBitMap, Si91xJoinFeatureBitMap, Si91xTCPIPFeatureBitMap
+    Si91xCustomFeatureBitMap, Si91xOperatingMode, Si91xExtCustomFeatureBitMap, Si91xJoinFeatureBitMap, \
+    Si91xTCPIPFeatureBitMap, Si91xExtTCPIPFeatureBitMap
 from utf.interfaces.wifi import WlanError
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from threading import Thread
@@ -203,7 +204,6 @@ class WifiConnectionThread(ThreadBase):
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi=
     {
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
@@ -213,7 +213,11 @@ class WifiConnectionThread(ThreadBase):
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
 
     }
 )
@@ -240,7 +244,6 @@ def test_wifi_sdk_scan_wpa3_c34503_04_05_07(wifi_sniffer, wifi_access_point, wif
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi=
     {
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
@@ -250,7 +253,11 @@ def test_wifi_sdk_scan_wpa3_c34503_04_05_07(wifi_sniffer, wifi_access_point, wif
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
 
     }
 )
@@ -279,7 +286,6 @@ def test_wifi_sdk_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, wifi_access_point
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi=
     {
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
@@ -289,6 +295,7 @@ def test_wifi_sdk_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, wifi_access_point
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W,
         "bt_features": 0,
         "ble_features": 0,
@@ -369,7 +376,6 @@ def test_wifi_sdk_bg_scan_specific_ch_wpa3_c34511(wifi_sniffer, wifi_access_poin
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi=
     {
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
@@ -379,6 +385,7 @@ def test_wifi_sdk_bg_scan_specific_ch_wpa3_c34511(wifi_sniffer, wifi_access_poin
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W,
         "bt_features": 0,
         "ble_features": 0,
@@ -461,7 +468,6 @@ def test_wifi_sdk_bg_scan_in_all_ch_wpa3_c34510(wifi_sniffer, wifi_access_point,
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi=
     {
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
@@ -471,7 +477,11 @@ def test_wifi_sdk_bg_scan_in_all_ch_wpa3_c34510(wifi_sniffer, wifi_access_point,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
 
     }
 )
@@ -549,7 +559,6 @@ def test_wifi_sdk_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_poi
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi=
     {
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
@@ -559,7 +568,11 @@ def test_wifi_sdk_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_poi
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
 
     }
 )
@@ -589,7 +602,6 @@ def test_wifi_sdk_2_4_tcp_rx_wpa3_C34513(wifi_sniffer, wifi_access_point, wifi_d
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi=
     {
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
@@ -599,7 +611,11 @@ def test_wifi_sdk_2_4_tcp_rx_wpa3_C34513(wifi_sniffer, wifi_access_point, wifi_d
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
 
     }
 )
@@ -629,7 +645,6 @@ def test_wifi_sdk_2_4_udp_rx_wpa3_c34515(wifi_sniffer, wifi_access_point, wifi_d
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi=
     {
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
@@ -639,7 +654,11 @@ def test_wifi_sdk_2_4_udp_rx_wpa3_c34515(wifi_sniffer, wifi_access_point, wifi_d
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
 
     }
 )
@@ -669,7 +688,6 @@ def test_wifi_sdk_2_4_tcp_tx_wpa3_c34512(wifi_sniffer, wifi_access_point, wifi_d
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
-
     wifi=
     {
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
@@ -679,7 +697,11 @@ def test_wifi_sdk_2_4_tcp_tx_wpa3_c34512(wifi_sniffer, wifi_access_point, wifi_d
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
 
     }
 )
