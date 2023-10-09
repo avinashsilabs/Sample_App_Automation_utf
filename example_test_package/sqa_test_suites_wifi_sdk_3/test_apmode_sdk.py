@@ -13,15 +13,14 @@ from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
 
 
 """Test Author = Jyothi Nagireddy
-
         1. Start the sniffer before connection
-        2. Required A7 EVK(DUT) board 
-        3. Stop the sniffer
-        4. Initiate ping from the dut
-        5. Analysing all sniffer capture packets and find the arp announcement packet
-
+        2. Initiate connection from Wifi client(Raspberry)
+        4. Initiate ping from the wifi client
+        5. Disconnect the wifi client
+        6. Stop the sniffer capture 
+        7. Analysing all sniffer capture packets.
 setup requirement:
-        1. DUT
+        1. DUT(Soc917)
         2. Raspberry PI4 - 2 and more                                                           
         3. Access Point(Third Party AP's)
 """
@@ -64,6 +63,14 @@ class ApModeClientConnections(ThreadBase):
             self.dtim_count = "1"
             self.beacon_interval = "100"
             self.no_of_clients = 1
+        if self.testcase_no == 19456:
+            self.ssid = "SILABS_AP_MODE"
+            self.security = "WPA2"
+            self.password = "Automation@123"
+            self.channel = "13"
+            self.dtim_count = "1"
+            self.beacon_interval = "100"
+            self.no_of_clients = 4
         if self.testcase_no == 19444:
             self.ssid = "SILABS_AP_C19444"
             self.security = "WPA2"
@@ -82,7 +89,7 @@ class ApModeClientConnections(ThreadBase):
             self.no_of_clients = 1
         logger().info("********** configuring the sniffer with access point channel **********")
         self.wifi_sniffer.interfaces.capture.configure_interface(
-            channel=self.wifi_access_point.interfaces.wifi.channel)
+            channel=self.channel)
         logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.capture_filename}.pcap")
         time.sleep(3)
@@ -115,6 +122,8 @@ class ApModeClientConnections(ThreadBase):
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
         "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11,
+        "region": 1,
+        "region_code": "us"
     }
 )
 @pytest.mark.config(
@@ -154,22 +163,19 @@ class ApModeClientConnections(ThreadBase):
         },
     }
 )
-def test_wifi_sdk_ap_mode_tx_rules_usregion_c19454(wifi_dut, wifi_clients, wifi_access_point, wifi_sniffer,
+def test_wifi_sdk_ap_mode_tx_rules_us_region_c19454(wifi_dut, wifi_clients, wifi_access_point, wifi_sniffer,
                                                    sl_collections, wifi_client, utf_constants, sniffer_filter):
     """ Verify Ap mode connection when region selected is US and region
         parameters are defined by user"""
     try:
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
-        wifi_dut.interfaces.wifi.set_region(region=Si91xRegion.FromUser,
-                                            region_code=Si91xRegionCode.US,
-                                            module_type=Si91xModuleType.WithOnboardAntenna)
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
                                              utf_constants, capture_filename="test_C19454",
                                              testcase_no=19454)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            wlan_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'], radio_ch = wifi_access_point.interfaces.wifi.channel,
+            wlan_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'], radio_ch=ap_dut_obj.channel,
             filter_name="beacon_ap_mode_us_region")
         logger().info(f"packet_filter1: {packet_filter1}")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
@@ -234,7 +240,6 @@ def test_wifi_sdk_dutap_multiclient_connect_disconnect_c19432(wifi_sniffer, wifi
                                                               sniffer_filter):
     """AP functionality, If many clients are connected & disconnected multiple times"""
     try:
-        rasp_mac_address = {}
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
                                              utf_constants, capture_filename="test_C19432",
@@ -242,10 +247,9 @@ def test_wifi_sdk_dutap_multiclient_connect_disconnect_c19432(wifi_sniffer, wifi
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
         for i in range(4):
-            rasp_mac_address['mac'] = wifi_clients[i].interfaces.wifi.get_mac_address()
             sl_collections.ap_sniffer_validation(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                  dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'],
-                                                 rasp_mac_address=rasp_mac_address['mac'])
+                                                 rasp_mac_address=wifi_clients[i].interfaces.wifi.get_mac_address())
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -355,7 +359,7 @@ def test_wifi_sdk_dutap_diff_beacon_intervals_c19443(wifi_sniffer, wifi_access_p
                                              rasp_mac_address=ap_dut_obj.dut_addr_dict['rasp_mac_address'])
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                          wlan_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
-                         radio_ch=wifi_access_point.interfaces.wifi.channel,
+                         radio_ch=ap_dut_obj.channel,
                          beacon=beacon, filter_name="beacon_ap_mode_dtim_interval")
         logger().info(f"packet_filter1: {packet_filter1}")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
@@ -381,7 +385,9 @@ def test_wifi_sdk_dutap_diff_beacon_intervals_c19443(wifi_sniffer, wifi_access_p
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
         "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123",
         "beacon": 100,
-        "channel": "11"
+        "channel": "11",
+        "region": 1,
+        "region_code": "us"
     }
 )
 @pytest.mark.config(
@@ -421,11 +427,7 @@ def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer, wifi_cli
                                                           wifi_clients, sl_collections, utf_constants,  sniffer_filter):
     """AP Sequence with many STAS connected"""
     try:
-        rasp_mac_address = {}
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
-        wifi_dut.interfaces.wifi.set_region(region=Si91xRegion.FromUser,
-                                            region_code=Si91xRegionCode.US,
-                                            module_type=Si91xModuleType.WithOnboardAntenna)
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
                                              utf_constants, capture_filename="test_C19442",
                                              testcase_no=19432)
@@ -434,12 +436,11 @@ def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer, wifi_cli
         bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f'AP BSSID = {bssid}')
         for i in range(4):
-            rasp_mac_address['mac'] = wifi_clients[i].interfaces.wifi.get_mac_address()
             sl_collections.ap_sniffer_validation(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                  dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'],
-                                                 rasp_mac_address=rasp_mac_address['mac'])
+                                                 rasp_mac_address=wifi_clients[i].interfaces.wifi.get_mac_address())
             packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                ta_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'], ra_addr=rasp_mac_address['mac'],
+                ta_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'], ra_addr=wifi_clients[i].interfaces.wifi.get_mac_address(),
                 filter_name='data_packets')
             logger().info(f"packet_filter3: {packet_filter3}")
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
@@ -467,6 +468,8 @@ def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer, wifi_cli
         "ssid": "RS9116_AP",
         "passphrase": "12345678", "beacon": 100,
         "channel": 14,
+        "region": 1,
+        "region_code": "us"
 
     },
 )
@@ -501,8 +504,10 @@ def test_wifi_sdk_dutap_usregion_unsupported_channel_c19458(wifi_dut, wifi_sniff
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
-        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100, "channel": 11
-    }
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100, "channel": 11,
+        "region": 1,
+        "region_code": "us"
+     }
 )
 @pytest.mark.config(
     "wifi_clients",
@@ -519,9 +524,6 @@ def test_wifi_sdk_dutap_usregion_unsupported_channel_c19458(wifi_dut, wifi_sniff
 def test_wifi_sdk_apmode_connectivity_with_wrong_psk_cli_c19437(wifi_sniffer, sniffer_filter, wifi_access_point,
                                                                 utf_constants, wifi_dut, wifi_clients, sl_collections):
     try:
-        wifi_dut.interfaces.wifi.set_region(region=Si91xRegion.FromUser,
-                                            region_code=Si91xRegionCode.US,
-                                            module_type=Si91xModuleType.WithOnboardAntenna)
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
                                              utf_constants,
                                              testcase_no=19465)
@@ -544,15 +546,15 @@ def test_wifi_sdk_apmode_connectivity_with_wrong_psk_cli_c19437(wifi_sniffer, sn
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.AccessPoint,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-        "security": "WPA2", "ssid": "SILABS_AP_C19456", "passphrase": "12345678", "region_config": 1, "beacon": 100,
-        "channel": 14,
-        "region_code": "JP",
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,
+        "channel": 13, "region": 1,
+        "region_code": "japan",
     }
 )
 @pytest.mark.config(
@@ -560,55 +562,56 @@ def test_wifi_sdk_apmode_connectivity_with_wrong_psk_cli_c19437(wifi_sniffer, sn
     wifi={
         0: {
             "security": "WPA2",
-            "ssid": "SILABS_AP_C19456",
+            "ssid": "SILABS_AP_MODE",
             "passphrase": "Automation@123",
             "country": "JP",
-            "channel": "14",
+            "channel": "13",
             "interface": "wlan0",
         },
         1: {
             "security": "WPA2",
-            "ssid": "SILABS_AP_C19456",
+            "ssid": "SILABS_AP_MODE",
             "passphrase": "Automation@123",
             "country": "JP",
-            "channel": "14",
+            "channel": "13",
             "interface": "wlan0",
         },
         2: {
             "security": "WPA2",
-            "ssid": "SILABS_AP_C19456",
+            "ssid": "SILABS_AP_MODE",
             "passphrase": "Automation@123",
             "country": "JP",
-            "channel": "14",
+            "channel": "13",
             "interface": "wlan0",
         },
         3: {
             "security": "WPA2",
-            "ssid": "SILABS_AP_C19456",
+            "ssid": "SILABS_AP_MODE",
             "passphrase": "Automation@123",
             "country": "JP",
-            "channel": "14",
+            "channel": "13",
             "interface": "wlan0",
         },
     }
 )
-@pytest.mark.skip("testagent support required")
-def test_wifi_sdk_ap_mode_tx_rules_jpregion_c19456(wifi_dut, sniffer_filter, wifi_client, wifi_access_point, channel,
-                                                   wifi_sniffer,
-                                                   wifi_clients, sl_collections, utf_constants, dtim_period, beacon):
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["set_default_region"])
+def test_wifi_sdk_ap_mode_tx_rules_jp_region_c19456(wifi_dut, sniffer_filter, wifi_client, wifi_access_point,
+                                                    wifi_sniffer,
+                                                    wifi_clients, sl_collections, utf_constants):
     """Verify whether DUT is obeying transmission rules(Transmitting with only given power as per channel) according
        to the inputs given in the set region ap api when region selected is JP and region parameters are
        defined by the user"""
     try:
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                        utf_constants,
-                                        capture_filename="test_C19454", dtim_count=None,
-                                        testcase_no=19454)
+                                             utf_constants,
+                                             capture_filename="test_C19456",
+                                             testcase_no=19456)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            wlan_addr=ap_dut_obj.dut_add_dict['dut_mac_address'], radio_ch=channel,
+            wlan_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'], radio_ch=ap_dut_obj.channel,
             filter_name="beacon_ap_mode_jp_region")
         logger().info(f"packet_filter1: {packet_filter1}")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
@@ -626,14 +629,15 @@ def test_wifi_sdk_ap_mode_tx_rules_jpregion_c19456(wifi_dut, sniffer_filter, wif
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.AccessPoint,
-        "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.PSKSecurity,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-        "security": "WPA2", "ssid": "SILABS_AP_C19455", "passphrase": "12345678", "region_config": 0, "beacon": 100, "channel": "13",
-        "region_code_ap": "EU",
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100, "channel": "13",
+        "region": 1,
+        "region_code": "europe",
     }
 )
 @pytest.mark.config(
@@ -641,50 +645,57 @@ def test_wifi_sdk_ap_mode_tx_rules_jpregion_c19456(wifi_dut, sniffer_filter, wif
     wifi={
         0: {
             "security": "WPA2",
-            "ssid": "SILABS_AP_C19455",
-            "passphrase": "12345678",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
             "country": "GE",
             "channel": "13",
             "interface": "wlan0",
         },
         1: {
             "security": "WPA2",
-            "ssid": "SILABS_AP_C19455",
-            "passphrase": "12345678",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
             "country": "GE",
             "channel": "13",
             "interface": "wlan0",
         },
         2: {
             "security": "WPA2",
-            "ssid": "SILABS_AP_C19455",
-            "passphrase": "12345678",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
             "country": "GE",
             "channel": "13",
             "interface": "wlan0",
         },
         3: {
             "security": "WPA2",
-            "ssid": "SILABS_AP_C19455",
-            "passphrase": "12345678",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
             "country": "GE",
             "channel": "13",
             "interface": "wlan0",
         },
     }
 )
-@pytest.mark.skip("testagent support required")
-def test_wifi_sdk_ap_mode_tx_rules_euregion_c19455(wifi_dut, wifi_client, wifi_access_point, channel, wifi_sniffer,
-                                                   wifi_clients, sl_collections, utf_constants, dtim_period, beacon):
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["set_default_region"])
+def test_wifi_sdk_ap_mode_tx_rules_eu_region_c19455(wifi_dut, wifi_client, wifi_access_point, wifi_sniffer,
+                                                    wifi_clients, sl_collections, utf_constants, sniffer_filter):
     """Verify whether DUT is obeying transmission rules(Transmitting with only given power as per channel) according to
     the inputs given in the set region ap api when region selected is EU and region parameters are defined by user"""
     try:
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                             utf_constants, capture_filename="test_C19454", dtim_count=None,
-                                             testcase_no=19454)
+                                             utf_constants, capture_filename="test_C19455",
+                                             testcase_no=19456)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            wlan_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'], radio_ch=ap_dut_obj.channel,
+            filter_name="beacon_ap_mode_eu_region")
+        logger().info(f"packet_filter1: {packet_filter1}")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find beacon frame with Region EU in Sniffer'
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
