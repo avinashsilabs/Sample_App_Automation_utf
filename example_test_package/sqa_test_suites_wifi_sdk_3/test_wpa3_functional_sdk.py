@@ -123,10 +123,10 @@ class WifiConnectionThread(ThreadBase):
                                                                      associated=self.wifi_dut.interfaces.wifi.associated,
                                                                      power_save=True, ping_after_power_save=True)
             logger().info("DUT successfully connected with AP")
-            if self.test_case_no == 34512 or 34514 or 34515 or 34513:
+            time.sleep(2)
+            if self.data_transfer:
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
-            if self.data_transfer:
                 if self.traffic_type == "TX":
                     # starting iperf
                     self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=
