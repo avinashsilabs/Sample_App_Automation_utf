@@ -134,12 +134,12 @@ class WLanThread(ThreadBase):
                                                                 expected_status=SLStatus.SL_STATUS_OK)
             if self.test_case_no == 19626:
                 """ set data rate in g mode(54 Mbps) and Verify """
-                self.wifi_dut.interfaces.wifi.set_transmit_rate(rate_protocol="802.11g", data_rate="54Mbps",
+                self.wifi_dut.interfaces.wifi.set_transmit_rate(rate_protocol="802.11g", data_rate="12Mbps",
                                                                 expected_status=SLStatus.SL_STATUS_OK)
 
             if self.test_case_no == 19627:
                 """ set data rate in n mode """
-                self.wifi_dut.interfaces.wifi.set_transmit_rate(rate_protocol="802.11n", data_rate="36Mbps",
+                self.wifi_dut.interfaces.wifi.set_transmit_rate(rate_protocol="802.11n", data_rate="14.4Mbps",
                                                                 expected_status=SLStatus.SL_STATUS_OK)
 
             if self.test_case_no == 19628:
@@ -190,7 +190,7 @@ class WLanThread(ThreadBase):
         "thread_config": { "wifi":{ "count": 1, "stack_len": 2048 }} ,
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
@@ -241,7 +241,7 @@ def test_wifi_sdk_mgmt_data_rates_c19622(wifi_sniffer, wifi_access_point, wifi_d
         "thread_config": { "wifi":{ "count": 1, "stack_len": 2048 }} ,
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
@@ -307,7 +307,7 @@ def test_wifi_sdk_mgmt_data_rates_rts_cts_c19623(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
@@ -353,7 +353,7 @@ def test_wifi_sdk_data_rates_for_data_packet_c19624(wifi_sniffer, wifi_access_po
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
@@ -437,7 +437,7 @@ def test_wifi_sdk_data_rates_for_g_mode_c19626(wifi_sniffer, wifi_access_point, 
             sa_addr=wlan_obj.dut_addr['dut_mac_address'],
             radio_ch=wifi_access_point.
             interfaces.wifi.channel,
-            filter_name='mgmt_data_rates_data_null_Qos_54mbps')
+            filter_name='mgmt_data_rates_data_null_Qos_12mbps')
 
         packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wlan_obj.dut_addr['dut_mac_address'],
@@ -466,7 +466,7 @@ def test_wifi_sdk_data_rates_for_g_mode_c19626(wifi_sniffer, wifi_access_point, 
         "thread_config": { "wifi":{ "count": 1, "stack_len": 2048 }} ,
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
@@ -497,7 +497,7 @@ def test_wifi_sdk_data_rates_for_n_mode_c19627(wifi_sniffer, wifi_access_point, 
 
         packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-            filter_name='radio_mcs_index_4')
+            filter_name='radio_mcs_index_1')
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
@@ -518,7 +518,7 @@ def test_wifi_sdk_data_rates_for_n_mode_c19627(wifi_sniffer, wifi_access_point, 
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
@@ -564,7 +564,7 @@ def test_wifi_sdk_data_rates_for_data_packets_12mbps_c19628(wifi_sniffer, wifi_a
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
@@ -613,7 +613,7 @@ def test_wifi_sdk_data_rates_for_rts_cts_12mbps_c19629(wifi_sniffer, wifi_access
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
@@ -657,7 +657,7 @@ def test_wifi_sdk_data_rates_eapol_c19631(wifi_sniffer, wifi_access_point, wifi_
         "thread_config": { "wifi":{ "count": 1, "stack_len": 2048 }} ,
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
