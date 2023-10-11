@@ -92,7 +92,6 @@ class WLanThread(ThreadBase):
                     join_feature_bitmap=IEEE802_11W.Protection_capable)
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
-                                                                         mode='power_save',
                                                                          associated=False,
                                                                          ping_after_power_save=False)
                 logger().info("DUT successfully connected with AP")
@@ -103,7 +102,6 @@ class WLanThread(ThreadBase):
                     join_feature_bitmap=IEEE802_11W.Protection_Required)
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
-                                                                         mode='power_save',
                                                                          associated=False,
                                                                          ping_after_power_save=False)
                 logger().info("DUT successfully connected with AP")
@@ -115,7 +113,6 @@ class WLanThread(ThreadBase):
                                                                       IEEE802_11W.Protection_Required)
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
-                                                                         mode='power_save',
                                                                          associated=False,
                                                                          ping_after_power_save=False)
                 logger().info("DUT successfully connected with AP")
