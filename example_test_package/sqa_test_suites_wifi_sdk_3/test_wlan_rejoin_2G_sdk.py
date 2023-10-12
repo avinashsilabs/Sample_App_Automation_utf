@@ -66,6 +66,7 @@ class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None,
                  ping_count=None, data_transfer=True, test_name=None, sl_collections=None, switch=None):
         super().__init__()
+        self.socket_obj = None
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
         self.time_period = time_period
@@ -80,8 +81,6 @@ class WLanThread(ThreadBase):
         self.rejoin_event = None
         self.dut_addr = None
         self.socket_id = None
-        self.socket_obj = SocketDataTransfer(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
-                                             time_period=self.time_period, data=self.data)
 
     def run(self):
         try:
@@ -144,9 +143,7 @@ class WLanThread(ThreadBase):
             if self.test_case_no == 19742:
                 "Set region code US"
                 logger().info(f"setting the DUT region to US")
-                self.wifi_dut.interfaces.wifi.set_region(region=Si91xRegion.FromUser,
-                                                         region_code=Si91xRegionCode.US,
-                                                         module_type=Si91xModuleType.WithOnboardAntenna, timeout=10)
+                self.wifi_dut.interfaces.wifi.set_wifi_region(region_code=Si91xRegionCode.US)
                 time.sleep(5)
 
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
@@ -156,9 +153,7 @@ class WLanThread(ThreadBase):
             if self.test_case_no == 19743:
                 "Set region code EU"
                 logger().info(f"setting the DUT region to EU")
-                self.wifi_dut.interfaces.wifi.set_region(region=Si91xRegion.FromUser,
-                                                         region_code=Si91xRegionCode.Europe,
-                                                         module_type=Si91xModuleType.WithOnboardAntenna, timeout=10)
+                self.wifi_dut.interfaces.wifi.set_wifi_region(region_code=Si91xRegionCode.Europe)
 
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                               beacon_missed_count=40,
@@ -166,9 +161,7 @@ class WLanThread(ThreadBase):
             if self.test_case_no == 19744:
                 "Set region code EU"
                 logger().info(f"setting the DUT region to EU")
-                self.wifi_dut.interfaces.wifi.set_region(region=Si91xRegion.FromUser,
-                                                         region_code=Si91xRegionCode.Japan,
-                                                         module_type=Si91xModuleType.WithOnboardAntenna, timeout=10)
+                self.wifi_dut.interfaces.wifi.set_wifi_region(region_code=Si91xRegionCode.Japan)
 
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                               beacon_missed_count=40,
@@ -177,9 +170,7 @@ class WLanThread(ThreadBase):
             if self.test_case_no == 19745:
                 "Set region code EU"
                 logger().info(f"setting the DUT region to Worldwide")
-                self.wifi_dut.interfaces.wifi.set_region(region=Si91xRegion.FromUser,
-                                                         region_code=Si91xRegionCode.Worldwide,
-                                                         module_type=Si91xModuleType.WithOnboardAntenna, timeout=10)
+                self.wifi_dut.interfaces.wifi.set_region(region_code=Si91xRegionCode.Worldwide)
 
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                               beacon_missed_count=40,
@@ -271,6 +262,8 @@ class WLanThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.scan(bgscan=True, bg_scan_periodicity=10)
 
             if self.data_transfer:
+                self.socket_obj = SocketDataTransfer(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
+                                                     time_period=self.time_period, data=self.data, dut_ip=self.dut_addr['device_ip'])
                 self.socket_obj.socket_data_transfer()
 
             if self.rejoin_event:
@@ -435,19 +428,6 @@ class WLanThread(ThreadBase):
         logger().info(f"Received rejoin error event after {t.duration:.2f}s")
         return True
 
-    def clean_up_method(self):
-        logger().info("\n\n ----------------------------Cleaning UP the DUT ----------------------------")
-        try:
-            logger().info('******* Turn on Access point Finally **********')
-            self.switch.interfaces.pdu_switch.turn_on(delay=60)
-            logger().info("Closing all opened sockets")
-            self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.socket_obj.socket_id)
-            # logger().info("Disconnect from AP")
-            # self.wifi_dut.interfaces.wifi.leave()
-            # self.wifi_dut.interfaces.wifi.associated = False
-        except:
-            logger().info("\n ----------------------------Cleaning UP of DUT is Completed ----------------------------")
-
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -458,9 +438,10 @@ class WLanThread(ThreadBase):
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
-        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -472,7 +453,6 @@ def test_wifi_sdk_rejoin_c19721(switch, wifi_sniffer, wifi_access_point, wifi_du
          process and gives success message to host AND If Module join to network after disconnect then PASS else FAIL"""
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
-
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
@@ -511,7 +491,8 @@ def test_wifi_sdk_rejoin_c19721(switch, wifi_sniffer, wifi_access_point, wifi_du
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -523,9 +504,10 @@ def test_wifi_sdk_rejoin_c19721(switch, wifi_sniffer, wifi_access_point, wifi_du
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -572,7 +554,8 @@ def test_wifi_sdk_rejoin_max_retry_failure_c19722(switch, wifi_sniffer, wifi_acc
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -584,9 +567,10 @@ def test_wifi_sdk_rejoin_max_retry_failure_c19722(switch, wifi_sniffer, wifi_acc
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -668,7 +652,8 @@ def test_wifi_sdk_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_poin
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        WLanThread(switch=switch).clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -680,9 +665,10 @@ def test_wifi_sdk_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_poin
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -764,7 +750,8 @@ def test_wifi_sdk_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        WLanThread(switch=switch).clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -776,9 +763,10 @@ def test_wifi_sdk_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
-        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -831,7 +819,8 @@ def test_wifi_sdk_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -843,9 +832,10 @@ def test_wifi_sdk_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -899,21 +889,23 @@ def test_wifi_sdk_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_du
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -961,7 +953,8 @@ def test_wifi_sdk_rejoin_psk_change_c19734(switch, wifi_sniffer, wifi_access_poi
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -973,9 +966,10 @@ def test_wifi_sdk_rejoin_psk_change_c19734(switch, wifi_sniffer, wifi_access_poi
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1021,7 +1015,8 @@ def test_wifi_sdk_rejoin_with_disconnect_c19735(switch, wifi_sniffer, wifi_acces
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1033,9 +1028,10 @@ def test_wifi_sdk_rejoin_with_disconnect_c19735(switch, wifi_sniffer, wifi_acces
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1055,28 +1051,10 @@ def test_wifi_sdk_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_po
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
-        # logger().info('******* Turn on Access point **********')
-        # switch.interfaces.pdu_switch.turn_on(delay=30)
-        # wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        # logger().info("Start sniffer capture")
-        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        # time.sleep(3)
-        #
-        # wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
-        #                                                          beacon_missed_count=100, first_time_retry_enable=0)
-        #
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f'AP BSSID = {ap_bssid}')
-        #
-        # logger().info("Joining into wifi_access_point")
-        # socket_obj.wifi_join(wifi_dut)
-        #
-        # dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-        # logger().info(f"DUT MAC_Address: {dut_mac_address}")
-        #
-        # socket_obj.socket_data_transfer()
 
-        '''Post power off AP DUT will try for the rejoin process that we can check in sniffer(i.e: post power off AP need
+        '''Post AP power off, DUT will try for the rejoin process that we can check in sniffer(i.e: post power off AP need
         to check in sniffer whether the DUT is sending broadcast probe requests or not'''
 
         logger().info("\n\n ****** Access point is going to turn off  ******")
@@ -1119,7 +1097,8 @@ def test_wifi_sdk_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_po
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1131,9 +1110,10 @@ def test_wifi_sdk_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_po
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1206,7 +1186,8 @@ def test_wifi_sdk_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_poi
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.skip
@@ -1219,9 +1200,10 @@ def test_wifi_sdk_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_poi
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1340,40 +1322,6 @@ def test_wifi_sdk_rejoin_infinite_retry_c19738(wifi_sniffer, wifi_access_point, 
         socket_obj.clean_up_method()
 
 
-# @pytest.mark.start_state("wifi_dut", wifi="init")
-# @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={
-#         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-#         "oper_mode": Si91xOperatingMode.WiFiClient,
-#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-#         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
-#         "custom_features": Si91xCustomFeatureBitMap.Default,
-#         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-#         "bt_features": 0,
-#         "ble_features": 0,
-#         "ble_custom_ext_features": 0,
-#     }
-# )
-#
-# def test_socket_setsockopt_with_valid_input(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants,
-#                                                request, sl_collections, sniffer_filter):
-#     max_retry_attempts = 0
-#     time_period = utf_constants.get("time_period")
-# 
-#     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-#                           time_period=time_period,
-#                           sl_collections=sl_collections, switch=switch)
-#     wlan_obj.socket_obj.socket_data_transfer()
-
-    # wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=0, option_name='SO_RCVTIMEO')
-    # wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=0, option_name='SO_RCVTIMEO', option_val='1')
-    # wifi_dut.interfaces.wifi.bsdGetSocketOpt(socket_fd=0, option_name='SO_RCVTIMEO')
-    # wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=0)
-
-
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -1383,9 +1331,10 @@ def test_wifi_sdk_rejoin_infinite_retry_c19738(wifi_sniffer, wifi_access_point, 
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1396,14 +1345,12 @@ def test_wifi_sdk_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wif
 
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
-
     ping_count = 20
+    """ Re-join with infinite retry when bgscan enable"""
+
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
                           test_case_no=19739, sl_collections=sl_collections, switch=switch)
-    """ Re-join with infinite retry when bgscan enable"""
-
-    """set_bgscan() not working as per expectation """
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1442,7 +1389,8 @@ def test_wifi_sdk_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wif
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1454,9 +1402,10 @@ def test_wifi_sdk_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wif
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1495,11 +1444,13 @@ def test_wifi_sdk_rejoin_first_time_retry_c19740(wifi_sniffer, wifi_access_point
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"ssid": 'Hidden_SSID_C19741', "broadcast_ssid": False})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -1507,15 +1458,16 @@ def test_wifi_sdk_rejoin_first_time_retry_c19740(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"ssid": 'Hidden_SSID_C19741', "broadcast_ssid": False})
+
 def test_wifi_sdk_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants, request,
                                             sl_collections, sniffer_filter):
     """Rejoin functionality with hidden mode AP"""
@@ -1564,7 +1516,8 @@ def test_wifi_sdk_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wif
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1576,9 +1529,10 @@ def test_wifi_sdk_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wif
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1632,7 +1586,8 @@ def test_wifi_sdk_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wi
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1643,9 +1598,10 @@ def test_wifi_sdk_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wi
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1699,7 +1655,8 @@ def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wi
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.skip
@@ -1712,9 +1669,10 @@ def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wi
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
-        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1769,7 +1727,8 @@ def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_sniffer, wifi_access_point,
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1781,9 +1740,10 @@ def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_sniffer, wifi_access_point,
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
-        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1837,7 +1797,8 @@ def test_wifi_sdk_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_po
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 # EAP Connection in TLS mode
@@ -1882,9 +1843,10 @@ def test_wifi_sdk_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_po
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
-        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1907,7 +1869,8 @@ def test_wifi_sdk_rejoin_eap_tls_c19730(switch, wifi_sniffer, wifi_access_point,
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 # EAP Connection in TTLS mode
@@ -1962,7 +1925,8 @@ def test_wifi_sdk_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 # EAP Connection in PEAP mode
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -2007,7 +1971,8 @@ def test_wifi_sdk_rejoin_eap_peap_c19732(switch, wifi_sniffer, wifi_access_point
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wlan_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.skip
@@ -2016,9 +1981,10 @@ def test_wifi_sdk_rejoin_eap_peap_c19732(switch, wifi_sniffer, wifi_access_point
     wifi={
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.DualBluetoothBLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
-        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "tx_wait_time": 16000,
         }
 )
@@ -2228,9 +2194,10 @@ def test_wifi_sdk_rejoin_roaming_c19728(wifi_access_points, wifi_dut, switches, 
     wifi={
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.DualBluetoothBLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
-        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "tx_wait_time": 16000,
         }
 )
