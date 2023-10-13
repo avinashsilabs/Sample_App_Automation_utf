@@ -502,17 +502,14 @@ def test_wifi_sdk_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_poi
         wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                         wifi_sniffer=wifi_sniffer,
                                         ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
-                                        test_case_no="19751")
+                                        data_transfer=False, test_case_no=34509)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+        time.sleep(3)
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-            radio_ch=wifi_access_point.interfaces.wifi.channel, filter_name='probe_request')
+            filter_name="probe_request")
         logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
-
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info("Stop Sniffer finally")
-        # device_ip = wifi_dut.interfaces.wifi.get_device_ip(wlan_obj.)
         time.sleep(2)
         if state == 'true':
             logger().info('#### Turn off the Access Point')
@@ -526,11 +523,14 @@ def test_wifi_sdk_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_poi
         if state == 'false':
             switch.interfaces.pdu_switch.turn_on()
             logger().info(
-                f"PDU was off, trying to turn on using PDU, Please wait for 60 seconds to check DUT is rejoined to that AP or not ........")
+                f"PDU was off, trying to turn on using PDU, Please wait for 60 seconds "
+                f"to check DUT is rejoined to that AP or not ........")
             time.sleep(60)
         if wifi_dut.interfaces.wifi.associated is True:
-            logger().info(f"Initiating ping to DUT ip {wlan_obj.device_ip['device_ip']} after successful rejoin")
-        status = wlan_obj.ping_to_dut(wlan_obj.device_ip['device_ip'], ping_count)
+            logger().info(f"Initiating ping to DUT ip {wlan_obj.dut_addr['device_ip']} after successful rejoin")
+        ping_count = 10
+        device_ip = wlan_obj.dut_addr['device_ip']
+        status = ping(device_ip, ping_count)
         assert status, "DUT not responding for ping request......"
         if status == 1:
             logger().info('#### Ping successful ####')
