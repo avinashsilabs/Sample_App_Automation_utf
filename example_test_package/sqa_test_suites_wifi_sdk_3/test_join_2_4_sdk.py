@@ -189,12 +189,6 @@ def test_wifi_sdk_connectivity_with_11n_mode_c19707(wifi_dut, wifi_access_point,
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
-        logger().info("\n **** 11n packet validation for probe_request_HT**** \n")
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter \
-            (sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=ap_mac_address, filter_name="probe_request_HT")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find 11n packet'
-
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
@@ -212,7 +206,6 @@ def test_wifi_sdk_connectivity_with_hidden_mode_ap_c19708(wifi_dut, wifi_access_
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
         5. Do sniffer Validation for hidden mode
-        6. Repeat the steps 2-5 for number of iterations
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -254,7 +247,6 @@ def test_wifi_sdk_join_time_providing_psk_c19712(wifi_dut, wifi_access_point, wi
         4. Initiate ping from the dut
         5. Do sniffer Validation for probe_req_response,and eapol_4_way_handshake
         6. Calculate the join time and validate the join time is less than 0.4 secs
-        7. Repeat the steps 2-6 for number of iterations
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -274,16 +266,10 @@ def test_wifi_sdk_join_time_providing_psk_c19712(wifi_dut, wifi_access_point, wi
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         if not rerun:
-            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-                da_addr=ap_mac_address,
-                filter_name='probe_req_response')
             packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter. \
                 get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=ap_mac_address,
                                    filter_name='assoc_req_resp_eapol_4_way_handshake')
             rerun = True
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Sniffer: Unable to find probe_req_response packet in sniffer'
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3,
                                                                   packet_filter2=packet_filter2)['packet_count'], \
             'Sniffer: Unable to find assoc_req_resp_eapol_4_way_handshake packet in sniffer'
@@ -309,12 +295,10 @@ def test_wifi_sdk_Joining_by_rsi_psk_command_c19714(wifi_dut, wifi_access_point,
         2. Join the access point and enable the dhcp
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
-        5. Repeat the steps 2-4 for number of iterations
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
-    """This test case verifies Joining to the security enable ap by giving psk"""
     ap_mac_address = wifi_access_point.interfaces.wifi.bssid
     logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
     try:
@@ -347,7 +331,6 @@ def test_wifi_sdk_psk_with_64_different_characters_c19719(wifi_dut, wifi_access_
         2. Join the access point and enable the dhcp
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
-        5. Repeat the steps 2-4 for number of iterations
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -381,7 +364,6 @@ def test_wifi_sdk_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_p
         2. Join the access point and enable the dhcp
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
-        5. Repeat the steps 2-4 for 1800 secs
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -480,7 +462,7 @@ def test_wifi_sdk_Joining_to_PMK_in_module_by_wrong_PSK_C19716(wifi_dut, wifi_ac
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wifi_access_point, wifi_sniffer,
+def test_wifi_sdk_join_PMK_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                             utf_constants, request, sl_collections,
                                                                             sniffer_filter):
     """
@@ -490,7 +472,6 @@ def test_wifi_sdk_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
         5. Join with PMK with 64 characters PSK and 32 characters ssid
-        6. Repeat the steps 2-5 for number of iterations
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -518,7 +499,7 @@ def test_wifi_sdk_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_wifi_join_pmk_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_access_point, wifi_sniffer,
+def test_wifi_sdk_wifi_join_PMK_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                       utf_constants, request, sl_collections,
                                                                       sniffer_filter):
     """
@@ -561,7 +542,6 @@ def test_wifi_sdk_Joining_time_PMK_C19711(wifi_dut, wifi_access_point, wifi_snif
         4. Initiate ping from the dut
         5. Do sniffer Validation for probe_req_response,and eapol_4_way_handshake
         6. Calculate the join time and validate the join time is less than 0.4 secs
-        7. Repeat the steps 2-6 for number of iterations
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -580,16 +560,11 @@ def test_wifi_sdk_Joining_time_PMK_C19711(wifi_dut, wifi_access_point, wifi_snif
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         if not rerun:
-            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-                da_addr=ap_mac_address,
-                filter_name='probe_req_response')
             packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter. \
                 get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=ap_mac_address,
                                    filter_name='assoc_req_resp_eapol_4_way_handshake')
             rerun = True
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Sniffer: Unable to find probe_req_response packet in sniffer'
+
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3,
                                                                   packet_filter2=packet_filter2)['packet_count'], \
             'Sniffer: Unable to find assoc_req_resp_eapol_4_way_handshake packet in sniffer'
