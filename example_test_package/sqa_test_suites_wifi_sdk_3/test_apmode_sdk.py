@@ -31,13 +31,12 @@ def logger():
 
 
 class ApModeClientConnections(ThreadBase):
-    def __init__(self, wifi_dut, wifi_clients,  wifi_sniffer, wifi_access_point,
+    def __init__(self, wifi_dut, wifi_clients,  wifi_sniffer,
                  sl_collections, utf_constants, testcase_no=None, capture_filename=None,
                  dtim_period=None, beacon=None, leave=True):
         self.wifi_dut = wifi_dut
         self.wifi_clients = wifi_clients
         self.wifi_sniffer = wifi_sniffer
-        self.wifi_access_point = wifi_access_point
         self.sl_collections = sl_collections
         self.utf_constants = utf_constants
         self.capture_filename = capture_filename
@@ -163,13 +162,13 @@ class ApModeClientConnections(ThreadBase):
         },
     }
 )
-def test_wifi_sdk_ap_mode_tx_rules_us_region_c19454(wifi_dut, wifi_clients, wifi_access_point, wifi_sniffer,
+def test_wifi_sdk_ap_mode_tx_rules_us_region_c19454(wifi_dut, wifi_clients, wifi_sniffer,
                                                    sl_collections, wifi_client, utf_constants, sniffer_filter):
     """ Verify Ap mode connection when region selected is US and region
         parameters are defined by user"""
     try:
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                              utf_constants, capture_filename="test_C19454",
                                              testcase_no=19454)
         ap_dut_obj.start()
@@ -236,12 +235,12 @@ def test_wifi_sdk_ap_mode_tx_rules_us_region_c19454(wifi_dut, wifi_clients, wifi
     }
 )
 def test_wifi_sdk_dutap_multiclient_connect_disconnect_c19432(wifi_sniffer, wifi_dut, wifi_client, wifi_clients,
-                                                              sl_collections,  wifi_access_point, utf_constants,
+                                                              sl_collections, utf_constants,
                                                               sniffer_filter):
     """AP functionality, If many clients are connected & disconnected multiple times"""
     try:
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                              utf_constants, capture_filename="test_C19432",
                                              testcase_no=19432)
         ap_dut_obj.start()
@@ -286,12 +285,12 @@ def test_wifi_sdk_dutap_multiclient_connect_disconnect_c19432(wifi_sniffer, wifi
 )
 @pytest.mark.parametrize("dtim_count", [1, 2, 3, 6, 10])
 def test_wifi_sdk_various_dtim_intervals_c19444(wifi_sniffer, wifi_dut, wifi_client, wifi_clients,
-                                                utf_constants, wifi_access_point, sl_collections,
+                                                utf_constants, sl_collections,
                                                 sniffer_filter, dtim_count):
     """Verify DTIM intervals by configuring different DTIM intervals(1,2,3,6,10)"""
     try:
         file_name = f'test_DTIM_{dtim_count}_C19444'
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                              utf_constants, capture_filename=file_name, dtim_period=dtim_count,
                                              testcase_no=19444)
         ap_dut_obj.start()
@@ -340,16 +339,12 @@ def test_wifi_sdk_various_dtim_intervals_c19444(wifi_sniffer, wifi_dut, wifi_cli
          }
 )
 @pytest.mark.parametrize("beacon", [100, 200, 600, 1000])
-def test_wifi_sdk_dutap_diff_beacon_intervals_c19443(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, beacon,
+def test_wifi_sdk_dutap_diff_beacon_intervals_c19443(wifi_sniffer, wifi_dut, wifi_client, beacon,
                                                      wifi_clients, sl_collections, utf_constants, sniffer_filter):
     """Verify beacon intervals by configuring different beacon intervals(100,200,600,1000)"""
     try:
-        if beacon in [600, 1000]:
-            pytest.skip(
-                f"Beacon interval '{beacon}' not working, Raspi-STA is not finding DUT-AP for beacon interval '{beacon}'")
-
         file_name = f'test_beacon_interval_{beacon}_C19443'
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                              utf_constants, capture_filename=file_name, beacon=beacon,
                                              testcase_no=19443)
         ap_dut_obj.start()
@@ -423,18 +418,16 @@ def test_wifi_sdk_dutap_diff_beacon_intervals_c19443(wifi_sniffer, wifi_access_p
         },
     }
 )
-def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer, wifi_client, wifi_access_point, wifi_dut,
+def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer, wifi_client, wifi_dut,
                                                           wifi_clients, sl_collections, utf_constants,  sniffer_filter):
     """AP Sequence with many STAS connected"""
     try:
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                              utf_constants, capture_filename="test_C19442",
                                              testcase_no=19432)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
-        bssid = wifi_access_point.interfaces.wifi.bssid
-        logger().info(f'AP BSSID = {bssid}')
         for i in range(4):
             sl_collections.ap_sniffer_validation(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                  dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'],
@@ -521,10 +514,10 @@ def test_wifi_sdk_dutap_usregion_unsupported_channel_c19458(wifi_dut, wifi_sniff
                }
          }
 )
-def test_wifi_sdk_apmode_connectivity_with_wrong_psk_cli_c19437(wifi_sniffer, sniffer_filter, wifi_access_point,
+def test_wifi_sdk_apmode_connectivity_with_wrong_psk_cli_c19437(wifi_sniffer, sniffer_filter,
                                                                 utf_constants, wifi_dut, wifi_clients, sl_collections):
     try:
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                              utf_constants,
                                              testcase_no=19465)
         ap_dut_obj.start()
@@ -596,7 +589,7 @@ def test_wifi_sdk_apmode_connectivity_with_wrong_psk_cli_c19437(wifi_sniffer, sn
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["set_default_region"])
-def test_wifi_sdk_ap_mode_tx_rules_jp_region_c19456(wifi_dut, sniffer_filter, wifi_client, wifi_access_point,
+def test_wifi_sdk_ap_mode_tx_rules_jp_region_c19456(wifi_dut, sniffer_filter, wifi_client,
                                                     wifi_sniffer,
                                                     wifi_clients, sl_collections, utf_constants):
     """Verify whether DUT is obeying transmission rules(Transmitting with only given power as per channel) according
@@ -604,7 +597,7 @@ def test_wifi_sdk_ap_mode_tx_rules_jp_region_c19456(wifi_dut, sniffer_filter, wi
        defined by the user"""
     try:
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                              utf_constants,
                                              capture_filename="test_C19456",
                                              testcase_no=19456)
@@ -679,13 +672,13 @@ def test_wifi_sdk_ap_mode_tx_rules_jp_region_c19456(wifi_dut, sniffer_filter, wi
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["set_default_region"])
-def test_wifi_sdk_ap_mode_tx_rules_eu_region_c19455(wifi_dut, wifi_client, wifi_access_point, wifi_sniffer,
+def test_wifi_sdk_ap_mode_tx_rules_eu_region_c19455(wifi_dut, wifi_client, wifi_sniffer,
                                                     wifi_clients, sl_collections, utf_constants, sniffer_filter):
     """Verify whether DUT is obeying transmission rules(Transmitting with only given power as per channel) according to
     the inputs given in the set region ap api when region selected is EU and region parameters are defined by user"""
     try:
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                              utf_constants, capture_filename="test_C19455",
                                              testcase_no=19456)
         ap_dut_obj.start()
