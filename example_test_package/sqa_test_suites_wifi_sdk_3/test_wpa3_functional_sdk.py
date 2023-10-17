@@ -685,7 +685,7 @@ def test_wifi_sdk_2_4_tcp_tx_wpa3_c34512(wifi_sniffer, wifi_access_point, wifi_d
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -713,7 +713,7 @@ def test_wifi_sdk_2_4_udp_tx_wpa3_c34514(wifi_sniffer, wifi_access_point, wifi_d
     wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                     ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
                                     net_perf_client=net_perf_client, protocol=protocol, data_transfer=True,
-                                    traffic_type="RX", sniffer_filter=sniffer_filter, wifi_client=wifi_client,
+                                    traffic_type="TX", sniffer_filter=sniffer_filter, wifi_client=wifi_client,
                                     test_case_no=34514
                                     )
     try:
