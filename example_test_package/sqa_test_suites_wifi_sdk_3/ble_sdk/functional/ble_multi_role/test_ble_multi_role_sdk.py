@@ -2,7 +2,7 @@ import pytest
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingMode, Si91xFeatureBitMap, Si91xTCPIPFeatureBitMap, \
     Si91xCustomFeatureBitMap, \
     Si91xCustomFeatureBitMap, \
-    Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xConfigFeatureBitMap, Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes
+    Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xBLECustomFeatureBitMap, Si91xBTFeatureBitMap, Si91xBLEFeatureBitMap, Si91xConfigFeatureBitMap, Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes
 from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
 import time
@@ -72,22 +72,29 @@ class BleFunctionality(ThreadBase):
             self.ble_client.interfaces.bluetooth.close()
 
 
-@pytest.mark.config(
+
+pytestmark = [
+  pytest.mark.config(
     "wifi_dut",
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
-        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0  | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+  ]
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["ble_stop_adv", "ble_stop_scan"])
+                       wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_sdk_dual_role_SI160ms_SW50ms_AImin160ms_AImax320ms_c19911(wifi_dut, ble_client, sl_collections):
     """1.verify ble slave connection with Advertising minimum interval 160ms and Advertising maximum interval 320ms
        2.verify ble master connection with scan interval 160ms and scan window 50ms"""
@@ -109,23 +116,8 @@ def test_ble_sdk_dual_role_SI160ms_SW50ms_AImin160ms_AImax320ms_c19911(wifi_dut,
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
-        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-    },
-)
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["ble_stop_adv", "ble_stop_scan"])
+                       wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_sdk_dual_role_SI500ms_SW400ms_AImin200ms_AImax200ms_c19912(wifi_dut, ble_client, sl_collections):
     """1.verify ble slave connection with Advertising minimum interval 200ms and Advertising maximum interval 200ms
           2.verify ble master connection with scan interval 500ms and scan window 400ms"""
@@ -152,22 +144,8 @@ def test_ble_sdk_dual_role_SI500ms_SW400ms_AImin200ms_AImax200ms_c19912(wifi_dut
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
-        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-    },
-)
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["ble_stop_adv", "ble_stop_scan"])
+                       wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_sdk_dual_role_SI1000ms_SW500ms_AImin500ms_AImax500ms_c19913(wifi_dut, ble_client, sl_collections):
     """1.verify ble slave connection with Advertising minimum interval 500ms and Advertising maximum interval 500ms
           2.verify ble master connection with scan interval 1000ms and scan window 500ms"""
@@ -193,23 +171,8 @@ def test_ble_sdk_dual_role_SI1000ms_SW500ms_AImin500ms_AImax500ms_c19913(wifi_du
         sl_collections.exception_handling(wifi_dut, error)
 
 
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 ,
-        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-    },
-)
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["ble_stop_adv", "ble_stop_scan"])
+                       wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_dual_role_SI5000ms_SW3000ms_AImin1000ms_AImax1000ms_c19914(wifi_dut, ble_client, sl_collections):
     """1.verify ble slave connection with Advertising minimum interval 1000ms and Advertising maximum interval 1000ms
           2.verify ble master connection with scan interval 5000ms and scan window 3000ms"""
@@ -235,23 +198,8 @@ def test_ble_dual_role_SI5000ms_SW3000ms_AImin1000ms_AImax1000ms_c19914(wifi_dut
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.skip("Issue with async timeout")
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-    },
-)
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["ble_stop_adv", "ble_stop_scan"])
+                       wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_sdk_dual_role_SI10240ms_SW5s_AImin10240ms_AImax10240ms_c19915(wifi_dut, ble_client, sl_collections):
     """1.verify ble slave connection with Advertising minimum interval 10240ms and Advertising maximum interval 10240ms
           2.verify ble master connection with scan interval 240ms and scan window 5000ms"""
@@ -265,11 +213,10 @@ def test_ble_sdk_dual_role_SI10240ms_SW5s_AImin10240ms_AImax10240ms_c19915(wifi_
                                                     ble_scan_interval=int(10240 / 0.625),
                                                     ble_scan_window=int(5000 / 0.625),
                                                     timeout=60)
-        time.sleep(5)
         wifi_dut.interfaces.wifi.ble_stop_scanning()
         time.sleep(5)
         wifi_dut.interfaces.wifi.ble_stop_advertising()
-        time.sleep(60)
+        time.sleep(5)
         ble_client.interfaces.bluetooth.stop_advertising()
         time.sleep(5)
     except Exception as error:
