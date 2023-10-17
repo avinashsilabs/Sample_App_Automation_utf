@@ -15,7 +15,8 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     DefaultCipher,
     DeviceConstants,
     SocketOptions,
-    Cipher
+    Cipher,
+    Si91xCertIdentifier
 )
 import string
 import random
@@ -154,16 +155,16 @@ pytestmark = [
         wifi=
         {
             "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
             "features": Si91xFeatureBitMap.Default,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
             "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "set_send_feature_frame": True,
             "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
-            "ca_cert": "ca-chain.cert.pem",
+            "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
         }
     )
 ]
@@ -179,13 +180,6 @@ def test_wifi_sdk_ssl_client_connect_close_sequence_testcase_c19130(wifi_access_
     ssl client socket connection, data send and socket close regression
     """
     try:
-        logger.info("Clearing old certificates in DUT")
-        wifi_dut.interfaces.wifi.clear_certificate()
-
-        logger.info("Loading certificates in DUT")
-        wifi_dut.interfaces.wifi.set_ssl_certificate(Si91xCertificateType.SSLCACertificate,
-                                                     str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")))
-
         capture_filename = "test_wifi_sdk_ssl_client_connect_close_sequence_testcase_C19130"
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
@@ -270,13 +264,6 @@ def test_wifi_sdk_ssl_socket_limit_testcase_c19121(wifi_sniffer, wifi_access_poi
     Open SSL server socket in DUT with maximum client limit 3
     """
     try:
-        logger.info("Clearing old certificates in DUT")
-        wifi_dut.interfaces.wifi.clear_certificate()
-
-        logger.info("Loading certificates in DUT")
-        wifi_dut.interfaces.wifi.set_ssl_certificate(Si91xCertificateType.SSLCACertificate,
-                                                     str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")))
-
         capture_filename = "test_wifi_sdk_ssl_socket_limit_testcase_TC19121"
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip()
@@ -299,7 +286,6 @@ def test_wifi_sdk_ssl_socket_limit_testcase_c19121(wifi_sniffer, wifi_access_poi
         # Socket binds at (device_ip, port) in DUT
         local_port = randint(5001, 20000)
         wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
-        time.sleep(2)
         # ssl socket opened in DUT connects to the server
         wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=5001)
 
@@ -311,7 +297,6 @@ def test_wifi_sdk_ssl_socket_limit_testcase_c19121(wifi_sniffer, wifi_access_poi
         # Socket binds at (device_ip, port) in DUT
         local_port = randint(20001, 40000)
         wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
-        time.sleep(2)
         # ssl socket opened in DUT connects to the server
         wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=5002)
 
@@ -355,13 +340,6 @@ def test_wifi_sdk_ssl_client_1_2_version_server_1_0_testcase_c19120(wifi_sniffer
     Connect to ssl server socket which run with version 1.0 at remote side and connect to it from module with version 1.2
     """
     try:
-        logger.info("Clearing old certificates in DUT")
-        wifi_dut.interfaces.wifi.clear_certificate()
-
-        logger.info("Loading certificates in DUT")
-        wifi_dut.interfaces.wifi.set_ssl_certificate(Si91xCertificateType.SSLCACertificate,
-                                                     str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")))
-
         capture_filename = "test_wifi_sdk_ssl_server_1_0version_client_1_2_testcase_TC19120"
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip()
@@ -423,13 +401,6 @@ def test_wifi_sdk_ssl_client_testcase_c19109(wifi_sniffer, wifi_access_point, wi
     SSL Protocol handshakes and Verify exchanges between server and client sockets during TCP connection establishment
     """
     try:
-        logger.info("Clearing old certificates in DUT")
-        wifi_dut.interfaces.wifi.clear_certificate()
-
-        logger.info("Loading certificates in DUT")
-        wifi_dut.interfaces.wifi.set_ssl_certificate(Si91xCertificateType.SSLCACertificate,
-                                                     str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")))
-
         capture = True
         capture_filename = "test_wifi_sdk_ssl_client_testcase_TC19109"
         port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -441,11 +412,11 @@ def test_wifi_sdk_ssl_client_testcase_c19109(wifi_sniffer, wifi_access_point, wi
         for repeat_count in range(1, repeat + 1):
             logger.info(f"******** Iteration {repeat_count} Starts ********")
             device_ip, dut_mac_address = ssl_obj.join_get_ip(sniff_capture=capture)
-
             # Open ssl server socket in remote device(Raspberry pi or static device)
             ssl_server.interfaces.ssl.start_server()
             server_ip = ssl_server.interfaces.ssl.server_ip
             logger.info(f"SSL server started with server ip:{server_ip}")
+
             # Open ssl client socket in the DUT
             sock = wifi_dut.interfaces.wifi.socket()
             assert sock == 0, "Socket id received is wrong. expected is 0"
@@ -520,19 +491,12 @@ def test_wifi_sdk_ssl_max_sockets_testcase_c19128(wifi_sniffer, wifi_dut, wifi_a
         pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
         repeat = utf_constants.get("iter_count")
 
-        logger.info("Clearing old certificates in DUT")
-        wifi_dut.interfaces.wifi.clear_certificate()
-
-        logger.info("Loading certificates in DUT")
-        wifi_dut.interfaces.wifi.set_ssl_certificate(Si91xCertificateType.SSLCACertificate,
-                                                     str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")),
-                                                     cert_index=0)
-        wifi_dut.interfaces.wifi.set_ssl_certificate(Si91xCertificateType.SSLCACertificate,
-                                                     str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")),
-                                                     cert_index=1)
-        wifi_dut.interfaces.wifi.set_ssl_certificate(Si91xCertificateType.SSLCACertificate,
-                                                     str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")),
-                                                     cert_index=2)
+        logger.info("Loading certificates at index 1 and 2")
+        wifi_dut.interfaces.wifi.set_ssl_certificate(str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")),
+                                                     Si91xCertificateType.SL_NET_SIGNING_CERTIFICATE, cert_index=1)
+        wifi_dut.interfaces.wifi.set_ssl_certificate(str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")),
+                                                     Si91xCertificateType.SL_NET_SIGNING_CERTIFICATE, cert_index=2)
+        logger.info("Loading certificates done\n\n")
 
         for repeat_count in range(1, repeat + 1):
             logger.info(f"******** Iteration {repeat_count} Starts ********")
@@ -611,9 +575,89 @@ def test_wifi_sdk_ssl_max_sockets_testcase_c19128(wifi_sniffer, wifi_dut, wifi_a
         sl_collections.exception_handling(wifi_dut, error)
 
 
-
-
-# Below testcases are commented, rework needed for these testcases for upcoming announcements.
+""" Below testcases are commented, rework needed for these testcases for upcoming announcements."""
+# @pytest.mark.start_state("wifi_dut", wifi=['init'])
+# @pytest.mark.end_state("wifi_dut",
+#                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated",
+#                              "clear_certs"])
+# def test_wifi_sdk_ssl_client_1_0version_server_1_0_testcase_c19117(wifi_sniffer, wifi_dut, wifi_access_point, openssl,
+#                                                                    wifi_client, logger, sl_collections):
+#     """
+#     Open ssl client socket with version 1.0 and do data transfer.
+#     """
+#     try:
+#         logger.info("Clearing old certificates in DUT")
+#         wifi_dut.interfaces.wifi.clear_certificate()
+#         logger.info("Clearing certificates completed")
+#
+#         logger.info("Loading certificates in DUT")
+#         wifi_dut.interfaces.wifi.set_ssl_certificate(str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")),
+#                                                      Si91xCertificateType.SL_NET_SIGNING_CERTIFICATE)
+#         logger.info("Loading certificates done\n\n")
+#
+#         capture_filename = "test_wifi_sdk_ssl_server_1_0version_client_1_2_testcase_TC19120"
+#         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
+#         device_ip, dut_mac_address = ssl_obj.join_get_ip()
+#         ap_bssid = wifi_access_point.interfaces.wifi.bssid
+#         logger.info(f'AP BSSID = {ap_bssid}')
+#
+#         openssl.interfaces.server.start(port=5001, tls_version="-tls1")
+#         server_ip = wifi_client.interfaces.wifi.get_ip_address()
+#
+#         sock = wifi_dut.interfaces.wifi.socket()
+#         assert sock == 0, "Socket id received is wrong. expected is 0"
+#         logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+#         # Enable ssl option for socket opened
+#         wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_")
+#         local_port = randint(5001, 60000)
+#         wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
+#         wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=5001)
+#
+#         # duration = 60
+#         # buffer_length = 100
+#         # t_end = time.time() + duration
+#         # data_check = []
+#         # while time.time() < t_end:
+#         #     data = "".join(
+#         #         random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
+#         #     )
+#         #     data_check.append(data)
+#         #     data_final = "".join(data_check)
+#         #     wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=data)
+#         #
+#         # out = openssl.interfaces.server.get_messages(timeout=100)
+#         # result = out[-1]
+#         # logger.info(f"Total data sent from DUT {data_final}")
+#         # logger.info(f"*************data received*************** {result}")
+#         #
+#         # assert data_final == result, "Data received doesn't match"
+#
+#         openssl.interfaces.server.stop()
+#         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+#         wifi_dut.interfaces.wifi.leave()
+#
+#         wifi_sniffer.interfaces.capture.stop_capture()
+#         logger.info("Stop Sniffer finally")
+#         validation = True
+#         packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+#         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+#         assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+#         logger.info(f"PS-POLL packets are captured in the sniffer")
+#         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+#         logger.info(f"DECRYPTION KEY-->{decryption_key}")
+#         ssl_pkt = sl_collections.ssl_packet_decryption(wifi_sniffer, decryption_key, dut_mac_address, ["tls"],
+#                                                        capture_filename, ap_bssid)['tls']
+#         if len(ssl_pkt) > 0:
+#             for i in ssl_pkt:
+#                 if re.search(".*Client Hello", i):
+#                     version = re.search("Version:.*", i).group(0)
+#                     logger.info(f"TLS VERSION USED BY DUT is--->{version}")
+#                     assert "TLS 1.0" in version, "TLS version mismatch, expected TLS VERSION 1.2 to be sent by DUT"
+#                     assert "Client Hello" in i, "Client Hello packet missed"
+#         else:
+#             logger.info(f"SSL packets are not found")
+#     except Exception as error:
+#         sl_collections.exception_handling(wifi_dut, error)
 
 # @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # @pytest.mark.end_state("wifi_dut",
@@ -1213,134 +1257,3 @@ def test_wifi_sdk_ssl_max_sockets_testcase_c19128(wifi_sniffer, wifi_dut, wifi_a
 #         sl_collections.exception_handling(wifi_dut, error)
 #
 #
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.DualBluetoothBLE,
-#         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
-#         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-#         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-#         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode | Si91xExtCustomFeatureBitMap.MultipleSslVersionSupport,
-#         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-#         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-#         "ca_cert": ["ca-chain.cert.pem"],
-#         "set_send_feature_frame": True,
-#         "rejoin_max_retry": 0,
-#         "scan_interval": 4,
-#         "beacon_missed_count": 40,
-#         "bt_features": 0,
-#         "ble_features": 0,
-#         "ble_custom_ext_features": 0,
-#     }
-# )
-# @pytest.mark.end_state("wifi_dut",
-#                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated",
-#                              "clear_certs"])
-# def test_wifi_sdk_ssl_client_1_0version_server_1_0_testcase_c19117(wifi_sniffer, wifi_dut, wifi_access_point, openssl,
-#                                                                    wifi_client, logger, sl_collections):
-#     """
-#     Open ssl client socket with version 1.0 and do data transfer.
-#     """
-#     try:
-#         capture_filename = "test_wifi_sdk_ssl_server_1_0version_client_1_0_testcase_TC19117"
-#         ping_count = 10
-#         port_connect = 5001
-#
-#         ap_bssid = wifi_access_point.interfaces.wifi.bssid
-#         # configure interface for the channel of the access point
-#         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-#
-#         scan_fail = sl_collections.scan(wifi_dut)
-#         assert not scan_fail, "Scanning for AP failed"
-#
-#         dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-#         logger.info(f"DUT MAC_Address: {dut_mac_address}")
-#
-#         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
-#
-#         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
-#                                                                  beacon_missed_count=40, first_time_retry_enable=0,
-#                                                                  )
-#         status = sl_collections.connect(wifi_dut, wifi_access_point)
-#         assert not status, "Failed to Join to AP"
-#
-#         status = sl_collections.configure_ip(wifi_dut)
-#         assert not status, "Failed to Join to AP"
-#
-#         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-#
-#         # The below api put DUT to power save
-#         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-#
-#         openssl.interfaces.server.start(port=5001, tls_version="-tls1")
-#         sock = wifi_dut.interfaces.wifi.socket(protocol=SocketOptions.SSL_ENABLE)
-#         assert sock == 0, "Socket id received is wrong. expected is 0"
-#         logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
-#         logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
-#         # Enable ssl option for socket opened
-#         wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=sock, option_name='SOL_SOCKET',
-#                                                  option_val=SocketOptions.SOL_SOCKET)
-#         wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=sock, option_name='SO_SSL_ENABLE',
-#                                                  option_val=SocketOptions.SO_SSL_ENABLE)
-#         wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=sock, option_name='SSL_ENABLE',
-#                                                  option_val=SocketOptions.SSL_ENABLE)
-#
-#         logger.info(f"Selecting SSL version {SocketOptions.SO_SSL_V_1_0_ENABLE} for the socket-id->{sock} using "
-#                     f"rsi_setsockopt API")
-#         wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=sock, option_name='SO_SSL_V_1_0_ENABLE',
-#                                                  option_val=SocketOptions.SO_SSL_V_1_0_ENABLE)
-#
-#         local_port = randint(5001, 60000)
-#         wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15,
-#                                       )
-#         host_ip = wifi_client.interfaces.wifi.get_ip_address()
-#         wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=host_ip, server_port=port_connect)
-#
-#         duration = 60
-#         buffer_length = 100
-#         t_end = time.time() + duration
-#         data_check = []
-#         while time.time() < t_end:
-#             data = "".join(
-#                 random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
-#             )
-#             data_check.append(data)
-#             data_final = "".join(data_check)
-#             wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=data)
-#
-#         out = openssl.interfaces.server.get_messages(timeout=100)
-#         result = out[-1]
-#         logger.info(f"Total data sent from DUT {data_final}")
-#         logger.info(f"*************data received*************** {result}")
-#
-#         assert data_final == result, "Data received doesn't match"
-#
-#         openssl.interfaces.server.stop()
-#         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
-#         wifi_dut.interfaces.wifi.leave()
-#
-#         wifi_sniffer.interfaces.capture.stop_capture()
-#         logger.info("Stop Sniffer finally")
-#         validation = True
-#         packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-#         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-#         assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
-#         logger.info(f"PS-POLL packets are captured in the sniffer")
-#         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-#         logger.info(f"DECRYPTION KEY-->{decryption_key}")
-#         ssl_pkt = sl_collections.ssl_packet_decryption(wifi_sniffer, decryption_key, dut_mac_address, ["tls"],
-#                                                        capture_filename, ap_bssid)['tls']
-#         if len(ssl_pkt) > 0:
-#             for i in ssl_pkt:
-#                 if re.search(".*Client Hello", i):
-#                     version = re.search("Version:.*", i).group(0)
-#                     logger.info(f"TLS VERSION USED BY DUT is--->{version}")
-#                     assert "TLS 1.0" in version, "TLS version mismatch, expected TLS VERSION 1.2 to be sent by DUT"
-#                     assert "Client Hello" in i, "Client Hello packet missed"
-#         else:
-#             logger.info(f"SSL packets are not found")
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut, error)
