@@ -2,6 +2,7 @@ import time
 import pytest
 from utf.utf_config import UtfConfig
 from utf.interfaces.wifi import WlanError
+from utf.utils.iperf.iperf_utils import print_dict
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingMode, Si91xFeatureBitMap, Si91xTCPIPFeatureBitMap, \
     Si91xCustomFeatureBitMap, \
@@ -29,13 +30,18 @@ setup requirement:
 def logger():
     return get_logger(__name__)
 
+def __print_throughput(iperf_throughput: dict):
+    if iperf_throughput is not None:
+        print_dict("##     ", iperf_throughput)
 
 class ApModeClientConnections(ThreadBase):
-    def __init__(self, wifi_dut, wifi_clients,  wifi_sniffer,
+    def __init__(self, wifi_dut, wifi_clients,  net_perf_client, protocol, wifi_sniffer,
                  sl_collections, utf_constants, testcase_no=None, capture_filename=None,
-                 dtim_period=None, beacon=None, leave=True):
+                 dtim_period=None, beacon=None, traffic_type=None, leave=True, enable_data_rate=False):
         self.wifi_dut = wifi_dut
         self.wifi_clients = wifi_clients
+        self.net_perf_client = net_perf_client
+        self.protocol = protocol
         self.wifi_sniffer = wifi_sniffer
         self.sl_collections = sl_collections
         self.utf_constants = utf_constants
@@ -43,7 +49,9 @@ class ApModeClientConnections(ThreadBase):
         self.testcase_no = testcase_no
         self.dtim_period = dtim_period
         self.beacon = beacon
+        self.traffic_type = traffic_type
         self.leave = leave
+        self.enable_data_rate = enable_data_rate
 
     def run(self):
         if self.testcase_no == 19454 or 19432:
@@ -103,9 +111,28 @@ class ApModeClientConnections(ThreadBase):
                                                                        beacon_interval=self.beacon_interval,
                                                                        ping_count=ping_count,
                                                                        no_of_clients=self.no_of_clients,
-                                                                       leave=self.leave)
+                                                                       leave=self.leave,
+                                                                       enable_data_rate=self.enable_data_rate)
+        if self.traffic_type == "Tx":
+            logger().info(f"***** starting iperf ******")
+            self.net_perf_client.interfaces.net_perf.init_server(host_ip=self.dut_addr_dict['client_ip'], device_ip=self.dut_addr_dict['dut_ip'],
+                                                                 protocol=self.protocol)
+            self.net_perf_client.interfaces.net_perf.start()
+            logger().info(f"***** send traffic  ******")
+            self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                           local_port=self.net_perf_client.interfaces.net_perf.server_port,
+                                           local_ip=self.dut_addr_dict['dut_ip'],
+                                           remote_ip=self.dut_addr_dict['client_ip'],
+                                           remote_port=self.net_perf_client.interfaces.net_perf.server_port,
+                                           size=1460, ttl=30, throughput_type=1, qos=0)
+            logger().info(f"***** get and print throughput ******")
+            tp = self.net_perf_client.interfaces.net_perf.process_output()
+            assert tp, "failed to get throughput..."
+            logger().info("data transfer is successful")
+            time.sleep(5)
         logger().info("Stop sniffer finally")
         self.wifi_sniffer.interfaces.capture.stop_capture()
+
 
 
 
@@ -162,13 +189,13 @@ class ApModeClientConnections(ThreadBase):
         },
     }
 )
-def test_wifi_sdk_ap_mode_tx_rules_us_region_c19454(wifi_dut, wifi_clients, wifi_sniffer,
+def test_wifi_sdk_ap_mode_tx_rules_us_region_c19454(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer,
                                                    sl_collections, wifi_client, utf_constants, sniffer_filter):
     """ Verify Ap mode connection when region selected is US and region
         parameters are defined by user"""
     try:
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer, sl_collections,
                                              utf_constants, capture_filename="test_C19454",
                                              testcase_no=19454)
         ap_dut_obj.start()
@@ -234,13 +261,13 @@ def test_wifi_sdk_ap_mode_tx_rules_us_region_c19454(wifi_dut, wifi_clients, wifi
         },
     }
 )
-def test_wifi_sdk_dutap_multiclient_connect_disconnect_c19432(wifi_sniffer, wifi_dut, wifi_client, wifi_clients,
+def test_wifi_sdk_dutap_multiclient_connect_disconnect_c19432(wifi_sniffer, wifi_dut, net_perf_client, protocol, wifi_clients,
                                                               sl_collections, utf_constants,
                                                               sniffer_filter):
     """AP functionality, If many clients are connected & disconnected multiple times"""
     try:
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer, sl_collections,
                                              utf_constants, capture_filename="test_C19432",
                                              testcase_no=19432)
         ap_dut_obj.start()
@@ -284,13 +311,13 @@ def test_wifi_sdk_dutap_multiclient_connect_disconnect_c19432(wifi_sniffer, wifi
          }
 )
 @pytest.mark.parametrize("dtim_count", [1, 2, 3, 6, 10])
-def test_wifi_sdk_various_dtim_intervals_c19444(wifi_sniffer, wifi_dut, wifi_client, wifi_clients,
+def test_wifi_sdk_various_dtim_intervals_c19444(wifi_sniffer, wifi_dut, net_perf_client, protocol, wifi_clients,
                                                 utf_constants, sl_collections,
                                                 sniffer_filter, dtim_count):
     """Verify DTIM intervals by configuring different DTIM intervals(1,2,3,6,10)"""
     try:
         file_name = f'test_DTIM_{dtim_count}_C19444'
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer, sl_collections,
                                              utf_constants, capture_filename=file_name, dtim_period=dtim_count,
                                              testcase_no=19444)
         ap_dut_obj.start()
@@ -339,12 +366,12 @@ def test_wifi_sdk_various_dtim_intervals_c19444(wifi_sniffer, wifi_dut, wifi_cli
          }
 )
 @pytest.mark.parametrize("beacon", [100, 200, 600, 1000])
-def test_wifi_sdk_dutap_diff_beacon_intervals_c19443(wifi_sniffer, wifi_dut, wifi_client, beacon,
+def test_wifi_sdk_dutap_diff_beacon_intervals_c19443(wifi_sniffer, wifi_dut, net_perf_client, protocol, beacon,
                                                      wifi_clients, sl_collections, utf_constants, sniffer_filter):
     """Verify beacon intervals by configuring different beacon intervals(100,200,600,1000)"""
     try:
         file_name = f'test_beacon_interval_{beacon}_C19443'
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer, sl_collections,
                                              utf_constants, capture_filename=file_name, beacon=beacon,
                                              testcase_no=19443)
         ap_dut_obj.start()
@@ -418,12 +445,12 @@ def test_wifi_sdk_dutap_diff_beacon_intervals_c19443(wifi_sniffer, wifi_dut, wif
         },
     }
 )
-def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer, wifi_client, wifi_dut,
+def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer, net_perf_client, protocol, wifi_dut,
                                                           wifi_clients, sl_collections, utf_constants,  sniffer_filter):
     """AP Sequence with many STAS connected"""
     try:
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer, sl_collections,
                                              utf_constants, capture_filename="test_C19442",
                                              testcase_no=19432)
         ap_dut_obj.start()
@@ -514,10 +541,10 @@ def test_wifi_sdk_dutap_usregion_unsupported_channel_c19458(wifi_dut, wifi_sniff
                }
          }
 )
-def test_wifi_sdk_apmode_connectivity_with_wrong_psk_cli_c19437(wifi_sniffer, sniffer_filter,
+def test_wifi_sdk_apmode_connectivity_with_wrong_psk_cli_c19437(wifi_sniffer, sniffer_filter, net_perf_client, protocol,
                                                                 utf_constants, wifi_dut, wifi_clients, sl_collections):
     try:
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer, sl_collections,
                                              utf_constants,
                                              testcase_no=19465)
         ap_dut_obj.start()
@@ -589,7 +616,7 @@ def test_wifi_sdk_apmode_connectivity_with_wrong_psk_cli_c19437(wifi_sniffer, sn
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["set_default_region"])
-def test_wifi_sdk_ap_mode_tx_rules_jp_region_c19456(wifi_dut, sniffer_filter, wifi_client,
+def test_wifi_sdk_ap_mode_tx_rules_jp_region_c19456(wifi_dut, sniffer_filter, net_perf_client, protocol,
                                                     wifi_sniffer,
                                                     wifi_clients, sl_collections, utf_constants):
     """Verify whether DUT is obeying transmission rules(Transmitting with only given power as per channel) according
@@ -597,7 +624,7 @@ def test_wifi_sdk_ap_mode_tx_rules_jp_region_c19456(wifi_dut, sniffer_filter, wi
        defined by the user"""
     try:
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer, sl_collections,
                                              utf_constants,
                                              capture_filename="test_C19456",
                                              testcase_no=19456)
@@ -672,13 +699,13 @@ def test_wifi_sdk_ap_mode_tx_rules_jp_region_c19456(wifi_dut, sniffer_filter, wi
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["set_default_region"])
-def test_wifi_sdk_ap_mode_tx_rules_eu_region_c19455(wifi_dut, wifi_client, wifi_sniffer,
+def test_wifi_sdk_ap_mode_tx_rules_eu_region_c19455(wifi_dut, net_perf_client, protocol, wifi_sniffer,
                                                     wifi_clients, sl_collections, utf_constants, sniffer_filter):
     """Verify whether DUT is obeying transmission rules(Transmitting with only given power as per channel) according to
     the inputs given in the set region ap api when region selected is EU and region parameters are defined by user"""
     try:
         assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer, sl_collections,
                                              utf_constants, capture_filename="test_C19455",
                                              testcase_no=19456)
         ap_dut_obj.start()
@@ -859,28 +886,27 @@ def test_wifi_sdk_dut_apmode_11n_htcaps_support_c19446(wifi_sniffer, wifi_dut, w
         'Unable to find HT_IE in Sniffer'
 
 
-@pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.DHCPv4Client
                           | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-        "security": "WPA2", "ssid": "SILABS_AP_C19449", "passphrase": "test1234", "channel": 11,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11,
     }
 )
 @pytest.mark.config(
-    "wifi_client",
+    "wifi_clients",
     wifi={
            0: {
                 "security": "WPA2",
-                "ssid": "SILABS_AP_C19449",
-                "passphrase": "12345678",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
                 "channel": 11,
                 "interface": "wlan0",
                }
@@ -895,10 +921,10 @@ def test_wifi_sdk_dut_apmode_11n_htcaps_support_c19446(wifi_sniffer, wifi_dut, w
         'channel': 11,
     }
 )
-@pytest.mark.skip("testagent support required")
-def test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449(wifi_sniffer, wifi_dut, wifi_clients, wifi_client, channel,
+@pytest.mark.parametrize("channel", [11])
+def test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449(wifi_sniffer, wifi_dut, wifi_clients, net_perf_client, protocol, channel,
                                                   wifi_access_point,
-                                                  utf_constants, sl_collections):
+                                                  utf_constants, sl_collections, sniffer_filter):
     """Soft Reset functionality when dUT moving from STA mode to AP mode"""
     try:
         logger().info("********* configuring the sniffer with access point channel *********")
@@ -906,37 +932,40 @@ def test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449(wifi_sniffer, wifi_dut, wifi_c
         logger().info(" ******* start capturing with Sniffer for sta mode ******* ")
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_DUT_softreset_statoap_C19449')
         time.sleep(3)
-        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
-        logger().info(f"in harness power_save flag set to be : {power_save}")
+        ping_count = utf_constants.get("ping_count")
         dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
                                                        wifi_access_point=wifi_access_point,
-                                                       power_save=power_save, associated=False)
+                                                       power_save=False,
+                                                       associated=wifi_dut.interfaces.wifi.associated,
+                                                       retry_count=3, ping_after_power_save=True,
+                                                       ping_count=ping_count)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f'AP BSSID = {ap_bssid}')
+        wifi_dut.interfaces.wifi.leave()
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_addr['dut_mac_address'], ap_bssid)
-        packet_filter1 = wifi_sniffer.interfaces.capture.get_sniffer_filter(sa_mac_address=ap_bssid,
-                                                                            da_mac_address=dut_addr['dut_mac_address'],
-                                                                            filter_name="data_packets")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            f'Unable to find qos data packets in Sniffer'
-        logger().info("Initiating wireless deinit")
-        wifi_dut.interfaces.wifi.sl_net_deinit()
-        logger().info("Initiating wireless init to change DUT STA mode to AP Mode ")
-        wifi_dut.interfaces.wifi.sl_net_init(oper_mode=6, coex_mode=9, retries=3)
-        wifi_dut.interfaces.wifi.inited = False
-        wifi_dut.interfaces.wifi.init(oper_mode=6, coex_mode=9)
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                             utf_constants, capture_filename="test_C19432", dtim_count=None,
-                                             testcase_no=19432)
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_addr['dut_mac_address'],
+                                               ap_bssid, sniffer_filter,
+                                               power_save=False)
+        packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            ta_addr=dut_addr['dut_mac_address'],
+            ra_addr=ap_bssid,
+            filter_name='data_packets')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
+            'Sniffer: Unable to find data_packets in sniffer'
+        logger().info("Initiating deinit")
+        wifi_dut.interfaces.wifi.deinit()
+        logger().info("Initiating init to change DUT STA mode to AP Mode ")
+        wifi_dut.interfaces.wifi.set_wifi_config(oper_mode=6, coex_mode=13)
+        wifi_dut.interfaces.wifi.init(mode="ap", config_required=False)
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer, sl_collections,
+                                             utf_constants, capture_filename="test_C19449",
+                                             testcase_no=19465)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
-        packet_filter1 = wifi_sniffer.interfaces.capture.get_sniffer_filter(sa_mac_address=
-                                                                            ap_dut_obj.dut_addr['dut_mac_address'],
-                                                                            filter_name="beacon")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  beacon in Sniffer'
+        sl_collections.ap_sniffer_validation(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                             dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'],
+                                             rasp_mac_address=ap_dut_obj.dut_addr_dict['rasp_mac_address'])
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -949,15 +978,16 @@ def test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449(wifi_sniffer, wifi_dut, wifi_c
     "wifi_dut",
     wifi={
         "oper_mode": Si91xOperatingMode.AccessPoint,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-        "security": "WPA2", "ssid": "SILABS_AP_C19450", "passphrase": "12345678", "region_config": 0, "beacon": 100,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,
         'channel': 11,
-        "region_code_ap": "US ",
+        "region": 1,
+        "region_code": "us",
     }
 )
 @pytest.mark.config(
@@ -974,63 +1004,64 @@ def test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449(wifi_sniffer, wifi_dut, wifi_c
     wifi={
            0: {
                 "security": "WPA2",
-                "ssid": "SILABS_AP_C19450",
-                "passphrase": "12345678",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
                 "channel": 11,
                 "interface": "wlan0",
                }
          }
 )
-@pytest.mark.skip("testagent support required")
-def test_wifi_sdk_dut_ap_mode_soft_reset_ap_to_sta_c19450(wifi_sniffer, wifi_dut, wifi_client, wifi_clients,  channel,
-                                                          wifi_access_point, utf_constants, sl_collections, beacon,
-                                                          dtim_period):
+@pytest.mark.parametrize("channel", [11])
+def test_wifi_sdk_dut_ap_mode_soft_reset_ap_to_sta_c19450(wifi_sniffer, wifi_dut, net_perf_client, protocol, wifi_clients,  channel,
+                                                          wifi_access_point, utf_constants, sl_collections, sniffer_filter
+                                                          ):
     """Soft Reset functionality when DEVUT moving from AP mode to STA mode"""
     try:
-        wifi_dut.interfaces.wifi.sl_net_init(mode='ap')
-        wifi_dut.interfaces.wifi.sl_net_up(mode='ap', timeout=100)
-        time.sleep(60)
-        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                             utf_constants, capture_filename="test_C19432", dtim_count=None,
-                                             testcase_no=19432)
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer, sl_collections,
+                                             utf_constants, capture_filename="test_C19450",
+                                             testcase_no=19465)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
-        logger().info("Initiating wireless de init")
-        wifi_dut.interfaces.wifi.sl_net_deinit(mode='ap')
-        time.sleep(60)
-        packet_filter1 = wifi_sniffer.interfaces.capture.get_sniffer_filter(sa_mac_address=
-                                                                            ap_dut_obj.dut_addr['dut_mac_address'],
-                                                                            filter_name="beacon")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  beacon in Sniffer'
-        packet_filter2 = wifi_sniffer.interfaces.capture.get_sniffer_filter(sa_mac_address=
-                                                                            ap_dut_obj.dut_addr['rasp_mac_address'],
-                                                                            da_mac_address=
-                                                                            ap_dut_obj.dut_addr['dut_mac_address'],
-                                                                            filter_name="data_packets")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter2=packet_filter2)['packet_count'], \
-            f'Unable to find qos data packets in Sniffer'
-        logger().info("Initiating wireless init to change DUT AP mode to STA Mode ")
-        wifi_dut.interfaces.wifi.sl_net_init(oper_mode=0, coex_mode=9, retries=3)
-        wifi_dut.interfaces.wifi.inited = False
-        wifi_dut.interfaces.wifi.init(oper_mode=0, coex_mode=9)
+        sl_collections.ap_sniffer_validation(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                             dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'],
+                                             rasp_mac_address=ap_dut_obj.dut_addr_dict['rasp_mac_address'])
+        packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            ta_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
+            ra_addr=ap_dut_obj.dut_addr_dict['rasp_mac_address'],
+            filter_name='data_packets')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
+            'Sniffer: Unable to find data_packets in sniffer'
+        logger().info("Initiating de init")
+        wifi_dut.interfaces.wifi.deinit()
+        logger().info("Initiating init to change DUT AP mode to STA Mode ")
+        wifi_dut.interfaces.wifi.set_wifi_config(oper_mode=0, coex_mode=13)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
         logger().info("********* configuring the sniffer with access point channel *********")
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-
         logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19450_dut_sta')
         time.sleep(3)
-        dut_addr = sl_collections.join_to_wifi_network(utf_constants, wifi_dut, wifi_access_point)
+        ping_count = utf_constants.get("ping_count")
+        dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                       wifi_access_point=wifi_access_point,
+                                                       power_save=False,
+                                                       associated=wifi_dut.interfaces.wifi.associated,
+                                                       retry_count=3, ping_after_power_save=True,
+                                                       ping_count=ping_count)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f'AP BSSID = {ap_bssid}')
+        wifi_dut.interfaces.wifi.leave()
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_addr['dut_mac_address'], ap_bssid)
-        packet_filter1 = wifi_sniffer.interfaces.capture.get_sniffer_filter(sa_mac_address=ap_bssid,
-                                                                            da_mac_address=dut_addr['dut_mac_address'],
-                                                                            filter_name="data_packets")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter4=packet_filter1)['packet_count'], \
-            f'Unable to find qos data packets in Sniffer'
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_addr['dut_mac_address'],
+                                               ap_bssid, sniffer_filter,
+                                               power_save=False)
+        packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            ta_addr=dut_addr['dut_mac_address'],
+            ra_addr=ap_bssid,
+            filter_name='data_packets')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
+            'Sniffer: Unable to find data_packets in sniffer'
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -1040,4 +1071,59 @@ def test_wifi_sdk_dut_ap_mode_soft_reset_ap_to_sta_c19450(wifi_sniffer, wifi_dut
 
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
+    },
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_dutap_fixed_data_rate_c19441(wifi_sniffer, wifi_dut,
+                                               wifi_clients, sl_collections, utf_constants, sniffer_filter,
+                                               net_perf_client, protocol):
+    """Verify fixed data rate (54mbps) in Apmode"""
+    try:
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer, sl_collections,
+                                             utf_constants, capture_filename="test_c19441",
+                                             testcase_no=19465, traffic_type="Tx", enable_data_rate=True, leave=False)
+        ap_dut_obj.start()
+        ap_dut_obj.wait_for_exit()
+        for i in range(0, 1):
+            logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
+            wifi_clients[i].interfaces.wifi.leave()
+        sl_collections.ap_sniffer_validation(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                             dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'],
+                                             rasp_mac_address=ap_dut_obj.dut_addr_dict['rasp_mac_address'])
+        packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
+            radio_ch=ap_dut_obj.channel,
+            filter_name='mgmt_data_rates_data_null_Qos_54mbps')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
+            'Unable to find any packets for Data/Qos/Null packet for 54 Mbps data rates'
 
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()

@@ -414,21 +414,17 @@ def test_wifi_sdk_DUTAP_Validate_TCP_Rx_data_C19464(wifi_sniffer, net_perf_clien
                }
          }
 )
-@pytest.mark.skip("testagent issue")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 def test_wifi_sdk_DUTAP_Validate_TCP_Tx_data_C19462(wifi_sniffer, net_perf_client, wifi_dut, protocol,
-                                           utf_constants, sniffer_filter, sl_collections, wifi_clients):
+                                                    utf_constants, sniffer_filter, sl_collections, wifi_clients):
     """Validate TCP Tx data on Remote peer in ap mode connection"""
     try:
-        ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
-                                                utf_constants,
-                                                testcase_no=19465, leave=False)
+        ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer, sl_collections,
+                                                utf_constants,  capture_filename="test_C19462",
+                                                testcase_no=19465, traffic_type="Tx", leave=False)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
-        sl_collections.run_traffic(wifi_dut=wifi_dut, net_perf_client=net_perf_client,
-                                   protocol=protocol, device_ip=ap_dut_obj.dut_addr_dict['dut_ip'],
-                                   host_ip=ap_dut_obj.dut_addr_dict['client_ip'], timeout=40, traffic_type="TX")
         for i in range(0, 1):
             logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
             wifi_clients[i].interfaces.wifi.leave()
@@ -476,8 +472,8 @@ def test_wifi_sdk_DUTAP_Validate_UDP_Tx_data_C19463(wifi_sniffer, net_perf_clien
                                            utf_constants, sl_collections, sniffer_filter, wifi_clients):
     """Validate UDP Tx data on Remote peer in ap mode connection"""
     try:
-        ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
-                                                utf_constants,
+        ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer, sl_collections,
+                                                utf_constants, capture_filename="test_C19463",
                                                 testcase_no=19465, leave=False)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
