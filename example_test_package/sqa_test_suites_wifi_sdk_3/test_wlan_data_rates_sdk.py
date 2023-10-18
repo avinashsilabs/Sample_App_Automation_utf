@@ -418,7 +418,7 @@ def test_wifi_sdk_data_rates_for_b_mode_c19625(wifi_sniffer, wifi_access_point, 
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | 
                               Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
