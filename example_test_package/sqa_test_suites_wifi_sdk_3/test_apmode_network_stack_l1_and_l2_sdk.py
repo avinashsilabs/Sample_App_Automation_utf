@@ -420,8 +420,8 @@ def test_wifi_sdk_DUTAP_Validate_TCP_Tx_data_C19462(wifi_sniffer, net_perf_clien
                                                     utf_constants, sniffer_filter, sl_collections, wifi_clients):
     """Validate TCP Tx data on Remote peer in ap mode connection"""
     try:
-        ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer, sl_collections,
-                                                utf_constants,  capture_filename="test_C19462",
+        ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+                                                utf_constants, net_perf_client=net_perf_client, protocol=protocol, capture_filename="test_C19462",
                                                 testcase_no=19465, traffic_type="Tx", leave=False)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
@@ -472,8 +472,8 @@ def test_wifi_sdk_DUTAP_Validate_UDP_Tx_data_C19463(wifi_sniffer, net_perf_clien
                                            utf_constants, sl_collections, sniffer_filter, wifi_clients):
     """Validate UDP Tx data on Remote peer in ap mode connection"""
     try:
-        ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, net_perf_client, protocol, wifi_sniffer, sl_collections,
-                                                utf_constants, capture_filename="test_C19463",
+        ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+                                                utf_constants, net_perf_client=net_perf_client, protocol=protocol, capture_filename="test_C19463",
                                                 testcase_no=19465, leave=False)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
