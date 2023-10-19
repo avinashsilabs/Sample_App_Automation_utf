@@ -133,8 +133,6 @@ def test_wifi_sdk_set_get_rtc_TC19051(wifi_dut, wifi_client, wifi_sniffer, chann
     }
     )
 @pytest.mark.config("wifi_client", wifi={"channel": 11, "ssid": "Ayush123", "security": 'Open',  "passphrase": "Ayush@123", "interface": "wlan0"})
-@pytest.mark.parametrize("channel", [11])
-@pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
 def test_wifi_sdk_check_set_rtc_functionality_19050(wifi_dut, sl_collections):
     set_seconds = 30
     set_minutes = 6
