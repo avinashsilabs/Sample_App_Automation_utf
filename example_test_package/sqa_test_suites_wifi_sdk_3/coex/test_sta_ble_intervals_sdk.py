@@ -94,6 +94,11 @@ class WifiJoinThread(ThreadBase):
     def join_to_ap(self):
 
         if not self.wifi_dut.interfaces.wifi.associated:
+            logger().info("Enabling rejoin parameters")
+            self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0,
+                                                                     scan_interval=4,
+                                                                     beacon_missed_count=40,
+                                                                     first_time_retry_enable=0)
             self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                      wifi_access_point=self.wifi_access_point,
                                                                      power_save=self.power_save,
@@ -402,7 +407,7 @@ def test_Wifi_sdk_connection_BLE_AI_20ms_C20165(wifi_sniffer, wifi_access_point,
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
