@@ -9,14 +9,13 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xConfigFeatureBitMap,
     Si91xCustomFeatureBitMap,
     Si91xExtCustomFeatureBitMap,
-    Si91xCertificateType,
-    Si91xJoinFeatureBitMap,
     Si91xAwsQos,
-    DefaultCipher,
-    DeviceConstants,
-    SocketOptions,
-    Cipher,
-    Si91xCertIdentifier
+    Si91xCertificateType,
+    Si91xModuleType,
+    Si91xCertIdentifier,
+    Si91xBTFeatureBitMap,
+    Si91xBLEFeatureBitMap,
+    Si91xBLECustomFeatureBitMap
 )
 import string
 import random
@@ -54,11 +53,8 @@ class ssl_connection:
     Class to configure SSL and Rejoin parameters in DUT along with WLAN and SSL Socket Connection.
     """
 
-    def __init__(self, wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections, cert1=None,
-                 cert2=None, cert3=None, listen_interval_feature=False, listen_interval=1600, rejoin_params=None):
-        self.cert1 = cert1
-        self.cert2 = cert2
-        self.cert3 = cert3
+    def __init__(self, wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections,
+                 listen_interval_feature=False, listen_interval=1600, rejoin_params=None):
         self.wifi_dut = wifi_dut
         self.wifi_sniffer = wifi_sniffer
         self.rejoin_params = rejoin_params
@@ -134,13 +130,22 @@ class ssl_connection:
                 channel=self.wifi_access_point.interfaces.wifi.channel)
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.capture_filename}.pcap")
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+        if not self.rejoin_params:
+            self.rejoin_params = [0, 6, 40, 0]
         result = self.sl_collections.join_to_wifi_network_with_rejoin(self.wifi_dut, self.wifi_access_point,
-                                                                      [0, 6, 40, 0])
+                                                                      self.rejoin_params)
         dut_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
         return dut_ip, dut_mac_address
 
-    @staticmethod
-    def pdu_switch(switch, sleep_time):
+    def pdu_switch(self, sleep_time=10, switch=None):
+        if not switch:
+            logger().info("\n\nDisabling Wireless in AP")
+            self.wifi_access_point.interfaces.wifi.stop_ap()
+            time.sleep(sleep_time)
+            logger().info("\n\nEnabling Wireless in AP")
+            self.wifi_access_point.interfaces.wifi.start_ap()
+            time.sleep(sleep_time)
+            return
         logger().info("Turning off the AP")
         switch.interfaces.pdu_switch.turn_off()
         logger().info("Successfully powered off AP")
@@ -156,12 +161,23 @@ pytestmark = [
         {
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.Default,
+            "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
             "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                                   | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(
+                1),
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC |
+                            Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                            Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX
+                            | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE
+                            | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES
+                                       | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                               | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "set_send_feature_frame": True,
             "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
             "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
@@ -317,6 +333,10 @@ def test_wifi_sdk_ssl_socket_limit_testcase_c19121(wifi_sniffer, wifi_access_poi
                 logger.info(f"error_code: {error_code}")
         assert error_code, "DUT sent error code when trying to connect to third ssl socket which is expected"
         logger.info(f"DUT sent error code when trying to connect to third ssl socket which is expected")
+
+        for sock_id in range(3):
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
+            logger.info(f"Successfully closed socket_id '{sock_id}' in the DUT")
 
         logger.info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -531,6 +551,7 @@ def test_wifi_sdk_ssl_max_sockets_testcase_c19128(wifi_sniffer, wifi_dut, wifi_a
                 # ssl socket opened in DUT connects to the server
                 wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=socket_port)
 
+            time.sleep(5)
             socket_no = [1, 2]
             for socket in socket_no:
                 ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length, pkt_rcv_timeout=120)
