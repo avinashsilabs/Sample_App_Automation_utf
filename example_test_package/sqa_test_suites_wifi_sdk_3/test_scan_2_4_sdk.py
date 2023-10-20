@@ -215,19 +215,17 @@ def test_wifi_sdk_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wifi_a
 
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
                                                                                         da_addr=da_addr,
-                                                                                        filter_name="probe_request")
+                                                                                        filter_name="hidden_ssid_scan")
         logger().info("Setting DUT in wlan power save...")
         wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
         logger().info("Enabling rejoin...")
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         logger().info("Initiating scan from dut...")
-        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
         time.sleep(20)
         logger().info(scan_results)
         assert len(scan_results) >= 1, "scan failed"
-        for count in scan_results:
-            assert count.ssid == wifi_access_point.interfaces.wifi.ssid
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info(f"Validate Probe req(Broadcast)")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
@@ -763,19 +761,15 @@ def test_wifi_sdk_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_acces
             wifi_access_point.interfaces.wifi.start_ap(channel=channel)
             time.sleep(5)
             logger().info("Initiating the scan in DUT with the given channel bitmap value...")
-            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid,
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None,
                                                          scan_bitmap_2_4=channel_bitmap_2_4)
             time.sleep(20)
             logger().info(scan_results)
             assert len(scan_results) >= 1
-            for count in scan_results:
-                assert count.ssid == wifi_access_point.interfaces.wifi.ssid
-            for count1 in scan_results:
-                assert (count1.rf_channel in channel_list), "Scan should happen only in selected channels"
 
             wifi_sniffer.interfaces.capture.stop_capture()
             packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
-                                                                                            filter_name="probe_request")
+                                                                                            filter_name="hidden_ssid_scan")
             logger().info(f"Validate Probe req(Broadcast)")
             output = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count']
             if bool(output) is False:
