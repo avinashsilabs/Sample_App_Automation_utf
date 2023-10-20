@@ -506,11 +506,6 @@ def test_wifi_sdk_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_poi
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         time.sleep(3)
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-            filter_name="probe_request")
-        logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
-        time.sleep(2)
         if state == 'true':
             logger().info('#### Turn off the Access Point')
             switch.interfaces.pdu_switch.turn_off()
@@ -537,6 +532,14 @@ def test_wifi_sdk_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_poi
         else:
             logger().info('#### Ping unsuccessful ####')
         logger().info("ping to DUT is successful....")
+        logger().info(f"DUT is going to leave the Thirdy Party")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_addr['dut_mac_address'],
+            filter_name="probe_request")
+        logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find Probe Request packets'
     except Exception as e:
@@ -547,7 +550,7 @@ def test_wifi_sdk_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_poi
         if state == 'false':
             switch.interfaces.pdu_switch.turn_on()
             logger().info(
-                f"PDU was off, trying to turn on using PDU, Please wait for 60 seconds ........")
+                f"Checking PDU status in finally state, trying to turn on using PDU, Please wait for 60 seconds ......")
             time.sleep(60)
 
 
