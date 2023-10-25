@@ -1400,7 +1400,7 @@ constants:
     iter_count:
         value: 5
     upgrade_fw:
-        value: "/RS9116W.2.9.0.14.rps"
+        value: "/RS9116W.2.9.0.46.rps"
     board_version:
         value: "1.4Q7"
 
