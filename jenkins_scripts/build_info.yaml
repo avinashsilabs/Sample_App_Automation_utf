@@ -1,0 +1,13 @@
+rps_path : 
+    Combo_SDK_9117_NCP : 
+      path : "connectivity_firmware"
+      customerid : "0"
+      rps_prefix : "SiWG917-A"
+    RS9116W_A10 : 
+      path : "firmware"
+      customerid : "0"
+      rps_prefix : "RS9116W"
+    RS9116W_A11 : 
+      path : "firmware"
+      customerid : "0"
+      rps_prefix : "RS916W"

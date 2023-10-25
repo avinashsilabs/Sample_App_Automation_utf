@@ -1,5 +1,6 @@
 ﻿Column1,Column2,Column3
 Column1,Column2,Column3
+Column1,Column2,Column3
 beacon,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 8)
 beacon_ap_mode_us_region,(wlan.addr == {{ wlan_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and ((wlan.fc.type_subtype == 8) and (wlan.country_info.code == US))
 beacon_ap_mode_eu_region,(wlan.addr == {{ wlan_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and ((wlan.fc.type_subtype == 8) and (wlan.country_info.code == EU))
@@ -27,8 +28,9 @@ association_request_HE,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }})
 association_response,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 1)
 assoc_req_resp,(wlan.sa == {{ sa_addr }}) and (wlan.ta == {{ ta_addr }}), or (wlan.fc.type_subtype == 0x0000) || (wlan.fc.type_subtype == 0x0001)
 deauthentication,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 12)
-ps_poll,(wlan.sa == {{ sa_addr }}), and (wlan.fc.pwrmgt == 1)
+ps_poll,(wlan.addr == {{ sa_addr }}), and (wlan.fc.type_subtype == 0x001a) and (wlan.fc.pwrmgt == 1)
 power_mgmt_bit,(wlan.sa == {{ sa_addr }}) and (wlan.da== {{ da_addr }}), and (wlan.fc.pwrmgt == 1) and (wlan.fc.type_subtype == 0x0024)
+qos_data_more_data,(wlan.da == {{ sa_addr }}) and (wlan.ta == {{ da_addr }}), and (wlan.fc.moredata == 1) and (wlan.fc.type_subtype == 0x0028)
 data_packets,(wlan.ta == {{ ta_addr }} and wlan.ra == {{ ra_addr }}), and (wlan.fc.type_subtype == 0x0028)
 data_packets_HE,(wlan.ta == {{ ta_addr }} and wlan.ra == {{ ra_addr }}), and (wlan.fc.type_subtype == 0x0028) and (wlan_radio.phy == 11)
 Data Rates,,
@@ -36,13 +38,18 @@ mgmt_data_rates_1_mbps,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ 
 mgmt_data_rates_block_ack_req_rts_1mbps,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), or wlan.fc.type_subtype == 0x0018 or wlan.fc.type_subtype == 0x001b and wlan_radio.data_rate == 1
 mgmt_data_rates_block_ack_res_cts_1mbps,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), or wlan.fc.type_subtype == 0x0019 or wlan.fc.type_subtype == 0x001c and wlan_radio.data_rate == 1
 mgmt_data_rates_data_null_Qos_1mbps,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), or wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == 0x0024 and !(wlan_radio.data_rate == 1) and !wlan.mgt
-mgmt_data_rates_data_null_Qos_11mbps,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), or wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == 0x0024 and wlan_radio.data_rate == 11 and !wlan.mgt
+mgmt_data_rates_data_null_Qos_11mbps,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and (wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == 0x0024) and wlan_radio.data_rate == 11 and !wlan.mgt
 mgmt_data_rates_block_ack_req_rts_12mbps,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), or wlan.fc.type_subtype == 0x0018 or wlan.fc.type_subtype == 0x001b and wlan_radio.data_rate == 12
-mgmt_data_rates_data_null_Qos_12mbps,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), or wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == 0x0024 and wlan_radio.data_rate == 12 and !wlan.mgt
+mgmt_data_rates_data_null_Qos_12mbps,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and (wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == 0x0024) and wlan_radio.data_rate == 12 and !wlan.mgt
+mgmt_data_rates_data_null_Qos_36mbps,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and (wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == 0x0024) and wlan_radio.data_rate == 36 and !wlan.mgt
+mgmt_data_rates_data_null_Qos_48mbps,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and (wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == 0x0024) and wlan_radio.data_rate == 48 and !wlan.mgt
+mgmt_data_rates_data_null_Qos_54mbps,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and (wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == 0x0024) and wlan_radio.data_rate == 54 and !wlan.mgt
 mgmt_data_rates_assoc_reassoc_probe_req_res_1mbps,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), or wlan.fc.type_subtype == 0x0004 or wlan.fc.type_subtype == 0x000b or wlan.fc.type_subtype == 0x0000 or wlan.fc.type_subtype == 0x000c and wlan_radio.data_rate == 1 and !(wlan.fc.type_subtype == 0x000d) and !(wlan.fc.type_subtype == 0x0020)
-mgmt_data_rates_data_null_Qos_54mbps,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), or wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0020 or wlan.fc.type_subtype == 0x0024 and wlan_radio.data_rate == 54 and !wlan.mgt
 mgmt_data_rates_probe_auth_Assoc_req_eapol_deauth_1mbps,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), or wlan.fc.type_subtype == 0x0004 or wlan.fc.type_subtype == 0x000b or wlan.fc.type_subtype == 0x0000 or wlan.fc.type_subtype == 0x000c and wlan_radio.data_rate == 1 and wlan.tag.number == 45 and !(wlan.fc.type_subtype == 0x000d) and !(wlan.fc.type_subtype == 0x0020)
-radio_mcs_index_4,(wlan.sa == {{ sa_addr }}), and radiotap.mcs.index == 4
+radio_mcs_index_0,(wlan.sa == {{ sa_addr }}), and radiotap.mcs.index == 0
+radio_mcs_index_1,(wlan.sa == {{ sa_addr }}), and radiotap.mcs.index == 1
+radio_mcs_index_6,(wlan.sa == {{ sa_addr }}), and radiotap.mcs.index == 6
+radio_mcs_index_7,(wlan.sa == {{ sa_addr }}), and radiotap.mcs.index == 7
 mgmt_data_rates_eapol_1mbps,(wlan_radio.channel == {{ radio_ch }}), and wlan_rsna_eapol.keydes.key_info.key_type == 1 and wlan_radio.data_rate == 1
 mgmt_basic_data_rates_assoc_req,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and wlan.fc.type_subtype == 0x0000 or ((((wlan.supported_rates == 0x82) and (wlan.supported_rates == 0x84)) and (wlan.supported_rates == 0x8c)) and (wlan.supported_rates == 0x98)) and (wlan.supported_rates == 0xb0)
 mgmt_basic_data_rates_probe_res,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and wlan.fc.type_subtype == 0x0005 and (((wlan.supported_rates == 0x82) and (wlan.supported_rates == 0x84)) and (wlan.supported_rates == 0x30))
@@ -65,11 +72,11 @@ wmm_aggre_action1,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and
 wmm_aggre_action2,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype ==0x000d) and (wlan.fixed.action_code == 0x01)
 wmm_aggre_action3,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype ==0x000d) and (wlan.fixed.action_code == 0x00)
 wmm_aggre_action4,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype ==0x000d) and (wlan.fixed.action_code == 0x01)
-wmm_aggre_cts,(wlan.addr == {{ wlan_addr }}), and (wlan.fc.type_subtype == 0x0028 or wlan.fc.type_subtype == 0x0019)
-dns_id,(wlan.addr == {{ wlan_addr }}), and (dns.id == {{dns_id}})
+wmm_aggre_cts,(wlan.ta == {{ wlan_addr }}), and (wlan.fc.type_subtype == 0x0019)
+dns_id,(wlan.addr == {{ wlan_addr }}), and (dns.id == dns.id)
 tcp_handshake,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and (tcp.flags == 0x002) or (tcp.flags == 0x012) or (tcp.flags == 0x010)
 arp_power_mgmt_bit,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}) and (wlan.da == ff:ff:ff:ff:ff:ff), and (arp.proto.type == 0x0800) and (wlan.fc.pwrmgt == 1)
-null_data_powersave,(wlan.sa == {{sa_addr}}), and (wlan.fc.type_subtype == 0x001a) and (wlan.fc.pwrmgt == 1)
+null_data_powersave,(wlan.sa == {{sa_addr}}) or (wlan.ta == {{ta_addr}}), and (wlan.fc.type_subtype == 0x001a) and (wlan.fc.pwrmgt == 1)
 EAP,,
 eap_tls_handshake_aes256_sha256,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x006b and tls.handshake.cipher_suites_length == 2
 eap_tls_handshake_aes128_sha128,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x0067 and tls.handshake.cipher_suites_length == 2
@@ -87,9 +94,9 @@ beacon_assoc_id_ps_poll_with_pm_bit_enable,(wlan.ta == {{ da_addr }} and wlan.fc
 beacon_assoc_id_dtim_count_ps_poll_with_pm_bit_enable,(wlan.addr == {{ sa_addr }} and wlan.fc.type_subtype == 0x001a), or (wlan.addr == {{ da_addr }} and (wlan.fc.type_subtype ==8) or (wlan.fc.type_subtype==0x0028) or (wlan.fc.type_subtype==0x002c))
 beacon_assoc_id_ps_poll_with_pm_bit_enable_qos,(wlan.fc.type_subtype == 0x001a or wlan.fc.type_subtype == 0x0028), or (wlan.tim.dtim_count == 0 and wlan.tim.dtim_period == 3 and wlan.tim.aid == 0x01)
 PMF(11w),,
-protection_capable_with assoc_req,(wlan_radio.channel ==  {{ radio_ch }} and wlan.ta ==  {{ ta_addr }}), and (wlan.fc.type_subtype == 0x0000 and wlan.rsn.capabilities.mfpc == 1)
-protection_required_with assoc_req,(wlan_radio.channel ==  {{ radio_ch }} and wlan.ta ==  {{ ta_addr }}), and (wlan.fc.type_subtype == 0x0000 and wlan.rsn.capabilities.mfpr == 1)
-protection_capable_required_with assoc_req,(wlan_radio.channel ==  {{ radio_ch }} and wlan.ta ==  {{ ta_addr }}), and (wlan.fc.type_subtype == 0x0000 and wlan.rsn.capabilities.mfpc == 1 and wlan.rsn.capabilities.mfpr == 1 )
+protection_capable_with_assoc_req,(wlan_radio.channel ==  {{ radio_ch }} and wlan.ta ==  {{ ta_addr }}), and (wlan.fc.type_subtype == 0x0000 and wlan.rsn.capabilities.mfpc == 1)
+protection_required_with_assoc_req,(wlan_radio.channel ==  {{ radio_ch }} and wlan.ta ==  {{ ta_addr }}), and (wlan.fc.type_subtype == 0x0000 and wlan.rsn.capabilities.mfpr == 1)
+protection_capable_required_with_assoc_req,(wlan_radio.channel ==  {{ radio_ch }} and wlan.ta ==  {{ ta_addr }}), and (wlan.fc.type_subtype == 0x0000 and wlan.rsn.capabilities.mfpc == 1 and wlan.rsn.capabilities.mfpr == 1 )
 mgmt_action_frame_protection_bit_enable_unicast,(wlan.ta == {{ ta_addr }}), and !(wlan.fixed.action_code == 0x00) and (wlan.fc.protected == 1 and wlan.fc.type_subtype == 0x000d)
 mgmt_action_frame_protection_bit_enable,(wlan.sa == {{ sa_addr }}), and !(wlan.fixed.action_code == 0x00) and (wlan.fc.protected == 1 and wlan.fc.type_subtype == 0x000d)
 pmf_enabled_with_disassociation,(wlan.ta == {{ ta_addr }}), and (wlan.fc.type_subtype == 0x000c) and (wlan.fc.protected == 1)
@@ -100,3 +107,5 @@ dhcp_offer,((wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }})), and (dhc
 dhcp_ack,((wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }})), and (dhcp.option.dhcp == 5)
 dhcp_4_way_handshake_packets,(wlan.sa == {{ sa_addr }} or wlan.da == {{ da_addr }}) or (wlan.ta == {{ ta_addr }} or wlan.ra == {{ ra_addr }}), and (dhcp.option.dhcp == 5) or (dhcp.option.dhcp == 1) or (dhcp.option.dhcp == 2) or (dhcp.option.dhcp == 3)
 tcp_syn_with_syn_ack_with_ack,(wlan.da == {{ da_addr }} or wlan.sa == {{ sa_addr }} or wlan.ta == {{ ta_addr }}), and tcp.flags == 0x002 or tcp.flags == 0x012 or tcp.flags == 0x010
+wpa3_h2e_mode,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 0) and (wlan.rsnx.sae_hash_to_element == 1)
+hidden_ssid_scan,(wlan.sa == {{ sa_addr }})," and (wlan.ssid == """") and (wlan.da == ff:ff:ff:ff:ff:ff)"

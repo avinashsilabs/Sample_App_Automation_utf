@@ -129,63 +129,84 @@ pipeline {
                                     if(BUILD_LOCATION != "source_code"){
                                         if(RS9116_FIRMWARE != "Internal"){
                                                 withCredentials([usernamePassword(credentialsId: 'artifactory-username-password', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                                                def read_path = readYaml(file: 'jenkins_scripts/build_info.yaml')
+                                                env.rps_file_path = read_path['rps_path']["${build_type}"]["path"]
+                                                env.customer_id = read_path['rps_path']["${build_type}"]["customerid"]
+                                                env.rps_file_prefix = read_path['rps_path']["${build_type}"]["rps_prefix"]
+                                            
                                                 PACKAGE_TYPE=RS9116_FIRMWARE.split("\\.")[0]
-                                                withEnv(["PACKAGE_TYPE=${PACKAGE_TYPE}"]){
+                                                withEnv(["PACKAGE_TYPE=${PACKAGE_TYPE}","rps_file_prefix=${rps_file_prefix}","customer_id=${customer_id}","rps_file_path=${rps_file_path}"]){
                                                     if(BUILD_LOCATION == "build_artifacts"){
                                                         sh '''
                                                             rm -rf rs9116_binary
                                                             mkdir rs9116_binary
-                                                        
                                                             cd rs9116_binary
-                                                            if [[ "${RS9116_FIRMWARE}" == RS9116W.* ]]; then 
+                                                            if [[ "${RS9116_FIRMWARE}" == RS9116W.* ]]; then
                                                                     wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/RS9116W/${RS9116_FIRMWARE}.zip 
-                                                                    python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"         
-                                                            elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/RS916W.${major}.${minor}.${patch}.0.${build_num}.rps" 2>/dev/null; then
+                                                                    python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}" 
+                                                                elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps" 2>/dev/null; then
                                                                     mkdir ${RS9116_FIRMWARE}
                                                                     cd  ${RS9116_FIRMWARE}
-                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/RS9116W.${major}.${minor}.${patch}.0.${build_num}.rps   
-                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/RS916W.${major}.${minor}.${patch}.0.${build_num}.rps         
-                                                                    cp * ../../manifest/
-                                                            else    
-                                                                   if [ -d venv/bin ]; then
-                                                                        . venv/bin/activate
-                                                                        elif [ -d venv/Scripts ]; then
-                                                                        . venv/Scripts/activate
-                                                                    fi
-                                                                    wget https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${RS9116_FIRMWARE}.zip                                                              
-                                                                    python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
-                                                            fi 
+                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps   
+                                                                    mv ${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps  
+                                                                    cp -r * ../../utf_core/src/utf/interfaces/http/www
+                                                                    cp -r * ../../manifest/
+                                                                else
+                                                                    wget https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${RS9116_FIRMWARE}.zip
+                                                                    unzip ${RS9116_FIRMWARE}.zip
+
+                                                                    cp -r ${RS9116_FIRMWARE}/${rps_file_path}/*.rps ../utf_core/src/utf/interfaces/http/www
+                                                                    mv ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps  
+                                                                    cp -r ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../utf_core/src/utf/interfaces/http/www
+                                                                    cp -r ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../manifest/
+                                                                fi
                                                         '''
                                                     } else {
                                                         sh '''
                                                             rm -rf rs9116_binary
                                                             mkdir rs9116_binary
-                                                        
                                                             cd rs9116_binary
                                                             if [[ "${RS9116_FIRMWARE}" == RS9116W.* ]]; then
                                                                     wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/RS9116W/${RS9116_FIRMWARE}.zip
-                                                                    python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
-                                                            elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/RS916W.${major}.${minor}.${patch}.0.${build_num}.rps" 2>/dev/null; then
+                                                                    python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}" 
+                                                                elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps" 2>/dev/null; then
                                                                     mkdir ${RS9116_FIRMWARE}
                                                                     cd  ${RS9116_FIRMWARE}
-                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/RS9116W.${major}.${minor}.${patch}.0.${build_num}.rps 
-                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/RS916W.${major}.${minor}.${patch}.0.${build_num}.rps 
-                                                                    cp * ../../manifest/  
-                                                            else 
-                                                                       if [ -d venv/bin ]; then
-                                                                        . venv/bin/activate
-                                                                        elif [ -d venv/Scripts ]; then
-                                                                        . venv/Scripts/activate
-                                                                        fi
-                                                                    wget https://artifactory.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${RS9116_FIRMWARE}.zip     
-                                                                    python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
-                                                            fi 
-                                                            
+                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps   
+                                                                    mv ${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps  
+                                                                    cp * ../../utf_core/src/utf/interfaces/http/www
+                                                                    cp * ../../manifest/                                               
+                                                                else
+                                                                    wget https://artifactory.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${RS9116_FIRMWARE}.zip
+                                                                    unzip ${RS9116_FIRMWARE}.zip
+
+                                                                    cp ${RS9116_FIRMWARE}/${rps_file_path}/*.rps ../utf_core/src/utf/interfaces/http/www
+                                                                    mv ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps  
+                                                                    cp ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../utf_core/src/utf/interfaces/http/www
+                                                                    cp ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../manifest/
+                                                                fi
                                                         '''
                                                     }
-                                                } 
+                                                }
                                             }
-                                         
+                                            dir('rs9116_binary'){
+                                                sh '''
+                                                if [ -d venv/bin ]; then
+                                                . venv/bin/activate
+                                                elif [ -d venv/Scripts ]; then
+                                                . venv/Scripts/activate
+                                                fi
+                                                
+
+                                                '''
+                                            }
+                
+                                                sh '''
+                                                pwd && ls
+                                                bash -ex jenkins_scripts/initialize_config.sh ${RS9116_FIRMWARE} ${rps_file_path} ${rps_file_prefix} ${customer_id} ${build_type}
+                                                cat config/harnesses/dev_sanity_harness_example.yaml
+                                                ls utf_core/src/utf/interfaces/http/www
+                                            '''
                                         }
                                     } else {
                                         echo "Skipping release package checkout for RS9116 firmware."
@@ -225,7 +246,7 @@ pipeline {
                                     else
                                         . venv/Scripts/activate
                                     fi
-                                    python3 jenkins_scripts/update_manifest.py ${RS9116_FIRMWARE}.rps ${SILICON_REV} ${BUILD_LOCATION}                 
+
                                 '''
                             }
                         }
@@ -255,7 +276,13 @@ pipeline {
                                             else
                                             . venv/Scripts/activate
                                             fi
+
                                             export PYTHONPATH=./utf_core/src
+                                            export QUERY_EXPR=$(printf '{stack=\\\\"%s\\\\",job=\\\\"%s\\\\",stage=\\\\"%s\\\\",build=\\\\"%s\\\\"}' "${STACK}" "${JENKINS_JOB_NAME}" "${JENKINS_JOB_STAGE_NAME}" "${JENKIN_RUN_NUM}")
+                                            export GRAFANA_BASE_URL="https://grafana.silabs.net/explore?orgId=1^&left="
+                                            export GRAFANA_PARAMS="{\\"datasource\\":\\"loki-production\\",\\"queries\\":[{\\"expr\\":\\"${QUERY_EXPR}\\",\\"maxLines\\":10000}],\\"range\\":{\\"from\\":\\"now-1d\\",\\"to\\":\\"now\\"}}"
+                                            export CONVERT_URL_CMD="import urllib.parse; import os; print('View live logs for this test run at ' + os.environ['GRAFANA_BASE_URL'] + urllib.parse.quote(os.environ['GRAFANA_PARAMS']))"
+                                            python -c "${CONVERT_URL_CMD}"
 
                                             export QUERY_EXPR=$(printf '{stack=\\\\"%s\\\\",job=\\\\"%s\\\\",stage=\\\\"%s\\\\",build=\\\\"%s\\\\"}' "${STACK}" "${JENKINS_JOB_NAME}" "${JENKINS_JOB_STAGE_NAME}" "${JENKIN_RUN_NUM}")
                                             export GRAFANA_BASE_URL="https://grafana.silabs.net/explore?orgId=1^&left="
@@ -339,7 +366,7 @@ pipeline {
                                             if (statusCode == '200') {
                                                 sh '''
                                                 echo "Artifact is available. Proceeding with the main pipeline."
-                                              
+                                                
                                                 ''' 
                                             } else {
                                                 echo "Artifact is not available. Triggering the main pipeline."
@@ -357,7 +384,6 @@ pipeline {
                                     }
                                 }
                             }
-
                         }
                     }
                 }
@@ -366,6 +392,4 @@ pipeline {
       
     }
 }
-
-
 

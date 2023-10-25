@@ -55,7 +55,7 @@ def logger():
 
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None, 
-                 ping_count=None, data_transfer=True, test_name=None, sl_collections=None):
+                 ping_count=None, data_transfer=True, test_name=None, sl_collections=None, switch=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -67,6 +67,7 @@ class WLanThread(ThreadBase):
         self.data_transfer = data_transfer
         self.sl_collections = sl_collections
         self.test_name = test_name
+        self.switch = switch
         self.dut_addr = None
         self.socket_obj = SocketDataTransfer(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
                                              time_period=self.time_period, data=self.data)
@@ -87,15 +88,10 @@ class WLanThread(ThreadBase):
                 """ Rejoin infinite retry """
                 self.wifi_dut.interfaces.wifi.set_advanced_scan_configuration(adv_active_channel_time=15,
                                                                               adv_passive_channel_time=20)
-
-                # Rejoin
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                               beacon_missed_count=40,
                                                                               first_time_retry_enable=0)
 
-            self.wifi_sniffer.interfaces.capture.configure_interface(
-                channel=self.wifi_access_point.interfaces.wifi.channel)
-            self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
             self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                      wifi_access_point=self.wifi_access_point,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated,
@@ -103,14 +99,30 @@ class WLanThread(ThreadBase):
             logger().info("DUT successfully connected with AP")
             time.sleep(2)
 
+            self.wifi_sniffer.interfaces.capture.configure_interface(
+                channel=self.wifi_access_point.interfaces.wifi.channel)
+            self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+
             logger().info("\n *** Enable BGscan *** \n")
             self.wifi_dut.interfaces.wifi.scan(bgscan=True, bg_scan_periodicity=10)
 
             if self.data_transfer:
                 self.socket_obj.socket_data_transfer()
 
-            time.sleep(2)
-            self.wifi_dut.interfaces.wifi.leave()
+            if self.test_case_no == 19038:
+                logger().info("\n\n *** Turn off AP radio *** \n\n")
+                self.switch.interfaces.pdu_switch.turn_off()
+                time.sleep(10)
+                logger().info('"\n\n *** Turn on Access point and wait for 90 seconds... ***"\n\n')
+                self.switch.interfaces.pdu_switch.turn_on(delay=90)
+
+                self.socket_obj.socket_data_transfer()
+                time.sleep(2)
+                self.wifi_dut.interfaces.wifi.leave()
+
+            if not self.test_case_no ==19038:
+                time.sleep(2)
+                self.wifi_dut.interfaces.wifi.leave()
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case {self.test_case_no} thread: {str(e)} ****\n\n")
             raise e
@@ -125,8 +137,9 @@ class WLanThread(ThreadBase):
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
@@ -158,7 +171,7 @@ def test_wifi_sdk_bgscan_c19035(wifi_sniffer, wifi_access_point, wifi_dut, utf_c
 
         '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
         wlan_obj_retry = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                                    time_period=time_period, data=data, sl_collections=sl_collections)
+                                    time_period=time_period, sl_collections=sl_collections)
         wlan_obj_retry.start()
         wlan_obj_retry.wait_for_exit()
     except Exception as e:
@@ -174,8 +187,9 @@ def test_wifi_sdk_bgscan_c19035(wifi_sniffer, wifi_access_point, wifi_dut, utf_c
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
@@ -206,7 +220,7 @@ def test_wifi_sdk_instant_bgscan_c19037(wifi_sniffer, wifi_access_point, wifi_du
 
         '''Again try to connect and send data as per test plan (repeat the steps from 5-10)'''
         wlan_obj_retry = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                                    time_period=time_period, data=data, sl_collections=sl_collections)
+                                    time_period=time_period, sl_collections=sl_collections)
         wlan_obj_retry.start()
         wlan_obj_retry.wait_for_exit()
     except Exception as e:
@@ -223,8 +237,9 @@ def test_wifi_sdk_instant_bgscan_c19037(wifi_sniffer, wifi_access_point, wifi_du
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
@@ -232,7 +247,7 @@ def test_wifi_sdk_instant_bgscan_c19037(wifi_sniffer, wifi_access_point, wifi_du
     },
 )
 def test_wifi_sdk_bgscan_rejoin_infinite_retry_c19038(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
-                                                      sl_collections, sniffer_filter):
+                                                      sl_collections, sniffer_filter, switch):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
 
@@ -241,10 +256,13 @@ def test_wifi_sdk_bgscan_rejoin_infinite_retry_c19038(wifi_sniffer, wifi_access_
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
                           test_case_no=19038,
-                          sl_collections=sl_collections)
+                          sl_collections=sl_collections, switch=switch)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+
+        logger().info("Stop sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wlan_obj.dut_addr['dut_mac_address'],
@@ -264,8 +282,9 @@ def test_wifi_sdk_bgscan_rejoin_infinite_retry_c19038(wifi_sniffer, wifi_access_
     wifi={"thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
           "oper_mode": Si91xOperatingMode.WiFiClient,
           "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-          "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+          "features": Si91xFeatureBitMap.Default,
           "custom_features": Si91xCustomFeatureBitMap.Default,
+          "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
           "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
           "bt_features": 0,
           "ble_features": 0,

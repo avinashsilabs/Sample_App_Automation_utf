@@ -73,6 +73,7 @@ class SocketDataTransfer:
 
             logger().error(f"\n\n Socket bind in DUT for socket-id: {self.socket_id}")
             self.wifi_dut.interfaces.wifi.bind(socket_fd=self.socket_id, device_ip=self.dut_ip, timeout=15)
+            time.sleep(5)
             logger().error(f"\n\n Trying to connect with server ")
             self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=self.socket_id, timeout=30)
 
@@ -85,7 +86,8 @@ class SocketDataTransfer:
                     else:
                         logger().info(f"Data transfer failed")
 
-            self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.socket_id)
+            time.sleep(5)
+            self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.socket_id, timeout=30)
 
     def verify_data_rates(self):
         packet_filter = '    Data rate:'
@@ -110,7 +112,7 @@ class SocketDataTransfer:
 
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None
-                 , ping_count=None, data_transfer=True, test_name=None, sl_collections=None):
+                 , ping_count=None, data_transfer=True, test_name=None, sl_collections=None, data_rates=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -123,6 +125,7 @@ class WLanThread(ThreadBase):
         self.data_transfer = data_transfer
         self.sl_collections = sl_collections
         self.test_name = test_name
+        self.data_rates = data_rates
         self.socket_obj = SocketDataTransfer(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
                                              time_period=self.time_period, data=self.data)
 
@@ -134,12 +137,12 @@ class WLanThread(ThreadBase):
                                                                 expected_status=SLStatus.SL_STATUS_OK)
             if self.test_case_no == 19626:
                 """ set data rate in g mode(54 Mbps) and Verify """
-                self.wifi_dut.interfaces.wifi.set_transmit_rate(rate_protocol="802.11g", data_rate="54Mbps",
+                self.wifi_dut.interfaces.wifi.set_transmit_rate(rate_protocol="802.11g", data_rate=self.data_rates,
                                                                 expected_status=SLStatus.SL_STATUS_OK)
 
             if self.test_case_no == 19627:
                 """ set data rate in n mode """
-                self.wifi_dut.interfaces.wifi.set_transmit_rate(rate_protocol="802.11n", data_rate="36Mbps",
+                self.wifi_dut.interfaces.wifi.set_transmit_rate(rate_protocol="802.11n", data_rate=self.data_rates,
                                                                 expected_status=SLStatus.SL_STATUS_OK)
 
             if self.test_case_no == 19628:
@@ -190,8 +193,10 @@ class WLanThread(ThreadBase):
         "thread_config": { "wifi":{ "count": 1, "stack_len": 2048 }} ,
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | 
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
@@ -229,7 +234,7 @@ def test_wifi_sdk_mgmt_data_rates_c19622(wifi_sniffer, wifi_access_point, wifi_d
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth mgmt packets'
     except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -241,8 +246,10 @@ def test_wifi_sdk_mgmt_data_rates_c19622(wifi_sniffer, wifi_access_point, wifi_d
         "thread_config": { "wifi":{ "count": 1, "stack_len": 2048 }} ,
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | 
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
@@ -295,7 +302,7 @@ def test_wifi_sdk_mgmt_data_rates_rts_cts_c19623(wifi_sniffer, wifi_access_point
             logger().info("Sniffer validation Passed")
             assert True
     except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -307,8 +314,10 @@ def test_wifi_sdk_mgmt_data_rates_rts_cts_c19623(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | 
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
@@ -341,7 +350,7 @@ def test_wifi_sdk_data_rates_for_data_packet_c19624(wifi_sniffer, wifi_access_po
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find Data/Null/Qos packets data rates'
     except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -353,8 +362,10 @@ def test_wifi_sdk_data_rates_for_data_packet_c19624(wifi_sniffer, wifi_access_po
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | 
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
@@ -398,20 +409,27 @@ def test_wifi_sdk_data_rates_for_b_mode_c19625(wifi_sniffer, wifi_access_point, 
             'Mbps ' \
             'data rates'
     except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.parametrize("data_rates, filter_name", [('12Mbps', 'mgmt_data_rates_data_null_Qos_12mbps'),
+                                                     ('36Mbps', "mgmt_data_rates_data_null_Qos_36mbps"),
+                                                     ('48Mbps', "mgmt_data_rates_data_null_Qos_48mbps"),
+                                                     ('54Mbps', "mgmt_data_rates_data_null_Qos_54mbps")])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | 
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
@@ -419,7 +437,7 @@ def test_wifi_sdk_data_rates_for_b_mode_c19625(wifi_sniffer, wifi_access_point, 
     },
 )
 def test_wifi_sdk_data_rates_for_g_mode_c19626(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
-                                               sniffer_filter, sl_collections):
+                                               sniffer_filter, sl_collections, data_rates, filter_name):
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
@@ -428,7 +446,7 @@ def test_wifi_sdk_data_rates_for_g_mode_c19626(wifi_sniffer, wifi_access_point, 
        Req,Re Assoc RespProbe Req,Probe Resp'''
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, ping_count=ping_count, test_name=test_name,
-                          test_case_no=19626, sl_collections=sl_collections)
+                          test_case_no=19626, sl_collections=sl_collections, data_rates=data_rates)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -437,7 +455,7 @@ def test_wifi_sdk_data_rates_for_g_mode_c19626(wifi_sniffer, wifi_access_point, 
             sa_addr=wlan_obj.dut_addr['dut_mac_address'],
             radio_ch=wifi_access_point.
             interfaces.wifi.channel,
-            filter_name='mgmt_data_rates_data_null_Qos_54mbps')
+            filter_name=filter_name)
 
         packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wlan_obj.dut_addr['dut_mac_address'],
@@ -453,21 +471,27 @@ def test_wifi_sdk_data_rates_for_g_mode_c19626(wifi_sniffer, wifi_access_point, 
             'Unable to find packets for Assoc Req, Assoc Resp, ReAssoc Req, ReAssoc Resp. Probe Req,Probe Resp for 1 ' \
             'Mbps data rates'
     except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n'})
+@pytest.mark.parametrize("data_rates, filter_name", [('7.2Mbps', 'radio_mcs_index_0'),
+                                                     ('14.4Mbps', "radio_mcs_index_1"),
+                                                     ('65Mbps', "radio_mcs_index_6"),
+                                                     ('72.2Mbps', "radio_mcs_index_7")])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": { "wifi":{ "count": 1, "stack_len": 2048 }} ,
+        "thread_config": { "wifi":{ "count": 1, "stack_len": 2048 }},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | 
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
@@ -475,7 +499,7 @@ def test_wifi_sdk_data_rates_for_g_mode_c19626(wifi_sniffer, wifi_access_point, 
     },
 )
 def test_wifi_sdk_data_rates_for_n_mode_c19627(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
-                                               sniffer_filter, sl_collections):
+                                               sniffer_filter, sl_collections, data_rates, filter_name):
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
@@ -484,7 +508,7 @@ def test_wifi_sdk_data_rates_for_n_mode_c19627(wifi_sniffer, wifi_access_point, 
        Req,Re Assoc RespProbe Req,Probe RespBeaconDisAssoc'''
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, ping_count=ping_count, test_name=test_name,
-                          test_case_no=19627, sl_collections=sl_collections)
+                          test_case_no=19627, sl_collections=sl_collections, data_rates=data_rates)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -497,7 +521,7 @@ def test_wifi_sdk_data_rates_for_n_mode_c19627(wifi_sniffer, wifi_access_point, 
 
         packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-            filter_name='radio_mcs_index_4')
+            filter_name=filter_name)
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
@@ -506,7 +530,7 @@ def test_wifi_sdk_data_rates_for_n_mode_c19627(wifi_sniffer, wifi_access_point, 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count'], \
             'Unable to find the MCS rate 4 in data packets'
     except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -518,8 +542,10 @@ def test_wifi_sdk_data_rates_for_n_mode_c19627(wifi_sniffer, wifi_access_point, 
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | 
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
@@ -552,7 +578,7 @@ def test_wifi_sdk_data_rates_for_data_packets_12mbps_c19628(wifi_sniffer, wifi_a
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find any packet for Data/Null/Qos packets'
     except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -564,8 +590,10 @@ def test_wifi_sdk_data_rates_for_data_packets_12mbps_c19628(wifi_sniffer, wifi_a
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | 
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
@@ -601,7 +629,7 @@ def test_wifi_sdk_data_rates_for_rts_cts_12mbps_c19629(wifi_sniffer, wifi_access
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find packets for Block ACK Req, RTS for data rates 12 Mbps'
     except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -613,8 +641,10 @@ def test_wifi_sdk_data_rates_for_rts_cts_12mbps_c19629(wifi_sniffer, wifi_access
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | 
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
@@ -645,7 +675,7 @@ def test_wifi_sdk_data_rates_eapol_c19631(wifi_sniffer, wifi_access_point, wifi_
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find packets for EAPOL packets for 1 Mbps data rates'
     except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -657,8 +687,10 @@ def test_wifi_sdk_data_rates_eapol_c19631(wifi_sniffer, wifi_access_point, wifi_
         "thread_config": { "wifi":{ "count": 1, "stack_len": 2048 }} ,
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | 
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
@@ -717,7 +749,7 @@ def test_wifi_sdk_basic_data_rates_c19634(wifi_sniffer, wifi_access_point, wifi_
             logger().info("Sniffer validation Passed")
             assert True
     except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.skip
@@ -732,7 +764,7 @@ def test_wifi_sdk_basic_data_rates_c19634(wifi_sniffer, wifi_access_point, wifi_
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
@@ -856,4 +888,4 @@ def test_wifi_sdk_data_rates_with_diff_rssi_values_c19630(wifi_sniffer, wifi_acc
 
             logger().info(f'Attenuation and Data Rates value = {attenuation_data_rates_dict}')
     except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)

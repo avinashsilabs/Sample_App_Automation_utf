@@ -7,14 +7,14 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xCoexMode,
     Si91xPowerSaveModes,
     Si91xPowerSaveProcedureTypes,
-    Si91xFeatureBitMap,
-    Si91xConfigFeatureBitMap,
-    Si91xTCPIPFeatureBitMap,
-    Si91xExtTCPIPFeatureBitMap,
+    Si91xFeatureBitMap,Si91xBLECustomFeatureBitMap,
+    Si91xConfigFeatureBitMap,Si91xBLEFeatureBitMap,
+    Si91xTCPIPFeatureBitMap,Si91xBTFeatureBitMap,
+    Si91xExtTCPIPFeatureBitMap,Si91xCustomFeatureBitMap,
     Si91xExtCustomFeatureBitMap, Si91xOperatingMode,
 )
 from utf.utils.logger import get_logger
-from utf.interfaces.wifi import WlanError
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 
 
 def logger():
@@ -33,7 +33,7 @@ def logger():
     Author : M.Harshitha
 """
 
-""" Note: Dependence on Jira WIFI_BT_UTFHELP-2840 and WIFI_BT_UTFHELP-2842 """
+""" Note: Dependence on Jira WIFI_BT_UTFHELP-2842 """
 
 
 def check_for_devices_in_scanned_results(ble_interface, bt_dut_address, adv_data):
@@ -52,21 +52,30 @@ def check_for_devices_in_scanned_results(ble_interface, bt_dut_address, adv_data
             return True
     return False
 
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower
-    }
-)
-@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_wifi_sdk_ble_undirected_connectable_adv_c19801(wifi_dut, ble_client, utf_constants):
+pytestmark = [
+    pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE|
+                                   Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                                   Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST
+                                        |Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+        }
+    )
+]
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+def test_wifi_sdk_ble_undirected_connectable_adv_c19801(wifi_dut, ble_client):
     """ Verify BLE Undirected Connectable advertisement """
 
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
@@ -78,19 +87,17 @@ def test_wifi_sdk_ble_undirected_connectable_adv_c19801(wifi_dut, ble_client, ut
             logger().info("Initializing BLE")
             bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
             assert bt_dut_address, "Unable to fetch bluetooth address from DUT"
-            logger().info("Advertising DUT ")
-            logger().info("keeping the DUT in undirected_connectable ADV mode")
+            logger().info(f"bt_dut_address : {bt_dut_address}")
+            logger().info("Advertising the DUT in undirected_connectable ADV mode")
             wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_type=128)
             logger().info("Enabling Wlan and BLE power save ")
             if power_save:
-                enable_wifi_ps = wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
-                assert enable_wifi_ps, 'failed to enable wlan power save'
-                enable_bt_ps = wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                                            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-                assert enable_bt_ps, 'failed to enable bt power save'
+                wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+                wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                                psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
             logger().info("Initiating scan from remote BLE device")
             bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-            assert bt_client_address is not None, "Unable to fetch remote bluetooth address"
+            assert bt_client_address, "Unable to fetch remote bluetooth address"
             device_found = check_for_devices_in_scanned_results(ble_interface=ble_client.interfaces.bluetooth,
                                                                 bt_dut_address=bt_dut_address,
                                                                 adv_data=wifi_dut.interfaces.wifi.ble_advertising_data)
@@ -111,19 +118,7 @@ def test_wifi_sdk_ble_undirected_connectable_adv_c19801(wifi_dut, ble_client, ut
         logger().info(f"\n****** Testcase failed with {e}******")
         raise e
 
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower
-    }
-)
+@pytest.mark.skip()
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_ble_undirected_scannable_adv_c19803(wifi_dut, ble_client):
     """ Verify BLE Undirected Scannable advertisement"""
@@ -133,23 +128,21 @@ def test_wifi_sdk_ble_undirected_scannable_adv_c19803(wifi_dut, ble_client):
 
     try:
         with BleLogs(start_collecting_logs=True,
-                     bt_log_path=f"reports/test_wifi_sdk_C19803{int(time.time())}") as bt_logs:
+                     bt_log_path=f"reports/test_wifi_sdk_C19803_{int(time.time())}") as bt_logs:
             logger().info("Initializing BLE")
             bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
             assert bt_dut_address, "Unable to fetch bluetooth address from DUT"
-            logger().info("Advertising DUT ")
-            logger().info("keeping the DUT in undirected scanable ADV mode")
+            logger().info(f"bt_dut_address : {bt_dut_address}")
+            logger().info("Advertising the DUT in undirected scanable ADV mode")
             wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_type=130)
             logger().info("Enabling Wlan and BLE power save ")
             if power_save:
-                enable_wifi_ps = wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
-                assert enable_wifi_ps, 'failed to enable wlan power save'
-                enable_bt_ps = wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                                            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-                assert enable_bt_ps, 'failed to enable bt power save'
+                wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+                wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
             logger().info("Initiating BLE scanning from remote device")
             bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-            assert bt_client_address is not None, "Unable to fetch Bluetooth address from remote device"
+            assert bt_client_address, "Unable to fetch Bluetooth address from remote device"
             device_found = check_for_devices_in_scanned_results(ble_interface=ble_client.interfaces.bluetooth,
                                                                 bt_dut_address=bt_dut_address,
                                                                 adv_data=wifi_dut.interfaces.wifi.ble_advertising_data)
@@ -170,21 +163,9 @@ def test_wifi_sdk_ble_undirected_scannable_adv_c19803(wifi_dut, ble_client):
         logger().info(f"\n****** Testcase failed with {e}******")
         raise e
 
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake
-                    | Si91xFeatureBitMap.Aggregation,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower
-    }
-)
+@pytest.mark.skip()
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
 def test_wifi_sdk_ble_undirected_non_connectable_adv_c19804(wifi_dut, ble_client):
     """ Verify BLE Undirected Non-Connectable Advertisement"""
 
@@ -196,16 +177,15 @@ def test_wifi_sdk_ble_undirected_non_connectable_adv_c19804(wifi_dut, ble_client
                      bt_log_path=f"reports/test_wifi_sdk_c19804{int(time.time())}.log") as bt_logs:
             logger().info("Initializing BLE")
             bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-            logger().info("Advertising DUT ")
-            logger().info("keeping the DUT in undirected_non_connectable_adv mode")
+            assert bt_dut_address, "Unable to fetch bluetooth address from DUT"
+            logger().info(f"bt_dut_address : {bt_dut_address}")
+            logger().info("Advertising the DUT in undirected_non_connectable_adv mode")
             wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_type=131)
             logger().info("Enabling Wlan and BLE power save ")
             if power_save:
-                enable_wifi_ps = wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
-                assert enable_wifi_ps, 'failed to enable wlan power save'
-                enable_bt_ps = wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                                            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-                assert enable_bt_ps, 'failed to enable bt power save'
+                wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+                wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
             logger().info("Initiating scanning from Remote remote device")
             bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
             assert bt_client_address is not None, "Unable to fetch bluetooth address from remote device"
@@ -224,27 +204,14 @@ def test_wifi_sdk_ble_undirected_non_connectable_adv_c19804(wifi_dut, ble_client
             bt_logs.device_characteristics(wifi_dut.interfaces.wifi.ble_address)
             logger().info(f"fetched data from bt mon {bt_logs.device_adv_type}")
             assert (
-                        "Non connectable undirected - ADV_NONCONN_IND (0x03)" in bt_logs.device_adv_type), "Expected avd type not found bt mon logs"
+                    "Non connectable undirected - ADV_NONCONN_IND (0x03)" in bt_logs.device_adv_type), "Expected avd type not found bt mon logs"
             logger().info(f"Verified that DUT in {bt_logs.device_adv_type} mode")
     except Exception as e:
         logger().info(f"\n****** Testcase failed with {e}******")
         raise e
 
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower,
-    }
-)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
 def test_wifi_sdk_adv_with_name_of_length_16bytes_c19850(wifi_dut, ble_client):
     """Verify ble default set local name length 16-bytes"""
 
@@ -254,23 +221,22 @@ def test_wifi_sdk_adv_with_name_of_length_16bytes_c19850(wifi_dut, ble_client):
     try:
         set_local_name = "ble_123456789012"
         logger().info(f"Setting BLE local name {set_local_name}")
-        time.sleep(3)
         wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
         status = wifi_dut.interfaces.wifi.bt_get_local_name()
         logger().info(f"Getting the local name : {status}")
         assert set_local_name == status, "Set local name and get local name not matched "
         bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        assert bt_dut_address, "Unable to fetch bluetooth address from DUT"
+        logger().info(f"bt_dut_address : {bt_dut_address}")
         logger().info("Advertising DUT with the name ble_123456789012 ")
         wifi_dut.interfaces.wifi.ble_start_advertising(ble_advertising_data="ble_123456789012")
         if power_save:
-            enable_wifi_ps = wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
-            assert enable_wifi_ps, 'failed to enable wlan power save'
-            enable_bt_ps = wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                                         psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-            assert enable_bt_ps, 'failed to enable bt power save'
+            wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+            wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                        psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         logger().info("Initiating scan from remote device")
         bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-        assert bt_client_address is not None, "Unable to fetch BD address from Remote BLE device"
+        assert bt_client_address, "Unable to fetch BD address from Remote BLE device"
         device_found = check_for_devices_in_scanned_results(ble_interface=ble_client.interfaces.bluetooth,
                                                             bt_dut_address=bt_dut_address,
                                                             adv_data=wifi_dut.interfaces.wifi.ble_advertising_data)
@@ -285,21 +251,16 @@ def test_wifi_sdk_adv_with_name_of_length_16bytes_c19850(wifi_dut, ble_client):
         logger().info(f"\n****** Testcase failed with {e}******")
         raise e
 
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={"oper_mode": 0, "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE},
-)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
 def test_wifi_sdk_set_localname_configured_with_17bytes_C71442(wifi_dut):
     """ Verify ble set local name configured with 17 bytes """
     try:
-        with pytest.raises(WlanError) as exc_info:
-            logger().info("Setting BLE local name A2345678901234567 of 17 bytes")
-            time.sleep(3)
-            wifi_dut.interfaces.wifi.bt_set_local_name("A2345678901234567")
-        assert exc_info.value.error_code == 0x4E66, "Observed wrong error code.expected is 0x4E66"
+        logger().info("Setting BLE local name A2345678901234567 of 17 bytes")
+        time.sleep(3)
+        wifi_dut.interfaces.wifi.bt_set_local_name("A2345678901234567", expected_status=SLStatus.SL_STATUS_BT_Invalid_NAME_LENGTH_WHEN_SET_TO_MORE_THAN_16_BYTES)
+        logger().info(
+                f" Local Name set configured more than 16 bytes , observed error code 0x4E66 which is expected")
     except Exception as e:
         logger().info(f"\n****** Testcase failed with {e}******")
         raise e

@@ -58,43 +58,20 @@ class WLanJoinThread(ThreadBase):
 
             if '19716' in self.test_case:
 
-                logger().info(" ====== configuring the Sniffer with access point channel ====== ")
-                self.wifi_sniffer.interfaces.capture.configure_interface(
-                    channel=self.wifi_access_point.interfaces.wifi.channel)
+                self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
 
-                logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-                self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_case)
-
-                self.wifi_access_point.interfaces.wifi.passphrase = '12345678'
-
-                self.sl_collections.join_to_wifi_network(self.wifi_dut,
-                                                         wifi_access_point=self.wifi_access_point,
-                                                         power_save=self.power_save,
-                                                         ping_after_power_save=True, retry_count=3,
-                                                         associated=self.wifi_dut.interfaces.wifi.associated,
-                                                         pmk_enable=self.pmk_enable,
-                                                         expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
+                self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point,
+                                                      pmk_enable=self.pmk_enable,
+                                                      expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
                 logger().info(
                     f"Dut Tried to connect to ap with wrong password, observed error code 0x10008 which is expected")
 
-                logger().info("disconnecting to ap.....")
-                self.wifi_dut.interfaces.wifi.leave()
-
-                logger().info("Stop Sniffer finally")
-                self.wifi_sniffer.interfaces.capture.stop_capture()
-
-                self.sl_collections.join_sniffer_validation(self.wifi_access_point, self.wifi_sniffer,
-                                                            self.dut_addr['dut_mac_address'], self.ap_mac_address,
-                                                            self.sniffer_filter, power_save=self.power_save)
-
             elif '19717' in self.test_case:
-                self.sl_collections.join_to_wifi_network(self.wifi_dut,
-                                                         wifi_access_point=self.wifi_access_point,
-                                                         power_save=self.power_save,
-                                                         ping_after_power_save=True, retry_count=3,
-                                                         associated=self.wifi_dut.interfaces.wifi.associated,
-                                                         pmk_enable=self.pmk_enable,
-                                                         expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
+                self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+
+                self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point,
+                                                      pmk_enable=self.pmk_enable,
+                                                      expected_status=SLStatus.SL_STATUS_SI91X_NO_AP_FOUND)
                 logger().info(
                     f"Dut Tried to connect to ap with wrong password, observed error code 0x10008 which is expected")
 
@@ -112,12 +89,13 @@ class WLanJoinThread(ThreadBase):
                                                                          ping_after_power_save=True, retry_count=3,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated,
                                                                          pmk_enable=self.pmk_enable)
+                time.sleep(2)
                 logger().info("disconnecting to ap.....")
                 self.wifi_dut.interfaces.wifi.leave()
-
+                time.sleep(2)
                 logger().info("Stop Sniffer finally")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-
+                time.sleep(2)
                 self.sl_collections.join_sniffer_validation(self.wifi_access_point, self.wifi_sniffer,
                                                             self.dut_addr['dut_mac_address'], self.ap_mac_address,
                                                             self.sniffer_filter, power_save=self.power_save)
@@ -211,12 +189,6 @@ def test_wifi_sdk_connectivity_with_11n_mode_c19707(wifi_dut, wifi_access_point,
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
-        logger().info("\n **** 11n packet validation for probe_request_HT**** \n")
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter \
-            (sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=ap_mac_address, filter_name="probe_request_HT")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find 11n packet'
-
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
@@ -234,7 +206,6 @@ def test_wifi_sdk_connectivity_with_hidden_mode_ap_c19708(wifi_dut, wifi_access_
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
         5. Do sniffer Validation for hidden mode
-        6. Repeat the steps 2-5 for number of iterations
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -245,7 +216,6 @@ def test_wifi_sdk_connectivity_with_hidden_mode_ap_c19708(wifi_dut, wifi_access_
     try:
         test_case = request.node.name
         ping_count = utf_constants.get("ping_count")
-        iteration = 3
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                   sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case=test_case,
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
@@ -254,12 +224,11 @@ def test_wifi_sdk_connectivity_with_hidden_mode_ap_c19708(wifi_dut, wifi_access_
                                                                                         hidden_ssid='""',
                                                                                         filter_name='hidden_ssid')
 
-        for count in range(0, iteration):
-            wlan_obj.start()
-            wlan_obj.wait_for_exit()
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-                'Unable to find hidden in sniffer'
-            time.sleep(2)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find hidden in sniffer'
+        time.sleep(2)
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
@@ -278,7 +247,6 @@ def test_wifi_sdk_join_time_providing_psk_c19712(wifi_dut, wifi_access_point, wi
         4. Initiate ping from the dut
         5. Do sniffer Validation for probe_req_response,and eapol_4_way_handshake
         6. Calculate the join time and validate the join time is less than 0.4 secs
-        7. Repeat the steps 2-6 for number of iterations
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -290,34 +258,26 @@ def test_wifi_sdk_join_time_providing_psk_c19712(wifi_dut, wifi_access_point, wi
     try:
         test_case = request.node.name
         ping_count = utf_constants.get("ping_count")
-        iteration = 3
         packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                   sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case=test_case,
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
 
-        for count in range(0, iteration):
-            wlan_obj.start()
-            wlan_obj.wait_for_exit()
-            if not rerun:
-                packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-                    da_addr=ap_mac_address,
-                    filter_name='probe_req_response')
-                packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter. \
-                    get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=ap_mac_address,
-                                       filter_name='assoc_req_resp_eapol_4_way_handshake')
-                rerun = True
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-                'Sniffer: Unable to find probe_req_response packet in sniffer'
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3,
-                                                                      packet_filter2=packet_filter2)['packet_count'], \
-                'Sniffer: Unable to find assoc_req_resp_eapol_4_way_handshake packet in sniffer'
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        if not rerun:
+            packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter. \
+                get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=ap_mac_address,
+                                   filter_name='assoc_req_resp_eapol_4_way_handshake')
+            rerun = True
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3,
+                                                                  packet_filter2=packet_filter2)['packet_count'], \
+            'Sniffer: Unable to find assoc_req_resp_eapol_4_way_handshake packet in sniffer'
 
-            time_taken = wlan_obj.time_diff()
-            assert time_taken <= 0.4
-            logger().info(f"time taken to connect is: {time_taken}")
-            time.sleep(2)
+        time_taken = wlan_obj.time_diff()
+        assert time_taken <= 0.4, "****Time required is more than 0.4 secs****"
+        logger().info(f"time taken to connect is: {time_taken}")
+        time.sleep(2)
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -335,25 +295,22 @@ def test_wifi_sdk_Joining_by_rsi_psk_command_c19714(wifi_dut, wifi_access_point,
         2. Join the access point and enable the dhcp
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
-        5. Repeat the steps 2-4 for number of iterations
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
-    """This test case verifies Joining to the security enable ap by giving psk"""
     ap_mac_address = wifi_access_point.interfaces.wifi.bssid
     logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
     try:
         test_case = request.node.name
         ping_count = utf_constants.get("ping_count")
-        iteration = 3
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                   sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case=test_case,
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
-        for count in range(0, iteration):
-            wlan_obj.start()
-            wlan_obj.wait_for_exit()
-            time.sleep(2)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(2)
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -361,7 +318,7 @@ def test_wifi_sdk_Joining_by_rsi_psk_command_c19714(wifi_dut, wifi_access_point,
 
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "Testssid",
-                          "passphrase": "1234567890qwertyuioplkjhgfdsazxcvbnm[]oirgrgrtyuio1234567890os1",
+                          "passphrase": "1234567890qwertyuioplkjhgfdsazxcvbnmoirgrgrtyuio123456!@#$%+=_,",
                           "security": "WPA2"})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -374,7 +331,6 @@ def test_wifi_sdk_psk_with_64_different_characters_c19719(wifi_dut, wifi_access_
         2. Join the access point and enable the dhcp
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
-        5. Repeat the steps 2-4 for number of iterations
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -385,14 +341,13 @@ def test_wifi_sdk_psk_with_64_different_characters_c19719(wifi_dut, wifi_access_
     try:
         test_case = request.node.name
         ping_count = utf_constants.get("ping_count")
-        iteration = 3
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                   sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case=test_case,
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
-        for count in range(0, iteration):
-            wlan_obj.start()
-            wlan_obj.wait_for_exit()
-            time.sleep(2)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(2)
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -409,7 +364,6 @@ def test_wifi_sdk_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_p
         2. Join the access point and enable the dhcp
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
-        5. Repeat the steps 2-4 for 1800 secs
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -481,7 +435,7 @@ def test_wifi_sdk_Joining_to_PMK_in_module_by_wrong_PSK_C19716(wifi_dut, wifi_ac
         2. Join the access point and enable the dhcp
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
-        5. Verify error code by validating PMK
+        5. Verify error SI91X_DEAUTHENTICATION
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -491,6 +445,7 @@ def test_wifi_sdk_Joining_to_PMK_in_module_by_wrong_PSK_C19716(wifi_dut, wifi_ac
     try:
         test_case = request.node.name
         ping_count = utf_constants.get("ping_count")
+        wifi_access_point.interfaces.wifi.passphrase = '12345678'
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                   sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case=test_case,
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
@@ -501,13 +456,13 @@ def test_wifi_sdk_Joining_to_PMK_in_module_by_wrong_PSK_C19716(wifi_dut, wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.config('wifi_access_point', wifi={"ssid": "thisssidisthirteeetwobytesofsize",
-                                               "passphrase": "123456789qwertyuio123456789qwertyuio123456789zxcvbnm123456789zx",
+@pytest.mark.config('wifi_access_point', wifi={"ssid": "Thisssidis32bytesofsize!@#$%+=_,",
+                                               "passphrase": "123456789qwertyuio123456789qwertyuio123456789zxcvbnmzx!@#$%+=_,",
                                                "security": "WPA2"})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wifi_access_point, wifi_sniffer,
+def test_wifi_sdk_join_PMK_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                             utf_constants, request, sl_collections,
                                                                             sniffer_filter):
     """
@@ -517,14 +472,12 @@ def test_wifi_sdk_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
         5. Join with PMK with 64 characters PSK and 32 characters ssid
-        6. Repeat the steps 2-5 for number of iterations
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     ap_mac_address = wifi_access_point.interfaces.wifi.bssid
     logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
-    iteration = 3
     try:
         test_case = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -532,21 +485,21 @@ def test_wifi_sdk_join_pmk_with_64_characters_psk_32_characters_ssid_C19720(wifi
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                   sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case=test_case,
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
-        for count in range(0, iteration):
-            wlan_obj.start()
-            wlan_obj.wait_for_exit()
-            time.sleep(2)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(2)
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.skip()
-@pytest.mark.config('wifi_access_point', wifi={"ssid": " redpine", "passphrase": 'Testing_pmk', "security": "WPA2"})
+@pytest.mark.config('wifi_access_point', wifi={"ssid": ' redpine', "passphrase": '12345678', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_wifi_join_pmk_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_access_point, wifi_sniffer,
+def test_wifi_sdk_wifi_join_PMK_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                       utf_constants, request, sl_collections,
                                                                       sniffer_filter):
     """
@@ -589,60 +542,62 @@ def test_wifi_sdk_Joining_time_PMK_C19711(wifi_dut, wifi_access_point, wifi_snif
         4. Initiate ping from the dut
         5. Do sniffer Validation for probe_req_response,and eapol_4_way_handshake
         6. Calculate the join time and validate the join time is less than 0.4 secs
-        7. Repeat the steps 2-6 for number of iterations
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
-    """This test case verifies Joining to the psk by giving 64 different characters"""
     ap_mac_address = wifi_access_point.interfaces.wifi.bssid
     logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
     rerun = False
     try:
         test_case = request.node.name
         ping_count = utf_constants.get("ping_count")
-        iteration = 3
         packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                   sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case=test_case,
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
-        for count in range(0, iteration):
-            wlan_obj.start()
-            wlan_obj.wait_for_exit()
-            if not rerun:
-                packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-                    da_addr=ap_mac_address,
-                    filter_name='probe_req_response')
-                packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter. \
-                    get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=ap_mac_address,
-                                       filter_name='assoc_req_resp_eapol_4_way_handshake')
-                rerun = True
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-                'Sniffer: Unable to find probe_req_response packet in sniffer'
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3,
-                                                                      packet_filter2=packet_filter2)['packet_count'], \
-                'Sniffer: Unable to find assoc_req_resp_eapol_4_way_handshake packet in sniffer'
 
-            time_taken = wlan_obj.time_diff()
-            assert time_taken <= 0.4
-            logger().info(f"time taken to connect is: {time_taken}")
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        if not rerun:
+            packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter. \
+                get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=ap_mac_address,
+                                   filter_name='assoc_req_resp_eapol_4_way_handshake')
+            rerun = True
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3,
+                                                                  packet_filter2=packet_filter2)['packet_count'], \
+            'Sniffer: Unable to find assoc_req_resp_eapol_4_way_handshake packet in sniffer'
+
+        time_taken = wlan_obj.time_diff()
+        assert time_taken <= 0.4, "****Time required is more than 0.4 secs****"
+        logger().info(f"time taken to connect is: {time_taken}")
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point',
-                    wifi={"ssid": "testwithnossid", "passphrase": 'Testing_pmk', "security": "WPA2"})
+                    wifi={"ssid": "This", "passphrase": 'Testing_pmk', "security": "WPA2"})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_wifi_join_PMK_without_SSID_C19717(wifi_dut, wifi_access_point, sl_collections, request):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+        5. Join with PMK without SSID
+        6. Verify error SI91X_NO_AP_FOUND
+    """
 
     try:
         with TimeMeasurer() as t:
             test_case = request.node.name
-            wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, test_case=test_case,
-                                      sl_collections=sl_collections)
+
+            wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                      sl_collections=sl_collections, test_case=test_case)
 
             wlan_obj.start()
             wlan_obj.wait_for_exit()

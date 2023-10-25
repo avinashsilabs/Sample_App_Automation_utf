@@ -78,33 +78,16 @@ class WifiJoinThread(ThreadBase):
         host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
 
-        logger().info("starting the server from Remote device")
-        # starting iperf
-        self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=self.device_ip,
-                                                             protocol=self.protocol)
-        self.net_perf_client.interfaces.net_perf.start()
-        logger().info("sending data from DUT")
-        self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
-                                            local_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                            local_ip=self.device_ip, remote_ip=host_ip,
-                                            remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                            size=1000, ttl=60)
-        # # get and print throughput
-        tp = self.net_perf_client.interfaces.net_perf.process_output()
-        assert tp is not None, "Throughput not found"
-        logger().info("data transfer is successful")
-
+        self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
+                                        protocol=self.protocol, device_ip=self.device_ip,
+                                        host_ip=host_ip, timeout=60, traffic_type="TX")
     def run(self):
 
         logger().info("starting the sniffer again")
         self.wifi_sniffer.interfaces.capture.configure_interface(
             channel=self.wifi_access_point.interfaces.wifi.channel)
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
-        if self.region:
-            logger().info(f"setting the DUT region to {self.region}")
-            self.wifi_dut.interfaces.wifi.set_region(region=Si91xRegion.FromUser,
-                                                     region_code=self.region,
-                                                     module_type=Si91xModuleType.WithOnboardAntenna)
+
         self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                  wifi_access_point=self.wifi_access_point,
                                                                  power_save=self.power_save,
@@ -136,12 +119,13 @@ class WifiJoinThread(ThreadBase):
     wifi={
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -164,12 +148,15 @@ def test_wifi_sdk_firmware_version_C34753(wifi_dut, sl_collections):
     wifi={
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "worldwide",
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -203,17 +190,20 @@ def test_wifi_sdk_join_WORLD_2_4_C34788(wifi_access_point, wifi_dut, net_perf_cl
     wifi={
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "europe",
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 11, "region": 'Europe'})
+@pytest.mark.config('wifi_access_point', wifi={"channel": 12, "region": 'Europe'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
@@ -241,12 +231,15 @@ def test_wifi_sdk_join_EU_2_4_C34786(wifi_access_point, wifi_dut, net_perf_clien
     wifi={
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "us",
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -279,12 +272,13 @@ def test_wifi_sdk_join_US_2_4_C34785(wifi_access_point, wifi_dut, net_perf_clien
     wifi={
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.PSKSecurity,
+        "features": Si91xFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -305,17 +299,13 @@ def test_wifi_sdk_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, w
         wifi_thread = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      testcase=test_name, wifi_client=wifi_client, net_perf_client=net_perf_client,
                                      protocol=protocol, test_type=test_type, sl_collections=sl_collections,
-                                     ping_count=ping_count, sniffer_filter=sniffer_filter)
+                                     ping_count=ping_count, sniffer_filter=sniffer_filter,
+                                     region=Si91xRegionCode.US)
         for count in range(0, iteration):
             wifi_thread.start()
             wifi_thread.wait_for_exit()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
-
-
-
-
 
 
 
