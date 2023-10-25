@@ -12,6 +12,7 @@ from utf.interfaces.wifi import WlanError
 from utf.utils.logger import get_logger
 from utf.interfaces.wifi import SecurityMode
 from utf.interfaces.shell.ssh_shell import SSHShell
+from utf.utils import get_tls_certificate_dir
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xOperatingMode,
     Si91xCoexMode,
@@ -27,7 +28,10 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xRegion,
     Si91xRegionCode,
     Si91xModuleType,
-    Si91xCertificateType
+    Si91xCertificateType,
+    Si91xCertIdentifier,
+    SocketOptions,
+
 )
 from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
@@ -89,40 +93,40 @@ class WLanThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                          beacon_missed_count=40,
                                                                          first_time_retry_enable=0)
-            if self.test_case_no == 19722:
+            elif self.test_case_no == 19722:
                 """ Enabling Rejoin for max retry count = 4 """
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=4,
                                                                          scan_interval=4,
                                                                          beacon_missed_count=40,
                                                                          first_time_retry_enable=0)
                 self.rejoin_event=True
-            if self.test_case_no == 19729:
+            elif self.test_case_no == 19729:
                 """ Enabling Rejoin for security mode change"""
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=4, scan_interval=6,
                                                                          beacon_missed_count=40,
                                                                          first_time_retry_enable=0)
-            if self.test_case_no == 19733:
+            elif self.test_case_no == 19733:
                 """ Enabling Rejoin for security mode change"""
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=20, scan_interval=6,
                                                                          beacon_missed_count=40,
                                                                          first_time_retry_enable=0)
-            if self.test_case_no == 19735:
+            elif self.test_case_no == 19735:
                 """ Enabling Rejoin with retry bit enable"""
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                          beacon_missed_count=40,
                                                                          first_time_retry_enable=1)
-            if self.test_case_no == 19736:
+            elif self.test_case_no == 19736:
                 """ Enabling Rejoin with reset beacon missed counter"""
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                          beacon_missed_count=100,
                                                                          first_time_retry_enable=0)
 
-            if self.test_case_no == 19737:
+            elif self.test_case_no == 19737:
                 """Enabling Rejoin with scan interval 1 second"""
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=4, scan_interval=1,
                                                                               beacon_missed_count=40,
                                                                               first_time_retry_enable=0)
-            if self.test_case_no == 19739:
+            elif self.test_case_no == 19739:
                 """ Enabling BG scan """
                 self.wifi_dut.interfaces.wifi.set_advanced_scan_configuration(adv_active_channel_time=15,
                                                                               adv_passive_channel_time=20)
@@ -130,17 +134,17 @@ class WLanThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                 beacon_missed_count=40, first_time_retry_enable=0)
 
-            if self.test_case_no == 19740:
+            elif self.test_case_no == 19740:
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=4, scan_interval=6,
                                                                          beacon_missed_count=200,
                                                                          first_time_retry_enable=1)
-            if self.test_case_no == 19741:
+            elif self.test_case_no == 19741:
                 """ Enabling Rejoin """
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                          beacon_missed_count=40,
                                                                          first_time_retry_enable=0)
 
-            if self.test_case_no == 19742:
+            elif self.test_case_no == 19742:
                 "Set region code US"
                 logger().info(f"setting the DUT region to US")
                 self.wifi_dut.interfaces.wifi.set_wifi_region(region_code=Si91xRegionCode.US)
@@ -150,7 +154,7 @@ class WLanThread(ThreadBase):
                                                                          beacon_missed_count=40,
                                                                          first_time_retry_enable=0)
 
-            if self.test_case_no == 19743:
+            elif self.test_case_no == 19743:
                 "Set region code EU"
                 logger().info(f"setting the DUT region to EU")
                 self.wifi_dut.interfaces.wifi.set_wifi_region(region_code=Si91xRegionCode.Europe)
@@ -158,7 +162,7 @@ class WLanThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                               beacon_missed_count=40,
                                                                               first_time_retry_enable=0)
-            if self.test_case_no == 19744:
+            elif self.test_case_no == 19744:
                 "Set region code EU"
                 logger().info(f"setting the DUT region to EU")
                 self.wifi_dut.interfaces.wifi.set_wifi_region(region_code=Si91xRegionCode.Japan)
@@ -167,10 +171,10 @@ class WLanThread(ThreadBase):
                                                                               beacon_missed_count=40,
                                                                               first_time_retry_enable=0)
 
-            if self.test_case_no == 19745:
+            elif self.test_case_no == 19745:
                 "Set region code EU"
                 logger().info(f"setting the DUT region to Worldwide")
-                self.wifi_dut.interfaces.wifi.set_region(region_code=Si91xRegionCode.Worldwide)
+                self.wifi_dut.interfaces.wifi.set_wifi_region(region_code=Si91xRegionCode.Worldwide)
 
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                               beacon_missed_count=40,
@@ -186,21 +190,20 @@ class WLanThread(ThreadBase):
                 self.wifi_access_point.interfaces.wifi.passphrase = "12345679"
                 self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point, expected_status=
                 SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION or SLStatus.SL_STATUS_SI91X_REJOIN_FAILURE)
-            if self.test_case_no == 19741:
+            elif self.test_case_no == 19741:
                 dut_add_dict = {}
                 logger().info("Initiating wlan Scan from DUT")
                 scan_results = self.wifi_dut.interfaces.wifi.scan(ssid=self.wifi_access_point.interfaces.wifi.ssid)
                 logger().info(scan_results)
                 assert len(scan_results) > 0, "scan_list not found"
-                join_fail = self.sl_collections.connect(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point)
-                assert not join_fail, "....Connection to the AP failed..exiting...."
-                logger().info("....Successfully connected to the AP....")
+                self.wifi_dut.interfaces.wifi.join(self.wifi_access_point.interfaces.wifi.ssid)
 
-                ip_fail, ip_config = self.sl_collections.configure_ip(self.wifi_dut)
-                assert not ip_fail, "....Unable to assign IP ADDRESS through DHCP..exiting...."
+                ip_status, ip_config = self.sl_collections.configure_ip(self.wifi_dut)
+                logger().info(f"\n ***ip_status={ip_status},  ip_config={ip_config}*** \n")
 
                 # we fetch the ip address and mac_address
                 device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+                logger().info(f"DUT ip: {device_ip}")
                 dut_add_dict['device_ip'] = device_ip
                 dut_add_dict['dut_mac_address'] = self.wifi_dut.interfaces.wifi.get_mac_address()
                 logger().info(
@@ -212,43 +215,56 @@ class WLanThread(ThreadBase):
 
                 self.dut_addr = dut_add_dict
 
-            if self.test_case_no == 19730:
+            elif self.test_case_no == 19730:
+                self.wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+
                 logger().info("Setting Rejoin Parameters in DUT")
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0,
                                                                          scan_interval=4,
                                                                          beacon_missed_count=40,
                                                                          first_time_retry_enable=0)
+
                 logger().info("DUT Joining to AP in EAP-TLS mode")
-                self.dut_addr = self.sl_collections.join_to_eap_network(self.wifi_dut, self.wifi_access_point)
+                self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
+                                                                        wifi_access_point=self.wifi_access_point,
+                                                                        eap_type="tls", ping_after_power_save=True)
                 time.sleep(5)
-                self.socket_data_transfer_recovery_in_rejoin(option_name='SO_MAX_RETRANSMISSION_TIMEOUT_VALUE', option_val=1)
-
-            if self.test_case_no == 19731:
+                self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET, option_val=SocketOptions.TCP_MAX_RETRY)
                 wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
+
+            elif self.test_case_no == 19731:
+                self.wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+
                 logger().info("Setting Rejoin Parameters in DUT")
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0,
                                                                          scan_interval=4,
                                                                          beacon_missed_count=40,
                                                                          first_time_retry_enable=0)
-                logger().info("DUT Joining to AP in EAP-TTLS mode")
-                self.dut_addr = self.sl_collections.join_to_eap_network(self.wifi_dut, self.wifi_access_point, eap_type="TTLS")
-                time.sleep(5)
-                self.socket_data_transfer_recovery_in_rejoin(option_name='SO_MAX_RETRANSMISSION_TIMEOUT_VALUE', option_val=1)
 
-            if self.test_case_no == 19732:
+                logger().info("DUT Joining to AP in EAP-TTLS mode")
+                self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
+                                                                        wifi_access_point=self.wifi_access_point,
+                                                                        eap_type="ttls", ping_after_power_save=True)
+                time.sleep(5)
+                self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET, option_val=SocketOptions.TCP_MAX_RETRY)
                 wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
+
+            elif self.test_case_no == 19732:
+                self.wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+
                 logger().info("Setting Rejoin Parameters in DUT")
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0,
                                                                          scan_interval=4,
                                                                          beacon_missed_count=40,
                                                                          first_time_retry_enable=0)
-                logger().info("DUT Joining to AP in EAP-TTLS mode")
-                self.dut_addr = self.sl_collections.join_to_eap_network(self.wifi_dut, self.wifi_access_point,
-                                                                        eap_type="PEAP")
+
+                logger().info("DUT Joining to AP in EAP-PEAP mode")
+                self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
+                                                                        wifi_access_point=self.wifi_access_point,
+                                                                        eap_type="peap", ping_after_power_save=True)
                 time.sleep(5)
-                self.socket_data_transfer_recovery_in_rejoin(option_name='SO_MAX_RETRANSMISSION_TIMEOUT_VALUE', option_val=1)
-
-
+                self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET, option_val=SocketOptions.TCP_MAX_RETRY)
+                wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
 
             else:
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
@@ -299,8 +315,8 @@ class WLanThread(ThreadBase):
             logger().error(f"\n\n Trying to connect with server ")
             self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=self.socket_id, timeout=30)
 
-            # self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=self.socket_id, option_name=option_name, option_val=option_val,
-            #                                        option_length=option_length, timeout=timeout)
+            self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=self.socket_id, option_name=option_name, option_val=option_val,
+                                                   )
 
             logger().error(f"\n **** Start validation of socket data transfer in rejoin scenario with AP turn off & "
                            f"Turn on again ****\n")
@@ -756,7 +772,7 @@ def test_wifi_sdk_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -825,7 +841,7 @@ def test_wifi_sdk_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1004,13 +1020,11 @@ def test_wifi_sdk_rejoin_with_disconnect_c19735(switch, wifi_sniffer, wifi_acces
 
         logger().info('************Disconnect the DUT from AP*******************')
         wifi_dut.interfaces.wifi.leave()
-        wifi_dut.interfaces.wifi.associated = False
-        # wifi_dut.interfaces.wifi.inited = False
         logger().info("******** Turn on the access point ********")
         switch.interfaces.pdu_switch.turn_on(delay=60)
-        # wifi_dut.interfaces.wifi.init()
         logger().info("Joining into wifi_access_point")
-        sl_collections.join_to_wifi_network()
+        sl_collections.join_to_wifi_network(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                            associated=False)
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1312,14 +1326,10 @@ def test_wifi_sdk_rejoin_infinite_retry_c19738(wifi_sniffer, wifi_access_point, 
             'Unable to find Broadcast probe request packet'
 
     except Exception as e:
-        recovery_error_codes = ['0xffffffe2', '0xffffffd5']
-        for error_code in recovery_error_codes:
-            if error_code in str(e):
-                logger().info('******* Initiating DUT Recovery using Reset **********')
-                wifi_dut.interfaces.wifi.reset()
-        raise e
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        socket_obj.clean_up_method()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1607,7 +1617,7 @@ def test_wifi_sdk_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wi
         "ble_custom_ext_features": 0,
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 12})
+@pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 11})
 def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants, request,
                                              sl_collections, sniffer_filter):
     """Verify Rejoin Functionality with EU region enabled in 2.4GHZ band"""
@@ -1839,29 +1849,37 @@ def test_wifi_sdk_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_po
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
     "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": Si91xOperatingMode.WiFiClient,
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default,
-        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.Aggregation,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                            Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|
+                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user.pem", "SL_NET_EAP_CLIENT_CREDENTIAL", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
+
     }
 )
-def test_wifi_sdk_rejoin_eap_tls_c19730(switch, wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections):
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+def test_wifi_sdk_rejoin_eap_tls_c19730(wifi_dut, wifi_access_point, wifi_sniffer, radius_server, request, sl_collections, switch):
     """Verify rejoin functionality in EAP-TLS mode"""
     test_name = request.node.name
-    ap_user_name = "\\\"user1\\\""
-    ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
-    dut_ssid = wifi_access_point.interfaces.wifi.ssid
-    dut_security = wifi_access_point.interfaces.wifi.security
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, test_name=test_name,
-                          test_case_no=19730, sl_collections=sl_collections, switch=switch, data_transfer=False)
+                          test_name=test_name, test_case_no=19730, sl_collections=sl_collections,
+                          switch=switch, data_transfer=False)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1874,47 +1892,36 @@ def test_wifi_sdk_rejoin_eap_tls_c19730(switch, wifi_sniffer, wifi_access_point,
 
 
 # EAP Connection in TTLS mode
-@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
-@pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "clear_certs"])
 @pytest.mark.config(
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
         "oper_mode": Si91xOperatingMode.EAPWiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.ULPGPIOHandshake
-                    | Si91xFeatureBitMap.Aggregation,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid
-                           | Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower
-                               | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-                               | Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-                              | Si91xCertificateType.EAPClientCertificate,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tx_wait_time": 16000,
-        "band": 0,
-        "eap_cert": "wifi-user.pem",
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.Aggregation,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                            Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|
+                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user.pem", "SL_NET_EAP_CLIENT_CREDENTIAL", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
+
     }
 )
-
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 def test_wifi_sdk_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point, wifi_dut, radius_server, request, sl_collections):
     """Verify rejoin functionality in EAP-TTLS mode"""
     test_name = request.node.name
-    # ping_count = utf_constants.get("ping_count")
-    # ap_user_name = "\\\"user1\\\""
-    # ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
-    # dut_ssid = wifi_access_point.interfaces.wifi.ssid
-    # dut_security = wifi_access_point.interfaces.wifi.security
-
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, test_case_no=19731,
                           sl_collections=sl_collections, switch=switch, data_transfer=False)
@@ -1929,33 +1936,33 @@ def test_wifi_sdk_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
 # EAP Connection in PEAP mode
-@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
-@pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "clear_certs"])
 @pytest.mark.config(
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
         "oper_mode": Si91xOperatingMode.EAPWiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-                               | Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-                              | Si91xCertificateType.EAPClientCertificate,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tx_wait_time": 16000,
-        "band": 0,
-        "eap_cert": "wifi-user.pem",
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.Aggregation,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                            Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|
+                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user.pem", "SL_NET_EAP_CLIENT_CREDENTIAL", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
+
     }
 )
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 
 def test_wifi_sdk_rejoin_eap_peap_c19732(switch, wifi_sniffer, wifi_access_point, wifi_dut, radius_server,
                                          request, sl_collections):
@@ -2397,4 +2404,5 @@ def test_wifi_sdk_rejoin_roaming_c19726(wifi_access_points, wifi_dut, switches, 
         logger().info("pdu switch state for AP1: " + str(state))
         assert state == 'false', 'Please check PDU outlet manually'
         wifi_dut.interfaces.wifi.leave()
+
 
