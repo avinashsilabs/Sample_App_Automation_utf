@@ -109,3 +109,4 @@ dhcp_4_way_handshake_packets,(wlan.sa == {{ sa_addr }} or wlan.da == {{ da_addr 
 tcp_syn_with_syn_ack_with_ack,(wlan.da == {{ da_addr }} or wlan.sa == {{ sa_addr }} or wlan.ta == {{ ta_addr }}), and tcp.flags == 0x002 or tcp.flags == 0x012 or tcp.flags == 0x010
 wpa3_h2e_mode,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 0) and (wlan.rsnx.sae_hash_to_element == 1)
 hidden_ssid_scan,(wlan.sa == {{ sa_addr }})," and (wlan.ssid == """") and (wlan.da == ff:ff:ff:ff:ff:ff)"
+wpa3_enh_mode,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 1)
