@@ -228,17 +228,17 @@ def test_ble_sdk_scan_in_busy_environment_C19827_c19828(ble_dut, ble_clients, sl
             assert bt_client_address, f"ble initialization failed in remote device{count}"
             logger().info(f"ble client address of remote device {count} is {bt_client_address}")
 
-            ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
-            time.sleep(2)
-            enable_wifi_ps = ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-            assert enable_wifi_ps == 0, 'failed to enable wlan power save'
-            enable_bt_ps, result = ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                                                psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-            assert enable_bt_ps == 0, 'failed to enable bt power save'
-            time.sleep(5)
-            ble_dut.interfaces.bluetooth.ble_stop_scanning()
-            time.sleep(5)
-            ble_client.interfaces.bluetooth.close()
+        ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
+        time.sleep(2)
+        enable_wifi_ps = ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        assert enable_wifi_ps == 0, 'failed to enable wlan power save'
+        enable_bt_ps = ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                                            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps == 0, 'failed to enable bt power save'
+        time.sleep(5)
+        ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        time.sleep(5)
+        ble_client.interfaces.bluetooth.close()
 
     except Exception as error:
         sl_collections.exception_handling(ble_dut, error)
