@@ -12,7 +12,6 @@ def __print_throughput(iperf_throughput: dict):
 
 pytestmark = [
     pytest.mark.framework_integration_test,
-    pytest.mark.dut("rs9116_sapi")
 ]
 
 

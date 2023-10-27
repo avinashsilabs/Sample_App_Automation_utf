@@ -88,6 +88,7 @@ eap_tls_cert_verification_1_0,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_a
 beacon_wpa2_entr_wfa_check,(wlan.sa == {{ sa_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff), and (wlan.fc.type_subtype == 0x0008) and (wlan.wfa.ie.wpa.type == 1) 
 beacon_wpa2_entr_akms_check,(wlan.sa == {{ sa_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff), and (wlan.fc.type_subtype == 0x0008) and (wlan.rsn.akms.type == 1)
 apmode_eapol,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 0x0020) or !(wlan.fc.type_subtype == 0x0008)
+eap_failure,(wlan.addr == {{ sa_addr }}) and  eap, or eapol
 Coex Enhanced Max Psp,,
 coex_enhanced_max_psp_34469,(wlan.da == {{ da_addr }} and wlan.fc.type_subtype == 0x28), or (wlan.ta == {{ da_addr }} and (wlan.fc.type_subtype == 0x24 or wlan.fc.type_subtype ==0x1a)) or (wlan.addr == {{ wlan_addr }} and (wlan.fc.type_subtype==8 or wlan.fc.type_subtype == 0x002c))
 beacon_assoc_id_ps_poll_with_pm_bit_enable,(wlan.ta == {{ da_addr }} and wlan.fc.type_subtype == 0x001a and wlan.fc.pwrmgt == 1), or (wlan.fc.type_subtype == 0x0008 or wlan.tim.aid == 0x01)
