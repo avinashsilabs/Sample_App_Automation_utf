@@ -111,3 +111,5 @@ tcp_syn_with_syn_ack_with_ack,(wlan.da == {{ da_addr }} or wlan.sa == {{ sa_addr
 wpa3_h2e_mode,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 0) and (wlan.rsnx.sae_hash_to_element == 1)
 hidden_ssid_scan,(wlan.sa == {{ sa_addr }})," and (wlan.ssid == """") and (wlan.da == ff:ff:ff:ff:ff:ff)"
 wpa3_enh_mode,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 1)
+apmode_association_id_asso_res,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype==1) and (wlan.fixed.aid==1 || wlan.fixed.aid==2 || wlan.fixed.aid==3 || wlan.fixed.aid==4)
+mgmt_data_rates_data_rate_54mbps_apmode,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}) and (wlan.da== {{ da_addr }}), and (wlan.fc.type_subtype == 0x0028) and (wlan_radio.data_rate == 54)
