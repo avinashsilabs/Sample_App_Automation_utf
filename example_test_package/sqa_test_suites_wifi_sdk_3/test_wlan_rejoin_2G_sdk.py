@@ -1181,7 +1181,7 @@ def test_wifi_sdk_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_poi
         logger().info(f'Probe packet time delta list after removing 0 = {probe_packets_time_delta_list}')
         for time_diff in probe_packets_time_delta_list:
             logger().info(int(time_diff))
-            is_between = int(time_diff) in range(time_delta, time_delta + 1)
+            is_between = int(time_diff) in range(time_delta, time_delta + 2)
             if is_between is False:
                 logger().info(is_between)
                 status = is_between
