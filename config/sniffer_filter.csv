@@ -1,6 +1,7 @@
 ﻿Column1,Column2,Column3
 Column1,Column2,Column3
 Column1,Column2,Column3
+Column1,Column2,Column3
 beacon,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 8)
 beacon_ap_mode_us_region,(wlan.addr == {{ wlan_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and ((wlan.fc.type_subtype == 8) and (wlan.country_info.code == US))
 beacon_ap_mode_eu_region,(wlan.addr == {{ wlan_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and ((wlan.fc.type_subtype == 8) and (wlan.country_info.code == EU))
@@ -109,7 +110,6 @@ dhcp_ack,((wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }})), and (dhcp.
 dhcp_4_way_handshake_packets,(wlan.sa == {{ sa_addr }} or wlan.da == {{ da_addr }}) or (wlan.ta == {{ ta_addr }} or wlan.ra == {{ ra_addr }}), and (dhcp.option.dhcp == 5) or (dhcp.option.dhcp == 1) or (dhcp.option.dhcp == 2) or (dhcp.option.dhcp == 3)
 tcp_syn_with_syn_ack_with_ack,(wlan.da == {{ da_addr }} or wlan.sa == {{ sa_addr }} or wlan.ta == {{ ta_addr }}), and tcp.flags == 0x002 or tcp.flags == 0x012 or tcp.flags == 0x010
 wpa3_h2e_mode,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 0) and (wlan.rsnx.sae_hash_to_element == 1)
-hidden_ssid_scan,(wlan.sa == {{ sa_addr }})," and (wlan.ssid == """") and (wlan.da == ff:ff:ff:ff:ff:ff)"
+hidden_ssid_scan,(wlan.sa == {{ sa_addr }}), and (wlan.ssid == "") and (wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.fc.type_subtype == 4)
 wpa3_enh_mode,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 1)
-apmode_association_id_asso_res,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype==1) and (wlan.fixed.aid==1 || wlan.fixed.aid==2 || wlan.fixed.aid==3 || wlan.fixed.aid==4)
-mgmt_data_rates_data_rate_54mbps_apmode,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}) and (wlan.da== {{ da_addr }}), and (wlan.fc.type_subtype == 0x0028) and (wlan_radio.data_rate == 54)
+dhcp,(wlan.addr == {{ sa_addr }}), and dhcp

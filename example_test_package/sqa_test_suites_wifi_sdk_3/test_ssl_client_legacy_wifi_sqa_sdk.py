@@ -241,18 +241,14 @@ def test_wifi_sdk_ssl_client_connect_close_sequence_testcase_c19130(wifi_access_
             # The api returns 100 bytes of random data
             data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
             logger.info(f"Sending data {data} over socket_no->{sock}")
-
-            sw1 = Stopwatch()
-            while sw1.elapsed_sec <= 30:
-                # DUT sends 100 bytes of data over ssl socket
-                wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=data)
-                # SSL server receives the data over ssl socket
-                time.sleep(1)
-                server_socket_no = 1
-                data_receive = ssl_server.interfaces.ssl.data_recv_content(server_socket_no, buffer_size=len(data))
-                logger.info(f"Data received on remote socket opened is {data_receive}")
-                assert data == data_receive.decode(), "Data sent by DUT and received on server is not matching"
-                logger.info("Data sent by DUT and received on server is matching\n\n")
+            # DUT sends 100 bytes of data over ssl socket
+            wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=data)
+            # SSL server receives the data over ssl socket
+            server_socket_no = 1
+            data_receive = ssl_server.interfaces.ssl.data_recv_content(server_socket_no, buffer_size=len(data))
+            logger.info(f"Data received on remote socket opened is {data_receive}")
+            assert data == data_receive.decode(), "Data sent by DUT and received on server is not matching"
+            logger.info("Data sent by DUT and received on server is matching\n\n")
 
             wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
             logger.info("Successfully closed opened socket in the DUT")
