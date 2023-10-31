@@ -71,8 +71,6 @@ class WLanThread(ThreadBase):
         self.data_transfer = data_transfer
         self.sl_collections = sl_collections
         self.test_name = test_name
-        self.socket_obj = SocketDataTransfer(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
-                                             time_period=self.time_period, data=self.data)
 
     def run(self):
         try:
@@ -119,10 +117,13 @@ class WLanThread(ThreadBase):
                 time.sleep(2)
 
             if self.data_transfer:
+                self.socket_obj = SocketDataTransfer(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
+                                                     time_period=self.time_period, data=self.data,
+                                                     dut_ip=self.dut_addr['device_ip'])
                 self.socket_obj.socket_data_transfer()
             time.sleep(2)
 
-            if not self.test_name == "test_wifi_sdk_mgmt_pmf_enable_receive_data_c19671":
+            if self.test_name != "test_wifi_sdk_mgmt_pmf_enable_receive_data_c19671":
                 self.wifi_dut.interfaces.wifi.leave()
 
         except Exception as e:
