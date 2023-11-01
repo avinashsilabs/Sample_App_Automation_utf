@@ -677,7 +677,7 @@ def test_wifi_sdk_qos1_mqtt_with_tcp_publish_diff_length_C127792(
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1, "security": 'OPEN'})
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(0, 120)])
 def test_wifi_sdk_mqtt_keep_alive_disable_with_qos1_TC127794(
@@ -770,7 +770,7 @@ def test_wifi_sdk_mqtt_keep_alive_disable_with_qos1_TC127794(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1, "security": 'OPEN'})
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
-@pytest.mark.parametrize("keep_alive_time,idle_time", [(60, 120)])
+@pytest.mark.parametrize("keep_alive_time,idle_time", [(60, 240)])
 def test_wifi_sdk_mqtt_keep_alive_60_with_qos0_TC127761(wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point,
                                                         wifi_dut, keep_alive_time, idle_time, request, sl_collections):
 
@@ -862,7 +862,7 @@ def test_wifi_sdk_mqtt_keep_alive_60_with_qos0_TC127761(wifi_sniffer, mqtt_serve
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11, "security": 'OPEN'})
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
-@pytest.mark.parametrize("keep_alive_time,idle_time", [(120, 240)])
+@pytest.mark.parametrize("keep_alive_time,idle_time", [(120, 480)])
 def test_wifi_sdk_mqtt_keep_alive_120_with_qos1_TC127784(wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point,
                                                          wifi_dut, request, keep_alive_time, idle_time, sl_collections):
 

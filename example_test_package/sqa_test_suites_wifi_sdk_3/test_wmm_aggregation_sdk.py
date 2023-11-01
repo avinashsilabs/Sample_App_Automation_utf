@@ -161,7 +161,7 @@ def test_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer, net_perf_client, wi
         assert snif_pkt_count, "Unable to find Block ACK packets"
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -260,7 +260,7 @@ def test_udp_tx_aggregation_open_mode_c19033(wifi_sniffer, net_perf_client, wifi
         assert snif_pkt_count, "Unable to find Block ACK packets"
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -355,7 +355,7 @@ def test_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer, net_perf_client, wi
         assert snif_pkt_count, "Unable to find Block ACK packets"
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -451,4 +451,4 @@ def test_udp_rx_aggregation_open_mode_c19034(wifi_sniffer, net_perf_client, wifi
         assert snif_pkt_count, "Unable to find Block ACK packets"
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

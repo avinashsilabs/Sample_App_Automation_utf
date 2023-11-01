@@ -137,7 +137,7 @@ def test_tcp_data_tx_with_BE_BK_VI_VO_19752(wifi_sniffer, net_perf_client, wifi_
         assert snif_pkt_count, "qos categories packets are not captured in the sniffer"
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -204,7 +204,7 @@ def test_udp_data_tx_with_BE_BK_VI_VO_c19753(wifi_sniffer, net_perf_client, wifi
         assert snif_pkt_count, "qos categories packets are not captured in the sniffer"
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -264,7 +264,7 @@ def test_ping_from_ap_to_module_ip_with_four_traffics_c19754(wifi_sniffer, wifi_
         assert snif_pkt_count, "qos_voice packets are not captured in the sniffer"
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -329,7 +329,7 @@ def test_udp_data_rx_with_BE_BK_VI_VO_c22116(wifi_sniffer, net_perf_client, wifi
         assert snif_pkt_count, "qos_categories packets are not captured in the sniffer"
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -392,4 +392,4 @@ def test_tcp_data_rx_with_best_effort_c22115(wifi_sniffer, net_perf_client, wifi
         assert snif_pkt_count, "qos_categories packets are not captured in the sniffer"
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
