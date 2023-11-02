@@ -113,3 +113,5 @@ wpa3_h2e_mode,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 0) and (w
 hidden_ssid_scan,(wlan.sa == {{ sa_addr }}), and (wlan.ssid == "") and (wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.fc.type_subtype == 4)
 wpa3_enh_mode,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 1)
 dhcp,(wlan.addr == {{ sa_addr }}), and dhcp
+apmode_association_id,(wlan.sa == {{ sa_addr }}), and (wlan.fixed.aid=={{association_id}})
+mgmt_data_rates_data_rate_54mbps_apmode,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}) and (wlan.da== {{ da_addr }}), and (wlan.fc.type_subtype == 0x0028) and (wlan_radio.data_rate == 54)

@@ -455,16 +455,17 @@ def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer,  wifi_du
                                              testcase_no=19432)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
-        for i in range(4):
-            sl_collections.ap_sniffer_validation(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
-                                                 dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'],
-                                                 rasp_mac_address=wifi_clients[i].interfaces.wifi.get_mac_address())
-            packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                ta_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'], ra_addr=wifi_clients[i].interfaces.wifi.get_mac_address(),
-                filter_name='data_packets')
-            logger().info(f"packet_filter3: {packet_filter3}")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
-                'Sniffer: Unable to find data_packets in sniffer'
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
+            filter_name='beacon')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find  beacon in Sniffer'
+        for asso_id in range(4):
+            packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'], association_id=asso_id+1,
+                filter_name='apmode_association_id')
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count'], \
+                f"unable to find apmode_association_id_{asso_id+1}"
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -1116,9 +1117,9 @@ def test_wifi_sdk_dutap_fixed_data_rate_c19441(wifi_sniffer, wifi_dut,
                                              dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'],
                                              rasp_mac_address=ap_dut_obj.dut_addr_dict['rasp_mac_address'])
         packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
+            sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'], da_addr=ap_dut_obj.dut_addr_dict['rasp_mac_address'],
             radio_ch=ap_dut_obj.channel,
-            filter_name='mgmt_data_rates_data_null_Qos_54mbps')
+            filter_name='mgmt_data_rates_data_rate_54mbps_apmode')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
             'Unable to find any packets for Data/Qos/Null packet for 54 Mbps data rates'
 
