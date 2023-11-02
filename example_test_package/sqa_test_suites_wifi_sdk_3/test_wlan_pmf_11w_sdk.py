@@ -85,7 +85,7 @@ class WLanThread(ThreadBase):
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
             time.sleep(2)
 
-            if self.test_case_no == 19658:
+            if self.test_case_no == 19658 or self.test_case_no == 19671:
                 self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
                     join_feature_bitmap=IEEE802_11W.Protection_capable)
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
@@ -123,7 +123,7 @@ class WLanThread(ThreadBase):
                 self.socket_obj.socket_data_transfer()
             time.sleep(2)
 
-            if self.test_name != "test_wifi_sdk_mgmt_pmf_enable_receive_data_c19671":
+            if self.test_case_no != 19671:
                 self.wifi_dut.interfaces.wifi.leave()
 
         except Exception as e:
@@ -600,7 +600,7 @@ def test_wifi_sdk_mgmt_pmf_enable_receive_data_c19671(wifi_dut, wifi_access_poin
     wifi_access_point.interfaces.wifi.start_ap()
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          test_name=test_name, test_case_no=19658, sl_collections=sl_collections, data_transfer=False)
+                          test_name=test_name, test_case_no=19671, sl_collections=sl_collections, data_transfer=False)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
