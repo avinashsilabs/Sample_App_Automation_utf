@@ -974,7 +974,7 @@ def test_wifi_sdk_mqtt_check_error_0xFFFFFFD3_C127802(
 
         wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt,
                                                                username=username,
-                                                               expected_status=SLStatus.SL_STATUS_SI91X_PARAMETER_LENGHT_EXCEED)
+                                                               expected_status=SLStatus.SL_STATUS_SI91X_PARAMETER_LENGTH_EXCEED)
         logger().info("DUT sent 0xFFFFFFD3 when the username or password is more than 60 bytes")
 
         logger().info("Stop the sniffer")
