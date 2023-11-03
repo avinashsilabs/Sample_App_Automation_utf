@@ -86,6 +86,7 @@ eap_type_ttls_verification,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr
 eap_type_peap_verification,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (eap.type == 25)
 eap_tls_cert_verification_1_2,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and eap and tls.record.version == 0x0303
 eap_tls_cert_verification_1_0,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and eap and tls.record.version == 0x0301
+eap_connection_failure,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (eap.code == 4)
 beacon_wpa2_entr_wfa_check,(wlan.sa == {{ sa_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff), and (wlan.fc.type_subtype == 0x0008) and (wlan.wfa.ie.wpa.type == 1) 
 beacon_wpa2_entr_akms_check,(wlan.sa == {{ sa_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff), and (wlan.fc.type_subtype == 0x0008) and (wlan.rsn.akms.type == 1)
 apmode_eapol,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 0x0020) or !(wlan.fc.type_subtype == 0x0008)
