@@ -112,7 +112,8 @@ class WifiJoinThread(ThreadBase):
     def __init__(self, wifi_sniffer=None, wifi_dut=None, \
                  wifi_access_point=None, testcase=None, wifi_client=None, \
                  net_perf_client=None, protocol=None, test_type=None, sl_collections=None, ping_count=None,
-                 sniffer_filter=None, region=None, switch=None, pmk_enable=False, traffic_type="TX"):
+                 sniffer_filter=None, region=None, switch=None, pmk_enable=False, traffic_type="TX",
+                 tcp_ip_bypass=False):
 
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -133,6 +134,7 @@ class WifiJoinThread(ThreadBase):
         self.dut_mac_address = None
         self.ap_mac_address = None
         self.traffic_type = traffic_type
+        self.tcp_ip_bypass = tcp_ip_bypass
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
 
@@ -153,23 +155,34 @@ class WifiJoinThread(ThreadBase):
         logger().info(f"Remote device ip :{host_ip}")
         self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
                                         protocol=protocol, device_ip=self.device_ip,
-                                        host_ip=host_ip, timeout=100, traffic_type=traffic_type)
+                                        host_ip=host_ip, timeout=60, traffic_type=traffic_type)
+    def set_power_save(self):
 
-    def join_to_ap(self):
+            self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                          psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+    def join_to_ap(self, skip_power_save=False):
 
         if not self.wifi_dut.interfaces.wifi.associated:
             logger().info("Enabling rejoin...")
             self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                      beacon_missed_count=40, first_time_retry_enable=0)
 
+            if skip_power_save:
+                pwr_save = False
+            else:
+                pwr_save = self.power_save
             self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
-                                                                 wifi_access_point=self.wifi_access_point,
-                                                                 power_save=self.power_save,
-                                                                 associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                 retry_count=3, ping_after_power_save=True,
-                                                                 ping_count=self.ping_count, pmk_enable=self.pmk_enable)
-
-            self.device_ip = self.dut_addr['device_ip']
+                                                                     wifi_access_point=self.wifi_access_point,
+                                                                     power_save=pwr_save,
+                                                                     associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                     retry_count=3, ping_after_power_save=True,
+                                                                     ping_count=self.ping_count,
+                                                                     pmk_enable=self.pmk_enable,
+                                                                     tcp_ip_bypass=self.tcp_ip_bypass)
+            if not self.tcp_ip_bypass:
+                self.device_ip = self.dut_addr['device_ip']
             self.dut_mac_address = self.dut_addr['dut_mac_address']
             logger().info(f"*****************DUT_MAC_ADDR : {self.dut_mac_address}*********************")
             self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
@@ -371,8 +384,49 @@ class ScanTime_JoinTime(ThreadBase):
                         assert False, "Unable to find ap in scan results"
                     logger().info(f"Scan in {t.duration} seconds")
 
+    def join_to_ap(self, tcp_ip_bypass=False):
 
-    def time_diff(self):
+        logger().info("configuring the Sniffer with the channel")
+        self.wifi_sniffer.interfaces.capture.configure_interface(
+            channel=self.wifi_access_point.interfaces.wifi.channel)
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
+
+        wifi_obj = WifiJoinThread(wifi_sniffer=self.wifi_sniffer, wifi_dut=self.wifi_dut,
+                                  wifi_access_point=self.wifi_access_point, testcase=self.testcase,
+                                  wifi_client=self.wifi_client, sl_collections=self.sl_collections,
+                                  ping_count=self.ping_count, sniffer_filter=self.sniffer_filter,
+                                  test_type=self.test_type, tcp_ip_bypass=tcp_ip_bypass)
+
+        self.dut_addr = wifi_obj.join_to_ap()
+        if not tcp_ip_bypass:
+            self.device_ip = self.dut_addr['device_ip']
+        self.dut_mac_address = self.dut_addr['dut_mac_address']
+        logger().info(f"*****************DUT_MAC_ADDR : {self.dut_mac_address}*********************")
+        self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap_bssid : {self.ap_mac_address}")
+
+        self.wifi_sniffer.interfaces.capture.stop_capture()
+
+    def caluculate_join_time(self):
+
+        packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
+
+        packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=self.dut_mac_address,
+            da_addr=self.ap_mac_address,
+            filter_name='probe_req_response')
+        packet_filter3 = self.sniffer_filter.interfaces.ws_sniffer_filter. \
+            get_sniffer_filter(sa_addr=self.dut_mac_address, da_addr=self.ap_mac_address,
+                               filter_name='assoc_req_resp_eapol_4_way_handshake')
+
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count'], \
+            'Sniffer: Unable to find probe_req_response packet in sniffer'
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3,
+                                                                       packet_filter2=packet_filter2)[
+            'packet_count'], \
+            'Sniffer: Unable to find assoc_req_resp_eapol_4_way_handshake packet in sniffer'
 
         packet_filter1 = "Arrival Time:"
         count = 0
@@ -405,53 +459,6 @@ class ScanTime_JoinTime(ThreadBase):
         datetime2 = datetime.combine(date1, time_object2)
         time_taken = datetime2 - datetime1
         time_taken = time_taken.total_seconds()
-        return time_taken
-
-    def caluculate_join_time(self):
-
-        logger().info("configuring the Sniffer with the channel")
-        self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
-        logger().info("start capturing with Sniffer by giving the test case name as filename")
-        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
-
-
-        if 'PMK' in self.testcase:
-            self.pmk_enable = True
-
-        wifi_obj = WifiJoinThread(wifi_sniffer=self.wifi_sniffer, wifi_dut=self.wifi_dut,
-                                  wifi_access_point=self.wifi_access_point, testcase=self.testcase,
-                                  wifi_client=self.wifi_client, sl_collections=self.sl_collections,
-                                  ping_count=self.ping_count, sniffer_filter=self.sniffer_filter,
-                                  test_type=self.test_type,pmk_enable=self.pmk_enable)
-
-        self.dut_addr = wifi_obj.join_to_ap()
-
-        self.device_ip = self.dut_addr['device_ip']
-        self.dut_mac_address = self.dut_addr['dut_mac_address']
-        logger().info(f"*****************DUT_MAC_ADDR : {self.dut_mac_address}*********************")
-        self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
-        logger().info(f"ap_bssid : {self.ap_mac_address}")
-        packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
-
-        self.wifi_sniffer.interfaces.capture.stop_capture()
-
-        packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=self.dut_mac_address,
-            da_addr=self.ap_mac_address,
-            filter_name='probe_req_response')
-        packet_filter3 = self.sniffer_filter.interfaces.ws_sniffer_filter. \
-            get_sniffer_filter(sa_addr=self.dut_mac_address, da_addr=self.ap_mac_address,
-                               filter_name='assoc_req_resp_eapol_4_way_handshake')
-
-        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
-            'packet_count'], \
-            'Sniffer: Unable to find probe_req_response packet in sniffer'
-        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3,
-                                                                       packet_filter2=packet_filter2)[
-            'packet_count'], \
-            'Sniffer: Unable to find assoc_req_resp_eapol_4_way_handshake packet in sniffer'
-
-        time_taken = self.time_diff()
         assert time_taken <= 0.4, "join time is more than 400ms"
         logger().info(f"time taken to connect is: {time_taken}")
         time.sleep(2)
@@ -500,7 +507,7 @@ class BleThreadFunctionality(ThreadBase):
         self.ble_client.interfaces.bluetooth.stop_scanning()
 
     def stop_scan_adv(self):
-        logger().info("Initiating stop scan from Remote dut")
+        logger().info("Initiating stop scan from dut")
         self.wifi_dut.interfaces.wifi.ble_stop_scanning()
         logger().info("Initiating stop advertise from Remote device")
         self.ble_client.interfaces.bluetooth.stop_advertising()
@@ -609,6 +616,9 @@ class BleThreadFunctionality(ThreadBase):
         if self.ble_test_type == "scan_from_remote_device":
             self.scan_from_remote_device()
 
+        if self.ble_test_type == "scan_and_connect_from_dut":
+            self.scan_and_connect_from_dut()
+
 
 pytestmark = [
     pytest.mark.config(
@@ -625,8 +635,8 @@ pytestmark = [
             "ble_features": Si91xBLEFeatureBitMap.Default
                             | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-                                        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
-                                        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+                                        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+                                        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
             "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
@@ -634,7 +644,6 @@ pytestmark = [
     )
 ]
 
-@pytest.mark.skip("Ble connection stability issue")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -677,12 +686,11 @@ def test_Coex_sdk_fun_ble_slave_wlan_conn_C133428(wifi_sniffer, wifi_access_poin
     logger().info("sniffer validation is successful")
 
 
-@pytest.mark.skip("Ble connection stability issue")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan"])
 def test_Coex_sdk_fun_ble_master_wlan_conn_C133429(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request,
                                                 utf_constants, sl_collections, wifi_client, sniffer_filter):
     """
@@ -766,7 +774,6 @@ def test_Coex_sdk_WLAN_conn_while_BLE_scan_C133430(wifi_sniffer, wifi_access_poi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip("Ble connection stability issue")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890', "beacon_interval": 500})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1015,14 +1022,14 @@ def test_Coex_sdk_BLE_scan_while_WLAN_conn_C133568(wifi_sniffer, wifi_access_poi
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-@pytest.mark.skip("Ble connection stability issue")
+
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan"])
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
 def test_Coex_sdk_WLAN_disconnect_BLE_slave_C133502(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                          request, utf_constants, sl_collections, wifi_client,
                                                          sniffer_filter, net_perf_client, protocol):
@@ -1065,14 +1072,14 @@ def test_Coex_sdk_WLAN_disconnect_BLE_slave_C133502(wifi_sniffer, wifi_access_po
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-@pytest.mark.skip("Ble connection stability issue")
+
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan"])
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
 def test_Coex_sdk_WLAN_disconnect_BLE_peripheral_C133466(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                          request, utf_constants, sl_collections, wifi_client,
                                                          sniffer_filter, net_perf_client, protocol):
@@ -1120,14 +1127,14 @@ def test_Coex_sdk_WLAN_disconnect_BLE_peripheral_C133466(wifi_sniffer, wifi_acce
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-@pytest.mark.skip("Ble connection stability issue")
+
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan"])
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
 def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133503(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                          request, utf_constants, sl_collections, wifi_client,
                                                          sniffer_filter, net_perf_client, protocol):
@@ -1181,7 +1188,7 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133503(wifi_sniffer, wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip()
+
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1242,14 +1249,14 @@ def test_Coex_sdk_BLE_conn_disconn_master_WLAN_conn_C133520(wifi_sniffer, wifi_a
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-@pytest.mark.skip("Ble connection stability issue")
+
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan"])
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
 def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133487(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                          request, utf_constants, sl_collections, wifi_client,
                                                          sniffer_filter, net_perf_client, protocol):
@@ -1304,14 +1311,13 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133487(wifi_sniffer, wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip("Ble connection stability issue")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan"])
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
 def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                          request, utf_constants, sl_collections, wifi_client,
                                                          sniffer_filter, net_perf_client, protocol):
@@ -1356,14 +1362,15 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(wifi_sniffer, wifi_acce
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-@pytest.mark.skip("Ble connection stability issue & TCP-RX issue")
+
+@pytest.mark.skip("TCP-RX issue")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan"])
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
 def test_Coex_sdk_WLAN_TCP_UDP_RX_WPA2_BLE_slave_C133476(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                          request, utf_constants, sl_collections, wifi_client,
                                                          sniffer_filter, net_perf_client, protocol):
@@ -1409,14 +1416,14 @@ def test_Coex_sdk_WLAN_TCP_UDP_RX_WPA2_BLE_slave_C133476(wifi_sniffer, wifi_acce
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip("Ble connection stability issue& TCP-RX issue")
+@pytest.mark.skip("TCP-RX issue")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan"])
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
 def test_Coex_sdk_WLAN_throughput_open_BLE_slave_C133449(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                          request, utf_constants, sl_collections, wifi_client,
                                                          sniffer_filter, net_perf_client, protocol):
@@ -1460,14 +1467,14 @@ def test_Coex_sdk_WLAN_throughput_open_BLE_slave_C133449(wifi_sniffer, wifi_acce
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip("Ble connection stability issue & TCP-RX issue")
+@pytest.mark.skip("TCP-RX issue")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan"])
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
 def test_Coex_sdk_WLAN_throughput_WPA2_BLE_slave_C133450(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                          request, utf_constants, sl_collections, wifi_client,
                                                          sniffer_filter, net_perf_client, protocol):
@@ -1592,7 +1599,6 @@ def test_Coex_sdk_selected_channels_scan_time_BLE_slave_C133454(wifi_sniffer, wi
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-@pytest.mark.skip("BLE connection issue stability issue")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1625,6 +1631,7 @@ def test_Coex_sdk_join_time_BLE_slave_C133458(wifi_sniffer, wifi_access_point, w
                                      wifi_access_point=wifi_access_point, testcase=test_name,
                                      wifi_client=wifi_client, test_type=test_type, sl_collections=sl_collections,
                                      ping_count=ping_count, sniffer_filter=sniffer_filter)
+        wifi_obj.join_to_ap()
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         ble_obj.ble_disconnect()
@@ -1632,53 +1639,411 @@ def test_Coex_sdk_join_time_BLE_slave_C133458(wifi_sniffer, wifi_access_point, w
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-@pytest.mark.skip("PMK connection issue")
+
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
+def test_Coex_sdk_ADV_BLE_while_WLAN_SCAN_C133551(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
+                                                         request, utf_constants, sl_collections, wifi_client,
+                                                         sniffer_filter):
+    """
+           Test Steps:
+               1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+               2. Wlan Scan in all channels from DUT
+               2. Advertise BLE DUT
+               3. Scan from remote BLE device
+           """
+
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "scan"
+
+        test_name = request.node.name
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                  testcase=test_name, wifi_client=wifi_client,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter,
+                                  test_type="scan")
+
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
+                                         ble_test_type="advertise")
+        wifi_obj.start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_scan()
+        logger().info("sniffer validation is successful")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.skip("TCP-RX issue")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv", "ble_stop_scan"])
-def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_C133460(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
+def test_Coex_sdk_ADV_BLE_while_WLAN_TCP_RX_C133552(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                          request, utf_constants, sl_collections, wifi_client,
                                                          sniffer_filter, net_perf_client, protocol):
     """
            Test Steps:
                1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
                2. Advertise BLE DUT
-               3. WLAN scan and connect to AP with PMK and enable power save
-               4. Scan from remote BLE device and connect to DUT
-               5. Caluculate the time taken to connect to AP
+               3. Wlan Scan ,connect ,ip ,powersave,ping
+               4. Run TCP RX
+               5. Scan from remote BLE device
            """
 
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
-        iter_count = utf_constants.get("iter_count")
-        test_type = "join_time"
 
+        test_name = request.node.name
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
                                          ble_test_type="scan_from_remote_device")
+
         ble_obj.advertise_dut()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        logger().info("Initiating stop scan from Remote device")
+        ble_client.interfaces.bluetooth.stop_scanning()
+        ble_client.interfaces.bluetooth.close()
+        wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                  testcase=test_name, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                                  sl_collections=sl_collections, protocol=protocol, ping_count=ping_count,
+                                  sniffer_filter=sniffer_filter, test_type="iperf", traffic_type="RX")
+        wifi_obj.join_to_ap()
 
-        for i in range(0, iter_count):
+        wifi_obj.start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        ble_client.interfaces.bluetooth.close()
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-            wifi_obj = ScanTime_JoinTime(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut,
-                                         wifi_access_point=wifi_access_point, testcase=test_name,
-                                         wifi_client=wifi_client, test_type=test_type, sl_collections=sl_collections,
-                                         ping_count=ping_count, sniffer_filter=sniffer_filter)
-            wifi_obj.start()
-            ble_obj.start()
-            wifi_obj.wait_for_exit()
-            ble_obj.wait_for_exit()
-            logger().info("Initiating stop scan from Remote device")
-            ble_client.interfaces.bluetooth.stop_scanning()
-            wifi_obj.disconnect()
+
+@pytest.mark.skip("TCP-RX issue")
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan"])
+def test_Coex_sdk_WLAN_TCP_RX_while_BLE_continuous_scan_C133555(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
+                                                                request, utf_constants, sl_collections, wifi_client,
+                                                                sniffer_filter, net_perf_client, protocol):
+    """
+           Test Steps:
+               1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+               2. Advertise remote Raspi device
+               3. Enable Scan from DUT check whether dut is able to find remote device
+               4. Join the access point and enable the dhcp
+               5. Enable the wlan and bt power save mode in dut after the connection
+               6. Initiate ping from the dut and run TCP RX
+           """
+
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
+                                         ble_test_type="scan")
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                  testcase=test_name, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                                  sl_collections=sl_collections, protocol=protocol, ping_count=ping_count,
+                                  sniffer_filter=sniffer_filter, test_type="iperf", traffic_type="RX")
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        ble_obj.stop_scan_adv()
+        wifi_obj.disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("sniffer validation is successful")
+        wifi_obj.sniffer_validation_join()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
+def test_Coex_sdk_fun_ble_slave_wlan_conn_disconn_C133554(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request,
+                                                utf_constants, sl_collections, wifi_client, sniffer_filter):
+    """
+      Test Steps:
+          1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+          2. Conenct DUT as BLE slave
+          3. Join the access point and enable the dhcp
+          4. Enable the wlan and bt power save mode in dut after the connection
+          5. Initiate ping from the dut
+          6. wlan disconnect
+          7. Repeat steps from 3-6 for 5 iterations
+
+      """
+    test_name = request.node.name
+    ping_count = utf_constants.get("ping_count")
+    iter_count = utf_constants.get("iter_count")
+    test_type = "ping"
+    logger().info("configuring the Sniffer with the channel")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    logger().info("start capturing with Sniffer by giving the test case name as filename")
+
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+    ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
+                                     ble_test_type="slave")
+    ble_obj.start()
+    ble_obj.wait_for_exit()
+    wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=test_name, wifi_client=wifi_client,
+                              sl_collections=sl_collections,
+                              ping_count=ping_count, sniffer_filter=sniffer_filter, test_type=test_type)
+
+    for count in range(0, iter_count):
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        wifi_obj.disconnect()
+    ble_obj.ble_disconnect()
+    wifi_sniffer.interfaces.capture.stop_capture()
+    wifi_obj.sniffer_validation_join()
+    logger().info("sniffer validation is successful")
+
+
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan"])
+def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
+                                                         request, utf_constants, sl_collections, wifi_client,
+                                                         sniffer_filter, net_perf_client, protocol):
+    """
+           Test Steps:
+               1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+               2. Configure AP on WPA2 security
+               3. Advertise BLE DUT
+               4. Scan from remote BLE device and connect to DUT
+               5. Join the access point and enable the dhcp
+               6. Enable wlan and bt power save mode in dut after the connection
+               7. Do Wi-Fi data transfer TCP-TX ,UDP-TX
+           """
+
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "throughput"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
+                                         ble_test_type="slave")
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                  testcase=test_name, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                                  sl_collections=sl_collections, protocol=protocol, ping_count=ping_count,
+                                  sniffer_filter=sniffer_filter, test_type=test_type)
+        wifi_obj.join_to_ap()
+        wifi_obj.run_traffic(protocol="TCP", traffic_type="TX")
+        ble_obj.ble_disconnect()
+        wifi_obj.disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("sniffer validation is successful")
+        wifi_obj.sniffer_validation_join()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan"])
+def test_Coex_sdk_BLE_active_scan_when_WLAN_conn_C133560(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
+                                                   request, utf_constants, sl_collections, wifi_client, sniffer_filter):
+    """
+           Test Steps:
+               1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+               2. Advertise remote Raspi device
+               3. Enable active Scan from DUT check whether dut is able to find remote device
+               4. Join the access point and enable the dhcp
+               5. Enable the wlan and bt power save mode in dut after the connection
+               6. Initiate ping from the dut
+           """
+
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
+                                         ble_test_type="scan", ble_scan_type=1)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                  testcase=test_name, wifi_client=wifi_client,
+                                  sl_collections=sl_collections,
+                                  ping_count=ping_count, sniffer_filter=sniffer_filter, test_type=test_type)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        ble_obj.stop_scan_adv()
+        wifi_obj.disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("sniffer validation is successful")
+        wifi_obj.sniffer_validation_join()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan"])
+def test_Coex_sdk_BLE_scan_while_TCP_TX_C133573(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
+                                                request, utf_constants, sl_collections, wifi_client,
+                                                sniffer_filter, net_perf_client, protocol):
+    """
+           Test Steps:
+               1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+               2. Advertise remote Raspi device
+               3. Scan from DUT check whether dut is able to find remote device
+               2. Join the access point and enable the dhcp
+               3. Enable the wlan and bt power save mode in dut after the connection
+               4. Initiate ping from the dut
+           """
+
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "iperf"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                  testcase=test_name, wifi_client=wifi_client,
+                                  sl_collections=sl_collections,
+                                  ping_count=ping_count, sniffer_filter=sniffer_filter,
+                                  net_perf_client=net_perf_client, protocol=protocol,
+                                  test_type=test_type)
+        wifi_obj.join_to_ap(skip_power_save=True)
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
+                                         ble_test_type="scan")
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj.set_power_save()
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        ble_obj.stop_scan_adv()
+        wifi_obj.disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("sniffer validation is successful")
+        wifi_obj.sniffer_validation_join()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan"])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_Coex_sdk_ble_bd_addr_wlan_TCP_TX_C133564(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request,
+                                                  utf_constants, sl_collections, wifi_client, sniffer_filter,
+                                                  net_perf_client, protocol):
+    """
+      Test Steps:
+          1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+          2. Join the access point and enable the dhcp
+          3. Conenct DUT as BLE master
+          4. Enable the wlan and bt power save mode in dut after the connection
+          5. Run TCP-TX
+          6. query for local bd address
+
+      """
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "iperf"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
+
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                  testcase=test_name, wifi_client=wifi_client,
+                                  sl_collections=sl_collections,
+                                  ping_count=ping_count, sniffer_filter=sniffer_filter, test_type=test_type,
+                                  net_perf_client=net_perf_client, protocol=protocol)
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
+                                        ble_test_type="scan_and_connect_from_dut")
+        ble_obj.advertise_remote_device()
+        wifi_obj.join_to_ap()
+        wifi_obj.start()
+        time.sleep(10)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.bt_get_local_address()
+        wifi_obj.wait_for_exit()
+        wifi_obj.disconnect()
+        ble_obj.ble_disconnect(disconnect_from="dut")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 @pytest.mark.skip("SMP pairing not working")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
@@ -1896,206 +2261,51 @@ def test_Coex_sdk_SMP_PAIR_RESP_DUT_TCP_TX_C133442(wifi_sniffer, wifi_access_poi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+
+@pytest.mark.skip("PMK connection issue")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
-def test_Coex_sdk_ADV_BLE_while_WLAN_SCAN_C133551(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
-                                                         request, utf_constants, sl_collections, wifi_client,
-                                                         sniffer_filter):
-    """
-           Test Steps:
-               1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
-               2. Wlan Scan in all channels from DUT
-               2. Advertise BLE DUT
-               3. Scan from remote BLE device
-           """
-
-    try:
-        test_name = request.node.name
-        ping_count = utf_constants.get("ping_count")
-        test_type = "scan"
-
-        test_name = request.node.name
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        logger().info("start capturing with Sniffer by giving the test case name as filename")
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-
-        wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                  testcase=test_name, wifi_client=wifi_client,
-                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter,
-                                  test_type="scan")
-
-        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
-                                         ble_test_type="advertise")
-        wifi_obj.start()
-        ble_obj.start()
-        ble_obj.wait_for_exit()
-        wifi_obj.wait_for_exit()
-        ble_obj.stop_adv_scan()
-        wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_obj.sniffer_validation_scan()
-        logger().info("sniffer validation is successful")
-
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
-
-@pytest.mark.skip("TCP-RX issue")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
-def test_Coex_sdk_ADV_BLE_while_WLAN_TCP_RX_C133552(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv", "ble_stop_scan"])
+def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_C133460(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                          request, utf_constants, sl_collections, wifi_client,
                                                          sniffer_filter, net_perf_client, protocol):
     """
            Test Steps:
                1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
                2. Advertise BLE DUT
-               3. Wlan Scan ,connect ,ip ,powersave,ping
-               4. Run TCP RX
-               5. Scan from remote BLE device
+               3. WLAN scan and connect to AP with PMK and enable power save
+               4. Scan from remote BLE device and connect to DUT
+               5. Caluculate the time taken to connect to AP
            """
 
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
+        iter_count = utf_constants.get("iter_count")
+        test_type = "join_time"
 
-        test_name = request.node.name
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        logger().info("start capturing with Sniffer by giving the test case name as filename")
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
                                          ble_test_type="scan_from_remote_device")
-
         ble_obj.advertise_dut()
-        ble_obj.start()
-        ble_obj.wait_for_exit()
-        logger().info("Initiating stop scan from Remote device")
-        ble_client.interfaces.bluetooth.stop_scanning()
-        ble_client.interfaces.bluetooth.close()
-        wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                  testcase=test_name, wifi_client=wifi_client, net_perf_client=net_perf_client,
-                                  sl_collections=sl_collections, protocol=protocol, ping_count=ping_count,
-                                  sniffer_filter=sniffer_filter, test_type="iperf", traffic_type="RX")
-        wifi_obj.join_to_ap()
 
-        wifi_obj.start()
-        ble_obj.start()
-        ble_obj.wait_for_exit()
-        wifi_obj.wait_for_exit()
-        ble_obj.stop_adv_scan()
-        ble_client.interfaces.bluetooth.close()
-        wifi_dut.interfaces.wifi.leave()
-        wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_obj.sniffer_validation_join()
-        logger().info("sniffer validation is successful")
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        for i in range(0, iter_count):
 
-
-@pytest.mark.skip("TCP-RX issue")
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan"])
-def test_Coex_sdk_WLAN_TCP_RX_while_BLE_continuous_scan_C133555(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
-                                                                request, utf_constants, sl_collections, wifi_client,
-                                                                sniffer_filter, net_perf_client, protocol):
-    """
-           Test Steps:
-               1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
-               2. Advertise remote Raspi device
-               3. Enable Scan from DUT check whether dut is able to find remote device
-               4. Join the access point and enable the dhcp
-               5. Enable the wlan and bt power save mode in dut after the connection
-               6. Initiate ping from the dut and run TCP RX
-           """
-
-    try:
-        test_name = request.node.name
-        ping_count = utf_constants.get("ping_count")
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        logger().info("start capturing with Sniffer by giving the test case name as filename")
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
-                                         ble_test_type="scan")
-        ble_obj.start()
-        ble_obj.wait_for_exit()
-        wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                  testcase=test_name, wifi_client=wifi_client, net_perf_client=net_perf_client,
-                                  sl_collections=sl_collections, protocol=protocol, ping_count=ping_count,
-                                  sniffer_filter=sniffer_filter, test_type="iperf", traffic_type="RX")
-        wifi_obj.start()
-        wifi_obj.wait_for_exit()
-        ble_obj.stop_scan_adv()
-        wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info("sniffer validation is successful")
-        wifi_obj.sniffer_validation_join()
+            wifi_obj = ScanTime_JoinTime(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut,
+                                         wifi_access_point=wifi_access_point, testcase=test_name,
+                                         wifi_client=wifi_client, test_type=test_type, sl_collections=sl_collections,
+                                         ping_count=ping_count, sniffer_filter=sniffer_filter)
+            wifi_obj.start()
+            ble_obj.start()
+            wifi_obj.wait_for_exit()
+            ble_obj.wait_for_exit()
+            logger().info("Initiating stop scan from Remote device")
+            ble_client.interfaces.bluetooth.stop_scanning()
+            wifi_obj.disconnect()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
-
-@pytest.mark.skip("BLE Connection stability issue")
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
-def test_Coex_sdk_fun_ble_slave_wlan_conn_disconn_C133554(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request,
-                                                utf_constants, sl_collections, wifi_client, sniffer_filter):
-    """
-      Test Steps:
-          1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
-          2. Conenct DUT as BLE slave
-          3. Join the access point and enable the dhcp
-          4. Enable the wlan and bt power save mode in dut after the connection
-          5. Initiate ping from the dut
-          6. wlan disconnect
-          7. Repeat steps from 3-6 for 5 iterations
-
-      """
-    test_name = request.node.name
-    ping_count = utf_constants.get("ping_count")
-    iter_count = utf_constants.get("iter_count")
-    test_type = "ping"
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    logger().info("start capturing with Sniffer by giving the test case name as filename")
-
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-    ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
-                                     ble_test_type="slave")
-    ble_obj.start()
-    ble_obj.wait_for_exit()
-    wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                              testcase=test_name, wifi_client=wifi_client,
-                              sl_collections=sl_collections,
-                              ping_count=ping_count, sniffer_filter=sniffer_filter, test_type=test_type)
-
-    for count in range(0, iter_count):
-        wifi_obj.start()
-        wifi_obj.wait_for_exit()
-        wifi_obj.disconnect()
-    ble_obj.ble_disconnect()
-    wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_obj.sniffer_validation_join()
-    logger().info("sniffer validation is successful")
-
 
