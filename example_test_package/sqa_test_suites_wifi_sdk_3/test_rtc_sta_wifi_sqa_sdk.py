@@ -2,10 +2,9 @@ import pytest
 import time
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
-    Si91xOperatingMode, Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap
+    Si91xOperatingMode, Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap
 from utf.utils.thread_base import ThreadBase
 from utf.utils.time_measurer import TimeMeasurer
-from utf.utf_config import UtfConfig
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 
 
@@ -25,7 +24,7 @@ def logger():
         2. Enable/Disable the RTC timer in DUT
         3. Set the RTC timer in DUT
         4. Get the RTC timer of DUT
-        
+
     Author: Ayush
 
 """
@@ -76,9 +75,11 @@ class WLanRTCSTAThread(ThreadBase):
                                                   hours=self.set_hour, day=self.set_month_day, month=self.set_month,
                                                   year=self.set_year, weekday=self.set_week_day)
             return
+        if '19055' in self.test_case:
+            self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                          beacon_missed_count=40,
+                                                                          first_time_retry_enable=0)
 
-        firmware_version = self.wifi_dut.interfaces.wifi.version()
-        logger().info(f"Firmware version-> {firmware_version}")
         logger().info(f"Time in seconds just before initiating set rtc ->  {self.set_time_sec}")
 
         self.wifi_dut.interfaces.wifi.set_performance_profile()
@@ -238,9 +239,6 @@ def test_wifi_sdk_check_set_rtc_functionality_twice_c19049(wifi_dut, wifi_access
             wlan_obj.start()
             wlan_obj.wait_for_exit()
 
-            logger().info(
-                f"Time difference observed between set time and get time is {wlan_obj.time_dif} seconds,which is in"
-                f" tolerance level for Iteration {count + 1}")
             wlan_obj.set_seconds = 30
             wlan_obj.set_minutes = 20
 
@@ -270,15 +268,14 @@ def test_wifi_sdk_check_set_rtc_functionality_twice_c19049(wifi_dut, wifi_access
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-@pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
-def test_wifi_sdk_check_get_rtc_functionality_c19052(wifi_dut, wifi_access_point, sl_collections, tolerance_threshold,
-                                                     wifi_sniffer):
+def test_wifi_sdk_check_get_rtc_functionality_c19052(wifi_dut, wifi_access_point, sl_collections, wifi_sniffer):
     """
      Test Steps:
         1. Set RTC time
         2. Scan for the AP
         3. Get RTC time
     """
+    tolerance_threshold = [-1, 2]
     try:
         wlan_obj = WLanRTCSTAThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                     sl_collections=sl_collections, tolerance_threshold=tolerance_threshold,
@@ -313,9 +310,7 @@ def test_wifi_sdk_check_get_rtc_functionality_c19052(wifi_dut, wifi_access_point
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-@pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
-def test_wifi_sdk_get_rtc_multiple_times_c19053(wifi_dut, wifi_access_point, sl_collections, tolerance_threshold,
-                                                wifi_sniffer):
+def test_wifi_sdk_get_rtc_multiple_times_c19053(wifi_dut, wifi_access_point, sl_collections, wifi_sniffer):
     """
     Test Steps:
         1. Set RTC time
@@ -326,6 +321,7 @@ def test_wifi_sdk_get_rtc_multiple_times_c19053(wifi_dut, wifi_access_point, sl_
         6. Get DUT IP
         7. Get RTC time
     """
+    tolerance_threshold = [-1, 2]
     try:
         wlan_obj = WLanRTCSTAThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                     sl_collections=sl_collections, tolerance_threshold=tolerance_threshold,
@@ -363,6 +359,8 @@ def test_wifi_sdk_get_rtc_multiple_times_c19053(wifi_dut, wifi_access_point, sl_
 
             device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
             logger().info(f"DUT ip: {device_ip}")
+            status = sl_collections.ping(device_ip=device_ip, ping_count=10)
+            logger().info(f'Status of ping = {status}')
         time_after_ping = T.duration
 
         wlan_obj.time_data = wifi_dut.interfaces.wifi.get_rtc()
@@ -403,9 +401,7 @@ def test_wifi_sdk_get_rtc_multiple_times_c19053(wifi_dut, wifi_access_point, sl_
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-@pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
-def test_wifi_sdk_get_rtc_without_enabling_feature_c19054(wifi_dut, wifi_access_point, sl_collections,
-                                                          tolerance_threshold, wifi_sniffer):
+def test_wifi_sdk_get_rtc_without_enabling_feature_c19054(wifi_dut, wifi_access_point, sl_collections, wifi_sniffer):
     """
     Test Steps:
         1. Scan for the AP
@@ -413,6 +409,7 @@ def test_wifi_sdk_get_rtc_without_enabling_feature_c19054(wifi_dut, wifi_access_
         3. Get RTC time
         4. Validate set time and get time are equal
     """
+    tolerance_threshold = [-1, 2]
     try:
         wlan_obj = WLanRTCSTAThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                     sl_collections=sl_collections, tolerance_threshold=tolerance_threshold,
@@ -426,6 +423,87 @@ def test_wifi_sdk_get_rtc_without_enabling_feature_c19054(wifi_dut, wifi_access_
 
         logger().info("Set time updated and get time received are same, which is expected when RTC feature is"
                       " not enabled")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.RealTimeClockFromHost |
+                           Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_get_rtc_after_rejoin_c19055(switch, wifi_dut, wifi_access_point, sl_collections, wifi_sniffer):
+    """
+    Test Steps:
+        1. Scan for the AP
+        2. Set RTC time
+        3. Get RTC time
+    """
+    tolerance_threshold = [-1, 2]
+    try:
+        wlan_obj = WLanRTCSTAThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                    sl_collections=sl_collections, tolerance_threshold=tolerance_threshold,
+                                    wifi_sniffer=wifi_sniffer, test_case='19055',
+                                    channel=wifi_access_point.interfaces.wifi.channel)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        assert (wlan_obj.time_dif >= tolerance_threshold[0]) and (
+                wlan_obj.time_dif <= tolerance_threshold[1]), f"get time updated is " \
+                                                              f"not in tolerance " \
+                                                              f"level. Time " \
+                                                              f"difference observed is {wlan_obj.time_dif}"
+
+        logger().info(
+            f"Time difference observed between set time and get time is {wlan_obj.time_dif} seconds,"
+            f"which is in tolerance level after scan")
+
+        with TimeMeasurer() as T:
+            sl_collections.connect(wifi_access_point=wifi_access_point, wifi_dut=wifi_dut)
+            ip_status, ip_config = sl_collections.configure_ip(wifi_dut, ip_status=False)
+            assert ip_status, f"....Unable to assign IP ADDRESS through DHCP with reason: {ip_config}...."
+
+            device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+            logger().info(f"DUT ip: {device_ip}")
+
+            switch.interfaces.pdu_switch.turn_off()
+
+            switch.interfaces.pdu_switch.turn_on(delay=60)
+            time.sleep(100)
+            status = sl_collections.ping(device_ip=device_ip, ping_count=10)
+            logger().info(f'Status of ping = {status}')
+
+        time_for_rejoin = T.duration
+        wlan_obj.time_data = wifi_dut.interfaces.wifi.get_rtc()
+        wlan_obj.time_data['seconds'] = wlan_obj.time_data['seconds'] + (wlan_obj.time_data['minutes'] * 60)
+        wlan_obj.idle_time = wlan_obj.idle_time + time_for_rejoin
+        wlan_obj.time_dif = wlan_obj.time_data['seconds'] - wlan_obj.idle_time - wlan_obj.set_time_sec
+
+        assert (wlan_obj.time_dif >= tolerance_threshold[0]) and (
+                wlan_obj.time_dif <= tolerance_threshold[1]), f"get time updated is " \
+                                                              f"not in tolerance " \
+                                                              f"level. Time " \
+                                                              f"difference observed is {wlan_obj.time_dif}"
+
+        logger().info(
+            f"Time difference observed between set time and get time is {wlan_obj.time_dif} seconds,"
+            f"which is in tolerance level after rejoin")
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
