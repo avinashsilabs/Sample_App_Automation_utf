@@ -1883,6 +1883,8 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(wifi_sniffer, wifi_acce
                                   sniffer_filter=sniffer_filter, test_type=test_type)
         wifi_obj.join_to_ap()
         wifi_obj.run_traffic(protocol="TCP", traffic_type="TX")
+        time.sleep(5)
+        wifi_obj.run_traffic(protocol="UDP", traffic_type="TX")
         ble_obj.ble_disconnect()
         wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
