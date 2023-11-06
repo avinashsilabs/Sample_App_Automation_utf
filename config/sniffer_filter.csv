@@ -116,3 +116,8 @@ wpa3_enh_mode,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 1)
 dhcp,(wlan.addr == {{ sa_addr }}), and dhcp
 apmode_association_id,(wlan.sa == {{ sa_addr }}), and (wlan.fixed.aid=={{association_id}})
 mgmt_data_rates_data_rate_54mbps_apmode,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}) and (wlan.da== {{ da_addr }}), and (wlan.fc.type_subtype == 0x0028) and (wlan_radio.data_rate == 54)
+eap_tls_dhe_rsa_aes256,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x0039 and tls.handshake.cipher_suites_length == 2
+eap_tls_dhe_rsa_aes128,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x0033 and tls.handshake.cipher_suites_length == 2
+eap_tls_aes256_sha256,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x003d and tls.handshake.cipher_suites_length == 2
+eap_tls_aes128_sha256,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x003c and tls.handshake.cipher_suites_length == 2
+eap_tls_aes128_sha,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x003c and tls.handshake.cipher_suites_length == 2
