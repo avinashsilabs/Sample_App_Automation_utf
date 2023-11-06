@@ -120,6 +120,7 @@ def test_ble_sdk_dual_role_1slave_1master_conn_disconn_reconn_C19917(wifi_dut, b
             ble_client_address = sl_collections.ble_connection(wifi_dut=wifi_dut, ble_client=ble_client2,
                                                                ble_dut_address=ble_obj.bt_dut_address,
                                                                mode="master")
+            time.sleep(60)
             ble_obj.check_device_state()
             ble_client1.interfaces.bluetooth.disconnect(ble_obj.bt_dut_address)
             wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
@@ -148,7 +149,7 @@ def test_ble_sdk_dual_role_1slave_conn_with_15ms_1master_conn_with_200ms_c19918(
         ble_client1.interfaces.bluetooth.connect(dev_addr=ble_obj.bt_dut_address, min_conn_interval=15,
                                                  max_conn_interval=15,
                                                  conn_latency=0, supervision_timeout=4000)
-        time.sleep(2)
+        time.sleep(60)
         ble_obj.check_device_state()
         logger().info(f"change in function for ble role")
         ble_client_address = sl_collections.ble_connection(wifi_dut=wifi_dut, ble_client=ble_client2,
@@ -185,6 +186,7 @@ def test_ble_sdk_dual_role_1slave_conn_with_20ms_1master_conn_with_200ms_c19919(
         ble_client1.interfaces.bluetooth.connect(dev_addr=ble_obj.bt_dut_address, min_conn_interval=20,
                                                  max_conn_interval=20,
                                                  conn_latency=0, supervision_timeout=4000)
+        time.sleep(60)
         ble_obj.check_device_state()
         logger().info(f"change in function for ble role")
         ble_client_address = sl_collections.ble_connection(wifi_dut=wifi_dut, ble_client=ble_client2, ble_dut_address=ble_obj.bt_dut_address, mode="master")
