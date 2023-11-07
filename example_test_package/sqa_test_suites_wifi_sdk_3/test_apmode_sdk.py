@@ -130,8 +130,40 @@ class ApModeClientConnections(ThreadBase):
             assert tp, "failed to get throughput..."
             logger().info("data transfer is successful")
             time.sleep(5)
+        if self.traffic_type == "Rx":
+            if self.protocol == "UDP":
+                transfer_type = 2
+                protocol = 17
+                size = 1470
+                throughput_type = 4
+                bandwidth = "68M"
+                self.net_perf_client.interfaces.net_perf.init_client(host_ip=self.dut_addr_dict['client_ip'],
+                                                                     device_ip=self.dut_addr_dict['dut_ip'],
+                                                                     protocol=self.protocol, bandwidth=bandwidth)
+            else:
+                transfer_type = 1
+                protocol = 6
+                size = 1460
+                throughput_type = 3
+                self.net_perf_client.interfaces.net_perf.init_client(host_ip=self.dut_addr_dict['client_ip'],
+                                                                     device_ip=self.dut_addr_dict['dut_ip'],
+                                                                     protocol=self.protocol)
+
+            self.net_perf_client.interfaces.net_perf.start()
+
+            logger().info("receiving data from Host")
+            self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
+                                                local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                local_ip=self.dut_addr_dict['dut_ip'],
+                                                remote_ip=self.dut_addr_dict['client_ip'],
+                                                remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                size=size, ttl=30, throughput_type=throughput_type, qos=0)
+
+            logger().info("data received is successful")
+            time.sleep(3)
         logger().info("Stop sniffer finally")
         self.wifi_sniffer.interfaces.capture.stop_capture()
+
 
 
 
