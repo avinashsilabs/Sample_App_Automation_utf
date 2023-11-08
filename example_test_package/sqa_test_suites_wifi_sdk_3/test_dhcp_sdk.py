@@ -1,16 +1,12 @@
 import time
-import uuid
-from datetime import datetime
 import pytest
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
-    Si91xCustomFeatureBitMap, Si91xOperatingMode
+    Si91xCustomFeatureBitMap, Si91xOperatingMode, Si91xTCPIPFeatureBitMap, \
+    Si91xExtTCPIPFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xOperatingMode, Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes
 from utf.interfaces.iperf.iperf_constants import IperfConstants
-from threading import Thread
+from utf.utils.iperf.iperf_utils import ping
 from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
-
-
-
 
 def logger():
     return get_logger(__name__)
@@ -32,87 +28,12 @@ def logger():
     Author: Shaik Abdul Azeez
 """
 
-class validation_sniffer:
-    """ Method to verify dhcp renewal by checking the time difference b/w successive dhcp requests
-    is lease_time/2 or 87.5% of lease time and also verifies null frames with powersave"""
-
-    def dhcp_renewal(self, wifi_dut, wifi_access_point, wifi_sniffer, testcase, dhcp_lease, sniffer_filter):
-
-        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"Device mac address: {sa_addr}")
-        da_addr = wifi_access_point.interfaces.wifi.bssid
-        logger().info(f"AP MAC: {da_addr}")
-        filter_3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,da_addr=da_addr,filter_name='power_mgmt_bit')
-        filter_2 = f"wlan.addr == {sa_addr} && dhcp"
-
-        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(wlan_addr={sa_addr},filter_name='dhcp_renewal')
-
-        logger().info("passing passphrase and ssid to decrypt dhcp packets")
-        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        logger().info("DHCP decryption is in progress : Validating the DORA process")
-
-        logger().info("Sniffer validation for dhcp packets")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_3)["packet_count"], \
-            'Unable to find the power save sniffer packets'
-
-        logger().info("calling the method from tshark filter_time_stamp")
-        current_time = time.time()
-        updated_capture_file = 'filter_' + testcase + '_' + str(
-            datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
-        file_name = f'./reports/{updated_capture_file}.pcap'
-        local_capture_file = file_name
-        wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
-
-        wifi_sniffer.interfaces.capture.shell(
-            f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{filter_1}' -T fields -e "
-            f"frame.number -w "
-            f"{wlan_filter_file}")
-        with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
-            sftp.get(wlan_filter_file, local_capture_file)
-        result = wifi_sniffer.interfaces.capture.fetch_packet_time_stamp(filter_2,
-                                                                         wlan_filter_file)
-        assert result, f"Unable to find the time stamp for the {filter_2}"
-        logger().info(f"DHCP request packet list {result}")
-        result.pop(0)  # Pop the first element because always the reference packet will be set to 0
-        count = 0
-        if len(result) >= 2:
-            diff_time_dhcp_request = [float(result[i + 1]) - float(result[i]) for i in range(0, len(result) - 1)]
-            logger().info(f"time difference between successive dhcp requests :{diff_time_dhcp_request}")
-            for i in range(0, len(diff_time_dhcp_request)):
-                logger().info(f"time diff {float(diff_time_dhcp_request[i])}")
-                if float((dhcp_lease / 2) - 10) < (float(diff_time_dhcp_request[i])) <= float((dhcp_lease / 2) + 10):
-                    logger().info(
-                        f"DHCP request packet found for {float(dhcp_lease / 2)} seconds lease time and the dhcp request "
-                        f"packet time is {float(diff_time_dhcp_request[i])}")
-                    count = count+1
-                elif float((dhcp_lease / 2) - 5) < (float(diff_time_dhcp_request[i])) <= float((dhcp_lease * 87.5) / 100):
-                    logger().info(
-                        f"DHCP request packet found for 87.5% of lease time time and the dhcp request packet time "
-                        f"difference is {float(diff_time_dhcp_request[i])}")
-                    count = count+1
-                else:
-                    rangelist = [x for x in range(int((dhcp_lease / 2) - 10), int((dhcp_lease / 2) + 10))]
-                    logger().info(f"expected packet should be in :{rangelist}")
-                    for j in rangelist:
-                        logger().info(f"**{diff_time_dhcp_request[i]}*{j}**{float(diff_time_dhcp_request[i]) % float(j)}*")
-                        if float(diff_time_dhcp_request[i]) % float(j) <= 2:
-                            logger().info(f"observed pkt diff is multiple of lease time:{diff_time_dhcp_request[i]}"
-                                          f" multiple of {j}")
-                            count = count + 1
-            assert (float(count/len(diff_time_dhcp_request))*100) >= 80, "expected pkts are not found with the given lease time"
-        else:
-            assert False, "DHCP list doesnot contain two request time stamps to compare"
-
-    def start(self):
-        pass
-
-
 class WifiJoinThread(ThreadBase):
     """This function is responsible for wifi connectivity ,powersave ,data transfer"""
 
     def __init__(self, wifi_sniffer=None, wifi_dut=None, \
                  wifi_access_point=None, wifi_client=None, \
-                 net_perf_client=None, protocol=None, sl_collections=None, ping_count=None,
+                 net_perf_client=None, protocol=None, sl_collections=None, ping_count=None, utf_constants=None,
                  sniffer_filter=None, data_transfer=None, traffic_type=None, testcase=None, test_case_no=None):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -121,6 +42,7 @@ class WifiJoinThread(ThreadBase):
         self.net_perf_client = net_perf_client
         self.protocol = protocol
         self.testcase = testcase
+        self.utf_constants = utf_constants
         self.wifi_client = wifi_client
         self.sl_collections = sl_collections
         self.ping_count = ping_count
@@ -133,7 +55,6 @@ class WifiJoinThread(ThreadBase):
         self.ap_mac_address = None
         self.dut_addr = None
 
-
     def run(self):
         logger().info("starting the sniffer again")
         self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
@@ -141,21 +62,40 @@ class WifiJoinThread(ThreadBase):
         time.sleep(3)
 
         if self.test_case_no == 19292:
+            static_ip = '192.168.50.210'
+            static_subnet = '255.255.255.0'
+            static_gateway = '192.168.50.1'
+            ip_version = 'ipv4'
             logger().info(f"=======>>>>>Verifying Static IP<<<<<<<======")
             self.sl_collections.scan(wifi_dut=self.wifi_dut)
             self.sl_collections.connect(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point)
-            self.sl_collections.configure_dut_in_static_ip(self.wifi_dut, static_ip='192.168.50.210', static_subnet='255.255.255.0',
-                                                           static_gateway='192.168.50.1')
-            self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+            self.wifi_dut.interfaces.wifi.start_ip(ip_version=ip_version, static_ip=static_ip,
+                                                   static_subnet=static_subnet,
+                                                   static_gateway=static_gateway, timeout=10)
+            device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode("utf-8")
+            logger().info(f"Device is {device_ip}")
+            time.sleep(2)
+            status = ping(device_ip, self.ping_count)
+            mode = 'power_save_low_latency'
+            dtim_aligned_type = 0
+            num_of_dtim_skip = 0
+            listen_interval = 0
+            assert (status is True), "DUT is not responding to ping request from third party device"
+            self.wifi_dut.interfaces.wifi.set_performance_profile(mode, dtim_aligned_type, num_of_dtim_skip, listen_interval)
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                          psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+            time.sleep(2)
+            status = ping(device_ip, self.ping_count)
+            assert (status is True), "DUT is not responding to ping request from third party device"
+            logger().info(f"ping is successful")
+
         else:
-            # logger().info(f"==========>>>>>>>>>>=======>>>>>>>>>")
             self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                      wifi_access_point=self.wifi_access_point,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                     retry_count=3, ping_after_power_save=True,
-                                                                     ping_count=self.ping_count, power_save=True)
+                                                                     retry_count=3, ping_count=self.ping_count)
         time.sleep(2)
-        if self.test_case_no == 19293:
+        if self.test_case_no == 19293 or self.test_case_no == 19256:
             logger().info(f"Verifying dhcp renewal")
             time.sleep(10)
         if self.data_transfer:
@@ -167,18 +107,18 @@ class WifiJoinThread(ThreadBase):
                 self.dut_addr['device_ip'], protocol=self.protocol)
                 self.net_perf_client.interfaces.net_perf.start()
                 logger().info("sending data from DUT")
+                timeout = 100
                 self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
                                                     local_port=self.net_perf_client.interfaces.net_perf.server_port,
                                                     local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
                                                     remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                    size=1460, ttl=90, throughput_type=1, qos=0)
+                                                    size=1460, ttl=30, throughput_type=1, qos=0, timeout=timeout+2)
                 # # get and print throughput
                 tp = self.net_perf_client.interfaces.net_perf.process_output()
                 assert tp is not None, "Throughput not found"
                 logger().info("data transfer successful")
                 time.sleep(3)
             if self.traffic_type == "RX":
-
                 self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
                 self.dut_addr['device_ip'], protocol=self.protocol, bandwidth="68M")
 
@@ -186,23 +126,46 @@ class WifiJoinThread(ThreadBase):
 
                 logger().info("receiving data from Host")
                 # open socket and listen for data
+                timeout = 100
                 self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
                                                     local_port=self.net_perf_client.interfaces.net_perf.client_port,
                                                     local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
                                                     remote_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                    size=1460, ttl=90, throughput_type=3, qos=0)
+                                                    size=1460, ttl=90, throughput_type=3, qos=0, timeout=timeout+2)
                 logger().info("data received is successful")
                 time.sleep(3)
         if self.test_case_no == 19295:
-            time.sleep(15)
+            time.sleep(60)
         if self.test_case_no == 19296:
             time.sleep(15)
         if self.test_case_no == 19293:
+            logger().info(f"\n######======>>>>>>Waiting for dhcp renewal packets<<<<<<======#######\n")
+            time.sleep(1800)
+            self.wifi_dut.interfaces.wifi.leave()
             logger().info(f"Disconnection will issued after verification")
             self.wifi_sniffer.interfaces.capture.stop_capture()
         else:
             self.wifi_dut.interfaces.wifi.leave()
             self.wifi_sniffer.interfaces.capture.stop_capture()
+
+    def delta_between_dhcp_req_packet(self):
+        packet_filter = "Time delta from previous captured frame"
+        count = 0
+        time_diff = []
+        filter_file = open(f'./reports/filter2_file.txt', 'r')
+        line = filter_file.readlines()
+
+        for x in line:
+            count = count + 1
+            if packet_filter in x:
+                time_delta_from_previous_packet = line[count].strip().split(':')[1].replace(']', '').strip().replace(
+                    'seconds', '')
+                logger().info(f'time_delta_from_previous_packet={time_delta_from_previous_packet}')
+                time_diff.append(float(time_delta_from_previous_packet))
+
+        logger().info(time_diff)
+        filter_file.close()
+        return time_diff
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -210,26 +173,32 @@ class WifiJoinThread(ThreadBase):
     "wifi_dut",
     wifi=
     {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLAN,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
     }
 )
-def test_verify_static_ip_allocation_to_dut_c19292(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request, sl_collections, sniffer_filter):
-
-    testcase = request.node.name
+def test_wifi_sdk_verify_static_ip_allocation_to_dut_c19292(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
+                                                            wifi_client, request, sl_collections, sniffer_filter):
+    capture_filename = request.node.name
     ping_count = utf_constants.get("ping_count")
     sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
     logger().info(f"Device mac address: {sa_addr}")
     da_addr = wifi_access_point.interfaces.wifi.bssid
     logger().info(f"AP MAC: {da_addr}")
+
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                              testcase=testcase, sl_collections=sl_collections, ping_count=ping_count, test_case_no=19292)
+                              testcase=capture_filename, wifi_client=wifi_client, sl_collections=sl_collections,
+                              ping_count=ping_count, test_case_no=19292)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -249,98 +218,67 @@ def test_verify_static_ip_allocation_to_dut_c19292(wifi_sniffer, wifi_access_poi
     "wifi_dut",
     wifi=
     {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLAN,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
     }
 )
-def test_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
-                                       utf_constants, request, sl_collections, dhcp_lease, sniffer_filter):
+def test_wifi_sdk_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+                                                                 utf_constants, request, sl_collections, dhcp_lease,
+                                                                 sniffer_filter):
+    time_delta = 60
+    packet_filter2 = '        DHCP: Request (3)'
     ping_count = utf_constants.get("ping_count")
     capture_filename = request.node.name
-    sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
-    da_addr = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f"AP MAC: {da_addr}")
-    logger().info(f"DUT MAC is : {sa_addr}")
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               testcase=capture_filename, wifi_client=wifi_client, sl_collections=sl_collections,
-                              ping_count=ping_count, test_case_no=19293
-                              )
+                              ping_count=ping_count, test_case_no=19293)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         logger().info(f"Waiting for half an hour to verify dhcp renewal ")
-        time.sleep(10)
-        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr,
-                                                                                  filter_name='power_mgmt_bit')
-        filter_2 = f"wlan.addr == {sa_addr} && dhcp"
+        time.sleep(2)
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+        time.sleep(2)
+        device_address = {'sa_addr': wlan_obj.dut_addr['dut_mac_address'], 'da_addr': da_addr,
+                          'wlan_addr': wlan_obj.dut_addr['dut_mac_address']}
+        filters_name = {1: 'power_mgmt_bit', 2: 'dhcp'}
+        output_1 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
+                                                                        device_address, filters_name=filters_name)
+        logger().info(f'\n OUTPUT 1 = {output_1}\n')
+        assert all(output_1.values()), 'Unable to find expected filter'
+        filters_name_1 = {1: 'dhcp_renewal'}
+        output_2 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
+                                                                        device_address, filters_name=filters_name_1,
+                                                                        packet_filter2=packet_filter2)
+        logger().info(f'\n OUTPUT 1 = {output_2}\n')
+        assert all(output_2.values()), 'Unable to find expected filter'
+        dhcp_request_packets_time_delta_list = wlan_obj.delta_between_dhcp_req_packet()
+        logger().info(f'Probe packet time delta list= {dhcp_request_packets_time_delta_list}')
+        dhcp_request_packets_time_delta_list.pop(0)
+        logger().info(f'DHCP Req packet time delta list after removing 0 = {dhcp_request_packets_time_delta_list}')
 
-        filter_3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(wlan_addr={sa_addr},
-                                                                                  filter_name='dhcp_renewal')
-
-        logger().info("passing passphrase and ssid to decrypt dhcp packets")
-        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        logger().info("DHCP decryption is in progress : Validating the DORA process")
-
-        logger().info("Sniffer validation for dhcp packets")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)["packet_count"], \
-            'Unable to find the power save sniffer packets'
-
-        logger().info("calling the method from tshark filter_time_stamp")
-        current_time = time.time()
-        updated_capture_file = 'filter_' + capture_filename + '_' + str(
-            datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
-        file_name = f'./reports/{updated_capture_file}.pcap'
-        local_capture_file = file_name
-        wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
-
-        wifi_sniffer.interfaces.capture.shell(
-            f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{filter_3}' -T fields -e "
-            f"frame.number -w "
-            f"{wlan_filter_file}")
-        with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
-            sftp.get(wlan_filter_file, local_capture_file)
-        result = wifi_sniffer.interfaces.capture.fetch_packet_time_stamp(filter_2,
-                                                                         wlan_filter_file)
-        assert result, f"Unable to find the time stamp for the {filter_2}"
-        logger().info(f"DHCP request packet list {result}")
-        result.pop(0)  # Pop the first element because always the reference packet will be set to 0
-        count = 0
-        if len(result) >= 2:
-            diff_time_dhcp_request = [float(result[i + 1]) - float(result[i]) for i in range(0, len(result) - 1)]
-            logger().info(f"time difference between successive dhcp requests :{diff_time_dhcp_request}")
-            for i in range(0, len(diff_time_dhcp_request)):
-                logger().info(f"time diff {float(diff_time_dhcp_request[i])}")
-                if float((dhcp_lease / 2) - 10) < (float(diff_time_dhcp_request[i])) <= float((dhcp_lease / 2) + 10):
-                    logger().info(
-                        f"DHCP request packet found for {float(dhcp_lease / 2)} seconds lease time and the dhcp request "
-                        f"packet time is {float(diff_time_dhcp_request[i])}")
-                    count = count + 1
-                elif float((dhcp_lease / 2) - 5) < (float(diff_time_dhcp_request[i])) <= float(
-                        (dhcp_lease * 87.5) / 100):
-                    logger().info(
-                        f"DHCP request packet found for 87.5% of lease time time and the dhcp request packet time "
-                        f"difference is {float(diff_time_dhcp_request[i])}")
-                    count = count + 1
-                else:
-                    rangelist = [x for x in range(int((dhcp_lease / 2) - 10), int((dhcp_lease / 2) + 10))]
-                    logger().info(f"expected packet should be in :{rangelist}")
-                    for j in rangelist:
-                        logger().info(
-                            f"**{diff_time_dhcp_request[i]}*{j}**{float(diff_time_dhcp_request[i]) % float(j)}*")
-                        if float(diff_time_dhcp_request[i]) % float(j) <= 2:
-                            logger().info(f"observed pkt diff is multiple of lease time:{diff_time_dhcp_request[i]}"
-                                          f" multiple of {j}")
-                            count = count + 1
-            assert (float(count / len(
-                diff_time_dhcp_request)) * 100) >= 80, "expected pkts are not found with the given lease time"
-        else:
-            assert False, "DHCP list doesnot contain two request time stamps to compare"
+        for time_diff in dhcp_request_packets_time_delta_list:
+            print(int(time_diff))
+            is_between = int(time_diff) in range(50, time_delta)
+            if is_between is False:
+                logger().info(f"{is_between}")
+                status = is_between
+                logger().info(f'\n{time_diff} value is out of range so test case is failed\n')
+                break
+            else:
+                logger().info(f"{is_between}")
+                status = is_between
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -353,27 +291,67 @@ def test_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer, wifi_acces
     "wifi_dut",
     wifi=
     {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLAN,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
     }
 )
-def test_tcp_tx_functionality_while_dhcp_renewal_c19295(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
-                                       protocol, utf_constants, request, sl_collections):
+def test_wifi_sdk_tcp_tx_functionality_while_dhcp_renewal_c19295(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,net_perf_client,
+                                                                 protocol, utf_constants, request, sl_collections, sniffer_filter):
+    time_delta = 60
+    packet_filter2 = '        DHCP: Request (3)'
     ping_count = utf_constants.get("ping_count")
-    testcase = request.node.name
+    capture_filename = request.node.name
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                              testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
-                              protocol=protocol, sl_collections=sl_collections,
-                              ping_count=ping_count, data_transfer=True, traffic_type="TX", test_case_no=19295)
+                              testcase=capture_filename, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                              protocol=protocol,sl_collections=sl_collections, ping_count=ping_count, data_transfer=True,
+                              traffic_type="TX", test_case_no=19295)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+        logger().info(f"Waiting for half an hour to verify dhcp renewal ")
+        time.sleep(2)
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+        time.sleep(2)
+        device_address = {'sa_addr': wlan_obj.dut_addr['dut_mac_address'], 'da_addr': da_addr,
+                          'wlan_addr': wlan_obj.dut_addr['dut_mac_address']}
+        filters_name = {1: 'power_mgmt_bit', 2: 'dhcp'}
+        output_1 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
+                                                                        device_address, filters_name=filters_name)
+        logger().info(f'\n OUTPUT 1 = {output_1}\n')
+        assert all(output_1.values()), 'Unable to find expected filter'
+        filters_name_1 = {1: 'dhcp_renewal'}
+        output_2 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
+                                                                        device_address, filters_name=filters_name_1,
+                                                                        packet_filter2=packet_filter2)
+        logger().info(f'\n OUTPUT 1 = {output_2}\n')
+        assert all(output_2.values()), 'Unable to find expected filter'
+        dhcp_request_packets_time_delta_list = wlan_obj.delta_between_dhcp_req_packet()
+        logger().info(f'Probe packet time delta list= {dhcp_request_packets_time_delta_list}')
+        dhcp_request_packets_time_delta_list.pop(0)
+        logger().info(f'DHCP Req packet time delta list after removing 0 = {dhcp_request_packets_time_delta_list}')
+
+        for time_diff in dhcp_request_packets_time_delta_list:
+            print(int(time_diff))
+            is_between = int(time_diff) in range(50, time_delta)
+            if is_between is False:
+                logger().info(f"{is_between}")
+                status = is_between
+                logger().info(f'\n{time_diff} value is out of range so test case is failed\n')
+                break
+            else:
+                logger().info(f"{is_between}")
+                status = is_between
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -386,26 +364,66 @@ def test_tcp_tx_functionality_while_dhcp_renewal_c19295(wifi_sniffer, wifi_acces
     "wifi_dut",
     wifi=
     {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLAN,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
     }
 )
-def test_tcp_rx_functionality_while_dhcp_renewal_c19296(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
-                                       protocol, utf_constants, request, sl_collections):
+def test_wifi_sdk_tcp_rx_functionality_while_dhcp_renewal_c19296(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,net_perf_client,
+                                                                 protocol, utf_constants, request, sl_collections, sniffer_filter):
+    time_delta = 60
+    packet_filter2 = '        DHCP: Request (3)'
     ping_count = utf_constants.get("ping_count")
-    testcase = request.node.name
+    capture_filename = request.node.name
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                              testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
-                              protocol=protocol, sl_collections=sl_collections,
-                              ping_count=ping_count, data_transfer=True, traffic_type="RX", test_case_no=19296)
+                              testcase=capture_filename, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                              protocol=protocol, sl_collections=sl_collections, ping_count=ping_count,data_transfer=True,
+                              traffic_type="RX", test_case_no=19296)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+        logger().info(f"Waiting for half an hour to verify dhcp renewal ")
+        time.sleep(2)
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+        time.sleep(2)
+        device_address = {'sa_addr': wlan_obj.dut_addr['dut_mac_address'], 'da_addr': da_addr,
+                          'wlan_addr': wlan_obj.dut_addr['dut_mac_address']}
+        filters_name = {1: 'power_mgmt_bit', 2: 'dhcp'}
+        output_1 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
+                                                                        device_address, filters_name=filters_name)
+        logger().info(f'\n OUTPUT 1 = {output_1}\n')
+        assert all(output_1.values()), 'Unable to find expected filter'
+        filters_name_1 = {1: 'dhcp_renewal'}
+        output_2 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
+                                                                        device_address, filters_name=filters_name_1,
+                                                                        packet_filter2=packet_filter2)
+        logger().info(f'\n OUTPUT 1 = {output_2}\n')
+        assert all(output_2.values()), 'Unable to find expected filter'
+        dhcp_request_packets_time_delta_list = wlan_obj.delta_between_dhcp_req_packet()
+        logger().info(f'Probe packet time delta list= {dhcp_request_packets_time_delta_list}')
+        dhcp_request_packets_time_delta_list.pop(0)
+        logger().info(f'DHCP Req packet time delta list after removing 0 = {dhcp_request_packets_time_delta_list}')
+
+        for time_diff in dhcp_request_packets_time_delta_list:
+            print(int(time_diff))
+            is_between = int(time_diff) in range(50, time_delta)
+            if is_between is False:
+                logger().info(f"{is_between}")
+                status = is_between
+                logger().info(f'\n{time_diff} value is out of range so test case is failed\n')
+                break
+            else:
+                logger().info(f"{is_between}")
+                status = is_between
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
