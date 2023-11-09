@@ -68,8 +68,8 @@ pipeline {
                                     env.tests_url= env.JENKINS_URL + 'view/UTF/job/'+env.JOB_NAME+ '/'+env.BUILD_NUMBER + '/testReport/'
 
                                   
-                                    env.RELEASE_NAME = params.Release_Name      
-                                    env.BRANCH_NAME = params.UTF_WIFI_BRANCH
+                                    env.RELEASE_NAME = "${Release_Name}"     
+                                    env.BRANCH_NAME = "${UTF_WIFI_BRANCH}"
                                     env.build = sh(script: "echo ${RS9116_FIRMWARE} | cut -d '.' -f5", returnStdout: true).trim()
                                     env.SDK_BUILD_NUM = build
                                     env.SDK_URL = "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/RS9116_WiSeConnect_SDK/$RS9116_FIRMWARE"
