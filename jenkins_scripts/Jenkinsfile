@@ -25,12 +25,13 @@ pipeline {
         UTF_WIFI_COMMIT = ""
         UTF_CORE_COMMIT = ""
         ARTIFACTORY_URL = ""
-
+        BUILD_USER_ID   = null
         // Add other environment variables here
+      
         RELEASE_NAME = null
-        BRANCH_NAME = null
         SDK_BUILD_NUM = null
         SDK_URL = null
+        BRANCH_NAME = null
         JENKINS_SERVER_NAME = null
         JENKIN_RUN_NUM_VAR = null
         JENKINS_TEST_RESULTS_URL = null
@@ -66,25 +67,48 @@ pipeline {
                                     echo JsonOutput.toJson(responseJson)
                                     env.tests_url= env.JENKINS_URL + 'view/UTF/job/'+env.JOB_NAME+ '/'+env.BUILD_NUMBER + '/testReport/'
 
-                                    RELEASE_NAME = "${Release_Name}"
-                                    UTF_WIFI_BRANCH = "${UTF_WIFI_BRANCH}"
-                                    build = sh(script: "echo ${RS9116_FIRMWARE} | cut -d '.' -f5", returnStdout: true).trim()
-                                    SDK_BUILD_NUM = build
-                                    SDK_URL = "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/RS9116_WiSeConnect_SDK/$RS9116_FIRMWARE"
-                                    JENKINS_SERVER_NAME = "${JENKINS_URL}"
-                                    JENKIN_RUN_NUM_VAR = "${BUILD_NUMBER}"
-                                    JENKINS_TEST_RESULTS_URL = "${tests_url}"
-                                    TESTBED_NAME = "${SSH_TARGET}"
-                                
+                                  
+                                    env.RELEASE_NAME = params.Release_Name      
+                                    env.BRANCH_NAME = params.UTF_WIFI_BRANCH
+                                    env.build = sh(script: "echo ${RS9116_FIRMWARE} | cut -d '.' -f5", returnStdout: true).trim()
+                                    env.SDK_BUILD_NUM = build
+                                    env.SDK_URL = "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/RS9116_WiSeConnect_SDK/$RS9116_FIRMWARE"
+                                    env.JENKINS_SERVER_NAME = "${JENKINS_URL}"
+                                    env.JENKIN_RUN_NUM_VAR = "${BUILD_NUMBER}"
+                                    env.JENKINS_TEST_RESULTS_URL = "${tests_url}"
+                                    env.TESTBED_NAME = "${SSH_TARGET}"
                                     env.major=RS9116_FIRMWARE.split("\\.")[1]
                                     env.minor=RS9116_FIRMWARE.split("\\.")[2]
                                     env.patch=RS9116_FIRMWARE.split("\\.")[3]
                                     env.build_num=RS9116_FIRMWARE.split("\\.")[4]
-                                    
+
                                     if (device_group_name == "utf_sqa_smoke_test_device_group") {
-                                        JOB_TYPE = "smoke"
+                                        env.JOB_TYPE = "smoke"
                                     } else {
-                                        JOB_TYPE = "regression"
+                                        env.JOB_TYPE = "regression"
+        
+                                    }
+                                      def causes = currentBuild.rawBuild.getCauses()
+                                    def startedByUser = null
+                                    
+                                    for (cause in causes) {
+                                        if (cause.class == hudson.model.Cause$UserIdCause) {
+                                            startedByUser = cause.userName
+                                            break
+                                        }
+                                    }
+                                    
+                                    if (startedByUser) {
+                                        echo "This job was started by ${startedByUser}."
+                                    } else {
+                                        echo "This job was not manually triggered by a user."
+                                    }
+                                    env.BUILD_USER_ID = startedByUser  
+                                   
+                                    echo "here"
+                                    def fields = env.getEnvironment()
+                                    fields.each {
+                                        key, value -> println("${key} = ${value}");
                                     }
                             
                                   
