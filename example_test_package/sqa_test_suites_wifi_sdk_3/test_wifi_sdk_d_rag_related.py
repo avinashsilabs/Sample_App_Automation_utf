@@ -116,7 +116,8 @@ class WPA2Enterprise(ThreadBase):
                 self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
                                                                         wifi_access_point=self.wifi_access_point,
                                                                         eap_type=self.eap_type,
-                                                                        ping_after_power_save=False
+                                                                        ping_after_power_save=False,
+                                                                        channel=self.wifi_access_point.interfaces.wifi.channel, retry_count=3
                                                                         )
                 logger().info(
                     f"device_ip, device_mac : {self.dut_addr['device_ip']}, {self.dut_addr['dut_mac_address']}")
