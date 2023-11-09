@@ -21,10 +21,10 @@ pipeline {
         JENKINS_JOB_STAGE_NAME = "Run Tests"
         variables_set = false
         teastagent_executed = false
-        UTF_WISECONNECT_COMMIT = ""
-        UTF_WIFI_COMMIT = ""
-        UTF_CORE_COMMIT = ""
-        ARTIFACTORY_URL = ""
+        UTF_WISECONNECT_COMMIT = null
+        UTF_WIFI_COMMIT = null
+        UTF_CORE_COMMIT = null
+        ARTIFACTORY_URL = null
         BUILD_USER_ID   = null
         // Add other environment variables here
       
