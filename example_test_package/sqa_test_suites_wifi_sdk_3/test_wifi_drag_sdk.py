@@ -108,10 +108,10 @@ class WPA2Enterprise(ThreadBase):
     def run(self):
         try:
             if self.test_case_no == 113821:
-                transfer_type = 2
-                protocol = 17
-                throughput_type = 2
-                size = 1470
+                transfer_type = 1
+                protocol = 6
+                throughput_type = 1
+                size = 1460
             if self.eap_type == "tls":
                 self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
                                                                         wifi_access_point=self.wifi_access_point,
@@ -218,7 +218,7 @@ class WPA2Enterprise(ThreadBase):
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.end_state("wifi_dut",
@@ -290,7 +290,7 @@ def test_wsdk_WPA2_EAP_DHE_RSA_AES256_SHA256_TLSv12_C113821(wifi_dut, wifi_acces
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.end_state("wifi_dut",
@@ -362,7 +362,7 @@ def test_wsdk_WPA2_EAP_DHE_RSA_AES128_SHA256_TLSv12_C113822(wifi_dut, wifi_acces
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.end_state("wifi_dut",
@@ -434,7 +434,7 @@ def test_wsdk_WPA2_EAP_DHE_RSA_AES256_SHA_TLSv12_C113823(wifi_dut, wifi_access_p
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.end_state("wifi_dut",
@@ -506,7 +506,7 @@ def test_wsdk_WPA2_EAP_DHE_RSA_AES128_SHA_TLSv12_C113824(wifi_dut, wifi_access_p
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.end_state("wifi_dut",
@@ -578,7 +578,7 @@ def test_wsdk_WPA2_EAP_AES256_SHA256_TLSv12_C113825(wifi_dut, wifi_access_point,
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.end_state("wifi_dut",
@@ -650,7 +650,7 @@ def test_wsdk_WPA2_EAP_AES128_SHA256_TLSv12_C113826(wifi_dut, wifi_access_point,
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.end_state("wifi_dut",
@@ -722,7 +722,7 @@ def test_wsdk_WPA2_EAP_AES256_SHA_TLSv12_C113827(wifi_dut, wifi_access_point, wi
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.end_state("wifi_dut",
@@ -794,7 +794,7 @@ def test_wsdk_WPA2_EAP_RSA_AES256_SHA256_and_RSA_AES256_SHA_TLSv12_C113832(wifi_
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.end_state("wifi_dut",
@@ -866,7 +866,7 @@ def test_wsdk_WPA2_EAP_all_ciphers_TLSv12_C113833(wifi_dut, wifi_access_point, w
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.end_state("wifi_dut",
