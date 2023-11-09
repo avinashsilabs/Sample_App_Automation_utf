@@ -25,18 +25,7 @@ pipeline {
         UTF_WIFI_COMMIT = null
         UTF_CORE_COMMIT = null
         ARTIFACTORY_URL = null
-        BUILD_USER_ID   = null
-        // Add other environment variables here
-      
-        RELEASE_NAME = "${Release_Name}"
-        SDK_BUILD_NUM = null
-        SDK_URL = null
-        BRANCH_NAME = null
-        JENKINS_SERVER_NAME = null
-        JENKIN_RUN_NUM_VAR = null
-        JENKINS_TEST_RESULTS_URL = null
-        TESTBED_NAME = null
-        JOB_TYPE = null
+     
     }
     options {
         globalLock(credentialsId: 'utf-sqa-hwmux-token', deviceGroup: env.device_group_name, label: env.device_group_label, variable: 'data')
@@ -295,7 +284,6 @@ pipeline {
                                             . venv/Scripts/activate
                                             fi
                                             echo "${RELEASE_NAME}"
-                                            echo "${env.BRANCH_NAME}"
                                             echo "${BRANCH_NAME}"
                                             echo "check_here"
 
