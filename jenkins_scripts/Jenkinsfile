@@ -105,10 +105,6 @@ pipeline {
                                     }
                                     env.BUILD_USER_ID = startedByUser  
                                    
-                                    env.keySet().each { key ->
-                                    echo "${key}: ${env[key]}"
-                                    }
-                            
                                   
                                 }   
                                 withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
