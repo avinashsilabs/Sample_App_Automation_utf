@@ -105,11 +105,11 @@ pipeline {
                                     }
                                     env.BUILD_USER_ID = startedByUser  
                                    
-                                    // echo "here"
-                                    // def fields = env.getEnvironment()
-                                    // fields.each {
-                                    //     key, value -> println("${key} = ${value}");
-                                    // }
+                                    echo "here"
+                                    def fields = env.getEnvironment()
+                                    fields.each {
+                                        key, value -> println("${key} = ${value}");
+                                    }
                             
                                   
                                 }   
