@@ -28,7 +28,7 @@ pipeline {
         BUILD_USER_ID   = null
         // Add other environment variables here
       
-        RELEASE_NAME = null
+        RELEASE_NAME = params.Release_Name
         SDK_BUILD_NUM = null
         SDK_URL = null
         BRANCH_NAME = null
@@ -294,6 +294,10 @@ pipeline {
                                             else
                                             . venv/Scripts/activate
                                             fi
+                                            echo "${RELEASE_NAME}"
+                                            echo "${env.BRANCH_NAME}"
+                                            echo "${BRANCH_NAME}"
+                                            echo "check_here"
 
                                             export PYTHONPATH=./utf_core/src
                                             export QUERY_EXPR=$(printf '{stack=\\\\"%s\\\\",job=\\\\"%s\\\\",stage=\\\\"%s\\\\",build=\\\\"%s\\\\"}' "${STACK}" "${JENKINS_JOB_NAME}" "${JENKINS_JOB_STAGE_NAME}" "${JENKIN_RUN_NUM}")
