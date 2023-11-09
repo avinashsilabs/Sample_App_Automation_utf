@@ -219,6 +219,7 @@ class WifiJoinThread(ThreadBase):
 
         if self.test_type == "ping":
             self.join_to_ap()
+            logger().info("Initiating ping from Raspi to DUT to check stability")
             status = ping(self.device_ip, 30, size=300)
             assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
 
@@ -233,22 +234,20 @@ class WifiJoinThread(ThreadBase):
             logger().info(f"Remote device ip :{host_ip}")
             self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
                                             protocol="TCP", device_ip=self.device_ip,
-                                            host_ip=host_ip, timeout=100, traffic_type="TX")
+                                            host_ip=host_ip, timeout=50, traffic_type="TX")
             self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
                                             protocol="TCP", device_ip=self.device_ip,
                                             host_ip=host_ip, timeout=50, traffic_type="RX")
             self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
                                             protocol="UDP", device_ip=self.device_ip,
-                                            host_ip=host_ip, timeout=100, traffic_type="TX")
+                                            host_ip=host_ip, timeout=50, traffic_type="TX")
             self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
                                             protocol="UDP", device_ip=self.device_ip,
-                                            host_ip=host_ip, timeout=100, traffic_type="RX")
+                                            host_ip=host_ip, timeout=50, traffic_type="RX")
 
         if self.test_type == "http":
             self.join_to_ap()
             logger().info("http download")
-
-
 
 
 
@@ -277,6 +276,10 @@ class ScanTime_JoinTime(ThreadBase):
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
         self.pmk_enable = False
+        self.dut_addr = None
+        self.device_ip = None
+        self.dut_mac_address = None
+        self.ap_mac_address = None
 
     def caluculate_scan_time(self):
 
@@ -392,12 +395,14 @@ class ScanTime_JoinTime(ThreadBase):
         logger().info("start capturing with Sniffer by giving the test case name as filename")
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
 
+        if 'PMK' in self.testcase:
+            self.pmk_enable = True
+
         wifi_obj = WifiJoinThread(wifi_sniffer=self.wifi_sniffer, wifi_dut=self.wifi_dut,
                                   wifi_access_point=self.wifi_access_point, testcase=self.testcase,
                                   wifi_client=self.wifi_client, sl_collections=self.sl_collections,
                                   ping_count=self.ping_count, sniffer_filter=self.sniffer_filter,
-                                  test_type=self.test_type, tcp_ip_bypass=tcp_ip_bypass)
-
+                                  test_type=self.test_type, tcp_ip_bypass=tcp_ip_bypass, pmk_enable=self.pmk_enable)
         self.dut_addr = wifi_obj.join_to_ap()
         if not tcp_ip_bypass:
             self.device_ip = self.dut_addr['device_ip']
@@ -505,12 +510,14 @@ class BleThreadFunctionality(ThreadBase):
         self.wifi_dut.interfaces.wifi.ble_stop_advertising()
         logger().info("Initiating stop scan from Remote device")
         self.ble_client.interfaces.bluetooth.stop_scanning()
+        self.ble_client.interfaces.bluetooth.close()
 
     def stop_scan_adv(self):
         logger().info("Initiating stop scan from dut")
         self.wifi_dut.interfaces.wifi.ble_stop_scanning()
         logger().info("Initiating stop advertise from Remote device")
         self.ble_client.interfaces.bluetooth.stop_advertising()
+        self.ble_client.interfaces.bluetooth.close()
 
     def ble_disconnect(self, disconnect_from="remote"):
         logger().info("Checking connection status of BLE")
@@ -562,6 +569,7 @@ class BleThreadFunctionality(ThreadBase):
         assert self.wifi_dut.interfaces.wifi.ble_address in found_devices, "DUT not found in scan results"
         logger().info(f"DUT BLE address:'{self.ble_dut_address}' found in raspi scan results")
         self.ble_client.interfaces.bluetooth.stop_scanning()
+        self.ble_client.interfaces.bluetooth.close()
 
 
     def scan_and_connect_from_dut(self):
@@ -573,11 +581,16 @@ class BleThreadFunctionality(ThreadBase):
         self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=self.ble_client_address, timeout=60)
         logger().info(f"Ble connection is successful")
 
+        self.wifi_dut.interfaces.wifi.ble_scanning = False
+        self.wifi_dut.interfaces.wifi.ble_advertising = False
+
     def scan_and_connect_from_remote(self):
 
         self.scan_from_remote_device()
         self.ble_client.interfaces.bluetooth.connect(dev_addr=self.ble_dut_address)
         logger().info("Connect ble_client to DUT successful")
+        self.wifi_dut.interfaces.wifi.ble_scanning = False
+        self.wifi_dut.interfaces.wifi.ble_advertising = False
 
 
     def run(self):
@@ -2047,6 +2060,7 @@ def test_Coex_sdk_ble_bd_addr_wlan_TCP_TX_C133564(wifi_sniffer, wifi_access_poin
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
 @pytest.mark.skip("SMP pairing not working")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -2271,7 +2285,7 @@ def test_Coex_sdk_SMP_PAIR_RESP_DUT_TCP_TX_C133442(wifi_sniffer, wifi_access_poi
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv", "ble_stop_scan"])
+                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
 def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_C133460(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                          request, utf_constants, sl_collections, wifi_client,
                                                          sniffer_filter, net_perf_client, protocol):
@@ -2300,6 +2314,7 @@ def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_C133460(wifi_sniffer, wifi_access_p
                                          wifi_access_point=wifi_access_point, testcase=test_name,
                                          wifi_client=wifi_client, test_type=test_type, sl_collections=sl_collections,
                                          ping_count=ping_count, sniffer_filter=sniffer_filter)
+            wifi_obj.join_to_ap()
             wifi_obj.start()
             ble_obj.start()
             wifi_obj.wait_for_exit()
