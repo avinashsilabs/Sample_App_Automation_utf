@@ -28,7 +28,7 @@ pipeline {
         BUILD_USER_ID   = null
         // Add other environment variables here
       
-        RELEASE_NAME = params.Release_Name
+        RELEASE_NAME = "${Release_Name}"
         SDK_BUILD_NUM = null
         SDK_URL = null
         BRANCH_NAME = null
