@@ -182,13 +182,13 @@ class WPA2Enterprise(ThreadBase):
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
                               | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ble_features": Si91xBLEFeatureBitMap.Default
-                            | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+                           | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-                                        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
-                                        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+                                       | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                       | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp
                            | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
-        "eap_cert": ["start_field.pem", "SL_NET_EAP_CLIENT_CREDENTIAL", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
 
     }
 )
@@ -326,8 +326,8 @@ def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_C133462(wifi_sniffer, wifi_access_p
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable","ble_stop_adv",
-                                         "clear_certs"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
+                                         "ble_stop_adv", "clear_certs"])
 def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_C133463(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                             radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap peap method"""
@@ -383,7 +383,7 @@ def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_C133463(wifi_sniffer, wifi_access_p
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp
                            | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
-        "eap_cert": ["start_field.pem", "SL_NET_EAP_CLIENT_CREDENTIAL", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
 
     }
 )
@@ -466,7 +466,6 @@ def test_Coex_sdk_WLAN_throughput_EAP_TLS_BLE_Central_C133451(wifi_sniffer, wifi
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp
                            | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
-        "eap_cert": ["start_field.pem", "SL_NET_EAP_CLIENT_CREDENTIAL", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
 
     }
 )
@@ -536,7 +535,7 @@ def test_Coex_sdk_WLAN_throughput_EAP_TTLS_BLE_Central_C133452(wifi_sniffer, wif
         "oper_mode": Si91xOperatingMode.EAPWiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-                               | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "tcpip_features": Si91xTCPIPFeatureBitMap.TCPIPBypass
                           | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -549,11 +548,10 @@ def test_Coex_sdk_WLAN_throughput_EAP_TTLS_BLE_Central_C133452(wifi_sniffer, wif
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp
                            | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
-        "eap_cert": ["start_field.pem", "SL_NET_EAP_CLIENT_CREDENTIAL", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
 
     }
 )
-@pytest.mark.skip("TCP bypass unable to get response for commands after connection")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
@@ -608,7 +606,7 @@ def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_tcp_bypass_C133497(wifi_sniffer, wif
         "oper_mode": Si91xOperatingMode.EAPWiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-                               | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "tcpip_features": Si91xTCPIPFeatureBitMap.TCPIPBypass
                           | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -624,7 +622,6 @@ def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_tcp_bypass_C133497(wifi_sniffer, wif
 
     }
 )
-@pytest.mark.skip("TCP bypass unable to get response for commands after connection")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
@@ -679,7 +676,7 @@ def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_tcp_bypass_C133498(wifi_sniffer, wi
         "oper_mode": Si91xOperatingMode.EAPWiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-                               | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "tcpip_features": Si91xTCPIPFeatureBitMap.TCPIPBypass
                           | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -695,12 +692,13 @@ def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_tcp_bypass_C133498(wifi_sniffer, wi
 
     }
 )
-@pytest.mark.skip("TCP bypass unable to get response for commands after connection")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
-def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_C133499(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
-                                            radius_server, sl_collections, request, utf_constants):
+def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_C133499(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
+                                                                sniffer_filter,
+                                                                radius_server, sl_collections, request,
+                                                                utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
     try:
         test_name = request.node.name
@@ -748,7 +746,6 @@ def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_C133499(wifi_sniffer, wi
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "tcpip_features": Si91xTCPIPFeatureBitMap.TCPIPBypass
                           | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -770,8 +767,8 @@ def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_C133499(wifi_sniffer, wi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
 def test_Coex_sdk_all_channels_scan_time_BLE_adv_bypass_C133489(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
-                                                         request, utf_constants, sl_collections, wifi_client,
-                                                         sniffer_filter):
+                                                                request, utf_constants, sl_collections, wifi_client,
+                                                                sniffer_filter):
     """
            Test Steps:
                1. Configure the DUT in Wlan+BLE mode for 2.4Ghz in bypass mode
@@ -814,7 +811,6 @@ def test_Coex_sdk_all_channels_scan_time_BLE_adv_bypass_C133489(wifi_sniffer, wi
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "tcpip_features": Si91xTCPIPFeatureBitMap.TCPIPBypass
                           | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -838,8 +834,8 @@ def test_Coex_sdk_all_channels_scan_time_BLE_adv_bypass_C133489(wifi_sniffer, wi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan", "ble_stop_adv"])
 def test_Coex_sdk_sel_chan_scan_time_BLE_slave_bypass_C133490(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
-                                                         request, utf_constants, sl_collections, wifi_client,
-                                                         sniffer_filter, net_perf_client, protocol):
+                                                              request, utf_constants, sl_collections, wifi_client,
+                                                              sniffer_filter, net_perf_client, protocol):
     """
            Test Steps:
                1. Configure the DUT in Wlan+BLE mode for 2.4Ghz in bypass mode
@@ -879,7 +875,6 @@ def test_Coex_sdk_sel_chan_scan_time_BLE_slave_bypass_C133490(wifi_sniffer, wifi
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "tcpip_features": Si91xTCPIPFeatureBitMap.TCPIPBypass
                           | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -945,7 +940,6 @@ def test_Coex_sdk_join_time_WPA2_AES_BLE_ADV_bypass_C133494(wifi_sniffer, wifi_a
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "tcpip_features": Si91xTCPIPFeatureBitMap.TCPIPBypass
                           | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
