@@ -32,17 +32,15 @@ def logger():
 
 
 class BleFunctionality(ThreadBase):
-    def __init__(self, wifi_dut=None, ble_clients=None, ble_adv=None, ble_adv_connection=True):
+    def __init__(self, wifi_dut=None, ble_clients=None, bt_dut_address=None, ble_adv=None, ble_adv_connection=True):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_clients = ble_clients
+        self.bt_dut_address = bt_dut_address
         self.ble_adv = ble_adv
         self.ble_adv_connection = ble_adv_connection
 
     def run(self):
-        logger().info("initiating ble in dut")
-        self.bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
-        assert self.bt_dut_address, "failed to initiate ble in dut"
         self.wifi_dut.interfaces.wifi.ble_start_advertising()
         enable_wifi_ps = self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
         assert enable_wifi_ps == 0, 'failed to enable wlan power save'
@@ -66,17 +64,16 @@ class BleFunctionality(ThreadBase):
         assert device_found
         if self.ble_adv_connection:
             self.ble_clients.interfaces.bluetooth.connect(dev_addr=self.bt_dut_address)
-            time.sleep(60)
-            logger().info(f"Get the state of the dut")
-            state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
-            logger().info(f"***********{state}**********")
-            state_int = int(state) if state.isdigit() else -1
-            assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
-    def check_device_state(self):
+    def check_device_state_on_dut(self):
         logger().info("Checking connection status of BLE")
         state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
+
+    def check_device_state_on_rasp(self):
+        status = self.ble_clients.interfaces.bluetooth.get_connection_status(self.bt_dut_address)
+        logger().info(f"Connection status in remote device '{self.ble_clients.name}' is:{status}")
+        assert status, f"Remote device '{self.ble_clients.name}' is not connected to DUT"
 
 
 
@@ -112,16 +109,21 @@ def test_ble_sdk_dual_role_1slave_1master_conn_disconn_reconn_C19917(wifi_dut, b
         ble_client1 = ble_clients[0]
         ble_client2 = ble_clients[1]
         iter_count = utf_constants.get('iter_count')
+        logger().info("initiating ble in dut")
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        assert bt_dut_address, "failed to initiate ble in dut"
         for i in range(0, iter_count):
-            ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1,
+            ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1, bt_dut_address=bt_dut_address,
                                        ble_adv_connection=True)
             ble_obj.start()
             ble_obj.wait_for_exit()
+            time.sleep(60)
+            ble_obj.check_device_state_on_rasp()
             ble_client_address = sl_collections.ble_connection(wifi_dut=wifi_dut, ble_client=ble_client2,
                                                                ble_dut_address=ble_obj.bt_dut_address,
                                                                mode="master")
             time.sleep(60)
-            ble_obj.check_device_state()
+            ble_obj.check_device_state_on_dut()
             ble_client1.interfaces.bluetooth.disconnect(ble_obj.bt_dut_address)
             wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
             ble_client1.interfaces.bluetooth.close()
@@ -141,8 +143,9 @@ def test_ble_sdk_dual_role_1slave_conn_with_15ms_1master_conn_with_200ms_c19918(
         assert len(ble_clients) >= 2
         ble_client1 = ble_clients[0]
         ble_client2 = ble_clients[1]
-
-        ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1, ble_adv="ble_adv_powersave",
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        assert bt_dut_address, "failed to initiate ble in dut"
+        ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1,  bt_dut_address=bt_dut_address, ble_adv="ble_adv_powersave",
                                    ble_adv_connection=False)
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -150,7 +153,7 @@ def test_ble_sdk_dual_role_1slave_conn_with_15ms_1master_conn_with_200ms_c19918(
                                                  max_conn_interval=15,
                                                  conn_latency=0, supervision_timeout=4000)
         time.sleep(60)
-        ble_obj.check_device_state()
+        ble_obj.check_device_state_on_rasp()
         logger().info(f"change in function for ble role")
         ble_client_address = sl_collections.ble_connection(wifi_dut=wifi_dut, ble_client=ble_client2,
                                                            ble_dut_address=ble_obj.bt_dut_address, mode="master")
@@ -160,7 +163,7 @@ def test_ble_sdk_dual_role_1slave_conn_with_15ms_1master_conn_with_200ms_c19918(
             time_left = round(((test_run_time - sw.elapsed_sec) / 60), 2)
             logger().info(f"Remaining time to complete test is '{time_left}' minutes")
             time.sleep(120)
-        ble_obj.check_device_state()
+        ble_obj.check_device_state_on_dut()
         ble_client1.interfaces.bluetooth.disconnect(ble_obj.bt_dut_address)
         wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
         ble_client1.interfaces.bluetooth.close()
@@ -179,7 +182,9 @@ def test_ble_sdk_dual_role_1slave_conn_with_20ms_1master_conn_with_200ms_c19919(
         assert len(ble_clients) >= 2
         ble_client1 = ble_clients[0]
         ble_client2 = ble_clients[1]
-        ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1, ble_adv="ble_adv_powersave",
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        assert bt_dut_address, "failed to initiate ble in dut"
+        ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1, bt_dut_address=bt_dut_address, ble_adv="ble_adv_powersave",
                                    ble_adv_connection=False)
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -187,7 +192,7 @@ def test_ble_sdk_dual_role_1slave_conn_with_20ms_1master_conn_with_200ms_c19919(
                                                  max_conn_interval=20,
                                                  conn_latency=0, supervision_timeout=4000)
         time.sleep(60)
-        ble_obj.check_device_state()
+        ble_obj.check_device_state_on_rasp()
         logger().info(f"change in function for ble role")
         ble_client_address = sl_collections.ble_connection(wifi_dut=wifi_dut, ble_client=ble_client2, ble_dut_address=ble_obj.bt_dut_address, mode="master")
         time.sleep(5)
@@ -196,7 +201,7 @@ def test_ble_sdk_dual_role_1slave_conn_with_20ms_1master_conn_with_200ms_c19919(
             time_left = round(((test_run_time - sw.elapsed_sec) / 60), 2)
             logger().info(f"Remaining time to complete test is '{time_left}' minutes")
             time.sleep(120)
-        ble_obj.check_device_state()
+        ble_obj.check_device_state_on_dut()
         ble_client1.interfaces.bluetooth.disconnect(ble_obj.bt_dut_address)
         wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
         ble_client1.interfaces.bluetooth.close()
@@ -226,6 +231,7 @@ def test_ble_sdk_scan_in_busy_environment_C19827_c19828(ble_dut, ble_clients, sl
             logger().info(f" ======= initialize ble adv in remote device {count}")
             bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
             assert bt_client_address, f"ble initialization failed in remote device{count}"
+
             logger().info(f"ble client address of remote device {count} is {bt_client_address}")
 
         ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
