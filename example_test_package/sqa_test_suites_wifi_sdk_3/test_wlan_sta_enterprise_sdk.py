@@ -733,6 +733,11 @@ def test_wifi_sdk_connectivity_wpa2_with_wrong_cert_tls_c19024(wifi_dut, wifi_ac
         logger().info(
             f"Connection failed when expired certificate is loaded into the device,observed error code 0x10008 which is "
             f"expected")
+        wifi_dut.interfaces.wifi.start_ip(
+            expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
+        logger().info(
+            f"IP configuration failed when command given in incorrect state,observed error code 0x10021 which "
+            f" is expected")
         dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"****** DUT MAC ADDRESS **** {dut_mac_address}")
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
