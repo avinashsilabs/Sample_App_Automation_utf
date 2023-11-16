@@ -89,6 +89,11 @@ eap_tls_aes256_sha,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }})
 aes256_sha256_and_aes256_sha,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x006b and tls.handshake.ciphersuite == 0x0039 and tls.handshake.cipher_suites_length == 4
 eap_tls_all_cipher,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0303 and tls.handshake.cipher_suites_length == 22
 eap_tls_aes128_sha,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x002f and tls.handshake.cipher_suites_length == 2
+eap_tls_handshake_aes256_sha256_v1,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0301 and tls.handshake.ciphersuite == 0x0039 and tls.handshake.cipher_suites_length == 2
+eap_tls_handshake_aes128_sha128_v1,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0301 and tls.handshake.ciphersuite == 0x0033 and tls.handshake.cipher_suites_length == 2
+eap_tls_aes256_sha_v1,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0301 and tls.handshake.ciphersuite == 0x0035 and tls.handshake.cipher_suites_length == 2
+eap_tls_aes128_sha_v1,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0301 and tls.handshake.ciphersuite == 0x002f and tls.handshake.cipher_suites_length == 2
+eap_tls_all_cipher_v1,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0301 and tls.handshake.cipher_suites_length == 22
 eap_type_tls_verification,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (eap.type == 13)
 eap_type_ttls_verification,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (eap.type == 21)
 eap_type_peap_verification,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (eap.type == 25)
