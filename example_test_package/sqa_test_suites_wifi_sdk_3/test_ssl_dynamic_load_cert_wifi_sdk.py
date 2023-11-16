@@ -875,11 +875,14 @@ def test_wifi_sdk_ssl_socket_connection_dataTX_enable_deep_sleep_base_powersave_
             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
             "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "set_send_feature_frame": True,
+            "ca_cert": [("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
+                    ("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
+                    ("start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START")]
         }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+                       wifi=["close_sockets","wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_wifi_sdk_dynamic_load_three_ssl_sockets_TC19641(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, sl_collections):
     """
@@ -893,26 +896,19 @@ def test_wifi_sdk_dynamic_load_three_ssl_sockets_TC19641(
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         port2 = ssl_server.interfaces.ssl.config['device_port2']
         port3 = 8883
-        result = sl_collections.join_to_wifi_network_with_rejoin(wifi_dut, wifi_access_point, ping_count=10,
-                                                                 retry_count=3, rejoin_params=[0, 4, 40, 0])
-        device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
-        for cert_index in range(0, 2):
-            wifi_dut.interfaces.wifi.set_ssl_certificate(str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")),
-                                                         Si91xCertificateType.SL_NET_SIGNING_CERTIFICATE,
-                                                         cert_index=cert_index)
-
-        wifi_dut.interfaces.wifi.set_ssl_certificate(str(get_tls_certificate_dir().joinpath("start_field.pem")),
-                                                     Si91xCertificateType.SL_NET_SIGNING_CERTIFICATE,Si91xCertIdentifier.SL_NET_TLS_SERVER_CREDENTIAL_START,
-                                                     cert_index=2)
-
         wifi_dut.interfaces.wifi.set_ssl_certificate(str(get_tls_certificate_dir().joinpath("client-certificate.crt")),
-                                                    Si91xCertificateType.SL_NET_CERTIFICATE, Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START,
+                                                     Si91xCertificateType.SL_NET_CERTIFICATE,
+                                                     Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START,
                                                      cert_index=2,
                                                      )
         wifi_dut.interfaces.wifi.set_ssl_certificate(str(get_tls_certificate_dir().joinpath("private-key.key")),
-                                                    Si91xCertificateType.SL_NET_PRIVATE_KEY, Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START,
+                                                     Si91xCertificateType.SL_NET_PRIVATE_KEY,
+                                                     Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START,
                                                      cert_index=2,
                                                      )
+        result = sl_collections.join_to_wifi_network_with_rejoin(wifi_dut, wifi_access_point, ping_count=10,
+                                                                 retry_count=3, rejoin_params=[0, 4, 40, 0])
+        device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
 
         ssl_server.interfaces.ssl.start_server(port=port1)
         ssl_server.interfaces.ssl.start_server(port=port2)
@@ -989,7 +985,7 @@ def test_wifi_sdk_dynamic_load_three_ssl_sockets_TC19641(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "disassociated"])
+                       wifi=["close_sockets","wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_wifi_sdk_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, sl_collections
 ):
