@@ -137,6 +137,7 @@ class WPA2Enterprise(ThreadBase):
 
             if self.eap_type_tls_no_cert:
                 self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=self.wifi_access_point.interfaces.wifi.ssid)
+                self.wifi_dut.interfaces.wifi.set_eap_credentials()
                 time.sleep(5)
                 self.wifi_dut.interfaces.wifi.join(ssid=self.wifi_access_point.interfaces.wifi.ssid,
                                                    passphrase=self.wifi_access_point.interfaces.wifi.passphrase,
@@ -651,6 +652,80 @@ def test_wifi_sdk_connectivity_wpa2_with_expired_cert_tls_c19023(wifi_dut, wifi_
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_rtc(seconds=50, minutes=59, hours=23, day=1, month=1, weekday=4, year=1930)
+        wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     sl_collections=sl_collections, eap_type_tls_no_cert=True)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        logger().info(
+            f"Connection failed when expired certificate is loaded into the device,observed error code 0x10008 which is "
+            f"expected")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"****** DUT MAC ADDRESS **** {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"**** AP mac address*****{ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        if wifi_access_point.interfaces.wifi.security == SecurityMode.WPAEnterprise:
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_mac_address,
+                                                                                            da_addr=dut_mac_address,
+                                                                                            filter_name='beacon_wpa2_entr_wfa_check')
+        else:
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_mac_address,
+                                                                                            da_addr=dut_mac_address,
+                                                                                            filter_name='beacon_wpa2_entr_akms_check')
+
+        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                        da_addr=ap_mac_address,
+                                                                                        filter_name='assoc_req_resp_eapol_4_way_handshake')
+
+        packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_mac_address,
+                                                                                        da_addr=dut_mac_address,
+                                                                                        filter_name='eap_connection_failure')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find beacons in sniffer'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count'], \
+            'Unable to find assoc_req_resp_eapol_4_way_handshake packet in sniffer'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
+            'Unable to find EAP failure frames sent from AP in sniffer '
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.Aggregation,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid |
+                           Si91xCustomFeatureBitMap.RealTimeClockFromHost,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
+def test_wifi_sdk_connectivity_wpa2_with_wrong_cert_tls_c19024(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                                 sniffer_filter, radius_server, sl_collections, request):
+    """This test case verifies the wpa2 enterprise connectivity when the Wrong Certificate loaded into device while
+                    using EAP TLS """
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, eap_type_tls_no_cert=True)
         wifi_thread.start()
