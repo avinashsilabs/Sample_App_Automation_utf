@@ -199,7 +199,7 @@ class aws_connection:
                     f"\naws_iot_client publishing message{i + 1} on topic:'{topic}' \nQOS:'{qos}'"
                     f"\nMessage{i + 1} with length:'{len(msg)} bytes'\nMessage{i + 1} is:'{msg}'")
                 aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic, msg, qos=qos)
-                time.sleep(4)
+                time.sleep(5)
         else:
             aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic, message, qos=qos)
 
@@ -1191,7 +1191,6 @@ def test_wifi_sdk_aws_receive_func_while_receiving_100_msgs_continuously_c19561(
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.check
 @pytest.mark.config('wifi_access_point', wifi={"channel": 3})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("total_bytes", [20])
@@ -1236,7 +1235,6 @@ def test_wifi_sdk_aws_receive_100_mqtt_messages_over_2_subscribed_topics_c19563(
         logger.info("Connecting to AWS server from DUT is successful")
         aws_obj.connect_to_aws_server_from_raspi(aws_iot_client)
         wifi_dut.interfaces.wifi.aws_iot_mqtt_autoreconnect_set_status()
-        aws_obj.connect_to_aws_server_from_raspi(aws_iot_client)
         aws_obj.subscribe_from_dut(wifi_dut, topic1, qos=Si91xAwsQos.QOS0)
         aws_obj.subscribe_from_dut(wifi_dut, topic2, qos=Si91xAwsQos.QOS1)
         time.sleep(5)
@@ -1270,7 +1268,6 @@ def test_wifi_sdk_aws_receive_100_mqtt_messages_over_2_subscribed_topics_c19563(
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.check
 @pytest.mark.config('wifi_access_point', wifi={"channel": 4})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("iterations", [1])
@@ -1353,7 +1350,6 @@ def test_wifi_sdk_aws_data_integrity_check_after_sending_1mb_of_data_c19564(firm
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.check
 @pytest.mark.config('wifi_access_point', wifi={"channel": 5})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("iterations", [1])
@@ -1389,7 +1385,6 @@ def test_wifi_sdk_aws_data_integrity_check_after_receiving_1mb_of_data_c19562(fi
         logger.info("Connecting to AWS server from DUT is successful")
         aws_obj.connect_to_aws_server_from_raspi(aws_iot_client)
         wifi_dut.interfaces.wifi.aws_iot_mqtt_autoreconnect_set_status()
-        aws_obj.connect_to_aws_server_from_raspi(aws_iot_client)
         aws_obj.subscribe_from_dut(wifi_dut, topic, qos=Si91xAwsQos.QOS0)
         time.sleep(5)
 

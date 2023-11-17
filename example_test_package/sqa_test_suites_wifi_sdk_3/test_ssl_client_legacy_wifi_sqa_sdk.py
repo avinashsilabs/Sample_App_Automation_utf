@@ -600,90 +600,70 @@ def test_wifi_sdk_ssl_max_sockets_testcase_c19128(wifi_sniffer, wifi_dut, wifi_a
         sl_collections.exception_handling(wifi_dut, error)
 
 
-""" Below testcases are commented, rework needed for these testcases for upcoming announcements."""
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.end_state("wifi_dut",
-#                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated",
-#                              "clear_certs"])
-# def test_wifi_sdk_ssl_client_1_0version_server_1_0_testcase_c19117(wifi_sniffer, wifi_dut, wifi_access_point, openssl,
-#                                                                    wifi_client, logger, sl_collections):
-#     """
-#     Open ssl client socket with version 1.0 and do data transfer.
-#     """
-#     try:
-#         logger.info("Clearing old certificates in DUT")
-#         wifi_dut.interfaces.wifi.clear_certificate()
-#         logger.info("Clearing certificates completed")
-#
-#         logger.info("Loading certificates in DUT")
-#         wifi_dut.interfaces.wifi.set_ssl_certificate(str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")),
-#                                                      Si91xCertificateType.SL_NET_SIGNING_CERTIFICATE)
-#         logger.info("Loading certificates done\n\n")
-#
-#         capture_filename = "test_wifi_sdk_ssl_server_1_0version_client_1_2_testcase_TC19120"
-#         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
-#         device_ip, dut_mac_address = ssl_obj.join_get_ip()
-#         ap_bssid = wifi_access_point.interfaces.wifi.bssid
-#         logger.info(f'AP BSSID = {ap_bssid}')
-#
-#         openssl.interfaces.server.start(port=5001, tls_version="-tls1")
-#         server_ip = wifi_client.interfaces.wifi.get_ip_address()
-#
-#         sock = wifi_dut.interfaces.wifi.socket()
-#         assert sock == 0, "Socket id received is wrong. expected is 0"
-#         logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
-#         # Enable ssl option for socket opened
-#         wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_")
-#         local_port = randint(5001, 60000)
-#         wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
-#         wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=5001)
-#
-#         # duration = 60
-#         # buffer_length = 100
-#         # t_end = time.time() + duration
-#         # data_check = []
-#         # while time.time() < t_end:
-#         #     data = "".join(
-#         #         random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
-#         #     )
-#         #     data_check.append(data)
-#         #     data_final = "".join(data_check)
-#         #     wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=data)
-#         #
-#         # out = openssl.interfaces.server.get_messages(timeout=100)
-#         # result = out[-1]
-#         # logger.info(f"Total data sent from DUT {data_final}")
-#         # logger.info(f"*************data received*************** {result}")
-#         #
-#         # assert data_final == result, "Data received doesn't match"
-#
-#         openssl.interfaces.server.stop()
-#         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
-#         wifi_dut.interfaces.wifi.leave()
-#
-#         wifi_sniffer.interfaces.capture.stop_capture()
-#         logger.info("Stop Sniffer finally")
-#         validation = True
-#         packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-#         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-#         assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
-#         logger.info(f"PS-POLL packets are captured in the sniffer")
-#         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-#         logger.info(f"DECRYPTION KEY-->{decryption_key}")
-#         ssl_pkt = sl_collections.ssl_packet_decryption(wifi_sniffer, decryption_key, dut_mac_address, ["tls"],
-#                                                        capture_filename, ap_bssid)['tls']
-#         if len(ssl_pkt) > 0:
-#             for i in ssl_pkt:
-#                 if re.search(".*Client Hello", i):
-#                     version = re.search("Version:.*", i).group(0)
-#                     logger.info(f"TLS VERSION USED BY DUT is--->{version}")
-#                     assert "TLS 1.0" in version, "TLS version mismatch, expected TLS VERSION 1.2 to be sent by DUT"
-#                     assert "Client Hello" in i, "Client Hello packet missed"
-#         else:
-#             logger.info(f"SSL packets are not found")
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut, error)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "disassociated",
+                             "clear_certs"])
+def test_wifi_sdk_ssl_client_1_0_version_server_1_2_c19117(sl_collections, openssl, logger, wifi_access_point,
+                                                           wifi_client, wifi_sniffer, wifi_dut, sniffer_filter):
+    """
+    Open ssl client socket with version 1.0 and do data transfer.
+    """
+    try:
+        capture_filename = "test_wifi_sdk_ssl_client_1_0_version_server_1_2_c19117"
+        ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
+        device_ip, dut_mac_address = ssl_obj.join_get_ip()
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
 
+        openssl.interfaces.server.start(port=5001, tls_version="-tls1_2")
+        server_ip = wifi_client.interfaces.wifi.get_ip_address()
+
+        sock = wifi_dut.interfaces.wifi.socket()
+        assert sock == 0, "Socket id received is wrong. expected is 0"
+        logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+        wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_0")
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=5001, timeout=15)
+        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=5001)
+
+        data_sent = []
+        sw = Stopwatch()
+        while sw.elapsed_sec < 60:
+            data = "".join(random.choices(string.ascii_uppercase + string.digits, k=100))
+            data_sent.append(data)
+            wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=data)
+
+        tx_data = "".join(data_sent)
+        rx_data = openssl.interfaces.server.get_messages(timeout=100)[-1]
+        logger.info(f"\n\n*************** Total data sent from DUT ***************\n{tx_data}")
+        logger.info(f"\n\n*************** data received *************** \n{rx_data}")
+        assert tx_data == rx_data, "Data received doesn't match"
+
+        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+        openssl.interfaces.server.stop()
+
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                               sniffer_filter)
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        logger.info(f"DECRYPTION KEY-->{decryption_key}")
+        ssl_pkt = sl_collections.ssl_packet_decryption(wifi_sniffer, decryption_key, dut_mac_address, ["tls"],
+                                                       capture_filename, ap_bssid)["tls"]
+        if len(ssl_pkt) > 0:
+            for i in ssl_pkt:
+                if re.search(".*Client Hello", i):
+                    version = re.search("Version:.*", i).group(0)
+                    logger.info(f"TLS VERSION USED BY DUT is--->{version}")
+                    assert "TLS 1.2" in version, "TLS version mismatch, expected TLS VERSION 1.2 to be sent by DUT"
+                    assert "Client Hello" in i, "Client Hello packet missed"
+        else:
+            logger.info(f"SSL packets are not found")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+""" Below testcases are commented, rework needed for these testcases for upcoming announcements."""
 # @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # @pytest.mark.end_state("wifi_dut",
 #                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
