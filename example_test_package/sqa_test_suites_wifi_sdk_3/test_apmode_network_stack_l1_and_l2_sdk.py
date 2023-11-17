@@ -272,7 +272,7 @@ class SocketDataTransfer(ThreadBase):
             bytes_sent = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=tcp_socket_id, data=self.data, timeout=30)
             logger().info(f"Number of bytes sent by dut {bytes_sent}")
             logger().info("Setting TCP socket receive timeout in remote server")
-            self.remote_socket.interfaces.socket.set_recv_timeout(socket_type=0, timeout=40)
+            self.remote_socket.interfaces.socket.set_recv_timeout(socket_type=0)
             recv_data = self.remote_socket.interfaces.socket.recv_data_tcp(data_size=len(self.data))
             logger().info(f"data received : {recv_data}")
             packets = packets + 1
@@ -351,8 +351,8 @@ class SocketDataTransfer(ThreadBase):
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-def test_wifi_sdk_DUTAP_Validate_UDP_Rx_data_C19465(wifi_sniffer, net_perf_client, wifi_clients, wifi_dut, protocol,
-                                           utf_constants, sl_collections, wifi_access_point, sniffer_filter):
+def test_wifi_sdk_DUTAP_Validate_UDP_Rx_data_C19465(wifi_sniffer, net_perf_client, wifi_dut, wifi_clients, protocol,
+                                           utf_constants, sl_collections, sniffer_filter):
     '''Validate UDP Tx data on Remote peer in ap mode connection'''
     try:
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
@@ -364,8 +364,6 @@ def test_wifi_sdk_DUTAP_Validate_UDP_Rx_data_C19465(wifi_sniffer, net_perf_clien
         for i in range(0, 1):
             logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
             wifi_clients[i].interfaces.wifi.leave()
-        logger().info("Stop sniffer finally")
-        wifi_sniffer.interfaces.capture.stop_capture()
         sl_collections.ap_sniffer_validation(wifi_sniffer, sniffer_filter, dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'],  rasp_mac_address=ap_dut_obj.dut_addr_dict['rasp_mac_address'])
 
     except Exception as Ex:
@@ -623,7 +621,7 @@ def test_wifi_sdk_dutap_tcp_socket_create_transfer_terminate_30min_c19480(wifi_s
                }
          }
 )
-def test_wifi_sdk_dutap_udp_socket_create_transfer_terminate_30min_C19481(wifi_sniffer, wifi_access_point, remote_socket, wifi_dut,
+def test_wifi_sdk_dutap_udp_socket_create_transfer_terminate_30min_C19481(wifi_sniffer, remote_socket, wifi_dut,
                                                                            utf_constants, sniffer_filter, sl_collections, wifi_clients):
     '''By creating socket need to test udp data transfer functionality in ap mode for 30mins'''
     try:
@@ -854,7 +852,7 @@ def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_a
     '''Checking maximum socket limit(11) on the Dut in ap mode connection'''
     try:
         socket_limit = 11
-        ap_dut_obj =  ap.ApMode_ClientConns(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
+        ap_dut_obj = ap.ApMode_ClientConns(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
                                            utf_constants,
                                            dtim_count=None, dut_addr_dict=None,
                                            beacon=None, testcase_no=19465)
