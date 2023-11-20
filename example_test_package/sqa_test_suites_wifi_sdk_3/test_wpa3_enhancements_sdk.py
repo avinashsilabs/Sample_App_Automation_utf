@@ -114,11 +114,13 @@ class WifiConnectionThread(ThreadBase):
                     protocol=self.protocol)
                     self.net_perf_client.interfaces.net_perf.start()
                     logger().info("sending data from DUT")
+                    timeout = 40
                     self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
                                                         local_port=self.net_perf_client.interfaces.net_perf.server_port,
                                                         local_ip=device_ip, remote_ip=host_ip,
                                                         remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0)
+                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0,
+                                                        timeout=timeout+2)
                     # # get and print throughput
                     tp = self.net_perf_client.interfaces.net_perf.process_output()
                     assert tp is not None, "Throughput not found"
@@ -138,11 +140,13 @@ class WifiConnectionThread(ThreadBase):
 
                     logger().info("receiving data from Host")
                     # open socket and listen for data
+                    timeout = 40
                     self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
                                                         local_port=self.net_perf_client.interfaces.net_perf.client_port,
                                                         local_ip=self.device_ip, remote_ip=host_ip,
                                                         remote_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0)
+                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0,
+                                                        timeout=timeout+2)
                     logger().info("data received is successful")
                     time.sleep(3)
             if self.test_case_no == 113909 or self.test_case_no == 113916:
