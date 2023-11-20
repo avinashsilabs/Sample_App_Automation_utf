@@ -531,6 +531,7 @@ class BleThreadFunctionality(ThreadBase):
         else:
             logger().info(f"Initiating BLE disconnection from DUT")
             self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
+        self.ble_client.interfaces.bluetooth.close()
 
     def advertise_remote_device(self):
         logger().info(f"Advertising the Remote BLE device")
@@ -591,6 +592,7 @@ class BleThreadFunctionality(ThreadBase):
         logger().info("Connect ble_client to DUT successful")
         self.wifi_dut.interfaces.wifi.ble_scanning = False
         self.wifi_dut.interfaces.wifi.ble_advertising = False
+        self.ble_client.interfaces.bluetooth.close()
 
 
     def run(self):
@@ -612,7 +614,6 @@ class BleThreadFunctionality(ThreadBase):
             logger().info(f"Remote device found in scan results ,BLE scanning is successful")
             # Stop scanning
             self.wifi_dut.interfaces.wifi.ble_stop_scanning()
-
 
         if self.ble_test_type == "slave":
             self.ble_client_address = self.sl_collections.ble_connection(wifi_dut=self.wifi_dut,
@@ -673,34 +674,39 @@ def test_Coex_sdk_fun_ble_slave_wlan_conn_C133428(wifi_sniffer, wifi_access_poin
           5. Initiate ping from the dut
 
       """
-    test_name = request.node.name
-    ping_count = utf_constants.get("ping_count")
-    test_type = "ping"
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-    ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
-                                     ble_test_type="slave")
-    wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                              testcase=test_name, wifi_client=wifi_client,
-                              sl_collections=sl_collections,
-                              ping_count=ping_count, sniffer_filter=sniffer_filter, test_type=test_type)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
+                                         ble_test_type="slave")
+        wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                  testcase=test_name, wifi_client=wifi_client,
+                                  sl_collections=sl_collections,
+                                  ping_count=ping_count, sniffer_filter=sniffer_filter, test_type=test_type)
 
-    iter_count = utf_constants.get("iter_count")
-    for count in range(iter_count):
-        ble_obj.start()
-        ble_obj.wait_for_exit()
-        wifi_obj.start()
-        wifi_obj.wait_for_exit()
-        logger().info("Checking connection stability for 60 seconds")
-        time.sleep(60)
-        wifi_obj.disconnect()
-        ble_obj.ble_disconnect()
-    wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_obj.sniffer_validation_join()
-    logger().info("sniffer validation is successful")
+        iter_count = utf_constants.get("iter_count")
+        for count in range(iter_count):
+            ble_obj.start()
+            ble_obj.wait_for_exit()
+            wifi_obj.start()
+            wifi_obj.wait_for_exit()
+            logger().info("Checking connection stability for 60 seconds")
+            time.sleep(60)
+            wifi_obj.disconnect()
+            ble_obj.ble_disconnect()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
@@ -719,32 +725,35 @@ def test_Coex_sdk_fun_ble_master_wlan_conn_C133429(wifi_sniffer, wifi_access_poi
           5. Initiate ping from the dut
 
       """
-    test_name = request.node.name
-    ping_count = utf_constants.get("ping_count")
-    test_type = "ping"
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    logger().info("start capturing with Sniffer by giving the test case name as filename")
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("start capturing with Sniffer by giving the test case name as filename")
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-    ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
-                                     ble_test_type="master")
-    ble_obj.start()
-    ble_obj.wait_for_exit()
-    wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                              testcase=test_name, wifi_client=wifi_client,
-                              sl_collections=sl_collections,
-                              ping_count=ping_count, sniffer_filter=sniffer_filter, test_type=test_type)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
+                                         ble_test_type="master")
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                  testcase=test_name, wifi_client=wifi_client,
+                                  sl_collections=sl_collections,
+                                  ping_count=ping_count, sniffer_filter=sniffer_filter, test_type=test_type)
 
-    wifi_obj.start()
-    wifi_obj.wait_for_exit()
-    logger().info("Checking connection stability for 60 seconds")
-    time.sleep(60)
-    wifi_obj.disconnect()
-    ble_obj.ble_disconnect(disconnect_from="dut")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_obj.sniffer_validation_join()
-    logger().info("sniffer validation is successful")
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        logger().info("Checking connection stability for 60 seconds")
+        time.sleep(60)
+        wifi_obj.disconnect()
+        ble_obj.ble_disconnect(disconnect_from="dut")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890', "beacon_interval": 200})
@@ -1203,7 +1212,6 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133503(wifi_sniffer, wifi_ac
                                   sniffer_filter=sniffer_filter, test_type=test_type)
         wifi_obj.join_to_ap()
         ble_obj.ble_disconnect()
-        ble_client.interfaces.bluetooth.close()
         for i in range(0, iter_count):
             #ble_obj.scan_and_connect_from_remote()
             ble_obj.start()
@@ -1211,7 +1219,6 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133503(wifi_sniffer, wifi_ac
             logger().info("Checking connection stability for 60 seconds")
             time.sleep(60)
             ble_obj.ble_disconnect()
-            ble_client.interfaces.bluetooth.close()
         wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("sniffer validation is successful")
@@ -1266,7 +1273,6 @@ def test_Coex_sdk_BLE_conn_disconn_master_WLAN_conn_C133520(wifi_sniffer, wifi_a
                                   sniffer_filter=sniffer_filter, test_type=test_type)
         wifi_obj.join_to_ap()
         ble_obj.ble_disconnect(disconnect_from="dut")
-        ble_client.interfaces.bluetooth.close()
         for i in range(0, iter_count):
             # ble_obj.scan_and_connect_from_dut()
             ble_obj.start()
@@ -1274,7 +1280,6 @@ def test_Coex_sdk_BLE_conn_disconn_master_WLAN_conn_C133520(wifi_sniffer, wifi_a
             logger().info("Checking connection stability for 60 seconds")
             time.sleep(60)
             ble_obj.ble_disconnect(disconnect_from="dut")
-            ble_client.interfaces.bluetooth.close()
 
         wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1330,14 +1335,12 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133487(wifi_sniffer, wifi_ac
         wifi_obj.join_to_ap()
         ble_obj.scan_and_connect_from_remote()
         ble_obj.ble_disconnect()
-        ble_client.interfaces.bluetooth.close()
         for i in range(0, iter_count):
             ble_obj.start()
             ble_obj.wait_for_exit()
             logger().info("Checking connection stability for 60 seconds")
             time.sleep(60)
             ble_obj.ble_disconnect()
-            ble_client.interfaces.bluetooth.close()
 
         wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
