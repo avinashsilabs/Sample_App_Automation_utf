@@ -184,8 +184,11 @@ def test_wifi_sdk_ssl_three_sockets_receive_data_testcase_C19153(wifi_sniffer, w
         )
         result = sl_collections.join_to_wifi_network_with_rejoin(wifi_dut, wifi_access_point, ping_count=10,
                                                                  retry_count=3, rejoin_params=[0, 4, 40, 0],
-                                                                 associated=False)
+                                                                 associated=False,power_save=False)
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+
+        logger.info(f"Applying performance profile mode")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
 
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         port2 = ssl_server.interfaces.ssl.config['device_port2']
@@ -233,14 +236,14 @@ def test_wifi_sdk_ssl_three_sockets_receive_data_testcase_C19153(wifi_sniffer, w
                 sock = (socket - 1)
                 buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
 
-                assert tx_buffer in buffer_rx.decode(), f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+                assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
 
         for sock_count in range(0, 3):
             logger.info(f"Closing socket_id->{sock_count}")
             wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_count)
         ssl_server.interfaces.ssl.stop_server()
         time.sleep(1)
-
+        wifi_dut.interfaces.wifi.leave()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -278,8 +281,11 @@ def test_wifi_sdk_ssl_three_openssl_sockets_set_16k_record_C19164(wifi_sniffer, 
         )
         result = sl_collections.join_to_wifi_network_with_rejoin(wifi_dut, wifi_access_point, ping_count=10,
                                                                  retry_count=3, rejoin_params=[0, 4, 40, 0],
-                                                                 associated=False)
+                                                                 associated=False,power_save=False)
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+
+        logger.info(f"Applying performance profile mode")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
 
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         port2 = ssl_server.interfaces.ssl.config['device_port2']
@@ -329,11 +335,12 @@ def test_wifi_sdk_ssl_three_openssl_sockets_set_16k_record_C19164(wifi_sniffer, 
                     sock = (socket - 1)
                     buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
 
-                    assert tx_buffer in buffer_rx.decode(), f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+                    assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
 
         for sock_count in range(0, 3):
             logger.info(f"Closing socket_id->{sock_count}")
             wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_count)
+        wifi_dut.interfaces.wifi.leave()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -370,8 +377,11 @@ def test_wifi_sdk_ssl_three_sockets_tx_rx_data_testcase_C19201(wifi_sniffer, wif
         )
         result = sl_collections.join_to_wifi_network_with_rejoin(wifi_dut, wifi_access_point, ping_count=10,
                                                                  retry_count=3, rejoin_params=[0, 4, 40, 0],
-                                                                 associated=False)
+                                                                 associated=False,power_save=False)
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+
+        logger.info(f"Applying performance profile mode")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
 
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         port2 = ssl_server.interfaces.ssl.config['device_port2']
@@ -431,11 +441,12 @@ def test_wifi_sdk_ssl_three_sockets_tx_rx_data_testcase_C19201(wifi_sniffer, wif
                     sock = (socket - 1)
                     buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
 
-                    assert tx_buffer in buffer_rx.decode(), f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+                    assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
 
         for sock_count in range(0, 3):
             logger.info(f"Closing socket_id->{sock_count}")
             wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_count)
+        wifi_dut.interfaces.wifi.leave()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
