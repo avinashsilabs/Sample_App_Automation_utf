@@ -129,6 +129,8 @@ class WifiJoinThread(ThreadBase):
 
         assert self.wifi_client.interfaces.wifi.ping(server_ip=device_ip), f"ping failed"
 
+        self.wifi_dut.interfaces.wifi.switch_host_frequency()
+
         if self.data_transfer:
             if self.traffic_type == "TX":
                 self.iteration_count = self.iteration_count
@@ -138,16 +140,18 @@ class WifiJoinThread(ThreadBase):
                                                                          protocol=self.protocol)
                     self.net_perf_client.interfaces.net_perf.start()
                     logger().info("sending data from DUT")
+                    timeout = 40
                     self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
                                                         local_port=self.net_perf_client.interfaces.net_perf.server_port,
                                                         local_ip=device_ip, remote_ip=host_ip,
                                                         remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0)
+                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0,
+                                                        timeout=timeout+2)
                     # # get and print throughput
+                    time.sleep(3)
                     tp = self.net_perf_client.interfaces.net_perf.process_output()
                     assert tp is not None, "Throughput not found"
                     logger().info("data transfer successful")
-                    time.sleep(3)
             if self.traffic_type == "RX":
                 self.iteration_count = self.iteration_count
                 for i in range(0, self.iteration_count):
@@ -163,19 +167,22 @@ class WifiJoinThread(ThreadBase):
 
                     logger().info("receiving data from Host")
                     # open socket and listen for data
+                    timeout = 40
                     self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
                                                         local_port=self.net_perf_client.interfaces.net_perf.client_port,
                                                         local_ip=device_ip, remote_ip=host_ip,
                                                         remote_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0)
-                    logger().info("data received is successful")
+                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0,
+                                                        async_socket=0, timeout=timeout+2)
                     time.sleep(3)
+                    logger().info("data received is successful")
         logger().info(f"*********Initiating the disconnect from Raspi-STA **********")
         self.wifi_client.interfaces.wifi.leave()
         self.wifi_sniffer.interfaces.capture.stop_capture()
 
 
 @pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("dtim_period", [1])
@@ -184,12 +191,14 @@ class WifiJoinThread(ThreadBase):
     "wifi_dut",
     wifi={
         "oper_mode": Si91xOperatingMode.AccessPoint,
-        "coex_mode": Si91xCoexMode.WLAN,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
         "security": "WPA2", "ssid": "SILABS_AP_C19444", "passphrase": "12345678", "beacon": 100, "channel": 11,
     }
 )
@@ -222,6 +231,7 @@ def test_wlan_sdk_ap_alone_device_as_server_tcp_rx_c20790(wifi_sniffer, wifi_cli
 
 
 @pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("dtim_period", [1])
@@ -230,12 +240,14 @@ def test_wlan_sdk_ap_alone_device_as_server_tcp_rx_c20790(wifi_sniffer, wifi_cli
     "wifi_dut",
     wifi={
         "oper_mode": Si91xOperatingMode.AccessPoint,
-        "coex_mode": Si91xCoexMode.WLAN,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
         "security": "WPA2", "ssid": "SILABS_AP_C19444", "passphrase": "12345678", "beacon": 100, "channel": 11,
     }
 )
@@ -268,6 +280,7 @@ def test_wlan_sdk_ap_alone_device_as_server_udp_rx_c20789(wifi_sniffer, wifi_cli
 
 
 @pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("dtim_period", [1])
@@ -276,12 +289,14 @@ def test_wlan_sdk_ap_alone_device_as_server_udp_rx_c20789(wifi_sniffer, wifi_cli
     "wifi_dut",
     wifi={
         "oper_mode": Si91xOperatingMode.AccessPoint,
-        "coex_mode": Si91xCoexMode.WLAN,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
         "security": "WPA2", "ssid": "SILABS_AP_C19444", "passphrase": "12345678", "beacon": 100, "channel": 11,
     }
 )
@@ -314,6 +329,7 @@ def test_wlan_sdk_ap_alone_device_as_client_tcp_tx_c20788(wifi_sniffer, wifi_cli
 
 
 @pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("dtim_period", [1])
@@ -322,12 +338,14 @@ def test_wlan_sdk_ap_alone_device_as_client_tcp_tx_c20788(wifi_sniffer, wifi_cli
     "wifi_dut",
     wifi={
         "oper_mode": Si91xOperatingMode.AccessPoint,
-        "coex_mode": Si91xCoexMode.WLAN,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
         "security": "WPA2", "ssid": "SILABS_AP_C19444", "passphrase": "12345678", "beacon": 100, "channel": 11,
     }
 )
