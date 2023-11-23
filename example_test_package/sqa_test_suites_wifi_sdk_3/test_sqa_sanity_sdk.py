@@ -164,18 +164,10 @@ class BleThreadFunctionality(ThreadBase):
         self.ble_client.interfaces.bluetooth.close()
 
     def ble_disconnect(self, disconnect_from="remote"):
-        logger().info("Checking connection status of BLE")
-        state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
-        state_int = int(state) if state.isdigit() else -1
-        assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
-
-        if disconnect_from == "remote":
-            logger().info(f"Initiating BLE disconnection from raspi")
-            self.ble_client.interfaces.bluetooth.disconnect(self.ble_dut_address)
-        else:
-            logger().info(f"Initiating BLE disconnection from DUT")
-            self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
-        self.ble_client.interfaces.bluetooth.close()
+        self.sl_collections.ble_disconnect(wifi_dut=self.wifi_dut, ble_client=self.ble_client,
+                                           ble_dut_address=self.ble_dut_address,
+                                           disconnect_from=disconnect_from,
+                                           ble_client_address=self.ble_client_address)
 
     def set_power_save(self):
         self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
@@ -184,17 +176,13 @@ class BleThreadFunctionality(ThreadBase):
 
     def run(self):
 
-        if self.ble_test_type == "slave":
+        if self.ble_test_type == "slave" or self.ble_test_type == "master":
             self.ble_client_address = self.sl_collections.ble_connection(wifi_dut=self.wifi_dut,
                                                                          ble_client=self.ble_client,
                                                                          ble_dut_address=self.ble_dut_address,
                                                                          mode="slave", ble_pairing=self.ble_pairing)
 
-        if self.ble_test_type == "master":
-            self.ble_client_address = self.sl_collections.ble_connection(wifi_dut=self.wifi_dut,
-                                                                         ble_client=self.ble_client,
-                                                                         ble_dut_address=self.ble_dut_address,
-                                                                         mode="master", ble_pairing=self.ble_pairing)
+
 
 
 @pytest.mark.config(
@@ -216,7 +204,7 @@ def test_wifi_sdk_firmware_version_C34753(wifi_dut, sl_collections):
     try:
         expected_version = parse_version()
         if expected_version is None:
-            pytest.skip("No firmware version for 9116x in manifest, skipping test_version")
+            pytest.skip("No firmware version for 91x in manifest, skipping test_version")
         logger().info(f"Expected Firmware version: {expected_version}")
         result = wifi_dut.interfaces.wifi.version().strip("\n")
         logger().info(f"Actual Firmware version: {result}")
@@ -795,7 +783,6 @@ def test_wifi_sdk_concurrent_mode_sta_ap_C34756(wifi_access_point, wifi_dut, wif
         if dut_addr:
             sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_addr['dut_mac_address'],
                                                    ap_mac_address, sniffer_filter, power_save=False)
-
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
