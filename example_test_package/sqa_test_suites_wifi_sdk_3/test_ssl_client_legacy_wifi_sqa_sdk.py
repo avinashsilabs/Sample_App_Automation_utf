@@ -579,13 +579,14 @@ def test_wifi_sdk_ssl_client_tx_while_rejoining_c19134(wifi_dut, wifi_access_poi
 
         ssl_server.interfaces.ssl.start_server(port=port1, server_cert=cert1[1], server_key=cert1[2])
         server_ip = ssl_server.interfaces.ssl.server_ip
+        local_port = randint(5001, 60000)
 
         sock = wifi_dut.interfaces.wifi.socket()
         assert sock == 0, f"socket id received is wrong, expected is 0"
         logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
         wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
         wifi_dut.interfaces.wifi.bsdSsetCustomSyncSockopt(socket_fd=sock, cert_index=0)
-        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=port1, timeout=15)
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
         wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=port1)
 
         thread = Thread(target=ssl_obj.pdu_switch, args=(0, switch))
