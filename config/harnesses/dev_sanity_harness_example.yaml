@@ -367,11 +367,11 @@ devices:
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
-                hostname: '10.207.18.232'
+                hostname: '10.207.17.132'
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
-                outlet: 1
+                outlet: 2
                 # use_persistent_state: true will set a persistent state, that the outlet will revert
                 # to after reboot or power cycle
                 # use_persistent_state: false will set a transient state only, and the outlet will revert
@@ -390,11 +390,11 @@ devices:
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
-                hostname: '10.207.18.235'
+                hostname: '10.207.17.132'
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
-                outlet: 1
+                outlet: 7
                 # use_persistent_state: true will set a persistent state, that the outlet will revert
                 # to after reboot or power cycle
                 # use_persistent_state: false will set a transient state only, and the outlet will revert
@@ -413,7 +413,7 @@ devices:
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
-                hostname: '10.207.18.235'
+                hostname: '10.207.17.132'
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
@@ -431,7 +431,11 @@ devices:
                 type: 'shell.shell'
             mqtt:
                 type: 'mqtt.client.paho_client'
-                disable_certificate_verification: false
+                disable_certificate_verification: true
+            tc:
+                type: 'traffic_controller.tc_cli'
+                shell: 'linux_shell'
+                interface: 'eth0'
             wifi:
                 # The 'wifi.access_points.linux' device type represents a linux-based access point
                 # running hostapd to create a soft AP
@@ -441,7 +445,7 @@ devices:
                 passphrase: 'thisisatestnetwork'
                 supports: [ 'wifi_ap', 'wifi_client' ]
 #                interface: 'wlan0'
-                interface: 'eth0'
+                interface: 'eth1'
                 standard: 'n'
                 ip_address: '192.168.0.1'
                 region: 'Japan'
@@ -514,8 +518,8 @@ devices:
             multicast:
                 type: 'multicast.multicast_socket'
                 ip_version: 0
-                multicast_ip: '239.0.0.1'
-                multicast_ip2: '239.0.0.1'
+                multicast_ip: '239.255.255.250'
+                multicast_ip2: '239.255.255.250'
                 dut_local_socket: 5001
                 destination_socket: 5002
                 ttl: 32
@@ -524,7 +528,7 @@ devices:
                 no_of_pkts: 500
                 multicast_ip_mac_map: '01:00:5e:7f:ff:fa'
                 multicast_ip2_mac_map1: '01:00:5e:7f:ff:fa'
-                interface: 'eth0'
+                interface: 'eth1'
 
     raspi_ip_socket:
         interfaces:
@@ -663,7 +667,7 @@ devices:
                             type: 'bluetooth.bluez'
                             shell: 'linux_shell'
             defaults: { }
-    secondary_raspi_ble_client_1:
+    tertiary_raspi_ble_client:
         interfaces:
             docker_host:
                 type: 'docker'
@@ -846,7 +850,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 80
-                interface: 'eth0'
+                interface: 'eth1'
 
     raspi_lighttpd_tls:
         interfaces:
@@ -1018,7 +1022,7 @@ devices:
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
                 client_limit: 1
-                ip_version: 0
+                ip_version: 4
                 buffer_length: 1300
                 no_of_pkts: 1000
                 time: 30
@@ -1148,6 +1152,7 @@ devices:
                 username: slwifi       # NUC username
                 password: Qwertyuiop@12    # NUC password
                 use_paramiko_expect: false
+                timeout: 15
             radius_server:
                 type: 'radius_server.freeradius.static'
                 shell: 'ssh_shell'
@@ -1335,9 +1340,13 @@ defaults:
 
     ble_clients:
         - 'secondary_raspi_ble_client'
-        - 'secondary_raspi_ble_client_1'
+        - 'tertiary_raspi_ble_client'
 
     bt_client: 'raspi_bt_client'
+
+    bt_clients:
+        - 'raspi_bt_client'
+        - 'secondary_raspi_bt_client'
 
     mqtt_server: 'raspi_mosquitto'
 
@@ -1430,8 +1439,8 @@ defaults:
         bt_pin_code: "4321"
 
     iop_sockets:
-        server_ip: '192.168.10.212'
-        server_port: '6001'
+        server_ip: '10.207.21.131'  #use ip address of PC and run hercules in pc
+        server_port: '8943'
         att_channel: 1
         db_value: 2
         att_enable: true
@@ -1480,7 +1489,7 @@ defaults:
             time: 30
         client_options:
             # used only for UDP as there is no limit imposed while TCP
-            bandwidth: 0.1M
+            bandwidth: 60M
             interval: 1
             #time in seconds to transmit for (default 10 secs)
             time: 30
