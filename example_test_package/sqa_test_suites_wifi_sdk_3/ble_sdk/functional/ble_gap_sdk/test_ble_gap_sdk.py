@@ -32,14 +32,16 @@ def logger():
 
 '''=================== Ble-gap IO test cases ===================== '''
 
+
 class connectasmaster:
-    def __init__(self, ble_dut, ble_client, sl_collections, ble_dut_address=None, ble_capability=None):
+    def __init__(self, ble_dut, ble_client, sl_collections, ble_dut_address=None, ble_capability=None, set_smp=0):
         super().__init__()
         self.ble_dut = ble_dut
         self.ble_client = ble_client
         self.ble_dut_address = ble_dut_address
         self.sl_collections = sl_collections
         self.ble_capability = ble_capability
+        self.set_smp = set_smp
 
     def ble_connect(self):
         logger().info("Initialising BLE")
@@ -48,26 +50,25 @@ class connectasmaster:
             self.ble_dut_address = self.ble_dut.interfaces.wifi.ble_start()
         else:
             logger().info("selected capability.....")
-            self.ble_dut_address = self.ble_dut.interfaces.wifi.ble_start(capability=self.ble_capability)
+            self.ble_dut_address = self.ble_dut.interfaces.wifi.ble_start(capability=self.ble_capability, set_smp=self.set_smp)
         assert self.ble_dut_address, "failed to initiate ble in dut"
 
         logger().info(f"Initiating connection.......")
-        ble_client_address = self.sl_collections.ble_connection(wifi_dut=self.ble_dut,
-                                                                ble_client=self.ble_client,
-                                                                ble_dut_address=self.ble_dut_address,
-                                                                mode="master")
-        time.sleep(30)
+        self.sl_collections.ble_connection(wifi_dut=self.ble_dut,
+                                           ble_client=self.ble_client,
+                                           ble_dut_address=self.ble_dut_address,
+                                           mode="master")
+        time.sleep(20)
         logger().info(f"\n\n ***** Successfully connected with Remote *****\n\n")
-
+        logger().info("Checking connection status of BLE")
         state = self.ble_dut.interfaces.wifi.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         logger().info(f"state_int==============>>,  {state_int}")
 
     def power_save(self):
-        logger().info("enabling the power save modes ")
         self.ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
         self.ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                          psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+                                                          psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
 
     def ble_disconnect(self, disconnect_from="remote"):
         logger().info("Checking connection status of BLE")
@@ -82,406 +83,275 @@ class connectasmaster:
             logger().info(f"Initiating BLE disconnection from DUT")
             self.ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
 
-#
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={
-#         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
-#         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-#         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
-#                     Si91xFeatureBitMap.WPSSupportDisabled,
-#         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-#         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-#         "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
-#                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
-#                                Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-#                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-#                                Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-#         "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-#         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
-#         "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS |
-#                         Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC |
-#                         Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID |
-#                         Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
-#                         Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE |
-#                         Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-#         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
-#                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES,
-#                                    # Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-#                                    # Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-#         "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp |
-#                            Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
-#    },
-# )
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", 'ble_stop_scan', "wifi_powersave_disable"])
-# def test_ble_sdk_io_cap_displayonly_C19851(ble_dut, ble_client, sl_collections):
-#     """
-#     Test "display only" IO capability in Slave mode as SMP responder
-#     :param ble_dut:  Fixture parameter to issue command in DUT.
-#     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
-#     """
-#     try:
-#         with BleLogs(start_collecting_logs=True,
-#                      bt_log_path=f"reports/test_sdk_io_cap_displayonly_C19851{int(time.time())}"):
-#             logger().info("Initiate ble service in DUT")
-#             ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
-#             assert ble_dut_address, "failed to initiate ble in dut"
-#
-#             logger().info("Set DUT in advertise mode")
-#             ble_dut.interfaces.bluetooth.ble_start_advertising()
-#
-#             logger().info("enabling the power save modes ")
-#             ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-#                                                          psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-#             ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-#
-#             time.sleep(5)
-#
-#             logger().info("Start smp scan from the remote device")
-#             ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-#             assert ble_client_address, "failed to initiate ble in remote device"
-#             time.sleep(2)
-#             logger().info("stop scanning ....")
-#             ble_client.interfaces.bluetooth.stop_scanning()
-#
-#             logger().info("Check the dut is listed...")
-#             found_devices = ble_client.interfaces.bluetooth.get_devices()
-#             assert ble_dut.interfaces.bluetooth.ble_address in found_devices
-#
-#             logger().info("Connect to the dut with mac address..")
-#
-#             connect_time = datetime.datetime.now()
-#             connect_state = ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_address)
-#             logger().info(f"connect_time:  {connect_time}")
-#             assert connect_state, "unable to connect to the given address"
-#             time.sleep(30)
-#             ble_dut.interfaces.bluetooth.ble_advertising = False
-#
-#             # checking if the connection exists to disconnect
-#             state = ble_dut.interfaces.wifi.ble_get_device_state()
-#             state_int = int(state) if state.isdigit() else -1
-#             logger().info(f"state_int==============>>,  {state_int}")
-#             if (state_int > 0):
-#                 logger().info("Disconnecting the bt host....")
-#                 disconnect_time = datetime.datetime.now(
-#                     ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address))
-#                 logger().info(f"disconnect_time  {disconnect_time}")
-#                 assert "unable to disconnect since the connection never existed"
-#
-#                 ble_client.interfaces.bluetooth.close()
-#                 time.sleep(5)
-#                 logger().info(f"connection existed for {disconnect_time - connect_time}")
-#
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
-#
-#
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={
-#         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
-#         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-#         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
-#                     Si91xFeatureBitMap.WPSSupportDisabled,
-#         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-#         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-#         "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
-#                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
-#                                Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-#                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-#                                Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-#         "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-#         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
-#         "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS |
-#                         Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC |
-#                         Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID |
-#                         Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
-#                         Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE |
-#                         Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-#         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
-#                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
-#                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-#                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-#         "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp |
-#                            Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
-#    },
-# )
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", 'ble_stop_scan', "wifi_powersave_disable"])
-# def test_ble_sdk_io_cap_display_yesno_C19852(ble_dut, ble_client, sl_collections):
-#     """
-#     Test "Display Yes No" capability in Slave mode as SMP responder
-#     :param ble_dut:  Fixture parameter to issue command in DUT.
-#     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
-#     """
-#     try:
-#         logger().info("Initiate ble service in DUT")
-#         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=1)
-#         assert ble_dut_address, "failed to initiate ble in dut"
-#
-#         logger().info("Set DUT in advertise mode")
-#         ble_dut.interfaces.bluetooth.ble_start_advertising()
-#
-#         logger().info("enabling the power save modes ")
-#         ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-#                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-#         ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-#         time.sleep(5)
-#
-#         logger().info("Start smp scan from the remote device")
-#         ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-#         assert ble_client_address, "failed to initiate ble in remote device"
-#         time.sleep(5)
-#         logger().info("stop scanning ....")
-#         ble_client.interfaces.bluetooth.stop_scanning()
-#
-#         logger().info("Check the dut is listed...")
-#         found_devices = ble_client.interfaces.bluetooth.get_devices()
-#         assert ble_dut.interfaces.bluetooth.ble_address in found_devices
-#
-#         logger().info("Connect to the dut with mac address..")
-#         connect_time = datetime.datetime.now()
-#         connect_state = ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_address)
-#         logger().info(f"connect_time  {connect_time}")
-#         assert connect_state, "unable to connect to the given address"
-#         time.sleep(30)
-#         ble_dut.interfaces.bluetooth.ble_advertising = False
-#         # checking if the connection exists to disconnect
-#         state = ble_dut.interfaces.wifi.ble_get_device_state()
-#         state_int = int(state) if state.isdigit() else -1
-#         logger().info(f"state_int==============>>,  {state_int}")
-#         if (state_int > 0):
-#             logger().info("Disconnecting the bt host....")
-#             disconnect_time = datetime.datetime.now(
-#                 ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address))
-#             logger().info(f"disconnect_time  {disconnect_time}")
-#             assert "unable to disconnect since the connection never existed"
-#             logger().info(f"connection existed for {disconnect_time - connect_time}")
-#         ble_client.interfaces.bluetooth.close()
-#         time.sleep(5)
-#
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
-#
-#
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={
-#         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
-#         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-#         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
-#                     Si91xFeatureBitMap.WPSSupportDisabled,
-#         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-#         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-#         "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
-#                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
-#                                Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-#                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-#                                Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-#         "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-#         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
-#         "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS |
-#                         Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC |
-#                         Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID |
-#                         Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
-#                         Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE |
-#                         Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-#         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
-#                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
-#                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-#                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-#         "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp |
-#                            Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
-#    },
-# )
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", 'ble_stop_scan', "wifi_powersave_disable"])
-# def test_ble_sdk_io_cap_keyboard_only_C19853(ble_dut, ble_client, sl_collections):
-#     """
-#     Test "Keyboard only" IO capability in Slave mode as SMP responder
-#     :param ble_dut:  Fixture parameter to issue command in DUT.
-#     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
-#     """
-#     try:
-#         logger().info("Initiate ble service in DUT")
-#         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=2)
-#         assert ble_dut_address, "failed to initiate ble in dut"
-#
-#         logger().info("Set DUT in advertise mode")
-#         ble_dut.interfaces.bluetooth.ble_start_advertising()
-#
-#         logger().info("enabling the power save modes ")
-#         ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-#                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-#         ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-#         time.sleep(5)
-#
-#         logger().info("Start smp scan from the remote device")
-#         ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-#         assert ble_client_address, "failed to initiate ble in remote device"
-#         time.sleep(5)
-#         logger().info("stop scanning ....")
-#         ble_client.interfaces.bluetooth.stop_scanning()
-#
-#         logger().info("Check the dut is listed...")
-#         found_devices = ble_client.interfaces.bluetooth.get_devices()
-#         assert ble_dut.interfaces.bluetooth.ble_address in found_devices
-#
-#         logger().info("Connect to the dut with mac address..")
-#         connect_time = datetime.datetime.now()
-#         connect_state = ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_address)
-#         logger().info(f"connect_time  {connect_time}")
-#         assert connect_state, "unable to connect to the given address"
-#         time.sleep(30)
-#         ble_dut.interfaces.bluetooth.ble_advertising = False
-#         # checking if the connection exists to disconnect
-#         state = ble_dut.interfaces.wifi.ble_get_device_state()
-#         state_int = int(state) if state.isdigit() else -1
-#         logger().info(f"state_int==============>>,  {state_int}")
-#         if (state_int > 0):
-#             logger().info("Disconnecting the bt host....")
-#             disconnect_time = datetime.datetime.now(
-#                 ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address))
-#             logger().info(f"disconnect_time  {disconnect_time}")
-#             assert "unable to disconnect since the connection never existed"
-#             logger().info(f"connection existed for {disconnect_time - connect_time}")
-#         ble_client.interfaces.bluetooth.close()
-#         time.sleep(5)
-#
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
-#
-#
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={
-#         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
-#         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-#         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
-#                     Si91xFeatureBitMap.WPSSupportDisabled,
-#         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-#         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-#         "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
-#                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
-#                                Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-#                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-#                                Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-#         "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-#         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
-#         "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS |
-#                         Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC |
-#                         Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID |
-#                         Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
-#                         Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE |
-#                         Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-#         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
-#                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
-#                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-#                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-#         "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp |
-#                            Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
-#    },
-# )
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", 'ble_stop_scan', "wifi_powersave_disable"])
-# def test_ble_sdk_io_cap_No_input_output_C19854(ble_dut, ble_client, sl_collections):
-#     """
-#     Test "No input no output" IO capability in Slave mode as SMP responder
-#     :param ble_dut:  Fixture parameter to issue command in DUT.
-#     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
-#     """
-#     try:
-#         logger().info("Initiate ble service in DUT")
-#         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=3)
-#         assert ble_dut_address, "failed to initiate ble in dut"
-#
-#         logger().info("Set DUT in advertise mode")
-#         ble_dut.interfaces.bluetooth.ble_start_advertising()
-#
-#         logger().info("enabling the power save modes ")
-#         ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-#                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-#         ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-#
-#         time.sleep(5)
-#
-#         logger().info("Start smp scan from the remote device")
-#         ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-#         assert ble_client_address, "failed to initiate ble in remote device"
-#         time.sleep(5)
-#         logger().info("stop scanning ....")
-#         ble_client.interfaces.bluetooth.stop_scanning()
-#
-#         logger().info("Check the dut is listed...")
-#         found_devices = ble_client.interfaces.bluetooth.get_devices()
-#         assert ble_dut.interfaces.bluetooth.ble_address in found_devices
-#
-#         logger().info("Connect to the dut with mac address..")
-#         connect_time = datetime.datetime.now()
-#         connect_state = ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_address)
-#         logger().info(f"connect_time  {connect_time}")
-#         assert connect_state, "unable to connect to the given address"
-#         time.sleep(30)
-#         ble_dut.interfaces.bluetooth.ble_advertising = False
-#
-#         # checking if the connection exists to disconnect
-#         state = ble_dut.interfaces.wifi.ble_get_device_state()
-#         state_int = int(state) if state.isdigit() else -1
-#         logger().info(f"state_int==============>>,  {state_int}")
-#         if (state_int > 0):
-#             logger().info("Disconnecting the bt host....")
-#             disconnect_time = datetime.datetime.now(
-#                 ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address))
-#             logger().info(f"disconnect_time  {disconnect_time}")
-#             assert "unable to disconnect since the connection never existed"
-#             logger().info(f"connection existed for {disconnect_time - connect_time}")
-#
-#         ble_client.interfaces.bluetooth.close()
-#         time.sleep(10)
-#
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
+
+pytestmark=[
+    pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                        Si91xFeatureBitMap.WPSSupportDisabled,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                                   Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                                   Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                                   Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                                   Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+            "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS |
+                            Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC |
+                            Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID |
+                            Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
+                            Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE |
+                            Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp |
+                               Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+       },
+    )
+]
+
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", 'ble_stop_scan', "wifi_powersave_disable"])
+def test_ble_sdk_io_cap_displayonly_C19851(ble_dut, ble_client, sl_collections):
+    """
+    Test "display only" IO capability in Slave mode as SMP responder
+    :param ble_dut:  Fixture parameter to issue command in DUT.
+    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
+    """
+    try:
+        logger().info("Initiate ble service in DUT")
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
+        assert ble_dut_address, "failed to initiate ble in dut"
+
+        logger().info("Set DUT in advertise mode")
+        ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+        logger().info("Start smp scan from the remote device")
+        ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
+        assert ble_client_address, "failed to initiate ble in remote device"
+
+        logger().info("enabling the power save modes ")
+        ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                     psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+        time.sleep(5)
+        logger().info("stop scanning ....")
+        ble_client.interfaces.bluetooth.stop_scanning()
+
+        logger().info("Check the dut is listed...")
+        ble_client.interfaces.bluetooth.get_devices()
+
+        logger().info("Connect to the dut with mac address..")
+        connect_time = datetime.datetime.now()
+        ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_address)
+        logger().info(f"connect_time:  {connect_time}")
+        time.sleep(60)
+        ble_dut.interfaces.bluetooth.ble_advertising = False
+
+        # checking if the connection exists to disconnect
+        state = ble_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        logger().info(f"state_int==============>>,  {state_int}")
+        if (state_int > 0):
+            logger().info("Disconnecting the bt host....")
+            disconnect_time = datetime.datetime.now()
+            ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
+            logger().info(f"disconnect_time  {disconnect_time}")
+            assert "unable to disconnect since the connection never existed"
+
+            ble_client.interfaces.bluetooth.close()
+            time.sleep(5)
+            logger().info(f"connection existed for {disconnect_time - connect_time}")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", 'ble_stop_scan', "wifi_powersave_disable"])
+def test_ble_sdk_io_cap_display_yesno_C19852(ble_dut, ble_client, sl_collections):
+    """
+    Test "Display Yes No" capability in Slave mode as SMP responder
+    :param ble_dut:  Fixture parameter to issue command in DUT.
+    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
+    """
+    try:
+        logger().info("Initiate ble service in DUT")
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=1, set_smp=1)
+        assert ble_dut_address, "failed to initiate ble in dut"
+
+        logger().info("Set DUT in advertise mode")
+        ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+        logger().info("Start smp scan from the remote device")
+        ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
+        assert ble_client_address, "failed to initiate ble in remote device"
+
+        logger().info("enabling the power save modes ")
+        ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                     psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+        time.sleep(5)
+        logger().info("stop scanning ....")
+        ble_client.interfaces.bluetooth.stop_scanning()
+
+        logger().info("Check the dut is listed...")
+        ble_client.interfaces.bluetooth.get_devices()
+
+        logger().info("Connect to the dut with mac address..")
+        connect_time = datetime.datetime.now()
+        ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_address)
+        logger().info(f"connect_time:  {connect_time}")
+        time.sleep(60)
+        ble_dut.interfaces.bluetooth.ble_advertising = False
+
+        # checking if the connection exists to disconnect
+        state = ble_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        logger().info(f"state_int==============>>,  {state_int}")
+        if (state_int > 0):
+            logger().info("Disconnecting the bt host....")
+            disconnect_time = datetime.datetime.now()
+            ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
+            logger().info(f"disconnect_time  {disconnect_time}")
+            assert "unable to disconnect since the connection never existed"
+
+            ble_client.interfaces.bluetooth.close()
+            time.sleep(5)
+            logger().info(f"connection existed for {disconnect_time - connect_time}")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", 'ble_stop_scan', "wifi_powersave_disable"])
+def test_ble_sdk_io_cap_keyboard_only_C19853(ble_dut, ble_client, sl_collections):
+    """
+    Test "Keyboard only" IO capability in Slave mode as SMP responder
+    :param ble_dut:  Fixture parameter to issue command in DUT.
+    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
+    """
+    try:
+        logger().info("Initiate ble service in DUT")
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=2, set_smp=1)
+        assert ble_dut_address, "failed to initiate ble in dut"
+
+        logger().info("Set DUT in advertise mode")
+        ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+        logger().info("Start smp scan from the remote device")
+        ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
+        assert ble_client_address, "failed to initiate ble in remote device"
+
+        logger().info("enabling the power save modes ")
+        ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                     psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+        time.sleep(5)
+        logger().info("stop scanning ....")
+        ble_client.interfaces.bluetooth.stop_scanning()
+
+        logger().info("Check the dut is listed...")
+        ble_client.interfaces.bluetooth.get_devices()
+
+        logger().info("Connect to the dut with mac address..")
+        connect_time = datetime.datetime.now()
+        ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_address)
+        logger().info(f"connect_time:  {connect_time}")
+        time.sleep(60)
+        ble_dut.interfaces.bluetooth.ble_advertising = False
+
+        # checking if the connection exists to disconnect
+        state = ble_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        logger().info(f"state_int==============>>,  {state_int}")
+        if (state_int > 0):
+            logger().info("Disconnecting the bt host....")
+            disconnect_time = datetime.datetime.now()
+            ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
+            logger().info(f"disconnect_time  {disconnect_time}")
+            assert "unable to disconnect since the connection never existed"
+
+            ble_client.interfaces.bluetooth.close()
+            time.sleep(5)
+            logger().info(f"connection existed for {disconnect_time - connect_time}")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", 'ble_stop_scan', "wifi_powersave_disable"])
+def test_ble_sdk_io_cap_No_input_output_C19854(ble_dut, ble_client, sl_collections):
+    """
+    Test "No input no output" IO capability in Slave mode as SMP responder
+    :param ble_dut:  Fixture parameter to issue command in DUT.
+    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
+    """
+    try:
+        logger().info("Initiate ble service in DUT")
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=3, set_smp=1)
+        assert ble_dut_address, "failed to initiate ble in dut"
+
+        logger().info("Set DUT in advertise mode")
+        ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+        logger().info("Start smp scan from the remote device")
+        ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
+        assert ble_client_address, "failed to initiate ble in remote device"
+
+        logger().info("enabling the power save modes ")
+        ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                     psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+        time.sleep(5)
+        logger().info("stop scanning ....")
+        ble_client.interfaces.bluetooth.stop_scanning()
+
+        logger().info("Check the dut is listed...")
+        ble_client.interfaces.bluetooth.get_devices()
+
+        logger().info("Connect to the dut with mac address..")
+        connect_time = datetime.datetime.now()
+        ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_address)
+        logger().info(f"connect_time:  {connect_time}")
+        time.sleep(60)
+        ble_dut.interfaces.bluetooth.ble_advertising = False
+
+        # checking if the connection exists to disconnect
+        state = ble_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        logger().info(f"state_int==============>>,  {state_int}")
+        if (state_int > 0):
+            logger().info("Disconnecting the bt host....")
+            disconnect_time = datetime.datetime.now()
+            ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
+            logger().info(f"disconnect_time  {disconnect_time}")
+            assert "unable to disconnect since the connection never existed"
+
+            ble_client.interfaces.bluetooth.close()
+            time.sleep(5)
+            logger().info(f"connection existed for {disconnect_time - connect_time}")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
+
 
 
 '''======================= Ble-gap IO test cases dut as initiator ====================='''
 
 
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
-                    Si91xFeatureBitMap.WPSSupportDisabled,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
-                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
-                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
-        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS |
-                        Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC |
-                        Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID |
-                        Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
-                        Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE |
-                        Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp |
-                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
-   },
-)
+
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", 'ble_stop_scan', "wifi_powersave_disable"])
 def test_ble_sdk_io_cap_displayonly_C19855(ble_dut, ble_client, sl_collections):
@@ -492,7 +362,7 @@ def test_ble_sdk_io_cap_displayonly_C19855(ble_dut, ble_client, sl_collections):
     """
     try:
         logger().info("start ble connection......")
-        ble_obj = connectasmaster(ble_dut, ble_client, sl_collections, ble_capability=0)
+        ble_obj = connectasmaster(ble_dut, ble_client, sl_collections, ble_capability=0, set_smp=1)
         ble_dut_address = ble_obj.ble_connect()
         logger().info(f"BLE DUT address: {ble_dut_address} ......")
 
@@ -511,37 +381,6 @@ def test_ble_sdk_io_cap_displayonly_C19855(ble_dut, ble_client, sl_collections):
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
 
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
-                    Si91xFeatureBitMap.WPSSupportDisabled,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
-                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
-                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
-        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS |
-                        Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC |
-                        Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID |
-                        Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
-                        Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE |
-                        Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp |
-                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
-   },
-)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", 'ble_stop_scan', "wifi_powersave_disable"])
 def test_ble_sdk_io_cap_display_yesno_C19856(ble_dut, ble_client, sl_collections):
@@ -552,7 +391,7 @@ def test_ble_sdk_io_cap_display_yesno_C19856(ble_dut, ble_client, sl_collections
     """
     try:
         logger().info("start ble connection......")
-        ble_obj = connectasmaster(ble_dut, ble_client, sl_collections, ble_capability=1)
+        ble_obj = connectasmaster(ble_dut, ble_client, sl_collections, ble_capability=1, set_smp=1)
         ble_dut_address = ble_obj.ble_connect()
         logger().info(f"BLE DUT address: {ble_dut_address} ......")
 
@@ -571,37 +410,6 @@ def test_ble_sdk_io_cap_display_yesno_C19856(ble_dut, ble_client, sl_collections
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
 
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
-                    Si91xFeatureBitMap.WPSSupportDisabled,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
-                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
-                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
-        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS |
-                        Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC |
-                        Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID |
-                        Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
-                        Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE |
-                        Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp |
-                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
-   },
-)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", 'ble_stop_scan', "wifi_powersave_disable"])
 def test_ble_sdk_io_cap_keyboard_only_C19857(ble_dut, ble_client, sl_collections):
@@ -612,7 +420,7 @@ def test_ble_sdk_io_cap_keyboard_only_C19857(ble_dut, ble_client, sl_collections
     """
     try:
         logger().info("start ble connection......")
-        ble_obj = connectasmaster(ble_dut, ble_client, sl_collections, ble_capability=2)
+        ble_obj = connectasmaster(ble_dut, ble_client, sl_collections, ble_capability=2, set_smp=1)
         ble_dut_address = ble_obj.ble_connect()
         logger().info(f"BLE DUT address: {ble_dut_address} ......")
 
@@ -631,37 +439,6 @@ def test_ble_sdk_io_cap_keyboard_only_C19857(ble_dut, ble_client, sl_collections
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
 
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
-                    Si91xFeatureBitMap.WPSSupportDisabled,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
-                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
-                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
-        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS |
-                        Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC |
-                        Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID |
-                        Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
-                        Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE |
-                        Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp |
-                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
-   },
-)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", 'ble_stop_scan', "wifi_powersave_disable"])
 def test_ble_sdk_io_cap_no_input_output_C19858(ble_dut, ble_client, sl_collections):
@@ -672,7 +449,7 @@ def test_ble_sdk_io_cap_no_input_output_C19858(ble_dut, ble_client, sl_collectio
     """
     try:
         logger().info("start ble connection......")
-        ble_obj = connectasmaster(ble_dut, ble_client, sl_collections, ble_capability=3)
+        ble_obj = connectasmaster(ble_dut, ble_client, sl_collections, ble_capability=3, set_smp=1)
         ble_dut_address = ble_obj.ble_connect()
         logger().info(f"BLE DUT address: {ble_dut_address} ......")
 
