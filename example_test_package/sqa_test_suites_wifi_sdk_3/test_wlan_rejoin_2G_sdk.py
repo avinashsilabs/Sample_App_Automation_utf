@@ -30,6 +30,8 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xModuleType,
     Si91xCertificateType,
     Si91xCertIdentifier,
+    Si91xPowerSaveModes,
+    Si91xPowerSaveProcedureTypes,
     SocketOptions,
 
 )
@@ -212,6 +214,11 @@ class WLanThread(ThreadBase):
                 # ping to DUT before power_save
                 status = self.sl_collections.ping(device_ip=dut_add_dict['device_ip'], ping_count=10)
                 assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+
+                logger().info(f"....Applying performance profile mode")
+                self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+                self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                              psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
 
                 self.dut_addr = dut_add_dict
 
@@ -1498,21 +1505,23 @@ def test_wifi_sdk_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wif
 
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter\
+            (sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name="probe_request")
 
         logger().info("\n\n ****** Access point is going to turn off  ******")
-        switch.interfaces.pdu_switch.turn_off(delay=30)
+        switch.interfaces.pdu_switch.turn_off(delay=10)
+
+        logger().info("\n\n Adding sleep for 10 sec \n")
+        time.sleep(20)
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
-        time.sleep(2)
 
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter\
-            (sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name="probe_request")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find Broadcast Probe request packet'
 
         logger().info("Turn on Access Point")
-        switch.interfaces.pdu_switch.turn_on(delay=100)
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(wlan_obj.dut_addr['device_ip'], ping_count)
