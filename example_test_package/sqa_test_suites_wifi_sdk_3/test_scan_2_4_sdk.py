@@ -785,3 +785,75 @@ def test_wifi_sdk_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_acces
         logger().info(f"found Probe req(Broadcast) in all the channel:{Probe_captured_channel_list}'")
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 4,
+        "region_code":"worldwide"
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_scan_all_channels_in_worldwide_region_c148601(wifi_dut, wifi_sniffer, wifi_client, request, sniffer_filter,sl_collections):
+    try:
+        test_name = request.node.name
+        channels_list_2g = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        true_result_list = []
+        false_result_list = []
+        Probe_captured_channel_list = []
+        Probe_not_captured_channel_list = []
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+        logger().info("Setting DUT in wlan power save...")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
+
+        for channel in channels_list_2g:
+            if channel == 14:
+                logger().info(f"channel : {channel} not supported by NUC,skipping the channel")
+                continue
+            logger().info(f"configuring the Sniffer with the channel : {channel}")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{channel}")
+            time.sleep(5)
+
+            logger().info("enable the scan in dut on channel 0...")
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+            time.sleep(20)
+            assert (len(scan_results) >= 1), "Scan Failed"
+            logger().info(scan_results)
+
+            wifi_sniffer.interfaces.capture.stop_capture()
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
+                                                                                            filter_name="probe_request")
+            logger().info(f"Validate Probe req(Broadcast)")
+            output = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count']
+            if bool(output) is False:
+                false_result_list.append(bool(output))
+                Probe_not_captured_channel_list.append(channel)
+            else:
+                true_result_list.append(bool(output))
+                Probe_captured_channel_list.append(channel)
+            logger().info(f"True list = {true_result_list}")
+            logger().info(f"false list = {false_result_list}")
+        assert Probe_not_captured_channel_list == [], logger().info(
+            f"**** unable to find the Probe requests  in all these channels:{Probe_not_captured_channel_list}")
+        logger().info(f"found Probe req(Broadcast) in all the channel:{Probe_captured_channel_list}'")
+        logger().info("DUT scan success in all channels")
+        logger().info("Dut is able to scan successfully in worldwide region")
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
