@@ -42,6 +42,7 @@ pipeline {
                         
                         git submodule sync 
                         git config --file=.gitmodules submodule.utf_core.url ssh://git@stash.silabs.com/utf/utf_core.git
+                        git config --file=.gitmodules submodule.utf_wiseconnect_3.url ssh://git@stash.silabs.com/redpine/sl_net.git
                         git config --file=.gitmodules submodule.utf_wiseconnect.url ssh://git@stash.silabs.com/utf/utf_wiseconnect.git
                         git config --file=.gitmodules submodule.tcmgr.url ssh://git@stash.silabs.com/toolchain_internal/tcmgr.git
                         git submodule update --init --recursive

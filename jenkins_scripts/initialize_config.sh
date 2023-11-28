@@ -2,12 +2,13 @@ FIRMWARE=$1
 Rps_Path=$2
 Rps_Prefix=$3
 Customer_Id=$4
+Build_type=$5
 prefix=$( echo $FIRMWARE |cut -d '.' -f1 )
 major=$( echo $FIRMWARE |cut -d '.' -f2 )
 minor=$( echo $FIRMWARE |cut -d '.' -f3 )
 patch=$( echo $FIRMWARE |cut -d '.' -f4 )
 build=$( echo $FIRMWARE |cut -d '.' -f5 )
-if [[ "${FIRMWARE}" == RS9116* ]]; then 
+if [[ "${Build_type}" == RS9116* ]]; then
     new_upgrade_fw_value=/RS9116W.$major.$minor.$patch.$build.rps
     sed_param='/upgrade_fw:/,/value:/ s|value:.*|value: "'"$new_upgrade_fw_value"'"|'
     sed -i "$sed_param" config/harnesses/dev_sanity_harness_example.yaml 
@@ -20,7 +21,7 @@ if [[ "${FIRMWARE}" == RS9116* ]]; then
     #sed_param='/firmware:/,/rs911x:/ s|rs911x:.*|rs911x: "'"$new_upgrade_fw_value"'"|'
     sed_param='2 s|RS9116W.2.9.0.1.rps|'"$new_upgrade_fw_value"'|'
     sed -i "$sed_param" manifest/manifest_without_aws_test_agent.yaml
-else
+elif [ "${Build_type}" == Combo_SDK_9117_NCP ]; then
     new_upgrade_fw_value=/SiWG917-A.$major.$minor.$patch.$build.rps
     sed_param='/upgrade_fw:/,/value:/ s|value:.*|value: "'"$new_upgrade_fw_value"'"|'
     sed_param='/upgrade_fw:/,/value:/ s|value:.*|value: "'"$new_upgrade_fw_value"'"|'
@@ -30,6 +31,30 @@ else
     new_upgrade_fw_value=$Rps_Prefix.$major.$minor.$patch.$build.rps
     sed_param='2 s|RS9116W.2.9.0.1.rps|'"$new_upgrade_fw_value"'|'
     sed -i "$sed_param" manifest/manifest_917_ncp.yaml
+elif [ "${Build_type}" == 9117_A0_CCP ]; then
+    new_upgrade_fw_value=/SiWG917-A.$major.$minor.$patch.$build.bin
+    sed_param='/upgrade_fw:/,/value:/ s|value:.*|value: "'"$new_upgrade_fw_value"'"|'
+    sed -i "$sed_param" config/harnesses/harness_example_si917_A0_ccp.yaml
+    pwd && ls
+    cp rs9116_binary/$FIRMWARE/$Rps_Path/new_upgrade_fw_value utf_core/src/utf/interfaces/http/www
+    mv rs9116_binary/$FIRMWARE/$Rps_Path/$Rps_Prefix.$major.$minor.$patch.$Customer_Id.$build.bin rs9116_binary/$FIRMWARE/$Rps_Path/$Rps_Prefix.$major.$minor.$patch.$build.bin
+    cp rs9116_binary/$FIRMWARE/$Rps_Path/$Rps_Prefix.$major.$minor.$patch.$build.bin manifest/
+    new_upgrade_fw_value=$Rps_Prefix.$major.$minor.$patch.$build.bin
+    sed_param='4 s|RS9116W.2.9.0.1.rps|'"$new_upgrade_fw_value"'|'
+    sed -i "$sed_param" manifest/manifest_917_ccp.yaml
+elif [ "${Build_type}" == 9117_B0_CCP ]; then
+    new_upgrade_fw_value=/SiWG917-B.$major.$minor.$patch.$build.rps
+    sed_param='/upgrade_fw:/,/value:/ s|value:.*|value: "'"$new_upgrade_fw_value"'"|'
+    sed -i "$sed_param" config/harnesses/harness_example_si917_B0_ccp.yaml
+    pwd && ls
+    cp rs9116_binary/$FIRMWARE/$Rps_Path/*.rps utf_core/src/utf/interfaces/http/www
+    mv rs9116_binary/$FIRMWARE/$Rps_Path/$Rps_Prefix.$major.$minor.$patch.$Customer_Id.$build.rps rs9116_binary/$FIRMWARE/$Rps_Path/$Rps_Prefix.$major.$minor.$patch.$build.rps
+    cp rs9116_binary/$FIRMWARE/$Rps_Path/$Rps_Prefix.$major.$minor.$patch.$build.rps manifest/
+    new_upgrade_fw_value=$Rps_Prefix.$major.$minor.$patch.$build.rps
+    sed_param='4 s|RS9116W.2.9.0.1.rps|'"$new_upgrade_fw_value"'|'
+    sed -i "$sed_param" manifest/manifest_917_ccp.yaml
+else
+    Build_type is not defined
 fi     
 #pwd && ls
 #cp rs9116_binary/$FIRMWARE/$Rps_Path/*.rps utf_core/src/utf/interfaces/http/www

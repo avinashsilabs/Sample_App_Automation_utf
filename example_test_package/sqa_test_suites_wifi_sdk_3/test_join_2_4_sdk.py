@@ -71,7 +71,7 @@ class WLanJoinThread(ThreadBase):
 
                 self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point,
                                                       pmk_enable=self.pmk_enable,
-                                                      expected_status=SLStatus.SL_STATUS_SI91X_NO_AP_FOUND)
+                                                      expected_status=SLStatus.SL_STATUS_SI91X_SSID_NOT_PRESENT_FOR_PMK_GENERATION)
                 logger().info(
                     f"Dut Tried to connect to ap with wrong password, observed error code 0x10008 which is expected")
 
@@ -577,7 +577,7 @@ def test_wifi_sdk_Joining_time_PMK_C19711(wifi_dut, wifi_access_point, wifi_snif
 
 
 @pytest.mark.config('wifi_access_point',
-                    wifi={"ssid": "This", "passphrase": 'Testing_pmk', "security": "WPA2"})
+                    wifi={"ssid": '""', "passphrase": 'Testing_pmk', "security": "WPA2"})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
@@ -595,6 +595,8 @@ def test_wifi_sdk_wifi_join_PMK_without_SSID_C19717(wifi_dut, wifi_access_point,
     try:
         with TimeMeasurer() as t:
             test_case = request.node.name
+
+            wifi_access_point.interfaces.wifi.bssid = "''"
 
             wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                       sl_collections=sl_collections, test_case=test_case)

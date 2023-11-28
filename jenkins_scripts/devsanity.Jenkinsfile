@@ -1,0 +1,406 @@
+@Library('pipeline-shared-library@main') _
+import groovy.json.JsonSlurper
+import main.groovy.HWMuxUtils
+import groovy.json.JsonSlurperClassic
+import groovy.json.JsonOutput
+
+pipeline {
+    agent {
+        label 'nomadagent-utf_wifi'
+    }
+    environment {
+        UTF_HWMUX_TOKEN = credentials('utf-sqa-hwmux-token')
+        JENKINS_USER_NAME = "${sh(script:'id -un', returnStdout: true).trim()}"
+        JENKINS_USER_ID = "${sh(script:'id -u', returnStdout: true).trim()}"
+        JENKINS_GROUP_ID = "${sh(script:'id -g', returnStdout: true).trim()}"
+        LOKI_URL = "https://loki-distributor.silabs.net/loki/api/v1/push"
+        BASE_ARTIFACTORY_URL= "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/testagent"
+        STACK = "WIFI"
+        JENKIN_RUN_NUM = "${BUILD_NUMBER}"
+        JENKINS_JOB_NAME = "${JOB_NAME}"
+        JENKINS_JOB_STAGE_NAME = "Run Tests"
+        variables_set = false
+        teastagent_executed = false
+        UTF_WISECONNECT_COMMIT = ""
+        UTF_WIFI_COMMIT = ""
+        UTF_CORE_COMMIT = ""
+        ARTIFACTORY_URL = ""
+
+        // Add other environment variables here
+        RELEASE_NAME = null
+        BRANCH_NAME = null
+        SDK_BUILD_NUM = null
+        SDK_URL = null
+        JENKINS_SERVER_NAME = null
+        JENKIN_RUN_NUM_VAR = null
+        JENKINS_TEST_RESULTS_URL = null
+        TESTBED_NAME = null
+        JOB_TYPE = null
+    }
+    options {
+        globalLock(credentialsId: 'utf-sqa-hwmux-token', deviceGroup: env.device_group_name, label: env.device_group_label, variable: 'data')
+    }
+    stages{
+        stage("parallel"){
+            failFast true // Fail all branches if any branch fails
+            parallel{
+                stage("main_pipeline"){
+                    stages{
+                        stage('Toolchain Setup'){
+                            steps {
+                                cleanWs()
+                                script {
+                                    if (env.SQA_TEST_AGENT == "") {
+                                        env.SQA_TEST_AGENT = env.RS9116_FIRMWARE
+                                    }
+                                    echo env.SSH_TARGET
+                                    echo env.HARNESS_NAME
+                                    echo "${env.data}"
+                                    configString = env.data.trim()
+                                    def configJSON = readJSON text: configString
+                                    print  configJSON["a_device_groups"][0]
+                                    id_num=configJSON["a_device_groups"][0]
+                                    def hwmuxUtils = new HWMuxUtils()
+                                    url= "https://hwmux.silabs.net/api/groups/${id_num}/"
+                                    def responseJson = hwmuxUtils.httpCallToJson(url, 'GET', '200', null, UTF_HWMUX_TOKEN)
+                                    echo JsonOutput.toJson(responseJson)
+                                    env.tests_url= env.JENKINS_URL + 'view/UTF/job/'+env.JOB_NAME+ '/'+env.BUILD_NUMBER + '/testReport/'
+
+                                    RELEASE_NAME = "${Release_Name}"
+                                    UTF_WIFI_BRANCH = "${UTF_WIFI_BRANCH}"
+                                    build = sh(script: "echo ${RS9116_FIRMWARE} | cut -d '.' -f5", returnStdout: true).trim()
+                                    SDK_BUILD_NUM = build
+                                    SDK_URL = "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/RS9116_WiSeConnect_SDK/$RS9116_FIRMWARE"
+                                    JENKINS_SERVER_NAME = "${JENKINS_URL}"
+                                    JENKIN_RUN_NUM_VAR = "${BUILD_NUMBER}"
+                                    JENKINS_TEST_RESULTS_URL = "${tests_url}"
+                                    TESTBED_NAME = "${SSH_TARGET}"
+                                
+                                    env.major=RS9116_FIRMWARE.split("\\.")[1]
+                                    env.minor=RS9116_FIRMWARE.split("\\.")[2]
+                                    env.patch=RS9116_FIRMWARE.split("\\.")[3]
+                                    env.build_num=RS9116_FIRMWARE.split("\\.")[4]
+                                    
+                                    if (device_group_name == "utf_sqa_smoke_test_device_group") {
+                                        JOB_TYPE = "smoke"
+                                    } else {
+                                        JOB_TYPE = "regression"
+                                    }
+                            
+                                  
+                                }   
+                                withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                                    keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
+                                                                    passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                                    usernameVariable: 'SSH_KEY_USERNAME')]) {
+                                    sh '''
+                                        export GIT_SSH=ssh
+                                        export GIT_SSH_COMMAND="ssh -i ${JENKINS_SSH_KEY_PATH} -o StrictHostKeyChecking=no"
+                                        git clone --single-branch --branch ${UTF_WIFI_BRANCH} --no-tags ssh://git@bitbucket-hyd.silabs.com/iot_infra_sw/utf_wifi.git .
+                                   
+                                        ls -l
+                                        git submodule update --init --recursive   
+                                    '''
+                                }
+                                          
+                                script {
+                                    UTF_WISECONNECT_COMMIT = sh(script: "git submodule status utf_wiseconnect | awk '{print \$1}'", returnStdout: true).trim()
+                                    UTF_WIFI_COMMIT = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+                                    url = "${BASE_ARTIFACTORY_URL}/${RS9116_FIRMWARE}/${UTF_WISECONNECT_COMMIT}/${UTF_WIFI_COMMIT}"
+                                    echo "Constructed URL: ${url}"
+                                    ARTIFACTORY_URL = url 
+                                    variables_set = true
+                                    if(isUnix()) {
+                                        sh '''
+                                           ./workspace_setup.sh
+                                   
+                                        '''
+                                    } else {
+                                        bat '''
+                                            call workspace_setup.bat
+                                        '''
+                                    }
+                                }
+                            }
+                        }
+                        stage('Get rs9116 binary') {
+                            steps{
+                                script{
+                                    if(BUILD_LOCATION != "source_code"){
+                                        if(RS9116_FIRMWARE != "Internal"){
+                                                withCredentials([usernamePassword(credentialsId: 'artifactory-username-password', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                                                def read_path = readYaml(file: 'jenkins_scripts/build_info.yaml')
+                                                env.rps_file_path = read_path['rps_path']["${build_type}"]["path"]
+                                                env.customer_id = read_path['rps_path']["${build_type}"]["customerid"]
+                                                env.rps_file_prefix = read_path['rps_path']["${build_type}"]["rps_prefix"]
+                                            
+                                                PACKAGE_TYPE=RS9116_FIRMWARE.split("\\.")[0]
+                                                withEnv(["PACKAGE_TYPE=${PACKAGE_TYPE}","rps_file_prefix=${rps_file_prefix}","customer_id=${customer_id}","rps_file_path=${rps_file_path}"]){
+                                                    if(BUILD_LOCATION == "build_artifacts"){
+                                                        sh '''
+                                                            rm -rf rs9116_binary
+                                                            mkdir rs9116_binary
+                                                            cd rs9116_binary
+                                                            if [[ "${RS9116_FIRMWARE}" == RS9116W.* ]]; then
+                                                                    wget https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/RS9116W/${RS9116_FIRMWARE}.zip
+                                                                    python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
+                                                                elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps" 2>/dev/null; then
+                                                                    mkdir ${RS9116_FIRMWARE}
+                                                                    cd  ${RS9116_FIRMWARE}
+                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps
+                                                                    mv ${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
+                                                                    cp -r * ../../utf_core/src/utf/interfaces/http/www
+                                                                    cp -r * ../../manifest/
+                                                                else
+                                                                    wget https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${RS9116_FIRMWARE}.zip
+                                                                    unzip ${RS9116_FIRMWARE}.zip
+
+                                                                    cp -r ${RS9116_FIRMWARE}/${rps_file_path}/*.rps ../utf_core/src/utf/interfaces/http/www
+                                                                    mv ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
+                                                                    cp -r ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../utf_core/src/utf/interfaces/http/www
+                                                                    cp -r ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../manifest/
+                                                                fi
+                                                        '''
+                                                    } else {
+                                                        sh '''
+                                                            rm -rf rs9116_binary
+                                                            mkdir rs9116_binary
+                                                            cd rs9116_binary
+                                                            if [[ "${RS9116_FIRMWARE}" == RS9116W.* ]]; then
+                                                                    wget https://artifactory.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/RS9116W/${RS9116_FIRMWARE}.zip
+                                                                    python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
+                                                                elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps" 2>/dev/null; then
+                                                                    mkdir ${RS9116_FIRMWARE}
+                                                                    cd  ${RS9116_FIRMWARE}
+                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps
+                                                                    mv ${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
+                                                                    cp * ../../utf_core/src/utf/interfaces/http/www
+                                                                    cp * ../../manifest/
+                                                                else
+                                                                    wget https://artifactory.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${RS9116_FIRMWARE}.zip
+                                                                    unzip ${RS9116_FIRMWARE}.zip
+
+                                                                    cp ${RS9116_FIRMWARE}/${rps_file_path}/*.rps ../utf_core/src/utf/interfaces/http/www
+                                                                    mv ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
+                                                                    cp ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../utf_core/src/utf/interfaces/http/www
+                                                                    cp ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../manifest/
+                                                                fi
+                                                        '''
+                                                    }
+                                                }
+                                            }
+                                            dir('rs9116_binary'){
+                                                sh '''
+                                                if [ -d venv/bin ]; then
+                                                . venv/bin/activate
+                                                elif [ -d venv/Scripts ]; then
+                                                . venv/Scripts/activate
+                                                fi
+
+
+                                                '''
+                                            }
+
+                                                sh '''
+                                                pwd && ls
+                                                bash -ex jenkins_scripts/initialize_config.sh ${RS9116_FIRMWARE} ${rps_file_path} ${rps_file_prefix} ${customer_id} ${build_type}
+                                                cat config/harnesses/dev_sanity_harness_example.yaml
+                                                ls utf_core/src/utf/interfaces/http/www
+                                            '''
+                                        }
+                                    } else {
+                                        echo "Skipping release package checkout for RS9116 firmware."
+                                    }
+                                }
+                            }
+                        }
+                        stage("Download hexfiles"){
+                            steps{
+                                script{
+                                    waitUntil(initialRecurrencePeriod: 10, quiet: true)
+                                    {
+                                        script
+                                        {
+                                            return teastagent_executed == true
+                                        }
+                                    }
+
+                                    PACKAGE_TYPE=RS9116_FIRMWARE.split("\\.")[0]
+                                    withEnv(["PACKAGE_TYPE=${PACKAGE_TYPE}"]){
+                                        sh """
+                                        curl -k -L ${ARTIFACTORY_URL}/${PACKAGE_TYPE}/${PACKAGE_TYPE}.zip -o ./build_test.zip
+                                        ls -l
+                                        unzip -o ./build_test.zip -d ./manifest
+                                        rm -f  ./build_test.zip
+                                        ls -l manifest
+                                        """
+                                    }
+                                }
+                            }
+                        }
+                        stage('Update manifest yaml'){
+                            steps {
+                                sh '''
+                                    if [ -d venv/bin ]; then
+                                        . venv/bin/activate
+                                    else
+                                        . venv/Scripts/activate
+                                    fi
+
+                                '''
+                            }
+                        }
+                        stage('Run Tests') {
+                            steps {
+                                echo BUILD_URL
+                                echo BUILD_NUMBER
+                                echo UTF_WIFI_BRANCH
+                                echo RUN_TESTS_DISPLAY_URL
+                                echo RS9116_FIRMWARE
+                                echo PUBLISH_TEST_RESULTS
+                                withEnv(['JENKINS_SERVER_NAME='+BUILD_URL, 'JENKIN_RUN_NUM='+BUILD_NUMBER, 'UTF_WIFI_BRANCH='+UTF_WIFI_BRANCH, 'JENKINS_TEST_RESULTS_URL='+RUN_TESTS_DISPLAY_URL, 'SDK_URL=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F'+RS9116_FIRMWARE]){
+                                        sh "echo \$BUILD_URL"
+                                        sh "echo \$BUILD_NUMBER"
+                                        sh "echo \$UTF_WIFI_BRANCH"
+                                        sh "echo \$RUN_TESTS_DISPLAY_URL"
+                                        sh "echo \$INSTALLER_URL_SDK"
+                                }
+                                script{
+                                    try{
+                                        sh '''
+                                            rm -rf reports
+                                            export SKIP_PROCESSING_ARTIFACTS=1
+
+                                            if [ -d venv/bin ]; then
+                                            . venv/bin/activate
+                                            else
+                                            . venv/Scripts/activate
+                                            fi
+
+                                            export PYTHONPATH=./utf_core/src
+                                            export QUERY_EXPR=$(printf '{stack=\\\\"%s\\\\",job=\\\\"%s\\\\",stage=\\\\"%s\\\\",build=\\\\"%s\\\\"}' "${STACK}" "${JENKINS_JOB_NAME}" "${JENKINS_JOB_STAGE_NAME}" "${JENKIN_RUN_NUM}")
+                                            export GRAFANA_BASE_URL="https://grafana.silabs.net/explore?orgId=1^&left="
+                                            export GRAFANA_PARAMS="{\\"datasource\\":\\"loki-production\\",\\"queries\\":[{\\"expr\\":\\"${QUERY_EXPR}\\",\\"maxLines\\":10000}],\\"range\\":{\\"from\\":\\"now-1d\\",\\"to\\":\\"now\\"}}"
+                                            export CONVERT_URL_CMD="import urllib.parse; import os; print('View live logs for this test run at ' + os.environ['GRAFANA_BASE_URL'] + urllib.parse.quote(os.environ['GRAFANA_PARAMS']))"
+                                            python -c "${CONVERT_URL_CMD}"
+
+                                            export QUERY_EXPR=$(printf '{stack=\\\\"%s\\\\",job=\\\\"%s\\\\",stage=\\\\"%s\\\\",build=\\\\"%s\\\\"}' "${STACK}" "${JENKINS_JOB_NAME}" "${JENKINS_JOB_STAGE_NAME}" "${JENKIN_RUN_NUM}")
+                                            export GRAFANA_BASE_URL="https://grafana.silabs.net/explore?orgId=1^&left="
+                                            export GRAFANA_PARAMS="{\\"datasource\\":\\"loki-production\\",\\"queries\\":[{\\"expr\\":\\"${QUERY_EXPR}\\",\\"maxLines\\":10000}],\\"range\\":{\\"from\\":\\"now-1d\\",\\"to\\":\\"now\\"}}"
+                                            export CONVERT_URL_CMD="import urllib.parse; import os; print('View live logs for this test run at ' + os.environ['GRAFANA_BASE_URL'] + urllib.parse.quote(os.environ['GRAFANA_PARAMS']))"
+                                            python -c "${CONVERT_URL_CMD}"
+
+                                            python executor/launch_utf_tests.py \
+                                                --target ${SSH_TARGET} \
+                                                --pytest_command "${UTF_PYTEST_COMMAND}" \
+                                                --harness ${HARNESS_NAME} \
+                                                --publish_test_results ${PUBLISH_TEST_RESULTS} \
+                                                --test_results_source_api TEST_RAIL_API \
+                                                --docker_flags "-e JENKINS_SERVER_NAME=${BUILD_URL}, \
+                                                    -e JENKIN_RUN_NUM=${BUILD_NUMBER}, \
+                                                    -e JENKINS_TEST_RESULTS_URL=${JOB_URL}${BUILD_NUMBER}/testReport, \
+                                                    -e JENKINS_JOB_NAME=${JOB_NAME}, \
+                                                    -e SDK_URL=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F${RS9116_FIRMWARE}, \
+                                                    -e STUDIO_URL=http://bostonstudiomirror/studio/v4/WSQA/rel.2885/, \
+                                                    -e TEST_SUITE=OT_Smoke_brd4161a, \
+                                                    -e STACK_NAME=${STACK}, \
+                                                    -e SSH_TARGET=${SSH_TARGET}, \
+                                                    -e GIT_BRANCH=${UTF_WIFI_BRANCH}" \
+
+                                            export exitcode=$?
+
+                                            # ssh -o StrictHostKeyChecking=no pi@${SSH_TARGET} "sudo reboot"
+                                            # ping -n 20 ${SSH_TARGET} || true
+
+                                            exit $exitcode
+                                        '''
+                                    } catch(err) {
+                                        echo err.toString()
+                                        // Below stages in pipeline won't execute
+                                        sh ''' exit 1'''
+                                    }
+                                }
+                            }
+                            post {
+                                always {
+                                    script {
+                                        withCredentials([usernamePassword(credentialsId: 'artifactory-username-password', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                                            //archiveArtifacts 'example_test_package/**'
+                                            //archiveArtifacts 'manifest/**'
+                                            archiveArtifacts 'reports/junit_report.xml'
+                                            // archiveArtifacts "config/harnesses/${env.HARNESS_NAME}"
+                                            junit allowEmptyResults: false, testResults: 'reports/junit_report.xml'
+                                            sh '''
+                                            zip -r reports.zip reports
+                                            curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${JOB_NAME}/${BUILD_NUMBER}/reports/" -T reports.zip
+                                            curl -u ${USERNAME}:${PASSWORD} -X PUT "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${JOB_NAME}/${BUILD_NUMBER}/config/harnesses/${HARNESS_NAME}" -T config/harnesses/${HARNESS_NAME}
+                                            '''
+                                        }
+                                        emailext(mimeType: "text/html",
+                                                body: """
+                                                    Dear all, <br>
+                                                    <br>
+                                                    Build ${BUILD_NUMBER} of ${JOB_NAME} is ${BUILD_STATUS}, with firmware version ${RS9116_FIRMWARE}. Please check the detailed test result in the URL below.<br>
+                                                    <br>
+                                                    ${BUILD_URL}
+                                                    <br>
+                                                    Thank you!
+                                                    """,
+                                                subject: "[${JOB_NAME}] ${BUILD_NUMBER} ${BUILD_STATUS}",
+                                                to: "DL.Wifi.Build.Reports@silabs.com,DL.Hyd-Connectivity-Regression-Team@silabs.com")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                stage('Build sqa test agent binary') {
+                    steps{
+                        script{
+                            if(SQA_TEST_AGENT != "Internal"){
+                                withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser-ssh-username-key', \
+                                                            keyFileVariable: 'JENKINS_SSH_KEY_PATH', \
+                                                            passphraseVariable: 'SSH_KEY_PATH_PASSPHRASE', \
+                                                            usernameVariable: 'SSH_KEY_USERNAME')]) {
+                                    PACKAGE_TYPE=RS9116_FIRMWARE.split("\\.")[0]
+                                    waitUntil(initialRecurrencePeriod: 10, quiet: true)
+                                    {
+                                        script
+                                        {
+                                            return variables_set == true
+                                        }
+                                    }
+                                    withEnv(["PACKAGE_TYPE=${PACKAGE_TYPE}"]){
+                                        def statusCode = sh(script: "curl --fail-early -s -o /dev/null -w '%{http_code}' ${ARTIFACTORY_URL}/${PACKAGE_TYPE}/${PACKAGE_TYPE}.zip", returnStdout: true).trim()
+                                        println(statusCode)
+                                        lock('testagent_lock'){
+                                            if (statusCode == '200') {
+                                                sh '''
+                                                echo "Artifact is available. Proceeding with the main pipeline."
+
+                                                '''
+                                            } else {
+                                                echo "Artifact is not available. Triggering the main pipeline."
+                                                // Trigger the main pipeline job with propagate=false
+                                                build job: 'SQA_TEST_AGENT', parameters: [ string(name: 'RS9116_FIRMWARE', value: params.RS9116_FIRMWARE),
+                                                                                        string(name: 'UTF_WIFI_BRANCH', value: params.UTF_WIFI_BRANCH),
+                                                                                        string(name: 'UTF_WIFI_COMMIT', value: UTF_WIFI_COMMIT),
+                                                                                        string(name: 'UTF_WISECONNECT_COMMIT', value: UTF_WISECONNECT_COMMIT),
+                                                                                        string(name: 'ARTIFACTORY_URL', value: "${ARTIFACTORY_URL}/${PACKAGE_TYPE}/") ], propagate: true
+
+                                            }
+                                        }
+                                        teastagent_executed = true
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+}
+

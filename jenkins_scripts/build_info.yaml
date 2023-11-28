@@ -11,3 +11,11 @@ rps_path :
       path : "firmware"
       customerid : "0"
       rps_prefix : "RS916W"
+    9117_A0_CCP :
+      path : "connectivity_firmware"
+      customerid : "0"
+      rps_prefix : "SiWG917-A"
+    9117_B0_CCP :
+      path : "connectivity_firmware"
+      customerid : "0"
+      rps_prefix : "SiWG917-B"

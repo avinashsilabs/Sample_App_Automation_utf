@@ -55,11 +55,12 @@ mgmt_data_rates_eapol_1mbps,(wlan_radio.channel == {{ radio_ch }}), and wlan_rsn
 mgmt_basic_data_rates_assoc_req,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and wlan.fc.type_subtype == 0x0000 or ((((wlan.supported_rates == 0x82) and (wlan.supported_rates == 0x84)) and (wlan.supported_rates == 0x8c)) and (wlan.supported_rates == 0x98)) and (wlan.supported_rates == 0xb0)
 mgmt_basic_data_rates_probe_res,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and wlan.fc.type_subtype == 0x0005 and (((wlan.supported_rates == 0x82) and (wlan.supported_rates == 0x84)) and (wlan.supported_rates == 0x30))
 mgmt_basic_data_rates_probe_req,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and wlan.fc.type_subtype == 0x0004 or ((((wlan.supported_rates == 0x82) && (wlan.supported_rates == 0x84)) && (wlan.supported_rates == 0x8c)) && (wlan.supported_rates == 0x98)) && (wlan.supported_rates == 0xb0)
+association_request_ht_supported_rates,(wlan.addr == {{mac_addr}} and wlan.fc.type_subtype == 0), and (wlan.supported_rates == 0x96) and (wlan.supported_rates == 0x24) and (wlan.ht.capabilities == 0x012c)
 eapol_m2_after_deauth,(wlan_radio.channel == {{ radio_ch }}), and radiotap.timestamp.ts >= 12256739 and wlan_rsna_eapol.keydes.msgnr == 2
 assoc_req_resp_eapol_4_way_handshake,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and ((wlan.fc.type_subtype == 0 or wlan.fc.type_subtype == 1) or (wlan_rsna_eapol.keydes.key_info.key_type == 1))
 wpa3_confirm_commit_message,(wlan.addr == {{ wlan_addr }}), and (wlan.fixed.sae_message_type == 1) or (wlan.fixed.sae_message_type == 2)
 wpa3_4_way_handshake_message,(wlan.addr == {{ wlan_addr }}), and !(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or (wlan.fc.type_subtype == 0x0000) or eapol or (wlan.fixed.sae_message_type == 1) or (wlan.fixed.sae_message_type == 2)
-dhcp_renewal,(wlan.addr == {{ wlan_addr }}), and (!(ip.dst == 255.255.255.255) and (dhcp.option.dhcp == 3))) and wlan.fc.retry == 0
+dhcp_renewal,(wlan.addr == {{ wlan_addr }}), and (!(ip.dst == 255.255.255.255) and (dhcp.option.dhcp == 3)) and wlan.fc.retry == 0
 WMM/Qos,,
 qos_best_effort_tx,(wlan.sa == {{ sa_addr }}), and (wlan.qos.priority == 0)
 qos_back_ground_tx,(wlan.sa == {{ sa_addr }}), and (wlan.qos.priority == 1)
@@ -94,6 +95,8 @@ eap_tls_handshake_aes128_sha128_v1,(wlan.addr == {{ sa_addr }}) and (wlan.addr =
 eap_tls_aes256_sha_v1,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0301 and tls.handshake.ciphersuite == 0x0035 and tls.handshake.cipher_suites_length == 2
 eap_tls_aes128_sha_v1,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0301 and tls.handshake.ciphersuite == 0x002f and tls.handshake.cipher_suites_length == 2
 eap_tls_all_cipher_v1,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0301 and tls.handshake.cipher_suites_length == 22
+eap_tls__aes256_sha256_aes256_sha_v1_2,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x0039 and tls.handshake.ciphersuite == 0x006b
+eap_tls__aes256_sha256_aes256_sha_v1_0,(wlan.addr == {{ sa_addr }}) and (wlan.addr == {{ da_addr }}), and eap and tls.record.version == 0x0301 and tls.handshake.ciphersuite == 0x0039 and tls.handshake.ciphersuite == 0x006b
 eap_type_tls_verification,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (eap.type == 13)
 eap_type_ttls_verification,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (eap.type == 21)
 eap_type_peap_verification,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (eap.type == 25)

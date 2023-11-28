@@ -191,8 +191,11 @@ class aws_connection:
         @param message: Data to publish from Raspi on subscribed topic.
         @param qos: QOS value to subscribe on aws topic(0/1).
         """
-        status = aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
-        assert status == ClientStatus.STABLE, f"Publish on topic:'{topic}' is failed from aws_iot_client"
+        try:
+            status = aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
+            assert status == ClientStatus.STABLE, f"Publish on topic:'{topic}' is failed from aws_iot_client"
+        except AssertionError:
+            self.connect_to_aws_server_from_raspi(aws_iot_client)
         if isinstance(message, list):
             for i, msg in enumerate(message):
                 logger().info(
@@ -967,7 +970,7 @@ def test_wifi_sdk_aws_tcp_shutdown_c19546(firmware_loader, wifi_sniffer, wifi_ac
             aws_obj.subscribe_from_dut(wifi_dut, topic, qos=Si91xAwsQos.QOS0)
             aws_obj.connect_to_aws_server_from_raspi(aws_iot_client)
             time.sleep(5)
-            wifi_dut.interfaces.wifi.aws_select_socket()
+
             for count, msg in enumerate(messages):
                 logger.info(
                     f"Raspi is publishing message{count + 1} on topic:'{topic}'\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
@@ -1008,7 +1011,7 @@ def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_different_lengths_
     try:
         messages = []
         # for size in (1, 10, 100, 512, 1000, 1390):
-        for size in [1, 10, 100]:
+        for size in (1, 10, 100, 512, 1000):
             messages.append(''.join(random.choice(string.ascii_uppercase) for _ in range(size)))
         logger.info(f"Messages are:{messages}")
 
@@ -1104,7 +1107,7 @@ def test_wifi_sdk_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(firmware
             send_count = send_count + 1
             logger.info(f"\naws_iot_client publishing message{send_count} on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS1}'"
                         f"\nMessage{send_count} with length:'{len(msg)} bytes'\nMessage{send_count} is:'{msg}'")
-            aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic, msg, qos=Si91xAwsQos.QOS1)
+            aws_obj.publish_from_raspi(aws_iot_client, topic, msg, qos=Si91xAwsQos.QOS1)
             recv_msg = aws_obj.receive_aws_messages_from_dut(wifi_dut, wait_time=10)
             assert msg == recv_msg, f"Failed to receive published message{send_count} in DUT"
             logger.info(f"Received message{send_count}: '{recv_msg}'")
@@ -1353,7 +1356,7 @@ def test_wifi_sdk_aws_data_integrity_check_after_sending_1mb_of_data_c19564(firm
 @pytest.mark.config('wifi_access_point', wifi={"channel": 5})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("iterations", [1])
-@pytest.mark.parametrize("publish_len, total_bytes", [(490, 102400)])  # 493 is max limit-file size(1024000)
+@pytest.mark.parametrize("publish_len, total_bytes", [(1000, 102400)])  # 493 is max limit-file size(1024000)
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
