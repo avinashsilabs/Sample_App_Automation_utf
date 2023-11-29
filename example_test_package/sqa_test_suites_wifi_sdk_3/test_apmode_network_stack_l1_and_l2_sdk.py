@@ -556,16 +556,23 @@ def test_wifi_sdk_DUTAP_Validate_UDP_Tx_data_C19463(wifi_sniffer, net_perf_clien
                }
          }
 )
+@pytest.mark.parametrize("channel", [11])
 def test_wifi_sdk_dutap_tcp_socket_create_transfer_terminate_30min_c19480(wifi_sniffer, sniffer_filter, remote_socket, wifi_dut,
-                                                                          utf_constants, sl_collections, wifi_clients):
+                                                                          utf_constants, sl_collections, wifi_clients, channel):
     '''By creating socket need to test tcp data transfer functionality in ap mode for 30mins'''
     try:
         test_run_time = utf_constants.get('time_duration')
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
-                                                utf_constants,
+                                                utf_constants, capture_filename="test_C19480_connection",
                                                 testcase_no=19465, leave=False)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=channel)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C19480_datatransfer.pcap")
+        time.sleep(3)
         sw = Stopwatch()
         while sw.elapsed_sec <= test_run_time:
             time_left = round(((test_run_time - sw.elapsed_sec) / 60), 2)
@@ -577,6 +584,9 @@ def test_wifi_sdk_dutap_tcp_socket_create_transfer_terminate_30min_c19480(wifi_s
         for i in range(0, 1):
             logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
             wifi_clients[i].interfaces.wifi.leave()
+
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
@@ -621,17 +631,24 @@ def test_wifi_sdk_dutap_tcp_socket_create_transfer_terminate_30min_c19480(wifi_s
                }
          }
 )
+@pytest.mark.parametrize("channel", [11])
 def test_wifi_sdk_dutap_udp_socket_create_transfer_terminate_30min_C19481(wifi_sniffer, remote_socket, wifi_dut,
-                                                                           utf_constants, sniffer_filter, sl_collections, wifi_clients):
+                                                                           utf_constants, sniffer_filter, sl_collections, wifi_clients, channel):
     '''By creating socket need to test udp data transfer functionality in ap mode for 30mins'''
     try:
         test_run_time = utf_constants.get('time_duration')
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                                 utf_constants,
-                                                capture_filename="test_C19465",
+                                                capture_filename="test_C19481_connection",
                                                 testcase_no=19465, leave=False)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=channel)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C19481-datatransfer.pcap")
+        time.sleep(3)
         sw = Stopwatch()
         while sw.elapsed_sec <= test_run_time:
             time_left = round(((test_run_time - sw.elapsed_sec) / 60), 2)
@@ -644,6 +661,9 @@ def test_wifi_sdk_dutap_udp_socket_create_transfer_terminate_30min_C19481(wifi_s
         for i in range(0, 1):
             logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
             wifi_clients[i].interfaces.wifi.leave()
+
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
