@@ -58,7 +58,7 @@ pipeline {
 
                                   
                                     env.RELEASE_NAME = "${Release_Name}"     
-                                    env.BRANCH_NAME = "${DB_BRANCH_NAME}"
+                                    env.BRANCH_NAME = "${SDK_BRANCH_NAME}"
                                     env.build = sh(script: "echo ${RS9116_FIRMWARE} | cut -d '.' -f5", returnStdout: true).trim()
                                     env.SDK_BUILD_NUM = build
                                     env.SDK_URL = "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/RS9116_WiSeConnect_SDK/$RS9116_FIRMWARE"
