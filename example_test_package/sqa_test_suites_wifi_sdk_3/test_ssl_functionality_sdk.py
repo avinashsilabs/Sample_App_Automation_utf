@@ -861,8 +861,14 @@ def test_wifi_sdk_rtc_get_multiple_times_c19178(wifi_sniffer, wifi_access_point,
         set_month = 10
         set_year = 2023
         set_week_day = 3
-        wait_time_after_scan = 50
+        wait_time_after_scan = 10
         set_time_sec = ((set_minutes * 60) + set_seconds)
+
+        logger.info(f"Time in seconds just before initiating set rtc ->  {set_time_sec}")
+        wifi_dut.interfaces.wifi.set_rtc(seconds=set_seconds, minutes=set_minutes, hours=set_hour,
+                                         day=set_month_day, month=set_month, year=set_year, weekday=set_week_day)
+        time.sleep(10)
+        wifi_dut.interfaces.wifi.get_rtc()
 
         logger.info(f"Time in seconds just before initiating set rtc ->  {set_time_sec}")
         wifi_dut.interfaces.wifi.set_rtc(seconds=set_seconds, minutes=set_minutes, hours=set_hour,
@@ -937,7 +943,7 @@ def test_wifi_sdk_rtc_get_multiple_times_c19179(wifi_sniffer, wifi_access_point,
         set_month = 10
         set_year = 2023
         set_week_day = 3
-        wait_time_after_scan = 50
+        wait_time_after_scan = 10
         listen_interval = 700
         set_time_sec = ((set_minutes * 60) + set_seconds)
 
@@ -992,9 +998,9 @@ def test_wifi_sdk_rtc_get_multiple_times_c19179(wifi_sniffer, wifi_access_point,
 
         with TimeMeasurer() as t:
             logger.info(f"Time taken for connecting to the AP, getting IP and ping for 10 sec  -> {join_time} seconds")
-            logger.info(f"wait for 50 seconds")
+            logger.info(f"wait for 10 seconds")
         join_logger_time = t.duration
-        wait_time_after_join = 50
+        wait_time_after_join = 10
         time.sleep(wait_time_after_join)
         idle_time = wait_time_after_scan + wait_time_after_join + scan_time + join_time + scan_logger_time1 + scan_logger_time2 + join_logger_time
 
@@ -1026,9 +1032,9 @@ def test_wifi_sdk_rtc_get_multiple_times_c19179(wifi_sniffer, wifi_access_point,
         with TimeMeasurer() as t:
             logger.info(
                 f"Time taken for executing power save api, ping for {ping_count} packets -> {power_save_time} seconds")
-            logger.info(f"wait for 50 seconds")
+            logger.info(f"wait for 10 seconds")
         powersave_logger_time = t.duration
-        wait_time_after_powersave = 50
+        wait_time_after_powersave = 10
         time.sleep(wait_time_after_powersave)
         idle_time = wait_time_after_scan + wait_time_after_join + wait_time_after_powersave + scan_time + join_time + scan_logger_time1 + scan_logger_time2 + join_logger_time + join_logger_time2 + power_save_time + powersave_logger_time
 
@@ -2313,7 +2319,7 @@ def test_wifi_sdk_2_ssl_tx_1_tcp_rx_c19161(wifi_sniffer, wifi_dut, wifi_access_p
                          ]
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated", "clear_certs"])
 def test_wifi_sdk_2ssl_1aws_testcase_c19150(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cert1, cert2,
                                             logger, sl_collections, sniffer_filter):
     """
@@ -2436,7 +2442,7 @@ def test_wifi_sdk_2ssl_1aws_testcase_c19150(wifi_sniffer, wifi_dut, wifi_access_
 @pytest.mark.parametrize("domain_name", ["a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com"])
 @pytest.mark.end_state("wifi_access_points", wifi="ap_disabled")
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "disassociated", "disable_store_config"])
+                       wifi=["wifi_powersave_disable", "disassociated", "disable_store_config", "clear_certs"])
 def test_wifi_sdk_dns_get_func_with_multiple_APs_c19183(wifi_sniffer, wifi_access_points, wifi_dut, domain_name,
                                                         logger, sl_collections, sniffer_filter):
     """
@@ -2498,7 +2504,7 @@ def test_wifi_sdk_dns_get_func_with_multiple_APs_c19183(wifi_sniffer, wifi_acces
 @pytest.mark.parametrize("domain_name", [("a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com",
                                           "a1ctxhjnkhtvqq.iot.us-east-2.amazonaws.com")])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "disassociated", "disable_store_config"])
+                       wifi=["wifi_powersave_disable", "disassociated", "disable_store_config", "clear_certs"])
 def test_wifi_sdk_aws_cloud_with_different_certificate_c19186(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server,
                                                               remote_socket, domain_name, logger, sl_collections,
                                                               sniffer_filter):
@@ -2581,7 +2587,7 @@ def test_wifi_sdk_aws_cloud_with_different_certificate_c19186(wifi_sniffer, wifi
 @pytest.mark.parametrize("domain_name", [("a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com",
                                           "a1ctxhjnkhtvqq.iot.us-east-2.amazonaws.com")])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "close_sockets", "disassociated"])
+                       wifi=["wifi_powersave_disable", "close_sockets", "disassociated", "clear_certs"])
 def test_wifi_sdk_three_socket_connection_with_1ssl_2aws_c19151(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server,
                                                                 domain_name, cert1, logger, sl_collections,
                                                                 sniffer_filter):
