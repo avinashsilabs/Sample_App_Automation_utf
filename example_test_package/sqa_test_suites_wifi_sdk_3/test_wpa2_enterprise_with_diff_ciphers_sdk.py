@@ -115,8 +115,10 @@ class SnifferValidationProcess:
                 filters_name_12 = {1: 'eap_tls_aes128_sha_v1'}
             if self.test_case_no == 113843:
                 filters_name_12 = {1: 'eap_tls_all_cipher_v1'}
-            if self.test_case_no == 297685:
+            if self.test_case_no == 113842:
                 filters_name_12 = {1: 'eap_tls__aes256_sha256_aes256_sha_v1_0'}
+            if self.test_case_no == 113858:
+                filters_name_12 = {1: 'eap_type_peap_verification'}
 
             output_2 = self.sl_collections.sniffer_validation_for_packet_filters(self.wifi_sniffer, self.sniffer_filter,
                                                                                  device_address_2,
@@ -1282,7 +1284,7 @@ def test_wsdk_WPA2_EAP_DHE_RSA_AES128_SHA256_ca_cert_1_C113845(wifi_dut, wifi_ac
         sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                         wifi_access_point=wifi_access_point,
                                                         dut_mac_address=dut_mac_address, sl_collections=sl_collections,
-                                                        ap_mac_address=ap_mac_address, test_case_no=113845)
+                                                        ap_mac_address=ap_mac_address, test_case_no=113822)
         sniffer_verification.verify_sniffer_validation()
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1319,7 +1321,7 @@ def test_wsdk_WPA2_EAP_DHE_RSA_AES128_SHA256_ca_cert_1_C113845(wifi_dut, wifi_ac
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
-def test_wsdk_WPA2_DHE_RSA_AES128_SHA256_DHE_RSA_AES128_SHA_TLSv10_C297685(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
+def test_wsdk_WPA2_DHE_RSA_AES128_SHA256_DHE_RSA_AES128_SHA_TLSv10_C113842(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                             protocol, net_perf_client, wifi_client, radius_server,
                                                             sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap dhe-rsa tls method"""
@@ -1349,7 +1351,7 @@ def test_wsdk_WPA2_DHE_RSA_AES128_SHA256_DHE_RSA_AES128_SHA_TLSv10_C297685(wifi_
         sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                         wifi_access_point=wifi_access_point,
                                                         dut_mac_address=dut_mac_address, sl_collections=sl_collections,
-                                                        ap_mac_address=ap_mac_address, test_case_no=297685)
+                                                        ap_mac_address=ap_mac_address, test_case_no=113842)
         sniffer_verification.verify_sniffer_validation()
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1389,7 +1391,7 @@ def test_wsdk_WPA2_DHE_RSA_AES128_SHA256_DHE_RSA_AES128_SHA_TLSv10_C297685(wifi_
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
-def test_wsdk_WPA2_conn_with_16k_record_size_C297689(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
+def test_wsdk_WPA2_conn_with_16k_record_size_C113846(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                             protocol, net_perf_client, wifi_client, radius_server,
                                                             sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap dhe-rsa tls method"""
@@ -1419,7 +1421,7 @@ def test_wsdk_WPA2_conn_with_16k_record_size_C297689(wifi_dut, wifi_access_point
         sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                         wifi_access_point=wifi_access_point,
                                                         dut_mac_address=dut_mac_address, sl_collections=sl_collections,
-                                                        ap_mac_address=ap_mac_address, test_case_no=297689)
+                                                        ap_mac_address=ap_mac_address, test_case_no=113846)
         sniffer_verification.verify_sniffer_validation()
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1701,3 +1703,73 @@ def test_sdk_WPA2_EAP_TTLS_ca_cert_flag_set_0_C113857(
             'packet_count'], 'Unable to find EAP failure frames sent from AP in sniffer'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
+    }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+def test_wsdk_WPA2_eap_conn_with_peap_cert_loaded_C113858(
+        wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, radius_server, protocol, net_perf_client,
+        wifi_client,
+        sl_collections, request, utf_constants):
+    """ WPA2 Enterprise connection in EAP PEAP Method when the ca_cert_required flag is set to 0 and the
+    certificate is loaded """
+
+    try:
+        test_name = request.node.name
+        iter_count = utf_constants.get("iter_count")
+        wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
+                                                   cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0,
+                                                                 eap_flags=1)
+        wifi_dut.interfaces.wifi.load_certs(
+            eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+        wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
+                                     protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
+                                     eap_type="peap", sl_collections=sl_collections, data_transfer=True,
+                                     test_case_no=113821, traffic_type="TX")
+        for i in range(0, iter_count):
+            wifi_thread.start()
+            wifi_thread.wait_for_exit()
+            time.sleep(3)
+        dut_mac_address = wifi_thread.dut_addr['dut_mac_address']
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(1)
+        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                        wifi_access_point=wifi_access_point,
+                                                        dut_mac_address=dut_mac_address, sl_collections=sl_collections,
+                                                        ap_mac_address=ap_mac_address, test_case_no=113858)
+        sniffer_verification.verify_sniffer_validation()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
