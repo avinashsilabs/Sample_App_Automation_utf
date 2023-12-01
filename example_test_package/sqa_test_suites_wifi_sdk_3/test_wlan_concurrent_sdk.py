@@ -153,7 +153,7 @@ class ConcurrentThread(ThreadBase):
         if self.traffic_type == "Tx":
             self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
                                        protocol=self.protocol, device_ip=self.dut_addr_dict['dut_ip'],
-                                       host_ip=self.dut_addr_dict['client_ip'], timeout=40, traffic_type="TX")
+                                       host_ip=self.dut_addr_dict['client_ip'], timeout=30, traffic_type="TX")
 
         logger().info("Stop sniffer finally")
         self.wifi_sniffer.interfaces.capture.stop_capture()
