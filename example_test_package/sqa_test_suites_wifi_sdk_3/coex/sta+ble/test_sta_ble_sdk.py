@@ -1708,7 +1708,6 @@ def test_Coex_sdk_BLE_scan_while_TCP_TX_C133573(wifi_sniffer, wifi_access_point,
 
 
 
-@pytest.mark.skip("PMK connection issue")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
