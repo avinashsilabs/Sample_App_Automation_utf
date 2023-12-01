@@ -850,8 +850,6 @@ def test_wifi_sdk_ssl_socket_connection_dataTX_enable_deep_sleep_base_powersave_
 
         logger.info(f"....Applying performance profile mode ")
         wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
-        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         #
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         port2 = ssl_server.interfaces.ssl.config['device_port2']
