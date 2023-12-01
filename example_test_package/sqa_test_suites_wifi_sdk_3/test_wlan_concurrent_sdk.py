@@ -437,7 +437,8 @@ def test_wifi_sdk_device_as_ap_and_sta_c19319(sl_collections, wifi_access_point,
         conc_obj = ConcurrentThread(wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants,
                                     wifi_access_point, testcase_no=19312,
                                     capture_filename="test_c19319")
-        conc_obj.sta_ap_connection()
+        conc_obj.start()
+        conc_obj.wait_for_exit()
         conc_obj.ap_sta_disconnection()
         conc_obj.concurrent_sniffer_validation()
 
