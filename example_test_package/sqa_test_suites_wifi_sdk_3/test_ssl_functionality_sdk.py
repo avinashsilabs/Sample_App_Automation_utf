@@ -108,7 +108,7 @@ class SocketDataTransfer:
             data_length = data_length + len(data)
         logger.info(f"Total bytes received on socket id {index} -> {data_length} TCP")
 
-    def ssl_socket_rx(self, ssl_server, sock_id, pkt_count, buffer_length, logger):
+    def ssl_socket_rx(self,ssl_server, sock_id, pkt_count, buffer_length, logger):
         logger.info(f"SSL Receiving data over socket id {sock_id}")
         ssl_server.interfaces.ssl.data_receive(sock_id + 1, pkt_count, buffer_length, pkt_rcv_timeout=120)
 
@@ -1253,20 +1253,20 @@ def test_wifi_sdk_ssl_connection_when_the_date_rtc_timer_expired_c19199(wifi_sni
 @pytest.mark.config(
     "wifi_dut",
     wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "set_send_feature_frame": True,
-        "thread_config": {"wifi": {"count": 4, "stack_len": 3584}},
-        "ca_cert": [("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
-                    ("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START")]
-    }
+        {
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLANOnly,
+            "features": Si91xFeatureBitMap.Default,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+            "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "set_send_feature_frame": True,
+            "thread_config": {"wifi": {"count": 4, "stack_len": 3584}},
+            "ca_cert": [("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
+                        ("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START")]
+        }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
@@ -1281,21 +1281,21 @@ def test_wifi_sdk_2SSL_1TCP_TX_testcase_C19185(wifi_sniffer, wifi_dut, wifi_acce
             capture_file=f"{capture_filename}.pcap"
         )
         sock_obj = SocketDataTransfer()
-
+        #
         port3 = 5007
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         port2 = ssl_server.interfaces.ssl.config['device_port3']
         list_sock = []
-        result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=True, ping_count=10,
-                                                     associated=False)
+        result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False, ping_count=10,
+                             associated=False)
 
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
         # Open ssl server socket in remote device-Port1
         ssl_server.interfaces.ssl.start_server(port=port1)
         # Open ssl server socket in remote device-Port2
         ssl_server.interfaces.ssl.start_server(port=port2)
         # Open ssl server socket in remote device-Port3
-        # ssl_server.interfaces.ssl.start_server(port=port3)
         server_ip = ssl_server.interfaces.ssl.server_ip
 
         for sock_count in range(3):
@@ -1316,8 +1316,7 @@ def test_wifi_sdk_2SSL_1TCP_TX_testcase_C19185(wifi_sniffer, wifi_dut, wifi_acce
                     try:
                         logger.info(f"DUT with sock id {sock} connecting to server with port number:{sock_port}")
                         # ssl socket opened in DUT connects to the server
-                        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
-                                                                  server_port=sock_port, timeout=20)
+                        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=sock_port,timeout=20)
                         retrial = 1
                         break
                     except:
@@ -1327,15 +1326,13 @@ def test_wifi_sdk_2SSL_1TCP_TX_testcase_C19185(wifi_sniffer, wifi_dut, wifi_acce
                         logger.info(f"Retrying connection for {retry} times")
                         time.sleep(5)
                 assert retrial == 1, "Connection to socket failed"
-
             else:
                 local_port = randint(20001, 40000)
                 server_socket = remote_socket_factory.interfaces.socket.create_socket()
                 server_socket.time_limit = 3600
-                server_socket.start_server(port=sock_port, socket_type=SOCKET_TYPE_TCP)
+                server_socket.start_server(port=sock_port,socket_type=SOCKET_TYPE_TCP)
 
-                sock = wifi_dut.interfaces.wifi.socket(domain="AF_INET", stream_type="SOCK_STREAM",
-                                                       protocol="IPPROTO_TCP")
+                sock = wifi_dut.interfaces.wifi.socket(domain="AF_INET",stream_type="SOCK_STREAM",protocol="IPPROTO_TCP")
                 assert sock == sock_count, f"socket id received is wrong, expected is 2"
                 logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
                 wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
@@ -1350,10 +1347,10 @@ def test_wifi_sdk_2SSL_1TCP_TX_testcase_C19185(wifi_sniffer, wifi_dut, wifi_acce
         for sock_id in list_sock:
             if sock_id == 2:
                 th_start = Thread(target=sock_obj.tcp_socket_rx,
-                                  args=(remote_socket_factory, 1, 10, data_size, logger), )
+                                  args=(remote_socket_factory, 1, pkt_count, data_size, logger), )
             else:
                 th_start = Thread(target=sock_obj.ssl_socket_rx,
-                                  args=(ssl_server, sock_id, pkt_count, buffer_length, logger), )
+                                      args=(ssl_server, sock_id, pkt_count, buffer_length, logger), )
             send_list.append(th_start)
             th_start.start()
 
@@ -1373,6 +1370,7 @@ def test_wifi_sdk_2SSL_1TCP_TX_testcase_C19185(wifi_sniffer, wifi_dut, wifi_acce
     finally:
         remote_socket_factory.interfaces.socket.close_all()
         wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -1498,19 +1496,19 @@ def test_wifi_sdk_2SSL_1TCP_RX_testcase_C19187(wifi_sniffer, wifi_dut, wifi_acce
 @pytest.mark.config(
     "wifi_dut",
     wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "set_send_feature_frame": True,
-        "thread_config": {"wifi": {"count": 4, "stack_len": 3584}},
-        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
-    }
+        {
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLANOnly,
+            "features": Si91xFeatureBitMap.Default,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+            "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "set_send_feature_frame": True,
+            "thread_config": {"wifi": {"count": 4, "stack_len": 3584}},
+            "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+        }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
@@ -1529,8 +1527,10 @@ def test_wifi_sdk_1ssl_2tcp_sockets_send_data_testcase_C19188(wifi_sniffer, wifi
         port2 = 5002
         port3 = 5003
         list_sock = []
-        result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=True, ping_count=10,
+        result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False, ping_count=10,
                                                      associated=False)
+
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
 
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
         # Open ssl server socket in remote device-Port1
@@ -1591,7 +1591,7 @@ def test_wifi_sdk_1ssl_2tcp_sockets_send_data_testcase_C19188(wifi_sniffer, wifi
         for sock_id in list_sock:
             if sock_id > 0:
                 th_start = Thread(target=sock_obj.tcp_socket_rx,
-                                  args=(remote_socket_factory, sock_id, 10, data_size, logger), )
+                                  args=(remote_socket_factory, sock_id, pkt_count, data_size, logger), )
             if sock_id == 0:
                 th_start = Thread(target=sock_obj.ssl_socket_rx,
                                   args=(ssl_server, sock_id, pkt_count, buffer_length, logger), )
@@ -1613,23 +1613,24 @@ def test_wifi_sdk_1ssl_2tcp_sockets_send_data_testcase_C19188(wifi_sniffer, wifi
     finally:
         ssl_server.interfaces.ssl.stop_server()
         remote_socket_factory.interfaces.socket.close_all()
+        wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
     "wifi_dut",
     wifi=
-    {
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "set_send_feature_frame": True,
-        "thread_config": {"wifi": {"count": 4, "stack_len": 3584}},
-    }
+        {
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLANOnly,
+            "features": Si91xFeatureBitMap.Default,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+            "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "set_send_feature_frame": True,
+            "thread_config": {"wifi": {"count": 4, "stack_len": 3584}},
+        }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
@@ -1649,8 +1650,10 @@ def test_wifi_sdk_tcp_three_sockets_send_data_testcase_C19189(wifi_sniffer, wifi
         port2 = 5002
         port3 = 5003
         list_sock = []
-        result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=True, ping_count=10,
+        result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False, ping_count=10,
                                                      associated=False)
+
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
 
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
 
@@ -1671,10 +1674,10 @@ def test_wifi_sdk_tcp_three_sockets_send_data_testcase_C19189(wifi_sniffer, wifi
             list_sock.append(sock)
         logger.info(f"SOCKET LIST{list_sock}")
 
-        pkt_count = 10
+        pkt_count = 100
         buffer_length = 100
         data_size = 100
-        for sock_id in range(1, 4):
+        for sock_id in range(1,4):
             th_start = Thread(target=sock_obj.tcp_socket_rx,
                               args=(remote_socket_factory, sock_id, pkt_count, data_size, logger), )
             th_start.start()
@@ -1689,11 +1692,12 @@ def test_wifi_sdk_tcp_three_sockets_send_data_testcase_C19189(wifi_sniffer, wifi
         for sock in list_sock:
             logger.info(f"Closing socket_id->{sock}")
             wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+        wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
         remote_socket_factory.interfaces.socket.close_all()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
