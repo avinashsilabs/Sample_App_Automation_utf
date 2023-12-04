@@ -82,7 +82,7 @@ class SnifferValidationProcess:
         logger().info(f'\n OUTPUT 2 = {output_1}\n')
         assert all(output.values()), 'Unable to find expected filter'
 
-        if self.test_case_no != 113845 and self.test_case_no != 297689:
+        if self.test_case_no != 113845 and self.test_case_no != 113846:
 
             device_address_2 = {'sa_addr': self.dut_mac_address, 'da_addr': self.ap_mac_address}
             if self.test_case_no == 113821:
