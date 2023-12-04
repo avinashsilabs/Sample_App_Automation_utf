@@ -77,10 +77,8 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
 def test_wifi_sdk_ble_undirected_connectable_adv_c19801(wifi_dut, ble_client):
     """ Verify BLE Undirected Connectable advertisement """
-
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
-
     try:
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=f"reports/test_wifi_sdk_C19801_{int(time.time())}") as bt_logs:
@@ -118,14 +116,12 @@ def test_wifi_sdk_ble_undirected_connectable_adv_c19801(wifi_dut, ble_client):
         logger().info(f"\n****** Testcase failed with {e}******")
         raise e
 
-@pytest.mark.skip()
+
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_ble_undirected_scannable_adv_c19803(wifi_dut, ble_client):
     """ Verify BLE Undirected Scannable advertisement"""
-
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
-
     try:
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=f"reports/test_wifi_sdk_C19803_{int(time.time())}") as bt_logs:
@@ -148,10 +144,8 @@ def test_wifi_sdk_ble_undirected_scannable_adv_c19803(wifi_dut, ble_client):
                                                                 adv_data=wifi_dut.interfaces.wifi.ble_advertising_data)
             if device_found:
                 logger().info("Dut found in scan results")
-            logger().info("Initiating stop scanning from remote Raspberry PI")
             ble_client.interfaces.bluetooth.stop_scanning()
             assert device_found, "Dut not found in scan results"
-            logger().info("Initiating stop advertising from DUT")
             wifi_dut.interfaces.wifi.ble_stop_advertising()
             logger().info(
                 f"Getting Remote BLE characteristics by passing address{wifi_dut.interfaces.wifi.ble_address} from BTmon logs")
@@ -163,18 +157,15 @@ def test_wifi_sdk_ble_undirected_scannable_adv_c19803(wifi_dut, ble_client):
         logger().info(f"\n****** Testcase failed with {e}******")
         raise e
 
-@pytest.mark.skip()
+
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
-@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
 def test_wifi_sdk_ble_undirected_non_connectable_adv_c19804(wifi_dut, ble_client):
     """ Verify BLE Undirected Non-Connectable Advertisement"""
-
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
-
     try:
         with BleLogs(start_collecting_logs=True,
-                     bt_log_path=f"reports/test_wifi_sdk_c19804{int(time.time())}.log") as bt_logs:
+                     bt_log_path=f"reports/test_wifi_sdk_c19804_{int(time.time())}.log") as bt_logs:
             logger().info("Initializing BLE")
             bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
             assert bt_dut_address, "Unable to fetch bluetooth address from DUT"
@@ -188,16 +179,14 @@ def test_wifi_sdk_ble_undirected_non_connectable_adv_c19804(wifi_dut, ble_client
                                                             psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
             logger().info("Initiating scanning from Remote remote device")
             bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-            assert bt_client_address is not None, "Unable to fetch bluetooth address from remote device"
+            assert bt_client_address, "Unable to fetch bluetooth address from remote device"
             device_found = check_for_devices_in_scanned_results(ble_interface=ble_client.interfaces.bluetooth,
                                                                 bt_dut_address=bt_dut_address,
                                                                 adv_data=wifi_dut.interfaces.wifi.ble_advertising_data)
             if device_found:
                 logger().info("Dut found in scan results")
-            logger().info("initiating stop scanning")
             ble_client.interfaces.bluetooth.stop_scanning()
             assert device_found, "dut not found in scan results"
-            logger().info("initiating stop advertising")
             wifi_dut.interfaces.wifi.ble_stop_advertising()
             logger().info(
                 f"Getting Remote BLE characteristics by passing address {wifi_dut.interfaces.wifi.ble_address} from BTmon logs")
@@ -209,6 +198,7 @@ def test_wifi_sdk_ble_undirected_non_connectable_adv_c19804(wifi_dut, ble_client
     except Exception as e:
         logger().info(f"\n****** Testcase failed with {e}******")
         raise e
+
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
