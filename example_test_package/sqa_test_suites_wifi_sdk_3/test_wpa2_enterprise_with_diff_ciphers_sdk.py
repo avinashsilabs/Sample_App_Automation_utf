@@ -117,14 +117,31 @@ class SnifferValidationProcess:
                 filters_name_12 = {1: 'eap_tls_all_cipher_v1'}
             if self.test_case_no == 113842:
                 filters_name_12 = {1: 'eap_tls__aes256_sha256_aes256_sha_v1_0'}
-            if self.test_case_no == 113858:
-                filters_name_12 = {1: 'eap_type_peap_verification'}
 
             output_2 = self.sl_collections.sniffer_validation_for_packet_filters(self.wifi_sniffer, self.sniffer_filter,
                                                                                  device_address_2,
                                                                                  filters_name=filters_name_12)
             logger().info(f'\n OUTPUT 2 = {output_2}\n')
             assert all(output.values()), 'Unable to find expected filter'
+
+    def verify_sniffer_validation_peap(self):
+        device_address = {'sa_addr': self.dut_mac_address, 'da_addr': self.ap_mac_address,
+                          'ta_addr': self.dut_mac_address}
+        filters_name = {1: 'assoc_req_resp_eapol_4_way_handshake', 2: 'power_mgmt_bit', 3: 'eap_type_peap_verification',
+                        4: 'eap_type_peap_verification'}
+
+        output = self.sl_collections.sniffer_validation_for_packet_filters(self.wifi_sniffer, self.sniffer_filter,
+                                                                           device_address, filters_name=filters_name)
+        logger().info(f'\n OUTPUT 1 = {output}\n')
+        assert all(output.values()), 'Unable to find expected filter'
+
+        device_address_1 = {'sa_addr': self.ap_mac_address, 'da_addr': self.dut_mac_address }
+
+        filters_name_1 = {1: 'beacon_wpa2_entr_akms_check'}
+        output_1 = self.sl_collections.sniffer_validation_for_packet_filters(self.wifi_sniffer, self.sniffer_filter,
+                                                   device_address_1, filters_name=filters_name_1)
+        logger().info(f'\n OUTPUT 2 = {output_1}\n')
+        assert all(output.values()), 'Unable to find expected filter'
 
 
 class WPA2Enterprise(ThreadBase):
@@ -1768,8 +1785,8 @@ def test_wsdk_WPA2_eap_conn_with_peap_cert_loaded_C113858(
         sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                         wifi_access_point=wifi_access_point,
                                                         dut_mac_address=dut_mac_address, sl_collections=sl_collections,
-                                                        ap_mac_address=ap_mac_address, test_case_no=113858)
-        sniffer_verification.verify_sniffer_validation()
+                                                        ap_mac_address=ap_mac_address, test_case_no=None)
+        sniffer_verification.verify_sniffer_validation_peap()
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
