@@ -1,4 +1,4 @@
-#below variables are taken from build_info.ynal file , 
+#below variables are taken from build_info.yaml file , 
 FIRMWARE=$1 #varaiable defines firmware name
 Rps_Path=$2 #rps_path is defined in build_info.yaml , which describes the path inside the release folder where the rps is located
 Rps_Prefix=$3 #rps_prefix is defined in build_info.yaml , which describes the first prefix in rps file name like RS9116W 
