@@ -3,8 +3,8 @@ utf_wifi_dev_9116_a10_devsanity_label:
   device_groups:
     utf_wifi_dev_9116_a10_devsanity_1_device_group: 
       metadata: 
-        UTF_WIFI_BRANCH: "release/23Q2"
-        SILICON_REV: "1.4"
+        UTF_WIFI_BRANCH: "dev_sanity/milestone45"
+        build_type: "RS9116W_A10"
         SQA_TEST_AGENT: ""
         SSH_TARGET: "10.207.18.189"
         HARNESS_NAME: "dev_sanity_harness_example.yaml"
@@ -12,7 +12,7 @@ utf_wifi_dev_9116_a10_devsanity_label:
         FLASH_RS9116: true
         FLASH_EFR32: true
         PUBLISH_TEST_RESULTS: true
-        RS9116_FIRMWARE: "RS9116W.2.9.0.14"
+        RS9116_FIRMWARE: "RS9116W.2.9.0.1"
         UTF_PYTEST_COMMAND: "pytest --tb=native --tmconfig example_test_package/.sequence_manager/test_execution_definitions/dev_sanity/wifi_dev_sanity.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
         device_group_name: "utf_wifi_dev_9116_a10_devsanity_1_device_group"
         device_group_label: ""
@@ -21,8 +21,8 @@ utf_wifi_dev_9116_a11_devsanity_label:
   device_groups:
     utf_wifi_dev_9116_a11_devsanity_1_device_group:
       metadata: 
-        UTF_WIFI_BRANCH: "release/23Q2"
-        SILICON_REV: "1.5"
+        UTF_WIFI_BRANCH: "dev_sanity/milestone45"
+        build_type: "RS9116W_A11"
         SQA_TEST_AGENT: ""
         SSH_TARGET: "10.207.17.102"
         HARNESS_NAME: "dev_sanity_harness_example_1_5.yaml"
@@ -30,7 +30,7 @@ utf_wifi_dev_9116_a11_devsanity_label:
         FLASH_RS9116: true
         FLASH_EFR32: true
         PUBLISH_TEST_RESULTS: true
-        RS9116_FIRMWARE: "RS9116W.2.9.0.14"
+        RS9116_FIRMWARE: "RS916W.2.9.0.1"
         UTF_PYTEST_COMMAND: "pytest --tb=native --tmconfig example_test_package/.sequence_manager/test_execution_definitions/dev_sanity/wifi_dev_sanity_1_5.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
         device_group_name: "utf_wifi_dev_9116_a11_devsanity_1_device_group"
         device_group_label: ""
@@ -39,8 +39,8 @@ utf_wifi_dev_9116_a10_smoke_test_label:
   device_groups:
     utf_wifi_dev_9116_a10_smoke_test_1_device_group:
       metadata: 
-        UTF_WIFI_BRANCH: "release/23Q2"
-        SILICON_REV: "1.4"
+        UTF_WIFI_BRANCH: "dev_sanity_production/milestone40"
+        build_type: "RS9116W_A10"
         SQA_TEST_AGENT: ""
         SSH_TARGET: "10.207.18.24"
         HARNESS_NAME: "Dev_smoketest_harness_example.yaml"
@@ -48,7 +48,7 @@ utf_wifi_dev_9116_a10_smoke_test_label:
         FLASH_RS9116: true
         FLASH_EFR32: true
         PUBLISH_TEST_RESULTS: true
-        RS9116_FIRMWARE: "RS9116W.2.9.0.14"
+        RS9116_FIRMWARE: "RS9116W.2.8.0.13"
         UTF_PYTEST_COMMAND: "pytest --tb=native example_test_package/sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
         device_group_name: "utf_wifi_dev_9116_a10_smoke_test_1_device_group"
         device_group_label: ""
@@ -57,8 +57,8 @@ utf_wifi_dev_9116_a11_smoke_test_label:
   device_groups:
     utf_wifi_dev_9116_a11_smoke_test_1_device_group:    
       metadata: 
-        UTF_WIFI_BRANCH: "release/23Q2"
-        SILICON_REV: "1.4"
+        UTF_WIFI_BRANCH: "dev_sanity_production/milestone40"
+        build_type: "RS9116W_A11"
         SQA_TEST_AGENT: ""
         SSH_TARGET: "10.207.17.122"
         HARNESS_NAME: "Dev_smoketest_harness_example_1_5.yaml"
@@ -66,7 +66,79 @@ utf_wifi_dev_9116_a11_smoke_test_label:
         FLASH_RS9116: true
         FLASH_EFR32: true
         PUBLISH_TEST_RESULTS: true
-        RS9116_FIRMWARE: "RS9116W.2.9.0.14"
+        RS9116_FIRMWARE: "RS916W.2.8.0.13"
         UTF_PYTEST_COMMAND: "pytest --tb=native example_test_package/sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
         device_group_name: "utf_wifi_dev_9116_a11_smoke_test_1_device_group"
+        device_group_label: ""
+utf_wifi_dev_9117_a0_ncp_devsanity_label:
+  metadata:
+  device_groups:
+    utf_wifi_dev_9117_NCP_A0_devsanity_1_device_group:
+      metadata:
+        UTF_WIFI_BRANCH: "dev_sanity/milestone41"
+        build_type: "Combo_SDK_9117_NCP"
+        SQA_TEST_AGENT: ""
+        SSH_TARGET: "10.207.17.107"
+        HARNESS_NAME: "dev_sanity_harness_example_9117_A0_NCP.yaml"
+        BUILD_LOCATION: "build_artifacts"
+        FLASH_RS9116: true
+        FLASH_EFR32: true
+        PUBLISH_TEST_RESULTS: true
+        RS9116_FIRMWARE: "SiWG917-A.1.0.2.0.3"
+        UTF_PYTEST_COMMAND: "pytest --tb=native --tmconfig example_test_package/.sequence_manager/test_execution_definitions/dev_sanity/wifi_dev_sanity_9117_NCP.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_917_ncp.yaml"
+        device_group_name: "utf_wifi_dev_9117_NCP_A0_devsanity_1_device_group"
+        device_group_label: ""
+utf_wifi_dev_9117_A0_NCP_smoke_test_label:
+  metadata:
+  device_groups:
+    utf_wifi_dev_9117_A0_NCP_smoke_test_1_device_group:
+      metadata:
+        UTF_WIFI_BRANCH: "dev_sanity/milestone41"
+        build_type: "Combo_SDK_9117_NCP"
+        SQA_TEST_AGENT: "Internal"
+        SSH_TARGET: "10.207.17.125"
+        HARNESS_NAME: "Dev_smoketest_harness_example_9117_A0_NCP.yaml"
+        BUILD_LOCATION: "build_artifacts"
+        FLASH_RS9116: true
+        FLASH_EFR32: true
+        PUBLISH_TEST_RESULTS: true
+        RS9116_FIRMWARE: "SiWG917-A.1.0.2.0.3"
+        UTF_PYTEST_COMMAND: "pytest --tb=native example_test_package/sqa_test_suites/smoke_test/test_rs9117_smoke_tests_ci_cd_system.py --manifest /app/manifest/manifest_917_ncp.yaml"
+        device_group_name: "utf_wifi_dev_9117_A0_NCP_smoke_test_1_device_group"
+        device_group_label: ""
+utf_wifi_dev_9117_a0_ccp_devsanity_label:
+  metadata:
+  device_groups:
+    utf_wifi_dev_9117_CCP_A0_devsanity_1_device_group:
+      metadata:
+        UTF_WIFI_BRANCH: "dev_sanity/milestone43"
+        build_type: "9117_A0_CCP"
+        SQA_TEST_AGENT: "Internal"
+        SSH_TARGET: "10.207.17.145"
+        HARNESS_NAME: "harness_example_si917_A0_ccp.yaml"
+        BUILD_LOCATION: "build_artifacts"
+        FLASH_RS9116: false
+        FLASH_EFR32: false
+        PUBLISH_TEST_RESULTS: true
+        RS9116_FIRMWARE: "SiWG917-A.1.0.2.0.3"
+        UTF_PYTEST_COMMAND: "pytest --tb=native --tmconfig example_test_package/.sequence_manager/test_execution_definitions/dev_sanity/wifi_dev_sanity_9117_CCP.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_917_ccp.yaml"
+        device_group_name: "utf_wifi_dev_9117_CCP_A0_devsanity_1_device_group"
+        device_group_label: ""
+utf_wifi_dev_9117_b0_ccp_devsanity_label:
+  metadata:
+  device_groups:
+    utf_wifi_dev_9117_CCP_B0_devsanity_1_device_group:
+      metadata:
+        UTF_WIFI_BRANCH: "dev_sanity/milestone45"
+        build_type: "9117_B0_20_CCP"
+        SQA_TEST_AGENT: ""
+        SSH_TARGET: "10.207.17.149"
+        HARNESS_NAME: "harness_example_si917_B0_ccp.yaml"
+        BUILD_LOCATION: "build_artifacts"
+        FLASH_RS9116: false
+        FLASH_EFR32: false
+        PUBLISH_TEST_RESULTS: true
+        RS9116_FIRMWARE: "SiWG917-B.2.9.0.0.15"
+        UTF_PYTEST_COMMAND: "pytest --tb=native --tmconfig example_test_package/.sequence_manager/test_execution_definitions/dev_sanity/wifi_dev_sanity_9117_CCP.yaml --skip_parametrization example_test_package --manifest /app/manifest/manifest_917_ccp.yaml"
+        device_group_name: "utf_wifi_dev_9117_CCP_B0_devsanity_1_device_group"
         device_group_label: ""
