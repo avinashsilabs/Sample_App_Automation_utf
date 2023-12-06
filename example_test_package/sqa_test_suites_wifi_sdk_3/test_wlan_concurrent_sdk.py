@@ -78,7 +78,7 @@ class ConcurrentThread(ThreadBase):
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.capture_filename}.pcap")
         time.sleep(3)
         ping_count = self.utf_constants.get("ping_count")
-        self.sl_collections.configure_dut_in_static_ip(self.wifi_dut, static_ip="192.168.100.76",
+        self.ipconfig1 = self.sl_collections.configure_dut_in_static_ip(self.wifi_dut, static_ip="192.168.100.76",
                                                        static_subnet="255.255.255.0",
                                                        static_gateway="192.168.100.76")
 
@@ -92,13 +92,13 @@ class ConcurrentThread(ThreadBase):
                                                                             no_of_clients=self.no_of_clients,
                                                                             leave=self.leave
                                                                             )
-
         self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut= self.wifi_dut,
                                                        wifi_access_point=self.wifi_access_point,
                                                        power_save=False,
                                                        ping_after_power_save=True, retry_count=3,
                                                        associated=self.wifi_dut.interfaces.wifi.associated
                                                        )
+
         self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
         logger().info(f"ap_bssid : {self.ap_mac_address}")
         if self.traffic_type == "Tx":
@@ -347,6 +347,8 @@ def test_wifi_sdk_device_as_ap_and_sta_c19314(sl_collections, wifi_access_point,
             wifi_clients[i].interfaces.wifi.leave()
             logger().info(f"reconnecting  to DUT-AP")
             wifi_clients[i].interfaces.wifi.join()
+            dut_ip = wifi_dut.interfaces.wifi.get_device_ip(conc_obj.ipconfig1)
+            logger().info(f"********* Dut IP **********: {dut_ip}")
         conc_obj.ap_sta_disconnection()
         conc_obj.concurrent_sniffer_validation()
 
