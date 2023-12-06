@@ -1,5 +1,5 @@
 firmware:
-  rs911x: &firmware_file_anchor RS9116W.2.9.0.61.rps
+  rs911x: &firmware_file_anchor RS9116W.2.9.0.69.rps
   stm32: generic_stm32_test_agent_without_aws.hex
 
 firmware_version_file: *firmware_file_anchor
@@ -13,7 +13,7 @@ firmware_applications:
     # List of devices and their firmware images for this marker
     - device_type: 'rs911x'
       device_subtype: 'rs9116'
-      filename: 'RS9116W.2.9.0.61.rps'
+      filename: 'RS9116W.2.9.0.69.rps'
     - device_type: 'stm32'
       device_subtype: 'efr32'
       filename: 'generic_stm32_test_agent_without_aws.hex'
