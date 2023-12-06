@@ -90,7 +90,7 @@ class WifiJoin(ThreadBase):
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
-def test_tcp_data_tx_with_BE_BK_VI_VO_19752(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
+def test_tcp_data_tx_with_BE_BK_VI_VO_c19752(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                             protocol, request, sl_collections, sniffer_filter, traffic, qos,
                                             filter_name):
 
@@ -350,7 +350,7 @@ def test_udp_data_rx_with_BE_BK_VI_VO_c22116(wifi_sniffer, net_perf_client, wifi
 
     },
 )
-def test_tcp_data_rx_with_best_effort_c22115(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
+def test_tcp_data_rx_with_BE_BK_VI_VO_c22115(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                              protocol, request, sl_collections, sniffer_filter, traffic, qos,
                                              filter_name):
 

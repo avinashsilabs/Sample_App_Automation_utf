@@ -505,7 +505,6 @@ test_sequence:
       sqa_test_suites/wlan_standalone/functional/dut_concurrent_mode/test_wlan_concurrent_mode.py
     test_markers:
       - pytest.mark.wifi_client('raspi_wifi',)
-      - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_access_point',wifi={'ssid':
         'Concurent_ap','security': 'WPA2','passphrase': 'test1234','channel':
@@ -525,7 +524,7 @@ test_sequence:
         'wlan0'})
       - pytest.mark.start_state('wifi_dut',wifi=['init'])
       - pytest.mark.firmware_app('test_concurrent_mode',)
-      - pytest.mark.end_state('wifi_dut',wifi=['disassociated'])
+      - pytest.mark.end_state('wifi_dut',wifi=['reset','disassociated'])
     test_params: []
     version: 0
     enabled: true
@@ -671,15 +670,14 @@ test_sequence:
     library_name: ''
     visible: true
     iterations: 1
-  - id: 7baa31d0c25975c75aeda930e6eac0918364e66a
-    test_case_id: test_device_as_sta_and_ap_c_19318[1-TCP]
+  - id: c5f477201390954665a89d87ff4c098e867eb46c
+    test_case_id: test_device_as_sta_and_ap_c_19318[TCP]
     test_function: test_device_as_sta_and_ap_c_19318
-    test_id: test_device_as_sta_and_ap_c_19318[1-TCP]::1
+    test_id: test_device_as_sta_and_ap_c_19318[TCP]::1
     test_module: >-
       sqa_test_suites/wlan_standalone/functional/dut_concurrent_mode/test_wlan_concurrent_mode.py
     test_markers:
       - pytest.mark.wifi_client('raspi_wifi',)
-      - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode':
         RS9116OperatingMode.ConcurrentMode,'coex_mode':
@@ -700,10 +698,8 @@ test_sequence:
       - pytest.mark.start_state('wifi_dut',wifi=['init'])
       - pytest.mark.firmware_app('test_concurrent_mode',)
       - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
-      - pytest.mark.end_state('wifi_dut',wifi=['disassociated'])
+      - pytest.mark.end_state('wifi_dut',wifi=['reset','disassociated'])
     test_params:
-      - name: execute_number
-        value: 1
       - name: protocol
         value: TCP
     version: 0
@@ -714,7 +710,7 @@ test_sequence:
       - sqa_test_suites
       - wlan_concurrent_mode
       - wlan_standalone
-    test_case_name: test_device_as_sta_and_ap_c_19318[1-TCP]
+    test_case_name: test_device_as_sta_and_ap_c_19318[TCP]
     library_name: ''
     visible: true
     iterations: 1

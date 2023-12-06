@@ -505,7 +505,6 @@ test_sequence:
       sqa_test_suites/wlan_standalone/functional/dut_concurrent_mode/test_wlan_concurrent_mode.py
     test_markers:
       - pytest.mark.wifi_client('raspi_wifi',)
-      - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_access_point',wifi={'ssid':
         'Concurent_ap','security': 'WPA2','passphrase': 'test1234','channel':
@@ -525,7 +524,7 @@ test_sequence:
         'wlan0'})
       - pytest.mark.start_state('wifi_dut',wifi=['init'])
       - pytest.mark.firmware_app('test_concurrent_mode',)
-      - pytest.mark.end_state('wifi_dut',wifi=['disassociated'])
+      - pytest.mark.end_state('wifi_dut',wifi=['reset','disassociated'])
     test_params: []
     version: 0
     enabled: true
@@ -536,40 +535,6 @@ test_sequence:
       - wlan_concurrent_mode
       - wlan_standalone
     test_case_name: test_device_as_sta_and_ap_c_19319
-    library_name: ''
-    visible: true
-    iterations: 1
-  - id: d0a3be4e432991d1156ab11f9177100d0bcaac5a
-    test_case_id: test_connectivity_in_WPA2_EAP_TLS_C19018
-    test_function: test_connectivity_in_WPA2_EAP_TLS_C19018
-    test_id: test_connectivity_in_WPA2_EAP_TLS_C19018::1
-    test_module: >-
-      sqa_test_suites/wlan_standalone/functional/security_enhancements/test_wlan_sta_enterprise.py
-    test_markers:
-      - >-
-        pytest.mark.config('wifi_dut',wifi={'oper_mode': 2,'coex_mode':
-        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
-        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'tcpip_features':
-        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Client,'custom_features':
-        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
-        RS9116ExtCustomFeatureBitMap.UartSelForDebugPrints|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
-        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
-        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'band':
-        0,'eap_cert': 'wifi-user.pem'})
-      - >-
-        pytest.mark.config('wifi_access_point',wifi={'security':
-        'WPA2Enterprise','passphrase': '12345678'})
-      - pytest.mark.end_state('wifi_dut',wifi=['disassociated','clear_certs'])
-    test_params: []
-    version: 0
-    enabled: true
-    labels:
-      - functional
-      - security_enhancements
-      - sqa_test_suites
-      - wlan_sta_enterprise
-      - wlan_standalone
-    test_case_name: test_connectivity_in_WPA2_EAP_TLS_C19018
     library_name: ''
     visible: true
     iterations: 1
@@ -671,15 +636,14 @@ test_sequence:
     library_name: ''
     visible: true
     iterations: 1
-  - id: 7baa31d0c25975c75aeda930e6eac0918364e66a
-    test_case_id: test_device_as_sta_and_ap_c_19318[1-TCP]
+  - id: c5f477201390954665a89d87ff4c098e867eb46c
+    test_case_id: test_device_as_sta_and_ap_c_19318[TCP]
     test_function: test_device_as_sta_and_ap_c_19318
-    test_id: test_device_as_sta_and_ap_c_19318[1-TCP]::1
+    test_id: test_device_as_sta_and_ap_c_19318[TCP]::1
     test_module: >-
       sqa_test_suites/wlan_standalone/functional/dut_concurrent_mode/test_wlan_concurrent_mode.py
     test_markers:
       - pytest.mark.wifi_client('raspi_wifi',)
-      - pytest.mark.dut('rs9116_sapi',)
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode':
         RS9116OperatingMode.ConcurrentMode,'coex_mode':
@@ -700,10 +664,8 @@ test_sequence:
       - pytest.mark.start_state('wifi_dut',wifi=['init'])
       - pytest.mark.firmware_app('test_concurrent_mode',)
       - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
-      - pytest.mark.end_state('wifi_dut',wifi=['disassociated'])
+      - pytest.mark.end_state('wifi_dut',wifi=['reset','disassociated'])
     test_params:
-      - name: execute_number
-        value: 1
       - name: protocol
         value: TCP
     version: 0
@@ -714,7 +676,7 @@ test_sequence:
       - sqa_test_suites
       - wlan_concurrent_mode
       - wlan_standalone
-    test_case_name: test_device_as_sta_and_ap_c_19318[1-TCP]
+    test_case_name: test_device_as_sta_and_ap_c_19318[TCP]
     library_name: ''
     visible: true
     iterations: 1

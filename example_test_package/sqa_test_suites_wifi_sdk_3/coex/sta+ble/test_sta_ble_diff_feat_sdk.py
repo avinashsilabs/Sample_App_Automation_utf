@@ -955,17 +955,17 @@ def test_Coex_sdk_join_time_WPA2_AES_BLE_ADV_bypass_C133494(wifi_sniffer, wifi_a
 
     }
 )
-@pytest.mark.skip("PMK connection issue")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv", "ble_stop_scan"])
 def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_bypass_C133496(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
-                                                     request, utf_constants, sl_collections, wifi_client, sniffer_filter):
+                                                            request, utf_constants, sl_collections, wifi_client,
+                                                            sniffer_filter):
     """
            Test Steps:
-               1. Configure the DUT in Wlan+BLE mode for 2.4Ghz in bypass mode
+               1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
                2. Advertise BLE DUT
                3. WLAN scan and connect to AP with PMK and enable power save
                4. Scan from remote BLE device and connect to DUT
@@ -983,11 +983,11 @@ def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_bypass_C133496(wifi_sniffer, wifi_a
         ble_obj.advertise_dut()
 
         for i in range(0, iter_count):
-
             wifi_obj = ScanTime_JoinTime(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut,
                                          wifi_access_point=wifi_access_point, testcase=test_name,
                                          wifi_client=wifi_client, test_type=test_type, sl_collections=sl_collections,
                                          ping_count=ping_count, sniffer_filter=sniffer_filter)
+            wifi_obj.join_to_ap(tcp_ip_bypass=True)
             wifi_obj.start()
             ble_obj.start()
             wifi_obj.wait_for_exit()
@@ -995,7 +995,6 @@ def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_bypass_C133496(wifi_sniffer, wifi_a
             logger().info("Initiating stop scan from Remote device")
             ble_client.interfaces.bluetooth.stop_scanning()
             wifi_obj.disconnect()
-
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 

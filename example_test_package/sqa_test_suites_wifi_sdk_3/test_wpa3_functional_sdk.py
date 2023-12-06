@@ -134,11 +134,13 @@ class WifiConnectionThread(ThreadBase):
                     self.dut_addr['device_ip'], protocol=self.protocol)
                     self.net_perf_client.interfaces.net_perf.start()
                     logger().info("sending data from DUT")
+                    timeout = 40
                     self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
                                                         local_port=self.net_perf_client.interfaces.net_perf.server_port,
                                                         local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
                                                         remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0)
+                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0,
+                                                        timeout=timeout+2)
                     # # get and print throughput
                     tp = self.net_perf_client.interfaces.net_perf.process_output()
                     assert tp is not None, "Throughput not found"
@@ -158,11 +160,13 @@ class WifiConnectionThread(ThreadBase):
 
                     logger().info("receiving data from Host")
                     # open socket and listen for data
+                    timeout = 40
                     self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
                                                         local_port=self.net_perf_client.interfaces.net_perf.client_port,
                                                         local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
                                                         remote_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0)
+                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0,
+                                                        timeout=timeout+2)
                     logger().info("data received is successful")
                     time.sleep(3)
 
@@ -323,14 +327,12 @@ def test_wifi_sdk_bg_scan_specific_ch_wpa3_c34511(wifi_sniffer, wifi_access_poin
         wifi_dut.interfaces.wifi.set_advanced_scan_configuration(adv_active_channel_time=15,
                                                                  adv_passive_channel_time=20,
                                                                  adv_enable_instant_scan=1)
-        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=10, scan_interval=6,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         time.sleep(2)
         wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=channel_bitmap_2_4)
         dut_add_dict=sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=True, associated=False,
                                             ping_after_power_save=True)
-        time.sleep(2)
-        wifi_dut.interfaces.wifi.scan(bgscan=True, bg_scan_periodicity=10)
         time.sleep(2)
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info(
@@ -338,15 +340,15 @@ def test_wifi_sdk_bg_scan_specific_ch_wpa3_c34511(wifi_sniffer, wifi_access_poin
         for channel in channel_list_2g:
             file_name = f'test_rejoin_for_ch_{channel}'
             wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-            time.sleep(2)
             wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
             logger().info("Delaying for some time to get the capture")
-            time.sleep(10)
+            time.sleep(2)
             ping_count = 10
             device_ip = dut_add_dict['device_ip']
             status = ping(device_ip, ping_count)
             assert status is True, "DUT is not responding to ping request from third party device"
             logger().info(f"ping is successful")
+            wifi_dut.interfaces.wifi.scan(bgscan=True, bg_scan_periodicity=10)
             time.sleep(10)
             logger().info("Stop sniffer capture")
             wifi_sniffer.interfaces.capture.stop_capture()
@@ -673,7 +675,7 @@ def test_wifi_sdk_2_4_tcp_tx_wpa3_c34512(wifi_sniffer, wifi_access_point, wifi_d
     wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                     ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
                                     net_perf_client=net_perf_client, protocol=protocol, data_transfer=True,
-                                    traffic_type="RX", sniffer_filter=sniffer_filter, wifi_client=wifi_client,
+                                    traffic_type="TX", sniffer_filter=sniffer_filter, wifi_client=wifi_client,
                                     test_case_no=34512
                                     )
     try:
