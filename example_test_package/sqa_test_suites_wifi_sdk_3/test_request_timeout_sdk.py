@@ -6,6 +6,7 @@ from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.iperf.iperf_utils import ping
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 
 
 def logger():
@@ -451,4 +452,109 @@ def test_sta_keep_alive_10s_with_bg_scan_C19637(
         time.sleep(1)
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "enable_timeout_config": True,
+        "auth_assoc_timeout_value": 100
+    },
+)
+def test_wifi_sdk_auth_timeout_with_100ms_c19749(wifi_sniffer, wifi_dut, wifi_access_point, request,
+                                                 sniffer_filter):
+
+    """Verify negative functionality by setting request timeout for association and authentication request for 100ms"""
+
+    try:
+        capture_filename = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+        time.sleep(5)
+
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+        logger().info(scan_results)
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f'dut_mac_address is {dut_mac_address}')
+
+        wifi_access_point.interfaces.wifi.enable_mac_filter_ap(client_mac=dut_mac_address)
+
+        wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
+                                      passphrase=wifi_access_point.interfaces.wifi.passphrase, security="wpa2",
+                                      expected_status=SLStatus.SL_STATUS_SI91X_AUTHENTICATION_TIMEOUT)
+        logger().info(f"Authentication timeout error code 0x10048 which is expected")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address, filter_name="authentication")
+
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find authentication"
+
+    finally:
+        wifi_access_point.interfaces.wifi.disable_mac_filter_ap()
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "enable_timeout_config": True,
+        "auth_assoc_timeout_value": 300
+    },
+)
+def test_wifi_sdk_auth_timeout_with_300ms_c19747(wifi_sniffer, wifi_dut, wifi_access_point, request,
+                                                 sniffer_filter):
+
+    """Verify negative functionality by setting request timeout for association and authentication request for 300ms"""
+
+    try:
+        capture_filename = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+        time.sleep(5)
+
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+        logger().info(scan_results)
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f'dut_mac_address is {dut_mac_address}')
+
+        wifi_access_point.interfaces.wifi.enable_mac_filter_ap(client_mac=dut_mac_address)
+
+        wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
+                                      passphrase=wifi_access_point.interfaces.wifi.passphrase, security="wpa2",
+                                      expected_status=SLStatus.SL_STATUS_SI91X_AUTHENTICATION_TIMEOUT)
+        logger().info(f"Authentication timeout error code 0x10048 which is expected")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address, filter_name="authentication")
+
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find authentication"
+
+    finally:
+        wifi_access_point.interfaces.wifi.disable_mac_filter_ap()
+
 
