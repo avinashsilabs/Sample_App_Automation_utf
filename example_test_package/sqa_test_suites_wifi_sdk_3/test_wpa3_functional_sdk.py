@@ -419,7 +419,7 @@ def test_wifi_sdk_bg_scan_in_all_ch_wpa3_c34510(wifi_sniffer, wifi_access_point,
         wifi_dut.interfaces.wifi.set_advanced_scan_configuration(adv_active_channel_time=15,
                                                                  adv_passive_channel_time=20,
                                                                  adv_enable_instant_scan=1)
-        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=10, scan_interval=6,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         time.sleep(2)
         wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=channel_bitmap_2_4)
@@ -427,10 +427,7 @@ def test_wifi_sdk_bg_scan_in_all_ch_wpa3_c34510(wifi_sniffer, wifi_access_point,
                                                            associated=False,
                                                            ping_after_power_save=True)
         time.sleep(2)
-        wifi_dut.interfaces.wifi.scan(bgscan=True, bg_scan_periodicity=10)
-        time.sleep(2)
         wifi_sniffer.interfaces.capture.stop_capture()
-
         logger().info(
             f"\n\n Broadcast Probe request packet validation is start for channel = {channel_list_2g}\n\n")
         for channel in channel_list_2g:
@@ -439,12 +436,12 @@ def test_wifi_sdk_bg_scan_in_all_ch_wpa3_c34510(wifi_sniffer, wifi_access_point,
             time.sleep(2)
             wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
             logger().info("Delaying for some time to get the capture")
-            time.sleep(10)
             ping_count = 10
             device_ip = dut_add_dict['device_ip']
             status = ping(device_ip, ping_count)
             assert status is True, "DUT is not responding to ping request from third party device"
             logger().info(f"ping is successful")
+            wifi_dut.interfaces.wifi.scan(bgscan=True, bg_scan_periodicity=10)
             time.sleep(10)
             logger().info("Stop sniffer capture")
             wifi_sniffer.interfaces.capture.stop_capture()
