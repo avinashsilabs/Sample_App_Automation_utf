@@ -369,6 +369,7 @@ def test_ble_sdk_io_cap_displayonly_C19855(ble_dut, ble_client, sl_collections):
         logger().info("enabling the power save modes ")
         ble_obj.power_save()
         logger().info(f"Sucessfully Enabled Powersave")
+        time.sleep(20)
 
         logger().info(f"Initiating BLE disconnection from DUT")
         ble_obj.ble_disconnect()
@@ -398,6 +399,7 @@ def test_ble_sdk_io_cap_display_yesno_C19856(ble_dut, ble_client, sl_collections
         logger().info("enabling the power save modes ")
         ble_obj.power_save()
         logger().info(f"Sucessfully Enabled Powersave")
+        time.sleep(20)
 
         logger().info(f"Initiating BLE disconnection from DUT")
         ble_obj.ble_disconnect()
@@ -427,6 +429,7 @@ def test_ble_sdk_io_cap_keyboard_only_C19857(ble_dut, ble_client, sl_collections
         logger().info("enabling the power save modes ")
         ble_obj.power_save()
         logger().info(f"Sucessfully Enabled Powersave")
+        time.sleep(20)
 
         logger().info(f"Initiating BLE disconnection from DUT")
         ble_obj.ble_disconnect()
@@ -456,6 +459,7 @@ def test_ble_sdk_io_cap_no_input_output_C19858(ble_dut, ble_client, sl_collectio
         logger().info("enabling the power save modes ")
         ble_obj.power_save()
         logger().info(f"Sucessfully Enabled Powersave")
+        time.sleep(20)
 
         logger().info(f"Initiating BLE disconnection from DUT")
         ble_obj.ble_disconnect()
