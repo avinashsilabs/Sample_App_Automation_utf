@@ -12,7 +12,7 @@ build=$( echo $FIRMWARE |cut -d '.' -f5 )
 
 #depending up on build_type below commands are updated
 #below commands mainly uses shell commands to replace firmware name appropriately in the required yaml files
-#Firmware rps file for any build_type will be downloaded to manifest folder when ran by jenkins pipeline, so file operations on rps file will be made accordingly 
+#Firmware rps file for any build_type will be downloaded to manifest folder when ran by jenkins pipeline, so file operations on rps file should be made accordingly 
 
 if [[ "${Build_type}" == RS9116* ]]; then
     new_upgrade_fw_value=/RS9116W.$major.$minor.$patch.$build.rps
