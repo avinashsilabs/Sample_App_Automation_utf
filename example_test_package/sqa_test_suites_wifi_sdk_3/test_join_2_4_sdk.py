@@ -73,7 +73,7 @@ class WLanJoinThread(ThreadBase):
                                                       pmk_enable=self.pmk_enable,
                                                       expected_status=SLStatus.SL_STATUS_SI91X_SSID_NOT_PRESENT_FOR_PMK_GENERATION)
                 logger().info(
-                    f"Dut Tried to connect to ap with wrong password, observed error code 0x10008 which is expected")
+                    "Try to generate PMK without SSID, getting error code 0x1003A, which is expected")
 
             else:
                 logger().info(" ====== configuring the Sniffer with access point channel ====== ")
