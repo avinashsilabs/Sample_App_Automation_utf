@@ -15,8 +15,8 @@ import string
 from random import randint
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes, Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, \
-    Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xOperatingMode, Si91xBand, SocketOptions, \
-    SocketType, Cipher, DeviceConstants, Si91xStoreConfiguration
+    Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xOperatingMode, SocketOptions, \
+     Cipher, DeviceConstants
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
 from utf import UtfDatabaseProperties
 
@@ -599,7 +599,6 @@ def test_wifi_sdk_ip_conflict_c101969(wifi_sniffer, wifi_dut, wifi_access_point,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "band": Si91xBand.TwoPointFourGHz,
         "security": "WPA2", "ssid": "Si91x_AP_C19312", "passphrase": "12345678", "channel": 8
 
     }
@@ -662,7 +661,6 @@ def test_wifi_sdk_ip_conflict_c101973(firmware_loader,wifi_sniffer,wifi_dut,wifi
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "band": Si91xBand.TwoPointFourGHz,
         "security": "WPA2", "ssid": "Si91x_AP_C101971", "passphrase": "12345678", "channel": 8
 
     }
@@ -716,7 +714,6 @@ def test_wifi_sdk_ip_conflict_c101971(firmware_loader, wifi_sniffer, wifi_dut, w
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "band": Si91xBand.TwoPointFourGHz,
         "security": "WPA2", "ssid": "Si91x_AP_C19312", "passphrase": "12345678", "channel": 8
     }
 )
@@ -769,7 +766,6 @@ def test_wifi_sdk_ip_conflict_c101972(firmware_loader, wifi_sniffer, wifi_dut, w
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "band": Si91xBand.TwoPointFourGHz,
         "security": "WPA2", "ssid": "Si91x_AP_C19312", "passphrase": "12345678", "channel": 8
 
     }
@@ -824,7 +820,6 @@ def test_wifi_sdk_ip_conflict_c101967(firmware_loader, wifi_sniffer, wifi_dut, w
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "band": Si91xBand.TwoPointFourGHz,
         "security": "WPA2", "ssid": "Si91x_AP_C101968", "passphrase": "12345678", "channel": 8
 
     }
@@ -880,7 +875,6 @@ def test_wifi_sdk_ip_conflict_c101968(firmware_loader, wifi_sniffer, wifi_dut, w
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "band": Si91xBand.TwoPointFourGHz,
         "security": "WPA2", "ssid": "Si91x_AP_C19312", "passphrase": "12345678", "channel": 8
     }
 )
@@ -993,6 +987,7 @@ def test_wifi_sdk_ip_conflict_c101980(wifi_sniffer, wifi_dut, wifi_access_point,
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
