@@ -71,12 +71,12 @@ pipeline {
                                     env.patch=RS9116_FIRMWARE.split("\\.")[3]
                                     env.build_num=RS9116_FIRMWARE.split("\\.")[4]
 
-                                    if (device_group_name == "utf_sqa_smoke_test_device_group") {
-                                        env.JOB_TYPE = "smoke"
-                                    } else {
-                                        env.JOB_TYPE = "regression"
-        
-                                    }
+//                                     if (device_group_name == "utf_sqa_smoke_test_device_group") {
+//                                         env.JOB_TYPE = "smoke"
+//                                     } else {
+//                                         env.JOB_TYPE = "regression"
+//
+//                                     }
                                       def causes = currentBuild.rawBuild.getCauses()
                                     def startedByUser = null
                                     
