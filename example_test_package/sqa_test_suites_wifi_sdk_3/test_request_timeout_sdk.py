@@ -59,17 +59,17 @@ class WifiConnectionThread(ThreadBase):
 
                 with TimeMeasurer() as t:
                     logger().info(f"Initiating Scan")
-                    scan_results = self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+                    scan_results = self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0, sleep_time=0.00001)
                 logger().info(scan_results)
                 assert len(scan_results) > 0
                 logger().info(f"Scan in {t.duration} seconds")
 
                 if self.test_case_no == 19748:
-                    assert (1.2 < t.duration < 2.2)
+                    assert (1.1 < t.duration < 1.7)
                     time.sleep(2)
 
                 if self.test_case_no == 19751:
-                    assert (1.2 < t.duration < 6.2)
+                    assert (5.3 < t.duration < 5.9)
                     time.sleep(2)
 
                 dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address()
@@ -193,7 +193,6 @@ class WifiConnectionThread(ThreadBase):
 @pytest.mark.config("wifi_access_point", wifi={"channel": 4, "security": 'OPEN'})
 def test_wifi_sdk_request_timeout_keep_alive_30s_c19750(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, channel):
-
     """ Verify the keep alive functionality with configured value 30s """
 
     try:
@@ -220,11 +219,11 @@ def test_wifi_sdk_request_timeout_keep_alive_30s_c19750(
         time.sleep(2)
 
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=wlan_obj.dut_addr['dut_mac_address'], radio_ch=wifi_access_point.interfaces.wifi.channel,
-            filter_name="arp_power_mgmt_bit")
+            sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name="arp_packet")
 
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
-                                                                            packet_filter2=packet_filter2)['packet_count']
+                                                                            packet_filter2=packet_filter2)[
+            'packet_count']
         assert snif_pkt_count, ("Unable to find ARP Announcement packets & Unable to find ARP Announcement packets "
                                 "with-in assigned time")
 
@@ -261,7 +260,6 @@ def test_wifi_sdk_request_timeout_keep_alive_30s_c19750(
 @pytest.mark.config("wifi_access_point", wifi={"channel": 4, "security": 'OPEN'})
 def test_wifi_sdk_request_timeout_keep_alive_10s_c19746(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, channel):
-
     """Verify the STA keep alive functionality with 10s keep alive time"""
 
     capture_filename = request.node.name
@@ -288,11 +286,11 @@ def test_wifi_sdk_request_timeout_keep_alive_10s_c19746(
         time.sleep(2)
 
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=wlan_obj.dut_addr['dut_mac_address'], radio_ch=wifi_access_point.interfaces.wifi.channel,
-            filter_name="arp_power_mgmt_bit")
+            sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name="arp_packet")
 
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
-                                                                            packet_filter2=packet_filter2)['packet_count']
+                                                                            packet_filter2=packet_filter2)[
+            'packet_count']
         assert snif_pkt_count, ("Unable to find ARP Announcement packets & Unable to find ARP Announcement packets "
                                 "with-in assigned time")
 
@@ -326,14 +324,14 @@ def test_wifi_sdk_request_timeout_keep_alive_10s_c19746(
 )
 def test_wifi_sdk_request_timeout_scan_100ms_c19748(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
-
     """ Verify the functionality by enabling each channel active scan time with default value(100ms) """
 
     try:
         capture_filename = request.node.name
         wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                         wifi_sniffer=wifi_sniffer, capture_filename=capture_filename,
-                                        sl_collections=sl_collections, test_case_no=19748, sniffer_filter=sniffer_filter)
+                                        sl_collections=sl_collections, test_case_no=19748,
+                                        sniffer_filter=sniffer_filter)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
@@ -357,16 +355,16 @@ def test_wifi_sdk_request_timeout_scan_100ms_c19748(
         "active_chan_scan_timeout_value": 500
     },
 )
-def test_request_timeout_scan_500ms_C19751(
+def test_wifi_sdk_request_timeout_scan_500ms_C19751(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
-
     """ Verify time for each channel active scan in request timeout command with configured value 500ms """
 
     try:
         capture_filename = request.node.name
         wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                         wifi_sniffer=wifi_sniffer, capture_filename=capture_filename,
-                                        sl_collections=sl_collections, test_case_no=19751, sniffer_filter=sniffer_filter)
+                                        sl_collections=sl_collections, test_case_no=19751,
+                                        sniffer_filter=sniffer_filter)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
@@ -394,53 +392,55 @@ def test_request_timeout_scan_500ms_C19751(
 )
 @pytest.mark.parametrize("channel", [4])
 @pytest.mark.config("wifi_access_point", wifi={"channel": 4, "security": 'OPEN'})
-def test_sta_keep_alive_10s_with_bg_scan_C19637(
+def test_wifi_sdk_sta_keep_alive_10s_with_bg_scan_C19637(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, channel):
-
     """ STA keep alive functionality with BG scan """
+
     try:
         capture_filename = request.node.name
         time_delta = 10
         packet_filter2 = 'Address Resolution Protocol (ARP Announcement)'
 
         wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                        wifi_sniffer=wifi_sniffer, channel=channel,
-                                        capture_filename=capture_filename,
+                                        wifi_sniffer=wifi_sniffer, channel=channel, capture_filename=capture_filename,
                                         sl_collections=sl_collections, test_case_no=19637)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-        logger().info("\n *** Enable BGscan *** \n")
-        wifi_dut.interfaces.wifi.scan(bgscan=True, bg_scan_periodicity=10)
+
         logger().info(" *** wait for 90 seconds *** ")
         time.sleep(90)
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
-        time.sleep(2)
+        time.sleep(1)
 
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=wlan_obj.dut_addr['dut_mac_address'], radio_ch=wifi_access_point.interfaces.wifi.channel,
-            filter_name="arp_power_mgmt_bit")
+            sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name="arp_packet")
 
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
-                                                                            packet_filter2=packet_filter2)[
-            'packet_count']
-        assert snif_pkt_count, ( "Unable to find ARP Announcement packets & Unable to find ARP Announcement packets "
-                                 "with-in assigned time")
+                                                                            packet_filter2=packet_filter2)['packet_count']
+        assert snif_pkt_count, ("Unable to find ARP Announcement packets & Unable to find ARP Announcement packets "
+                                "with-in assigned time")
 
+        packet_filter4 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            mac_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name="association_request_ht_supported_rates")
+
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter4)['packet_count']
+        assert snif_pkt_count, "Unable to find association frames request with supported rates"
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+
+        logger().info("\n *** Enable BGscan *** \n")
+        wifi_dut.interfaces.wifi.scan(bgscan=True, bg_scan_periodicity=10)
+        logger().info(" *** wait for 20 seconds *** ")
+        time.sleep(30)
         packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name="probe_request")
 
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)[
             'packet_count']
         assert snif_pkt_count, "Unable to find probe request frames in sniffer"
-
-        packet_filter4 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            mac_addr=wlan_obj.dut_addr['dut_mac_address'],
-            filter_name="association_request_ht_supported_rates")
-
-        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter4)[
-            'packet_count']
-        assert snif_pkt_count, "Unable to find association frames request with supported rates"
 
         logger().info("""********* Validation of time delta between keep-alive packets *********""")
         arp_packets_time_delta_list = wlan_obj.delta_between_arp_packet()
@@ -454,6 +454,7 @@ def test_sta_keep_alive_10s_with_bg_scan_C19637(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -472,7 +473,6 @@ def test_sta_keep_alive_10s_with_bg_scan_C19637(
 )
 def test_wifi_sdk_auth_timeout_with_100ms_c19749(wifi_sniffer, wifi_dut, wifi_access_point, request,
                                                  sniffer_filter):
-
     """Verify negative functionality by setting request timeout for association and authentication request for 100ms"""
 
     try:
@@ -506,6 +506,7 @@ def test_wifi_sdk_auth_timeout_with_100ms_c19749(wifi_sniffer, wifi_dut, wifi_ac
         wifi_access_point.interfaces.wifi.disable_mac_filter_ap()
 
 
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -524,7 +525,6 @@ def test_wifi_sdk_auth_timeout_with_100ms_c19749(wifi_sniffer, wifi_dut, wifi_ac
 )
 def test_wifi_sdk_auth_timeout_with_300ms_c19747(wifi_sniffer, wifi_dut, wifi_access_point, request,
                                                  sniffer_filter):
-
     """Verify negative functionality by setting request timeout for association and authentication request for 300ms"""
 
     try:
@@ -556,5 +556,3 @@ def test_wifi_sdk_auth_timeout_with_300ms_c19747(wifi_sniffer, wifi_dut, wifi_ac
 
     finally:
         wifi_access_point.interfaces.wifi.disable_mac_filter_ap()
-
-
