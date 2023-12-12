@@ -143,6 +143,16 @@ class SnifferValidationProcess:
         logger().info(f'\n OUTPUT 2 = {output_1}\n')
         assert all(output.values()), 'Unable to find expected filter'
 
+    def verify_sniffer_for_negative_scenarios(self):
+        device_address = {'da_addr': self.dut_mac_address, 'sa_addr': self.ap_mac_address,
+                          'ta_addr': self.dut_mac_address}
+        filters_name = {1: 'beacon_wpa2_entr_akms_check', 2: 'eap_connection_failure'}
+
+        output = self.sl_collections.sniffer_validation_for_packet_filters(self.wifi_sniffer, self.sniffer_filter,
+                                                                           device_address, filters_name=filters_name)
+        logger().info(f'\n OUTPUT 1 = {output}\n')
+        assert all(output.values()), 'Unable to find expected filter'
+
 
 class WPA2Enterprise(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_client=None, sniffer_filter=None, wifi_sniffer=None,
