@@ -76,12 +76,7 @@ class IoTSocketDataTransfer:
             if self.data_transfer:
                 sw = Stopwatch()
                 while sw.elapsed_sec < self.time_period:
-                    send_bytes = self.wifi_dut.interfaces.wifi.iotSocketSend(self.socket_id, data=self.data, timeout=120)
-                    if isinstance(send_bytes, str):
-                        logger().info(f"Send {send_bytes} bytes successfully")
-                    else:
-                        logger().info(f"Data transfer failed")
-
+                    self.wifi_dut.interfaces.wifi.iotSocketSend(self.socket_id, data=self.data, timeout=120)
             time.sleep(5)
             self.wifi_dut.interfaces.wifi.iotSocketClose(self.socket_id, timeout=30)
 
