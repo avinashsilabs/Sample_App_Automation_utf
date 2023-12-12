@@ -1131,7 +1131,7 @@ def test_wifi_sdk_ssl_three_sockets_connectivity_check_loading_wrong_certs_c1916
             elif sock_count == 1:
                 socket_port = port2
             else:
-                server_ip = wifi_dut.interfaces.wifi.dns_get(domain_name, query_timeout=120)
+                server_ip = wifi_dut.interfaces.wifi.dns_get(domain_name, query_timeout=120000, timeout=30)
                 server_ip = re.sub('b\'', '', str(server_ip))[:-3]
                 logger.info(f"server_ip {server_ip}")
                 socket_port = port3
@@ -1225,7 +1225,7 @@ def test_wifi_sdk_ssl_connection_when_the_date_rtc_timer_expired_c19199(wifi_sni
         local_port = randint(40001, 50000)
         wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
 
-        server_ip = wifi_dut.interfaces.wifi.dns_get(domain_name, query_timeout=120)
+        server_ip = wifi_dut.interfaces.wifi.dns_get(domain_name, query_timeout=120000)
         server_ip = re.sub('b\'', '', str(server_ip))[:-3]
         logger.info(f"server_ip {server_ip}")
         error_code = 0
@@ -2348,7 +2348,7 @@ def test_wifi_sdk_2ssl_1aws_testcase_c19150(wifi_sniffer, wifi_dut, wifi_access_
         port3 = 8883
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
-        # wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -2369,7 +2369,7 @@ def test_wifi_sdk_2ssl_1aws_testcase_c19150(wifi_sniffer, wifi_dut, wifi_access_
                 socket_port = port2
             else:
                 socket_port = port3
-                result = wifi_dut.interfaces.wifi.dns_get(domain_name, query_timeout=120, timeout=30)
+                result = wifi_dut.interfaces.wifi.dns_get(domain_name, query_timeout=120000, timeout=30)
                 server_ip = result.strip().decode()
                 logger.info(f"aws_server_ip {server_ip}")
             wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=socket_port, timeout=15)
@@ -2457,14 +2457,14 @@ def test_wifi_sdk_dns_get_func_with_multiple_APs_c19183(wifi_sniffer, wifi_acces
         for i in range(0, len(wifi_access_points)):
             ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_points[i], capture_filename, sl_collections)
             device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
-            # wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+            wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
             ap_bssid = wifi_access_points[1].interfaces.wifi.bssid
             if not i:
                 ap_bssid = wifi_access_points[i].interfaces.wifi.get_mac_address()
             logger.info(f'AP BSSID = {ap_bssid}')
             time.sleep(3)
 
-            result = wifi_dut.interfaces.wifi.dns_get(domain_name, query_timeout=120, timeout=30)
+            result = wifi_dut.interfaces.wifi.dns_get(domain_name, query_timeout=120000, timeout=30)
             server_ip = result.strip().decode()
             logger.info(f"aws_server_ip {server_ip}")
 
@@ -2520,14 +2520,14 @@ def test_wifi_sdk_aws_cloud_with_different_certificate_c19186(wifi_sniffer, wifi
         capture_filename = "test_wifi_sdk_aws_cloud_with_different_certificate_c19186"
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
-        # wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
         for index in range(len(domain_name)):
             for _ in range(3):
                 try:
-                    result = wifi_dut.interfaces.wifi.dns_get(domain_name[index], query_timeout=120, timeout=30)
+                    result = wifi_dut.interfaces.wifi.dns_get(domain_name[index], query_timeout=120000, timeout=30)
                     server_ip = result.strip().decode()
                     logger.info(f"aws_server_ip {server_ip}")
                     break
@@ -2604,7 +2604,7 @@ def test_wifi_sdk_three_socket_connection_with_1ssl_2aws_c19151(wifi_sniffer, wi
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
-        # wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -2619,7 +2619,7 @@ def test_wifi_sdk_three_socket_connection_with_1ssl_2aws_c19151(wifi_sniffer, wi
                 server_ip = None
                 for _ in range(3):
                     try:
-                        server_ip = wifi_dut.interfaces.wifi.dns_get(domain_name[sock_count], query_timeout=120,
+                        server_ip = wifi_dut.interfaces.wifi.dns_get(domain_name[sock_count], query_timeout=120000,
                                                                      timeout=30).strip().decode()
                         logger.info(f"aws_server_ip {server_ip}")
                         break
