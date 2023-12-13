@@ -1533,7 +1533,7 @@ def test_sdk_WPA2_EAP_PEAP_ca_cert_flag_set_1_C113854(
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.RealTimeClockFromHost,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
@@ -1541,24 +1541,24 @@ def test_sdk_WPA2_EAP_PEAP_ca_cert_flag_set_1_C113854(
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "band": 0,
-        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
-def test_sdk_WPA2_EAP_PEAP_ca_cert_flag_set_0_C113855(
+def test_sdk_WPA2_EAP_PEAP_ca_cert_flag_set_1_cert_not_loaded_C113855(
         wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, radius_server, sl_collections, request):
-    """ WPA2 Enterprise connection in EAP PEAP Method with ca_cert_required flag set to 0 """
+    """ WPA2 Enterprise conn. in EAP PEAP Method with ca_cert_required flag set to 1 and certificate is not loaded """
 
     try:
         test_name = request.node.name
+        wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
+                                                   cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        wifi_dut.interfaces.wifi.set_rtc(seconds=50, minutes=59, hours=23, day=1, month=1, weekday=4, year=1930)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=1)
+                                                                 eap_flags=2)
 
         wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
         wifi_dut.interfaces.wifi.set_eap_credentials()
@@ -1566,7 +1566,7 @@ def test_sdk_WPA2_EAP_PEAP_ca_cert_flag_set_0_C113855(
                                       passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                       security="wpa2_enterprise", uid="user1", enc="peap", timeout_ms=1,
                                       expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
-        logger().info(f"Connection failed when expired date is loaded into the device, "
+        logger().info(f"Connection failed when certificate is not loaded into the device, "
                       f"error code 0x10008 which is expected")
         wifi_dut.interfaces.wifi.start_ip(expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
         logger().info(f"IP config failed when command given in incorrect state, error code 0x10021 which is expected")
@@ -1662,6 +1662,7 @@ def test_sdk_WPA2_EAP_TTLS_ca_cert_flag_set_1_C113856(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.skip('Skip the test case as we dont have the support to run on hostapd server')
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1671,7 +1672,7 @@ def test_sdk_WPA2_EAP_TTLS_ca_cert_flag_set_1_C113856(
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.RealTimeClockFromHost,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
@@ -1679,25 +1680,25 @@ def test_sdk_WPA2_EAP_TTLS_ca_cert_flag_set_1_C113856(
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "band": 0,
-        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
-def test_sdk_WPA2_EAP_TTLS_ca_cert_flag_set_0_C113857(
+def test_sdk_WPA2_EAP_ttls_ca_cert_flag_set_1_cert_not_loaded_C113857(
         wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, radius_server, sl_collections, request):
 
-    """ WPA2 Enterprise connection in EAP TTLS Method with ca_cert_required flag set to 0 """
+    """ WPA2 Enterprise conn. in EAP TTLS Method with ca_cert_required flag set to 1 and certificate is not loaded """
 
     try:
         test_name = request.node.name
+        wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
+                                                   cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        wifi_dut.interfaces.wifi.set_rtc(seconds=50, minutes=59, hours=23, day=1, month=1, weekday=4, year=1930)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=1)
+                                                                 eap_flags=2)
 
         wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
         wifi_dut.interfaces.wifi.set_eap_credentials()
