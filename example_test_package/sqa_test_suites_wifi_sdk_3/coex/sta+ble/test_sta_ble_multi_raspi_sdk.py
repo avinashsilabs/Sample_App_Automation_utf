@@ -932,7 +932,7 @@ def test_Coex_sdk_fun_ble_master_adv_wlan_UDP_C133447(
     "wifi_dut",
     wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv", "ble_stop_scan"],
 )
-def test_Coex_sdk_ble_dual_role_wlan_UDP_RX_C133447(
+def test_Coex_sdk_ble_dual_role_wlan_UDP_RX_C133511(
     wifi_sniffer,
     wifi_access_point,
     wifi_dut,
