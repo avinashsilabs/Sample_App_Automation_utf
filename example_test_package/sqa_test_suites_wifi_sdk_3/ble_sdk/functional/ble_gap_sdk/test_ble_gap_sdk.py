@@ -139,10 +139,6 @@ def test_ble_sdk_io_cap_displayonly_C19851(ble_dut, ble_client, sl_collections):
         ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
         assert ble_client_address, "failed to initiate ble in remote device"
 
-        logger().info("enabling the power save modes ")
-        ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-        ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                     psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
         time.sleep(5)
         logger().info("stop scanning ....")
         ble_client.interfaces.bluetooth.stop_scanning()
@@ -154,12 +150,17 @@ def test_ble_sdk_io_cap_displayonly_C19851(ble_dut, ble_client, sl_collections):
         connect_time = datetime.datetime.now()
         ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_address)
         logger().info(f"connect_time:  {connect_time}")
-        time.sleep(60)
+        logger().info("enabling the power save modes ")
+        ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                     psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+        time.sleep(20)
         ble_dut.interfaces.bluetooth.ble_advertising = False
 
-        # checking if the connection exists to disconnect
+        logger().info("Checking connection status of BLE")
         state = ble_dut.interfaces.wifi.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
         logger().info(f"state_int==============>>,  {state_int}")
         if (state_int > 0):
             logger().info("Disconnecting the bt host....")
@@ -167,10 +168,9 @@ def test_ble_sdk_io_cap_displayonly_C19851(ble_dut, ble_client, sl_collections):
             ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
             logger().info(f"disconnect_time  {disconnect_time}")
             assert "unable to disconnect since the connection never existed"
-
-            ble_client.interfaces.bluetooth.close()
-            time.sleep(5)
             logger().info(f"connection existed for {disconnect_time - connect_time}")
+        ble_client.interfaces.bluetooth.close()
+        time.sleep(5)
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
@@ -196,10 +196,6 @@ def test_ble_sdk_io_cap_display_yesno_C19852(ble_dut, ble_client, sl_collections
         ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
         assert ble_client_address, "failed to initiate ble in remote device"
 
-        logger().info("enabling the power save modes ")
-        ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-        ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                     psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
         time.sleep(5)
         logger().info("stop scanning ....")
         ble_client.interfaces.bluetooth.stop_scanning()
@@ -211,12 +207,18 @@ def test_ble_sdk_io_cap_display_yesno_C19852(ble_dut, ble_client, sl_collections
         connect_time = datetime.datetime.now()
         ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_address)
         logger().info(f"connect_time:  {connect_time}")
-        time.sleep(60)
+
+        logger().info("enabling the power save modes ")
+        ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                     psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+        time.sleep(20)
         ble_dut.interfaces.bluetooth.ble_advertising = False
 
-        # checking if the connection exists to disconnect
+        logger().info("Checking connection status of BLE")
         state = ble_dut.interfaces.wifi.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
         logger().info(f"state_int==============>>,  {state_int}")
         if (state_int > 0):
             logger().info("Disconnecting the bt host....")
@@ -224,10 +226,9 @@ def test_ble_sdk_io_cap_display_yesno_C19852(ble_dut, ble_client, sl_collections
             ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
             logger().info(f"disconnect_time  {disconnect_time}")
             assert "unable to disconnect since the connection never existed"
-
-            ble_client.interfaces.bluetooth.close()
-            time.sleep(5)
             logger().info(f"connection existed for {disconnect_time - connect_time}")
+        ble_client.interfaces.bluetooth.close()
+        time.sleep(5)
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
@@ -253,10 +254,6 @@ def test_ble_sdk_io_cap_keyboard_only_C19853(ble_dut, ble_client, sl_collections
         ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
         assert ble_client_address, "failed to initiate ble in remote device"
 
-        logger().info("enabling the power save modes ")
-        ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-        ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                     psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
         time.sleep(5)
         logger().info("stop scanning ....")
         ble_client.interfaces.bluetooth.stop_scanning()
@@ -268,12 +265,18 @@ def test_ble_sdk_io_cap_keyboard_only_C19853(ble_dut, ble_client, sl_collections
         connect_time = datetime.datetime.now()
         ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_address)
         logger().info(f"connect_time:  {connect_time}")
-        time.sleep(60)
+
+        logger().info("enabling the power save modes ")
+        ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                     psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+        time.sleep(20)
         ble_dut.interfaces.bluetooth.ble_advertising = False
 
-        # checking if the connection exists to disconnect
+        logger().info("Checking connection status of BLE")
         state = ble_dut.interfaces.wifi.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
         logger().info(f"state_int==============>>,  {state_int}")
         if (state_int > 0):
             logger().info("Disconnecting the bt host....")
@@ -281,10 +284,9 @@ def test_ble_sdk_io_cap_keyboard_only_C19853(ble_dut, ble_client, sl_collections
             ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
             logger().info(f"disconnect_time  {disconnect_time}")
             assert "unable to disconnect since the connection never existed"
-
-            ble_client.interfaces.bluetooth.close()
-            time.sleep(5)
             logger().info(f"connection existed for {disconnect_time - connect_time}")
+        ble_client.interfaces.bluetooth.close()
+        time.sleep(5)
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
@@ -310,10 +312,6 @@ def test_ble_sdk_io_cap_No_input_output_C19854(ble_dut, ble_client, sl_collectio
         ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
         assert ble_client_address, "failed to initiate ble in remote device"
 
-        logger().info("enabling the power save modes ")
-        ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-        ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                     psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
         time.sleep(5)
         logger().info("stop scanning ....")
         ble_client.interfaces.bluetooth.stop_scanning()
@@ -325,12 +323,18 @@ def test_ble_sdk_io_cap_No_input_output_C19854(ble_dut, ble_client, sl_collectio
         connect_time = datetime.datetime.now()
         ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_address)
         logger().info(f"connect_time:  {connect_time}")
-        time.sleep(60)
+
+        logger().info("enabling the power save modes ")
+        ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                     psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+        time.sleep(20)
         ble_dut.interfaces.bluetooth.ble_advertising = False
 
-        # checking if the connection exists to disconnect
+        logger().info("Checking connection status of BLE")
         state = ble_dut.interfaces.wifi.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
         logger().info(f"state_int==============>>,  {state_int}")
         if (state_int > 0):
             logger().info("Disconnecting the bt host....")
@@ -338,10 +342,9 @@ def test_ble_sdk_io_cap_No_input_output_C19854(ble_dut, ble_client, sl_collectio
             ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
             logger().info(f"disconnect_time  {disconnect_time}")
             assert "unable to disconnect since the connection never existed"
-
-            ble_client.interfaces.bluetooth.close()
-            time.sleep(5)
             logger().info(f"connection existed for {disconnect_time - connect_time}")
+        ble_client.interfaces.bluetooth.close()
+        time.sleep(5)
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
