@@ -1556,15 +1556,13 @@ def test_dynamic_load_powersave_enabled_testcase14(
                               )
                          ]
                          )
-@pytest.mark.parametrize("domain_name", ["a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_store_config"])
 @pytest.mark.store_config
 def test_dynamic_load_auto_join_TC19645(
-        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2, cert3, domain_name
-        ):
+        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2, cert3):
 
         ping_count = 10
         capture_filename = "test_dynamic_load_auto_join_TC19645"
@@ -1729,8 +1727,7 @@ def test_dynamic_load_auto_join_TC19645(
             if sock_count < 2:
                 wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=socket_port)
             else:
-                result = wifi_dut.interfaces.wifi.dns_get(4, domain_name, "NULL",
-                                                          "NULL")
+                result = wifi_dut.interfaces.wifi.dns_get(4)
                 logger.info(f"dns response is {result}")
                 server_ip = result.split(b"\n")[1].split(b":")[1].decode()
 
