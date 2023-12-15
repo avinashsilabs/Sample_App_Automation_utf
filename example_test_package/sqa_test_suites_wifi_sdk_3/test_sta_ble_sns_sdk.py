@@ -148,6 +148,23 @@ class BleThreadFunctionality(ThreadBase):
                                                              timeout=30)
             logger().info("*************** BLE scanning is successful****************")
 
+        if self.ble_test_type == "advertise":
+            logger().info("Initiating scan from Remote device")
+            ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(
+                bt_dut_address=self.ble_dut_address)
+            assert ble_client_address, "Unable to fetch bluetooth address from Remote device"
+            logger().info(f"Started scan from remote BLE device")
+            logger().info("\n***********{}**********\n".format(ble_client_address))
+            found_devices = []
+            for i in range(0, 3):
+                found_devices = self.ble_client.interfaces.bluetooth.get_devices()
+                logger().info("\n***scan results:{}**********\n".format(found_devices))
+                time.sleep(5)
+            assert self.wifi_dut.interfaces.wifi.ble_address in found_devices, "DUT not found in scan results"
+            logger().info(f"DUT BLE address:'{self.ble_dut_address}' found in raspi scan results")
+            self.ble_client.interfaces.bluetooth.close()
+            return ble_client_address
+
     def advertise_dut(self):
         logger().info(f"****** Advertising the DUT *******")
         self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
@@ -164,6 +181,11 @@ class BleThreadFunctionality(ThreadBase):
                                            disconnect_from=disconnect_from,
                                            ble_client_address=self.ble_client_address)
 
+    def stop_adv_scan(self):
+        logger().info("Initiating stop advertise from DUT")
+        self.wifi_dut.interfaces.wifi.ble_stop_advertising()
+        logger().info("Initiating stop scan from Remote device")
+        self.ble_client.interfaces.bluetooth.stop_scanning()
 
 pytestmark = [
     pytest.mark.config(
@@ -307,6 +329,60 @@ def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_ble_scanning_C148547(
             f'**** Total execution time for wlan connect_disconnect_reconnect and ble_adv = {T.duration} ****')
 
         wifi_obj.sniffer_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
+def test_wifi_sdk_ble_adv_20ms_and_wlan_scanning_C148545(
+        wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client):
+    """Run ble advertising with 20ms and wlan scanning test for 30 minutes"""
+
+    try:
+        test_name = request.node.name
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f'dut_mac_address is {dut_mac_address}')
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap_bssid : {ap_mac_address}")
+
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
+                                         ble_test_type="advertise")
+
+        logger().info(f"Advertising the DUT")
+        wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_int_min=int(20 / 0.625), ble_adv_int_max=int(20 / 0.625),
+                                                       timeout=20)
+
+        with TimeMeasurer() as T:
+            t_end = time.time() + 60 * 30
+            while time.time() < t_end:
+                logger().info(f"Initiating Scan")
+                scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0, sleep_time=0.01)
+                logger().info(scan_results)
+                assert len(scan_results) > 0, "scan failed"
+                if ap_mac_address.lower() in str(scan_results):
+                    logger().info(f"found ap bssid in scan_results {ap_mac_address}")
+                else:
+                    assert False, "Unable to find ap in scan results"
+                ble_obj.start()
+                ble_obj.wait_for_exit()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+        logger().info(
+            f'**** Total execution time for wlan connect_disconnect_reconnect and ble_adv = {T.duration} ****')
+        ble_obj.stop_adv_scan()
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                        filter_name="probe_request")
+        logger().info(f"***** Validating packets for probe request  ******")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find probe request"
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

@@ -22,6 +22,7 @@ from datetime import datetime
 import uuid
 from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
 
 """The testcases added in this file can run below test steps :
         1. Configuration of DUT in 2G
@@ -987,7 +988,6 @@ def test_wifi_sdk_mqtt_check_error_0xFFFFFFD3_C127802(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1019,16 +1019,22 @@ def test_wifi_sdk_mqtt_invalid_server_TC127801(
         wifi_obj.wait_for_exit()
         wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
         wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client")
-        logger().info(f"MQTT server is not running at 192.168.100.50")
-
         wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt,
                                                                mqtt_server="192.168.100.50")
-        # logger().info(f"DUT sent {exc_info.value.error_code} code when MQTT server is not responding")
+        event_data1 = ""
+        time.sleep(60)
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        for event in events:
+            if event.event_type == AsyncEventIdentifiers.TCP_CONNECTION_FAILURE_INDICATION:
+                event_data1 = event.event_data
+
+        logger().info(f"event data is {event_data1}")
+
+        assert "0x1ff87" in event_data1, "expected error code not found. Expected is 0x1ff87"
+        logger().info(f"MQTT server is not running at 192.168.100.50")
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
-        # wifi_dut.interfaces.wifi.mqtt_client_disconnect()
-        # wifi_dut.interfaces.wifi.leave()
-        wifi_obj.verify_ps_validation()
+
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -1635,7 +1641,6 @@ def test_wifi_sdk_mqtt_keep_alive_disable_ssl_connection_with_qos0_TC127795(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1695,7 +1700,7 @@ def test_wifi_sdk_connect_subscribe_publish_mqtt_with_ssl_qos1_for_30_min_C12779
             mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
             logger().info("Wifi DUT subscribes to the topic")
             wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
-            time.sleep(2)
+            time.sleep(5)
             mqtt_client.interfaces.mqtt.received_messages.clear()
             logger().info("DUT publishes message over the topic")
             wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=Si91xMqttQos.QOS1)
@@ -1746,7 +1751,6 @@ def test_wifi_sdk_connect_subscribe_publish_mqtt_with_ssl_qos1_for_30_min_C12779
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1805,7 +1809,7 @@ def test_wifi_sdk_subscribe_mqtt_qos0_with_ssl_subscribe_unscribe_for_30_min_C12
             mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS0)
             logger().info("Wifi DUT subscribes to the topic")
             wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS0)
-            time.sleep(2)
+            time.sleep(5)
             mqtt_client.interfaces.mqtt.received_messages.clear()
             logger().info("DUT publishes message over the topic")
             wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=Si91xMqttQos.QOS0)
