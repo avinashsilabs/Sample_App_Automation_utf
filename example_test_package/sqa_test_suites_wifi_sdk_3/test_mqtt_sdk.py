@@ -1004,8 +1004,8 @@ def test_wifi_sdk_mqtt_check_error_0xFFFFFFD3_C127802(
         "set_send_feature_frame": True,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.start_state("wifi_dut", wifi=['init'], device='reset')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_mqtt_invalid_server_TC127801(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, mqtt_client):
     """If MQTT server is not running in PC and when DUT is trying to connect 0xFF87 error should be seen"""
