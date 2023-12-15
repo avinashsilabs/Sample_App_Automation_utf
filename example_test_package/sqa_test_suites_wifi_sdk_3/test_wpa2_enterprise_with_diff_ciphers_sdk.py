@@ -2629,7 +2629,7 @@ def test_wsdk_WPA2_EAP_footer_removed_TLSv12_C113863(wifi_dut, wifi_access_point
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs", "reset_wifi_conn_stats"])
-def test_wsdk_WPA2_EAP_client_cert_parsing_TLSv12_C113905(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
+def test_wsdk_WPA2_EAP_client_cert_parsing_TLSv12_C113902(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                  wifi_client, radius_server, sl_collections, request, utf_constants):
     """ WPA2 Enterprise Connection when the Client Certificate Parsing is not proper"""
     output = None
@@ -2789,7 +2789,7 @@ def test_wsdk_WPA2_EAP_tls_few_lines_removed_from_cert_C113893(wifi_dut, wifi_ac
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs", "reset_wifi_conn_stats"])
-def test_wsdk_WPA2_EAP_user_configured_Not_found_TLSv12_C113834(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
+def test_wsdk_WPA2_EAP_user_configured_Not_found_TLSv12_C113874(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                  wifi_client, radius_server, sl_collections, request, utf_constants):
     """ WPA2 Enterprise Connection when the User configured is not found """
     output = None
