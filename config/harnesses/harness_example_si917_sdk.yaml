@@ -1039,6 +1039,8 @@ defaults:
 
     wiseconnect_web: 'wiseconnect_web'
 
+    net_perf_server: 'secondary_raspi_iperf'
+
     net_perf_client: 'raspi_iperf'
 
     secondary_net_perf_client : 'secondary_raspi_iperf'

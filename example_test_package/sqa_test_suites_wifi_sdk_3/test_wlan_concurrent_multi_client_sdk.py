@@ -74,26 +74,25 @@ class ConcurrentMode:
         if iperf_throughput is not None:
             print_dict("##     ", iperf_throughput)
 
-    def run_traffic_btwn_two_clients(self, net_perf_client1, net_perf_client2, server_ip, client_ip, protocol,
-                                     iperf_time=30):
-        logger().info("***** preparing wifi_client1 as iperf_server *****")
-        net_perf_client1.interfaces.net_perf.init_server(host_ip=server_ip, device_ip=client_ip, protocol=protocol,
-                                                         time_out=iperf_time)
-        logger().info(f"***** preparing wifi_client2 as iperf_client *****")
-        net_perf_client2.interfaces.net_perf.init_client(host_ip=server_ip, device_ip=client_ip, protocol=protocol,
-                                                         time_out=iperf_time)
-        time.sleep(3)
-        logger().info("***** start iperf on wifi_client1 --> server *****")
-        net_perf_client1.interfaces.net_perf.start()
-        time.sleep(10)
-        logger().info("***** start iperf on wifi_client2 --> client *****")
-        net_perf_client2.interfaces.net_perf.start()
+    def run_traffic_btwn_two_clients(self, net_perf_server, net_perf_client, server_ip, client_ip, protocol,
+                                     wifi_clients=None, iperf_time=60):
+        logger().info(f"********************** Starting iperf Server {net_perf_server.name} **********************")
+        net_perf_server.interfaces.net_perf.init_server(protocol=protocol, host_ip=server_ip,
+                                                        device_ip=client_ip, time_out=iperf_time)
+        server_port = net_perf_server.interfaces.net_perf.server_port
+        net_perf_server.interfaces.net_perf.start()
+        time.sleep(5)
 
-        logger().info("***** Adding 5 sec sleep before printing throughput *****")
-        time.sleep(15)
-        logger().info("***** get and print throughput *****")
-        tp = net_perf_client1.interfaces.net_perf.process_output()
-        assert tp is not None, 'Unable to retrieve the Throughput information'
+        logger().info(f"********************** Starting iperf Client {net_perf_client.name} **********************")
+        net_perf_client.interfaces.net_perf.init_client(host_ip=client_ip, device_ip=server_ip,
+                                                        protocol=protocol, time_out=iperf_time)
+        # net_perf_client.interfaces.net_perf.start()
+        cmd = f"iperf -c {server_ip} -t{iperf_time} -i1 -p {server_port} {'-u' if protocol.upper() == 'UDP' else ''}"
+        wifi_clients[1].interfaces.wifi.shell.execute(cmd)
+        logger().info("Printing Throughput")
+        time.sleep(10)
+        tp = net_perf_server.interfaces.net_perf.process_output()
+        assert tp is not None
         self.print_throughput(tp)
 
     @staticmethod
@@ -707,6 +706,163 @@ def test_wifi_sdk_connect_disconnect_sta_module_of_dut_c148585(sl_collections, w
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'security': 'WPA2',
+        'channel': 11,
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "TEST_C148576",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0",
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "TEST_C148576",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0",
+        }
+    }
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_transfer_data_from_client1_to_client2_in_concurrent_mode_c148576(sl_collections, wifi_access_point,
+                                                                                   wifi_dut, wifi_clients, wifi_sniffer,
+                                                                                   utf_constants, sniffer_filter,
+                                                                                   protocol, net_perf_server,
+                                                                                   net_perf_client):
+    """ Transfer data from client one to client two in concurrent mode """
+    try:
+        con_obj = ConcurrentMode()
+        capture_filename = "test_c148576"
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=11)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        dut_mac_address = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False,
+                                                              retry_count=3, associated=False)['dut_mac_address']
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP BSSID : {ap_bssid}")
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148576", security="WPA2", psk="Automation@123", channel=11,
+                                          dtim_beacon_count="1", beacon_interval="100")
+        ip_dict = con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut)
+
+        server_ip = ip_dict['client1_ip']
+        client_ip = ip_dict['client2_ip']
+        con_obj.run_traffic_btwn_two_clients(net_perf_server, net_perf_client, server_ip, client_ip,
+                                             protocol, wifi_clients, iperf_time=60)
+
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                               sniffer_filter, power_save=False)
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'security': 'WPA2',
+        'channel': 11,
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "TEST_C148573",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0",
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "TEST_C148573",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0",
+        }
+    }
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+def test_wifi_sdk_transfer_udp_data_from_client1_to_client2_in_concurrent_mode_c148573(sl_collections, wifi_clients,
+                                                                                       wifi_access_point, wifi_dut,
+                                                                                       wifi_sniffer, net_perf_client,
+                                                                                       net_perf_server, utf_constants,
+                                                                                       sniffer_filter,
+                                                                                       protocol):
+    """ UDP Transfer data from client one to client two in concurrent mode """
+    try:
+        con_obj = ConcurrentMode()
+        capture_filename = "test_c148573"
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=11)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        dut_mac_address = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False,
+                                                              retry_count=3, associated=False)['dut_mac_address']
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP BSSID : {ap_bssid}")
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148573", security="WPA2", psk="Automation@123", channel=11,
+                                          dtim_beacon_count="1", beacon_interval="100")
+        ip_dict = con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut)
+
+        server_ip = ip_dict['client1_ip']
+        client_ip = ip_dict['client2_ip']
+        con_obj.run_traffic_btwn_two_clients(net_perf_server, net_perf_client, server_ip, client_ip,
+                                             protocol, wifi_clients, iperf_time=60)
+
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                               sniffer_filter, power_save=False)
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
 # @pytest.mark.config(
 #     "wifi_dut",
 #     wifi={
@@ -859,4 +1015,3 @@ def test_wifi_sdk_connect_disconnect_sta_module_of_dut_c148585(sl_collections, w
 #         sl_collections.exception_handling(wifi_dut, error)
 #     finally:
 #         wifi_dut.interfaces.wifi.stop_ap()
-
