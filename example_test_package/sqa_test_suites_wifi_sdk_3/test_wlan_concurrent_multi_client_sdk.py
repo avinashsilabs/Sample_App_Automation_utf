@@ -75,22 +75,24 @@ class ConcurrentMode:
             print_dict("##     ", iperf_throughput)
 
     def run_traffic_btwn_two_clients(self, net_perf_server, net_perf_client, server_ip, client_ip, protocol,
-                                     wifi_clients=None, iperf_time=60):
-        logger().info(f"********************** Starting iperf Server {net_perf_server.name} **********************")
+                                     iperf_time=30):
+        logger().info(f"********************** Starting Iperf Server {net_perf_server.name} **********************")
         net_perf_server.interfaces.net_perf.init_server(protocol=protocol, host_ip=server_ip,
                                                         device_ip=client_ip, time_out=iperf_time)
-        server_port = net_perf_server.interfaces.net_perf.server_port
         net_perf_server.interfaces.net_perf.start()
+        server_port = net_perf_server.interfaces.net_perf.server_port
         time.sleep(5)
 
-        logger().info(f"********************** Starting iperf Client {net_perf_client.name} **********************")
+        logger().info(f"********************** Starting Iperf Client {net_perf_client.name} **********************")
         net_perf_client.interfaces.net_perf.init_client(host_ip=client_ip, device_ip=server_ip,
                                                         protocol=protocol, time_out=iperf_time)
-        # net_perf_client.interfaces.net_perf.start()
-        cmd = f"iperf -c {server_ip} -t{iperf_time} -i1 -p {server_port} {'-u' if protocol.upper() == 'UDP' else ''}"
-        wifi_clients[1].interfaces.wifi.shell.execute(cmd)
+        client_port = net_perf_client.interfaces.net_perf.client_port
+        args = net_perf_client.interfaces.net_perf.executable_arguments
+        args[args.index(str(client_port))] = str(server_port)
+        net_perf_client.interfaces.net_perf.start()
+        time.sleep(iperf_time + 5)
         logger().info("Printing Throughput")
-        time.sleep(10)
+
         tp = net_perf_server.interfaces.net_perf.process_output()
         assert tp is not None
         self.print_throughput(tp)
@@ -773,7 +775,7 @@ def test_wifi_sdk_transfer_data_from_client1_to_client2_in_concurrent_mode_c1485
         server_ip = ip_dict['client1_ip']
         client_ip = ip_dict['client2_ip']
         con_obj.run_traffic_btwn_two_clients(net_perf_server, net_perf_client, server_ip, client_ip,
-                                             protocol, wifi_clients, iperf_time=60)
+                                             protocol, iperf_time=60)
 
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -852,7 +854,7 @@ def test_wifi_sdk_transfer_udp_data_from_client1_to_client2_in_concurrent_mode_c
         server_ip = ip_dict['client1_ip']
         client_ip = ip_dict['client2_ip']
         con_obj.run_traffic_btwn_two_clients(net_perf_server, net_perf_client, server_ip, client_ip,
-                                             protocol, wifi_clients, iperf_time=60)
+                                             protocol, iperf_time=60)
 
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
