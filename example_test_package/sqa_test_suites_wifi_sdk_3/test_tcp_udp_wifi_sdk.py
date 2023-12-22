@@ -487,9 +487,9 @@ def test_wifi_sdk_udp_socket_dut_client_c19350(wifi_access_point, wifi_dut, remo
                 bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(udp_socket_id, pkt_length, no_of_pkts,
                                                                      server_ip=server_ip, server_port=current_port)
                 logger().info(f"Number of bytes sent by dut {bytes_sent}")
-        for sock_value in socket_id_value:
-            wifi_dut.interfaces.wifi.bsdSockClose(sock_value)
-            time.sleep(1)
+        # for sock_value in socket_id_value:
+        #     wifi_dut.interfaces.wifi.bsdSockClose(sock_value)
+        #     time.sleep(1)
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
         wifi_dut.interfaces.wifi.leave()
