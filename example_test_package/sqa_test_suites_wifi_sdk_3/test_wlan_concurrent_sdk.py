@@ -607,7 +607,7 @@ def test_wifi_sdk_device_as_ap_and_sta_c19317(sl_collections, wifi_access_point,
         conc_obj.start()
         conc_obj.wait_for_exit()
         logger().info("\n\nTurning off the AP")
-        switch.interfaces.pdu_switch.turn_off(delay=150)
+        switch.interfaces.pdu_switch.turn_off(delay=10)
         logger().info("Successfully powered off AP")
         logger().info("Checking for rejoin fail event from dut, this may take some time....")
         sw = Stopwatch()
