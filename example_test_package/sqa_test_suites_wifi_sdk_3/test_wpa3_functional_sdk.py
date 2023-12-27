@@ -331,8 +331,9 @@ def test_wifi_sdk_bg_scan_specific_ch_wpa3_c34511(wifi_sniffer, wifi_access_poin
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         time.sleep(2)
         wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=channel_bitmap_2_4)
-        dut_add_dict=sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=True, associated=False,
-                                            ping_after_power_save=True)
+        dut_add_dict = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=True,
+                                                           associated=False,
+                                                           ping_after_power_save=True)
         time.sleep(2)
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info(
@@ -353,20 +354,23 @@ def test_wifi_sdk_bg_scan_specific_ch_wpa3_c34511(wifi_sniffer, wifi_access_poin
             logger().info("Stop sniffer capture")
             wifi_sniffer.interfaces.capture.stop_capture()
 
-            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter\
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter \
                 (sa_addr=dut_add_dict['dut_mac_address'], filter_name="probe_request")
 
             output = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count']
             probe_check_dict[channel] = int(output)
 
             logger().info(f'\n\n ***** probe check dictionary : {probe_check_dict} ***** \n\n')
-            for key, value in probe_check_dict.items():
-                if value == 0:
-                    probe_not_captured_channel_list.append(key)
 
-            logger().info(f"probe not captured channel list: {probe_not_captured_channel_list}")
-            assert probe_not_captured_channel_list == [], f"probe not captured channel list: {probe_not_captured_channel_list}"
-            logger().info(f"probe requests are captured in all the configured channels, Hence the test case is PASS")
+        for key, value in probe_check_dict.items():
+            if value == 0:
+                probe_not_captured_channel_list.append(key)
+
+        logger().info(f"\n *** Missed probe req channel is:  {probe_not_captured_channel_list} *** \n")
+        assert (all(list(probe_check_dict.values()))), f"probe not captured channel list:" \
+                                                       f" {probe_not_captured_channel_list}"
+
+        logger().info(f"probe requests are captured in all the configured channels, Hence the test case is PASS")
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -415,7 +419,7 @@ def test_wifi_sdk_bg_scan_in_all_ch_wpa3_c34510(wifi_sniffer, wifi_access_point,
         wifi_dut.interfaces.wifi.set_advanced_scan_configuration(adv_active_channel_time=15,
                                                                  adv_passive_channel_time=20,
                                                                  adv_enable_instant_scan=1)
-        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=10, scan_interval=6,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         time.sleep(2)
         wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=channel_bitmap_2_4)
@@ -423,10 +427,7 @@ def test_wifi_sdk_bg_scan_in_all_ch_wpa3_c34510(wifi_sniffer, wifi_access_point,
                                                            associated=False,
                                                            ping_after_power_save=True)
         time.sleep(2)
-        wifi_dut.interfaces.wifi.scan(bgscan=True, bg_scan_periodicity=10)
-        time.sleep(2)
         wifi_sniffer.interfaces.capture.stop_capture()
-
         logger().info(
             f"\n\n Broadcast Probe request packet validation is start for channel = {channel_list_2g}\n\n")
         for channel in channel_list_2g:
@@ -435,12 +436,12 @@ def test_wifi_sdk_bg_scan_in_all_ch_wpa3_c34510(wifi_sniffer, wifi_access_point,
             time.sleep(2)
             wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
             logger().info("Delaying for some time to get the capture")
-            time.sleep(10)
             ping_count = 10
             device_ip = dut_add_dict['device_ip']
             status = ping(device_ip, ping_count)
             assert status is True, "DUT is not responding to ping request from third party device"
             logger().info(f"ping is successful")
+            wifi_dut.interfaces.wifi.scan(bgscan=True, bg_scan_periodicity=10)
             time.sleep(10)
             logger().info("Stop sniffer capture")
             wifi_sniffer.interfaces.capture.stop_capture()

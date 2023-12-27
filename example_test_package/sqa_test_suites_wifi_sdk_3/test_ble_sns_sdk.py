@@ -1,10 +1,5 @@
-import re
 import pytest
 import time
-import datetime
-from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
-from utf.utils.stopwatch import Stopwatch
-from utf.interfaces.bluetooth import BLEDeviceState
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap,\
     Si91xTCPIPFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xBTFeatureBitMap,\
     Si91xCustomFeatureBitMap, Si91xBLECustomFeatureBitMap, Si91xBLEFeatureBitMap, Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes
@@ -69,61 +64,67 @@ class BLEMasterSNS(ThreadBase):
         self.ble_dut_address = None
 
     def run(self):
-        try:
-            self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start(set_smp=self.ble_pairing)
-            self.ble_client_address = self.sl_collections.ble_connection(wifi_dut=self.wifi_dut,
-                                                                         ble_client=self.ble_client,
-                                                                         ble_dut_address=self.ble_dut_address,
-                                                                         mode="master", ble_pairing=self.ble_pairing)
+        if self.test_case == '148508':
+            with TimeMeasurer() as T:
+                t_end = time.time() + 30 * 60
+                while time.time() < t_end:
+                    self.wifi_dut.interfaces.wifi.ble_start()
+                    self.wifi_dut.interfaces.wifi.bt_stop()
 
-            if self.test_case == '148509':
-                with TimeMeasurer() as T:
-                    self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
-                    t_end = time.time() + 60 * 30
-                    self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=self.ble_client_address,
-                                                                     timeout=60)
-                    while time.time() < t_end:
-                        logger().info(f"Remote device found in scan results ,BLE scanning is successful")
-                        self.wifi_dut.interfaces.wifi.ble_connect(self.ble_client_address)
-                logger().info(f'\n*** Total execution time for scanning = {T.duration} ***\n')
+            logger().info(f'\n*** Total execution time for init + deinit = {T.duration} ***\n')
+            return
 
-            if self.test_case == '148510':
-                with TimeMeasurer() as T:
+        self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start(set_smp=self.ble_pairing)
+        self.ble_client_address = self.sl_collections.ble_connection(wifi_dut=self.wifi_dut,
+                                                                     ble_client=self.ble_client,
+                                                                     ble_dut_address=self.ble_dut_address,
+                                                                     mode="master", ble_pairing=self.ble_pairing)
+
+        if self.test_case == '148509':
+            with TimeMeasurer() as T:
+                self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
+                t_end = time.time() + 60 * 30
+                self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=self.ble_client_address,
+                                                                 timeout=60)
+                while time.time() < t_end:
+                    logger().info(f"Remote device found in scan results ,BLE scanning is successful")
+                    self.wifi_dut.interfaces.wifi.ble_connect(self.ble_client_address)
+            logger().info(f'\n*** Total execution time for scanning = {T.duration} ***\n')
+
+        if self.test_case == '148510':
+            with TimeMeasurer() as T:
+                self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=self.ble_client_address,
+                                                                 timeout=60)
+                logger().info(f"Remote device found in scan results ,BLE scanning is successful")
+                logger().info(' \n*** Wait for 30 minutes ***\n')
+                time.sleep(1800)
+                self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+
+            logger().info(f'\n*** Total execution time for scanning = {T.duration} ***\n')
+
+        if self.test_case == '148511':
+            with TimeMeasurer() as T:
+                self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=self.ble_client_address,
+                                                                 timeout=60)
+                logger().info(f"Remote device found in scan results ,BLE scanning is successful")
+                logger().info(' \n*** Wait for 30 minutes ***\n')
+                time.sleep(1800)
+
+            logger().info(f'\n*** Total execution time for scanning = {T.duration} ***\n')
+
+        if self.test_case == '148512':
+            with TimeMeasurer() as T:
+                t_end = time.time() + 60 * 30
+                while time.time() < t_end:
                     self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=self.ble_client_address,
                                                                      timeout=60)
                     logger().info(f"Remote device found in scan results ,BLE scanning is successful")
-                    logger().info(' \n*** Wait for 30 minutes ***\n')
-                    time.sleep(1800)
                     self.wifi_dut.interfaces.wifi.ble_stop_scanning()
-
-                logger().info(f'\n*** Total execution time for scanning = {T.duration} ***\n')
-
-            if self.test_case == '148511':
-                with TimeMeasurer() as T:
-                    self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=self.ble_client_address,
-                                                                     timeout=60)
-                    logger().info(f"Remote device found in scan results ,BLE scanning is successful")
-                    logger().info(' \n*** Wait for 30 minutes ***\n')
-                    time.sleep(240)
-                    # self.wifi_dut.interfaces.wifi.ble_stop_scanning()
-
-                logger().info(f'\n*** Total execution time for scanning = {T.duration} ***\n')
-
-            if self.test_case == '148512':
-                with TimeMeasurer() as T:
-                    t_end = time.time() + 60 * 30
-                    while time.time() < t_end:
-                        self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=self.ble_client_address,
-                                                                         timeout=60)
-                        logger().info(f"Remote device found in scan results ,BLE scanning is successful")
-                        self.wifi_dut.interfaces.wifi.ble_stop_scanning()
-                logger().info(f'\n*** Total execution time for start and stop scan = {T.duration} ***\n')
-
-        except Exception as Ex:
-            logger().info(f"*** Got Exception in Test Case Thread = {Ex}***")
+            logger().info(f'\n*** Total execution time for start and stop scan = {T.duration} ***\n')
 
 
 def test_wifi_sdk_ble_start_and_stop_scan_30_minutes_c148512(sl_collections, wifi_dut, ble_client):
+    """This Test Case verifies BLE start scan and stop scan functionality for 30 minutes"""
 
     test_case = '148512'
     ble_obj = BLEMasterSNS(wifi_dut=wifi_dut, sl_collections=sl_collections, test_case=test_case, ble_client=ble_client)
@@ -134,6 +135,7 @@ def test_wifi_sdk_ble_start_and_stop_scan_30_minutes_c148512(sl_collections, wif
 
 @pytest.mark.end_state("wifi_dut", wifi=['ble_stop_scan', "wifi_powersave_disable"])
 def test_wifi_sdk_ble_scan_30_minutes_c148511(sl_collections, wifi_dut, ble_client):
+    """This Test Case verifies BLE scan functionality for 30 minutes"""
     test_case = '148511'
     ble_obj = BLEMasterSNS(wifi_dut=wifi_dut, sl_collections=sl_collections, test_case=test_case, ble_client=ble_client)
 
@@ -142,7 +144,17 @@ def test_wifi_sdk_ble_scan_30_minutes_c148511(sl_collections, wifi_dut, ble_clie
 
 
 def test_wifi_sdk_ble_connect_disconnect_30_minutes_c148509(sl_collections, wifi_dut, ble_client):
+    """This Test Case verifies BLE device connection and device disconnection functionality for 30 minutes"""
     test_case = '148509'
+    ble_obj = BLEMasterSNS(wifi_dut=wifi_dut, sl_collections=sl_collections, test_case=test_case, ble_client=ble_client)
+
+    ble_obj.start()
+    ble_obj.wait_for_exit()
+
+
+def test_wifi_sdk_ble_radio_init_deinit_30_min_c148508(sl_collections, wifi_dut, ble_client):
+    """This Test Case verifies BLE init radio and deinit radio functionality for 30 minutes"""
+    test_case = '148508'
     ble_obj = BLEMasterSNS(wifi_dut=wifi_dut, sl_collections=sl_collections, test_case=test_case, ble_client=ble_client)
 
     ble_obj.start()

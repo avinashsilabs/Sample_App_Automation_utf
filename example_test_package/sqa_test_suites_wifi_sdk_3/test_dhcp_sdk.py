@@ -2,15 +2,16 @@ import time
 import pytest
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xCustomFeatureBitMap, Si91xOperatingMode, Si91xTCPIPFeatureBitMap, \
-    Si91xExtTCPIPFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xOperatingMode, Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes
+    Si91xExtTCPIPFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xOperatingMode, Si91xPowerSaveModes, \
+    Si91xPowerSaveProcedureTypes
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.utils.iperf.iperf_utils import ping
 from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
+from utf.utf_config import UtfConfig
 
 def logger():
     return get_logger(__name__)
-
 
 """ Test Steps:
         1. Configure the DUT in Wlan & coex mode for 2.4Ghz.
@@ -61,43 +62,16 @@ class WifiJoinThread(ThreadBase):
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
         time.sleep(3)
 
-        if self.test_case_no == 19292:
-            static_ip = '192.168.50.210'
-            static_subnet = '255.255.255.0'
-            static_gateway = '192.168.50.1'
-            ip_version = 'ipv4'
-            logger().info(f"=======>>>>>Verifying Static IP<<<<<<<======")
-            self.sl_collections.scan(wifi_dut=self.wifi_dut)
-            self.sl_collections.connect(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point)
-            self.wifi_dut.interfaces.wifi.start_ip(ip_version=ip_version, static_ip=static_ip,
-                                                   static_subnet=static_subnet,
-                                                   static_gateway=static_gateway, timeout=10)
-            device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode("utf-8")
-            logger().info(f"Device is {device_ip}")
-            time.sleep(2)
-            status = ping(device_ip, self.ping_count)
-            mode = 'power_save_low_latency'
-            dtim_aligned_type = 0
-            num_of_dtim_skip = 0
-            listen_interval = 0
-            assert (status is True), "DUT is not responding to ping request from third party device"
-            self.wifi_dut.interfaces.wifi.set_performance_profile(mode, dtim_aligned_type, num_of_dtim_skip, listen_interval)
-            self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                          psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-            time.sleep(2)
-            status = ping(device_ip, self.ping_count)
-            assert (status is True), "DUT is not responding to ping request from third party device"
-            logger().info(f"ping is successful")
-
-        else:
+        if self.test_case_no == 19293 or self.test_case_no == 19295 or self.test_case_no == 19296:
             self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                      wifi_access_point=self.wifi_access_point,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated,
                                                                      retry_count=3, ping_count=self.ping_count)
-        time.sleep(2)
-        if self.test_case_no == 19293 or self.test_case_no == 19256:
+            time.sleep(2)
             logger().info(f"Verifying dhcp renewal")
-            time.sleep(10)
+            self.wifi_access_point.interfaces.wifi.enable_dhcp_ap()
+            time.sleep(60)
+
         if self.data_transfer:
             host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
             logger().info(f"Remote device ip :{host_ip}")
@@ -112,7 +86,7 @@ class WifiJoinThread(ThreadBase):
                                                     local_port=self.net_perf_client.interfaces.net_perf.server_port,
                                                     local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
                                                     remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                    size=1460, ttl=30, throughput_type=1, qos=0, timeout=timeout+2)
+                                                    size=1460, ttl=60, throughput_type=1, qos=0, timeout=timeout+2)
                 # # get and print throughput
                 tp = self.net_perf_client.interfaces.net_perf.process_output()
                 assert tp is not None, "Throughput not found"
@@ -120,10 +94,8 @@ class WifiJoinThread(ThreadBase):
                 time.sleep(3)
             if self.traffic_type == "RX":
                 self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
-                self.dut_addr['device_ip'], protocol=self.protocol, bandwidth="68M")
-
+                self.dut_addr['device_ip'], protocol=self.protocol)
                 self.net_perf_client.interfaces.net_perf.start()
-
                 logger().info("receiving data from Host")
                 # open socket and listen for data
                 timeout = 100
@@ -131,15 +103,15 @@ class WifiJoinThread(ThreadBase):
                                                     local_port=self.net_perf_client.interfaces.net_perf.client_port,
                                                     local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
                                                     remote_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                    size=1460, ttl=90, throughput_type=3, qos=0, timeout=timeout+2)
+                                                    size=1460, ttl=30, throughput_type=3, qos=0, timeout=timeout + 2)
+                time.sleep(5)
                 logger().info("data received is successful")
-                time.sleep(3)
         if self.test_case_no == 19295:
-            time.sleep(60)
+            time.sleep(10)
         if self.test_case_no == 19296:
-            time.sleep(15)
+            time.sleep(10)
         if self.test_case_no == 19293:
-            logger().info(f"\n######======>>>>>>Waiting for dhcp renewal packets<<<<<<======#######\n")
+            logger().info(f"\n==========>>>>>>Waiting up to 1800 seconds for dhcp renewal packets<<<<<<===========\n")
             time.sleep(1800)
             self.wifi_dut.interfaces.wifi.leave()
             logger().info(f"Disconnection will issued after verification")
@@ -189,23 +161,51 @@ class WifiJoinThread(ThreadBase):
 )
 def test_wifi_sdk_verify_static_ip_allocation_to_dut_c19292(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                             wifi_client, request, sl_collections, sniffer_filter):
-    capture_filename = request.node.name
-    ping_count = utf_constants.get("ping_count")
-    sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f"Device mac address: {sa_addr}")
-    da_addr = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f"AP MAC: {da_addr}")
-
-    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                              testcase=capture_filename, wifi_client=wifi_client, sl_collections=sl_collections,
-                              ping_count=ping_count, test_case_no=19292)
     try:
-        wlan_obj.start()
-        wlan_obj.wait_for_exit()
+        capture_filename = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+
+        static_ip = UtfConfig.instance().defaults["wifi"].get("static_ip", None)
+        logger().info(f"in harness static_ip flag set to be : {static_ip}")
+        static_subnet = UtfConfig.instance().defaults["wifi"].get("static_subnet", None)
+        logger().info(f"in harness static_subnet flag set to be : {static_subnet}")
+        static_gateway = UtfConfig.instance().defaults["wifi"].get("static_gateway", None)
+        logger().info(f"in harness static_gateway flag set to be : {static_gateway}")
+        ip_version = 'ipv4'
+        logger().info(f"=======>>>>>Verifying Static IP<<<<<<<======")
+        sl_collections.scan(wifi_dut=wifi_dut)
+        sl_collections.connect(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point)
+        wifi_dut.interfaces.wifi.start_ip(ip_version=ip_version, static_ip=static_ip, static_subnet=static_subnet,
+                                          static_gateway=static_gateway, timeout=10)
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode("utf-8")
+        logger().info(f"Device is {device_ip}")
         time.sleep(2)
+        status = ping(device_ip, ping_count)
+        mode = 'power_save_low_latency'
+        dtim_aligned_type = 0
+        num_of_dtim_skip = 0
+        listen_interval = 0
+        assert (status is True), "DUT is not responding to ping request from third party device"
+        wifi_dut.interfaces.wifi.set_performance_profile(mode, dtim_aligned_type, num_of_dtim_skip, listen_interval)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        time.sleep(2)
+        status = ping(device_ip, ping_count)
+        assert (status is True), "DUT is not responding to ping request from third party device"
+        logger().info(f"ping is successful")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
         filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr,
                                                                                   filter_name='power_mgmt_bit')
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)["packet_count"], \
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
             'Unable to find the power save sniffer packets'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -233,8 +233,7 @@ def test_wifi_sdk_verify_static_ip_allocation_to_dut_c19292(wifi_sniffer, wifi_a
     }
 )
 def test_wifi_sdk_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
-                                                                 utf_constants, request, sl_collections, dhcp_lease,
-                                                                 sniffer_filter):
+                                                                 utf_constants, request, sl_collections, dhcp_lease, sniffer_filter):
     time_delta = 60
     packet_filter2 = '        DHCP: Request (3)'
     ping_count = utf_constants.get("ping_count")
@@ -283,10 +282,13 @@ def test_wifi_sdk_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer, w
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "100", "security": 'OPEN'})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "100", "security": 'OPEN'})
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.parametrize("dhcp_lease", [100])
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -305,15 +307,16 @@ def test_wifi_sdk_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer, w
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_tcp_tx_functionality_while_dhcp_renewal_c19295(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,net_perf_client,
-                                                                 protocol, utf_constants, request, sl_collections, sniffer_filter):
+def test_wifi_sdk_tcp_tx_functionality_while_dhcp_renewal_c19295(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+                                                                 net_perf_client, protocol, utf_constants, request, sl_collections, dhcp_lease, sniffer_filter):
     time_delta = 60
     packet_filter2 = '        DHCP: Request (3)'
     ping_count = utf_constants.get("ping_count")
     capture_filename = request.node.name
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               testcase=capture_filename, wifi_client=wifi_client, net_perf_client=net_perf_client,
-                              protocol=protocol,sl_collections=sl_collections, ping_count=ping_count, data_transfer=True,
+                              protocol=protocol, sl_collections=sl_collections, ping_count=ping_count,
+                              data_transfer=True,
                               traffic_type="TX", test_case_no=19295)
     try:
         wlan_obj.start()
@@ -356,10 +359,13 @@ def test_wifi_sdk_tcp_tx_functionality_while_dhcp_renewal_c19295(wifi_sniffer, w
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("dhcp_lease", [100])
 @pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "100", "security": 'OPEN'})
-@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -378,15 +384,18 @@ def test_wifi_sdk_tcp_tx_functionality_while_dhcp_renewal_c19295(wifi_sniffer, w
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_tcp_rx_functionality_while_dhcp_renewal_c19296(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,net_perf_client,
-                                                                 protocol, utf_constants, request, sl_collections, sniffer_filter):
+def test_wifi_sdk_tcp_rx_functionality_while_dhcp_renewal_c19296(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+                                                                 net_perf_client,
+                                                                 protocol, utf_constants, request, sl_collections, dhcp_lease,
+                                                                 sniffer_filter):
     time_delta = 60
     packet_filter2 = '        DHCP: Request (3)'
     ping_count = utf_constants.get("ping_count")
     capture_filename = request.node.name
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               testcase=capture_filename, wifi_client=wifi_client, net_perf_client=net_perf_client,
-                              protocol=protocol, sl_collections=sl_collections, ping_count=ping_count,data_transfer=True,
+                              protocol=protocol, sl_collections=sl_collections, ping_count=ping_count,
+                              data_transfer=True,
                               traffic_type="RX", test_case_no=19296)
     try:
         wlan_obj.start()

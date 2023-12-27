@@ -1039,6 +1039,8 @@ defaults:
 
     wiseconnect_web: 'wiseconnect_web'
 
+    net_perf_server: 'secondary_raspi_iperf'
+
     net_perf_client: 'raspi_iperf'
 
     secondary_net_perf_client : 'secondary_raspi_iperf'
@@ -1081,6 +1083,14 @@ defaults:
         protocol: 'IPPROTO_TCP'
         stream_type: 'SOCK_STREAM'
         ip_len: 4
+
+    iot_sockets:
+        protocol: 'tcp'
+        address_family: 'ipv4'
+        port: '6666'
+        ip_len: 4
+        server_ip: '192.168.50.117'
+        stream_type: 'stream'
 
     sntp_server:
         server_ip: '10.8.4.11'

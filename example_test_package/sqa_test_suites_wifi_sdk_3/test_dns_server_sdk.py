@@ -56,7 +56,7 @@ class WlanThread(ThreadBase):
             logger().info(" ====== Trying to connect to the Access Point ====== ")
             self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                      wifi_access_point=self.wifi_access_point,
-                                                                     power_save=False,
+                                                                     power_save=True,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated)
             logger().info(" ====== DUT successfully connected with AP ====== ")
 
@@ -107,7 +107,7 @@ def test_wifi_sdk_dns_server_obtaining_ip_through_dhcp_handshake_c19297(wifi_sni
 
         logger().info(" ====== Initiating DNS get command when DNS IP address is obtained through dhcp handshake "
                       "process ====== ")
-        status = wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", timeout=30, query_timeout=40)
+        status = wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", timeout=30, query_timeout=1.2)
         logger().info(f'\n *** DNS address = {status} *** \n')
         time.sleep(2)
 
@@ -130,6 +130,15 @@ def test_wifi_sdk_dns_server_obtaining_ip_through_dhcp_handshake_c19297(wifi_sni
 
         logger().info(f"\n\n *** Validation for DHCP 4 way handshake is about to start *** \n\n")
         wifi_sniffer.interfaces.capture.get_dhcp_list(wlan_obj.dut_addr['dut_mac_address'], decryption_key, ["dhcp"])
+
+        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name='ps_poll')
+
+        result = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count']
+        logger().info(f"DNS address = {result}")
+
+        assert result, "Can not find power management packets"
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 

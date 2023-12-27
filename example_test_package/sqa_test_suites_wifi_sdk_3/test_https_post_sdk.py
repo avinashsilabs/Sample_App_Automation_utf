@@ -157,3 +157,266 @@ def test_wifi_sdk_http_post_functionality_invalid_ip_C19220(http_server, wifi_du
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.start_state("wifi_dut", wifi=["reset", "init"])
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_http_post_functionality_multiple_iterations_C19221(http_server, wifi_dut, wifi_access_point,
+                                                                     index_path
+                                                                     , wifi_sniffer, sl_collections):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http post request for multiple iterations using a single url.
+        5. Verify the http post response
+    """
+    try:
+        test_name = 'test_19221'
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        iteration_count = 5
+        for index in range(0, iteration_count):
+            logger().info(f"\n\n***Posting data using http post request for {index + 1} iteration***\n\n")
+            status_dut, content_dut = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, index_path,
+                                                                         post_data='hellotestingfrohttppostcontent')
+
+            assert status_dut == SLStatus.SL_STATUS_OK, "failed to post data using http post request"
+            logger().info(status_dut)
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.http_client_deinit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_http_post_functionality_for_50mb_data_C19222(http_server, wifi_dut, wifi_access_point,
+                                                               index_path
+                                                               , wifi_sniffer, sl_collections):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http post request for data of 50mb size
+        5. Verify the http post response
+    """
+    try:
+        test_name = 'test_19222'
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        logger().info("\n\n***Posting data using http post request***\n\n")
+        status_dut, content_dut = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, index_path,
+                                                                     post_data="hellohvbsjvhkjsdhvhksdhvksjdvravvjvdhi"
+                                                                               "jhdvbjhbjdhjvjdbjbsdwfbkjdhkdhfkk"
+                                                                               "jhdvjdjhddjhjgfjhjfdkhfhhfkhjhkfhjkfhkhfhak")
+
+        assert not status_dut, "failed to post http data"
+        logger().info(status_dut)
+
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.http_client_deinit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_http_post_functionality_different_urls_C19224(http_server, wifi_dut, wifi_access_point
+                                                                , wifi_sniffer, sl_collections):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http post using different url lengths
+        5. Verify the http post response
+    """
+    try:
+        test_name = 'test_19224'
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        logger().info("\n\n***Posting data using http post request***\n\n")
+
+        urls_list = ["cgi-bin/cgi_example.py", "index_long_crlf.html", "6KB.html"]
+        for url in urls_list:
+            logger().info(f"Initiating http post request for url {url}")
+            status_dut, content_dut = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, resource_path=url,
+                                                                         post_data="hellothisisfordifferenturlsusedtopostthed"
+                                                                                   "atoverthehttppostprotocol")
+            assert not status_dut, "failed to post http data"
+            logger().info(status_dut)
+
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.http_client_deinit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "clear_certs"])
+def test_wifi_sdk_https_post_functionality_multiple_iterations_C19225(http_server, wifi_dut, wifi_access_point,
+                                                                      index_path
+                                                                      , wifi_sniffer, sl_collections):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate https post request for multiple iterations using a single url.
+        5. Verify the https post response
+    """
+    try:
+        test_name = 'test_19225'
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections, https_enable=True)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        iteration_count = 5
+        for index in range(0, iteration_count):
+            logger().info(f"\n\n***Posting data using http post request for {index + 1} iteration***\n\n")
+            status_dut, content_dut = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, index_path,
+                                                                         post_data="hellothisisfordifferenturlsusedtopostthed"
+                                                                                   "atoverthehttppostprotocol",
+                                                                         server_port=443)
+
+            assert status_dut == SLStatus.SL_STATUS_OK, "failed to post data using http post request"
+            logger().info(status_dut)
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.http_client_deinit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "clear_certs"])
+def test_wifi_sdk_https_post_functionality_different_urls_C19226(http_server, wifi_dut, wifi_access_point
+                                                                 , wifi_sniffer, sl_collections):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate https post using different url lengths
+        5. Verify the https post response
+    """
+    try:
+        test_name = 'test_19226'
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections, https_enable=True)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        logger().info("\n\n***Posting data using http post request***\n\n")
+        urls_list = ["cgi-bin/cgi_example.py", "index_long_crlf.html", "6KB.html"]
+        for url in urls_list:
+            logger().info(f"Initiating http post request for url {url}")
+            status_dut, content_dut = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, resource_path=url,
+                                                                         post_data=''.join(random.choices(
+                                                                             string.ascii_uppercase + string.digits,
+                                                                             k=30)), server_port=443)
+            assert not status_dut, "failed to post http data"
+            logger().info(status_dut)
+
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.http_client_deinit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)

@@ -276,7 +276,9 @@ class WLanThread(ThreadBase):
             else:
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                      wifi_access_point=self.wifi_access_point,
-                                                                     associated=self.wifi_dut.interfaces.wifi.associated, ping_after_power_save=False)
+                                                                     associated=self.wifi_dut.interfaces.wifi.associated
+                                                                     , ping_after_power_save=False,
+                                                                     channel=self.wifi_access_point.interfaces.wifi.channel)
                 logger().info("DUT successfully connected with AP")
             time.sleep(2)
 
@@ -304,7 +306,8 @@ class WLanThread(ThreadBase):
             logger().info(f"\n\n **** Got exception in test case {self.test_case_no} thread: {str(e)} ****\n\n")
             raise e
 
-    def socket_data_transfer_recovery_in_rejoin(self, option_name=None, option_val=None, option_length=None, timeout=10):
+    def socket_data_transfer_recovery_in_rejoin(self, option_name=None, option_val=None, bsdSetSocketOpt=True,
+                                                option_length=None, timeout=10):
         end_time = 300
 
         """ This method is responsible to validate socket data transfer recovery after rejoin event """
@@ -322,7 +325,8 @@ class WLanThread(ThreadBase):
             logger().error(f"\n\n Trying to connect with server ")
             self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=self.socket_id, timeout=30)
 
-            self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=self.socket_id, option_name=option_name, option_val=option_val,
+            if bsdSetSocketOpt:
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=self.socket_id, option_name=option_name, option_val=option_val,
                                                    )
 
             logger().error(f"\n **** Start validation of socket data transfer in rejoin scenario with AP turn off & "
@@ -520,7 +524,7 @@ def test_wifi_sdk_rejoin_c19721(switch, wifi_sniffer, wifi_access_point, wifi_du
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1412,7 +1416,7 @@ def test_wifi_sdk_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wif
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1564,23 +1568,20 @@ def test_wifi_sdk_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wi
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
 
-
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
-                          test_case_no=19742, sl_collections=sl_collections, switch=switch)
+                          test_case_no=19742, sl_collections=sl_collections, switch=switch, data_transfer=False)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-
-        time.sleep(2)
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
-        time.sleep(5)
+
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         time.sleep(2)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file="test_bgscan_rejoin_")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="test_rejoin_us_region")
         logger().info("\n\n ****** Access point is going to turn off  ******")
-        switch.interfaces.pdu_switch.turn_off(delay=150)
+        wlan_obj.socket_data_transfer_recovery_in_rejoin(bsdSetSocketOpt=False)
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.
@@ -1589,9 +1590,6 @@ def test_wifi_sdk_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wi
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find Broadcast Probe request packet'
-
-        logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=100)
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(wlan_obj.dut_addr['device_ip'], 20)
@@ -1607,6 +1605,7 @@ def test_wifi_sdk_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wi
     finally:
         logger().info('******* Turn on Access point Finally **********')
         switch.interfaces.pdu_switch.turn_on(delay=60)
+
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1632,7 +1631,6 @@ def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wi
     """Verify Rejoin Functionality with EU region enabled in 2.4GHZ band"""
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
-
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
@@ -1678,7 +1676,6 @@ def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wi
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
-@pytest.mark.skip
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -1697,8 +1694,8 @@ def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wi
         "ble_custom_ext_features": 0,
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"region": "Japan", "channel": 11})
-def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants,
+@pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 13})
+def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_access_point, wifi_sniffer, wifi_dut, switch, utf_constants,
                                                 request, sl_collections, sniffer_filter):
     """ Verify Rejoin Functionality with JP region enabled in 2.4GHZ band,
         # Please Note - ASUS AP doesn't have Japan region, So changed to US region"""
@@ -1708,20 +1705,18 @@ def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_sniffer, wifi_access_point,
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
-                          test_case_no=19744, sl_collections=sl_collections, switch=switch)
+                          test_case_no=19744, sl_collections=sl_collections, switch=switch, data_transfer=False)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-
-        time.sleep(2)
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
-        time.sleep(5)
+
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         time.sleep(2)
         wifi_sniffer.interfaces.capture.start_capture(capture_file="test_rejoin_japan_region")
         logger().info("\n\n ****** Access point is going to turn off  ******")
-        switch.interfaces.pdu_switch.turn_off(delay=150)
+        wlan_obj.socket_data_transfer_recovery_in_rejoin(bsdSetSocketOpt=False)
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.
@@ -1730,9 +1725,6 @@ def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_sniffer, wifi_access_point,
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find Broadcast Probe request packet'
-
-        logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=100)
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(wlan_obj.dut_addr['device_ip'], 20)
