@@ -523,8 +523,8 @@ def test_wifi_sdk_socket_select_after_remote_socket_close_c19333(wifi_sniffer, w
                                                                  sniffer_filter, remote_socket_factory, logger,
                                                                  sl_collections):
     """
-    Execute rsi_select() api on the socket ID when the socket is opened second time.
-    The first opened socket is closed due to remote terminate or closed intentially by DUT
+    Execute rsi_select() api on the socket ID when the socket is opened second time. The first opened socket is closed
+    due to remote terminate or closed intentionally by DUT
     """
     try:
         capture_filename = "test_wifi_sdk_socket_select_after_remote_socket_close_c19333"
@@ -539,16 +539,15 @@ def test_wifi_sdk_socket_select_after_remote_socket_close_c19333(wifi_sniffer, w
 
         server_port = 5001
         for count in range(2):
-            server_port = server_port + count
             sock = wifi_dut.interfaces.wifi.Asyncsocket(protocol="IPPROTO_TCP")
             wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=server_port, timeout=15,
                                           asynch=1)
-            wifi_dut.interfaces.wifi.listen(socket_fd=sock, backlog=1, asynch=1)
+            wifi_dut.interfaces.wifi.listen(socket_fd=sock, backlog=0, asynch=1)
             time.sleep(3)
             client_socket = remote_socket_factory.interfaces.socket.create_socket()
             ThreadBase.call_functions_simultaneously(
                 [(wifi_dut.interfaces.wifi.bsdSocketAccept, sock, 1),
-                 (client_socket.connect_client_tcp, device_ip, server_port)], timeout=10)
+                 (client_socket.connect_client_tcp, device_ip, server_port)], timeout=30)
 
             time.sleep(3)
             wifi_dut.interfaces.wifi.bsdAsyncSocketSelect(numberOfFds=1, time=10)
@@ -563,12 +562,10 @@ def test_wifi_sdk_socket_select_after_remote_socket_close_c19333(wifi_sniffer, w
                 assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id " \
                                                f"{sock + 1} opened in the DUT is not matched"
                 logger.info("Data sent by remote peer and received on DUT is matching")
-
             if count == 0:
                 logger.info("\n\nClosing remote socket from remote peer as per the test step")
                 remote_socket_factory.interfaces.socket.close_all()
                 remote_socket_factory.interfaces.socket.sockets = []
-                time.sleep(30)
                 logger.info("Successfully closed remote socket at remote side")
                 wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
                 logger.info("\n\nRe-Opening remote socket and connecting again")
@@ -581,7 +578,6 @@ def test_wifi_sdk_socket_select_after_remote_socket_close_c19333(wifi_sniffer, w
         sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
                                                sniffer_filter, power_save=False)
     except Exception as error:
-        wifi_dut.interfaces.wifi.is_dut_bad_state = True
         sl_collections.exception_handling(wifi_dut, error)
 
 
