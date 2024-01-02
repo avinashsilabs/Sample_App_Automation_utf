@@ -312,15 +312,16 @@ def test_wifi_sdk_bgscan_primary_channel_2g_c19039(wifi_sniffer, wifi_access_poi
             wifi_dut.interfaces.wifi.set_advanced_scan_configuration(adv_active_channel_time=15,
                                                                      adv_passive_channel_time=20)
 
-            wifi_sniffer.interfaces.capture.configure_interface(
-                channel=wifi_access_point.interfaces.wifi.channel)
-            wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
             dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
                                                            wifi_access_point=wifi_access_point,
                                                            associated=wifi_dut.interfaces.wifi.associated,
-                                                           ping_after_power_save=False)
+                                                           ping_after_power_save=False, retry_count=3)
             logger().info("DUT successfully connected with AP")
 
+            wifi_sniffer.interfaces.capture.configure_interface(
+                channel=wifi_access_point.interfaces.wifi.channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+            time.sleep(1)
             wifi_dut.interfaces.wifi.scan(bgscan=True, bg_scan_periodicity=10, scan_bitmap_2_4=channel_bitmap_2_4)
             packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                 sa_addr=dut_addr['dut_mac_address'],
@@ -328,8 +329,6 @@ def test_wifi_sdk_bgscan_primary_channel_2g_c19039(wifi_sniffer, wifi_access_poi
 
             logger().info(f"\n\nCreate socket and start data transfer *****\n\n")
             data_transfer.socket_obj.socket_data_transfer()
-
-            time.sleep(1)
             wifi_dut.interfaces.wifi.leave()
 
             wifi_sniffer.interfaces.capture.stop_capture()
