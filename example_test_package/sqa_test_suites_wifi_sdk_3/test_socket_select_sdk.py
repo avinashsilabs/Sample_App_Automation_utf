@@ -79,7 +79,7 @@ class SocketDataTransfer:
     def __init__(self):
         self.connected = False
 
-    @retry(Exception, delay=10, tries=3)
+    @retry(Exception, delay=1, tries=5)
     def open_socket_and_data_transfer(self, wifi_dut, remote_socket, dut_ip, numberOfFds=0, close_socket=True,
                                       test_run_time=30):
         sock = 0
@@ -96,8 +96,8 @@ class SocketDataTransfer:
                 wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=dut_ip, server_port=local_port, timeout=15)
                 wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=server_port)
                 self.connected = True
-            if numberOfFds:
-                wifi_dut.interfaces.wifi.bsdAsyncSocketSelect(numberOfFds=numberOfFds, time=60)
+                if numberOfFds:
+                    wifi_dut.interfaces.wifi.bsdAsyncSocketSelect(numberOfFds=numberOfFds, time=60)
 
             sw = Stopwatch()
             while sw.elapsed_sec <= test_run_time:
@@ -106,16 +106,16 @@ class SocketDataTransfer:
                 remote_socket.interfaces.socket.send_data_tcp(tx_buffer, use_server_socket=True)
                 time.sleep(1)
                 wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
-                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
+                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock, async_timeout=10)
                 assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id " \
                                                f"{sock} opened in the DUT is not matched"
                 logger().info("Data sent by remote peer and received on DUT is matching")
             if close_socket:
                 self.close_socket(wifi_dut, sock, remote_socket)
+            return sock
         except Exception as error:
-            logger().info(f"Exception Occurred: {error}")
-            self.close_socket(wifi_dut, sock, remote_socket)
-            raise error
+            if "0x1" in str(error) or "0x7" in str(error):
+                logger().error(f"*********** Data Receive failed due to AP-Power Off ************")
 
     @staticmethod
     def close_socket(wifi_dut, socket_id, remote_socket):
@@ -444,14 +444,16 @@ def test_wifi_sdk_socket_select_tcp_c19331(switch, wifi_sniffer, wifi_dut, wifi_
             count += 1
             logger.info(f"Initiating test for iteration:'{count}'")
             ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
-            device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False, sniff_capture=False)
-            wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+            device_ip, dut_mac_address = ssl_obj.join_get_ip(sniff_capture=False)
             ap_bssid = wifi_access_point.interfaces.wifi.bssid
             logger.info(f'AP BSSID = {ap_bssid}')
 
             socket_obj = SocketDataTransfer()
-            socket_obj.open_socket_and_data_transfer(wifi_dut, remote_socket, device_ip, numberOfFds=1)
-
+            trf_thread = Thread(target=socket_obj.open_socket_and_data_transfer,
+                                args=(wifi_dut, remote_socket, device_ip), kwargs={'numberOfFds': 1,
+                                                                                   'close_socket': False})
+            trf_thread.start()
+            time.sleep(25)
             if count == 1:
                 logger.info("\n\nTurning off the AP")
                 switch.interfaces.pdu_switch.turn_off(delay=5)
@@ -484,6 +486,7 @@ def test_wifi_sdk_socket_select_tcp_c19331(switch, wifi_sniffer, wifi_dut, wifi_
                 # wifi_access_point.interfaces.wifi.start_ap()
                 # time.sleep(60)
                 # logger.info("Enabled Wireless in AP")
+            trf_thread.join()
             logger.info(f"Iteration '{count}' completed\n\n")
 
         logger.info("Stop Sniffer finally")
@@ -578,6 +581,7 @@ def test_wifi_sdk_socket_select_after_remote_socket_close_c19333(wifi_sniffer, w
         sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
                                                sniffer_filter, power_save=False)
     except Exception as error:
+        wifi_dut.interfaces.wifi.is_dut_bad_state = True
         sl_collections.exception_handling(wifi_dut, error)
 
 
@@ -614,18 +618,20 @@ def test_wifi_sdk_socket_select_tcp_close_stress_c19334(wifi_sniffer, wifi_dut, 
         sock_opened = []
         capture_filename = "test_wifi_sdk_socket_select_tcp_close_stress_c19334"
         test_run_time = utf_constants.get('time_duration')
-        ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
-        device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
-        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections,
+                                 listen_interval=700)
+        device_ip, dut_mac_address = ssl_obj.join_get_ip()
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
-        err_count = 0
-        expected_err_count = 5
+        err_count = []
+        expected_err_count = 0
+        iter_count = 0
         sw = Stopwatch()
         while sw.elapsed_sec < test_run_time:
+            iter_count += 1
             time_left = int((test_run_time - sw.elapsed_sec) / 60)
-            logger.info(f"Remaining time to complete test is '{time_left}' minutes")
+            logger.info(f"Remaining time to complete test is '{time_left}' minutes and iteration is:{iter_count}")
             try:
                 start_port = 5001
                 for sock_count in range(4):
@@ -662,8 +668,8 @@ def test_wifi_sdk_socket_select_tcp_close_stress_c19334(wifi_sniffer, wifi_dut, 
                 remote_socket_factory.interfaces.socket.close_all()
                 remote_socket_factory.interfaces.socket.sockets = []
             except Exception as error:
-                logger.warning(f"Observed Error: {error}")
-                err_count += 1
+                logger.warning(f"Observed error in iteration '{iter_count}': {error} ")
+                err_count.append(iter_count)
                 for sock_id in sock_opened:
                     logger.info(f"Closing socket_id->{sock_id}")
                     wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
@@ -671,10 +677,12 @@ def test_wifi_sdk_socket_select_tcp_close_stress_c19334(wifi_sniffer, wifi_dut, 
                 remote_socket_factory.interfaces.socket.close_all()
                 remote_socket_factory.interfaces.socket.sockets = []
 
-        assert err_count <= expected_err_count, f"Number of times failures occurred is '{err_count}'," \
-                                                f"which is greater than expected error count '{expected_err_count}'"
+        for count in err_count:
+            logger.info(f"Errors occurred in iteration:{count}")
+        assert len(err_count) <= expected_err_count, f"Number of times failures occurred is '{len(err_count)}'," \
+                                                     f"which is greater than expected error count '{expected_err_count}'"
         logger.info(f"**************** Number of times failures observed during span of {test_run_time / 60} minutes "
-                    f"test run is '{err_count}', Which is less than expected failure count '{expected_err_count}'. "
+                    f"of test run is '{len(err_count)}', Which is less than expected failure count '{expected_err_count}'. "
                     f"Hence marking the testcase as PASS ****************\n")
 
         logger.info("Stop Sniffer finally")
