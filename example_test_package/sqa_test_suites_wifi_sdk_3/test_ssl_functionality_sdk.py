@@ -1521,6 +1521,7 @@ def test_wifi_sdk_1ssl_2tcp_sockets_send_data_testcase_C19188(wifi_sniffer, wifi
     """
     try:
         capture_filename = "test_wifi_sdk_1ssl_2tcp_sockets_send_data_testcase_C19188"
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(
             capture_file=f"{capture_filename}.pcap"
         )
@@ -1644,6 +1645,7 @@ def test_wifi_sdk_tcp_three_sockets_send_data_testcase_C19189(wifi_sniffer, wifi
     """
     try:
         capture_filename = "test_wifi_sdk_tcp_three_sockets_send_data_testcase_C19189"
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(
             capture_file=f"{capture_filename}.pcap"
         )
