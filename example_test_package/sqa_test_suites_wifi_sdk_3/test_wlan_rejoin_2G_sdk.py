@@ -165,14 +165,9 @@ class WLanThread(ThreadBase):
                                                                               beacon_missed_count=40,
                                                                               first_time_retry_enable=0)
             elif self.test_case_no == 19744:
-                "Set region code EU"
-                logger().info(f"setting the DUT region to EU")
-                self.wifi_dut.interfaces.wifi.set_wifi_region(region_code=Si91xRegionCode.Japan)
-
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                               beacon_missed_count=40,
                                                                               first_time_retry_enable=0)
-
             elif self.test_case_no == 19745:
                 "Set region code EU"
                 logger().info(f"setting the DUT region to Worldwide")
@@ -181,7 +176,6 @@ class WLanThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                               beacon_missed_count=40,
                                                                               first_time_retry_enable=0)
-
             logger().info('******* Turn on Access point **********')
             self.switch.interfaces.pdu_switch.turn_on(delay=30)
             logger().info("\n *** Start sniffer configuration *** \n")
@@ -1692,6 +1686,8 @@ def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wi
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "japan"
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 13})
@@ -1701,7 +1697,6 @@ def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_access_point, wifi_sniffer,
         # Please Note - ASUS AP doesn't have Japan region, So changed to US region"""
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
-
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
