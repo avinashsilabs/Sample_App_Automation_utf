@@ -46,33 +46,31 @@ def logger():
 
 """
 
-pytestmark = [
-    pytest.mark.config(
-        "wifi_dut",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.Default
-            | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-            | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-            | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,  # | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
-            "ble_features": Si91xBLEFeatureBitMap.Default
-            | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-            # | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-            "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048},
-                "ble": {"count": 1, "stack_len": 2048},
-            },
-        },
-    )
-]
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default
+        | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ble_features": Si91xBLEFeatureBitMap.Default
+        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048},
+            "ble": {"count": 1, "stack_len": 2048},
+        },
+    },
+)
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
@@ -84,7 +82,7 @@ pytestmark = [
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_adv"]
 )
 def test_Coex_sdk_WLAN_TCP_UDP_RX_WPA2_BLE_slave_C133476(
     wifi_sniffer,
@@ -159,6 +157,30 @@ def test_Coex_sdk_WLAN_TCP_UDP_RX_WPA2_BLE_slave_C133476(
 
 
 @pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default
+        | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ble_features": Si91xBLEFeatureBitMap.Default
+        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048},
+            "ble": {"count": 1, "stack_len": 2048},
+        },
+    },
+)
+@pytest.mark.config(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -168,7 +190,7 @@ def test_Coex_sdk_WLAN_TCP_UDP_RX_WPA2_BLE_slave_C133476(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_adv"]
 )
 def test_Coex_sdk_ADV_BLE_while_WLAN_TCP_RX_C133552(
     wifi_sniffer,
@@ -246,6 +268,31 @@ def test_Coex_sdk_ADV_BLE_while_WLAN_TCP_RX_C133552(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default
+        | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ble_features": Si91xBLEFeatureBitMap.Default
+        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048},
+            "ble": {"count": 1, "stack_len": 2048},
+        },
+    },
+)
 @pytest.mark.config(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
@@ -256,7 +303,7 @@ def test_Coex_sdk_ADV_BLE_while_WLAN_TCP_RX_C133552(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_scan"]
 )
 def test_Coex_sdk_WLAN_TCP_RX_while_BLE_continuous_scan_C133555(
     wifi_sniffer,
@@ -326,6 +373,31 @@ def test_Coex_sdk_WLAN_TCP_RX_while_BLE_continuous_scan_C133555(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default
+        | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ble_features": Si91xBLEFeatureBitMap.Default
+        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048},
+            "ble": {"count": 1, "stack_len": 2048},
+        },
+    },
+)
 @pytest.mark.config("wifi_access_point", wifi={"security": "Open"})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -334,7 +406,7 @@ def test_Coex_sdk_WLAN_TCP_RX_while_BLE_continuous_scan_C133555(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_adv"]
 )
 def test_Coex_sdk_WLAN_throughput_open_BLE_slave_C133449(
     wifi_sniffer,
@@ -403,6 +475,31 @@ def test_Coex_sdk_WLAN_throughput_open_BLE_slave_C133449(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default
+        | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ble_features": Si91xBLEFeatureBitMap.Default
+        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048},
+            "ble": {"count": 1, "stack_len": 2048},
+        },
+    },
+)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -413,7 +510,7 @@ def test_Coex_sdk_WLAN_throughput_open_BLE_slave_C133449(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_adv"]
 )
 def test_Coex_sdk_WLAN_throughput_WPA2_BLE_slave_C133450(
     wifi_sniffer,
@@ -483,6 +580,30 @@ def test_Coex_sdk_WLAN_throughput_WPA2_BLE_slave_C133450(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default
+        | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ble_features": Si91xBLEFeatureBitMap.Default
+        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048},
+            "ble": {"count": 1, "stack_len": 2048},
+        },
+    },
+)
 @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
@@ -490,7 +611,7 @@ def test_Coex_sdk_WLAN_throughput_WPA2_BLE_slave_C133450(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_scan"]
 )
 @pytest.mark.config(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
@@ -570,7 +691,32 @@ def test_Coex_sdk_ble_bd_addr_wlan_TCP_TX_C133564(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip()
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default
+        | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ble_features": Si91xBLEFeatureBitMap.Default
+        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048},
+            "ble": {"count": 1, "stack_len": 2048},
+        },
+    },
+)
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -581,7 +727,7 @@ def test_Coex_sdk_ble_bd_addr_wlan_TCP_TX_C133564(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_scan"]
 )
 def test_Coex_sdk_SMP_DUT_UDP_RX_C133443(
     wifi_sniffer,
@@ -660,7 +806,32 @@ def test_Coex_sdk_SMP_DUT_UDP_RX_C133443(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip()
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default
+        | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ble_features": Si91xBLEFeatureBitMap.Default
+        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048},
+            "ble": {"count": 1, "stack_len": 2048},
+        },
+    },
+)
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -671,7 +842,7 @@ def test_Coex_sdk_SMP_DUT_UDP_RX_C133443(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_scan"]
 )
 def test_Coex_sdk_SMP_PAIR_REQ_DUT_UDP_TX_C133441(
     wifi_sniffer,
@@ -750,7 +921,33 @@ def test_Coex_sdk_SMP_PAIR_REQ_DUT_UDP_TX_C133441(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip()
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default
+        | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ble_features": Si91xBLEFeatureBitMap.Default
+        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048},
+            "ble": {"count": 1, "stack_len": 2048},
+        },
+    },
+)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -761,7 +958,7 @@ def test_Coex_sdk_SMP_PAIR_REQ_DUT_UDP_TX_C133441(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_adv"]
 )
 def test_Coex_sdk_SMP_PAIR_RESP_DUT_TCP_TX_C133442(
     wifi_sniffer,
@@ -839,14 +1036,38 @@ def test_Coex_sdk_SMP_PAIR_RESP_DUT_TCP_TX_C133442(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip()
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default
+        | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ble_features": Si91xBLEFeatureBitMap.Default
+        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048},
+            "ble": {"count": 1, "stack_len": 2048},
+        },
+    },
+)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_adv"]
 )
 def test_Coex_sdk_SMP_WLAN_connection_data_C133565(
     wifi_sniffer,
@@ -920,5 +1141,3 @@ def test_Coex_sdk_SMP_WLAN_connection_data_C133565(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
-

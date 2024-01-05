@@ -18,17 +18,9 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xPowerSaveModes,
     Si91xPowerSaveProcedureTypes,
 )
-from utf.utf_config import UtfConfig
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.utils.thread_base import ThreadBase
-from utf_wiseconnect.utils.rs911x_version import parse_version
 from utf.utils.logger import get_logger
-from utf.utils.iperf.iperf_utils import ping
-from utf.interfaces.bluetooth import BLEDeviceState
-from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
-from utf.utils.time_measurer import TimeMeasurer
-from datetime import datetime, date
-import re
 from test_sta_ble_sdk import (
     BleThreadFunctionality,
     SnifferValidationProcess,
@@ -193,7 +185,13 @@ pytestmark = [
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
     "wifi_dut",
-    wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv", "ble_stop_scan"],
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_adv",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_ble_adv_scan_wlan_conn_C133444(
     wifi_sniffer,
@@ -277,7 +275,13 @@ def test_Coex_sdk_ble_adv_scan_wlan_conn_C133444(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
     "wifi_dut",
-    wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv", "ble_stop_scan"],
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_adv",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_ble_scan_adv_wlan_conn_C133569(
     wifi_sniffer,
@@ -361,7 +365,13 @@ def test_Coex_sdk_ble_scan_adv_wlan_conn_C133569(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
     "wifi_dut",
-    wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan", "ble_stop_adv"],
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+        "ble_stop_adv",
+    ],
 )
 def test_Coex_sdk_fun_ble_master_slave_wlan_ping_C133507(
     wifi_sniffer,
@@ -437,7 +447,13 @@ def test_Coex_sdk_fun_ble_master_slave_wlan_ping_C133507(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_fun_ble_slave_master_wlan_ping_C133508(
     wifi_sniffer,
@@ -513,7 +529,13 @@ def test_Coex_sdk_fun_ble_slave_master_wlan_ping_C133508(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133519(
     wifi_sniffer,
@@ -589,7 +611,13 @@ def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133519(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133550(
     wifi_sniffer,
@@ -671,7 +699,13 @@ def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133550(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
     "wifi_dut",
-    wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan", "ble_stop_adv"],
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+        "ble_stop_adv",
+    ],
 )
 def test_Coex_sdk_fun_ble_master_slave_20ms_wlan_ping_C133572(
     wifi_sniffer,
@@ -746,7 +780,13 @@ def test_Coex_sdk_fun_ble_master_slave_20ms_wlan_ping_C133572(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_discon_from_remote_wlan_conn_C133570(
     wifi_sniffer,
@@ -824,7 +864,13 @@ def test_Coex_sdk_discon_from_remote_wlan_conn_C133570(
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state(
     "wifi_dut",
-    wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan", "ble_stop_adv"],
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+        "ble_stop_adv",
+    ],
 )
 def test_Coex_sdk_fun_ble_master_adv_wlan_UDP_C133447(
     wifi_sniffer,
@@ -930,7 +976,13 @@ def test_Coex_sdk_fun_ble_master_adv_wlan_UDP_C133447(
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state(
     "wifi_dut",
-    wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv", "ble_stop_scan"],
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_adv",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_ble_dual_role_wlan_UDP_RX_C133511(
     wifi_sniffer,
