@@ -433,9 +433,9 @@ def test_wifi_sdk_bg_scan_in_all_ch_wpa3_c34510(wifi_sniffer, wifi_access_point,
         for channel in channel_list_2g:
             file_name = f'test_rejoin_for_ch_{channel}'
             wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-            time.sleep(2)
             wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
             logger().info("Delaying for some time to get the capture")
+            time.sleep(2)
             ping_count = 10
             device_ip = dut_add_dict['device_ip']
             status = ping(device_ip, ping_count)
@@ -453,13 +453,17 @@ def test_wifi_sdk_bg_scan_in_all_ch_wpa3_c34510(wifi_sniffer, wifi_access_point,
             probe_check_dict[channel] = int(output)
 
             logger().info(f'\n\n ***** probe check dictionary : {probe_check_dict} ***** \n\n')
-            for key, value in probe_check_dict.items():
-                if value == 0:
-                    probe_not_captured_channel_list.append(key)
 
-            logger().info(f"probe not captured channel list: {probe_not_captured_channel_list}")
-            assert probe_not_captured_channel_list == [], f"probe not captured channel list: {probe_not_captured_channel_list}"
-            logger().info(f"probe requests are captured in all the configured channels, Hence the test case is PASS")
+        for key, value in probe_check_dict.items():
+            if value == 0:
+                probe_not_captured_channel_list.append(key)
+
+        logger().info(
+            f"\n *** Unable to find Probe Request in following channels:  {probe_not_captured_channel_list} *** \n")
+        assert (all(list(probe_check_dict.values()))), f"probe not captured channel list:" \
+                                                       f" {probe_not_captured_channel_list}"
+
+        logger().info(f"probe requests are captured in all the configured channels, Hence the test case is PASS")
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
