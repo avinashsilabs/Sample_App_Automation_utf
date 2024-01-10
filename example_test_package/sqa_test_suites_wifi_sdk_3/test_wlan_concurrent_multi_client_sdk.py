@@ -783,8 +783,8 @@ def test_wifi_sdk_transfer_data_from_client1_to_client2_in_concurrent_mode_c1485
                                           dtim_beacon_count="1", beacon_interval="100")
         ip_dict = con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut)
 
-        server_ip = ip_dict['client1_ip']
-        client_ip = ip_dict['client2_ip']
+        client_ip = ip_dict['client1_ip']
+        server_ip = ip_dict['client2_ip']
         con_obj.run_traffic_btwn_two_clients(net_perf_server, net_perf_client, server_ip, client_ip,
                                              protocol, iperf_time=60)
 
@@ -861,8 +861,8 @@ def test_wifi_sdk_transfer_udp_data_from_client1_to_client2_in_concurrent_mode_c
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148573", security="WPA2", psk="Automation@123", channel=11,
                                           dtim_beacon_count="1", beacon_interval="100")
         ip_dict = con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut)
-        server_ip = ip_dict['client1_ip']
-        client_ip = ip_dict['client2_ip']
+        client_ip = ip_dict['client1_ip']
+        server_ip = ip_dict['client2_ip']
         con_obj.run_traffic_btwn_two_clients(net_perf_server, net_perf_client, server_ip, client_ip,
                                              protocol, iperf_time=60)
 
@@ -937,8 +937,8 @@ def test_wifi_sdk_rejoin_func_of_dut_sta_in_concurrent_mode_c148588(sl_collectio
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148588", security="WPA2", psk="Automation@123", channel=11,
                                           dtim_beacon_count="1", beacon_interval="100")
         ip_dict = con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut)
-        server_ip = ip_dict['client1_ip']
-        client_ip = ip_dict['client2_ip']
+        client_ip = ip_dict['client1_ip']
+        server_ip = ip_dict['client2_ip']
 
         result = sl_collections.join_to_wifi_network_with_rejoin(wifi_dut, wifi_access_point, [0, 6, 40, 0],
                                                                  power_save=False)
@@ -1453,8 +1453,8 @@ def test_wifi_sdk_ssl_rx_func_when_tcp_trf_btwn_clients_in_conc_mode_c148593(sl_
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148593", security="WPA2", psk="Automation@123", channel=11,
                                           dtim_beacon_count="1", beacon_interval="100")
         ip_dict = con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut)
-        server_ip = ip_dict['client1_ip']
-        client_ip = ip_dict['client2_ip']
+        client_ip = ip_dict['client1_ip']
+        server_ip = ip_dict['client2_ip']
 
         result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False,
                                                      retry_count=3, associated=False)
@@ -1571,8 +1571,8 @@ def test_wifi_sdk_ssl_tx_func_when_udp_trf_btwn_clients_in_conc_mode_c148594(sl_
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148594", security="WPA2", psk="Automation@123", channel=11,
                                           dtim_beacon_count="1", beacon_interval="100")
         ip_dict = con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut)
-        server_ip = ip_dict['client1_ip']
-        client_ip = ip_dict['client2_ip']
+        client_ip = ip_dict['client1_ip']
+        server_ip = ip_dict['client2_ip']
 
         result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False,
                                                      retry_count=3, associated=False)
