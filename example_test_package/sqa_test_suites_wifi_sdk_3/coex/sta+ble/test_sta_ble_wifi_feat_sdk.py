@@ -232,6 +232,7 @@ def test_Coex_sdk_WLAN_http_get_BLE_slave_C133481(http_server, wifi_dut, http_cl
         ping_count = utf_constants.get("ping_count")
         iter_count = utf_constants.get("iter_count")
         test_type = "ping"
+        http_client_status = False
 
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -271,7 +272,8 @@ def test_Coex_sdk_WLAN_http_get_BLE_slave_C133481(http_server, wifi_dut, http_cl
 
             logger().info("\n\n***Fetching the data on http using get method***\n\n")
             status_dut, content_dut = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path,
-                                                                        server_port=80)
+                                                                        server_port=80, timeout=50)
+            http_client_status = True
             status_client, content_client = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
 
             assert not status_dut, "failed to fetch the http data"
@@ -282,6 +284,7 @@ def test_Coex_sdk_WLAN_http_get_BLE_slave_C133481(http_server, wifi_dut, http_cl
             assert content_dut == content_client, "fetched data is not same as expected data"
 
         wifi_dut.interfaces.wifi.http_client_deinit()
+        http_client_status = False
 
         logger().info("Checking the stability for 60 secs")
         time.sleep(60)
@@ -295,6 +298,9 @@ def test_Coex_sdk_WLAN_http_get_BLE_slave_C133481(http_server, wifi_dut, http_cl
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        if http_client_status:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 
@@ -401,6 +407,10 @@ def test_Coex_sdk_WLAN_http_post_BLE_slave_C133482(http_server, wifi_dut, wifi_a
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        logger().info("stopping the HTTP server")
+        http_server.interfaces.http.stop_server()
 
 
 

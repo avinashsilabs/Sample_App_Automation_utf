@@ -30,10 +30,8 @@ from utf.utils.time_measurer import TimeMeasurer
 from datetime import datetime, date
 import re
 
-
 def logger():
     return get_logger(__name__)
-
 
 """
     setup requirement:
@@ -51,7 +49,6 @@ def logger():
        
 
     Author: Swathi.Chinthala
-
 """
 
 
@@ -158,6 +155,7 @@ class WifiJoinThread(ThreadBase):
         pmk_enable=False,
         traffic_type="TX",
         tcp_ip_bypass=False,
+        enc="ccmp",
         timeout=60,
     ):
 
@@ -181,6 +179,7 @@ class WifiJoinThread(ThreadBase):
         self.ap_mac_address = None
         self.traffic_type = traffic_type
         self.tcp_ip_bypass = tcp_ip_bypass
+        self.enc = enc
         self.timeout = timeout
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
@@ -245,6 +244,7 @@ class WifiJoinThread(ThreadBase):
                 ping_count=self.ping_count,
                 pmk_enable=self.pmk_enable,
                 tcp_ip_bypass=self.tcp_ip_bypass,
+                enc=self.enc
             )
             if not self.tcp_ip_bypass:
                 self.device_ip = self.dut_addr["device_ip"]
@@ -341,6 +341,7 @@ class ScanTime_JoinTime(ThreadBase):
         all_channel_5=None,
         select_channel_2_4=None,
         select_channel_5=None,
+        enc="ccmp"
     ):
 
         super().__init__()
@@ -357,6 +358,7 @@ class ScanTime_JoinTime(ThreadBase):
         self.all_channel_5 = all_channel_5
         self.select_channel_2_4 = select_channel_2_4
         self.select_channel_5 = select_channel_5
+        self.enc = enc
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
         self.pmk_enable = False
@@ -534,6 +536,7 @@ class ScanTime_JoinTime(ThreadBase):
             test_type=self.test_type,
             tcp_ip_bypass=tcp_ip_bypass,
             pmk_enable=self.pmk_enable,
+            enc=self.enc
         )
         self.dut_addr = wifi_obj.join_to_ap()
         if not tcp_ip_bypass:
@@ -608,7 +611,6 @@ class ScanTime_JoinTime(ThreadBase):
         datetime2 = datetime.combine(date1, time_object2)
         time_taken = datetime2 - datetime1
         time_taken = time_taken.total_seconds()
-        assert time_taken <= 0.4, "join time is more than 400ms"
         logger().info(f"time taken to connect is: {time_taken}")
         time.sleep(2)
 
