@@ -1,5 +1,8 @@
 import re
+import uuid
+from datetime import datetime
 import time
+from typing import Dict
 import test_apmode_sdk as ap
 from threading import Thread
 from utf.utils.time_measurer import TimeMeasurer
@@ -36,6 +39,42 @@ from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEvent
 def logger():
     return get_logger(__name__)
 
+def get_igmp_list(self, dut_mac_address, decryption_key: str, print_layers: list, capture_filename: str) -> Dict[
+        str, int]:
+        igmp_capture_list = []
+        current_time = time.time()
+        updated_capture_file = 'filter_' + capture_filename + '_' + str(
+            datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+        file_name = f'./reports/{updated_capture_file}.pcap'
+        local_capture_file = file_name
+        wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+        packet_filter1 = f'(wlan.addr == {dut_mac_address})'
+        self.wifi_sniffer.interfaces.capture.shell(
+            f"tshark -nr {self.wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{packet_filter1}' -T fields -e "
+            f"frame.number -w "
+            f"{wlan_filter_file}")
+        with self.wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+            sftp.get(wlan_filter_file, local_capture_file)
+        for packet in self.wifi_sniffer.interfaces.capture.iter_packets(
+                decrypt_packets=True,
+                encryption_type="WPA-PWD",
+                decryption_key=decryption_key,
+                capture_file_filter=local_capture_file
+        ):
+            for layer in packet.layers:
+                layer_name = layer.layer_name.lower()
+                if layer_name == "wlan":
+                    mac_layer = str(layer)
+                    for count in mac_layer.split("\n"):
+                        if "Transmitter address" in count:
+                            ta_address = count.split(": ")[1].strip()
+                if layer_name in print_layers:
+                    if ta_address == dut_mac_address:
+                        igmp_layer = str(layer)
+                        logger().info(f"As per sniffer capture IGMP packets sent by DUT..{ta_address}  ->  {igmp_layer}")
+                        igmp_capture_list.append(tuple([igmp_layer, packet.sniff_timestamp]))
+                        logger().info(f"*********{igmp_capture_list}")
+        return igmp_capture_list
 
 class ConcurrentThread(ThreadBase):
     def __init__(self, wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants, wifi_access_point, net_perf_client=None, protocol=None, testcase_no = None, capture_filename = None,  traffic_type=None,leave=False):
@@ -276,43 +315,49 @@ def test_wifi_sdk_concurrent_mode_sta_ap_c19312(wifi_access_point, wifi_dut, wif
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 def test_wifi_sdk_concurrent_mode_sta_ap_c19321(wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, sniffer_filter, multicast_client, utf_constants, sl_collections, protocol, net_perf_client):
-    """ To Verify Dut Behaviour in  STA and AP connection by enabling concurrent mode"""
+    """ To Verify Dut Behaviour  multicast in  STA and AP connection by enabling concurrent mode"""
     try:
         conc_obj = ConcurrentThread(wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants, wifi_access_point, testcase_no=19312, capture_filename="test_c19312")
         conc_obj.sta_ap_connection()
         dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"**********{dut_mac_address}***************")
         ip_version, ttl, multicast_mac, multicast_ip, device_port, server_port, buffer_length, no_of_pkts = multicast_client.interfaces.multicast.multicast_params()
         logger().info(f"DUT joining to the multicast group {multicast_ip}")
-        wifi_dut.interfaces.wifi.sl_net_join_multicast_address()
+        wifi_dut.interfaces.wifi.sl_net_join_multicast_address(interface=16)
         logger().info("starting the server from Remote device")
         logger().info(f"starting iperf")
         net_perf_client.interfaces.net_perf.init_server(host_ip=conc_obj.dut_addr_dict['client_ip'],
-                                                        device_ip=multicast_ip,
-                                                        protocol=protocol, time_out=30)
+                                                        device_ip=conc_obj.dut_addr_dict['dut_ip'],
+                                                        protocol=protocol, time_out=30, bind_address=multicast_ip)
         net_perf_client.interfaces.net_perf.start()
         logger().info("sending data from DUT")
         wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=2, protocol=17,
                                        local_port=net_perf_client.interfaces.net_perf.server_port,
-                                       local_ip=multicast_ip, remote_ip=conc_obj.dut_addr_dict['client_ip'],
+                                       local_ip=conc_obj.dut_addr_dict['dut_ip'], remote_ip=multicast_ip,
                                        remote_port=net_perf_client.interfaces.net_perf.server_port,
                                        size=1470,
                                        ttl=30,
-                                       throughput_type=4, qos=0, timeout=30, async_socket=1)
-
+                                       throughput_type=2, qos=0, async_socket=1)
         logger().info(f"get and print throughput")
         tp = net_perf_client.interfaces.net_perf.process_output()
         assert tp is not None, "Throughput not found"
-        wifi_dut.interfaces.wifi.sl_net_leave_multicast_address()
+        wifi_dut.interfaces.wifi.sl_net_leave_multicast_address(interface=16)
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
         ap_addr = dut_mac_address.split(":")
         ap_mac = int(ap_addr[5][1]) + 1
         ap_mac_addr = dut_mac_address[:-1] + str(ap_mac)
+        logger().info(f"*********{ap_mac_addr}****************")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_mac_addr,
             filter_name='beacon')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find  beacon in Sniffer'
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address,
+            filter_name='multicast_concurrent')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find  multicast_concurrent in Sniffer'
         conc_obj.concurrent_sniffer_validation()
         conc_obj.ap_sta_disconnection()
     except Exception as Ex:

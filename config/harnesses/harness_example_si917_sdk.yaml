@@ -1043,6 +1043,10 @@ defaults:
 
     net_perf_client: 'raspi_iperf'
 
+    net_perf_clients:
+        - 'raspi_iperf'
+        - 'secondary_raspi_iperf'
+
     secondary_net_perf_client : 'secondary_raspi_iperf'
 
     wiseconnect_ui:

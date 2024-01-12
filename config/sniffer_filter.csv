@@ -135,4 +135,11 @@ wpa3_enh_mode,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 1)
 dhcp,(wlan.addr == {{ sa_addr }}), and dhcp
 apmode_association_id,(wlan.sa == {{ sa_addr }}), and (wlan.fixed.aid=={{association_id}})
 mgmt_data_rates_data_rate_54mbps_apmode,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}) and (wlan.da== {{ da_addr }}), and (wlan.fc.type_subtype == 0x0028) and (wlan_radio.data_rate == 54)
+rsi_apmode, (wlan.sa == {{ sa_addr }}), and (wlan.tag.number == 48 ) and (wlan.fc.type_subtype == 8)
+soft_ap_ssid_check, (wlan.sa == {{ sa_addr }}), and (wlan.ssid == {{ssid}})
+beacon_seq_reset, (wlan.sa == {{ sa_addr }}), and (wlan.seq == 0) and (wlan.tag.number == 48 )
+neg_rsi_apmode, (wlan.sa == {{ sa_addr }}), and !(wlan.tag.number == 48 ) and (wlan.fc.type_subtype == 8)
+multicast_concurrent, ((wlan.sa == {{ sa_addr }}) and (wlan.da == 01:00:5e:00:00:01)), and (wlan.fc.type_subtype == 0x0028)
+eap_gtk_interval, (wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 0x0028) and (wlan_radio.data_rate == 1) && !eapol
 deauth_from_ap,(wlan.addr == {{ da_addr }}), and (wlan.addr == {{ sa_addr }}) and (wlan.fixed.reason_code == 0x0002)
+

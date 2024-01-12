@@ -70,6 +70,16 @@ class ApModeClientConnections(ThreadBase):
             self.dtim_count = "1"
             self.beacon_interval = "100"
             self.no_of_clients = 1
+
+        if self.testcase_no == 19484:
+            self.ssid = "SILABS_AP_MODE"
+            self.security = "WPA2"
+            self.password = "Automation@123"
+            self.channel = "11"
+            self.dtim_count = "1"
+            self.beacon_interval = "100"
+            self.no_of_clients = 2
+
         if self.testcase_no == 19456:
             self.ssid = "SILABS_AP_MODE"
             self.security = "WPA2"
@@ -78,6 +88,7 @@ class ApModeClientConnections(ThreadBase):
             self.dtim_count = "1"
             self.beacon_interval = "100"
             self.no_of_clients = 4
+
         if self.testcase_no == 19444:
             self.ssid = "SILABS_AP_C19444"
             self.security = "WPA2"
@@ -124,7 +135,7 @@ class ApModeClientConnections(ThreadBase):
                                            local_ip=self.dut_addr_dict['dut_ip'],
                                            remote_ip=self.dut_addr_dict['client_ip'],
                                            remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                           size=1460, ttl=30, throughput_type=1, qos=0)
+                                           size=1460, ttl=30, throughput_type=1, qos=0, async_socket=1)
             logger().info(f"***** get and print throughput ******")
             tp = self.net_perf_client.interfaces.net_perf.process_output()
             assert tp, "failed to get throughput..."
