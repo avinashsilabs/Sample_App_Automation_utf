@@ -290,6 +290,7 @@ def test_Coex_sdk_rejoin_ap_deauth_ble_slave_C133465(
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         logger().info("***** Changing the security of Access Point to Open*****")
         wifi_access_point.interfaces.wifi.start_ap(security="Open")
+        time.sleep(10)
         logger().info("***** Changing the security of Access Point to WPA2*****")
         wifi_access_point.interfaces.wifi.start_ap(
             security="WPA2", passphrase="1234567890"
@@ -302,7 +303,16 @@ def test_Coex_sdk_rejoin_ap_deauth_ble_slave_C133465(
         status = ping(wifi_obj.device_ip, 30)
         assert status, "DUT NOT RESPONDING FOR PING REQUEST......Rejoin Failed"
         wifi_sniffer.interfaces.capture.stop_capture()
-        ble_obj.ble_disconnect()
+        packet_filter1 = (
+            sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=wifi_obj.dut_mac_address, filter_name="deauthentication"
+            )
+        )
+        logger().info(f"Validating deauthentication frames")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter1
+        )["packet_count"], "Sniffer: Unable to find deauthentication packets in sniffer"
+
         sl_collections.join_sniffer_validation(
             wifi_access_point,
             wifi_sniffer,
@@ -311,6 +321,7 @@ def test_Coex_sdk_rejoin_ap_deauth_ble_slave_C133465(
             sniffer_filter,
             power_save=False,
         )
+        ble_obj.ble_disconnect()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -555,13 +566,27 @@ def test_Coex_sdk_rejoin_ap_deauth_ble_slave_bypass_C133501(
             wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
             logger().info("***** Changing the security of Access Point to Open*****")
             wifi_access_point.interfaces.wifi.start_ap(security="Open")
+
+            time.sleep(10)
+
             logger().info("***** Changing the security of Access Point to WPA2*****")
             wifi_access_point.interfaces.wifi.start_ap(
                 security="WPA2", passphrase="1234567890"
             )
             logger().info("***** Changing the security of Access Point to Open*****")
-            time.sleep(20)
+            time.sleep(50)
             wifi_sniffer.interfaces.capture.stop_capture()
+            packet_filter1 = (
+                sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                    sa_addr=wifi_obj.dut_mac_address, filter_name="deauthentication"
+                )
+            )
+            logger().info(f"Validating deauthentication frames")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(
+                packet_filter1=packet_filter1
+            )["packet_count"], "Sniffer: Unable to find deauthentication packets in sniffer"
+
+
             sl_collections.join_sniffer_validation(
                 wifi_access_point,
                 wifi_sniffer,

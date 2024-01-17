@@ -33,15 +33,14 @@ def logger():
 
 
 class BleScan(ThreadBase):
-    def __init__(self, wifi_dut, ble_clients=None, bt_client_address=None, ble_scan_interval=None, ble_scan_window=None, filter_type=None
+    def __init__(self, wifi_dut, ble_clients=None, ble_dut_address=None, ble_scan_interval=None, ble_scan_window=None
                  ):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_clients = ble_clients
-        self.bt_client_address = bt_client_address
+        self.ble_dut_address = ble_dut_address
         self.ble_scan_interval = ble_scan_interval
         self.ble_scan_window = ble_scan_window
-        self.filter_type = filter_type
 
     def run(self):
         logger().info(f" \n\n******************* START SCANNING FROM DUT ***********************\n\n ")
@@ -67,11 +66,10 @@ class BleScan(ThreadBase):
                 logger().info(f"\n\n***********character conversion of advertising data*****************\n\n")
                 logger().info(f"\n\n***********found advertising data: {whitelist_data}****************\n\n")
                 break
-    def ble_adv(self):
+    def ble_adv(self, filter_type=None):
         logger().info(" **** START ADVERTISEMENT FROM DUT **** ")
-        self.wifi_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_filter_type=self.filter_type)
+        self.wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_filter_type=filter_type)
         # enable wlan and bt power save in dut
-        self.wifi_dut.interfaces.wifi.ble_stop_scanning()
         enable_wifi_ps = self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
         assert enable_wifi_ps == 0, 'failed to enable wlan power save'
         enable_bt_ps = self.wifi_dut.interfaces.wifi.enable_bt_power_save(
@@ -80,21 +78,21 @@ class BleScan(ThreadBase):
         assert enable_bt_ps == 0, 'failed to enable bt power save'
 
         # scan and connect from whitelisted remote device
-        ble_white_list_address = self.ble_clients.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.bt_dut_address)
+        ble_white_list_address = self.ble_clients.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.ble_dut_address)
         assert ble_white_list_address, "FAILED TO INITIATE BLE IN REMOTE DEVICE 1"
         time.sleep(5)
         self.ble_clients.interfaces.bluetooth.stop_scanning()
         found_devices = self.ble_clients.interfaces.bluetooth.get_devices()
         logger().info(f" FOUND_DEVICES :*********{found_devices}*****************")
-        flag = self.wifi_dut.interfaces.bluetooth.ble_address in found_devices
+        flag = self.wifi_dut.interfaces.wifi.ble_address in found_devices
         assert flag, "DUT ISN'T LISTED IN SCAN RESULTS"
         if flag:
             logger().info("REMOTE DEVICE 1 IS VISIBLE IN SCAN RESULTS")
         logger().info("....CONNECT TO DUT AND MAC ADDRESS....")
-        connect_state = self.ble_clients.interfaces.bluetooth.pair_and_connect(self.bt_dut_address, timeout=120)
+        connect_state = self.ble_clients.interfaces.bluetooth.connect(self.ble_dut_address)
         logger().info(f"THE STATE IS: {connect_state}")
         assert connect_state, "UNABLE TO CONNECT TO THE GIVEN ADDRESS"
-        time.sleep(10)
+        time.sleep(60)
 
     def check_device_state(self):
         logger().info("Checking connection status of BLE")
@@ -102,6 +100,7 @@ class BleScan(ThreadBase):
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
         return state_int
+
 
 
 
@@ -126,6 +125,7 @@ pytestmark = [
     },
 )
   ]
+@pytest.mark.skip("testagent issue")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_whitelist_with_adv_data_index5_C19949(wifi_dut, ble_client, sl_collections, ble_clients):
     try:
@@ -167,6 +167,7 @@ def test_ble_whitelist_with_adv_data_index5_C19949(wifi_dut, ble_client, sl_coll
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.skip("testagent issue")
 def test_ble_whitelist_with_adv_data_index10_C19951(wifi_dut, ble_client, sl_collections):
     try:
         logger().info(f"\n\n**************Start ble on DUT**************\n\n")
@@ -206,6 +207,7 @@ def test_ble_whitelist_with_adv_data_index10_C19951(wifi_dut, ble_client, sl_col
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.skip("testagent issue")
 def test_ble_whitelist_with_adv_data_index20_C19953(wifi_dut, ble_client, sl_collections):
     try:
         logger().info(f"\n\n**************Start ble on DUT**************\n\n")
@@ -245,6 +247,7 @@ def test_ble_whitelist_with_adv_data_index20_C19953(wifi_dut, ble_client, sl_col
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.skip("testagent issue")
 def test_ble_sdk_whitelist_with_adv_data_index25_C19954(wifi_dut, ble_client, sl_collections):
     try:
         logger().info(f"\n\n**************Start DUT**************\n\n")
@@ -285,6 +288,7 @@ def test_ble_sdk_whitelist_with_adv_data_index25_C19954(wifi_dut, ble_client, sl
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.skip("testagent issue")
 def test_ble_scan_whitelist_adv_data_index15_2Advertisers_C19952(wifi_dut, ble_client, ble_clients, sl_collections):
     assert len(ble_clients) >= 2
     ble_client1 = ble_clients[1]
@@ -344,6 +348,7 @@ def test_ble_scan_whitelist_adv_data_index15_2Advertisers_C19952(wifi_dut, ble_c
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.skip("testagent issue")
 def test_ble_sdk_scan_aggressive_interval_whitelist_adv_data_index5_C19956(wifi_dut, ble_client, ble_clients, sl_collections):
     try:
         logger().info(f"\n\n**************Start DUT**************\n\n")
@@ -380,6 +385,7 @@ def test_ble_sdk_scan_aggressive_interval_whitelist_adv_data_index5_C19956(wifi_
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.skip("testagent issue")
 def test_ble_scan_aggressive_interval_whitelist_adv_data_2advertisers_index5_C19957(wifi_dut, ble_client, ble_clients, sl_collections):
     assert len(ble_clients) >= 2
     ble_client1 = ble_clients[1]
@@ -438,15 +444,16 @@ def test_ble_scan_aggressive_interval_whitelist_adv_data_2advertisers_index5_C19
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.skip("testagent issue")
 def test_wifi_dut_master_white_list_remote_device_c19846(wifi_dut, ble_client, rs_helper_ble, sl_collections):
     with BleLogs(start_collecting_logs=True,
                  bt_log_path=f"reports/test_wifi_dut_master_remote_device_directed_connectable.logs_{int(time.time())}"):
         try:
             ble_client.interfaces.bluetooth.close()
             logger().info(f"Start ble DUT and client")
-            wifi_dut_address = wifi_dut.interfaces.wifi.ble_start()
-            assert wifi_dut_address, f"Unable to get wifi_dut_address"
-            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=wifi_dut_address)
+            ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
+            assert ble_dut_address, f"Unable to get ble_dut_address"
+            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address)
             assert ble_client_address, f"Unable to get ble_client_address"
             time.sleep(5)
             try:
@@ -466,7 +473,7 @@ def test_wifi_dut_master_white_list_remote_device_c19846(wifi_dut, ble_client, r
                 assert enable_bt_ps == 0, 'failed to enable bt power save'
                 logger().info(f"DUT initiating BLE connection with ble_client device")
                 rs_helper_ble.ble_connect_DUT_as_master(wifi_dut=wifi_dut, ble_remote=ble_client,
-                                                        wifi_dut_address=wifi_dut_address,
+                                                        ble_dut_address=ble_dut_address,
                                                         ble_remote_address=ble_client_address, smp_flag=True)
                 logger().info("******** BLE master connection successful ********")
 
@@ -484,6 +491,179 @@ def test_wifi_dut_master_white_list_remote_device_c19846(wifi_dut, ble_client, r
             sl_collections.exception_handling(wifi_dut, error)
 
         
-    
+
+@pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_sdk_ble_advertising_with_whitelist_filter_policy_0x01_C19841(wifi_dut, ble_clients, sl_collections):
+    try:
+        assert len(ble_clients) >= 2, f"MINIMUM 2 RASPI DEVICES NEEDED"
+        ble_client1 = ble_clients[0]
+        ble_client2 = ble_clients[1]
+        logger().info("INITIATING BLE SERVICE IN DUT")
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(set_smp=0)
+        assert bt_dut_address, "FAILED TO INITIATE BLE IN DUT"
+
+        logger().info(" **** SETTING LOCAL NAME **** ")
+        device_name = "AUTOMATION432"
+        wifi_dut.interfaces.wifi.bt_set_local_name(device_name)
+        returned_name = wifi_dut.interfaces.wifi.bt_get_local_name()
+        assert device_name == returned_name, "THE SET DEVICE NAME DIDN'T MATCH RETURNED DEVICE NAME"
+        ble_white_list_address = ble_client1.interfaces.bluetooth.get_ble_address()
+        wifi_dut.interfaces.wifi.ble_set_scan_response_data()
+        # add the remote device 1 to whitelist and start advertising from DUT
+        logger().info(" **** ADDING REMOTE DEVICE 1 TO WHITELIST **** ")
+        wifi_dut.interfaces.wifi.ble_add_white_list(ble_white_list_address)
+        ble_obj = BleScan(wifi_dut=wifi_dut, ble_clients=ble_client1, ble_dut_address=bt_dut_address)
+        ble_obj.ble_adv(filter_type=1)
+        state_int = ble_obj.check_device_state()
+        if (state_int > 0):
+            logger().info("DISCONNECTING THE BT HOST....")
+            wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_white_list_address)
+            assert "UNABLE TO DISCONNECT SINCE THE CONNECTION NEVER EXISTED"
+        ble_client1.interfaces.bluetooth.close()
+        time.sleep(10)
+        # start advertisement from dut again
+        logger().info("STARTING BLE ADVERTISEMENT IN DUT AGAIN.....")
+        wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_filter_type=1)
+        time.sleep(10)
+        logger().info("....SCANNING FOR NON WHITE LISTED DEVICES....")
+        ble_non_white_list_address = ble_client2.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+        assert ble_non_white_list_address, "FAILED TO INITIATE BLE IN DUT"
+        time.sleep(5)
+        ble_client2.interfaces.bluetooth.stop_scanning()
+        found_devices = ble_client2.interfaces.bluetooth.get_devices()
+        logger().info(f"SCAN RESULTS FROM REMOTE DEVICE 2:*********{found_devices}*****************")
+        assert wifi_dut.interfaces.wifi.ble_address in found_devices, "DUT ISN'T LISTED IN SCAN RESULTS"
+        logger().info("FOUND DUT BD ADDRESS IN SCAN RESULTS")
+        logger().info("....CONNECT TO DUT WITH MAC ADDRESS....")
+        ble_client2.interfaces.bluetooth.connect(bt_dut_address)
+        time.sleep(60)
+        status = ble_client2.interfaces.bluetooth.get_connection_status(bt_dut_address)
+        logger().info(f"Connection status in remote device '{ble_client2}' is:{status}")
+        assert status, f"Remote device '{ble_client2}' is not connected to DUT"
+        if (status > 0):
+            logger().info("DISCONNECTING THE BT HOST....")
+            wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_non_white_list_address)
+            assert "UNABLE TO DISCONNECT SINCE THE CONNECTION NEVER EXISTED"
+        ble_client2.interfaces.bluetooth.close()
+        time.sleep(10)
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
 
 
+
+@pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_sdk_ble_slave_connection_with_whitelist_filter_policy_0x00_C19843(wifi_dut, ble_clients, sl_collections):
+    try:
+        assert len(ble_clients) >= 2, f"MINIMUM 2 RASPI DEVICES NEEDED"
+        ble_client1 = ble_clients[0]
+        ble_client2 = ble_clients[1]
+        logger().info("INITIATING BLE SERVICE IN DUT")
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        assert bt_dut_address, "FAILED TO INITIATE BLE IN DUT"
+
+        logger().info(" **** SETTING LOCAL NAME **** ")
+        device_name = "AUTOMATION432"
+        wifi_dut.interfaces.wifi.bt_set_local_name(device_name)
+        returned_name = wifi_dut.interfaces.wifi.bt_get_local_name()
+        assert device_name == returned_name, "THE SET DEVICE NAME DIDN'T MATCH RETURNED DEVICE NAME"
+        ble_white_list_address = ble_client1.interfaces.bluetooth.get_ble_address()
+        wifi_dut.interfaces.wifi.ble_set_scan_response_data()
+        # add the remote device 1 to whitelist and start advertising from DUT
+        logger().info(" **** ADDING REMOTE DEVICE 1 TO WHITELIST **** ")
+        wifi_dut.interfaces.wifi.ble_add_white_list(ble_white_list_address)
+        ble_obj = BleScan(wifi_dut=wifi_dut, ble_clients=ble_client1, ble_dut_address=bt_dut_address)
+        ble_obj.ble_adv(filter_type=0)
+        state_int = ble_obj.check_device_state()
+        if (state_int > 0):
+            logger().info("DISCONNECTING THE BT HOST....")
+            wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_white_list_address)
+            assert "UNABLE TO DISCONNECT SINCE THE CONNECTION NEVER EXISTED"
+        ble_client1.interfaces.bluetooth.close()
+        time.sleep(10)
+        # start advertisement from dut again
+        logger().info("STARTING BLE ADVERTISEMENT IN DUT AGAIN.....")
+        wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_filter_type=0)
+        time.sleep(10)
+        logger().info("....SCANNING FOR NON WHITE LISTED DEVICES....")
+        ble_non_white_list_address = ble_client2.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+        assert ble_non_white_list_address, "FAILED TO INITIATE BLE IN DUT"
+        time.sleep(5)
+        ble_client2.interfaces.bluetooth.stop_scanning()
+        found_devices = ble_client2.interfaces.bluetooth.get_devices()
+        logger().info(f"SCAN RESULTS FROM REMOTE DEVICE 2:*********{found_devices}*****************")
+        assert wifi_dut.interfaces.wifi.ble_address in found_devices, "DUT ISN'T LISTED IN SCAN RESULTS"
+        logger().info("FOUND DUT BD ADDRESS IN SCAN RESULTS")
+        logger().info("....CONNECT TO DUT WITH MAC ADDRESS....")
+        ble_client2.interfaces.bluetooth.connect(bt_dut_address)
+        time.sleep(60)
+        status = ble_client2.interfaces.bluetooth.get_connection_status(bt_dut_address)
+        logger().info(f"Connection status in remote device '{ble_client2}' is:{status}")
+        assert status, f"Remote device '{ble_client2}' is not connected to DUT"
+        if (status > 0):
+            logger().info("DISCONNECTING THE BT HOST....")
+            wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_non_white_list_address)
+            assert "UNABLE TO DISCONNECT SINCE THE CONNECTION NEVER EXISTED"
+        ble_client2.interfaces.bluetooth.close()
+        time.sleep(10)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_sdk_ble_slave_connection_with_whitelist_filter_policy_0x02_C19842(wifi_dut, ble_clients, sl_collections):
+    try:
+        assert len(ble_clients) >= 2, f"MINIMUM 2 RASPI DEVICES NEEDED"
+        ble_client1 = ble_clients[0]
+        ble_client2 = ble_clients[1]
+        logger().info("INITIATING BLE SERVICE IN DUT")
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        assert bt_dut_address, "FAILED TO INITIATE BLE IN DUT"
+
+        logger().info(" **** SETTING LOCAL NAME **** ")
+        device_name = "AUTOMATION432"
+        wifi_dut.interfaces.wifi.bt_set_local_name(device_name)
+        returned_name = wifi_dut.interfaces.wifi.bt_get_local_name()
+        assert device_name == returned_name, "THE SET DEVICE NAME DIDN'T MATCH RETURNED DEVICE NAME"
+        ble_white_list_address = ble_client1.interfaces.bluetooth.get_ble_address()
+        wifi_dut.interfaces.wifi.ble_set_scan_response_data()
+        # add the remote device 1 to whitelist and start advertising from DUT
+        logger().info(" **** ADDING REMOTE DEVICE 1 TO WHITELIST **** ")
+        wifi_dut.interfaces.wifi.ble_add_white_list(ble_white_list_address)
+        ble_obj = BleScan(wifi_dut=wifi_dut, ble_clients=ble_client1, ble_dut_address=bt_dut_address)
+        ble_obj.ble_adv(filter_type=2)
+        state_int = ble_obj.check_device_state()
+        if (state_int > 0):
+            logger().info("DISCONNECTING THE BT HOST....")
+            wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_white_list_address)
+            assert "UNABLE TO DISCONNECT SINCE THE CONNECTION NEVER EXISTED"
+        ble_client1.interfaces.bluetooth.close()
+        time.sleep(10)
+        # start advertisement from dut again
+        logger().info("STARTING BLE ADVERTISEMENT IN DUT AGAIN.....")
+        wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_filter_type=2)
+        time.sleep(10)
+        logger().info("....SCANNING FOR NON WHITE LISTED DEVICES....")
+        ble_non_white_list_address = ble_client2.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+        assert ble_non_white_list_address, "FAILED TO INITIATE BLE IN DUT"
+        time.sleep(5)
+        ble_client2.interfaces.bluetooth.stop_scanning()
+        found_devices = ble_client2.interfaces.bluetooth.get_devices()
+        logger().info(f"SCAN RESULTS FROM REMOTE DEVICE 2:*********{found_devices}*****************")
+        assert wifi_dut.interfaces.wifi.ble_address in found_devices, "DUT ISN'T LISTED IN SCAN RESULTS"
+        logger().info("FOUND DUT BD ADDRESS IN SCAN RESULTS")
+        for count in range(0, 4):
+            try:
+                logger().info("....CONNECT TO DUT WITH MAC ADDRESS....")
+                ble_client2.interfaces.bluetooth.connect(bt_dut_address)
+            except Exception:
+                logger().info(f"\n\n **** ble connection Failed....retrying for the {count + 1} iteration ****\n\n")
+        wifi_dut.interfaces.wifi.ble_stop_advertising()
+        ble_client2.interfaces.bluetooth.close()
+        time.sleep(10)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)

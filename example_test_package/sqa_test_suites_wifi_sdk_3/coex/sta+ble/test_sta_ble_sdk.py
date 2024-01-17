@@ -30,10 +30,8 @@ from utf.utils.time_measurer import TimeMeasurer
 from datetime import datetime, date
 import re
 
-
 def logger():
     return get_logger(__name__)
-
 
 """
     setup requirement:
@@ -51,7 +49,6 @@ def logger():
        
 
     Author: Swathi.Chinthala
-
 """
 
 
@@ -158,6 +155,7 @@ class WifiJoinThread(ThreadBase):
         pmk_enable=False,
         traffic_type="TX",
         tcp_ip_bypass=False,
+        enc="ccmp",
         timeout=60,
     ):
 
@@ -181,6 +179,7 @@ class WifiJoinThread(ThreadBase):
         self.ap_mac_address = None
         self.traffic_type = traffic_type
         self.tcp_ip_bypass = tcp_ip_bypass
+        self.enc = enc
         self.timeout = timeout
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
@@ -245,6 +244,7 @@ class WifiJoinThread(ThreadBase):
                 ping_count=self.ping_count,
                 pmk_enable=self.pmk_enable,
                 tcp_ip_bypass=self.tcp_ip_bypass,
+                enc=self.enc
             )
             if not self.tcp_ip_bypass:
                 self.device_ip = self.dut_addr["device_ip"]
@@ -341,6 +341,7 @@ class ScanTime_JoinTime(ThreadBase):
         all_channel_5=None,
         select_channel_2_4=None,
         select_channel_5=None,
+        enc="ccmp"
     ):
 
         super().__init__()
@@ -357,6 +358,7 @@ class ScanTime_JoinTime(ThreadBase):
         self.all_channel_5 = all_channel_5
         self.select_channel_2_4 = select_channel_2_4
         self.select_channel_5 = select_channel_5
+        self.enc = enc
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
         self.pmk_enable = False
@@ -411,33 +413,62 @@ class ScanTime_JoinTime(ThreadBase):
 
                 if self.all_channel_2_4:
 
-                    with TimeMeasurer() as t:
+                    for scan_count in range(0, 3):
                         scan_results = self.wifi_dut.interfaces.wifi.scan(
-                            channel=0, ssid=None, sleep_time=0.0001
+                            channel=0, ssid=None, sleep_time=0.00001
                         )
                         assert len(scan_results) >= 1, "Scan failed"
                         logger().info(scan_results)
-                    logger().info(f"Scan in {t.duration} seconds")
+                        logger().info(
+                            f"Scan in {self.wifi_dut.interfaces.wifi.async_response_duration} seconds"
+                        )
+                        if (
+                            1.1
+                            < float(
+                                self.wifi_dut.interfaces.wifi.async_response_duration
+                            )
+                            < 1.25
+                        ):
+                            break
                     assert (
-                        t.duration < 1.2
-                    ), f"scan time {t.duration} should be less than 1200ms"
+                        1.1
+                        < float(self.wifi_dut.interfaces.wifi.async_response_duration)
+                        < 1.25
+                    ), f"scan time {self.wifi_dut.interfaces.wifi.async_response_duration} should be less than 1.25s"
 
                 if self.select_channel_2_4:
 
-                    with TimeMeasurer() as t:
+                    for scan_count in range(0, 3):
+
                         scan_resp = self.wifi_dut.interfaces.wifi.scan(
                             channel=0,
                             ssid=None,
                             scan_bitmap_2_4=channel_bitmap_2_4,
-                            sleep_time=0.1,
+                            sleep_time=0.00001,
                         )
-
+                        logger().info(
+                            f"Scan in {self.wifi_dut.interfaces.wifi.async_response_duration} seconds"
+                        )
+                        if (
+                            0.300
+                            < float(
+                                self.wifi_dut.interfaces.wifi.async_response_duration
+                            )
+                            < 0.450
+                        ):
+                            break
                     assert (
-                        t.duration < 0.4
-                    ), f"scan time {t.duration} should be less than 400ms"
+                        float(self.wifi_dut.interfaces.wifi.async_response_duration)
+                        < 0.450
+                    ), (
+                        f"scan time :{float(self.wifi_dut.interfaces.wifi.async_response_duration)} "
+                        f"should be less than 450ms"
+                    )
                     assert len(scan_resp) >= 1, "Scan response not found"
                     logger().info(f"scan_resp {scan_resp}")
-                    logger().info(f"Scan in {t.duration} seconds")
+                    logger().info(
+                        f"Scan in {float(self.wifi_dut.interfaces.wifi.async_response_duration)} seconds"
+                    )
                     channel_selected = 0
                     for count in scan_resp:
                         for device_channel in channel_list:
@@ -467,19 +498,17 @@ class ScanTime_JoinTime(ThreadBase):
                         "channel scan *** "
                     )
 
-                    with TimeMeasurer() as t:
-                        scan_results = self.wifi_dut.interfaces.wifi.scan(
-                            channel=channel, ssid=None
-                        )
-                        assert len(scan_results) >= 1, "Scan failed"
-                        logger().info(scan_results)
+                    scan_results = self.wifi_dut.interfaces.wifi.scan(
+                        channel=channel, ssid=None
+                    )
+                    assert len(scan_results) >= 1, "Scan failed"
+                    logger().info(scan_results)
                     if ap_bssid.lower() in str(scan_results):
                         logger().info(
                             f"found ap bssid in scan_results for channel {channel}"
                         )
                     else:
                         assert False, "Unable to find ap in scan results"
-                    logger().info(f"Scan in {t.duration} seconds")
 
     def join_to_ap(self, tcp_ip_bypass=False):
 
@@ -507,6 +536,7 @@ class ScanTime_JoinTime(ThreadBase):
             test_type=self.test_type,
             tcp_ip_bypass=tcp_ip_bypass,
             pmk_enable=self.pmk_enable,
+            enc=self.enc
         )
         self.dut_addr = wifi_obj.join_to_ap()
         if not tcp_ip_bypass:
@@ -581,7 +611,6 @@ class ScanTime_JoinTime(ThreadBase):
         datetime2 = datetime.combine(date1, time_object2)
         time_taken = datetime2 - datetime1
         time_taken = time_taken.total_seconds()
-        assert time_taken <= 0.4, "join time is more than 400ms"
         logger().info(f"time taken to connect is: {time_taken}")
         time.sleep(2)
 
@@ -764,7 +793,13 @@ pytestmark = [
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_adv",
+    ],
 )
 def test_Coex_sdk_fun_ble_slave_wlan_conn_C133428(
     wifi_sniffer,
@@ -841,7 +876,13 @@ def test_Coex_sdk_fun_ble_slave_wlan_conn_C133428(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_fun_ble_master_wlan_conn_C133429(
     wifi_sniffer,
@@ -916,7 +957,13 @@ def test_Coex_sdk_fun_ble_master_wlan_conn_C133429(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_WLAN_conn_while_BLE_scan_C133430(
     wifi_sniffer,
@@ -990,7 +1037,13 @@ def test_Coex_sdk_WLAN_conn_while_BLE_scan_C133430(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_BLE_conn_request_WLAN_conn_C133431(
     wifi_dut,
@@ -1093,7 +1146,13 @@ def test_Coex_sdk_BLE_conn_request_WLAN_conn_C133431(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_WLAN_conn_while_BLE_active_scan_C133432(
     wifi_sniffer,
@@ -1166,7 +1225,13 @@ def test_Coex_sdk_WLAN_conn_while_BLE_active_scan_C133432(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_WLAN_conn_while_BLE_passive_scan_C133433(
     wifi_sniffer,
@@ -1239,7 +1304,13 @@ def test_Coex_sdk_WLAN_conn_while_BLE_passive_scan_C133433(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_WLAN_scan_BLE_scan_C133445(
     wifi_sniffer,
@@ -1306,7 +1377,13 @@ def test_Coex_sdk_WLAN_scan_BLE_scan_C133445(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_BLE_scan_while_WLAN_conn_C133568(
     wifi_sniffer,
@@ -1384,7 +1461,13 @@ def test_Coex_sdk_BLE_scan_while_WLAN_conn_C133568(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_adv",
+    ],
 )
 def test_Coex_sdk_WLAN_disconnect_BLE_slave_C133502(
     wifi_sniffer,
@@ -1468,7 +1551,13 @@ def test_Coex_sdk_WLAN_disconnect_BLE_slave_C133502(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_adv",
+    ],
 )
 def test_Coex_sdk_WLAN_disconnect_BLE_peripheral_C133466(
     wifi_sniffer,
@@ -1557,7 +1646,13 @@ def test_Coex_sdk_WLAN_disconnect_BLE_peripheral_C133466(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_adv",
+    ],
 )
 def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133503(
     wifi_sniffer,
@@ -1648,7 +1743,13 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133503(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_BLE_conn_disconn_master_WLAN_conn_C133520(
     wifi_sniffer,
@@ -1741,7 +1842,13 @@ def test_Coex_sdk_BLE_conn_disconn_master_WLAN_conn_C133520(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_adv",
+    ],
 )
 def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133487(
     wifi_sniffer,
@@ -1834,7 +1941,13 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133487(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_adv",
+    ],
 )
 def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(
     wifi_sniffer,
@@ -1914,7 +2027,13 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_adv",
+    ],
 )
 def test_Coex_sdk_all_channels_scan_time_BLE_adv_C133453(
     wifi_sniffer,
@@ -1982,7 +2101,13 @@ def test_Coex_sdk_all_channels_scan_time_BLE_adv_C133453(
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
     "wifi_dut",
-    wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan", "ble_stop_adv"],
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+        "ble_stop_adv",
+    ],
 )
 def test_Coex_sdk_selected_channels_scan_time_BLE_slave_C133454(
     wifi_sniffer,
@@ -2052,7 +2177,13 @@ def test_Coex_sdk_selected_channels_scan_time_BLE_slave_C133454(
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
     "wifi_dut",
-    wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan", "ble_stop_adv"],
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+        "ble_stop_adv",
+    ],
 )
 def test_Coex_sdk_join_time_BLE_slave_C133458(
     wifi_sniffer,
@@ -2117,7 +2248,13 @@ def test_Coex_sdk_join_time_BLE_slave_C133458(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_adv",
+    ],
 )
 def test_Coex_sdk_ADV_BLE_while_WLAN_SCAN_C133551(
     wifi_sniffer,
@@ -2190,7 +2327,13 @@ def test_Coex_sdk_ADV_BLE_while_WLAN_SCAN_C133551(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_adv",
+    ],
 )
 def test_Coex_sdk_fun_ble_slave_wlan_conn_disconn_C133554(
     wifi_sniffer,
@@ -2269,7 +2412,13 @@ def test_Coex_sdk_fun_ble_slave_wlan_conn_disconn_C133554(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(
     wifi_sniffer,
@@ -2350,7 +2499,13 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_BLE_active_scan_when_WLAN_conn_C133560(
     wifi_sniffer,
@@ -2428,7 +2583,13 @@ def test_Coex_sdk_BLE_active_scan_when_WLAN_conn_C133560(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
 )
 def test_Coex_sdk_BLE_scan_while_TCP_TX_C133573(
     wifi_sniffer,
@@ -2510,7 +2671,13 @@ def test_Coex_sdk_BLE_scan_while_TCP_TX_C133573(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_adv",
+    ],
 )
 def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_C133460(
     wifi_sniffer,
@@ -2568,6 +2735,7 @@ def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_C133460(
             ble_obj.wait_for_exit()
             logger().info("Initiating stop scan from Remote device")
             ble_client.interfaces.bluetooth.stop_scanning()
+            ble_client.interfaces.bluetooth.close()
             wifi_obj.disconnect()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

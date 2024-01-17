@@ -254,3 +254,47 @@ def test_wifi_sdk_set_localname_configured_with_17bytes_C71442(wifi_dut):
     except Exception as e:
         logger().info(f"\n****** Testcase failed with {e}******")
         raise e
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_wifi_sdk_ble_init_deinit_for_multiple_iteration_C19849(wifi_dut, ble_client):
+    """ Verify ble init, start advertise, powersave enable, powersave disable, stop advertise and ble deinit for 10
+        iterations"""
+
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    try:
+        iter_count = 10
+        for count in range(0, iter_count):
+            wifi_dut.interfaces.wifi.ble_initialized = False
+            logger().info(f" ======= initialize start advertising iteration {count + 1}")
+            bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+            wifi_dut.interfaces.wifi.ble_start_advertising()
+            if power_save:
+                wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+                wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                              psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+                wifi_dut.interfaces.wifi.set_performance_profile(mode="high_performance")
+                wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveDisabled,
+                                                              psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+            logger().info("Initiating scan from remote BLE device")
+            bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+            assert bt_client_address, "Unable to fetch BD address from Remote BLE device"
+            device_found = check_for_devices_in_scanned_results(ble_interface=ble_client.interfaces.bluetooth,
+                                                                bt_dut_address=bt_dut_address,
+                                                                adv_data=wifi_dut.interfaces.wifi.ble_advertising_data)
+            if device_found:
+                logger().info("Dut found in scan results")
+            logger().info("initiating stop scanning")
+            ble_client.interfaces.bluetooth.stop_scanning()
+            assert device_found, "dut not found in scan results"
+            logger().info("initiating stop advertising")
+            wifi_dut.interfaces.wifi.ble_stop_advertising()
+            wifi_dut.interfaces.wifi.bt_stop()
+            wifi_dut.interfaces.wifi.ble_initialized = False
+            ble_client.interfaces.bluetooth.close()
+    except Exception as e:
+        logger().info(f"\n****** Testcase failed with {e}******")
+        raise e
+

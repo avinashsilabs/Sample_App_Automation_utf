@@ -454,7 +454,6 @@ def test_wifi_sdk_sta_keep_alive_10s_with_bg_scan_C19637(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -506,7 +505,6 @@ def test_wifi_sdk_auth_timeout_with_100ms_c19749(wifi_sniffer, wifi_dut, wifi_ac
         wifi_access_point.interfaces.wifi.disable_mac_filter_ap()
 
 
-@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")

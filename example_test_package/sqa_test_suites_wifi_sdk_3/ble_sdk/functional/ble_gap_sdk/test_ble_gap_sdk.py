@@ -184,6 +184,7 @@ def test_ble_sdk_io_cap_displayonly_C19851(ble_dut, ble_client, sl_collections):
         ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                      psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
         time.sleep(60)
+        logger().info("Connection successfully stable for 60sec")
         ble_dut.interfaces.bluetooth.ble_advertising = False
 
         logger().info("Checking connection status of BLE")
@@ -242,6 +243,7 @@ def test_ble_sdk_io_cap_display_yesno_C19852(ble_dut, ble_client, sl_collections
         ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                      psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
         time.sleep(60)
+        logger().info("Connection successfully stable for 60sec")
         ble_dut.interfaces.bluetooth.ble_advertising = False
 
         logger().info("Checking connection status of BLE")
@@ -300,6 +302,7 @@ def test_ble_sdk_io_cap_keyboard_only_C19853(ble_dut, ble_client, sl_collections
         ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                      psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
         time.sleep(60)
+        logger().info("Connection successfully stable for 60sec")
         ble_dut.interfaces.bluetooth.ble_advertising = False
 
         logger().info("Checking connection status of BLE")
@@ -358,6 +361,7 @@ def test_ble_sdk_io_cap_No_input_output_C19854(ble_dut, ble_client, sl_collectio
         ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                      psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
         time.sleep(60)
+        logger().info("Connection successfully stable for 60sec")
         ble_dut.interfaces.bluetooth.ble_advertising = False
 
         logger().info("Checking connection status of BLE")

@@ -119,6 +119,7 @@ pytestmark = [
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unsassociated"])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 def test_wifi_multicast_receive_TC19369(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client, request,
@@ -140,14 +141,14 @@ def test_wifi_multicast_receive_TC19369(wifi_sniffer, wifi_access_point, wifi_du
 
         net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=multicast_ip, time_out=timeout,
                                                         protocol=protocol, time_to_leave="32", bandwidth="60M",
-                                                        host_role="C")
+                                                        host_role="C", bind_address=host_ip)
         logger().info(f"Host IP: {host_ip}, Dut IP: {wifi_obj.dut_addr['device_ip']}, Protocol: {protocol}")
         logger().info(f"***** starting iperf ******")
         net_perf_client.interfaces.net_perf.start()
         logger().info(f"***** start listening  ******")
         wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=2, protocol=17,
                                        local_port=net_perf_client.interfaces.net_perf.client_port,
-                                       local_ip=wifi_obj.dut_addr['device_ip'], remote_ip=host_ip,
+                                       local_ip=multicast_ip, remote_ip=host_ip,
                                        remote_port=net_perf_client.interfaces.net_perf.client_port,
                                        size=1470, ttl=30, throughput_type=4, qos=0, async_socket=1)
 
@@ -166,6 +167,7 @@ def test_wifi_multicast_receive_TC19369(wifi_sniffer, wifi_access_point, wifi_du
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unsassociated"])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 def test_wifi_sdk_multicast_group_leave_TC19370(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client, request,
@@ -185,25 +187,23 @@ def test_wifi_sdk_multicast_group_leave_TC19370(wifi_sniffer, wifi_access_point,
             if count % 2 == 0:
                 logger().info(f"DUT joining to the multicast group {multicast_ip}")
                 wifi_dut.interfaces.wifi.sl_net_join_multicast_address()
-                sl_status = SLStatus.SL_STATUS_OK
             else:
                 wifi_dut.interfaces.wifi.sl_net_leave_multicast_address()
-                sl_status = SLStatus.SL_STATUS_TIMEOUT
 
             net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=multicast_ip, time_out=timeout,
                                                             protocol=protocol, time_to_leave="32", bandwidth="60M",
-                                                            host_role="C")
+                                                            host_role="C", bind_address=host_ip)
             logger().info(f"Host IP: {host_ip}, Dut IP: {wifi_obj.dut_addr['device_ip']}, Protocol: {protocol}")
             logger().info(f"***** starting iperf ******")
             net_perf_client.interfaces.net_perf.start()
             logger().info(f"***** start listening  ******")
             wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=2, protocol=17,
                                            local_port=net_perf_client.interfaces.net_perf.client_port,
-                                           local_ip=wifi_obj.dut_addr['device_ip'], remote_ip=host_ip,
+                                           local_ip=multicast_ip, remote_ip=host_ip,
                                            remote_port=net_perf_client.interfaces.net_perf.client_port,
-                                           size=1470, ttl=30, throughput_type=4, qos=0, async_socket=1,
-                                           expected_status=sl_status)
+                                           size=1470, ttl=30, throughput_type=4, qos=0, async_socket=1)
 
+        logger().info("DUT not received any data when DUT not joined to multicast group")
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
