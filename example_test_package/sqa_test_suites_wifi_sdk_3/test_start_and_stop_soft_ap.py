@@ -1472,7 +1472,7 @@ def test_wifi_sdk_giving_soft_stop_ap_for_second_time_concurrent_C191365(wifi_sn
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as Err:
-        if "0x00B44" in str(Err):
+        if "0xb44" in str(Err):
             logger().info(f"stop ap failed with : {Err} after giving it for 2nd time")
         else:
             raise Err
@@ -1624,7 +1624,7 @@ def test_wifi_sdk_start_ap_after_enabling_power_save_concurrent_C191373(wifi_sni
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=channel)
         logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191356.pcap")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191373.pcap")
         time.sleep(3)
         ap_dut_obj = ApModeConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
                                        utf_constants,
