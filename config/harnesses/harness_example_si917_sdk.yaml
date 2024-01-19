@@ -816,6 +816,9 @@ devices:
                 password: '12345678'
                 tls_min_version: '1.0'
                 tls_max_version: '1.2'
+                private_key_file: 'wifi-user.pem'
+                certificate_file: 'wifi-user.pem'
+                ca_file: 'wifi-user.pem'
 
     static_radius_server:
         interfaces:
