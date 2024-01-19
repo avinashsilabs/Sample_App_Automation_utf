@@ -1,6 +1,7 @@
 import time
 import pytest
 from utf.utils.thread_base import ThreadBase
+from random import randint
 from utf_wiseconnect_3.tests.devices.si91x import (Si91xCoexMode, Si91xPowerSaveModes, Si91xFeatureBitMap,
                                                    Si91xOperatingMode,
                                                    Si91xCustomFeatureBitMap,
@@ -10,9 +11,16 @@ from utf_wiseconnect_3.tests.devices.si91x import (Si91xCoexMode, Si91xPowerSave
                                                    Si91xExtTCPIPFeatureBitMap,
                                                    Si91xCertificateType, Si91xCertIdentifier,
                                                    Si91xPowerSaveProcedureTypes, Si91xJoinFeatureBitMap,
-                                                   DeviceConstants
+                                                   DeviceConstants, Si91xMqttQos
                                                    )
 from utf.utils.logger import get_logger
+from utf.utils.stopwatch import Stopwatch
+import string
+import random
+import time
+import re
+from datetime import datetime
+import uuid
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.interfaces.wifi import SecurityMode
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
@@ -1002,5 +1010,383 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_1_0_c113775(wifi_dut, wifi_access_poin
         logger().info(f"Validating EAP frames TLS version 1.0 in sniffer")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter6)['packet_count'], \
             'Unable to find EAP frames with TLS version 1.0 sent'
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+        "ca_cert": [("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
+                    ("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
+                    ("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START")]
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+def test_wifi_sdk_three_ssl_connection_wpa2_enterprise_eap_c113797(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                                   sniffer_filter,
+                                                                   radius_server, sl_collections, request, ssl_server):
+    """ This test case verifies the three ssl socket connectivity in WPA2 Enterprise between the dut and the remote
+        server """
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     eap_type="tls", sl_collections=sl_collections, test_name=test_name)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+        port1 = ssl_server.interfaces.ssl.config['device_port1']
+        port2 = ssl_server.interfaces.ssl.config['device_port2']
+        port3 = ssl_server.interfaces.ssl.config['device_port3']
+        ssl_server.interfaces.ssl.start_server(port=port1)
+        ssl_server.interfaces.ssl.start_server(port=port2)
+        ssl_server.interfaces.ssl.start_server(port=port3)
+        server_ip = ssl_server.interfaces.ssl.server_ip
+        for sock_count in range(0, 3):
+            # Open ssl client socket in the DUT
+            sock = wifi_dut.interfaces.wifi.socket()
+            assert sock == sock_count, f"Sock ID must be {sock_count} but received {sock}"
+            # Enable ssl option for socket opened
+            wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+            if sock_count == 0:
+                socket_port = port1
+                local_port = randint(5001, 20000)
+            elif sock_count == 1:
+                socket_port = port2
+                local_port = randint(20001, 40000)
+            else:
+                socket_port = port3
+                local_port = randint(40001, 60000)
+            wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
+            wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=socket_port)
+        socket_no = [1, 2, 3]
+        for socket in socket_no:
+            buffer_length = 100
+            pkt_count = 1
+            tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=buffer_length))
+            if socket > 3:
+                logger().info(f"DATA TRANSFER -----DUT SENDING DATA ON SOCKET ID{socket - 1}")
+                data_length = len(tx_buffer)
+                socket_number = socket - 1
+                wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=socket_number, data=tx_buffer)
+                server_socket_no = socket
+                data_receive = ssl_server.interfaces.ssl.data_recv_content(server_socket_no, data_length)
+                logger().info(f"Data received on remote socket opened is {data_receive}")
+                assert tx_buffer == data_receive.decode(), "Data sent by DUT and received on server is matching"
+            else:
+                logger().info(f"DATA TRANSFER -----DUT RECEVING DATA ON SOCKET ID{socket - 1}")
+                ssl_server.interfaces.ssl.send_data(socket, pkt_count, buffer_length, message=tx_buffer)
+                sock = (socket - 1)
+                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
+                assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+
+        for sock_count in range(0, 3):
+            logger().info(f"Closing socket_id->{sock_count}")
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_count)
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.leave()
+        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                        wifi_access_point=wifi_access_point,
+                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification.verify_sniffer_validation()
+        packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=ap_mac_address,
+            sa_addr=wifi_thread.dut_addr['dut_mac_address'], filter_name='eap_type_tls_verification')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
+            'packet_count'], 'Unable to find EAP frames sent from AP in sniffer'
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+def test_wifi_sdk_mqtt_wpa2_enterprise_c113795(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
+                                               radius_server, sl_collections, request, utf_constants,
+                                               mqtt_server, mqtt_client):
+    """ This test case verifies the Mqtt connectivity in WPA2 Enterprise """
+    try:
+        test_name = request.node.name
+        topic = "mytesttopic"
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
+        qos = Si91xMqttQos.QOS1
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     eap_type="tls", sl_collections=sl_collections, test_name=test_name)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=1)
+        logger().info(".....DUT connects to MQTT server.....")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        logger().info(".....MQTT Client connects to MQTT server.....")
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        logger().info("MQTT Client subscribes to the topic")
+        time.sleep(5)
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
+        time.sleep(5)
+        logger().info("DUT subscribes to the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
+        time.sleep(5)
+        logger().info("DUT publishes message over the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=Si91xMqttQos.QOS1, timeout=20)
+        time.sleep(5)
+        msgs = []
+        sw = Stopwatch()
+        while sw.elapsed_sec < 10:
+            time.sleep(0.1)
+            msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+            if len(msgs) == 1:
+                break
+        assert len(msgs) == 1, "No message is received by mqtt-client"
+        assert msgs[0].topic == topic, "No message received by mqtt-client on subscribed topic"
+        assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
+        assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
+                                                    "message received is wrong"
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        logger().info("Disconnecting from MQTT Server")
+        wifi_dut.interfaces.wifi.mqtt_client_disconnect()
+        time.sleep(1)
+        logger().info("Disconnecting from DUT")
+        wifi_dut.interfaces.wifi.leave()
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                        wifi_access_point=wifi_access_point,
+                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification.verify_sniffer_validation()
+        packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=ap_mac_address,
+            sa_addr=wifi_thread.dut_addr['dut_mac_address'], filter_name='eap_type_tls_verification')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
+            'packet_count'], 'Unable to find EAP frames sent from AP in sniffer'
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+def test_wifi_sdk_ssl_socket_connection_in_wpa2_enterprise_c113793(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                                   sniffer_filter, radius_server, sl_collections, request, ssl_server):
+    """ This test case verifies the ssl socket connectivity in WPA2 Enterprise between the dut and the remote
+        server """
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     eap_type="tls", sl_collections=sl_collections, test_name=test_name)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        port1 = ssl_server.interfaces.ssl.config['device_port1']
+        ssl_server.interfaces.ssl.start_server(port=port1)
+        server_ip = ssl_server.interfaces.ssl.server_ip
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+        sock = wifi_dut.interfaces.wifi.socket()
+        logger().info(
+            f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+        wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+        socket_port = port1
+        local_port = randint(5001, 20000)
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
+        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=socket_port)
+        buffer_length = 100
+        pkt_count = 1
+        tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=buffer_length))
+        ssl_server.interfaces.ssl.send_data(1, pkt_count, buffer_length, message=tx_buffer)
+        buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
+        assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.leave()
+        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                        wifi_access_point=wifi_access_point,
+                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification.verify_sniffer_validation()
+        packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=ap_mac_address,
+            sa_addr=wifi_thread.dut_addr['dut_mac_address'], filter_name='eap_type_tls_verification')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
+            'packet_count'], 'Unable to find EAP frames sent from AP in sniffer'
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.skip()
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+def test_wifi_sdk_http_otaf_wpa2_enterprise_c13803(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client,
+                                                   sniffer_filter, radius_server, sl_collections, request, http_server):
+    """ This test case verifies the http otaf in wpa2 enterprise"""
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        fw_before_upgrade = wifi_dut.interfaces.wifi.version()
+        wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     eap_type="tls", sl_collections=sl_collections, test_name=test_name)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("checking server stats....")
+        server_stat = http_server.interfaces.http.started
+        assert server_stat == True, "server is inactive"
+        logger().info(f'http server state is {server_stat}')
+        logger().info("fetching server ip....")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"server ip is {host_ip}")
+        wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, '/SiWG917-B.2.10.0.0.4.bin', host_ip)
+        wifi_dut.interfaces.wifi.reset()
+        time.sleep(15)
+        logger().info("Initialising DUT after the reset....")
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        time.sleep(60)
+        wifi_dut.interfaces.wifi.init(mode="eap", config_required=True)
+        time.sleep(5)
+        wifi_dut.interfaces.wifi.initialize_thread()
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+        fw_after_upgrade = wifi_dut.interfaces.wifi.version()
+        time.sleep(2)
+        logger().info(f"\n\n ***firmware versions before otaf:{fw_before_upgrade}"
+                      f" firmware version after loading through otaf :{fw_after_upgrade}")
+        assert fw_before_upgrade != fw_after_upgrade, f"firmware versions should not match after loading" \
+                                                      f" firmware through otaf"
+        logger().info(f"\n ***firmware versions not matched after loading"
+                      f" firmware through otaf\n")
+        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                        wifi_access_point=wifi_access_point,
+                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification.verify_sniffer_validation()
+        packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=ap_mac_address,
+            sa_addr=wifi_thread.dut_addr['dut_mac_address'], filter_name='eap_type_tls_verification')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
+            'packet_count'], 'Unable to find EAP frames sent from AP in sniffer'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
