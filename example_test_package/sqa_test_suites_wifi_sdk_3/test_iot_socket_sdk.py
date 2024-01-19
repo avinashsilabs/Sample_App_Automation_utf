@@ -25,6 +25,7 @@ from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.interfaces.iperf.iperf_constants import IperfConstants
+from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncIdentifiers
 
 """Author : Vivek"""
 
@@ -107,12 +108,11 @@ class WLanThread(ThreadBase):
 
     def run(self):
         try:
-            if self.test_case_no == 19255:
+            if self.test_case_no == 217772 or self.test_case_no == 217774:
                 self.stream_type = 'stream'
                 self.protocol = 'tcp'
 
-
-            if self.test_case_no == 19256:
+            if self.test_case_no == 217773 or self.test_case_no == 217775:
                 self.stream_type = 'dgram'
                 self.protocol = 'udp'
 
@@ -122,7 +122,7 @@ class WLanThread(ThreadBase):
                                                                      wifi_access_point=self.wifi_access_point,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated
                                                                      , ping_after_power_save=False,
-                                                                     channel=self.wifi_access_point.interfaces.wifi.channel)
+                                                                     channel=self.wifi_access_point.interfaces.wifi.channel, retry_count=3)
             logger().info("DUT successfully connected with AP")
 
             if self.socket_server:
@@ -143,6 +143,7 @@ class WLanThread(ThreadBase):
             logger().info(f"\n\n **** Got exception in test case {self.test_case_no} thread: {str(e)} ****\n\n")
             raise e
 
+
 class ThreadS(ThreadBase):
     def __init__(self, wifi_dut, socket_id, port_no, connection_type='tcp'):
         super().__init__()
@@ -153,38 +154,36 @@ class ThreadS(ThreadBase):
 
     def run(self):
         if self.connection_type == 'tcp':
-            self.wifi_dut.interfaces.wifi.iotSocketAccept(socket=self.sock_id, port=self.port_no)
-        else:
-            self.wifi_dut.interfaces.wifi.iotSocketReceiveFrom(socket=self.sock_id, port=self.port_no)
+            self.wifi_dut.interfaces.wifi.iotSocketAccept(socket=self.sock_id, port=self.port_no, timeout=150)
 
 
 class ThreadC(ThreadBase):
-    def __init__(self, client_socket, wlan_obj, wifi_dut, socket_id, port_no, host_ip, connection_type='tcp'):
+    def __init__(self, wifi_client, wlan_obj, wifi_dut, port_no, connection_type='tcp', server_socket_id=None):
         super().__init__()
-        self.client_socket = client_socket
+        self.wifi_client = wifi_client
         self.wlan_obj = wlan_obj
         self.wifi_dut = wifi_dut
-        self.socket_id = socket_id
         self.port_no = port_no
-        self.host_ip = host_ip
         self.connection_type = connection_type
+        self.server_socket_id = server_socket_id
 
     def run(self):
         tx_buffer = "12345678901234567890123456789012345678901234567890"
+        server_ip = self.wlan_obj.dut_addr['device_ip']
         if self.connection_type == 'tcp':
-            self.client_socket.connect_client_tcp(self.wlan_obj.dut_addr['device_ip'], self.port_no, self.host_ip)
+            self.wifi_client.connect_client_tcp(server_ip, self.port_no)
+            time.sleep(2)
             sw = Stopwatch()
-            while sw.elapsed_sec < 10:
-                self.client_socket.send_data_tcp(tx_buffer)
-                result = self.wifi_dut.interfaces.wifi.iotSocketReceive(socket=self.socket_id)
+            while sw.elapsed_sec < 30:
+                self.wifi_client.send_data_tcp(tx_buffer)
+                result = self.wifi_dut.interfaces.wifi.iotSocketReceive(socket=1, timeout=30)
                 logger().info(f"data = {result}")
         else:
-            self.client_socket.connect_client_tcp(self.wlan_obj.dut_addr['device_ip'], self.port_no, self.host_ip)
             sw = Stopwatch()
-            while sw.elapsed_sec < 10:
-                self.client_socket.send_data_udp(tx_buffer, server_ip=self.wlan_obj.dut_addr['device_ip'],
+            while sw.elapsed_sec < 20:
+                self.wifi_client.interfaces.socket.send_data_udp(tx_buffer, server_ip=server_ip,
                                                  port=self.port_no)
-                result = self.wifi_dut.interfaces.wifi.iotSocketReceive(socket=self.socket_id)
+                result = self.wifi_dut.interfaces.wifi.iotSocketReceiveFrom(socket=self.server_socket_id)
                 logger().info(f"data = {result}")
 
 
@@ -208,12 +207,13 @@ class ThreadC(ThreadBase):
         "ble_custom_ext_features": 0,
     },
 )
-def test_wifi_sdk_iot_socket_tcp_dl(wifi_access_point, wifi_dut, utf_constants,
+def test_wifi_sdk_iot_socket_tcp_tx_c217772(wifi_access_point, wifi_dut, utf_constants,
                                          sl_collections, net_perf_client, wifi_sniffer, wifi_client):
     time_period = utf_constants.get("time_period")
+    """Verify TCP_TX Functionality using IoT socket"""
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                          time_period=time_period, sl_collections=sl_collections, test_case_no=19255,
+                          time_period=time_period, sl_collections=sl_collections, test_case_no=217772,
                           wifi_sniffer=wifi_sniffer, net_perf_client=net_perf_client,
                           socket_server=True, wifi_client=wifi_client, data_transfer=True)
     try:
@@ -251,12 +251,13 @@ def test_wifi_sdk_iot_socket_tcp_dl(wifi_access_point, wifi_dut, utf_constants,
         "ble_custom_ext_features": 0,
     },
 )
-def test_wifi_sdk_iot_socket_udp_dl(wifi_access_point, wifi_dut, utf_constants,
+def test_wifi_sdk_iot_socket_udp_tx_c217773(wifi_access_point, wifi_dut, utf_constants,
                                          sl_collections, net_perf_client, wifi_sniffer, wifi_client):
     time_period = utf_constants.get("time_period")
+    """Verify UDP_TX Functionality using IoT socket"""
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                          time_period=time_period, sl_collections=sl_collections, test_case_no=19256,
+                          time_period=time_period, sl_collections=sl_collections, test_case_no=217773,
                           wifi_sniffer=wifi_sniffer, net_perf_client=net_perf_client,
                           socket_server=True, wifi_client=wifi_client, data_transfer=True)
     try:
@@ -279,7 +280,7 @@ def test_wifi_sdk_iot_socket_udp_dl(wifi_access_point, wifi_dut, utf_constants,
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": { "wifi":{ "count": 2, "stack_len": 2048 }} ,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -292,30 +293,36 @@ def test_wifi_sdk_iot_socket_udp_dl(wifi_access_point, wifi_dut, utf_constants,
         "ble_custom_ext_features": 0,
     },
 )
-def test_wifi_sdk_iot_socket_tcp_ul(wifi_access_point, wifi_dut, utf_constants,
-                                         sl_collections, wifi_sniffer, remote_socket_factory, wifi_client):
+@pytest.mark.repeat(2)
+def test_wifi_sdk_iot_socket_tcp_rx_c217774(wifi_access_point, wifi_dut, utf_constants,
+                                            sl_collections, wifi_sniffer, remote_socket_factory, wifi_client):
     time_period = utf_constants.get("time_period")
-    local_port = randint(5001, 65535)
+    local_port = randint(5001, 6001)
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
     logger().info(f"Remote device ip :{host_ip}")
 
+    """Verify TCP_RX Functionality using IoT socket"""
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                          time_period=time_period, sl_collections=sl_collections, test_case_no=19255,
-                          wifi_sniffer=wifi_sniffer)
+                          time_period=time_period, sl_collections=sl_collections, test_case_no=217774,
+                          wifi_sniffer=wifi_sniffer, socket_server=False)
+
     try:
         '''DUT as SERVER & RESPI as a CLIENT with TCP connection '''
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
         socket_id = wifi_dut.interfaces.wifi.iotSocketCreate()
-        wifi_dut.interfaces.wifi.iotSocketBind(socket=socket_id, client_ip=wlan_obj.dut_addr['device_ip'], port=local_port)
-        wifi_dut.interfaces.wifi.iotSocketListen(socket=socket_id, backlog=1, timeout=20)
-
         client_socket = remote_socket_factory.interfaces.socket.create_socket()
 
-        with ThreadS(wifi_dut, socket_id, local_port), ThreadC(client_socket, wlan_obj, wifi_dut, socket_id,
-                                                               local_port, host_ip):
-            time.sleep(20)
+        wifi_dut.interfaces.wifi.iotSocketBind(socket=socket_id, client_ip=wlan_obj.dut_addr['device_ip'],
+                                               port=local_port)
+        time.sleep(5)
+        wifi_dut.interfaces.wifi.iotSocketListen(socket=socket_id, backlog=1, timeout=20)
+        time.sleep(1)
+
+        with ThreadS(wifi_dut, socket_id, local_port), ThreadC(client_socket, wlan_obj, wifi_dut, local_port,
+                                                               connection_type='tcp'):
+            logger().info("\n *** Trying for socket connection ***")
 
         wifi_dut.interfaces.wifi.iotSocketClose(socket_id, timeout=30)
         logger().info("Stop sniffer capture")
@@ -345,31 +352,34 @@ def test_wifi_sdk_iot_socket_tcp_ul(wifi_access_point, wifi_dut, utf_constants,
         "ble_custom_ext_features": 0,
     },
 )
-def test_wifi_sdk_iot_socket_udp_ul(wifi_access_point, wifi_dut, utf_constants,
-                                         sl_collections, wifi_sniffer, remote_socket_factory, wifi_client):
+@pytest.mark.repeat (2)
+def test_wifi_sdk_iot_socket_udp_rx_c217775(wifi_access_point, wifi_dut, utf_constants,
+                                         sl_collections, wifi_sniffer, remote_socket, wifi_client):
     time_period = utf_constants.get("time_period")
-    local_port = randint(5001, 65535)
+    local_port = randint(5001, 7001)
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
     logger().info(f"Remote device ip :{host_ip}")
 
+    """Verify UDP_RX Functionality using IoT socket"""
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                          time_period=time_period, sl_collections=sl_collections, test_case_no=19255,
-                          wifi_sniffer=wifi_sniffer)
+                          time_period=time_period, sl_collections=sl_collections, test_case_no=217775,
+                          wifi_sniffer=wifi_sniffer, socket_server=False)
     try:
         '''DUT as SERVER & RESPI as a CLIENT with UDP connection'''
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
         socket_id = wifi_dut.interfaces.wifi.iotSocketCreate(stream_type="dgram", protocol = 'udp')
+        remote_socket.interfaces.socket.start_server(socket_type=1)
+
         wifi_dut.interfaces.wifi.iotSocketBind(socket=socket_id, client_ip=wlan_obj.dut_addr['device_ip'],
                                                port=local_port)
-        # wifi_dut.interfaces.wifi.iotSocketListen(socket=socket_id, backlog=1, timeout=20)
 
-        client_socket = remote_socket_factory.interfaces.socket.create_socket()
+        client_obj = ThreadC(remote_socket, wlan_obj, wifi_dut, local_port, connection_type='udp',
+                             server_socket_id=socket_id)
 
-        with ThreadS(wifi_dut, socket_id, local_port, connection_type='udp'), ThreadC(client_socket, wlan_obj, wifi_dut, socket_id,
-                                                               local_port, host_ip, connection_type='udp'):
-            time.sleep(20)
+        client_obj.start()
+        client_obj.wait_for_exit()
 
         wifi_dut.interfaces.wifi.iotSocketClose(socket_id, timeout=30)
         logger().info("Stop sniffer capture")
