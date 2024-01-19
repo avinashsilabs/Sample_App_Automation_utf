@@ -25,7 +25,7 @@ rts,(wlan.addr == {{ wlan_addr }}), and (wlan.fc.type_subtype == 27)
 cts,(wlan.addr == {{ wlan_addr }}), and (wlan.fc.type_subtype == 28)
 disassociation,(wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 10)
 association_request,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 0)
-association_request_HE,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 0)  and (wlan.tag.number == 35 )
+association_request_HE,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 0)  and (wlan.ext_tag.number == 35 )
 association_response,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 1)
 assoc_req_resp,(wlan.sa == {{ sa_addr }}) and (wlan.ta == {{ ta_addr }}), or (wlan.fc.type_subtype == 0x0000) || (wlan.fc.type_subtype == 0x0001)
 deauthentication,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 12)
@@ -144,4 +144,6 @@ neg_rsi_apmode, (wlan.sa == {{ sa_addr }}), and !(wlan.tag.number == 48 ) and (w
 multicast_concurrent, ((wlan.sa == {{ sa_addr }}) and (wlan.da == 01:00:5e:00:00:01)), and (wlan.fc.type_subtype == 0x0028)
 eap_gtk_interval, (wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 0x0028) and (wlan_radio.data_rate == 1) && !eapol
 deauth_from_ap,(wlan.addr == {{ da_addr }}), and (wlan.addr == {{ sa_addr }}) and (wlan.fixed.reason_code == 0x0002)
+radiotap_HE_data,(wlan.sa == {{ wlan_addr }}), and (radiotap.present.he == 1)
+icmp_ack_ampdu_disable,(wlan.addr == {{ sa_addr }} and radiotap.present.ampdu ==0), and (wlan.fc.type_subtype==0x001d || icmp)
 
