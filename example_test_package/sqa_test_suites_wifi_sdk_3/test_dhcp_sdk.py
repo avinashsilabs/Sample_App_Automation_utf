@@ -57,10 +57,13 @@ class WifiJoinThread(ThreadBase):
         self.dut_addr = None
 
     def run(self):
-        logger().info("starting the sniffer again")
+        logger().info(f"Enabling DHCP lease time")
+        self.wifi_access_point.interfaces.wifi.enable_dhcp_ap()
+        time.sleep(2)
+        logger().info("starting the sniffer capture")
         self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
-        time.sleep(3)
+        time.sleep(2)
 
         if self.test_case_no == 19293 or self.test_case_no == 19295 or self.test_case_no == 19296:
             self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
@@ -68,9 +71,6 @@ class WifiJoinThread(ThreadBase):
                                                                      associated=self.wifi_dut.interfaces.wifi.associated,
                                                                      retry_count=3, ping_count=self.ping_count)
             time.sleep(2)
-            logger().info(f"Verifying dhcp renewal")
-            self.wifi_access_point.interfaces.wifi.enable_dhcp_ap()
-            time.sleep(60)
 
         if self.data_transfer:
             host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -107,9 +107,9 @@ class WifiJoinThread(ThreadBase):
                 time.sleep(5)
                 logger().info("data received is successful")
         if self.test_case_no == 19295:
-            time.sleep(10)
+            time.sleep(300)
         if self.test_case_no == 19296:
-            time.sleep(10)
+            time.sleep(300)
         if self.test_case_no == 19293:
             logger().info(f"\n==========>>>>>>Waiting up to 1800 seconds for dhcp renewal packets<<<<<<===========\n")
             time.sleep(1800)
@@ -238,13 +238,13 @@ def test_wifi_sdk_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer, w
     packet_filter2 = '        DHCP: Request (3)'
     ping_count = utf_constants.get("ping_count")
     capture_filename = request.node.name
+    status = None
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               testcase=capture_filename, wifi_client=wifi_client, sl_collections=sl_collections,
                               ping_count=ping_count, test_case_no=19293)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-        logger().info(f"Waiting for half an hour to verify dhcp renewal ")
         time.sleep(2)
         da_addr = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP MAC: {da_addr}")
@@ -273,11 +273,11 @@ def test_wifi_sdk_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer, w
             if is_between is False:
                 logger().info(f"{is_between}")
                 status = is_between
-                logger().info(f'\n{time_diff} value is out of range so test case is failed\n')
                 break
             else:
                 logger().info(f"{is_between}")
                 status = is_between
+        assert status, 'value is out of range so test case is failed'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -321,7 +321,6 @@ def test_wifi_sdk_tcp_tx_functionality_while_dhcp_renewal_c19295(wifi_sniffer, w
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-        logger().info(f"Waiting for half an hour to verify dhcp renewal ")
         time.sleep(2)
         da_addr = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP MAC: {da_addr}")
@@ -350,11 +349,11 @@ def test_wifi_sdk_tcp_tx_functionality_while_dhcp_renewal_c19295(wifi_sniffer, w
             if is_between is False:
                 logger().info(f"{is_between}")
                 status = is_between
-                logger().info(f'\n{time_diff} value is out of range so test case is failed\n')
                 break
             else:
                 logger().info(f"{is_between}")
                 status = is_between
+        assert status, 'value is out of range so test case is failed'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -400,7 +399,6 @@ def test_wifi_sdk_tcp_rx_functionality_while_dhcp_renewal_c19296(wifi_sniffer, w
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-        logger().info(f"Waiting for half an hour to verify dhcp renewal ")
         time.sleep(2)
         da_addr = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP MAC: {da_addr}")
@@ -429,10 +427,10 @@ def test_wifi_sdk_tcp_rx_functionality_while_dhcp_renewal_c19296(wifi_sniffer, w
             if is_between is False:
                 logger().info(f"{is_between}")
                 status = is_between
-                logger().info(f'\n{time_diff} value is out of range so test case is failed\n')
                 break
             else:
                 logger().info(f"{is_between}")
                 status = is_between
+        assert status, 'value is out of range so test case is failed'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
