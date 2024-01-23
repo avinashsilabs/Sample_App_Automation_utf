@@ -317,7 +317,7 @@ def test_wifi_sdk_concurrent_mode_sta_ap_c19312(wifi_access_point, wifi_dut, wif
 def test_wifi_sdk_concurrent_mode_sta_ap_c19321(wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, sniffer_filter, multicast_client, utf_constants, sl_collections, protocol, net_perf_client):
     """ To Verify Dut Behaviour  multicast in  STA and AP connection by enabling concurrent mode"""
     try:
-        conc_obj = ConcurrentThread(wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants, wifi_access_point, testcase_no=19312, capture_filename="test_c19312")
+        conc_obj = ConcurrentThread(wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants, wifi_access_point, testcase_no=19312, capture_filename="test_c19321")
         conc_obj.sta_ap_connection()
         dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"**********{dut_mac_address}***************")
