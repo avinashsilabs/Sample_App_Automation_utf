@@ -3052,7 +3052,7 @@ def test_wsdk_WPA2_EAP_TLS_when_not_loaded_private_key_in_certs_C113861(wifi_dut
             logger().info(f"\n\n Event data is: {output} \n\n")
             result = output.strip().split(':')[1].lstrip()
             logger().info(f"\n\n Reason code:{result} \n\n")
-            assert result == '53', "Unable to get expected reason code hence test is failed"
+            assert result == '29', "Unable to get expected reason code hence test is failed"
             logger().info(f"Observed Expected Error Code, Hence test cases is passed")
             ap_mac_address = wifi_access_point.interfaces.wifi.bssid
             logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
@@ -3136,7 +3136,7 @@ def test_wsdk_WPA2_EAP_TLS_when_invalid_inter_rootca_in_certs_C113894(wifi_dut, 
             logger().info(f"\n\n Event data is: {output} \n\n")
             result = output.strip().split(':')[1].lstrip()
             logger().info(f"\n\n Reason code:{result} \n\n")
-            assert result == '53', "Unable to get expected reason code hence test is failed"
+            assert result == '50', "Unable to get expected reason code hence test is failed"
             logger().info(f"Observed Expected Error Code, Hence test cases is passed")
             ap_mac_address = wifi_access_point.interfaces.wifi.bssid
             logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
@@ -3220,7 +3220,7 @@ def test_wsdk_WPA2_EAP_TLS_when_no_root_ca_in_certs_C113859(wifi_dut, wifi_acces
             logger().info(f"\n\n Event data is: {output} \n\n")
             result = output.strip().split(':')[1].lstrip()
             logger().info(f"\n\n Reason code:{result} \n\n")
-            assert result == '53', "Unable to get expected reason code hence test is failed"
+            assert result == '28', "Unable to get expected reason code hence test is failed"
             logger().info(f"Observed Expected Error Code, Hence test cases is passed")
             ap_mac_address = wifi_access_point.interfaces.wifi.bssid
             logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
@@ -3304,7 +3304,7 @@ def test_wsdk_WPA2_EAP_TLS_with_no_client_certs_C113860(wifi_dut, wifi_access_po
             logger().info(f"\n\n Event data is: {output} \n\n")
             result = output.strip().split(':')[1].lstrip()
             logger().info(f"\n\n Reason code:{result} \n\n")
-            assert result == '53', "Unable to get expected reason code hence test is failed"
+            assert result == '2A', "Unable to get expected reason code hence test is failed"
             logger().info(f"Observed Expected Error Code, Hence test cases is passed")
             ap_mac_address = wifi_access_point.interfaces.wifi.bssid
             logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
