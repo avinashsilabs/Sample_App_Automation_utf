@@ -2627,7 +2627,7 @@ def test_ble_sdk_passive_scanning_on_dut_C19838(ble_dut, ble_client, sl_collecti
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", 'ble_stop_scan', "wifi_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", 'ble_stop_scan', "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_sdk_adv_report_C19848(ble_dut, ble_client, sl_collections):
     """
     Verify Ble Advertise report
@@ -2635,6 +2635,7 @@ def test_ble_sdk_adv_report_C19848(ble_dut, ble_client, sl_collections):
     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
+        scan_result = ""
         logger().info("start ble...")
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
         assert ble_dut_address, "failed to initiate ble in dut"
@@ -2647,18 +2648,18 @@ def test_ble_sdk_adv_report_C19848(ble_dut, ble_client, sl_collections):
         logger().info("Start scanning....")
         ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
         time.sleep(10)
-        events = ble_dut.interfaces.bluetooth.get_async_events()
-        for event in events:
-            if event.event_type == AsyncEventIdentifiers.ADVERTISE:
-                if "rsi_ble_simple_central_on_adv_report_event" in event.event_data:
-                    logger().info(f" event data : {event.event_data}")
-                    scan_result = event.event_data
-
+        sw = Stopwatch()
+        while sw.elapsed_sec <= 120:
+            events = ble_dut.interfaces.bluetooth.get_async_events()
+            for event in events:
+                if event.event_type == AsyncEventIdentifiers.ADVERTISE:
+                    if "rsi_ble_simple_central_on_adv_report_event" in event.event_data:
+                        logger().info(f" event data : {event.event_data}")
+                        scan_result = event.event_data
         logger().info("enabling the power save modes ")
         ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
         ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-
         logger().info("verifying client addr, is available in scan list...")
         assert str(ble_client_address) in str(scan_result), "failed to find client bt addr in scan list...."
         logger().info(f"found BT client address : {ble_client_address}")
