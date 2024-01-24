@@ -724,6 +724,9 @@ def test_sdk_ble_slave_connection_with_whitelist_filter_policy_0x00_C19843(wifi_
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
+    finally:
+        logger().info(" **** ADDING clearing WHITELIST on dut **** ")
+        wifi_dut.interfaces.wifi.ble_clear_white_list()
 
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
