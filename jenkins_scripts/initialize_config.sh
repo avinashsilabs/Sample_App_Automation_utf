@@ -48,6 +48,11 @@ elif [ "${Build_type}" == 9117_A0_CCP ]; then
     new_upgrade_fw_value=$Rps_Prefix.$major.$minor.$patch.$build.bin
     sed_param='4 s|RS9116W.*|'"$new_upgrade_fw_value"'|'
     sed -i "$sed_param" manifest/manifest_917_ccp.yaml
+elif [ "${Build_type}" == sl_net_pr_sanity_9117_ccp ]; then
+    pwd && ls
+    new_upgrade_fw_value=$Rps_Prefix.$major.$minor.$patch.$build.rps 
+    sed -i "s/\(&firmware_file_anchor '\).*'/\1$new_upgrade_fw_value'/" manifest/manifest_917_ccp.yaml
+    pwd && ls
 elif [ "${Build_type}" == 9117_B0_CCP ]; then
     new_upgrade_fw_value=/SiWG917-B.$major.$minor.$patch.$build.rps
     sed_param='/upgrade_fw:/,/value:/ s|value:.*|value: "'"$new_upgrade_fw_value"'"|'
