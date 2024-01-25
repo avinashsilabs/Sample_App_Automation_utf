@@ -989,12 +989,13 @@ def test_wifi_sdk_gtk_renewal_wpa2_eap_multicast_c70608(wifi_dut, wifi_access_po
         logger().info(f"***** start listening  ******")
         wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=2, protocol=17,
                                        local_port=net_perf_client.interfaces.net_perf.client_port,
-                                       local_ip=wifi_thread.dut_addr['device_ip'], remote_ip=host_ip,
+                                       local_ip=multicast_ip, remote_ip=host_ip,
                                        remote_port=net_perf_client.interfaces.net_perf.client_port,
                                        size=1470, ttl=30, throughput_type=4, qos=0, async_socket=1)
         time.sleep(5)
         wifi_dut.interfaces.wifi.sl_net_leave_multicast_address()
         logger().info("stopping capture")
+        wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                         wifi_access_point=wifi_access_point,
