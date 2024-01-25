@@ -188,7 +188,7 @@ def test_wlan_standby_dtim_2g(power_meter, wifi_access_point, wifi_dut, dtim):
     power_device = UtfConfig.instance().defaults.get("power_meter", {})
     if power_device == "keysight_benchvue_power_analyzer_win_wcf":
         logger().info(f"Power Meter is : {power_meter}")
-        power_obj = power_number_output(power_meter=power_meter, dim=dtim)
+        power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
         power_obj.get_power_value()
     elif power_device == "nrf_ppk2_device":
         logger().info(f"The Power Meter is {power_meter}")
@@ -537,7 +537,7 @@ def test_wlan_power_save_without_ram_ret_C20555(power_meter, wifi_dut):
 
     # Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
-    wifi_dut.interfaces.wifi.power_save(8, 0)
+    wifi_dut.interfaces.wifi.power_save(10, 0)
 
     time.sleep(10)
     logger().info("starting power meter capture")
@@ -581,7 +581,7 @@ def test_wlan_power_save_withou_ram_ret_C20555_5g(power_meter, wifi_dut):
 
     # Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
-    wifi_dut.interfaces.wifi.power_save(8, 0)
+    wifi_dut.interfaces.wifi.power_save(10, 0)
 
     time.sleep(10)
     logger().info("starting power meter capture")

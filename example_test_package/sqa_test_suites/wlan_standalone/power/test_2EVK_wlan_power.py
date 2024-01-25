@@ -114,7 +114,6 @@ def test_wlan_active_rx_10dBm_20dBm_2_4Ghz_C20560(wifi_dut, power_msrmt, power_m
             "features": RS9116FeatureBitMap.OpenMode,
             "set_send_feature_frame": True,
             "rf_type": 1,
-            "wireless_mode": 12,
             "features_enable": 0,
         }
 )
@@ -133,7 +132,6 @@ def test_wlan_active_rx_LP_2_4Ghz_C20560(wifi_dut, power_msrmt, power_meter):
     channel = 1
     power = 8
     rate = 139
-    wireless_mode = 12
 
     logger().info("======= set antenna on 1st dut")
     wifi_dut.interfaces.wifi.set_wireless_antenna(antenna, gain_2g, gain_5g)
@@ -142,7 +140,7 @@ def test_wlan_active_rx_LP_2_4Ghz_C20560(wifi_dut, power_msrmt, power_meter):
     wifi_dut.interfaces.wifi.get_receive_stats_start(channel)
 
     logger().info("======= invoke 2nd dut")
-    power_msrmt.interfaces.power_meter.init_device(wireless_mode=wireless_mode)
+    power_msrmt.interfaces.power_meter.init_device()
     time.sleep(10)
 
     logger().info("======= set antenna on 2nd dut")
