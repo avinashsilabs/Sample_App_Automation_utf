@@ -71,7 +71,6 @@ class WifiJoin(ThreadBase):
             if self.test_case == '19774':
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
                                                                host_name=self.host_ip,
-                                                               http_url='/SiWG917-B.2.10.0.0.4.bin',
                                                                expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
                 logger().info("stop Sniffer capture...")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -111,7 +110,7 @@ class WifiJoin(ThreadBase):
             if self.test_case == '19778':
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
                                                                host_name=self.host_ip,
-                                                               http_url='/SiWG917-B.2.9.0.0.20.bin',
+                                                               http_url='/RS9116.2.5.0.4_empty.rps',
                                                                expected_status=SLStatus.SL_STATUS_SI91X_WRONG_PACKET_INFO)
                 logger().info("stop Sniffer capture...")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
