@@ -94,7 +94,7 @@ pytestmark = [
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
     },
 )
   ]
@@ -117,17 +117,22 @@ def test_ble_sdk_dual_role_1slave_1master_conn_disconn_reconn_C19917(wifi_dut, b
                                        ble_adv_connection=True)
             ble_obj.start()
             ble_obj.wait_for_exit()
-            time.sleep(60)
-            ble_obj.check_device_state_on_rasp()
             ble_client_address = sl_collections.ble_connection(wifi_dut=wifi_dut, ble_client=ble_client2,
                                                                ble_dut_address=ble_obj.bt_dut_address,
                                                                mode="master")
             time.sleep(60)
             ble_obj.check_device_state_on_dut()
+            ble_obj.check_device_state_on_rasp()
+            ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1, bt_dut_address=bt_dut_address,
+                                       ble_adv_connection=True)
+            ble_obj.check_device_state_on_rasp()
             ble_client1.interfaces.bluetooth.disconnect(ble_obj.bt_dut_address)
+            time.sleep(3)
             wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
+            time.sleep(5)
             ble_client1.interfaces.bluetooth.close()
             ble_client2.interfaces.bluetooth.close()
+            time.sleep(10)
             logger().info(f"iteration completed: {i+1}")
 
     except Exception as error:
