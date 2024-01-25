@@ -486,7 +486,6 @@ def test_wifi_sdk_scan_and_connect_in_world_domain_c19076(wifi_dut, utf_constant
                                       security="wpa2",
                                       passphrase=wifi_access_points[0].interfaces.wifi.passphrase,
                                       channel=0, timeout=60)
-
         time.sleep(20)
         logger().info(scan_results)
         assert len(scan_results) >= 1, "scan results not found"
