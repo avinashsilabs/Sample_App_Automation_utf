@@ -237,10 +237,10 @@ pipeline {
                                     withEnv(["PACKAGE_TYPE=${PACKAGE_TYPE}"]){
                                         sh """
                                         cd manifest
-                                                # Specify a local directory to save the downloaded files
+                                       # Specify a local directory to save the downloaded files
                                         wget --recursive --no-parent --no-directories --reject "index.html*" -P . ${ARTIFACTORY_URL}/${ARTIFACTORY_FOLDER}/${FIRMWARE_NAME}/${SL_NET_COMMIT}
                                         ls -l
-                                      
+                                                                        
                                         """
                                     }
                                 }
@@ -376,28 +376,28 @@ pipeline {
                                             return variables_set == true
                                         }
                                     }
-                                    withEnv(["PACKAGE_TYPE=${PACKAGE_TYPE}"]){            
+                                                
                                     def statusCode = sh(script: "curl --fail-early -s -o /dev/null -w '%{http_code}' -I -L ${ARTIFACTORY_URL}/${ARTIFACTORY_FOLDER}/${FIRMWARE_NAME}/${SL_NET_COMMIT}", returnStdout: true).trim()                                   
                                     println(statusCode)
-                                                                        
-                                            if (statusCode == '200') {
-                                                sh '''
-                                                echo "Artifact is available. Proceeding with the main pipeline."
-                                                
-                                                ''' 
-                                            } else {
-                                                echo "Artifact is not available. Triggering the main pipeline."
-                                                // Trigger the main pipeline job with propagate=false
-                                                build job: '917_sl_net_test_agent', parameters: [ string(name: 'sl_net_commit', value: params.SL_NET_COMMIT),
-                                                                                        string(name: 'FIRMWARE_NAME', value: params.FIRMWARE_NAME),   
-                                                                                        string(name: 'ARTIFACTORY_FOLDER', value: params.ARTIFACTORY_FOLDER) ], propagate: true
-                                                                            
-                                            }
+                                
+                                    if (statusCode == '200') {
+                                        sh '''
+                                        echo "Artifact is available. Proceeding with the main pipeline."
                                         
-                                        teastagent_executed = true
+                                        ''' 
+                                    } else {
+                                        echo "Artifact is not available. Triggering the main pipeline."
+                                        // Trigger the main pipeline job with propagate=false
+                                        build job: '917_sl_net_test_agent', parameters: [ string(name: 'SL_NET_COMMIT', value: params.SL_NET_COMMIT),
+                                                                                string(name: 'FIRMWARE_NAME', value: params.FIRMWARE_NAME),   
+                                                                                string(name: 'ARTIFACTORY_FOLDER', value: params.ARTIFACTORY_FOLDER) ], propagate: true
+                                                                    
+                                    }
+                                        
+                                    teastagent_executed = true
                                         
                                     
-                                    }
+                                    
                                 }
                             }
                         }
