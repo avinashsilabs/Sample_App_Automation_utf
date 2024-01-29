@@ -58,19 +58,15 @@ class WifiJoin(ThreadBase):
         self.test_case_no = test_case_no
 
     def get_firmware_status(self):
-        self.wifi_dut.interfaces.wifi.host_reset()
+        self.wifi_dut.interfaces.wifi.reset()
         time.sleep(15)
         logger().info("Initialising DUT after the reset....")
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
         self.wifi_dut.interfaces.wifi.init(load_certificate=False)
-        time.sleep(5)
         self.wifi_dut.interfaces.wifi.initialize_thread()
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
-
-        self.wifi_dut.interfaces.wifi.associated = False
         fw_after_upgrade = self.wifi_dut.interfaces.wifi.version()
         time.sleep(5)
-        self.wifi_dut.interfaces.wifi.inited = False
         return fw_after_upgrade
 
     def run(self):
@@ -90,8 +86,7 @@ class WifiJoin(ThreadBase):
             if self.test_case_no == 19779:
                 with pytest.raises(WlanError) as exc_info:
                     logger().info("Performing firmware upgrade....")
-                    self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, host_ip)
-                    time.sleep(120)
+                    self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip, host_name=host_ip)
                 assert exc_info.value.error_code == 0x10021, "observed wrong error code expected is 0x10021"
             logger().info(f"Start sniffer capture on channel {self.wifi_access_point.interfaces.wifi.channel}")
             self.wifi_sniffer.interfaces.capture.configure_interface(
@@ -100,6 +95,14 @@ class WifiJoin(ThreadBase):
             logger().info("dut fw version before upgrade...")
             fw_before_upgrade = self.wifi_dut.interfaces.wifi.version()
             logger().info(f" ***** FW before upgrade: {fw_before_upgrade} *****")
+            if self.test_case_no == 19796:
+                with pytest.raises(WlanError) as exc_info:
+                    logger().info("performing fw upgrade on dut....")
+                    self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6.bin",
+                                                                   host_ip)
+                assert exc_info.value.error_code == 0x10021, "observed wrong error code expected is 0x10021"
+                self.get_firmware_status()
+
             logger().info("join WIFI network...")
             self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated,
@@ -107,15 +110,6 @@ class WifiJoin(ThreadBase):
             time.sleep(2)
             start_time = time.time()
             logger().info(f" start firmware upgrade: {start_time}")
-
-            if self.test_case_no == 19796:
-                with pytest.raises(WlanError) as exc_info:
-                    logger().info("performing fw upgrade on dut....")
-                    self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6.bin",
-                                                                   host_ip)
-                    time.sleep(120)
-                assert exc_info.value.error_code == 0x10021, "observed wrong error code expected is 0x10021"
-                self.get_firmware_status()
 
             if self.test_case_no == 19795:
                 with pytest.raises(WlanError) as exc_info:
@@ -130,7 +124,6 @@ class WifiJoin(ThreadBase):
                     logger().info("performing fw upgrade on dut with empty rps file....")
                     self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6_empty.rps",
                                                                    host_ip)
-                    time.sleep(120)
                 assert exc_info.value.error_code == 0x1FFF9, "observed wrong error code expected is 0xFFF9"
                 self.get_firmware_status()
 
@@ -186,15 +179,13 @@ class WifiJoin(ThreadBase):
                     logger().info("performing fw upgrade on dut by using .bin file....")
                     self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6.bin",
                                                                    host_ip)
-                    time.sleep(120)
                 assert exc_info.value.error_code == 0x1FF74, "observed wrong error code expected is 0x1FF74"
                 time.sleep(3)
                 self.get_firmware_status()
 
             else:
                 logger().info("performing firmware upgrade....")
-                self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6.rps", host_ip)
-                time.sleep(120)
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip, host_name=host_ip)
                 finish_time = time.time()
                 logger().info(f"firmware upgraded : {finish_time}")
                 time_duration = (finish_time - start_time)
@@ -204,16 +195,15 @@ class WifiJoin(ThreadBase):
                     logger().warning(f"TOOK TOO LONG TIME TO DOWNLOAD FW {time_duration}")
                 else:
                     logger().info(f"time taken to upgrade firmware using http otaf {time_duration} seconds")
+                logger().info(f"\n ***firmware versions not matched after loading firmware through otaf \n")
+                logger().info("Stop Sniffer finally")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
                 fw_after_upgrade = self.get_firmware_status()
                 time.sleep(2)
                 logger().info(f"\n\n ***firmware versions before otaf:{fw_before_upgrade}"
                               f" firmware version after loading through otaf :{fw_after_upgrade}")
                 assert fw_before_upgrade != fw_after_upgrade, f"firmware versions should not match after loading" \
                                                               f" firmware through otaf"
-                logger().info(f"\n ***firmware versions not matched after loading firmware through otaf \n")
-                logger().info("Stop Sniffer finally")
-                self.wifi_sniffer.interfaces.capture.stop_capture()
-                time.sleep(10)
         except Exception as e:
             logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
 
@@ -259,7 +249,7 @@ def test_sdk_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780(http_serv
         wifi_obj.wait_for_exit()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -303,7 +293,7 @@ def test_sdk_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server
         wifi_obj.wait_for_exit()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -346,7 +336,7 @@ def test_sdk_http_fw_upgrade_failure_with_empty_rps_C19800(http_server, wifi_sni
         wifi_dut.interfaces.wifi.reset()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -389,7 +379,7 @@ def test_sdk_http_fw_upgrade_failure_without_enabling_http_C19799(http_server, w
         wifi_dut.interfaces.wifi.reset()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -432,7 +422,7 @@ def test_sdk_fw_upgrade_failure_when_STA_is_not_connected_C19779(http_server, wi
         wifi_dut.interfaces.wifi.reset()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -469,7 +459,7 @@ def test_sdk_http_fw_upgrade_failure_with_non_rps_C19798(http_server, wifi_sniff
         wifi_obj.wait_for_exit()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -506,7 +496,7 @@ def test_http_fw_upgrade_failure_with_junk_rps_C19797(http_server, wifi_sniffer,
         wifi_obj.wait_for_exit()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -550,7 +540,7 @@ def test_sdk_http_fw_upgrade_failure_when_enabled_only_ble_C19796(http_server, w
         wifi_dut.interfaces.wifi.reset()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -591,7 +581,7 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_sniffer, wifi_acces
             wifi_obj.wait_for_exit()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
@@ -631,7 +621,7 @@ def test_sdk_http_fw_upgrade_over_night_corrupted_file_C19794(http_server, wifi_
             wifi_obj.wait_for_exit()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -672,7 +662,7 @@ def test_sdk_http_fw_upgrade_over_night_corrupted_file_C19795(http_server, wifi_
             wifi_obj.wait_for_exit()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -759,8 +749,7 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19784(http_server, wifi_
         start_time = time.time()
         logger().info(f" start firmware upgrade: {start_time}")
         logger().info("performing firmware upgrade....")
-        wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6.rps", host_ip)
-        time.sleep(100)
+        wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip, host_name=host_ip)
         finish_time = time.time()
         logger().info(f"firmware upgraded : {finish_time}")
         time_duration = (finish_time - start_time)
@@ -770,27 +759,26 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19784(http_server, wifi_
             logger().warning(f"TOOK TOO LONG TIME TO DOWNLOAD FW {time_duration}")
         else:
             logger().info(f"time taken to upgrade firmware using http otaf {time_duration} seconds")
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
-        wifi_dut.interfaces.wifi.host_reset()
+        wifi_dut.interfaces.wifi.reset()
         time.sleep(15)
         logger().info("Initialising DUT after the reset....")
         wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-        wifi_dut.interfaces.wifi.init()
-        time.sleep(5)
+        wifi_dut.interfaces.wifi.init(load_certificate=False)
         wifi_dut.interfaces.wifi.initialize_thread()
         wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
-        wifi_dut.interfaces.wifi.associated = False
         fw_after_upgrade = wifi_dut.interfaces.wifi.version()
         time.sleep(5)
+
         logger().info(f"\n\n ***firmware versions before otaf:{fw_before_upgrade}"
                       f" firmware version after loading through otaf :{fw_after_upgrade}")
         assert fw_before_upgrade != fw_after_upgrade, f"firmware versions should not match after loading" \
                                                       f" firmware through otaf"
         logger().info(f"\n ***firmware versions not matched after loading firmware through otaf \n")
-        logger().info("Stop Sniffer finally")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        time.sleep(10)
+        time.sleep(5)
         wifi_dut.interfaces.wifi.reset()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exeception=Ex)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
