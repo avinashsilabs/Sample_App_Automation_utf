@@ -129,3 +129,25 @@ utf_wifi_sqa_code_sanity_label:
           /app/manifest/manifest_without_aws_test_agent.yaml"
         device_group_name: "utf_wifi_sqa_code_sanity_1_device_group"
         device_group_label: ""
+utf_wifi_sqa_9117_ccp_slnet_pr_label:
+  metadata:
+    FIRMWARE_NAME: "SiWx917_WiSeConnect_SDK.2.10.0.3"
+  device_groups:
+    utf_wifi_sqa_9117_ccp_slnet_pr_1_device_group:   
+      metadata: 
+        SQA_TEST_AGENT: ""
+        SSH_TARGET: "10.207.18.131"
+        SDK_BRANCH_NAME: "development"
+        HARNESS_NAME: "wifi_sqa_harness_si917_131.yaml"
+        UTF_PYTEST_COMMAND: "pytest --tb=native example_test_package/sqa_test_suites_wifi_sdk_3/test_join_2_4_sdk.py::test_wifi_sdk_connectivity_with_11n_mode_c19707 --manifest /app/manifest/manifest_917_ccp.yaml"
+        device_group_name: "utf_wifi_sqa_9117_ccp_slnet_pr_1_device_group"
+        device_group_label: ""
+        UTF_WIFI_BRANCH: "release/milestone53"      
+        FIRMWARE_NAME: "SiWx917_WiSeConnect_SDK.2.10.0.3"
+        build_type: "sl_net_pr_sanity_9117_ccp"
+        BUILD_LOCATION: "build_artifacts"
+        FLASH_RS9116: true
+        FLASH_EFR32: true
+        PUBLISH_TEST_RESULTS: true  
+        ARTIFACTORY_URL: "https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts"
+        ARTIFACTORY_FOLDER: "917-smoke"
