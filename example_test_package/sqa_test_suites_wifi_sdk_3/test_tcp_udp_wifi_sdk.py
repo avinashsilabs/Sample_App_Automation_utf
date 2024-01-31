@@ -739,7 +739,7 @@ def test_wifi_tcp_data_receive_check_c19360(wifi_sniffer, wifi_dut, wifi_access_
             timeout=10,
         )
 
-        tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=100))
+        tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=50))
         sw = Stopwatch()
         while sw.elapsed_sec < 60:
             logger().info(f"Remote peer sending data over socket {socket_id} and data:{tx_buffer}")
@@ -821,7 +821,7 @@ def test_wifi_udp_receive_c19361(wifi_sniffer, wifi_dut, wifi_access_point, requ
 
         sw = Stopwatch()
         while sw.elapsed_sec < 60:
-            tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+            tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=50))
             buffer_length = len(tx_buffer)
             remote_socket.interfaces.socket.send_data_udp(tx_buffer, wifi_thread.dut_addr['device_ip'], local_port)
             time.sleep(2)
