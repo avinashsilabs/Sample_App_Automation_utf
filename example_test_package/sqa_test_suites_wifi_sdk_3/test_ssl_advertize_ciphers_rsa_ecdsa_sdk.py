@@ -5,6 +5,7 @@ import pytest
 from random import randint
 from utf.utils.logger import get_logger
 from utf.utils.stopwatch import Stopwatch
+from utf.utils import get_tls_certificate_dir
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xTCPIPFeatureBitMap,
     Si91xExtTCPIPFeatureBitMap,
@@ -18,10 +19,13 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     DeviceConstants,
     SocketOptions,
     Cipher,
-    Si91xModuleType
+    Si91xModuleType,
+    Si91xCertificateType,
+    Si91xCertIdentifier
 )
 
-"""The testcases added in this file run below test steps for DUT-Si91x
+"""
+The testcases added in this file run below test steps for DUT-Si91x
         1. Configuration of DUT in 2G/5G : BGN
         2. Load ssl certificates in the DUT
         3. Association of Third party AP's
@@ -51,19 +55,21 @@ class ssl_connection:
     """
 
     def __init__(self, wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
-                 cipher_list, mode=0, rejoin_params=None, sniffer_filter=None, wifi_client=None, test_run_time=60):
+                 cipher_list, mode=0, sniffer_filter=None, wifi_client=None, server_cert=None, server_key=None,
+                 test_run_time=60):
         self.mode = mode
         self.wifi_dut = wifi_dut
         self.ssl_server = ssl_server
         self.cipher_list = cipher_list
         self.wifi_sniffer = wifi_sniffer
-        self.rejoin_params = rejoin_params
         self.test_run_time = test_run_time
         self.sl_collections = sl_collections
         self.capture_filename = request.node.name
         self.wifi_access_point = wifi_access_point
         self.sniffer_filter = sniffer_filter
         self.wifi_client = wifi_client
+        self.server_cert = server_cert
+        self.server_key = server_key
 
     def join_get_ip(self, sniff_capture=True):
         if sniff_capture:
@@ -71,15 +77,17 @@ class ssl_connection:
                 channel=self.wifi_access_point.interfaces.wifi.channel)
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.capture_filename}.pcap")
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
-        if not self.rejoin_params:
-            self.rejoin_params = [0, 6, 40, 0]
         result = self.sl_collections.join_to_wifi_network_with_rejoin(self.wifi_dut, self.wifi_access_point,
-                                                                      self.rejoin_params)
+                                                                      [0, 6, 40, 0])
         dut_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
-
         return dut_ip, dut_mac_address
 
-    def ssl_connection_tx_rx(self):
+    def ssl_connection_tx_rx(self, ca_cert=None):
+        if ca_cert is not None:
+            self.wifi_dut.interfaces.wifi.set_ssl_certificate(str(get_tls_certificate_dir().joinpath(ca_cert)),
+                                                              Si91xCertificateType.SL_NET_SIGNING_CERTIFICATE,
+                                                              Si91xCertIdentifier.SL_NET_TLS_SERVER_CREDENTIAL_START,
+                                                              cert_index=0)
         expected_cipher = DefaultCipher.cipher_list
         if len(self.cipher_list):
             cipher = self.select_cipher_list(self.cipher_list)
@@ -96,7 +104,11 @@ class ssl_connection:
             self.ssl_server.interfaces.server.start(port=server_port, tls_version="-tls1_2")
             server_ip = self.wifi_client.interfaces.wifi.get_ip_address()
         else:
-            self.ssl_server.interfaces.ssl.start_server(port=server_port)
+            if self.server_cert is None:
+                self.ssl_server.interfaces.ssl.start_server(port=server_port)
+            else:
+                self.ssl_server.interfaces.ssl.start_server(port=server_port, server_cert=self.server_cert,
+                                                            server_key=self.server_key)
             server_ip = self.ssl_server.interfaces.ssl.server_ip
 
         sock = self.wifi_dut.interfaces.wifi.socket()
@@ -214,23 +226,27 @@ pytestmark = [
                                | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "set_send_feature_frame": True,
             "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
-            "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
         }
-    )
+    ),
+    pytest.mark.config('wifi_access_point', wifi={'channel': 3})
 ]
 
 
+# ======================================================================================================================
+#                                         ADVERTISE RSA CIPHERS
+# ======================================================================================================================
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_all_ciphers_ssl_tx_c19604(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
-                                                      cipher_list, sl_collections, request, sniffer_filter):
+                                                      cipher_list, sl_collections, request, sniffer_filter, ca_cert):
     try:
         ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
                                  cipher_list, sniffer_filter=sniffer_filter, mode=0)
-        ssl_obj.ssl_connection_tx_rx()
+        ssl_obj.ssl_connection_tx_rx(ca_cert)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -240,12 +256,13 @@ def test_wifi_sdk_advertise_all_ciphers_ssl_tx_c19604(wifi_sniffer, wifi_access_
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_all_ciphers_ssl_rx_c19605(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
-                                                      cipher_list, request, sl_collections, sniffer_filter):
+                                                      cipher_list, request, sl_collections, sniffer_filter, ca_cert):
     try:
         ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
                                  cipher_list, sniffer_filter=sniffer_filter, mode=1)
-        ssl_obj.ssl_connection_tx_rx()
+        ssl_obj.ssl_connection_tx_rx(ca_cert)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -262,12 +279,13 @@ def test_wifi_sdk_advertise_all_ciphers_ssl_rx_c19605(wifi_sniffer, wifi_access_
                                           'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256',
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_tx_c19606(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
-                                                  request, sl_collections, sniffer_filter):
+                                                  request, sl_collections, sniffer_filter, ca_cert):
     try:
         ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
                                  cipher_list, sniffer_filter=sniffer_filter, mode=0)
-        ssl_obj.ssl_connection_tx_rx()
+        ssl_obj.ssl_connection_tx_rx(ca_cert)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -284,12 +302,13 @@ def test_wifi_sdk_advertise_ciphers_ssl_tx_c19606(wifi_sniffer, wifi_access_poin
                                           'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256',
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_rx_c19607(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
-                                                  request, sl_collections, sniffer_filter):
+                                                  request, sl_collections, sniffer_filter, ca_cert):
     try:
         ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
                                  cipher_list, sniffer_filter=sniffer_filter, mode=1)
-        ssl_obj.ssl_connection_tx_rx()
+        ssl_obj.ssl_connection_tx_rx(ca_cert)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -300,12 +319,13 @@ def test_wifi_sdk_advertise_ciphers_ssl_rx_c19607(wifi_sniffer, wifi_access_poin
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384']])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_tx_c19608(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
-                                                  request, sl_collections, sniffer_filter):
+                                                  request, sl_collections, sniffer_filter, ca_cert):
     try:
         ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
                                  cipher_list, sniffer_filter=sniffer_filter, mode=0)
-        ssl_obj.ssl_connection_tx_rx()
+        ssl_obj.ssl_connection_tx_rx(ca_cert)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -316,12 +336,13 @@ def test_wifi_sdk_advertise_ciphers_ssl_tx_c19608(wifi_sniffer, wifi_access_poin
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384']])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_rx_c19609(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
-                                                  request, sl_collections, sniffer_filter):
+                                                  request, sl_collections, sniffer_filter, ca_cert):
     try:
         ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
                                  cipher_list, sniffer_filter=sniffer_filter, mode=1)
-        ssl_obj.ssl_connection_tx_rx()
+        ssl_obj.ssl_connection_tx_rx(ca_cert)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -332,12 +353,13 @@ def test_wifi_sdk_advertise_ciphers_ssl_rx_c19609(wifi_sniffer, wifi_access_poin
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256']])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_tx_c19610(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
-                                                  request, sl_collections, sniffer_filter):
+                                                  request, sl_collections, sniffer_filter, ca_cert):
     try:
         ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
                                  cipher_list, sniffer_filter=sniffer_filter, mode=0)
-        ssl_obj.ssl_connection_tx_rx()
+        ssl_obj.ssl_connection_tx_rx(ca_cert)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -348,17 +370,15 @@ def test_wifi_sdk_advertise_ciphers_ssl_tx_c19610(wifi_sniffer, wifi_access_poin
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256']])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_rx_c19611(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
-                                                  request, sl_collections, sniffer_filter):
+                                                  request, sl_collections, sniffer_filter, ca_cert):
     try:
         ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
                                  cipher_list, sniffer_filter=sniffer_filter, mode=1)
-        ssl_obj.ssl_connection_tx_rx()
+        ssl_obj.ssl_connection_tx_rx(ca_cert)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
-
-
-""" Below testcases needs rework on next announcements """
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -367,12 +387,13 @@ def test_wifi_sdk_advertise_ciphers_ssl_rx_c19611(wifi_sniffer, wifi_access_poin
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384']])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_tx_c19612(wifi_sniffer, wifi_dut, wifi_access_point, openssl, wifi_client,
-                                                  cipher_list, request, sl_collections, sniffer_filter, ssl_server):
+                                                  cipher_list, request, sl_collections, sniffer_filter, ca_cert):
     try:
         ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, openssl, request, sl_collections,
                                  cipher_list, sniffer_filter=sniffer_filter, wifi_client=wifi_client, mode=0)
-        ssl_obj.ssl_connection_tx_rx()
+        ssl_obj.ssl_connection_tx_rx(ca_cert)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -383,12 +404,13 @@ def test_wifi_sdk_advertise_ciphers_ssl_tx_c19612(wifi_sniffer, wifi_dut, wifi_a
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384']])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_rx_c19613(wifi_sniffer, wifi_access_point, wifi_dut, openssl, wifi_client,
-                                                  cipher_list, request, sl_collections, sniffer_filter):
+                                                  cipher_list, request, sl_collections, sniffer_filter, ca_cert):
     try:
         ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, openssl, request, sl_collections,
                                  cipher_list, sniffer_filter=sniffer_filter, wifi_client=wifi_client, mode=1)
-        ssl_obj.ssl_connection_tx_rx()
+        ssl_obj.ssl_connection_tx_rx(ca_cert)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -399,12 +421,13 @@ def test_wifi_sdk_advertise_ciphers_ssl_rx_c19613(wifi_sniffer, wifi_access_poin
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256']])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_tx_c19614(wifi_sniffer, wifi_dut, wifi_access_point, openssl, wifi_client,
-                                                  cipher_list, request, sl_collections, sniffer_filter):
+                                                  cipher_list, request, sl_collections, sniffer_filter, ca_cert):
     try:
         ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, openssl, request, sl_collections,
                                  cipher_list, sniffer_filter=sniffer_filter, wifi_client=wifi_client, mode=0)
-        ssl_obj.ssl_connection_tx_rx()
+        ssl_obj.ssl_connection_tx_rx(ca_cert)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -415,12 +438,53 @@ def test_wifi_sdk_advertise_ciphers_ssl_tx_c19614(wifi_sniffer, wifi_dut, wifi_a
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256']])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_rx_c19615(wifi_sniffer, wifi_access_point, wifi_dut, openssl, wifi_client,
-                                                  cipher_list, request, sl_collections, sniffer_filter):
+                                                  cipher_list, request, sl_collections, sniffer_filter, ca_cert):
     try:
         ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, openssl, request, sl_collections,
                                  cipher_list, sniffer_filter=sniffer_filter, wifi_client=wifi_client, mode=1)
-        ssl_obj.ssl_connection_tx_rx()
+        ssl_obj.ssl_connection_tx_rx(ca_cert)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
+
+# ======================================================================================================================
+#                                         ADVERTISE ECDSA CIPHERS
+# ======================================================================================================================
+@pytest.mark.ecdsa
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
+@pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
+@pytest.mark.parametrize("cipher_list",
+                         [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
+def test_wifi_sdk_advertise_ciphers_ssl_tx_c19616(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
+                                                  request, cert, sl_collections, sniffer_filter):
+    try:
+        ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
+                                 cipher_list, sniffer_filter=sniffer_filter, server_cert=cert[1], server_key=cert[2],
+                                 mode=0)
+        ssl_obj.ssl_connection_tx_rx(ca_cert=cert[0])
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.ecdsa
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
+@pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
+@pytest.mark.parametrize("cipher_list",
+                         [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
+def test_wifi_sdk_advertise_ciphers_ssl_rx_c19617(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
+                                                  request, cert, sl_collections, sniffer_filter):
+    try:
+        ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
+                                 cipher_list, sniffer_filter=sniffer_filter, server_cert=cert[1], server_key=cert[2],
+                                 mode=1)
+        ssl_obj.ssl_connection_tx_rx(ca_cert=cert[0])
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)

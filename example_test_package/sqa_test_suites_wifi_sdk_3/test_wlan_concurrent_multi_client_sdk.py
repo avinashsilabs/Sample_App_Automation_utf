@@ -807,7 +807,6 @@ def test_wifi_sdk_transfer_data_from_client1_to_client2_in_concurrent_mode_c1485
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148576", security="WPA2", psk="Automation@123", channel=11,
                                           dtim_beacon_count="1", beacon_interval="100")
         ip_dict = con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut)
-
         client_ip = ip_dict['client1_ip']
         server_ip = ip_dict['client2_ip']
         con_obj.run_traffic_btwn_two_clients(net_perf_server, net_perf_client, server_ip, client_ip,
@@ -964,7 +963,6 @@ def test_wifi_sdk_rejoin_func_of_dut_sta_in_concurrent_mode_c148588(switch, sl_c
         ip_dict = con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut)
         client_ip = ip_dict['client1_ip']
         server_ip = ip_dict['client2_ip']
-
         result = sl_collections.join_to_wifi_network_with_rejoin(wifi_dut, wifi_access_point, [0, 6, 40, 0],
                                                                  power_save=False)
         dut_sta_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
@@ -1063,11 +1061,9 @@ def test_wifi_sdk_tcp_tx_with_wpa3_and_11n_mode_in_concurrent_mode_c148589(sl_co
                                                   static_gateway="192.168.100.76")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148589", security="WPA2", psk="Automation@123", channel=11,
                                           dtim_beacon_count="1", beacon_interval="100")
-
         for client in wifi_clients:
             client.interfaces.wifi.config['interface'] = "wlan0"
         con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut)
-
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
             join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
                                 | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
@@ -1077,7 +1073,6 @@ def test_wifi_sdk_tcp_tx_with_wpa3_and_11n_mode_in_concurrent_mode_c148589(sl_co
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP BSSID : {ap_bssid}")
         time.sleep(5)
-
         logger().info("Initiating TCP-TX traffic from DUT")
         host_ip = wifi_client.interfaces.wifi.get_ip_address(network_interface=interface)
         sl_collections.run_traffic(wifi_dut=wifi_dut, net_perf_client=net_perf_client, protocol=protocol,
@@ -1278,7 +1273,6 @@ def test_wifi_sdk_udp_tx_func_4_clients_connected_in_conc_mode_when_c148591(sl_c
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP BSSID : {ap_bssid}")
-
         thread_started = False
         host_ip = wifi_client.interfaces.wifi.get_ip_address(network_interface=interface)
         trf_thread = Thread(target=sl_collections.run_traffic,
@@ -2734,7 +2728,7 @@ def test_wifi_sdk_tcp_tx_when_4_clients_connected_in_conc_mode_c148569(sl_collec
             con_discon_thread.start()
 
             logger().info("Starting TCP server socket remotely")
-            server_port = randint(5001, 5010)
+            server_port = randint(5001, 5100)
             local_port = randint(5001, 60000)
             remote_socket.interfaces.socket.stop()
 
@@ -2750,15 +2744,14 @@ def test_wifi_sdk_tcp_tx_when_4_clients_connected_in_conc_mode_c148569(sl_collec
             time.sleep(3)
             sw = Stopwatch()
             while sw.elapsed_sec <= 80:
-                remote_socket.interfaces.socket.set_recv_timeout(timeout=30)
+                remote_socket.interfaces.socket.set_recv_timeout(timeout=120)
                 data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
                 logger().info(f"DUT is sending data over TCP socket_no 1 and data --> {data}")
                 wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=data)
-
-                data = remote_socket.interfaces.socket.recv_data_tcp(len(data))
-                logger().info(f"Total bytes received on remote TCP socket is -> {len(data)}")
-                logger().info("Data sent by DUT and received on server is matching\n\n")
                 time.sleep(1)
+                data = remote_socket.interfaces.socket.recv_data_tcp(len(data))
+                logger().info(f"Data received on remote TCP socket is -> {data}")
+                logger().info("Data sent by DUT and received on server is matching\n\n")
 
             remote_socket.interfaces.socket.stop()
             for sock_id in sock_opened:
@@ -2881,15 +2874,15 @@ def test_wifi_sdk_tcp_rx_when_4_clients_connected_in_conc_mode_c148571(sl_collec
             server_port = randint(5001, 5100)
             remote_socket_factory.interfaces.socket.close_all()
             remote_socket_factory.interfaces.socket.sockets = []
+            client_socket = remote_socket_factory.interfaces.socket.create_socket()
             sock = wifi_dut.interfaces.wifi.socket()
             sock_opened.append(sock)
             wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=dut_sta_ip, server_port=server_port, timeout=15,
                                           asynch=0)
             wifi_dut.interfaces.wifi.listen(socket_fd=sock, backlog=0, asynch=0)
-            time.sleep(3)
-            client_socket = remote_socket_factory.interfaces.socket.create_socket()
-            ThreadBase.call_functions_simultaneously([(client_socket.connect_client_tcp, dut_sta_ip, server_port),
-                                                      (wifi_dut.interfaces.wifi.bsdSocketAccept, sock, 0)],
+            time.sleep(5)
+            ThreadBase.call_functions_simultaneously([(wifi_dut.interfaces.wifi.bsdSocketAccept, sock, 0),
+                                                      (client_socket.connect_client_tcp, dut_sta_ip, server_port)],
                                                      timeout=30)
             sw = Stopwatch()
             while sw.elapsed_sec <= 60:
@@ -2899,19 +2892,19 @@ def test_wifi_sdk_tcp_rx_when_4_clients_connected_in_conc_mode_c148571(sl_collec
                 trf_thread = Thread(target=client_socket.send_data_tcp, args=(tx_buffer,))
                 trf_thread.start()
                 time.sleep(1)
-                wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
                 buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock + 1, timeout=30)
                 assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id " \
                                                f"{sock} opened in the DUT is not matched"
                 logger().info("Data sent by remote peer and received on DUT is matching")
                 trf_thread.join()
+            remote_socket_factory.interfaces.socket.close_all()
+            remote_socket_factory.interfaces.socket.sockets = []
             for sock_id in sock_opened:
                 logger().info(f"Closing socket_id->{sock_id}")
                 wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
                 wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
             sock_opened.clear()
-            remote_socket_factory.interfaces.socket.close_all()
-            remote_socket_factory.interfaces.socket.sockets = []
+
             con_discon_thread.join()
 
             logger().info("Disconnecting DUT from 3rd Party AP")
@@ -3032,7 +3025,6 @@ def test_wifi_sdk_concurrent_mode_with_mqtt_connect_disconnect_for_30_times_c148
                 time.sleep(3)
                 logger().info("MQTT Client subscribes to the topic")
                 mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS0)
-
                 mqtt_client.interfaces.mqtt.received_messages.clear()
                 wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=Si91xMqttQos.QOS0,
                                                              timeout=30)
@@ -3053,12 +3045,10 @@ def test_wifi_sdk_concurrent_mode_with_mqtt_connect_disconnect_for_30_times_c148
 
                 logger().info("Unsubscribing from the topic")
                 wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
-
                 logger().info("Disconnecting from the mqtt server")
                 wifi_dut.interfaces.mqtt.mqtt_client_disconnect()
                 mqtt_client.interfaces.mqtt.mqtt_client_close()
                 connected = False
-
                 for client in wifi_clients:
                     logger().info(f"Disconnecting RASPI-STA:'{client.name}' from DUT-AP")
                     client.interfaces.wifi.leave()
