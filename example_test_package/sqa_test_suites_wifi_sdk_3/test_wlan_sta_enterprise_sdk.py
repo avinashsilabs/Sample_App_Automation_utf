@@ -1307,7 +1307,7 @@ def test_wifi_sdk_connectivity_wpa2_eap_tls_valid_invalid_cert_c19025(wifi_dut, 
         wifi_dut.interfaces.wifi.set_rtc(seconds=50, minutes=59, hours=23, day=1, month=1, weekday=4, year=2023)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      eap_type="tls", sl_collections=sl_collections, test_name=test_name,
-                                     eap_type_tls_no_cert=False)
+                                     eap_type_tls_no_cert=False, eap_gtk_interval=False)
         wifi_thread.start()
         wifi_thread.wait_for_exit()
         dut_mac_address = wifi_thread.dut_addr['dut_mac_address']
