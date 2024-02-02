@@ -146,4 +146,9 @@ eap_gtk_interval, (wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and
 deauth_from_ap,(wlan.addr == {{ da_addr }}), and (wlan.addr == {{ sa_addr }}) and (wlan.fixed.reason_code == 0x0002)
 radiotap_HE_data,(wlan.sa == {{ wlan_addr }}), and (radiotap.present.he == 1)
 icmp_ack_ampdu_disable,(wlan.addr == {{ sa_addr }} and radiotap.present.ampdu ==0), and (wlan.fc.type_subtype==0x001d || icmp)
+icmpv6_msg_type,(icmpv6.type == {{ type }}), and (ip.version == 6)
+router_advertisement,(wlan.da == {{ da_addr }}), and (ip.version == 6) and (icmpv6.type == 134)
+router_solicitation,(wlan.sa == {{ sa_addr }}), and (ip.version == 6) and (icmpv6.type == 133)
+stateful_ipv6_address,(wlan.addr == {{ sa_addr }}), and (dhcpv6.msgtype == 7) and (dhcpv6.option.type == 3)
+echo_req_reply,((ipv6.src == {{ sa_addr }} && ipv6.dst == {{ da_addr }}) or (ipv6.src == {{ da_addr }} and ipv6.dst == {{ sa_addr }})), and (icmpv6.type == 128 or icmpv6.type == 129)
 
