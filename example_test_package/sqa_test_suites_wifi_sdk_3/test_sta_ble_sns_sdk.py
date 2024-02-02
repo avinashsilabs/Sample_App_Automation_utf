@@ -50,13 +50,26 @@ class WifiJoinThread(ThreadBase):
         try:
             if self.test_case == '148524':
                 with TimeMeasurer() as T:
-                    t_end = time.time() + 60 * 30
+                    t_end = time.time() + 1800
 
                     while time.time() < t_end:
                         logger().info(f"Initiating Scan")
                         scan_results = self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0, sleep_time=0.01)
                         logger().info(scan_results)
                         time.sleep(1)
+                return
+
+            if self.test_case == '148525':
+                with TimeMeasurer() as T:
+                    t_end = time.time() + 1800
+
+                    while time.time() < t_end:
+                        logger().info(f"Initiating Scan")
+                        scan_results = self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0, sleep_time=0.01)
+                        logger().info(scan_results)
+                        self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
+                        self.wifi_dut.interfaces.wifi.leave()
+                        time.sleep(2)
                 return
 
             self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
@@ -180,7 +193,7 @@ class BleThreadFunctionality(ThreadBase):
             return ble_client_address
         if self.test_case == '148524':
             with TimeMeasurer() as T:
-                t_end = time.time() + 60 * 30
+                t_end = time.time() + 1800
 
                 while time.time() < t_end:
                     logger().info('*** Went in ble thread ***')
@@ -415,28 +428,63 @@ def test_wifi_sdk_ble_adv_20ms_and_wlan_scanning_C148545(
 def test_wifi_sdk_wlan_scan_ble_radio_init_deinit_c148524(wifi_access_point, wifi_dut, wifi_sniffer, sl_collections):
 
     """Run ble radio init deinit with wlan scan"""
+    try:
+        test_name = '148524'
 
-    test_name = '148524'
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
 
-    logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f'dut_mac_address is {dut_mac_address}')
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
 
-    dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-    logger().info(f'dut_mac_address is {dut_mac_address}')
-    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap_bssid : {ap_mac_address}")
+        wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, test_case=test_name)
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, test_case=test_name)
 
-    logger().info(f"ap_bssid : {ap_mac_address}")
-    wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, test_case=test_name)
-    ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, test_case=test_name)
+        with TimeMeasurer() as T:
+            wlan_obj.start()
+            ble_obj.start()
 
-    with TimeMeasurer() as T:
-        wlan_obj.start()
-        ble_obj.start()
+            ble_obj.wait_for_exit()
+            wlan_obj.wait_for_exit()
+        logger().info(f'*** Total execution time = {T.duration} ***')
 
-        ble_obj.wait_for_exit()
-        wlan_obj.wait_for_exit()
-    logger().info(f'*** Total execution time = {T.duration} ***')
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-    wifi_sniffer.interfaces.capture.stop_capture()
-    logger().info("Stop the Sniffer")
+
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_wifi_sdk_wlan_connect_ble_radio_init_deinit_c148525(wifi_access_point, wifi_dut, wifi_sniffer, sl_collections):
+    """Run ble radio init deinit with wlan connect"""
+    try:
+        test_name = '148525'
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f'dut_mac_address is {dut_mac_address}')
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+
+        logger().info(f"ap_bssid : {ap_mac_address}")
+        wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, test_case=test_name)
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, test_case='148524')
+        with TimeMeasurer() as T:
+            wlan_obj.start()
+            ble_obj.start()
+
+            ble_obj.wait_for_exit()
+            wlan_obj.wait_for_exit()
+        logger().info(f'*** Total execution time = {T.duration} ***')
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
