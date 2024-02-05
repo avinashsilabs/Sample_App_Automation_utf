@@ -21,17 +21,15 @@ from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from random import randint
-from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
 import random
 import string
-from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
-from utf.utils.subprocess_manager import SubprocessManager
+
 
 """The testcases added in this file run below test steps for DUT(Soc917)
         1. Configuration of DUT in 2G/5G : BGN
         2. Association of Third party AP's
         3. Get the valid IP address
-        4. Create a new TCP/IP or UDP socket(Client/server) at DUT/RESPI
+        4. Create a new TCP/IP or UDP socket(Client/server) at DUT/RASPBERRY - PI
         5. Bind the socket with DUT ip address
         6. Connect the client with server socket as specified port number.
         7. Send and receive the data over the socket. Verify the data integrity and packet loss checks.
@@ -740,6 +738,7 @@ def test_wifi_tcp_data_receive_check_c19360(wifi_sniffer, wifi_dut, wifi_access_
         )
 
         tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=50))
+        buffer_length = len(tx_buffer)
         sw = Stopwatch()
         while sw.elapsed_sec < 60:
             logger().info(f"Remote peer sending data over socket {socket_id} and data:{tx_buffer}")
@@ -748,6 +747,7 @@ def test_wifi_tcp_data_receive_check_c19360(wifi_sniffer, wifi_dut, wifi_access_
             wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
             buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=socket_id + 1)
             logger().info(f"###################### Buffer Data  {buffer_rx}  ######################")
+            logger().info(f"###################### Buffer Data Length  {buffer_length}  ######################")
             assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id " \
                                            f"{socket_id} opened in the DUT is not matched"
             logger().info("Data sent by remote peer and received on DUT is matching")
