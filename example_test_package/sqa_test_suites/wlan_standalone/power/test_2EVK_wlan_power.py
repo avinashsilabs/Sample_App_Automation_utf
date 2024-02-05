@@ -173,7 +173,7 @@ def test_wlan_active_rx_LP_2_4Ghz_C20560(wifi_dut, power_msrmt, power_meter):
 def test_wlan_active_rx_5Ghz_C20626(utf_constants, wifi_dut, power_msrmt, power_meter, rate):
     board_ver = utf_constants.get("board_version")
     logger().info(f"board version is : {board_ver}")
-    if board_ver == "1.4Q7" or "1.5Q7":
+    if board_ver == "1.4Q7" or board_ver == "1.5Q7":
         pytest.skip(reason="board version doesn't support 5Ghz")
 
     else:
