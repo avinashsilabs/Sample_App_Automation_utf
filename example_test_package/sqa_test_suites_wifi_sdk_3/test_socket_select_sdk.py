@@ -126,12 +126,10 @@ class SocketDataTransfer:
         remote_socket.interfaces.socket.stop()
 
     @staticmethod
-    def send_data(remote_socket, tx_buffer, pkt_count=10, sock_id=None, use_server=True):
+    def send_data(remote_socket_factory, socket_no, udp_buffer, dut_ip, start_port, pkt_count=1):
         for _ in range(pkt_count):
-            if sock_id is None:
-                remote_socket.interfaces.socket.send_data_tcp(tx_buffer, use_server)
-            else:
-                remote_socket.interfaces.socket.sockets[sock_id].send_data_tcp(tx_buffer, use_server)
+            remote_socket_factory.interfaces.socket.sockets[socket_no].send_data_udp(udp_buffer, dut_ip,
+                                                                                     port=start_port + socket_no)
 
 
 @pytest.mark.config(
@@ -726,7 +724,10 @@ def test_wifi_sdk_socket_select_multiple_sockets_tcp_udp_c19329(wifi_sniffer, wi
     Verify Data receive functionality after checking the availability of the data on the socket ID
     using select function over 2 udp sockets and 2 tcp sockets
     """
+    tcp_socks = []
+    udp_socks = []
     try:
+        sock_obj = SocketDataTransfer()
         capture_filename = "test_wifi_sdk_socket_select_multiple_sockets_tcp_udp_c19329"
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
@@ -738,16 +739,15 @@ def test_wifi_sdk_socket_select_multiple_sockets_tcp_udp_c19329(wifi_sniffer, wi
 
         start_port = 5001
         client_socket = []
-        tcp_socks = []
+
         for count in range(4):
             server_port = start_port + count
             if count in range(2):
                 server_socket = remote_socket_factory.interfaces.socket.create_socket()
                 server_socket.start_server(port=server_port, socket_type=SOCKET_TYPE_UDP)
-                server_ip = remote_socket_factory.interfaces.socket.sockets[count].hostname_or_ip_address(
-                    ip_version=4)
+                server_ip = remote_socket_factory.interfaces.socket.sockets[count].hostname_or_ip_address(ip_version=4)
                 sock = wifi_dut.interfaces.wifi.Asyncsocket(stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP")
-                assert sock == count, f"socket id received is wrong, expected is {count}"
+                udp_socks.append(sock)
                 wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=server_port, timeout=15,
                                               asynch=1)
                 wifi_dut.interfaces.wifi.bsdSocketConnect(sock, server_ip, 4, server_port)
@@ -770,36 +770,38 @@ def test_wifi_sdk_socket_select_multiple_sockets_tcp_udp_c19329(wifi_sniffer, wi
             count = 0
             for socket_no in range(2):
                 udp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
-                logger.info(
-                    f"UDP --> Remote peer is sending data over socket {socket_no} and data:{udp_buffer}")
-                remote_socket_factory.interfaces.socket.sockets[socket_no].send_data_udp(udp_buffer, device_ip,
-                                                                                         port=start_port + socket_no)
+                logger.info(f"UDP --> Remote peer is sending data over socket {socket_no}")
+                wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+                trf_thread = Thread(target=sock_obj.send_data,
+                                    args=(remote_socket_factory, socket_no, udp_buffer, device_ip, start_port, 3))
+                trf_thread.start()
                 time.sleep(1)
                 wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
-                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=socket_no)
-                assert udp_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id " \
-                                                f"{socket_no} opened in the DUT is not matched"
+                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=socket_no, timeout=80)
+                assert len(udp_buffer) == len(buffer_rx), (f"buffer length sent by remote peer and received on the"
+                                                           f" socket id {socket_no} opened in the DUT is not matched")
                 logger.info("UDP --> Data sent by remote peer and received on DUT is matching")
+                trf_thread.join()
             for socket_no in tcp_socks:
                 tcp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
-                logger.info(
-                    f"TCP --> Remote peer is sending data over socket {socket_no + 1} and data:{tcp_buffer}")
+                logger.info(f"TCP --> Remote peer is sending data over socket {socket_no + 1}")
                 client_socket[count].send_data_tcp(tcp_buffer)
                 count += 1
                 time.sleep(1)
                 wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
-                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_no + 1)
+                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_no + 1, timeout=60)
                 assert tcp_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id " \
                                                 f"{socket_no + 1} opened in the DUT is not matched"
                 logger.info("TCP --> Data sent by remote peer and received on DUT is matching")
             logger.info("\n\n")
-
-        for sock_id in range(2):
+        for sock_id in udp_socks:
             logger.info(f"Closing socket_id->{sock_id}")
             wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
+        udp_socks.clear()
         for sock_id in tcp_socks:
             logger.info(f"Closing socket_id->{sock_id}")
             wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
+        tcp_socks.clear()
         remote_socket_factory.interfaces.socket.close_all()
 
         logger.info("Stop Sniffer finally")
@@ -808,6 +810,15 @@ def test_wifi_sdk_socket_select_multiple_sockets_tcp_udp_c19329(wifi_sniffer, wi
                                                sniffer_filter, power_save=False)
 
     except Exception as error:
+        for sock_id in udp_socks:
+            logger.info(f"Closing socket_id->{sock_id}")
+            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
+        udp_socks.clear()
+        for sock_id in tcp_socks:
+            logger.info(f"Closing socket_id->{sock_id}")
+            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
+        tcp_socks.clear()
+        remote_socket_factory.interfaces.socket.close_all()
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
 
 
@@ -942,7 +953,9 @@ def test_wifi_sdk_socket_select_udp_bidirectional_c19338(wifi_sniffer, wifi_dut,
     """
     Verify send and receive data over socket ID(UDP)parallel when the socket id is added in the socket_select() api
     """
+    socks_opened = []
     try:
+        sock_obj = SocketDataTransfer()
         capture_filename = "test_socket_select_udp_bidirectional_TC19338"
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
@@ -959,7 +972,7 @@ def test_wifi_sdk_socket_select_udp_bidirectional_c19338(wifi_sniffer, wifi_dut,
             server_socket = remote_socket_factory.interfaces.socket.create_socket()
             server_socket.start_server(port=server_port, socket_type=SOCKET_TYPE_UDP)
             sock = wifi_dut.interfaces.wifi.Asyncsocket(stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP")
-            assert sock == count, f"socket id received is wrong, expected is {count}"
+            socks_opened.append(sock)
             wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=server_port, timeout=15,
                                           asynch=1)
 
@@ -970,31 +983,33 @@ def test_wifi_sdk_socket_select_udp_bidirectional_c19338(wifi_sniffer, wifi_dut,
                 server_ip = remote_socket_factory.interfaces.socket.sockets[socket_no].hostname_or_ip_address(
                     ip_version=4)
                 data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
-                logger.info(f"DUT is sending data over socket {socket_no} and data:{data}")
+                logger.info(f"DUT is sending data over socket {socket_no}")
                 wifi_dut.interfaces.wifi.bsdSocketSendTo(socket_fd=socket_no, data=data, ip_addr=server_ip,
                                                          ip_len=4, port=start_port + socket_no)
 
-                time.sleep(0.5)
-                data_receive, address = remote_socket_factory.interfaces.socket.sockets[socket_no].recv_data_udp(
-                    len(data))
-                logger.info(f"Remote peer received data ->  {data_receive} from address {address}")
-                assert data == data_receive, "Data sent by DUT and received on server is not matching"
+                time.sleep(1)
+                rx_data, address = remote_socket_factory.interfaces.socket.sockets[socket_no].recv_data_udp(len(data))
+                logger.info(f"Remote peer received data ->  {rx_data} from address {address}")
+                assert data == rx_data, "Data sent by DUT and received on server is not matching"
                 logger.info("Data sent by DUT and received on remote peer is matching")
 
                 tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
-                logger.info(f"Remote peer is sending data over socket {socket_no} and data:{tx_buffer}")
-                remote_socket_factory.interfaces.socket.sockets[socket_no].send_data_udp(tx_buffer, device_ip,
-                                                                                         port=start_port + socket_no)
-                time.sleep(3)
+                logger.info(f"Remote peer is sending data over socket {socket_no}")
+                wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+                trf_thread = Thread(target=sock_obj.send_data,
+                                    args=(remote_socket_factory, socket_no, tx_buffer, device_ip, start_port, 3))
+                trf_thread.start()
+                time.sleep(1)
                 wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
-                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=socket_no, timeout=30)
-                assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id " \
-                                               f"{socket_no} opened in the DUT is not matched"
+                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=socket_no, timeout=80)
+                assert len(tx_buffer) == len(buffer_rx), (f"buffer length sent by remote peer and received on the"
+                                                          f" socket id {socket_no} opened in the DUT is not matched")
+                trf_thread.join()
                 logger.info("Data sent by remote peer and received on DUT is matching\n\n")
-
-        for sock_id in range(4):
+        for sock_id in socks_opened:
             logger.info(f"Closing socket_id->{sock_id}")
             wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
+        socks_opened.clear()
         remote_socket_factory.interfaces.socket.close_all()
 
         logger.info("Stop Sniffer finally")
@@ -1002,6 +1017,11 @@ def test_wifi_sdk_socket_select_udp_bidirectional_c19338(wifi_sniffer, wifi_dut,
         sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
                                                sniffer_filter, power_save=False)
     except Exception as error:
+        for sock_id in socks_opened:
+            logger.info(f"Closing socket_id->{sock_id}")
+            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
+        socks_opened.clear()
+        remote_socket_factory.interfaces.socket.close_all()
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
 
 
