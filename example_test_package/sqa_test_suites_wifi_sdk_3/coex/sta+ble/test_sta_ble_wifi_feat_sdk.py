@@ -31,6 +31,10 @@ from utf.utils.stopwatch import Stopwatch
 import uuid
 from datetime import datetime
 from typing import Dict
+from threading import Thread
+from utf.interfaces.socket import SOCKET_TYPE_TCP, SOCKET_TYPE_UDP
+
+
 
 def logger():
     return get_logger(__name__)
@@ -58,9 +62,9 @@ def logger():
 """
 
 
-def get_igmp_list(wifi_sniffer, dut_mac_address, decryption_key: str, print_layers: list, capture_filename) -> Dict[
+def get_pkt_list(wifi_sniffer, dut_mac_address, decryption_key: str, print_layers: list, capture_filename) -> Dict[
     str, int]:
-    igmp_capture_list = []
+    capture_list = []
     current_time = time.time()
     updated_capture_file = 'filter_' + capture_filename + '_' + str(
         datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
@@ -89,10 +93,10 @@ def get_igmp_list(wifi_sniffer, dut_mac_address, decryption_key: str, print_laye
                         ta_address = count.split(": ")[1].strip()
             if layer_name in print_layers:
                 if ta_address == dut_mac_address:
-                    igmp_layer = str(layer)
-                    logger().info(f"As per sniffer capture IGMP packets sent by DUT..{ta_address}  ->  {igmp_layer}")
-                    igmp_capture_list.append(tuple([igmp_layer, packet.sniff_timestamp]))
-    return igmp_capture_list
+                    proto_layer = str(layer)
+                    logger().info(f"As per sniffer capture expected packets sent by DUT..{ta_address}  ->  {proto_layer}")
+                    capture_list.append(tuple([proto_layer, packet.sniff_timestamp]))
+    return capture_list
 
 
 @pytest.mark.config(
@@ -585,6 +589,7 @@ def test_Coex_sdk_WLAN_http_post_non_exist_ip_BLE_slave_C133483(http_server, wif
         },
     },
 )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_C133480(wifi_dut, wifi_access_point,
@@ -647,15 +652,11 @@ def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_C133480(wifi_dut, wifi_acc
 
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
-        packet_filter1 = (
-            sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                wlan_addr=wifi_obj.dut_mac_address, filter_name="dns"
-            )
-        )
-        logger().info(f"Validating dns frames")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(
-            packet_filter1=packet_filter1
-        )["packet_count"], "Sniffer: Unable to find dns packets in sniffer"
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["dns"],
+                                     test_name)
+        assert len(
+            capture_list) > 0, "DNS packets  are not captured in the sniffer"
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -752,15 +753,11 @@ def test_Coex_sdk_WLAN_DNS_Query_BLE_slave_C133583(wifi_dut, wifi_access_point,
 
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
-        packet_filter1 = (
-            sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                wlan_addr=wifi_obj.dut_mac_address, filter_name="dns"
-            )
-        )
-        logger().info(f"Validating dns frames")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(
-            packet_filter1=packet_filter1
-        )["packet_count"], "Sniffer: Unable to find dns packets in sniffer"
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["dns"],
+                                     test_name)
+        assert len(
+            capture_list) > 0, "DNS packets  are not captured in the sniffer"
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -881,15 +878,13 @@ def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_C133477(wifi_dut, wifi_access_point,
         wifi_sniffer.interfaces.capture.stop_capture()
 
         wifi_obj.sniffer_validation_join()
-        packet_filter1 = (
-            sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                wlan_addr=wifi_obj.dut_mac_address, filter_name="ssl"
-            )
-        )
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["tls"],
+                                     test_name)
+        assert len(
+            capture_list) > 0, "SSL packets or one of the 4-way handshake packets are not captured in the sniffer"
         logger().info(f"Validating ssl frames")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(
-            packet_filter1=packet_filter1
-        )["packet_count"], "Sniffer: Unable to find ssl packets in sniffer"
+
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -1009,15 +1004,12 @@ def test_Coex_sdk_WLAN_SSL_rx_BLE_slave_C133478(wifi_dut, wifi_access_point,
         wifi_sniffer.interfaces.capture.stop_capture()
 
         wifi_obj.sniffer_validation_join()
-        packet_filter1 = (
-            sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                wlan_addr=wifi_obj.dut_mac_address, filter_name="ssl"
-            )
-        )
-        logger().info(f"Validating ssl frames")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(
-            packet_filter1=packet_filter1
-        )["packet_count"], "Sniffer: Unable to find ssl packets in sniffer"
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["tls"],
+                                     test_name)
+        assert len(
+            capture_list) > 0, "SSL packets or one of the 4-way handshake packets are not captured in the sniffer"
+
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -1154,6 +1146,12 @@ def test_Coex_sdk_WLAN_MQTT_BLE_slave_C133574(wifi_dut, wifi_access_point,
 
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["mqtt"],
+                                          test_name)
+        assert len(
+            capture_list) > 0, "MQTT packets or one of the 4-way handshake packets are not captured in the sniffer"
+        logger().info("sniffer validation is successful")
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -1433,7 +1431,7 @@ def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        igmp_capture_list = get_igmp_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["igmp"],
+        igmp_capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["igmp"],
                                                    test_name)
         assert len(
             igmp_capture_list) > 0, "IGMP packets or one of the 4-way handshake packets are not captured in the sniffer"
