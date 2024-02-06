@@ -1,0 +1,74 @@
+firmware:
+  efx32:
+    load_binary:
+      file_name: &firmware_file_anchor 'SiWG917-B.2.10.1.0.0.10.rps'
+    write_firmware:
+      file_name: 'test_agent-brd4338a-gcc_arm+wifi+ble.rps'
+
+firmware_version_file: *firmware_file_anchor
+# List of devices to be reset when needed
+# reset of efx32 runs reset sequence for rs911x so no need to reset rs911x
+reset: [efx32]
+
+firmware_applications:
+    # List of markers for test cases
+    wifitest:
+    # List of devices and their firmware images for this marker
+    - device_type: 'rs911x'
+      device_subtype: 'rs9116'
+      filename:
+        load_binary:
+          file_name: 'SiWG917-A.1.0.0.0.23.bin'
+        write_firmware:
+          file_name: '917_ccp/generic_test_agent_without_aws.rps'
+
+
+    test_concurrent_mode:
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: '917_ccp/concurrent_test_agent.rps'
+
+    test_ap_ht_caps:
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: '917_ccp/ap_htcaps_enable.rps'
+
+    test_wlan_aws_enable:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/aws_test_agent.rps'
+
+    test_wlan_rts:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/rts_test_agent.rps'
+
+    test_wlan_powersave_mode2_without_ram_ret:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/generic_test_agent_wt_aws_wt_ram_ret.rps'
+
+    test_wlan_powersave_mode3_lp:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/generic_test_agent_without_aws.rps'
+
+    test_wlan_powersave_mode3_ulp:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/generic_test_agent_without_aws.rps'
+
+    test_coex_custom:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/coex_custom_test_agent.rps'
+
+    test_multi_gatt_conn:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/multi_gatt_generic_test_agent.rps'
+
+    test_wlan_powersave_mode2_lp:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/generic_test_agent_without_aws.rps'
