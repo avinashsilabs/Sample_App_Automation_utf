@@ -39,17 +39,20 @@ from utf.utils.logger import get_logger
 def logger():
     return get_logger(__name__)
 
+
 def power_measurement(power_device=None, power_meter=None, dtim=None):
-    
     if power_device == "keysight_benchvue_power_analyzer_win_wcf":
         power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
     elif power_device == "nrf_ppk2_device":
         power_obj = ppk_power_number_output(power_meter=power_meter)
     power_obj.get_power_value()
 
+
 def __print_throughput(throughput: dict):
     if throughput is not None:
         print_dict("##     ", throughput)
+
+
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in Wifi+Bluetooth dual mode
         2. Put DUT in BLE advertising mode
@@ -78,6 +81,7 @@ class device_scan_result:
             == adv_data):
                 return True
         return False
+
 
 class power_number_output():
     def __init__(self, power_meter = None, dtim=None):
@@ -187,14 +191,17 @@ def test_wlan_ble_coex_DTIM10_BLE_adv_1_28_C20564(power_meter, wifi_dut, wifi_ac
         logger().info("Enabling power save")
         wifi_dut.interfaces.wifi.power_save(2, 0)
         wifi_dut.interfaces.wifi.bt_power_save(2, 0)
-
         time.sleep(20)
+        
         logger().info(f"Starting Power Capture")
         power_device = UtfConfig.instance().defaults.get("power_meter", {})
-        power_measurement(power_device=power_device, power_meter=power_meter)
+        power_measurement(power_device=power_device, power_meter=power_meter, dtim=dtim)
         time.sleep(15)
 
+
 ######Connection test case#####
+        
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -257,8 +264,7 @@ def test_wlan_ble_coex_DTIM10_BLE_connect_200ms_C20565(power_meter, wifi_dut, wi
         ble_client.interfaces.bluetooth.connect(bt_dut_address, min_conn_interval=0xa0,
                                                 max_conn_interval=0xa0, conn_latency=0,
                                                 supervision_timeout=3200)
-        logger().info("Initiating power save")
-
+        
         logger().info(f"configuring access point with dtim:{dtim}")
         wifi_access_point.interfaces.wifi.start_ap(dtim=dtim)
 
@@ -272,11 +278,11 @@ def test_wlan_ble_coex_DTIM10_BLE_connect_200ms_C20565(power_meter, wifi_dut, wi
         logger().info("Enabling power save")
         wifi_dut.interfaces.wifi.power_save(2, 0)
         wifi_dut.interfaces.wifi.bt_power_save(2, 0)
-
         time.sleep(10)
+
         logger().info(f"Starting Power Capture")
         power_device = UtfConfig.instance().defaults.get("power_meter", {})
-        power_measurement(power_device=power_device, power_meter=power_meter)
+        power_measurement(power_device=power_device, power_meter=power_meter, dtim=dtim)
         time.sleep(15)
 
         logger().info("Initiating disconnection from remote device")
@@ -284,6 +290,8 @@ def test_wlan_ble_coex_DTIM10_BLE_connect_200ms_C20565(power_meter, wifi_dut, wi
 
 
 ######Connection test case#####
+        
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -348,8 +356,7 @@ def test_wlan_ble_coex_DTIM10_BLE_SSL_connect_200ms_C20557(power_meter, wifi_dut
         ble_client.interfaces.bluetooth.connect(bt_dut_address, min_conn_interval=0xa0,
                                                 max_conn_interval=0xa0, conn_latency=0,
                                                 supervision_timeout=32000)
-        logger().info("Initiating power save")
-
+        
         logger().info(f"configuring access point with dtim:{dtim}")
         wifi_access_point.interfaces.wifi.start_ap(dtim=dtim)
         device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
@@ -380,9 +387,10 @@ def test_wlan_ble_coex_DTIM10_BLE_SSL_connect_200ms_C20557(power_meter, wifi_dut
         wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
 
         time.sleep(10)
+
         logger().info(f"Starting Power Capture")
         power_device = UtfConfig.instance().defaults.get("power_meter", {})
-        power_measurement(power_device=power_device, power_meter=power_meter)
+        power_measurement(power_device=power_device, power_meter=power_meter, dtim=dtim)
         time.sleep(15)
 
         logger().info("Initiating disconnection from remote device")
@@ -480,5 +488,5 @@ def test_wlan_ble_coex_DTIM10_BLE_SSL_connect_200ms_without_traffic_C20566(power
         time.sleep(10)
         logger().info(f"Starting Power Capture")
         power_device = UtfConfig.instance().defaults.get("power_meter", {})
-        power_measurement(power_device=power_device, power_meter=power_meter)
+        power_measurement(power_device=power_device, power_meter=power_meter, dtim=dtim)
         time.sleep(15)
