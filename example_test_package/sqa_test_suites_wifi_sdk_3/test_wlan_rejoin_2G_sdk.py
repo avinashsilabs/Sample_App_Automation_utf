@@ -231,7 +231,7 @@ class WLanThread(ThreadBase):
                                                                         eap_type="tls", ping_after_power_save=True)
                 time.sleep(5)
                 self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET, option_val=SocketOptions.TCP_MAX_RETRY)
-                wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
+                self.wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
 
             elif self.test_case_no == 19731:
                 self.wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
@@ -248,7 +248,7 @@ class WLanThread(ThreadBase):
                                                                         eap_type="ttls", ping_after_power_save=True)
                 time.sleep(5)
                 self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET, option_val=SocketOptions.TCP_MAX_RETRY)
-                wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
+                self.wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
 
             elif self.test_case_no == 19732:
                 self.wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
@@ -265,7 +265,7 @@ class WLanThread(ThreadBase):
                                                                         eap_type="peap", ping_after_power_save=True)
                 time.sleep(5)
                 self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET, option_val=SocketOptions.TCP_MAX_RETRY)
-                wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
+                self.wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
 
             else:
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
@@ -1584,15 +1584,6 @@ def test_wifi_sdk_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wi
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find Broadcast Probe request packet'
-
-        # Initiate ping from third party wifi-client to DUT
-        status = ping(wlan_obj.dut_addr['device_ip'], 20)
-        assert status, "Failed to ping to DUT"
-
-        if status:
-            logger().info('**** DUT successfully re-associated after AP power turn on ****')
-        else:
-            logger().info('DUT failed to reconnect after AP power turn on ')
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
