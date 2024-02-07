@@ -173,3 +173,65 @@ def test_ble_whitelist_with_adv_data_index5(wifi_dut, ble_client):
         whitelist_data = wifi_dut.interfaces.wifi.parse_and_get_whitelist_data(event.event_data)
         assert whitelist_data == "AUTOMATION", "whitelist data not found"
         logger().info(f"=======found advertising data: {whitelist_data}")
+pytestmark = [
+# pytest.mark.framework_integration_test,
+# pytest.mark.dut("rs9116_sapi"),
+pytest.mark.config(
+"wifi_dut",
+wifi={
+    "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+    "oper_mode": 0,
+    "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+    "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
+    "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+    "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+    "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                           Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+    "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+    "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+    "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+    "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE |
+        Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC |
+        Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID |
+        Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
+        Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE |
+        Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+    "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN |
+        Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_DISABLE_CODED_PHY_FROM_HOST |
+        Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_SET_SCAN_RESP_DATA_FROM_HOST |
+        Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+},
+),
+]
+@pytest.mark.start_state("ble_dut", wifi=['init'])
+def test_Basic_connect_and_disconnect_BLE_AE_C23514(ble_dut, ble_client, ble_sniffer, wifi_sniffer, sl_collections):
+    """Test case: This test case will verify basic connection and disconnection of DUT with remote device
+                    by doing AE_advertiing"""
+    try:
+        ble_dut_address = ble_dut.interfaces.wifi.ble_start(capability=3, set_smp=1)
+        logger().info(f"BLE Mac: {ble_dut_address}")
+        ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
+        assert ble_client_address, "Unable to fetch Bluetooth address from remote device"
+        ble_dut.interfaces.wifi.ble_add_white_list(remote_dev_addr=ble_client_address)
+        ble_dut.interfaces.wifi.bt_set_local_name(bt_local_name="SI917AE")
+        ble_dut.interfaces.wifi.bt_get_local_name()
+        ble_dut.interfaces.wifi.ble_get_max_adv_data_len(max_data_len=251)
+        ble_dut.interfaces.wifi.ble_get_max_no_of_supp_adv_sets(no_adv_sets=2)
+        # ble_dut.interfaces.wifi.ble_ae_set_scan_params()
+        # ble_dut.interfaces.wifi.ble_ae_set_scan_enable()
+        ble_dut.interfaces.wifi.ble_set_ae_params(remote_dev_addr=ble_client_address)
+        ble_dut.interfaces.wifi.set_ae_set_random_address(random_address=ble_client_address)
+        time.sleep(8)
+        # ble_dut.interfaces.wifi.ble_ae_set_scan_enable()
+        # time.sleep(8)
+        ble_dut.interfaces.wifi.ble_set_ae_data()
+        time.sleep(8)
+        ble_dut.interfaces.wifi.ble_start_ae_advertising()
+        time.sleep(8)
+
+        # ble_dut.interfaces.wifi.ble_extended_connect_with_params(remote_dev_addr=ble_client_address)
+        time.sleep(8)
+    finally:
+        logger().info("initiating stop scanning")
+        ble_client.interfaces.bluetooth.stop_scanning()
+        ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
