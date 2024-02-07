@@ -19,7 +19,6 @@ pipeline {
     stages {
         stage('Run Smoke tests') {
             agent {
-//                label 'LAB0014503'
                 label 'NB0015129'
             }
             environment {

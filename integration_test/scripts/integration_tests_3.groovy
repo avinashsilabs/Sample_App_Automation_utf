@@ -19,7 +19,6 @@ pipeline {
     stages {
         stage('Run integration tests set 3') {
             agent {
-//                label 'LAB0014503'
                 label 'NB0015129'
             }
             environment {
