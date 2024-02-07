@@ -49,35 +49,37 @@ pipeline {
                 }
                 stage('Run Integration Tests') {
                     environment {
-                        MWLABUSER_JENKINS_SSH = credentials("mwlabuser_jenkins_ssh")
                         MILESTONE_BRANCH_NAME = 'release/milestone54'
                     }
                     steps {
-                        hwmuxReserveAnyGroupFromLabel(HWMUX_GROUP_LABEL, null, UTF_HWMUX_TOKEN, "HWMUX_GROUP_JSON")  {
-                            timeout(time: 120, unit: 'MINUTES') {
-                                writeFile(file: env.HWMUX_GROUP_JSON_FILE_NAME, text: env.HWMUX_GROUP_JSON)
-                                sh(label: "Run UTF Launcher", script: '''
-                                    UTF_DOCKER_TARGET=$(./yq eval '.metadata.host_ip' $HWMUX_GROUP_JSON_FILE_NAME)
-                                    ./yq eval '.metadata.harness' $HWMUX_GROUP_JSON_FILE_NAME  -P > config/harnesses/$HARNESS_NAME
-                                    rm -rf reports
+                        withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser_jenkins_ssh', keyFileVariable: 'MWLABUSER_JENKINS_SSH', passphraseVariable: 'PASSPHRASE_UNUSED', usernameVariable: 'USERNAME_UNUSED')]) {
+                            hwmuxReserveAnyGroupFromLabel(HWMUX_GROUP_LABEL, null, UTF_HWMUX_TOKEN, "HWMUX_GROUP_JSON")  {
+                                timeout(time: 120, unit: 'MINUTES') {
+                                    writeFile(file: env.HWMUX_GROUP_JSON_FILE_NAME, text: env.HWMUX_GROUP_JSON)
+                                    sh(label: "Run UTF Launcher", script: '''
+                                        UTF_DOCKER_TARGET=$(./yq eval '.metadata.host_ip' $HWMUX_GROUP_JSON_FILE_NAME)
+                                        ./yq eval '.metadata.harness' $HWMUX_GROUP_JSON_FILE_NAME  -P > config/harnesses/$HARNESS_NAME
+                                        rm -rf reports
 
-                                    . $PYTHON3_VENV_DIR/bin/activate
-                                    cp utf_core/unit_tests/.coveragerc integration_test/.coveragerc
+                                        . $PYTHON3_VENV_DIR/bin/activate
+                                        cp utf_core/unit_tests/.coveragerc integration_test/.coveragerc
 
-                                    PYTEST_COMMAND="pytest --tb=native example_test_package/sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
-                                    ./executor/launch_utf_tests.sh --harness $HARNESS_NAME --target $UTF_DOCKER_TARGET --pytest_command "$PYTEST_COMMAND"
-                                    exitcode=$?
+                                        PYTEST_COMMAND="pytest --tb=native example_test_package/sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
+                                        ./executor/launch_utf_tests.sh --harness $HARNESS_NAME --target $UTF_DOCKER_TARGET --pytest_command "$PYTEST_COMMAND"
+                                        exitcode=$?
 
-                                    ssh -i $MWLABUSER_JENKINS_SSH -o StrictHostKeyChecking=no pi@$UTF_DOCKER_TARGET "sudo reboot"
-                                    # wait a bit for reboot, otherwise next job may fail
-                                    sleep 15
-                                    exit $exitcode
-                                ''')
-//                                dir('integration_test') {
-//                                    archiveArtifacts artifacts: env.TEST_CONFIG_FILE
-//                                }
-                                archiveArtifacts artifacts: "reports/pytest-log.txt,reports/junit_report.xml,reports/pytest-report.html"
-                                junit allowEmptyResults: false, testResults: "reports/junit_report.xml"
+                                        set +e
+                                        ssh -i $MWLABUSER_JENKINS_SSH -o StrictHostKeyChecking=no pi@$UTF_DOCKER_TARGET "sudo reboot"
+                                        # wait a bit for reboot, otherwise next job may fail
+                                        sleep 15
+                                        exit $exitcode
+                                    ''')
+    //                                dir('integration_test') {
+    //                                    archiveArtifacts artifacts: env.TEST_CONFIG_FILE
+    //                                }
+                                    archiveArtifacts artifacts: "reports/pytest-log.txt,reports/junit_report.xml,reports/pytest-report.html"
+                                    junit allowEmptyResults: false, testResults: "reports/junit_report.xml"
+                                }
                             }
                         }
                     }
