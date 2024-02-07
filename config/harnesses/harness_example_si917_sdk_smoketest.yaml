@@ -811,7 +811,7 @@ devices:
             radius_server:
                 type: 'radius_server.freeradius.freeradius_linux'
                 shell: 'linux_shell'
-                ap_ip_address: '192.168.50.1/24'
+                ap_ip_address: '10.207.17.148/24'
                 ap_secret: '12345678'
                 username: 'user1'
                 password: '12345678'
