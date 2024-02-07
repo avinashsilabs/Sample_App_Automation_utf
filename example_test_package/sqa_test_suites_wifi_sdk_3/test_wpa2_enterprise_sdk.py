@@ -1051,13 +1051,14 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_1_0_c113775(wifi_dut, wifi_access_poin
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+                       wifi=["unassociated", "wifi_powersave_disable", "clear_certs"])
 def test_wifi_sdk_three_ssl_connection_wpa2_enterprise_eap_c113797(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                    sniffer_filter,
                                                                    radius_server, sl_collections, request, ssl_server):
     """ This test case verifies the three ssl socket connectivity in WPA2 Enterprise between the dut and the remote
         server """
     try:
+        ping_count = 10
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
@@ -1065,12 +1066,17 @@ def test_wifi_sdk_three_ssl_connection_wpa2_enterprise_eap_c113797(wifi_dut, wif
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                     eap_type="tls", sl_collections=sl_collections, test_name=test_name)
+                                     sl_collections=sl_collections, test_name=test_name, http_Otaf="tls")
         wifi_thread.start()
         wifi_thread.wait_for_exit()
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+        logger().info("....Pinging DUT after power-save....")
+        status = ping(device_ip, ping_count)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+        logger().info("PING TO DUT IS SUCCESSFULLY DONE....")
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         port2 = ssl_server.interfaces.ssl.config['device_port2']
         port3 = ssl_server.interfaces.ssl.config['device_port3']
@@ -1096,26 +1102,24 @@ def test_wifi_sdk_three_ssl_connection_wpa2_enterprise_eap_c113797(wifi_dut, wif
             wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
             wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=socket_port)
         socket_no = [1, 2, 3]
-        for socket in socket_no:
-            buffer_length = 100
-            pkt_count = 1
-            tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=buffer_length))
-            if socket > 3:
-                logger().info(f"DATA TRANSFER -----DUT SENDING DATA ON SOCKET ID{socket - 1}")
-                data_length = len(tx_buffer)
-                socket_number = socket - 1
-                wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=socket_number, data=tx_buffer)
-                server_socket_no = socket
-                data_receive = ssl_server.interfaces.ssl.data_recv_content(server_socket_no, data_length)
-                logger().info(f"Data received on remote socket opened is {data_receive}")
-                assert tx_buffer == data_receive.decode(), "Data sent by DUT and received on server is matching"
-            else:
-                logger().info(f"DATA TRANSFER -----DUT RECEVING DATA ON SOCKET ID{socket - 1}")
-                ssl_server.interfaces.ssl.send_data(socket, pkt_count, buffer_length, message=tx_buffer)
-                sock = (socket - 1)
-                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
-                assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
-
+        sw = Stopwatch()
+        while sw.elapsed_sec < 60:
+            for socket in socket_no:
+                buffer_length = 100
+                # The api returns 100 bytes of random data
+                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=buffer_length))
+                if socket < 4:
+                    logger().info(f"Sending data {data} over socket_no->{socket - 1}")
+                    # DUT sends 100 bytes of data over ssl socket
+                    socket_number = socket - 1
+                    wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=socket_number, data=data)
+                    time.sleep(1)
+                    # SSL server receives the data over ssl socket
+                    server_socket_no = socket
+                    data_receive = ssl_server.interfaces.ssl.data_recv_content(server_socket_no, buffer_size=len(data))
+                    logger().info(f"Data received on remote socket opened is {data_receive}")
+                    assert data == data_receive.decode(), "Data sent by DUT and received on server is not matching"
+                    logger().info("Data sent by DUT and received on server is matching\n\n")
         for sock_count in range(0, 3):
             logger().info(f"Closing socket_id->{sock_count}")
             wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_count)
@@ -1239,7 +1243,7 @@ def test_wifi_sdk_mqtt_wpa2_enterprise_c113795(wifi_dut, wifi_access_point, wifi
     {
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
         "oper_mode": Si91xOperatingMode.EAPWiFiClient,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
                     Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
@@ -1291,12 +1295,14 @@ def test_wifi_sdk_ssl_socket_connection_in_wpa2_enterprise_c113793(wifi_dut, wif
         local_port = randint(5001, 20000)
         wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
         wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=socket_port)
-        buffer_length = 100
-        pkt_count = 1
-        tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=buffer_length))
-        ssl_server.interfaces.ssl.send_data(1, pkt_count, buffer_length, message=tx_buffer)
-        buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
-        assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+        sw = Stopwatch()
+        while sw.elapsed_sec < 30:
+            buffer_length = 100
+            pkt_count = 1
+            tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=buffer_length))
+            ssl_server.interfaces.ssl.send_data(1, pkt_count, buffer_length, message=tx_buffer)
+            buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock, timeout=50, async_timeout=50)
+            assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1481,6 +1487,5 @@ def test_wifi_sdk_https_otaf_wpa2_enterprise_c113804(wifi_dut, wifi_access_point
             sa_addr=wifi_thread.dut_addr['dut_mac_address'], filter_name='eap_type_tls_verification')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)[
             'packet_count'], 'Unable to find EAP frames sent from AP in sniffer'
-
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
