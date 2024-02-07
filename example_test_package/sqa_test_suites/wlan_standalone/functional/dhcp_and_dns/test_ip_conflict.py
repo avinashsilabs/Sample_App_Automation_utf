@@ -201,6 +201,7 @@ def test_static_ip_assignment_with_existing_ip_C101962(wifi_sniffer, wifi_dut, w
         time.sleep(10)
         wifi_client.interfaces.wifi.config["interface"] = "wlan0"
         wifi_client_ip, dut_ip, wifi_client_gateway_ip = wifi_client_join(wifi_client, wifi_access_point, dhcp_start, dhcp_end)
+        ap_client_ip = wifi_access_point.interfaces.wifi.read_ip_client_address("rs9116test")
         time.sleep(10)
         with pytest.raises(WlanError) as exc_info:
             result = wifi_dut.interfaces.wifi.start_ip_in_static_mode(mode="static",
