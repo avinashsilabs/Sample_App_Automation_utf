@@ -19,3 +19,7 @@ rps_path :
       path : "connectivity_firmware"
       customerid : "0"
       rps_prefix : "SiWG917-B"
+    sl_net_pr_sanity_9117_ccp:
+      path : "connectivity_firmware"
+      customerid : "0"
+      rps_prefix : "SiWG917-B"

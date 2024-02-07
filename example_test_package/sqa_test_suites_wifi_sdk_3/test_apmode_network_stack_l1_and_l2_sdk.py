@@ -8,6 +8,7 @@ from random import randint
 from utf.utils.stopwatch import Stopwatch
 from utf.utils.thread_base import ThreadBase
 import pytest as pytest
+import threading
 from utf.utils import get_random_data
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.interfaces.iperf.iperf_device_output_parser import Result
@@ -38,6 +39,33 @@ setup requirement:
         3. Access Point(Third Party AP's)
 """
 
+class data_transfer:
+    def __init__(self):
+        self.thread_lock = threading.Lock()
+        self.sent_data = 0
+        self.rcv_data = 0
+
+    def receive_data_socket(self, remote_socket_factory, no_of_pkts, data_size, proto_type=0):
+        fail_count = 0
+        if proto_type == 0:
+            remote_socket_factory.interfaces.socket.set_recv_timeout(socket_type=0)
+        else:
+            remote_socket_factory.interfaces.socket.set_recv_timeout(use_client_socket=True, socket_type=1)
+        for count in range(0, no_of_pkts):
+            if proto_type == 0:
+                data = remote_socket_factory.interfaces.socket.recv_data_tcp(data_size)
+                logger().info(f"**********{data}************")
+            else:
+                data, address = remote_socket_factory.interfaces.socket.recv_data_udp(data_size)
+                logger().info(f"**********{data}************")
+            if not isinstance(data, str):
+                fail_count = fail_count + 1
+                if fail_count == 5:
+                    break
+                else:
+                    continue
+            self.rcv_data = self.rcv_data + len(data)
+        logger().info(f"Total bytes received on socket opened remotely -> {self.rcv_data}")
 
 
 class ApmodeConnection(ThreadBase):
@@ -1217,6 +1245,8 @@ def test_wifi_sdk_Verify_Multicast_RX_C19484(wifi_sniffer, net_perf_client, wifi
 @pytest.mark.skip("testagent issue")
 def test_wifisdk_DUTAP_open_10_UDP_client_sockets_send_tx_C19474(wifi_sniffer, sniffer_filter, wifi_dut, wifi_client, utf_constants, remote_socket_factory, sl_collections, wifi_clients):
     try:
+        no_of_pkts = 10000
+        pkt_length = (1460)
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
                                                   static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
@@ -1256,6 +1286,18 @@ def test_wifisdk_DUTAP_open_10_UDP_client_sockets_send_tx_C19474(wifi_sniffer, s
                                                           server_port=server_port, timeout=5)
             logger().info(f"Bind socket successfully: {bind_response}")
             logger().info("DUT is connecting to server socket")
+        for index in range(10):
+            server_port = server_base_port + index
+            data_transfer_obj = data_transfer()
+            th_start = Thread(target=data_transfer_obj.receive_data_socket,
+                              args=(remote_socket_factory, no_of_pkts, pkt_length, 1), daemon=True)
+            th_start.start()
+            bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(dut_sockets[index], pkt_length, no_of_pkts,
+                                                                 server_ip=client_ips[index], server_port=server_port)
+            logger().info(f"Number of bytes sent by dut {bytes_sent}")
+
+        for index in dut_sockets:
+           wifi_dut.interfaces.wifi.bsdSockClose(dut_sockets[index])
 
         sw = Stopwatch()
         while sw.elapsed_sec < 120:
@@ -1277,7 +1319,6 @@ def test_wifisdk_DUTAP_open_10_UDP_client_sockets_send_tx_C19474(wifi_sniffer, s
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 

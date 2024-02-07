@@ -3,7 +3,8 @@ import pytest
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xRegion, Si91xRegionCode, Si91xModuleType, Si91xCustomFeatureBitMap, Si91xTCPIPFeatureBitMap, \
-    Si91xExtTCPIPFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xOperatingMode
+    Si91xExtTCPIPFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xOperatingMode, Si91xPowerSaveModes
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 
 def logger():
     return get_logger(__name__)
@@ -855,5 +856,53 @@ def test_wifi_sdk_scan_all_channels_in_worldwide_region_c148601(wifi_dut, wifi_s
         logger().info(f"found Probe req(Broadcast) in all the channel:{Probe_captured_channel_list}'")
         logger().info("DUT scan success in all channels")
         logger().info("Dut is able to scan successfully in worldwide region")
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+# This test case verifies the scan in us region with cahnnels 12,13,14
+def test_wifi_sdk_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut, wifi_access_point, sl_collections):
+
+    try:
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        logger().info("Setting DUT in wlan power save...")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
+
+        logger().info("Setting DUT in bt power save...")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode8)
+
+        logger().info("Enabling rejoin...")
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        channel_list = [12, 13, 14]
+        channel_bitmap_2_4 = 0
+        scan_expected_time = 0
+        for count in channel_list:
+            channel_bitmap_2_4 += 1 << (count - 1)
+            scan_expected_time += 100
+            logger().info(f"Initiating the scan in DUT with the given channel bitmap value ---->>>{count}")
+            wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=channel_bitmap_2_4, expected_status=SLStatus.SL_STATUS_SI91X_INVALID_CHANNEL)
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)

@@ -77,7 +77,7 @@ def get_igmp_list(self, dut_mac_address, decryption_key: str, print_layers: list
         return igmp_capture_list
 
 class ConcurrentThread(ThreadBase):
-    def __init__(self, wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants, wifi_access_point, net_perf_client=None, protocol=None, testcase_no = None, capture_filename = None,  traffic_type=None,leave=False):
+    def __init__(self, wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants, wifi_access_point, net_perf_client=None, protocol=None, testcase_no = None, capture_filename = None,  ping=True, traffic_type=None, stop_sniffer=True, leave=False):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.sl_collections = sl_collections
@@ -90,7 +90,9 @@ class ConcurrentThread(ThreadBase):
         self.protocol = protocol
         self.testcase_no = testcase_no
         self.capture_filename = capture_filename
+        self.ping = ping
         self.traffic_type = traffic_type
+        self.stop_sniffer = stop_sniffer
         self.leave = leave
         if self.testcase_no == 19312:
             self.ssid = "SILABS_AP_MODE"
@@ -140,6 +142,10 @@ class ConcurrentThread(ThreadBase):
 
         self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
         logger().info(f"ap_bssid : {self.ap_mac_address}")
+        if self.ping:
+            status = ping(self.dut_addr_dict['dut_ip'], 10)
+            assert status == 1, "failed to ping to client"
+
         if self.traffic_type == "Tx":
             logger().info(f"***** starting iperf ******")
             self.net_perf_client.interfaces.net_perf.init_server(host_ip=self.dut_addr_dict['client_ip'],
@@ -157,8 +163,9 @@ class ConcurrentThread(ThreadBase):
             tp = self.net_perf_client.interfaces.net_perf.process_output()
             assert tp, "failed to get throughput..."
             logger().info("data transfer is successful")
-        logger().info("Stop sniffer finally")
-        self.wifi_sniffer.interfaces.capture.stop_capture()
+        if self.stop_sniffer:
+            logger().info("Stop sniffer finally")
+            self.wifi_sniffer.interfaces.capture.stop_capture()
 
     def sta_ap_connection(self):
         logger().info("********** configuring the sniffer with access point channel **********")
@@ -317,7 +324,7 @@ def test_wifi_sdk_concurrent_mode_sta_ap_c19312(wifi_access_point, wifi_dut, wif
 def test_wifi_sdk_concurrent_mode_sta_ap_c19321(wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, sniffer_filter, multicast_client, utf_constants, sl_collections, protocol, net_perf_client):
     """ To Verify Dut Behaviour  multicast in  STA and AP connection by enabling concurrent mode"""
     try:
-        conc_obj = ConcurrentThread(wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants, wifi_access_point, testcase_no=19312, capture_filename="test_c19312")
+        conc_obj = ConcurrentThread(wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants, wifi_access_point, testcase_no=19312, capture_filename="test_c19321")
         conc_obj.sta_ap_connection()
         dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"**********{dut_mac_address}***************")
@@ -396,31 +403,14 @@ def test_wifi_sdk_device_as_ap_and_sta_c19313(sl_collections, wifi_access_point,
     """ To Verify Dut Behaviour in AP and STA connection by enabling concurrent mode"""
     try:
         conc_obj = ConcurrentThread(wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants, wifi_access_point, net_perf_client=net_perf_client, protocol=protocol, testcase_no=19312,
-                                    capture_filename="test_c19313")
+                                    capture_filename="test_c19313", ping=True, traffic_type="Tx", stop_sniffer=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
-        status = ping(conc_obj.dut_addr_dict['dut_ip'], 10)
-        assert status == 1, "failed to ping to client"
-        logger().info(f"***** starting iperf ******")
-        net_perf_client.interfaces.net_perf.init_server(host_ip=conc_obj.dut_addr_dict['client_ip'],
-                                                             device_ip=conc_obj.dut_addr_dict['dut_ip'],
-                                                             protocol=protocol)
-        net_perf_client.interfaces.net_perf.start()
-        logger().info(f"***** send traffic  ******")
-        wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
-                                            local_port=net_perf_client.interfaces.net_perf.server_port,
-                                            local_ip=conc_obj.dut_addr_dict['dut_ip'],
-                                            remote_ip=conc_obj.dut_addr_dict['client_ip'],
-                                            remote_port=net_perf_client.interfaces.net_perf.server_port,
-                                            size=1460, ttl=60, throughput_type=1, qos=0)
-        logger().info(f"***** get and print throughput ******")
-        tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp, "failed to get throughput..."
-        logger().info("data transfer is successful")
         time.sleep(5)
         conc_obj.ap_sta_disconnection()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
         conc_obj.concurrent_sniffer_validation()
-
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -598,18 +588,19 @@ def test_wifi_sdk_device_as_ap_and_sta_c19320(sl_collections, wifi_access_point,
     try:
         conc_obj = ConcurrentThread(wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants,
                                     wifi_access_point, net_perf_client=net_perf_client, protocol=protocol,
-                                    testcase_no=19318,
-                                    capture_filename="test_c19320")
-        conc_obj.ap_sta_connection()
-        conc_obj.datatransfer_tx()
-
-
-        # sl_collections.run_traffic(wifi_dut=wifi_dut, net_perf_client=net_perf_client,
-        #                            protocol=protocol, device_ip=conc_obj.dut_addr_dict['dut_ip'],
-        #                            host_ip=conc_obj.dut_addr_dict['client_ip'], timeout=30, traffic_type="TX")
-        # sl_collections.run_traffic(wifi_dut=wifi_dut, net_perf_client=net_perf_client,
-        #                                 protocol=protocol, device_ip=conc_obj.dut_addr['device_ip'],
-        #                                 host_ip=conc_obj.dut_addr_dict['client_ip'], timeout=40, traffic_type="TX")
+                                    testcase_no=19312,
+                                    capture_filename="test_c19320", ping=True, stop_sniffer=True)
+        conc_obj.start()
+        conc_obj.wait_for_exit()
+        sl_collections.run_traffic(wifi_dut=wifi_dut, net_perf_client=net_perf_client,
+                                   protocol=protocol, device_ip=conc_obj.dut_addr_dict['dut_ip'],
+                                   host_ip=conc_obj.dut_addr_dict['client_ip'], timeout=40, traffic_type="TX")
+        sl_collections.run_traffic(wifi_dut=wifi_dut, net_perf_client=net_perf_client,
+                                        protocol=protocol, device_ip=conc_obj.dut_addr_dict['client_ip'],
+                                        host_ip=conc_obj.dut_addr_dict['dut_ip'], timeout=40, traffic_type="TX")
+        conc_obj.sta_ap_connection()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
         conc_obj.concurrent_sniffer_validation()
 
     except Exception as Ex:
@@ -793,11 +784,13 @@ def test_wifi_sdk_device_as_ap_and_sta_c19318(sl_collections, wifi_access_point,
     """ To Verify Dut Behaviour in  STA and AP connection by enabling concurrent mode in different security modes"""
     try:
         conc_obj = ConcurrentThread(wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants,
-                                    wifi_access_point, testcase_no=19312,
-                                    capture_filename="test_c19313", traffic_type="Tx")
+                                    wifi_access_point, net_perf_client=net_perf_client, protocol=protocol, testcase_no=19318,
+                                    capture_filename="test_c19318", ping=True, traffic_type="Tx", stop_sniffer=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         conc_obj.ap_sta_disconnection()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
         conc_obj.concurrent_sniffer_validation()
 
     except Exception as Ex:

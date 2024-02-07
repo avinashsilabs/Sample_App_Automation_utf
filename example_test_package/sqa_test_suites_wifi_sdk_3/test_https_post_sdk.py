@@ -66,7 +66,7 @@ class WLanThread(ThreadBase):
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
@@ -75,57 +75,7 @@ class WLanThread(ThreadBase):
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-def test_wifi_sdk_http_post_functionality_C19219(http_server, wifi_dut, wifi_access_point, index_path
-                                                 , wifi_sniffer, sl_collections, utf_constants):
-    """
-    Test Steps:
-        1. Configure the DUT in Wlan coex mode for 2.4Ghz
-        2. Scan and Join the access point and enable the dhcp
-        3. Enable the wlan and bt power save mode in dut after the connection
-        4. Initiate http post request for given url
-        5. Verify the http post response
-    """
-    try:
-        test_name = 'test_19219'
-        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                              test_name=test_name, sl_collections=sl_collections, https_enable=False)
-        wlan_obj.start()
-        wlan_obj.wait_for_exit()
-
-        logger().info("\n\n***Posting data using http post request***\n\n")
-        status_dut, content_dut = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, index_path,
-                                                                     post_data=''.join(random.choices(
-                                                                         string.ascii_uppercase + string.digits,
-                                                                         k=utf_constants.get('generate_bytes'))))
-
-        assert not status_dut, "failed to post http data"
-        logger().info(status_dut)
-
-        logger().info("Stopping sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_dut.interfaces.wifi.http_client_deinit()
-
-    except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-    }
-)
-@pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-def test_wifi_sdk_http_post_functionality_invalid_ip_C19220(http_server, wifi_dut, wifi_access_point,
+def test_wifi_sdk_http_post_functionality_invalid_ip_c19220(http_server, wifi_dut, wifi_access_point,
                                                             index_path
                                                             , wifi_sniffer, sl_collections, utf_constants):
     """
@@ -165,7 +115,7 @@ def test_wifi_sdk_http_post_functionality_invalid_ip_C19220(http_server, wifi_du
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
@@ -216,59 +166,7 @@ def test_wifi_sdk_http_post_functionality_multiple_iterations_C19221(http_server
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-    }
-)
-@pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-def test_wifi_sdk_http_post_functionality_for_50mb_data_C19222(http_server, wifi_dut, wifi_access_point,
-                                                               index_path
-                                                               , wifi_sniffer, sl_collections):
-    """
-    Test Steps:
-        1. Configure the DUT in Wlan coex mode for 2.4Ghz
-        2. Scan and Join the access point and enable the dhcp
-        3. Enable the wlan and bt power save mode in dut after the connection
-        4. Initiate http post request for data of 50mb size
-        5. Verify the http post response
-    """
-    try:
-        test_name = 'test_19222'
-        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                              test_name=test_name, sl_collections=sl_collections)
-        wlan_obj.start()
-        wlan_obj.wait_for_exit()
-
-        logger().info("\n\n***Posting data using http post request***\n\n")
-        status_dut, content_dut = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, index_path,
-                                                                     post_data="hellohvbsjvhkjsdhvhksdhvksjdvravvjvdhi"
-                                                                               "jhdvbjhbjdhjvjdbjbsdwfbkjdhkdhfkk"
-                                                                               "jhdvjdjhddjhjgfjhjfdkhfhhfkhjhkfhjkfhkhfhak")
-
-        assert not status_dut, "failed to post http data"
-        logger().info(status_dut)
-
-        logger().info("Stopping sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_dut.interfaces.wifi.http_client_deinit()
-
-    except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
@@ -320,7 +218,7 @@ def test_wifi_sdk_http_post_functionality_different_urls_C19224(http_server, wif
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
@@ -375,7 +273,7 @@ def test_wifi_sdk_https_post_functionality_multiple_iterations_C19225(http_serve
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,

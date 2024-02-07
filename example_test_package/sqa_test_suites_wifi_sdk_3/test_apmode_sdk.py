@@ -37,7 +37,7 @@ def __print_throughput(iperf_throughput: dict):
 class ApModeClientConnections(ThreadBase):
     def __init__(self, wifi_dut, wifi_clients, wifi_sniffer,
                  sl_collections, utf_constants,  net_perf_client=None, protocol=None, testcase_no=None, capture_filename=None,
-                 dtim_period=None, beacon=None, traffic_type=None, leave=True, enable_data_rate=False):
+                 dtim_period=None, beacon=None, traffic_type=None, leave=True, enable_data_rate=False, sniffer_stop=True):
         self.wifi_dut = wifi_dut
         self.wifi_clients = wifi_clients
         self.net_perf_client = net_perf_client
@@ -52,6 +52,7 @@ class ApModeClientConnections(ThreadBase):
         self.traffic_type = traffic_type
         self.leave = leave
         self.enable_data_rate = enable_data_rate
+        self.sniffer_stop = sniffer_stop
 
     def run(self):
         if self.testcase_no == 19454 or 19432:
@@ -172,8 +173,9 @@ class ApModeClientConnections(ThreadBase):
 
             logger().info("data received is successful")
             time.sleep(3)
-        logger().info("Stop sniffer finally")
-        self.wifi_sniffer.interfaces.capture.stop_capture()
+        if self.sniffer_stop == "True":
+            logger().info("Stop sniffer finally")
+            self.wifi_sniffer.interfaces.capture.stop_capture()
 
 
 

@@ -17,7 +17,7 @@ def logger():
         1. SoC board
         2. Raspberry PI4
         3. Access Point(Third Party AP's)
-        
+
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
         2. Join the access point and enable the dhcp
@@ -25,14 +25,14 @@ def logger():
         4. Initiate ping from the dut
         5. set advertise, scan & connect
 
-    Author: Saurabh Sharma
+    Author: Saurabh Sharma and Ayush Agarwal
 """
 
 
 class WifiJoinThread(ThreadBase):
 
-    def __init__(self, wifi_sniffer=None, wifi_dut=None, wifi_access_point=None, wifi_client=None,
-                 sl_collections=None, sniffer_filter=None):
+    def __init__(self, wifi_sniffer=None, wifi_dut=None, wifi_access_point=None, wifi_client=None, sl_collections=None,
+                 sniffer_filter=None, test_case=None):
 
         super().__init__()
         self.wifi_sniffer = wifi_sniffer
@@ -44,9 +44,34 @@ class WifiJoinThread(ThreadBase):
         self.device_ip = None
         self.dut_addr = None
         self.ap_mac_address = None
+        self.test_case = test_case
 
     def run(self):
         try:
+            if self.test_case == '148524':
+                with TimeMeasurer() as T:
+                    t_end = time.time() + 1800
+
+                    while time.time() < t_end:
+                        logger().info(f"Initiating Scan")
+                        scan_results = self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0, sleep_time=0.01)
+                        logger().info(scan_results)
+                        time.sleep(1)
+                return
+
+            if self.test_case == '148525':
+                with TimeMeasurer() as T:
+                    t_end = time.time() + 1800
+
+                    while time.time() < t_end:
+                        logger().info(f"Initiating Scan")
+                        scan_results = self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0, sleep_time=0.01)
+                        logger().info(scan_results)
+                        self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
+                        self.wifi_dut.interfaces.wifi.leave()
+                        time.sleep(2)
+                return
+
             self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated,
                                                                      ping_after_power_save=True, retry_count=3)
@@ -106,7 +131,8 @@ class WifiJoinThread(ThreadBase):
 
 class BleThreadFunctionality(ThreadBase):
     def __init__(self, wifi_dut=None, ble_client=None, ble_test_type=None, sl_collections=None, ble_scan_type=1,
-                 ble_pairing=0, ble_scan_filter_type=0, ble_scan_interval=256, ble_scan_window=80, ble_public_address=0):
+                 ble_pairing=0, ble_scan_filter_type=0, ble_scan_interval=256, ble_scan_window=80, ble_address_type=0,
+                 test_case=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_client = ble_client
@@ -118,7 +144,8 @@ class BleThreadFunctionality(ThreadBase):
         self.ble_scan_filter_type = ble_scan_filter_type
         self.ble_scan_interval = ble_scan_interval
         self.ble_scan_window = ble_scan_window
-        self.ble_public_address = ble_public_address
+        self.ble_address_type = ble_address_type
+        self.test_case = test_case
 
         """ *************************** Set up DUT for BLE advertising ***************************** """
 
@@ -143,15 +170,14 @@ class BleThreadFunctionality(ThreadBase):
                                                              ble_scan_filter_type=self.ble_scan_filter_type,
                                                              ble_scan_interval=self.ble_scan_interval,
                                                              ble_scan_window=self.ble_scan_window,
-                                                             ble_public_address=self.ble_public_address,
+                                                             ble_address_type=self.ble_address_type,
                                                              ble_client_address=self.ble_client_address,
                                                              timeout=30)
             logger().info("*************** BLE scanning is successful****************")
 
         if self.ble_test_type == "advertise":
             logger().info("Initiating scan from Remote device")
-            ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(
-                bt_dut_address=self.ble_dut_address)
+            ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.ble_dut_address)
             assert ble_client_address, "Unable to fetch bluetooth address from Remote device"
             logger().info(f"Started scan from remote BLE device")
             logger().info("\n***********{}**********\n".format(ble_client_address))
@@ -164,10 +190,19 @@ class BleThreadFunctionality(ThreadBase):
             logger().info(f"DUT BLE address:'{self.ble_dut_address}' found in raspi scan results")
             self.ble_client.interfaces.bluetooth.close()
             return ble_client_address
+        if self.test_case == '148524':
+            with TimeMeasurer() as T:
+                t_end = time.time() + 1800
 
-    def advertise_dut(self):
-        logger().info(f"****** Advertising the DUT *******")
-        self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
+                while time.time() < t_end:
+                    logger().info('*** Went in ble thread ***')
+                    self.wifi_dut.interfaces.wifi.ble_start()
+                    self.wifi_dut.interfaces.wifi.bt_stop()
+                    time.sleep(2)
+            return
+        if self.test_case == '148543':
+            logger().info(f"****** Advertising the DUT *******")
+            self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
 
     def scan_from_remote_device(self):
         bt_client_address = self.sl_collections.scan_from_remote_device(wifi_dut=self.wifi_dut,
@@ -186,6 +221,7 @@ class BleThreadFunctionality(ThreadBase):
         self.wifi_dut.interfaces.wifi.ble_stop_advertising()
         logger().info("Initiating stop scan from Remote device")
         self.ble_client.interfaces.bluetooth.stop_scanning()
+
 
 pytestmark = [
     pytest.mark.config(
@@ -212,11 +248,9 @@ pytestmark = [
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "unassociated", "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "ble_stop_adv"])
 def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_Ble_adv_C148543(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, wifi_client, sniffer_filter):
-
     """Run wlan connect ,disconnect ,reconnect and Ble advertising test for 5 minutes"""
 
     try:
@@ -225,8 +259,8 @@ def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_Ble_adv_C148543(
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
-                                         ble_test_type="advertise")
-        ble_obj.advertise_dut()
+                                         test_case="148543")
+        ble_obj.start()
 
         with TimeMeasurer() as T:
             t_end = time.time() + 10 * 30
@@ -238,7 +272,8 @@ def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_Ble_adv_C148543(
                 wifi_obj.wait_for_exit()
                 wifi_obj.disconnect()
                 ble_obj.scan_from_remote_device()
-
+                ble_client.interfaces.bluetooth.close()
+        ble_obj.wait_for_exit()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop the Sniffer")
         logger().info(
@@ -249,15 +284,16 @@ def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_Ble_adv_C148543(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+
 
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "unassociated", "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.end_state("wifi_dut",wifi=["wifi_powersave_disable", "unassociated", "ble_stop_adv"])
 def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_Ble_conn_C148544(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, wifi_client, sniffer_filter):
-
     """Run wlan connect ,disconnect ,reconnect and Ble connection test for 30 minutes"""
 
     try:
@@ -273,9 +309,9 @@ def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_Ble_conn_C148544(
         with TimeMeasurer() as T:
             t_end = time.time() + 60 * 30
             while time.time() < t_end:
-                wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut,
-                                          wifi_access_point=wifi_access_point, wifi_client=wifi_client,
-                                          sl_collections=sl_collections, sniffer_filter=sniffer_filter)
+                wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_client=wifi_client,
+                                          wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                          sniffer_filter=sniffer_filter)
                 wifi_obj.start()
                 wifi_obj.wait_for_exit()
                 wifi_obj.disconnect()
@@ -292,15 +328,16 @@ def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_Ble_conn_C148544(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+
 
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "unassociated", "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "ble_stop_scan"])
 def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_ble_scanning_C148547(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, wifi_client, sniffer_filter):
-
     """Run wlan connect ,disconnect ,reconnect and Ble scanning test for 5 minutes"""
 
     try:
@@ -311,7 +348,6 @@ def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_ble_scanning_C148547(
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
                                          ble_test_type="master")
         ble_obj.start()
-
         time.sleep(5)
         with TimeMeasurer() as T:
             t_end = time.time() + 10 * 30
@@ -380,9 +416,75 @@ def test_wifi_sdk_ble_adv_20ms_and_wlan_scanning_C148545(
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
                                                                                         filter_name="probe_request")
         logger().info(f"***** Validating packets for probe request  ******")
-        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
-            'packet_count']
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count']
         assert snif_pkt_count, "Unable to find probe request"
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_wifi_sdk_wlan_scan_ble_radio_init_deinit_c148524(wifi_access_point, wifi_dut, wifi_sniffer, sl_collections):
+
+    """Run ble radio init deinit with wlan scan"""
+    try:
+        test_name = '148524'
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f'dut_mac_address is {dut_mac_address}')
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+
+        logger().info(f"ap_bssid : {ap_mac_address}")
+        wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, test_case=test_name)
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, test_case=test_name)
+
+        with TimeMeasurer() as T:
+            wlan_obj.start()
+            ble_obj.start()
+
+            ble_obj.wait_for_exit()
+            wlan_obj.wait_for_exit()
+        logger().info(f'*** Total execution time = {T.duration} ***')
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_wifi_sdk_wlan_connect_ble_radio_init_deinit_c148525(wifi_access_point, wifi_dut, wifi_sniffer, sl_collections):
+    """Run ble radio init deinit with wlan connect"""
+    try:
+        test_name = '148525'
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f'dut_mac_address is {dut_mac_address}')
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+
+        logger().info(f"ap_bssid : {ap_mac_address}")
+        wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, test_case=test_name)
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, test_case='148524')
+        with TimeMeasurer() as T:
+            wlan_obj.start()
+            ble_obj.start()
+
+            ble_obj.wait_for_exit()
+            wlan_obj.wait_for_exit()
+        logger().info(f'*** Total execution time = {T.duration} ***')
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

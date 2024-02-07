@@ -191,6 +191,19 @@ devices:
                 ssh_port: 1022
                 ssid: "TESTTEST-ASUS"
                 protected_management_frame: 'Disable'
+                #ipv6 configuration
+                connection_type: 'STATIC_IPV6'
+                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1bcz"
+                wan_ipv6_gateway: "2401:4900:1cb3:3444::1"
+                wan_prefix_length: "64"
+                ipv6_state: "1" #0= "stateless" 1="stateful"
+                lan_ipv6_address: "2401:3500:133c:1341:1134:ffed:13cd:1134"
+                lan_prefix_length: "64"
+                #                lan_ipv6_prefix: "2401:3500:133c:1341::"
+                lan_ip_pool_start: "2401:3500:133c:1341::1000"
+                lan_ip_pool_end: "2401:3500:133c:1341::2000"
+                lan_lease_time: "86400"
+                ap_test_ip: '192.168.50.1' #AP LOGIN IP (TEST IP)
                 skip_assertion_failure: True
                 # radius server configuration
                 radius_ip: "192.168.50.176"
@@ -816,6 +829,9 @@ devices:
                 password: '12345678'
                 tls_min_version: '1.0'
                 tls_max_version: '1.2'
+                private_key_file: 'wifi-user.pem'
+                certificate_file: 'wifi-user.pem'
+                ca_file: 'wifi-user.pem'
 
     static_radius_server:
         interfaces:

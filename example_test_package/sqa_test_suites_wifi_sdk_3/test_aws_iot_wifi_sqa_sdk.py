@@ -348,7 +348,7 @@ pytestmark = [
         }
     ),
     pytest.mark.start_state("wifi_access_point", wifi="ap_enabled"),
-    pytest.mark.firmware_app("test_aws")
+
 ]
 
 
@@ -357,7 +357,7 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_connect_sub_publish_c19548(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger,
+def test_wifi_sdk_aws_connect_sub_publish_c19548(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                  sniffer_filter, sl_collections, aws_iot_client, utf_constants):
     """
     Connect to AWS MQTT server subscribe to topic and publish message on the same topic. Initiate disconnection and
@@ -413,7 +413,7 @@ def test_wifi_sdk_aws_connect_sub_publish_c19548(firmware_loader, wifi_sniffer, 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_publish_message_in_thread1_and_receive_message_in_thread2_c19566(firmware_loader, wifi_sniffer,
+def test_wifi_sdk_aws_publish_message_in_thread1_and_receive_message_in_thread2_c19566(wifi_sniffer,
                                                                                        sniffer_filter,
                                                                                        wifi_access_point,
                                                                                        wifi_dut, aws_iot_client,
@@ -477,7 +477,7 @@ def test_wifi_sdk_aws_publish_message_in_thread1_and_receive_message_in_thread2_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_tx_after_rejoin_qos0_C19555(firmware_loader, switch, wifi_sniffer, wifi_access_point, wifi_dut,
+def test_wifi_sdk_aws_tx_after_rejoin_qos0_C19555(switch, wifi_sniffer, wifi_access_point, wifi_dut,
                                                   sniffer_filter, logger, sl_collections, aws_iot_client):
     client_id = 'client_c19555'
     topic = "topic_c19555"
@@ -550,7 +550,7 @@ def test_wifi_sdk_aws_tx_after_rejoin_qos0_C19555(firmware_loader, switch, wifi_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_tx_after_rejoin_qos1_c19556(firmware_loader, switch, wifi_sniffer, wifi_access_point, wifi_dut,
+def test_wifi_sdk_aws_tx_after_rejoin_qos1_c19556(switch, wifi_sniffer, wifi_access_point, wifi_dut,
                                                   sniffer_filter, logger, sl_collections, aws_iot_client):
     client_id = 'client_c19556'
     topic = "topic_c19556"
@@ -624,7 +624,7 @@ def test_wifi_sdk_aws_tx_after_rejoin_qos1_c19556(firmware_loader, switch, wifi_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_check_rejoin_failure_functionality_of_dut_c19549(firmware_loader, wifi_sniffer, switch,
+def test_wifi_sdk_aws_check_rejoin_failure_functionality_of_dut_c19549(wifi_sniffer, switch,
                                                                        sniffer_filter, sl_collections, aws_iot_client,
                                                                        logger, wifi_dut, wifi_access_point, iterations):
     client_id = 'client_c19549'
@@ -719,7 +719,7 @@ def test_wifi_sdk_aws_check_rejoin_failure_functionality_of_dut_c19549(firmware_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "#aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_publish_a_message_on_the_topic_for_every_10_minutes_c19567(firmware_loader, wifi_dut, logger,
+def test_wifi_sdk_aws_publish_a_message_on_the_topic_for_every_10_minutes_c19567(wifi_dut, logger,
                                                                                  sniffer_filter, wifi_sniffer,
                                                                                  wifi_access_point, aws_iot_client,
                                                                                  test_run_time, sl_collections):
@@ -780,7 +780,7 @@ def test_wifi_sdk_aws_publish_a_message_on_the_topic_for_every_10_minutes_c19567
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_publish_data_with_different_length_c19553(firmware_loader, wifi_sniffer, wifi_access_point,
+def test_wifi_sdk_aws_publish_data_with_different_length_c19553(wifi_sniffer, wifi_access_point,
                                                                 wifi_dut, logger, sl_collections, aws_iot_client,
                                                                 sniffer_filter):
     """
@@ -840,7 +840,7 @@ def test_wifi_sdk_aws_publish_data_with_different_length_c19553(firmware_loader,
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.parametrize("test_run_time", [1800])
-def test_wifi_sdk_aws_connect_disconnect_sequence_c19552(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut,
+def test_wifi_sdk_aws_connect_disconnect_sequence_c19552(wifi_sniffer, wifi_access_point, wifi_dut,
                                                          logger, sl_collections, aws_iot_client, test_run_time,
                                                          sniffer_filter):
     """
@@ -902,7 +902,7 @@ def test_wifi_sdk_aws_connect_disconnect_sequence_c19552(firmware_loader, wifi_s
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_connection_when_client_id_is_null_c19558(firmware_loader, wifi_sniffer, wifi_access_point,
+def test_wifi_sdk_aws_connection_when_client_id_is_null_c19558(wifi_sniffer, wifi_access_point,
                                                                wifi_dut, logger, sl_collections, sniffer_filter):
     """
     Verify AWS connection when "AWS_IOT_MQTT_CLIENT_ID" is NULL and clean session flag set to true
@@ -937,7 +937,7 @@ def test_wifi_sdk_aws_connection_when_client_id_is_null_c19558(firmware_loader, 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "#aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_tcp_shutdown_c19546(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client,
+def test_wifi_sdk_aws_tcp_shutdown_c19546(wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client,
                                           logger, sl_collections, sniffer_filter, utf_constants):
     """
     Connect to AWS MQTT server subscribe to any topic, Receive data on the subscribed topic. Close the TCP connection
@@ -999,7 +999,7 @@ def test_wifi_sdk_aws_tcp_shutdown_c19546(firmware_loader, wifi_sniffer, wifi_ac
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_different_lengths_c19554(firmware_loader, wifi_sniffer,
+def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_different_lengths_c19554(wifi_sniffer,
                                                                                        wifi_access_point, wifi_dut,
                                                                                        aws_iot_client, logger,
                                                                                        sl_collections, sniffer_filter):
@@ -1054,8 +1054,8 @@ def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_different_lengths_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(firmware_loader, wifi_sniffer, switch,
-                                                                        wifi_access_point, wifi_dut, aws_iot_client,
+def test_wifi_sdk_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(switch, wifi_sniffer, wifi_access_point,
+                                                                        wifi_dut, aws_iot_client,
                                                                         logger, sl_collections, sniffer_filter):
     client_id = 'client_c19559'
     topic = "topic_c19559"
@@ -1102,6 +1102,9 @@ def test_wifi_sdk_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(firmware
                 logger.info("Pinging to DUT to check rejoin process is completed or not")
                 status = sl_collections.ping(dut_ip, 30, 5)
                 assert status, "Pinging to DUT is failed, DUT not rejoined to AP"
+                wifi_dut.interfaces.wifi.aws_iot_mqtt_autoreconnect_set_status()
+                aws_obj.subscribe_from_dut(wifi_dut, topic, qos=Si91xAwsQos.QOS1)
+                aws_obj.connect_to_aws_server_from_raspi(aws_iot_client)
 
             msg = messages[send_count]
             send_count = send_count + 1
@@ -1125,12 +1128,13 @@ def test_wifi_sdk_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(firmware
         sl_collections.exception_handling(wifi_dut, error)
 
 
+
 @pytest.mark.config('wifi_access_point', wifi={"channel": 5})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "#aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_receive_func_while_receiving_100_msgs_continuously_c19561(firmware_loader, wifi_access_point,
+def test_wifi_sdk_aws_receive_func_while_receiving_100_msgs_continuously_c19561(wifi_access_point,
                                                                                 wifi_sniffer, sniffer_filter, logger,
                                                                                 wifi_dut, aws_iot_client, utf_constants,
                                                                                 sl_collections):
@@ -1203,7 +1207,7 @@ def test_wifi_sdk_aws_receive_func_while_receiving_100_msgs_continuously_c19561(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_receive_100_mqtt_messages_over_2_subscribed_topics_c19563(firmware_loader, wifi_sniffer,
+def test_wifi_sdk_aws_receive_100_mqtt_messages_over_2_subscribed_topics_c19563(wifi_sniffer,
                                                                                 wifi_access_point, sniffer_filter,
                                                                                 wifi_dut, sl_collections,
                                                                                 aws_iot_client, logger, total_bytes):
@@ -1277,7 +1281,7 @@ def test_wifi_sdk_aws_receive_100_mqtt_messages_over_2_subscribed_topics_c19563(
 @pytest.mark.parametrize("publish_len, total_bytes", [(100, 102400)])  # 100 is max limit-file size(1024000)
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_disconnect", "disassociated"])
-def test_wifi_sdk_aws_data_integrity_check_after_sending_1mb_of_data_c19564(firmware_loader, wifi_sniffer, logger,
+def test_wifi_sdk_aws_data_integrity_check_after_sending_1mb_of_data_c19564(wifi_sniffer, logger,
                                                                             wifi_access_point, wifi_dut, sniffer_filter,
                                                                             aws_iot_client, sl_collections, publish_len,
                                                                             iterations, total_bytes):
@@ -1360,7 +1364,7 @@ def test_wifi_sdk_aws_data_integrity_check_after_sending_1mb_of_data_c19564(firm
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_data_integrity_check_after_receiving_1mb_of_data_c19562(firmware_loader, wifi_dut, sniffer_filter,
+def test_wifi_sdk_aws_data_integrity_check_after_receiving_1mb_of_data_c19562(wifi_dut, sniffer_filter,
                                                                               wifi_sniffer, sl_collections, iterations,
                                                                               aws_iot_client, wifi_access_point,
                                                                               logger, publish_len, total_bytes):
@@ -1441,7 +1445,7 @@ def test_wifi_sdk_aws_data_integrity_check_after_receiving_1mb_of_data_c19562(fi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_connect_after_wifi_reconnection_c4053(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut,
+def test_wifi_sdk_aws_connect_after_wifi_reconnection_c4053(wifi_sniffer, wifi_access_point, wifi_dut,
                                                             logger, sl_collections, aws_iot_client, sniffer_filter):
     """
     Connect to AWS MQTT server after connecting to AP second time, the first time connection is closed intentionally by
@@ -1502,7 +1506,7 @@ def test_wifi_sdk_aws_connect_after_wifi_reconnection_c4053(firmware_loader, wif
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_server_not_respond_c4062(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger,
+def test_wifi_sdk_aws_server_not_respond_c4062(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                sl_collections, aws_iot_client, sniffer_filter):
     """
     DUT functionality when server doesn't respond to tcp connection request sent by DUT when DUT is trying to connect
@@ -1551,7 +1555,7 @@ def test_wifi_sdk_aws_server_not_respond_c4062(firmware_loader, wifi_sniffer, wi
 # @pytest.mark.end_state("wifi_dut",
 #                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
 #                              "disassociated"])
-# def test_wifi_sdk_aws_mqtt_keep_alive_func_when_keep_alive_is_0_c19551(firmware_loader, wifi_sniffer, wifi_access_point,
+# def test_wifi_sdk_aws_mqtt_keep_alive_func_when_keep_alive_is_0_c19551(wifi_sniffer, wifi_access_point,
 #                                                                        wifi_dut, logger, sniffer_filter, sl_collections,
 #                                                                        aws_iot_client):
 #     """
@@ -1628,7 +1632,7 @@ def test_wifi_sdk_aws_server_not_respond_c4062(firmware_loader, wifi_sniffer, wi
 #                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
 #                              "disassociated"])
 # @pytest.mark.parametrize("keep_alive", [60, 100, 180])
-# def test_wifi_sdk_aws_mqtt_keep_alive_func_with_different_periods_c19550(firmware_loader, wifi_sniffer,
+# def test_wifi_sdk_aws_mqtt_keep_alive_func_with_different_periods_c19550(wifi_sniffer,
 #                                                                          wifi_access_point,
 #                                                                          wifi_dut, logger, sniffer_filter,
 #                                                                          sl_collections, aws_iot_client, keep_alive

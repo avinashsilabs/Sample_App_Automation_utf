@@ -957,6 +957,16 @@ def test_Coex_sdk_fun_ble_master_adv_wlan_UDP_C133447(
     ble_clients[1].interfaces.bluetooth.close()
     wifi_obj.wait_for_exit()
     wifi_obj.disconnect()
+
+    status = ble_clients[0].interfaces.bluetooth.get_connection_status(
+        ble_obj.ble_dut_address
+    )
+    logger().info(
+        f"Connection status in remote device '{ble_clients[0].name}' is:{status}"
+    )
+    assert (
+        status
+    ), f"Remote device '{ble_clients[0].name}' is not connected to DUT"
     logger().info(f"Initiating BLE disconnection from raspi")
     ble_clients[0].interfaces.bluetooth.disconnect(ble_obj.ble_dut_address)
     wifi_sniffer.interfaces.capture.stop_capture()

@@ -21,6 +21,15 @@ from utf.utf_config import UtfConfig
 def logger():
     return get_logger(__name__)
 
+
+def power_measurement(power_device=None, power_meter=None, dtim=None):
+    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
+        power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
+    elif power_device == "nrf_ppk2_device":
+        power_obj = ppk_power_number_output(power_meter=power_meter)
+    power_obj.get_power_value()
+    
+
 class power_number_output():
     def __init__(self, power_meter = None, dtim=None):
         super().__init__()
@@ -129,22 +138,15 @@ def test_bt_spp_dut_as_master(power_meter, wifi_dut, bt_client):
                                                        sniff_attempt=sniff_attempt, sniff_tout=sniff_tout)
 
             time.sleep(20)
-            logger().info("power numbers measurement initiated")
+
+            logger().info(f"Starting Power Capture")
             power_device = UtfConfig.instance().defaults.get("power_meter", {})
-            if power_device == "keysight_benchvue_power_analyzer_win_wcf":
-                logger().info(f"Power Meter is : {power_meter}")
-                power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
-                power_obj.get_power_value()
-            elif power_device == "nrf_ppk2_device":
-                logger().info(f"The Power Meter is {power_meter}")
-                power_obj = ppk_power_number_output(power_meter=power_meter)
-                power_obj.get_power_value()
+            power_measurement(power_device=power_device, power_meter=power_meter)
             time.sleep(15)
-            time.sleep(5)
+
             logger().info("disconnecting DUT from 3rd party master")
             wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
             bt_server_socket.close()
-
 
 
 @pytest.mark.config(
@@ -206,18 +208,11 @@ def test_bt_per_tx(power_meter, bt_dut, bt_client):
     logger().info("starting per stats")
     bt_dut.interfaces.bluetooth.get_bt_per_tx_stats(cmd_type=cmd_type)
     logger().info("BT per stats successfull")
-
     time.sleep(10)
-    logger().info("power number measurement initiated")
+
+    logger().info(f"Starting Power Capture")
     power_device = UtfConfig.instance().defaults.get("power_meter", {})
-    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
-        logger().info(f"Power Meter is : {power_meter}")
-        power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
-        power_obj.get_power_value()
-    elif power_device == "nrf_ppk2_device":
-        logger().info(f"The Power Meter is {power_meter}")
-        power_obj = ppk_power_number_output(power_meter=power_meter)
-        power_obj.get_power_value()
+    power_measurement(power_device=power_device, power_meter=power_meter)
     time.sleep(15)
 
 
@@ -279,18 +274,11 @@ def test_bt_per_tx_GFSCK_C20583(power_meter, bt_dut, bt_client):
 
     logger().info("starting per stats")
     bt_dut.interfaces.bluetooth.get_bt_per_tx_stats(cmd_type=cmd_type)
-
     time.sleep(10)
-    logger().info("power number measurement initiated")
+
+    logger().info(f"Starting Power Capture")
     power_device = UtfConfig.instance().defaults.get("power_meter", {})
-    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
-        logger().info(f"Power Meter is : {power_meter}")
-        power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
-        power_obj.get_power_value()
-    elif power_device == "nrf_ppk2_device":
-        logger().info(f"The Power Meter is {power_meter}")
-        power_obj = ppk_power_number_output(power_meter=power_meter)
-        power_obj.get_power_value()
+    power_measurement(power_device=power_device, power_meter=power_meter)
     time.sleep(15)
 
 
@@ -354,16 +342,9 @@ def test_bt_per_tx_EDR_HP_C20585(power_meter, bt_dut, bt_client):
 
     logger().info("starting per stats")
     bt_dut.interfaces.bluetooth.get_bt_per_tx_stats(cmd_type=cmd_type)
-
     time.sleep(10)
-    logger().info("power number measurement initiated")
+
+    logger().info(f"Starting Power Capture")
     power_device = UtfConfig.instance().defaults.get("power_meter", {})
-    if power_device == "keysight_benchvue_power_analyzer_win_wcf":
-        logger().info(f"Power Meter is : {power_meter}")
-        power_obj = power_number_output(power_meter=power_meter, dtim=dtim)
-        power_obj.get_power_value()
-    elif power_device == "nrf_ppk2_device":
-        logger().info(f"The Power Meter is {power_meter}")
-        power_obj = ppk_power_number_output(power_meter=power_meter)
-        power_obj.get_power_value()
+    power_measurement(power_device=power_device, power_meter=power_meter)
     time.sleep(15)
