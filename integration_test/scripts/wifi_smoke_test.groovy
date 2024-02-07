@@ -19,7 +19,8 @@ pipeline {
     stages {
         stage('Run Smoke tests') {
             agent {
-                label 'LAB0014503'
+//                label 'LAB0014503'
+                label 'NB0015129'
             }
             environment {
                 UTF_HWMUX_TOKEN = credentials('utf-dev-hwmux-token')

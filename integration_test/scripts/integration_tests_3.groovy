@@ -19,7 +19,8 @@ pipeline {
     stages {
         stage('Run integration tests set 3') {
             agent {
-                label 'LAB0014503'
+//                label 'LAB0014503'
+                label 'NB0015129'
             }
             environment {
                 UTF_HWMUX_TOKEN = credentials('utf-dev-hwmux-token')
