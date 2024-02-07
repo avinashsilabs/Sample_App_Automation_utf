@@ -251,7 +251,7 @@ class WifiJoin(ThreadBase):
         content = content[1:]
         logger().info(f'time_diff_list is {content}')
         for i in content:
-            assert i / self.keep_alive_time > 1.09, "MQTT Keep Alive Packet missed or keep alive duration exceed"
+            assert i / self.keep_alive_time < 1.09, "MQTT Keep Alive Packet missed or keep alive duration exceed"
         logger().info(f'MQTT keep alive packets captured successfully with keep alive time : {self.keep_alive_time}')
 
 
@@ -1466,7 +1466,7 @@ def test_wifi_sdk_mqtt_keep_alive_180_ssl_connection_with_qos0_TC127786(
     when keep alive period is 180"""
 
     try:
-        packet_filter2 = 'Application Data Protocol (Application Data)'
+        packet_filter2 = '    Type/Subtype: QoS Data (0x0028)'
         topic = "mytesttopic"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=400))
         capture_filename = request.node.name
