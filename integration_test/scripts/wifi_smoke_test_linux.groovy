@@ -50,6 +50,7 @@ pipeline {
                 stage('Run Integration Tests') {
                     environment {
                         MWLABUSER_JENKINS_SSH = credentials("mwlabuser_jenkins_ssh")
+                        MILESTONE_BRANCH_NAME = 'release/milestone54'
                     }
                     steps {
                         hwmuxReserveAnyGroupFromLabel(HWMUX_GROUP_LABEL, null, UTF_HWMUX_TOKEN, "HWMUX_GROUP_JSON")  {
@@ -64,7 +65,6 @@ pipeline {
                                     cp utf_core/unit_tests/.coveragerc integration_test/.coveragerc
 
                                     PYTEST_COMMAND="pytest --tb=native example_test_package/sqa_test_suites/smoke_test/test_rs9116_smoke_tests_ci_cd_system.py --manifest /app/manifest/manifest_without_aws_test_agent.yaml"
-
                                     ./executor/launch_utf_tests.sh --harness $HARNESS_NAME --target $UTF_DOCKER_TARGET --pytest_command "$PYTEST_COMMAND"
                                     exitcode=$?
 
