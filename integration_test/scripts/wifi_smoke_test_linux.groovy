@@ -55,7 +55,7 @@ pipeline {
                         hwmuxReserveAnyGroupFromLabel(HWMUX_GROUP_LABEL, null, UTF_HWMUX_TOKEN, "HWMUX_GROUP_JSON")  {
                             timeout(time: 120, unit: 'MINUTES') {
                                 writeFile(file: env.HWMUX_GROUP_JSON_FILE_NAME, text: env.HWMUX_GROUP_JSON)
-                                sh(label: "Run UTF Launcher", script: """
+                                sh(label: "Run UTF Launcher", script: '''
                                     UTF_DOCKER_TARGET=$(./yq eval '.metadata.host_ip' $HWMUX_GROUP_JSON_FILE_NAME)
                                     ./yq eval '.metadata.harness' $HWMUX_GROUP_JSON_FILE_NAME  -P > config/harnesses/$HARNESS_NAME
                                     rm -rf reports
@@ -72,7 +72,7 @@ pipeline {
                                     # wait a bit for reboot, otherwise next job may fail
                                     sleep 15
                                     exit $exitcode
-                                """)
+                                ''')
 //                                dir('integration_test') {
 //                                    archiveArtifacts artifacts: env.TEST_CONFIG_FILE
 //                                }
