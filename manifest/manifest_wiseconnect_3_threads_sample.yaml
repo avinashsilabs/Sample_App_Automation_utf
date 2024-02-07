@@ -1,5 +1,5 @@
 firmware:
-  rs911x: &firmware_file_anchor RS9116W.2.9.0.69.rps
+  rs911x: &firmware_file_anchor RS9116W.2.9.1.12.rps
   efx32: wiseconnect_3_utf_3264.hex
 
 firmware_version_file: *firmware_file_anchor
