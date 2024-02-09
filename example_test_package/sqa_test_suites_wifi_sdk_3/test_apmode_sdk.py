@@ -826,56 +826,58 @@ def test_wifi_sdk_dutap_tcp_tx_rx_c19447(wifi_sniffer, wifi_access_point, net_pe
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "oper_mode": Si91xOperatingMode.AccessPoint,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.DualBluetoothBLE,
-        "features": Si91xFeatureBitMap.PSKSecurity,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-        "security": "WPA2", "ssid": "SILABS_AP_C19436", "passphrase": "12345678", "beacon": 100,
-    },
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.AccessPoint,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.PSKSecurity,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+         "custom_features": Si91xCustomFeatureBitMap.Default,
+         "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+         "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": "11",
+    }
 )
 @pytest.mark.config(
     "wifi_clients",
     wifi={
            0: {
                 "security": "WPA2",
-                "ssid": "SILABS_AP_C19436",
-                "passphrase": "12345678",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
                 "channel": 11,
                 "interface": "wlan0",
                }
          }
 )
-@pytest.mark.skip("htcaps support-NA")
-@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
-@pytest.mark.parametrize("channel", [10])
-def test_wifi_sdk_dutap_verify_beacon_format_c19436(wifi_sniffer, wifi_dut, channel, wifi_access_point,
-                                                    utf_constants, sl_collections, wifi_clients):
+def test_wifi_sdk_dutap_verify_beacon_format_c19436(wifi_sniffer, wifi_dut, wifi_access_point,
+                                                    utf_constants, sl_collections, wifi_clients, sniffer_filter):
     """Verify beacon format sent by APUT"""
-    beacon = 100
-    ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                         utf_constants, capture_filename="test_C19432", dtim_count=None,
-                                         testcase_no=19432)
-    ap_dut_obj.start()
-    ap_dut_obj.wait_for_exit()
-    # wifi_dut.interfaces.wifi.set_htcaps()
-    packet_filter1 = wifi_sniffer.interfaces.capture.get_sniffer_filter(sa_mac_address=
-                                                                        ap_dut_obj.dut_addr['dut_mac_address'],
-                                                                        filter_name="beacon")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-        'Unable to find  beacon frame in Sniffer'
-    packet_filter2 = wifi_sniffer.interfaces.capture.get_sniffer_filter(sa_mac_address=
-                                                                        ap_dut_obj.dut_addr['dut_mac_address'],
-                                                                        filter_name="beacon_ap_mode_dtim_interval")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter2=packet_filter2)['packet_count'], \
-        f'Unable to find dtim interval in Sniffer'
-    packet_filter3 = wifi_sniffer.interfaces.capture.get_sniffer_filter(sa_mac_address=
-                                                                        ap_dut_obj.dut_addr['dut_mac_address'],
-                                                                        filter_name="HT_IE")
-    assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter3=packet_filter3)['packet_count'], \
-        'Unable to find  HT_IE in Sniffer'
+    try:
+        beacon = 100
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+                                             utf_constants, capture_filename="test_C19436",
+                                             testcase_no=19465)
+        ap_dut_obj.start()
+        ap_dut_obj.wait_for_exit()
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
+            filter_name='beacon')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find  beacon in Sniffer'
+        logger().info('********** Validating Beacon interval **********')
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            wlan_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
+            radio_ch=ap_dut_obj.channel,
+            beacon=beacon, filter_name="beacon_ap_mode_dtim_interval")
+        logger().info(f"packet_filter1: {packet_filter1}")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Sniffer: Unable to find beacon_ap_mode_dtim_interval packet in sniffer'
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
 @pytest.mark.wifi_client("raspi_wifi")
