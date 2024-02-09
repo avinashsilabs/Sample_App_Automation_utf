@@ -105,50 +105,23 @@ class WifiConnectionThread(ThreadBase):
             assert status is True, "DUT is not responding to ping request from third party device"
             logger().info(f"ping is successful")
             time.sleep(2)
-            if self.data_transfer:
-                host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-                logger().info(f"Remote device ip :{host_ip}")
-                if self.traffic_type == "TX":
-                    # starting iperf
-                    self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip,
-                    protocol=self.protocol)
-                    self.net_perf_client.interfaces.net_perf.start()
-                    logger().info("sending data from DUT")
-                    timeout = 40
-                    self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
-                                                        local_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                        local_ip=device_ip, remote_ip=host_ip,
-                                                        remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0,
-                                                        timeout=timeout+2)
-                    # # get and print throughput
-                    tp = self.net_perf_client.interfaces.net_perf.process_output()
-                    assert tp is not None, "Throughput not found"
-                    logger().info("data transfer successful")
-                    time.sleep(3)
-                if self.traffic_type == "RX":
-                    # Iperf Client Started
-                    if self.protocol == "UDP":
-                        bandwidth = "68M"
-                        self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
-                        device_ip, protocol=self.protocol, bandwidth=bandwidth)
-                    else:
-                        self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
-                        self.dut_addr['device_ip'], protocol=self.protocol)
+            host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+            logger().info(f"Remote device ip :{host_ip}")
+            if self.test_case_no == 113911 or self.test_case_no == 113913:
+                protocols = ["TCP", "UDP"]
+                traffic_types = ["TX", "RX"]
+                for protocol in protocols:
+                    for traffic_type in traffic_types:
+                        self.sl_collections.run_traffic(
+                            wifi_dut=self.wifi_dut,
+                            net_perf_client=self.net_perf_client,
+                            protocol=protocol,
+                            device_ip=device_ip,
+                            host_ip=host_ip,
+                            timeout=35,
+                            traffic_type=traffic_type,
+                        )
 
-                    self.net_perf_client.interfaces.net_perf.start()
-
-                    logger().info("receiving data from Host")
-                    # open socket and listen for data
-                    timeout = 40
-                    self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
-                                                        local_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                        local_ip=self.device_ip, remote_ip=host_ip,
-                                                        remote_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0,
-                                                        timeout=timeout+2)
-                    logger().info("data received is successful")
-                    time.sleep(3)
             if self.test_case_no == 113909 or self.test_case_no == 113916:
                 logger().info(f"Rejoin Test_case")
             else:
