@@ -596,7 +596,7 @@ def test_ble_scan_aggressive_interval_whitelist_adv_data_2advertisers_index5_C19
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
-@pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_sdk_dut_as_master_white_list_remote_device_c19846(wifi_dut, ble_client, rs_helper_ble, sl_collections):
     with BleLogs(start_collecting_logs=True,
@@ -650,6 +650,7 @@ def test_ble_sdk_dut_as_master_white_list_remote_device_c19846(wifi_dut, ble_cli
         except Exception as error:
             sl_collections.exception_handling(wifi_dut, error)
         finally:
+            wifi_dut.interfaces.wifi.ble_clear_white_list()
             ble_client.interfaces.bluetooth.close()
 
 
@@ -1015,3 +1016,5 @@ def test_ble_sdk_verify_dut_ble_scanning_with_whitelist_device_C19845(ble_client
 
         finally:
             ble_dut.interfaces.wifi.ble_stop_scanning()
+            ble_dut.interfaces.bluetooth.ble_clear_white_list()
+
