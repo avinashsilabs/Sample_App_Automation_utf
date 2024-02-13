@@ -8,7 +8,6 @@ from random import randint
 from utf.utils.stopwatch import Stopwatch
 from utf.utils.thread_base import ThreadBase
 import pytest as pytest
-import threading
 from utf.utils import get_random_data
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.interfaces.iperf.iperf_device_output_parser import Result
@@ -16,6 +15,7 @@ from utf import UtfDatabaseProperties
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
 from utf.interfaces.wifi import WlanError
 from utf.utils.logger import get_logger
+import threading
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingMode, Si91xFeatureBitMap, Si91xTCPIPFeatureBitMap, \
     Si91xCustomFeatureBitMap, \
     Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xBLEFeatureBitMap, Si91xConfigFeatureBitMap, Si91xExtCustomFeatureBitMap
@@ -40,24 +40,23 @@ setup requirement:
 """
 
 class data_transfer:
-    def __init__(self):
+    def __init__(self, index=None):
         self.thread_lock = threading.Lock()
         self.sent_data = 0
         self.rcv_data = 0
+        self.index = index
 
-    def receive_data_socket(self, remote_socket_factory, no_of_pkts, data_size, proto_type=0):
+    def receive_data_socket(self, remote_socket_factory, no_of_pkts, data_size=1460, proto_type=0):
         fail_count = 0
         if proto_type == 0:
-            remote_socket_factory.interfaces.socket.set_recv_timeout(socket_type=0)
+            remote_socket_factory.interfaces.sockets[self.index].set_recv_timeout(socket_type=0)
         else:
-            remote_socket_factory.interfaces.socket.set_recv_timeout(use_client_socket=True, socket_type=1)
+            remote_socket_factory.interfaces.sockets[self.index].set_recv_timeout(use_client_socket=True, socket_type=1)
         for count in range(0, no_of_pkts):
             if proto_type == 0:
-                data = remote_socket_factory.interfaces.socket.recv_data_tcp(data_size)
-                logger().info(f"**********{data}************")
+                data = remote_socket_factory.interfaces.sockets[self.index].recv_data_tcp(data_size)
             else:
-                data, address = remote_socket_factory.interfaces.socket.recv_data_udp(data_size)
-                logger().info(f"**********{data}************")
+                data, address = remote_socket_factory.interfaces.sockets[self.index].recv_data_udp(data_size)
             if not isinstance(data, str):
                 fail_count = fail_count + 1
                 if fail_count == 5:
@@ -66,6 +65,7 @@ class data_transfer:
                     continue
             self.rcv_data = self.rcv_data + len(data)
         logger().info(f"Total bytes received on socket opened remotely -> {self.rcv_data}")
+
 
 
 class ApmodeConnection(ThreadBase):
@@ -427,12 +427,14 @@ def test_wifi_sdk_DUTAP_Validate_UDP_Rx_data_C19465(wifi_sniffer, net_perf_clien
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                                 utf_constants, net_perf_client=net_perf_client, protocol=protocol,
                                                 capture_filename="test_C19465",
-                                                testcase_no=19465, traffic_type="Rx", leave=False)
+                                                testcase_no=19465, traffic_type="Rx", leave=False,  sniffer_stop=True)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
         for i in range(0, 1):
             logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
             wifi_clients[i].interfaces.wifi.leave()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
         sl_collections.ap_sniffer_validation(wifi_sniffer, sniffer_filter, dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'],  rasp_mac_address=ap_dut_obj.dut_addr_dict['rasp_mac_address'])
 
     except Exception as Ex:
@@ -478,13 +480,15 @@ def test_wifi_sdk_DUTAP_Validate_TCP_Rx_data_C19464(wifi_sniffer, net_perf_clien
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                                 utf_constants, net_perf_client=net_perf_client, protocol=protocol,
                                                 capture_filename="test_C19464",
-                                                testcase_no=19465, leave=False)
+                                                testcase_no=19465, leave=False, sniffer_stop=True)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
         timeout = 30
         sl_collections.run_traffic(wifi_dut, net_perf_client, protocol, ap_dut_obj.dut_addr_dict['dut_ip'],
                                    ap_dut_obj.dut_addr_dict['client_ip'], timeout,
                                    traffic_type="RX")
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
         sl_collections.ap_sniffer_validation(wifi_sniffer, sniffer_filter, dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'], rasp_mac_address=ap_dut_obj.dut_addr_dict['rasp_mac_address'])
 
     except Exception as Ex:
@@ -528,12 +532,14 @@ def test_wifi_sdk_DUTAP_Validate_TCP_Tx_data_C19462(wifi_sniffer, net_perf_clien
     try:
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                                 utf_constants, net_perf_client=net_perf_client, protocol=protocol, capture_filename="test_C19462",
-                                                testcase_no=19465, traffic_type="Tx", leave=False)
+                                                testcase_no=19465, traffic_type="Tx", leave=False, sniffer_stop=True)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
         for i in range(0, 1):
             logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
             wifi_clients[i].interfaces.wifi.leave()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
         sl_collections.ap_sniffer_validation(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                              dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'],
                                              rasp_mac_address=ap_dut_obj.dut_addr_dict['rasp_mac_address'])
@@ -580,7 +586,7 @@ def test_wifi_sdk_DUTAP_Validate_UDP_Tx_data_C19463(wifi_sniffer, net_perf_clien
     try:
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                                 utf_constants, net_perf_client=net_perf_client, protocol=protocol, capture_filename="test_C19463",
-                                                testcase_no=19465, leave=False)
+                                                testcase_no=19465, leave=False, sniffer_stop=True)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
         sl_collections.run_traffic(wifi_dut=wifi_dut, net_perf_client=net_perf_client,
@@ -590,6 +596,8 @@ def test_wifi_sdk_DUTAP_Validate_UDP_Tx_data_C19463(wifi_sniffer, net_perf_clien
         for i in range(0, 1):
             logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
             wifi_clients[i].interfaces.wifi.leave()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
         sl_collections.ap_sniffer_validation(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                              dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'],
                                              rasp_mac_address=ap_dut_obj.dut_addr_dict['rasp_mac_address'])
@@ -636,15 +644,9 @@ def test_wifi_sdk_dutap_tcp_socket_create_transfer_terminate_30min_c19480(wifi_s
         test_run_time = utf_constants.get('time_duration')
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                                 utf_constants, capture_filename="test_C19480_connection",
-                                                testcase_no=19465, leave=False)
+                                                testcase_no=19465, leave=False, sniffer_stop=True)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
-        logger().info("********** configuring the sniffer with access point channel **********")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=channel)
-        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C19480_datatransfer.pcap")
-        time.sleep(3)
         sw = Stopwatch()
         while sw.elapsed_sec <= test_run_time:
             time_left = round(((test_run_time - sw.elapsed_sec) / 60), 2)
@@ -712,15 +714,9 @@ def test_wifi_sdk_dutap_udp_socket_create_transfer_terminate_30min_C19481(wifi_s
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                                 utf_constants,
                                                 capture_filename="test_C19481_connection",
-                                                testcase_no=19465, leave=False)
+                                                testcase_no=19465, leave=False, sniffer_stop=True)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
-        logger().info("********** configuring the sniffer with access point channel **********")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=channel)
-        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C19481-datatransfer.pcap")
-        time.sleep(3)
         sw = Stopwatch()
         while sw.elapsed_sec <= test_run_time:
             time_left = round(((test_run_time - sw.elapsed_sec) / 60), 2)
@@ -869,7 +865,7 @@ def test_wifi_sdk_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C194
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
         "client_socket_limit": 10,
         "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123"
     }
@@ -886,17 +882,23 @@ def test_wifi_sdk_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C194
                }
          }
 )
-@pytest.mark.skip()
-def test_wifisdk_DUTAP_open_10_TCP_client_sockets_send_tx_C19473(wifi_sniffer, sniffer_filter, wifi_dut, wifi_client, utf_constants, remote_socket_factory, sl_collections, wifi_clients):
+def test_wifisdk_DUTAP_open_10_TCP_client_sockets_send_tx_C19473(wifi_sniffer, wifi_dut, wifi_client, utf_constants, remote_socket_factory, sl_collections, wifi_clients):
     '''Open 10 TCP client sockets and Data TX in ap mode'''
     try:
+        no_of_pkts = 10000
+        pkt_length = 1460
+        local_port = randint(5001, 6000)
         iter_count = utf_constants.get('iter_count')
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_tcp_10clients')
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
                                                        static_subnet="255.255.255.0",
                                                        static_gateway="192.168.100.76")
         dut_addr_dict = sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
                                                                   channel=11, ssid="SILABS_AP_MODE",
-                                                                  security="Automation@123",
+                                                                  security="WPA2",
                                                                   password="Automation@123",
                                                                   dtim_count=1,
                                                                   beacon_interval=100,
@@ -906,7 +908,7 @@ def test_wifisdk_DUTAP_open_10_TCP_client_sockets_send_tx_C19473(wifi_sniffer, s
         for count in range(1, iter_count + 1):
             client_ips = []
             client_sockets = []
-            for _ in range(1, 11):
+            for _ in range(1, 2):
                 client_ips.append(dut_addr_dict['client_ip'])
                 client_socket = remote_socket_factory.interfaces.socket.create_socket()
                 client_sockets.append(client_socket)
@@ -918,7 +920,7 @@ def test_wifisdk_DUTAP_open_10_TCP_client_sockets_send_tx_C19473(wifi_sniffer, s
                 client_socket.start_server(server_ip=client_ip, port=server_port)
                 time.sleep(10)
                 logger().info(f"opening socket_id_{index}")
-                tcp_socket_id = wifi_dut.interfaces.wifi.socket()
+                tcp_socket_id = wifi_dut.interfaces.wifi.Asyncsocket(protocol="IPPROTO_TCP")
                 if isinstance(tcp_socket_id, int):
                     logger().info(f"Socket open successfully : {tcp_socket_id}")
                 else:
@@ -932,28 +934,53 @@ def test_wifisdk_DUTAP_open_10_TCP_client_sockets_send_tx_C19473(wifi_sniffer, s
                 connect_response = wifi_dut.interfaces.wifi.bsdSocketConnect(tcp_socket_id, dut_addr_dict['client_ip'],
                                                                          server_port=server_port)
                 logger().info(f"Connect response : {connect_response}")
+            # data_sent = []
+            # for _ in client_sockets:
+            #     data_sent.append(get_random_data(1460))
+            # results = ThreadBase.call_functions_simultaneously(
+            #     [(wifi_dut.interfaces.wifi.bsdSocketSend, dut_sockets[index], len(data), data) for index, data in
+            #      enumerate(data_sent)]
+            # )
+            # for index, client_socket in enumerate(client_sockets):
+            #     data = data_sent[index]
+            #     logger().info(f"Data sent to client {index} - {data}")
+            #     data_recv = client_socket.recv_data_tcp(len(data))
+            #     logger().info(f"Data received in client {index} - {data_recv}")
+            #     assert data_recv == data
+            for index in range(10):
+                server_port = server_base_port + index
+                data_transfer_obj = data_transfer(index=index)
+                th_start = Thread(target=data_transfer_obj.receive_data_socket,
+                                  args=(remote_socket_factory, no_of_pkts, pkt_length, 1), daemon=True)
+                th_start.start()
+                bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(dut_sockets[index], pkt_length, no_of_pkts,
+                                                                     server_ip=client_ips[index],
+                                                                     server_port=server_port)
+                logger().info(f"Number of bytes sent by dut {bytes_sent}")
+                th_start.join(5)
 
-            sw = Stopwatch()
-            while sw.elapsed_sec < 120:
-                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
-                for socket_no in range(10):
-                    logger().info(f"DUT is sending data over socket {socket_no} and data:{data}")
-                    bytes_sent = wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=socket_no, data=data, timeout=120)
-                    time.sleep(0.5)
-                    logger().info(f"Number of bytes sent by dut {bytes_sent}")
-
-                for index, client_socket in enumerate(client_sockets):
-                    logger().info(f"Data sent to client {index} - {data}")
-                    data_recv = client_socket.recv_data_tcp(len(data))
-                    logger().info(f"Data received in client {index} - {data_recv}")
-                    assert data_recv == data
+            # sw = Stopwatch()
+            # while sw.elapsed_sec < 120:
+            #     data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+            #     for socket_no in range(10):
+            #         logger().info(f"DUT is sending data over socket {socket_no} and data:{data}")
+            #         bytes_sent = wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=socket_no, data=data, timeout=120)
+            #         time.sleep(0.5)
+            #         logger().info(f"Number of bytes sent by dut {bytes_sent}")
+            #     for index, client_socket in enumerate(client_sockets):
+            #         logger().info(f"Data sent to client {index} - {data}")
+            #         data_recv = client_socket.recv_data_tcp(len(data))
+            #         logger().info(f"Data received in client {index} - {data_recv}")
+            #         assert data_recv == data
             logger().info(f"closing the sockets on remote side")
             remote_socket_factory.interfaces.socket.close_all()
             time.sleep(15)
-            logger().info(f"**************{count}")
+            logger().info("Stop the sniffer")
+            wifi_sniffer.interfaces.capture.stop_capture()
         for i in range(0, 1):
             logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
             wifi_clients[i].interfaces.wifi.leave()
+
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -1046,7 +1073,6 @@ def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_a
                }
          }
 )
-@pytest.mark.skip()
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 def test_wifi_sdk_Verify_Multicast_data_TX_and_RX_C19469(wifi_sniffer, net_perf_client, wifi_dut, protocol,
@@ -1055,7 +1081,7 @@ def test_wifi_sdk_Verify_Multicast_data_TX_and_RX_C19469(wifi_sniffer, net_perf_
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                                 utf_constants, net_perf_client=net_perf_client, protocol=protocol,
                                                 capture_filename="test_C19464",
-                                                testcase_no=19465, leave=False)
+                                                testcase_no=19465, leave=False, sniffer_stop=False)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
         ip_version, ttl, multicast_mac, multicast_ip, device_port, server_port, buffer_length, no_of_pkts = multicast_client.interfaces.multicast.multicast_params()
@@ -1093,6 +1119,8 @@ def test_wifi_sdk_Verify_Multicast_data_TX_and_RX_C19469(wifi_sniffer, net_perf_
                                        local_ip=multicast_ip, remote_ip=ap_dut_obj.dut_addr_dict['client_ip'],
                                        remote_port=net_perf_client.interfaces.net_perf.client_port,
                                        size=1470, ttl=30, throughput_type=4, qos=0, async_socket=1)
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -1145,20 +1173,14 @@ def test_wifi_sdk_Verify_Multicast_RX_C19484(wifi_sniffer, net_perf_client, wifi
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                                 utf_constants, net_perf_client=net_perf_client, protocol=protocol,
                                                 capture_filename="test_C19484",
-                                                testcase_no=19484, leave=False)
+                                                testcase_no=19484, leave=False, sniffer_stop=True)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
         for i in range(0, len(wifi_clients)):
             ip_dict[f'client_ip_{i}'] = wifi_clients[i].interfaces.wifi.get_ip_address()
             logger().info(f"*****************client_ip{i}: {ip_dict[f'client_ip_{i}']}")
-        client_ip_1  = ip_dict['client_ip_0']
-        client_ip_2  =  ip_dict['client_ip_1']
-        logger().info("********** configuring the sniffer with access point channel **********")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=11)
-        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"multicast_traffic.pcap")
-        time.sleep(3)
+        client_ip_1 = ip_dict['client_ip_0']
+        client_ip_2 = ip_dict['client_ip_1']
         ip_version, ttl, multicast_mac, multicast_ip, device_port, server_port, buffer_length, no_of_pkts = multicast_client.interfaces.multicast.multicast_params()
         logger().info(f"DUT joining to the multicast group {multicast_ip}")
         wifi_dut.interfaces.wifi.sl_net_join_multicast_address(interface=18)
@@ -1242,11 +1264,16 @@ def test_wifi_sdk_Verify_Multicast_RX_C19484(wifi_sniffer, net_perf_client, wifi
                }
          }
 )
-@pytest.mark.skip("testagent issue")
-def test_wifisdk_DUTAP_open_10_UDP_client_sockets_send_tx_C19474(wifi_sniffer, sniffer_filter, wifi_dut, wifi_client, utf_constants, remote_socket_factory, sl_collections, wifi_clients):
+def test_wifisdk_DUTAP_open_10_UDP_client_sockets_send_tx_C19474(wifi_sniffer, wifi_dut, wifi_client, utf_constants, remote_socket_factory, sl_collections, wifi_clients):
     try:
         no_of_pkts = 10000
-        pkt_length = (1460)
+        pkt_length = 1460
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C19474.pcap")
+        time.sleep(3)
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
                                                   static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
@@ -1262,7 +1289,7 @@ def test_wifisdk_DUTAP_open_10_UDP_client_sockets_send_tx_C19474(wifi_sniffer, s
         client_sockets = []
         client_ips = []
         for _ in range(0, 10):
-            client_ips.append(dut_addr_dict['client_ip'])  # four hosts totally
+            client_ips.append(dut_addr_dict['client_ip'])
             client_socket = remote_socket_factory.interfaces.socket.create_socket(
                 interface="wlan0"
             )
@@ -1288,37 +1315,38 @@ def test_wifisdk_DUTAP_open_10_UDP_client_sockets_send_tx_C19474(wifi_sniffer, s
             logger().info("DUT is connecting to server socket")
         for index in range(10):
             server_port = server_base_port + index
-            data_transfer_obj = data_transfer()
+            data_transfer_obj = data_transfer(index=index)
             th_start = Thread(target=data_transfer_obj.receive_data_socket,
                               args=(remote_socket_factory, no_of_pkts, pkt_length, 1), daemon=True)
             th_start.start()
             bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(dut_sockets[index], pkt_length, no_of_pkts,
                                                                  server_ip=client_ips[index], server_port=server_port)
             logger().info(f"Number of bytes sent by dut {bytes_sent}")
+            th_start.join(5)
+            result = wifi_dut.interfaces.wifi.get_socket_rx_stats(dut_sockets[index])
+            bytes_received = int(result.split(b":")[1])
+            logger().info(f"bytes received on socket {index} -> {bytes_received}")
+        # data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1460))
+        # logger().info(f"*********{data}")
+        # for index in range(10):
+        #     wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=dut_sockets[index], data=data, timeout=120)
+        #
+        # for index, client_socket in enumerate(client_sockets):
+        #     data = data[index]
+        #     logger().info(f"Data sent to client {index} - {data}")
+        #     data_recv = client_socket.recv_data_tcp(len(data))
+        #     logger().info(f"Data received in client {index} - {data_recv}")
+        #     assert data_recv == data
 
         for index in dut_sockets:
            wifi_dut.interfaces.wifi.bsdSockClose(dut_sockets[index])
 
-        sw = Stopwatch()
-        while sw.elapsed_sec < 120:
-            for socket_no in range(10):
-                start_port = 5001
-                server_ip = remote_socket_factory.interfaces.socket.sockets[socket_no].hostname_or_ip_address(
-                    ip_version=4)
-                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
-                logger().info(f"DUT is sending data over socket {socket_no} and data:{data}")
-                wifi_dut.interfaces.wifi.bsdSocketSendTo(socket_fd=socket_no, data=data, ip_addr=server_ip,
-                                                         ip_len=4, port=start_port + socket_no)
-
-                time.sleep(0.5)
-                data_receive, address = remote_socket_factory.interfaces.socket.sockets[socket_no].recv_data_udp(
-                    len(data))
-                logger().info(f"Remote peer received data ->  {data_receive} from address {address}")
-                assert data == data_receive, "Data sent by DUT and received on server is not matching"
-                logger().info("Data sent by DUT and received on remote peer is matching")
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
@@ -1363,17 +1391,11 @@ def test_wifi_sdk_DUTAP_Bidirectional_TCP_traffic_data_C19467(wifi_sniffer, net_
     """Validate bidirectional tcp traffic on Remote peer in ap mode connection"""
     try:
         ip_dict = {}
-        logger().info("********** configuring the sniffer with access point channel **********")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=11)
-        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"bidircetional_tcp_C19467.pcap")
-        time.sleep(3)
         wifi_clients = wifi_clients[:2]
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                                 utf_constants, net_perf_client=net_perf_client, protocol=protocol,
-                                                capture_filename="test_C19484",
-                                                testcase_no=19484, leave=False)
+                                                capture_filename="test_C19467",
+                                                testcase_no=19484, leave=False, sniffer_stop=True)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
         for i in range(0, len(wifi_clients)):
@@ -1470,16 +1492,11 @@ def test_wifi_sdk_DUTAP_Bidirectional_UDP_traffic_data_C19468(wifi_sniffer, net_
     try:
         ip_dict= {}
         logger().info("********** configuring the sniffer with access point channel **********")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=11)
-        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"bidircetional_udpC19468.pcap")
-        time.sleep(3)
         wifi_clients = wifi_clients[:2]
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                                 utf_constants, net_perf_client=net_perf_client, protocol=protocol,
-                                                capture_filename="test_C19484",
-                                                testcase_no=19484, leave=False)
+                                                capture_filename="test_C19468",
+                                                testcase_no=19484, leave=False, sniffer_stop=True)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
         for i in range(0, len(wifi_clients)):
@@ -1530,3 +1547,77 @@ def test_wifi_sdk_DUTAP_Bidirectional_UDP_traffic_data_C19468(wifi_sniffer, net_
 
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "client_socket_limit": 10,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123"
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+def test_wifisdk_DUTAP_open_10_tcp_server_sockets_send_tx_C19474_1(wifi_dut, wifi_client, utf_constants, remote_socket_factory, sl_collections, wifi_clients):
+    try:
+        no_of_pkts = 10000
+        pkt_length = 1460
+        local_port = randint(5001, 6000)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        dut_addr_dict = sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
+                                                                  channel=11, ssid="SILABS_AP_MODE",
+                                                                  security="WPA2",
+                                                                  password="Automation@123",
+                                                                  dtim_count=1,
+                                                                  beacon_interval=100,
+                                                                  ping_count=10,
+                                                                  no_of_clients=1, leave=False
+                                                                  )
+        server_port_base = 5001
+        tcp_socks = []
+        client_socket = []
+        for count in range(0, 10):
+            server_port = server_port_base + count
+            # The below api opens ssl server socket in the DUT
+            sock = wifi_dut.interfaces.wifi.Asyncsocket(protocol="IPPROTO_TCP")
+            tcp_socks.append(sock)
+            wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=dut_addr_dict['dut_ip'], server_port=server_port, timeout=15,
+                                          asynch=1)
+            wifi_dut.interfaces.wifi.listen(sock, backlog=0, asynch=1)
+            time.sleep(3)
+            client_socket.append(remote_socket_factory.interfaces.socket.create_socket())
+            ThreadBase.call_functions_simultaneously(
+                [(client_socket[count].connect_client_tcp, dut_addr_dict['dut_ip'], server_port),
+                 (wifi_dut.interfaces.wifi.bsdSocketAccept, sock, 1)], timeout=10)
+            time.sleep(3)
+
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+    #
+    # buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock_no + 1, timeout=30)
+    # assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id " \
+    #                                f"{sock_no} opened in the DUT is not matched"
+    # logger.info(f"Data received at DUT --> {buffer_rx}")

@@ -37,7 +37,7 @@ def __print_throughput(iperf_throughput: dict):
 class ApModeClientConnections(ThreadBase):
     def __init__(self, wifi_dut, wifi_clients, wifi_sniffer,
                  sl_collections, utf_constants,  net_perf_client=None, protocol=None, testcase_no=None, capture_filename=None,
-                 dtim_period=None, beacon=None, traffic_type=None, leave=True, enable_data_rate=False, sniffer_stop=True):
+                 dtim_period=None, beacon=None, traffic_type=None, leave=True, enable_data_rate=False, sniffer_stop=False):
         self.wifi_dut = wifi_dut
         self.wifi_clients = wifi_clients
         self.net_perf_client = net_perf_client
