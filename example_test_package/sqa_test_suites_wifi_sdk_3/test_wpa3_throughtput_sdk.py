@@ -103,6 +103,8 @@ class WifiConnectionThread(ThreadBase):
                                                                      power_save=False, ping_after_power_save=False)
             logger().info("DUT successfully connected with AP")
             time.sleep(2)
+            self.wifi_dut.interfaces.wifi.switch_host_frequency()
+            time.sleep(2)
             if self.data_transfer:
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
@@ -146,7 +148,7 @@ class WifiConnectionThread(ThreadBase):
                                                             local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
                                                             remote_port=self.net_perf_client.interfaces.net_perf.client_port,
                                                             size=size, ttl=30, throughput_type=throughput_type, qos=0,
-                                                            timeout=timeout+2)
+                                                            async_socket=1, timeout=timeout+2)
                         logger().info("data received is successful")
                         time.sleep(3)
 
