@@ -72,16 +72,19 @@ class BleScan(ThreadBase):
         for event in events:
             if event.event_type == AsyncEventIdentifiers.ADVERTISE:
                 if "rsi_ble_simple_central_on_adv_report_event" in event.event_data:
-                    logger().info(f"********{event.event_data}**************")
                     adv_data_list = re.findall(r"adv_data:[\d-]*", event.event_data)
+                    data = adv_data_list[0].split('adv_data:')
+                    data1 = data[1].split('-')
+                    compare_data = data1[::-1]
+                    adv_data_list1 = list(reversed(compare_data[1:]))
                     whitelist_string = ""
-                    for data in adv_data_list:
+                    for data in adv_data_list1:
                         if data != '0':
                             data1 = int(data, base=10)
                             ascii_value = chr(data1)
                             whitelist_string = whitelist_string + ascii_value
-                    for i in range(len(adv_data_list)):
-                        d = chr(int(adv_data_list[i]))
+                    for i in range(len(adv_data_list1)):
+                        d = chr(int(adv_data_list1[i]))
                         if d.isalpha():
                             index = i
                             logger().info(f"*********index found in scan results : {index} ***************")
@@ -117,10 +120,13 @@ class BleScan(ThreadBase):
         assert flag, "DUT ISN'T LISTED IN SCAN RESULTS"
         if flag:
             logger().info("REMOTE DEVICE 1 IS VISIBLE IN SCAN RESULTS")
-        logger().info("....CONNECT TO DUT AND MAC ADDRESS....")
-        connect_state = self.ble_clients.interfaces.bluetooth.connect(self.ble_dut_address)
-        logger().info(f"THE STATE IS: {connect_state}")
-        assert connect_state, "UNABLE TO CONNECT TO THE GIVEN ADDRESS"
+        try:
+            logger().info("....CONNECT TO DUT AND MAC ADDRESS....")
+            connect_state = self.ble_clients.interfaces.bluetooth.connect(self.ble_dut_address)
+            logger().info(f"THE STATE IS: {connect_state}")
+            assert connect_state, "UNABLE TO CONNECT TO THE GIVEN ADDRESS"
+        except Exception:
+            self.wifi_dut.interfaces.wifi.ble_stop_advertising()
         time.sleep(60)
 
     def check_device_state(self):
@@ -625,6 +631,7 @@ def test_ble_sdk_dut_as_master_white_list_remote_device_c19846(wifi_dut, ble_cli
                 wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address,
                                                             ble_scan_filter_type=1,
                                                             timeout=30)
+                time.sleep(50)
                 enable_wifi_ps = wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
                 assert enable_wifi_ps == 0, 'failed to enable wlan power save'
                 enable_bt_ps = wifi_dut.interfaces.wifi.enable_bt_power_save(
@@ -698,8 +705,11 @@ def test_sdk_ble_advertising_with_whitelist_filter_policy_0x01_C19841(wifi_dut, 
         logger().info(f"SCAN RESULTS FROM REMOTE DEVICE 2:*********{found_devices}*****************")
         assert wifi_dut.interfaces.wifi.ble_address in found_devices, "DUT ISN'T LISTED IN SCAN RESULTS"
         logger().info("FOUND DUT BD ADDRESS IN SCAN RESULTS")
-        logger().info("....CONNECT TO DUT WITH MAC ADDRESS....")
-        ble_client2.interfaces.bluetooth.connect(bt_dut_address)
+        try:
+            logger().info("....CONNECT TO DUT WITH MAC ADDRESS....")
+            ble_client2.interfaces.bluetooth.connect(bt_dut_address)
+        except Exception:
+            wifi_dut.interfaces.wifi.ble_stop_advertising()
         time.sleep(60)
         status = ble_client2.interfaces.bluetooth.get_connection_status(bt_dut_address)
         logger().info(f"Connection status in remote device '{ble_client2}' is:{status}")
@@ -761,8 +771,11 @@ def test_sdk_ble_slave_connection_with_whitelist_filter_policy_0x00_C19843(wifi_
         logger().info(f"SCAN RESULTS FROM REMOTE DEVICE 2:*********{found_devices}*****************")
         assert wifi_dut.interfaces.wifi.ble_address in found_devices, "DUT ISN'T LISTED IN SCAN RESULTS"
         logger().info("FOUND DUT BD ADDRESS IN SCAN RESULTS")
-        logger().info("....CONNECT TO DUT WITH MAC ADDRESS....")
-        ble_client2.interfaces.bluetooth.connect(bt_dut_address)
+        try:
+            logger().info("....CONNECT TO DUT WITH MAC ADDRESS....")
+            ble_client2.interfaces.bluetooth.connect(bt_dut_address)
+        except Exception:
+            wifi_dut.interfaces.wifi.ble_stop_advertising()
         time.sleep(60)
         status = ble_client2.interfaces.bluetooth.get_connection_status(bt_dut_address)
         logger().info(f"Connection status in remote device '{ble_client2}' is:{status}")
