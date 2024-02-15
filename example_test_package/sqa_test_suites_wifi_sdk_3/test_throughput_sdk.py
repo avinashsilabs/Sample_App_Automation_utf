@@ -223,7 +223,7 @@ class WifiJoinThread(ThreadBase):
                                                         local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
                                                         remote_port=self.net_perf_client.interfaces.net_perf.client_port,
                                                         size=size, ttl=30, throughput_type=throughput_type, qos=0,
-                                                        async_socket=0, timeout=timeout+2)
+                                                        async_socket=1, timeout=timeout+2)
                     logger().info("data received is successful")
                     time.sleep(3)
 

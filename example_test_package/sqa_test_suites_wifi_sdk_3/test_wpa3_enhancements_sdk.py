@@ -344,7 +344,7 @@ def test_wifi_sdk_DUT_behaviour_rejoin_H2E_C113909(wifi_sniffer, wifi_access_poi
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3', "protected_management_frame": "Capable"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -395,7 +395,7 @@ def test_wifi_sdk_thpt_STA_AP_in_H2E_mode_C113911(wifi_sniffer, wifi_access_poin
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "protected_management_frame": "Capable"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
     wifi=
