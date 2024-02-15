@@ -1169,14 +1169,16 @@ def test_wifi_sdk_Verify_Multicast_data_TX_and_RX_C19469(wifi_sniffer, net_perf_
 def test_wifi_sdk_Verify_Multicast_RX_C19484(wifi_sniffer, net_perf_client, wifi_dut, protocol,
                                                     utf_constants, sniffer_filter, sl_collections, wifi_clients, multicast_client, net_perf_clients):
     try:
+        assert len(wifi_clients) >= 2, f"Minimum 2 raspi devices needed for this test"
         ip_dict = {}
+        timeout = 60
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                                 utf_constants, net_perf_client=net_perf_client, protocol=protocol,
                                                 capture_filename="test_C19484",
                                                 testcase_no=19484, leave=False, sniffer_stop=True)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
-        for i in range(0, len(wifi_clients)):
+        for i in range(0, 2):
             ip_dict[f'client_ip_{i}'] = wifi_clients[i].interfaces.wifi.get_ip_address()
             logger().info(f"*****************client_ip{i}: {ip_dict[f'client_ip_{i}']}")
         client_ip_1 = ip_dict['client_ip_0']
@@ -1191,7 +1193,7 @@ def test_wifi_sdk_Verify_Multicast_RX_C19484(wifi_sniffer, net_perf_client, wifi
                 logger().info(f"************1st raspi: {net_perf_clients[i].name}*********")
                 logger().info("***** Initiating UDP RX traffic from DUT *****")
                 net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=multicast_ip,
-                                                                time_out=30,
+                                                                time_out=timeout,
                                                                 protocol=protocol, time_to_leave="32",
                                                                 bandwidth="60M",
                                                                 host_role="C", bind_address=host_ip)
@@ -1210,7 +1212,7 @@ def test_wifi_sdk_Verify_Multicast_RX_C19484(wifi_sniffer, net_perf_client, wifi
                 logger().info(f"************2nd raspi: {net_perf_clients[i].name}*********")
                 logger().info("***** Initiating UDP RX traffic from DUT *****")
                 net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=multicast_ip,
-                                                                time_out=30,
+                                                                time_out=timeout,
                                                                 protocol=protocol, time_to_leave="32",
                                                                 bandwidth="60M",
                                                                 host_role="C", bind_address=host_ip)
