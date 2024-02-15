@@ -10,6 +10,7 @@ pipeline {
     }
     environment {
         UTF_HWMUX_TOKEN = credentials('utf-sqa-hwmux-token')
+        ARTIFACTORY_CREDENTIALS = credentials('artifactory-username-password')
         JENKINS_USER_NAME = "${sh(script:'id -un', returnStdout: true).trim()}"
         JENKINS_USER_ID = "${sh(script:'id -u', returnStdout: true).trim()}"
         JENKINS_GROUP_ID = "${sh(script:'id -g', returnStdout: true).trim()}"
@@ -235,13 +236,13 @@ pipeline {
 
                                     PACKAGE_TYPE=FIRMWARE_NAME.split("\\.")[0]
                                     withEnv(["PACKAGE_TYPE=${PACKAGE_TYPE}"]){
-                                        sh """
+                                        sh '''
                                         cd manifest
-                                       # Specify a local directory to save the downloaded files
-                                        wget --recursive --no-parent --no-directories --reject "index.html*" -P . ${ARTIFACTORY_URL}/${ARTIFACTORY_FOLDER}/${FIRMWARE_NAME}/${SL_NET_COMMIT}
+                                        # Specify a local directory to save the downloaded files
+                                        jf rt dl --flat --url "https://artifactory.silabs.net/artifactory"  --insecure-tls --user $ARTIFACTORY_CREDENTIALS_USR --password $ARTIFACTORY_CREDENTIALS_PSW  "iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${ARTIFACTORY_FOLDER}/${FIRMWARE_NAME}/${SL_NET_COMMIT}"                          
                                         ls -l
                                                                         
-                                        """
+                                        '''
                                     }
                                 }
                             }
