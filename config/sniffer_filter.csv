@@ -152,4 +152,5 @@ router_advertisement,(wlan.da == {{ da_addr }}), and (ip.version == 6) and (icmp
 router_solicitation,(wlan.sa == {{ sa_addr }}), and (ip.version == 6) and (icmpv6.type == 133)
 stateful_ipv6_address,(wlan.addr == {{ sa_addr }}), and (dhcpv6.msgtype == 7) and (dhcpv6.option.type == 3)
 echo_req_reply,((ipv6.src == {{ sa_addr }} && ipv6.dst == {{ da_addr }}) or (ipv6.src == {{ da_addr }} and ipv6.dst == {{ sa_addr }})), and (icmpv6.type == 128 or icmpv6.type == 129)
-
+ntp_packet, (wlan.addr == {{sa_addr}}), and ntp
+ntp_keep_alive, ((wlan.addr == {{sa_addr}}), and ntp), and (ntp.flags.mode == 3)
