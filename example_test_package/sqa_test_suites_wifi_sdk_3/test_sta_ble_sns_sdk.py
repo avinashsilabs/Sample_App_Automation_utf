@@ -64,10 +64,10 @@ class WifiJoinThread(ThreadBase):
                     t_end = time.time() + 1800
 
                     while time.time() < t_end:
-                        logger().info(f"Initiating Scan")
-                        scan_results = self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0, sleep_time=0.01)
-                        logger().info(scan_results)
-                        self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
+                        self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                 wifi_access_point=self.wifi_access_point,
+                                                                 retry_count=3, power_save=False,
+                                                                 associated=self.wifi_dut.interfaces.wifi.associated)
                         self.wifi_dut.interfaces.wifi.leave()
                         time.sleep(2)
                 return
@@ -459,6 +459,7 @@ def test_wifi_sdk_wlan_scan_ble_radio_init_deinit_c148524(wifi_access_point, wif
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_wlan_connect_ble_radio_init_deinit_c148525(wifi_access_point, wifi_dut, wifi_sniffer, sl_collections):
     """Run ble radio init deinit with wlan connect"""
     try:
@@ -473,7 +474,8 @@ def test_wifi_sdk_wlan_connect_ble_radio_init_deinit_c148525(wifi_access_point, 
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
 
         logger().info(f"ap_bssid : {ap_mac_address}")
-        wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, test_case=test_name)
+        wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, test_case=test_name, wifi_access_point=wifi_access_point,
+                                  sl_collections=sl_collections)
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, test_case='148524')
         with TimeMeasurer() as T:
             wlan_obj.start()
