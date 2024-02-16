@@ -318,3 +318,58 @@ def test_wifi_sdk_https_post_functionality_different_urls_C19226(http_server, wi
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.config("http_server", auto_start=False)
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_http_post_functionality_on_different_ports_c19227(http_server, wifi_dut, wifi_access_point,
+                                                            index_path
+                                                            , wifi_sniffer, sl_collections, utf_constants):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http post request on multiple ports
+        5. Verfify the HTTP response
+    """
+    try:
+        test_name = 'test_19220'
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections, https_enable=False)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        ports = (0, 10, 200, 2000, 20000, 443)
+
+        for port in ports:
+            http_server.interfaces.http.start_server(port=port)
+            logger().info(f"\n\n***Posting data using http post request on port number {port}***\n\n")
+            status_dut, content_dut = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, index_path,
+                                                                     post_data=''.join(random.choices(
+                                                                         string.ascii_uppercase + string.digits,
+                                                                         k=utf_constants.get('generate_bytes'))),
+                                                                         server_port=port,
+                                                                         expected_status=SLStatus.SL_STATUS_OK
+                                                                     )
+            logger().info(status_dut)
+            http_server.interfaces.http.stop_server()
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
