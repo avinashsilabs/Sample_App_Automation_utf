@@ -687,6 +687,10 @@ def test_ble_sdk_scan_connectable_directed_adv_C19806(ble_dut, ble_client, sl_co
         t1.wait_for_exit(True)
         scan_result = t1.return_value
 
+        logger().info("enabling the power save modes ")
+        ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                     psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
         scan_status = False
         if (ble_client_address in str(scan_result)) and ("report_type:1" in str(scan_result)):
             logger().info("Advertisement type found in adv report is : report_type:1")
