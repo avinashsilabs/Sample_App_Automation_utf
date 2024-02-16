@@ -184,15 +184,14 @@ class ssl_connection:
         if not len(cipher_suite):
             logger().info(
                 f"tls client hello packet is not captured or one of the wifi 4-way handshake pkt is not captured")
-        assert len(cipher_suite) > 0, f"tls client hello packet is not captured or one of the wifi 4-way handshake " \
-                                      f"pkt is not captured"
+        assert len(cipher_suite) > 0, (f"tls client hello packet is not captured or one of the wifi 4-way handshake "
+                                       f"packet is not captured")
         logger().info(f"'{len(cipher_suite)}' times tls client hello message captured on sniffer log")
         cipher_suite_cmp = None
         for cipher in cipher_suite:
             cipher_suite_cmp = cipher[1]
-            if not cipher_suite_cmp == expected_cipher:
-                logger().info(f"****** cipher suite mismatched on iteration {cipher[0]} ******\n"
-                              f"expected is {expected_cipher}\nBut observed {cipher_suite_cmp}")
+            assert cipher_suite_cmp == expected_cipher, (f"Cipher Suite Mismatched, Expected is '{expected_cipher}'\n"
+                                                         f"But Observed '{cipher_suite_cmp}'")
         logger().info(f"****** As per sniffer capture cipher suite advertised by device {dut_mac} --> "
                       f"{cipher_suite_cmp} *******")
 
