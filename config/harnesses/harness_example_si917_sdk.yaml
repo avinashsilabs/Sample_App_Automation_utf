@@ -1241,5 +1241,7 @@ constants:
         value: 30
     generate_bytes:
         value: 30
+    hostname:
+        value: 'rs9116test'
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']

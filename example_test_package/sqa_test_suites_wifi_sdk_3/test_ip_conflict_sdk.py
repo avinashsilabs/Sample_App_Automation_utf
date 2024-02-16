@@ -1,10 +1,11 @@
-import time
-import socket
 import ipaddress
+from unittest import result
+
 import pytest
 import re
 from utf.utils.thread_base import ThreadBase
-from utf.utils.time_measurer import TimeMeasurer
+from utf.utf_config import UtfConfig
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping, print_dict
 from utf.interfaces.iperf.iperf_constants import IperfConstants
@@ -43,7 +44,8 @@ def logger():
 class Ip_Conflict(ThreadBase):
 
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_client=None, mode=None, dhcp_start=None,
-                 dhcp_end=None, utf_constants=None, start_ap=True, sl_collections=None):
+                 dhcp_end=None, utf_constants=None, start_ap=True, static_ip=True, sl_collections=None,
+                 test_case_id=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -55,6 +57,8 @@ class Ip_Conflict(ThreadBase):
         self.sl_collections = sl_collections
         self.dut_addr = None
         self.start_ap = start_ap
+        self.test_case_id = test_case_id
+        self.static_ip = static_ip
 
     def access_point_gateway(self):
         dhcp_start = self.wifi_access_point.interfaces.wifi.dhcp_start_addr
@@ -71,10 +75,7 @@ class Ip_Conflict(ThreadBase):
         self.wifi_client.interfaces.wifi.join(security="WPA2", ssid="IPConflict_Sil_917", passphrase="test1234",
                                               channel='8')
         wifi_client_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-        logger().info(f"****** Wifi Client ip ******{wifi_client_ip}")
         wifi_client_gateway_ip = self.wifi_client.interfaces.wifi.get_gateway_ip()
-        logger().info(f"***** Wifi Client gateway ip address *******{wifi_client_gateway_ip}")
-        logger().info("*** After client join raspberry get the ip address: " + wifi_client_ip)
         if wifi_client_ip is None:
             raise ValueError("Wifi client IP address is None")
         wifi_client_start_ip = int(wifi_client_ip.split('.')[-1]) + 1
@@ -91,6 +92,26 @@ class Ip_Conflict(ThreadBase):
         assert ipaddress.ip_address(wifi_client_ip) > ipaddress.IPv4Address(
             '169.254.255.255'), f"RASPI IP Address is static ip--{wifi_client_ip} hence test is terminating"
         return wifi_client_ip, dut_ip, wifi_client_gateway_ip
+
+    def static_ap_client(self):
+        self.access_point_gateway()
+        static_subnet = '255.255.255.0'
+        constants = UtfConfig.instance().data.get("constants")
+        hostname = constants.get("hostname").get("value")
+        wifi_client_ip, dut_ip, wifi_client_gateway_ip = self.wifi_client_join(dhcp_start=self.dhcp_start,
+                                                                               dhcp_end=self.dhcp_end)
+        self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+        self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
+        logger().info("****** Configuring static ip to DUT****** ")
+        ap_client_ip = self.wifi_access_point.interfaces.wifi.read_ip_client_address(hostname)
+        self.wifi_dut.interfaces.wifi.start_ip(static_ip=ap_client_ip, static_subnet=static_subnet,
+                                               static_gateway=wifi_client_gateway_ip, vid=0,
+                                               expected_status=SLStatus.SL_STATUS_SI91X_IP_CONFLICT_ERROR)
+        logger().info(
+            f" DUT unable tp configure ip address due to ip conflict, observed error code 0x1ff75 which is expected")
+        if self.static_ip:
+            self.wifi_dut.interfaces.wifi.start_ip(static_ip=dut_ip, static_subnet=static_subnet,
+                                                   static_gateway=wifi_client_gateway_ip, vid=0)
 
     def run(self):
         if self.mode == "static":
@@ -120,6 +141,26 @@ class Ip_Conflict(ThreadBase):
                                                                      ping_after_power_save=True)
             logger().info(
                 f"device_ip, device_mac : {self.dut_addr['device_ip']}, {self.dut_addr['dut_mac_address']}")
+
+        if self.test_case_id == 101962:
+            self.static_ap_client()
+
+        if self.test_case_id == 101980:
+            self.access_point_gateway()
+            static_subnet = '255.255.255.0'
+            constants = UtfConfig.instance().data.get("constants")
+            hostname = constants.get("hostname").get("value")
+            for i in range(1, 6):
+                wifi_client_ip, dut_ip, wifi_client_gateway_ip = self.wifi_client_join(dhcp_start=self.dhcp_start,
+                                                                                       dhcp_end=self.dhcp_end)
+                ap_client_ip = self.wifi_access_point.interfaces.wifi.read_ip_client_address(hostname)
+                logger().info(f" Expected Error Code for iteration count {i}")
+                self.wifi_dut.interfaces.wifi.start_ip(static_ip=ap_client_ip, static_subnet=static_subnet,
+                                                       static_gateway=wifi_client_gateway_ip, vid=0,
+                                                       expected_status=SLStatus.SL_STATUS_SI91X_IP_CONFLICT_ERROR)
+                logger().info(
+                    f" DUT unable tp configure ip address due to ip conflict, observed error code 0x1ff75 which is"
+                    f"expected")
 
 
 @pytest.mark.config(
@@ -176,7 +217,7 @@ def test_wifi_sdk_static_ip_assignment_to_DUT_c101963(wifi_dut, wifi_access_poin
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         wifi_thread = Ip_Conflict(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
-                                  mode=mode, start_ap=False)
+                                  mode=mode, start_ap=False, static_ip=False)
         wifi_thread.start()
         wifi_thread.wait_for_exit()
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
@@ -242,7 +283,7 @@ def test_wifi_sdk_dynamic_ip_assignment_to_DUT_C101964(wifi_sniffer, wifi_dut, w
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         wifi_thread = Ip_Conflict(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
-                                  mode=mode, sl_collections=sl_collections, start_ap=False)
+                                  mode=mode, sl_collections=sl_collections, start_ap=False, static_ip=False)
         wifi_thread.start()
         wifi_thread.wait_for_exit()
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -306,7 +347,7 @@ def test_wifi_sdk_static_ip_assignment_when_dut_in_concurrent_mode_c101967(wifi_
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         wifi_thread = Ip_Conflict(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
-                                  mode=mode, start_ap=True)
+                                  mode=mode, start_ap=True, static_ip=False)
         wifi_thread.start()
         wifi_thread.wait_for_exit()
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
@@ -377,7 +418,7 @@ def test_wifi_sdk_dynamic_IP_Assignment_when_dut_in_concurrent_Mode_C101973(wifi
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         wifi_thread = Ip_Conflict(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
-                                  mode=mode, sl_collections=sl_collections, start_ap=True)
+                                  mode=mode, sl_collections=sl_collections, start_ap=True, static_ip=False)
         wifi_thread.start()
         wifi_thread.wait_for_exit()
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -386,3 +427,492 @@ def test_wifi_sdk_dynamic_IP_Assignment_when_dut_in_concurrent_Mode_C101973(wifi
 
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'IPConflict_Sil_917',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 8,
+        'standard': '11n'
+    }
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={"security": "WPA2", "ssid": "IPConflict_Sil_917", "passphrase": "test1234", "channel": 8,
+          "interface": "wlan0"}
+)
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_wifi_sdk_static_ip_assignment_with_existing_ip_c101962(wifi_dut, wifi_sniffer, wifi_access_point, request,
+                                                                wifi_client, sl_collections):
+    """verifies the Static IP assignment to the device which is already existing in the Network"""
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_thread = Ip_Conflict(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
+                                  test_case_id=101962, sl_collections=sl_collections, start_ap=False, static_ip=False)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'IPConflict_Sil_917',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 8,
+        'standard': '11n'
+    }
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={"security": "WPA2", "ssid": "IPConflict_Sil_917", "passphrase": "test1234", "channel": 8,
+          "interface": "wlan0"}
+)
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_wifi_sdk_static_ip_assignment_with_and_Without_ip_Conflict_c101965(wifi_dut, wifi_sniffer, wifi_access_point,
+                                                                            request, wifi_client, sl_collections):
+    """Verifies Static ip assignment to the device when the existing ip is assigned to the DUT and then assign the
+        non existing ip"""
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_thread = Ip_Conflict(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
+                                  test_case_id=101962, sl_collections=sl_collections, start_ap=False, static_ip=True)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'IPConflict_Sil_917',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 8,
+        'standard': '11n'
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config(
+    "wifi_client",
+    wifi={"security": "WPA2", "ssid": "IPConflict_Sil_917", "passphrase": "test1234", "channel": 8,
+          "interface": "wlan0"}
+)
+def test_wifi_sdk_tcp_tx_once_ip_conflict_resolved_static_mode_c101974(wifi_dut, wifi_sniffer, wifi_access_point,
+                                                                       request, wifi_client, sl_collections,
+                                                                       net_perf_client,
+                                                                       protocol, utf_constants):
+    """ verifies the Static IP assignment to the device when the Existing IP is assigned to the
+            DUT and then assign the non existing IP"""
+    try:
+        timeout = 30
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_thread = Ip_Conflict(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
+                                  test_case_id=101962, sl_collections=sl_collections, start_ap=False, static_ip=True)
+
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+        logger().info("....Pinging to DUT.....")
+        status = ping(device_ip, ping_count)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+        logger().info("PING TO DUT IS SUCCESSFULLY DONE....")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Remote device ip :{host_ip}")
+        sl_collections.run_traffic(wifi_dut=wifi_dut, net_perf_client=net_perf_client, protocol=protocol,
+                                   device_ip=device_ip, host_ip=host_ip, timeout=timeout, traffic_type="TX")
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'IPConflict_Sil_917',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 8,
+        'standard': '11n'
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config(
+    "wifi_client",
+    wifi={"security": "WPA2", "ssid": "IPConflict_Sil_917", "passphrase": "test1234", "channel": 8,
+          "interface": "wlan0"}
+)
+def test_wifi_sdk_tcp_rx_once_ip_conflict_resolved_static_mode_c101975(wifi_dut, wifi_sniffer, wifi_access_point,
+                                                                       request, wifi_client, sl_collections,
+                                                                       net_perf_client,
+                                                                       protocol, utf_constants):
+    """ verifies the Static IP assignment to the device when the Existing IP is assigned to the
+     DUT and then assign the Non existing IP"""
+    try:
+        timeout = 30
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_thread = Ip_Conflict(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
+                                  test_case_id=101962, sl_collections=sl_collections, start_ap=False, static_ip=True)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+        logger().info("....Pinging to DUT.....")
+        status = ping(device_ip, ping_count)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+        logger().info("PING TO DUT IS SUCCESSFULLY DONE....")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Remote device ip :{host_ip}")
+        sl_collections.run_traffic(wifi_dut=wifi_dut, net_perf_client=net_perf_client, protocol=protocol,
+                                   device_ip=device_ip, host_ip=host_ip, timeout=timeout, traffic_type="RX")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'IPConflict_Sil_917',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 8,
+        'standard': '11n'
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.config(
+    "wifi_client",
+    wifi={"security": "WPA2", "ssid": "IPConflict_Sil_917", "passphrase": "test1234", "channel": 8,
+          "interface": "wlan0"}
+)
+def test_wifi_sdk_udp_tx_once_ip_conflict_resolved_static_mode_c101976(wifi_dut, wifi_sniffer, wifi_access_point,
+                                                                       request, wifi_client, sl_collections,
+                                                                       net_perf_client, protocol, utf_constants):
+    """ verifies the Static IP assignment to the device when the Existing IP is assigned to the
+            DUT and then assign the non existing IP"""
+    try:
+        timeout = 30
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_thread = Ip_Conflict(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
+                                  test_case_id=101962, sl_collections=sl_collections, start_ap=False, static_ip=True)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+        logger().info("....Pinging to DUT.....")
+        status = ping(device_ip, ping_count)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+        logger().info("PING TO DUT IS SUCCESSFULLY DONE....")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Remote device ip :{host_ip}")
+        sl_collections.run_traffic(wifi_dut=wifi_dut, net_perf_client=net_perf_client, protocol=protocol,
+                                   device_ip=device_ip, host_ip=host_ip, timeout=timeout, traffic_type="TX")
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'IPConflict_Sil_917',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 8,
+        'standard': '11n'
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.config(
+    "wifi_client",
+    wifi={"security": "WPA2", "ssid": "IPConflict_Sil_917", "passphrase": "test1234", "channel": 8,
+          "interface": "wlan0"}
+)
+def test_wifi_sdk_udp_rx_once_ip_conflict_resolved_static_mode_c101977(wifi_dut, wifi_sniffer, wifi_access_point,
+                                                                       request, wifi_client, sl_collections,
+                                                                       net_perf_client,
+                                                                       protocol, utf_constants):
+    """ verifies the Static IP assignment to the device when the Existing IP is assigned to the
+     DUT and then assign the Non existing IP"""
+    try:
+        timeout = 30
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_thread = Ip_Conflict(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
+                                  test_case_id=101962, sl_collections=sl_collections, start_ap=False, static_ip=True)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info("....Pinging to DUT.....")
+        status = ping(device_ip, ping_count)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+        logger().info("PING TO DUT IS SUCCESSFULLY DONE....")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Remote device ip :{host_ip}")
+        sl_collections.run_traffic(wifi_dut=wifi_dut, net_perf_client=net_perf_client, protocol=protocol,
+                                   device_ip=device_ip, host_ip=host_ip, timeout=timeout, traffic_type="RX")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'IPConflict_Sil_917',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 8,
+        'standard': '11n'
+    }
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={"security": "WPA2", "ssid": "IPConflict_Sil_917", "passphrase": "test1234", "channel": 8,
+          "interface": "wlan0"}
+)
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_wifi_sdk_static_ip_conflict_multiple_iterations_c101980(wifi_dut, wifi_sniffer, wifi_access_point, request,
+                                                                 wifi_client, sl_collections):
+    """verifies the Static ip conflict for multiple iterations"""
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        wifi_thread = Ip_Conflict(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
+                                  test_case_id=101980, sl_collections=sl_collections, start_ap=False, static_ip=False)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
