@@ -674,27 +674,27 @@ def test_wifi_sdk_DUT_reconnection_hunting_pecking_C113908(wifi_sniffer, wifi_ac
 
     }
 )
-def test_wifi_sdk_DUT_rejoin_AP1_H2E_AP2_hunting_pecking_C113916(wifi_sniffer, wifi_access_points, wifi_dut,
+def test_wifi_sdk_DUT_rejoin_AP1_H2E_AP2_hunting_pecking_C113916(wifi_sniffer, wifi_access_points, wifi_dut, switches,
                                                                utf_constants, request, sniffer_filter, sl_collections):
     try:
         ping_count = utf_constants.get("ping_count")
         test_name = request.node.name
         dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"DUT MAC is : {dut_mac_addr}")
-        logger().info("Turning OFF AP[1]")
-        wifi_access_points[1].interfaces.wifi.stop_ap()
+        switches[0].interfaces.pdu_switch.turn_off(delay=10)
+        logger().info(f"\n\n######=====>>>>>Access Point is going to turn OFF[1] <<<<<=======######\n\n")
         time.sleep(5)
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_points[0].interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_points[1].interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
             join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable)  # | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
         time.sleep(2)
-        wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_points[0].interfaces.wifi.ssid)
-        wifi_dut.interfaces.wifi.join(ssid=wifi_access_points[0].interfaces.wifi.ssid,
+        wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_points[1].interfaces.wifi.ssid)
+        wifi_dut.interfaces.wifi.join(ssid=wifi_access_points[1].interfaces.wifi.ssid,
                                       security="wpa3_transition",
-                                      passphrase=wifi_access_points[0].interfaces.wifi.passphrase,
+                                      passphrase=wifi_access_points[1].interfaces.wifi.passphrase,
                                       channel=0, timeout=60)
         time.sleep(2)
         ip_config = wifi_dut.interfaces.wifi.start_ip(timeout=30)
@@ -713,16 +713,26 @@ def test_wifi_sdk_DUT_rejoin_AP1_H2E_AP2_hunting_pecking_C113916(wifi_sniffer, w
         status = ping(device_ip, ping_count)
         assert status is True, "DUT is not responding to ping request from third party device"
         time.sleep(2)
-        logger().info("Turning OFF AP")
-        wifi_access_points[0].interfaces.wifi.stop_ap()
-        time.sleep(30)
-        logger().info("Turning ON AP")
-        wifi_access_points[0].interfaces.wifi.start_ap()
+        switches[1].interfaces.pdu_switch.turn_off(delay=10)
+        logger().info(f"\n\n######=====>>>>>Access Point is going to turn OFF[2] <<<<<=======######\n\n")
         time.sleep(2)
-        wifi_access_points[1].interfaces.wifi.start_ap()
+        switches[1].interfaces.pdu_switch.turn_on(delay=10)
+        logger().info(f"\n\n######=====>>>>>Access Point is going to turn ON[2] <<<<<=======######\n\n")
+        time.sleep(2)
+        switches[0].interfaces.pdu_switch.turn_on(delay=10)
+        logger().info(f"\n\n######=====>>>>>Access Point is going to turn ON[1] <<<<<=======######\n\n")
         time.sleep(30)
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+
+        dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        status = ping(dut_ip, ping_count)
+        assert status is True, "DUT is not responding to ping request from third party device"
+        logger().info("Dut going to leave the AP")
+        wifi_dut.interfaces.wifi.leave()
+        logger().info("Stop sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(2)
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=dut_mac_addr,
             filter_name="wpa3_h2e_mode")
@@ -731,16 +741,8 @@ def test_wifi_sdk_DUT_rejoin_AP1_H2E_AP2_hunting_pecking_C113916(wifi_sniffer, w
             'packet_count']
         assert snif_pkt_count, "Unable to find Assoc req with H2E."
         time.sleep(3)
-        dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-        status = ping(dut_ip, ping_count)
-        assert status is True, "DUT is not responding to ping request from third party device"
-        logger().info("Dut going to leave the AP")
 
-        wifi_dut.interfaces.wifi.leave()
-        logger().info("Stop sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        time.sleep(2)
-        ap_bssid = wifi_access_points[0].interfaces.wifi.bssid
+        ap_bssid = wifi_access_points[1].interfaces.wifi.bssid
         logger().info(f"MAC of AP2 is: {ap_bssid}")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter \
             (sa_addr=ap_bssid, filter_name="wpa3_enh_mode")
@@ -750,3 +752,10 @@ def test_wifi_sdk_DUT_rejoin_AP1_H2E_AP2_hunting_pecking_C113916(wifi_sniffer, w
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        logger().info("\n\n #####******====>>>> Access point is going to turn ON[1][2] <<<<<<======******#####\n\n")
+        switches[0].interfaces.pdu_switch.turn_on(delay=10)
+        time.sleep(1)
+        switches[1].interfaces.pdu_switch.turn_on(delay=10)
+        time.sleep(1)
