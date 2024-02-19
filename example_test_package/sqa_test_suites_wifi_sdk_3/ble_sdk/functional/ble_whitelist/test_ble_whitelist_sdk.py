@@ -163,7 +163,7 @@ pytestmark = [
 def test_ble_sdk_whitelist_with_adv_data_index5_C19949(wifi_dut, ble_client, sl_collections, ble_clients):
     try:
         logger().info(f"\n\n**************Start ble on DUT**************\n\n")
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
         assert bt_dut_address is not None
         index = 5
         wifi_dut.interfaces.wifi.ble_add_whitelist_adv_data(enable=1, data_compare_index=index, compare_data_length=10,
@@ -202,7 +202,7 @@ def test_ble_sdk_whitelist_with_adv_data_index5_C19949(wifi_dut, ble_client, sl_
 def test_ble_sdk_whitelist_with_adv_data_index10_C19951(wifi_dut, ble_client, sl_collections):
     try:
         logger().info(f"\n\n**************Start ble on DUT**************\n\n")
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
         assert bt_dut_address is not None
         index = 10
         wifi_dut.interfaces.wifi.ble_add_whitelist_adv_data(enable=1, data_compare_index=index, compare_data_length=10,
@@ -242,7 +242,7 @@ def test_ble_sdk_whitelist_with_adv_data_index20_C19953(wifi_dut, ble_client, sl
     try:
         index = 20
         logger().info(f"\n\n**************Start ble on DUT**************\n\n")
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
         assert bt_dut_address is not None
         wifi_dut.interfaces.wifi.ble_add_whitelist_adv_data(enable=1, data_compare_index=index, compare_data_length=10,
                                                             data_list=['A', 'U', 'T', 'O', 'M', 'A', 'T', 'I', 'O',
@@ -281,7 +281,7 @@ def test_ble_sdk_whitelist_with_adv_data_index20_C19953(wifi_dut, ble_client, sl
 def test_ble_sdk_whitelist_with_adv_data_index25_C19954(wifi_dut, ble_client, sl_collections, ble_clients):
     try:
         logger().info(f"\n\n**************Start ble on DUT**************\n\n")
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
         assert bt_dut_address is not None
         wifi_dut.interfaces.wifi.ble_add_whitelist_adv_data(enable=1, data_compare_index=25, compare_data_length=5,
                                                             data_list=['G', 'A', 'N', 'G', 'A'])
@@ -330,7 +330,7 @@ def test_disable_ble_whitelist_with_adv_data_C19950(wifi_dut, ble_client, sl_col
     try:
         index = 18
         logger().info(f"\n\n**************Start DUT**************\n\n")
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
         assert bt_dut_address is not None
 
         wifi_dut.interfaces.wifi.ble_add_whitelist_adv_data(enable=0, data_compare_index=18, compare_data_length=10,
@@ -375,7 +375,7 @@ def test_ble_scan_whitelist_adv_data_index15_2Advertisers_C19952(wifi_dut, ble_c
     try:
         index = 15
         logger().info(f"\n\n**************Start DUT**************\n\n")
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(set_smp=0)
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0, set_smp=0)
         assert bt_dut_address is not None
         wifi_dut.interfaces.wifi.ble_add_whitelist_adv_data(enable=1, data_compare_index=index, compare_data_length=10,
                                                             data_list=['A', 'U', 'T', 'O', 'M', 'A', 'T', 'I', 'O',
@@ -471,7 +471,7 @@ def test_ble_sdk_scan_aggressive_interval_whitelist_adv_data_index5_C19956(wifi_
     try:
         index = 5
         logger().info(f"\n\n**************Start DUT**************\n\n")
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
         assert bt_dut_address is not None
         wifi_dut.interfaces.wifi.ble_add_whitelist_adv_data(enable=1, data_compare_index=5, compare_data_length=10,
                                                             data_list=['A', 'U', 'T', 'O', 'M', 'A', 'T', 'I', 'O',
@@ -515,7 +515,7 @@ def test_ble_scan_aggressive_interval_whitelist_adv_data_2advertisers_index5_C19
     try:
         index = 5
         logger().info(f"\n\n**************Start DUT**************\n\n")
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
         assert bt_dut_address is not None
         wifi_dut.interfaces.wifi.ble_add_whitelist_adv_data(enable=1, data_compare_index=index, compare_data_length=10,
                                                             data_list=['A', 'U', 'T', 'O', 'M', 'A', 'T', 'I', 'O',
@@ -609,7 +609,7 @@ def test_ble_sdk_dut_as_master_white_list_remote_device_c19846(wifi_dut, ble_cli
                  bt_log_path=f"reports/test_wifi_dut_master_C19486.logs_{int(time.time())}"):
         try:
             logger().info(f"Start ble DUT and client")
-            ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
+            ble_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
             assert ble_dut_address, f"Unable to get ble_dut_address"
             logger().info("FETCHING THE BLE ADDRESS OF REMOTE DEVICE 1")
             ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv_whitelist_with_hci_tool(bt_dut_address=ble_dut_address,
@@ -628,9 +628,7 @@ def test_ble_sdk_dut_as_master_white_list_remote_device_c19846(wifi_dut, ble_cli
                 logger().info(f"****** ADDING WHITELIST BEFORE SCANNING")
                 wifi_dut.interfaces.wifi.ble_add_white_list(ble_client_address)
                 logger().info(f"Start scanning and connect to ble client")
-                wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address,
-                                                            ble_scan_filter_type=1,
-                                                            timeout=30)
+                wifi_dut.interfaces.wifi.ble_start_scanning(ble_scan_filter_type=1, timeout=30)
                 time.sleep(50)
                 enable_wifi_ps = wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
                 assert enable_wifi_ps == 0, 'failed to enable wlan power save'
@@ -670,7 +668,7 @@ def test_sdk_ble_advertising_with_whitelist_filter_policy_0x01_C19841(wifi_dut, 
         ble_client1 = ble_clients[0]
         ble_client2 = ble_clients[1]
         logger().info("INITIATING BLE SERVICE IN DUT")
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(set_smp=0)
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0, set_smp=0)
         assert bt_dut_address, "FAILED TO INITIATE BLE IN DUT"
 
         logger().info(" **** SETTING LOCAL NAME **** ")
@@ -736,7 +734,7 @@ def test_sdk_ble_slave_connection_with_whitelist_filter_policy_0x00_C19843(wifi_
         ble_client1 = ble_clients[0]
         ble_client2 = ble_clients[1]
         logger().info("INITIATING BLE SERVICE IN DUT")
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
         assert bt_dut_address, "FAILED TO INITIATE BLE IN DUT"
 
         logger().info(" **** SETTING LOCAL NAME **** ")
@@ -804,7 +802,7 @@ def test_sdk_ble_slave_connection_with_whitelist_filter_policy_0x02_C19842(wifi_
         ble_client1 = ble_clients[0]
         ble_client2 = ble_clients[1]
         logger().info("INITIATING BLE SERVICE IN DUT")
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
         assert bt_dut_address, "FAILED TO INITIATE BLE IN DUT"
 
         logger().info(" **** SETTING LOCAL NAME **** ")
@@ -866,7 +864,7 @@ def test_ble_dut_slave_2_white_list_rd_1_non_white_list_rd_c19844(ble_dut, ble_c
         assert len(ble_clients) >= remote_le_devices, "This test case requires 3 Raspberry pi devices"
 
         logger().info(f"Start ble DUT and client")
-        ble_dut_address = ble_dut.interfaces.wifi.ble_start()
+        ble_dut_address = ble_dut.interfaces.wifi.ble_start(capability=0)
         time.sleep(1)
 
         ble_client1_address = ble_clients[0].interfaces.bluetooth.get_ble_address()
@@ -959,7 +957,7 @@ def test_ble_sdk_verify_dut_ble_scanning_with_whitelist_device_C19845(ble_client
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
             logger().info("INITIATING BLE SERVICE IN DUT")
-            bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+            bt_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0)
             assert bt_dut_address, "FAILED TO INITIATE BLE IN DUT"
             logger().info("FETCHING THE BLE ADDRESS OF REMOTE DEVICE 1")
             ble_white_list_address = ble_client1.interfaces.bluetooth.get_ble_address()
@@ -998,8 +996,7 @@ def test_ble_sdk_verify_dut_ble_scanning_with_whitelist_device_C19845(ble_client
             time.sleep(3)
             # start scanning from dut and enable powersave in dut
             logger().info(f" **** START SCANNING FROM DUT **** ")
-            scan_results = ble_dut.interfaces.bluetooth.ble_start_scanning(
-                ble_client_address=ble_white_list_address, ble_scan_filter_type=1, timeout=30)
+            scan_results = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_scan_filter_type=1, timeout=30)
             sw = Stopwatch()
             while sw.elapsed_sec <= 30:
                     events = ble_dut.interfaces.bluetooth.get_async_events()
