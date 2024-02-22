@@ -19,6 +19,12 @@ from utf.utils.logger import get_logger
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.utils.stopwatch import Stopwatch
+from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import (
+    BatteryLevelCharacteristic,
+)
+from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import (
+    BatteryService,
+)
 
 def logger():
     return get_logger(__name__)
@@ -40,23 +46,32 @@ def logger():
 """
 
 @pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
-    },
-)
-def test_ble_master_connection(wifi_dut, ble_client):
+        "wifi_dut",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.Default
+            | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+            | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+            | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "ble_features": Si91xBLEFeatureBitMap.Default
+            | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+            "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048},
+                "ble": {"count": 1, "stack_len": 2048},
+            },
+        },
+    )
+def test_ble_master_connection_non_smp(ble_dut, ble_client):
     # Start DUT
-    bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=3, bond_info=0, set_smp=1)
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=3, bond_info=0, set_smp=0)
     logger().info(f"test case mac address is {bt_dut_address}")
     assert bt_dut_address," ======= failed to invoke ble in DUT"
 
@@ -64,32 +79,244 @@ def test_ble_master_connection(wifi_dut, ble_client):
     assert bt_client_address," ======= failed to invoke ble in rpi"
     time.sleep(1)
     # Start scanning and connect to ble client
-    wifi_dut.interfaces.wifi.ble_start_scanning(
+    ble_dut.interfaces.bluetooth.ble_start_scanning(
         ble_client_address=bt_client_address
     )
     time.sleep(20)
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
     logger().info(f"Initiating connection this can take up to {timeout} seconds....")
-    wifi_dut.interfaces.wifi.ble_connect(
+    ble_dut.interfaces.bluetooth.ble_connect(
         ble_remote_dev_address=bt_client_address, timeout=timeout
     )
     time.sleep(5)
 
     # Get the state of the dut
-    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state = ble_dut.interfaces.bluetooth.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected
 
-    enable_bt_ps = wifi_dut.interfaces.wifi.enable_bt_power_save()
-    assert enable_bt_ps, "failed to enable bt power save"
+    time.sleep(120)
+
+    state = ble_dut.interfaces.bluetooth.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
 
     # Disconnect
-    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+    ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.Default
+            | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+            | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+            | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "ble_features": Si91xBLEFeatureBitMap.Default
+            | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+            "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048},
+                "ble": {"count": 1, "stack_len": 2048},
+            },
+        },
+    )
+def test_ble_master_connection_smp(ble_dut, ble_client):
+    # Start DUT
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=3, bond_info=0, set_smp=1)
+    logger().info(f"test case mac address is {bt_dut_address}")
+    assert bt_dut_address," ======= failed to invoke ble in DUT"
+
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+    assert bt_client_address," ======= failed to invoke ble in rpi"
+    time.sleep(1)
+    # Start scanning and connect to ble client
+    ble_dut.interfaces.bluetooth.ble_start_scanning(
+        ble_client_address=bt_client_address
+    )
+    time.sleep(20)
+    # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
+    timeout = 120
+    logger().info(f"Initiating connection this can take up to {timeout} seconds....")
+    ble_dut.interfaces.bluetooth.ble_connect(
+        ble_remote_dev_address=bt_client_address, timeout=timeout
+    )
+    time.sleep(5)
+
+    # Get the state of the dut
+    state = ble_dut.interfaces.bluetooth.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    time.sleep(120)
+
+    # Get the state of the dut after 120 seconds
+    state = ble_dut.interfaces.bluetooth.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    # Disconnect
+    ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.Default
+            | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+            | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+            | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "ble_features": Si91xBLEFeatureBitMap.Default
+            | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+            "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048},
+                "ble": {"count": 1, "stack_len": 2048},
+            },
+        },
+    )
+def test_ble_conn_slave(ble_dut, ble_client):
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address, "failed to start bel in dut"
+    ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(
+        bt_dut_address=bt_dut_address
+    )
+    assert bt_client_address,"failed top start ble in rpi"
+
+    device_found = False
+    sw = Stopwatch()
+    while sw.elapsed_sec < 30:
+        found_devices = ble_client.interfaces.bluetooth.get_devices()
+        if (
+            bt_dut_address in found_devices
+            and found_devices[bt_dut_address]
+            == ble_dut.interfaces.bluetooth.ble_advertising_data
+        ):
+            device_found = True
+            break
+
+    ble_client.interfaces.bluetooth.stop_scanning()
+    assert device_found
+
+    # Provide BT connection parameter's value
+    conn_params = {
+        "min_conn_interval": 40,
+        "max_conn_interval": 40,
+        "conn_latency": 0,
+        "supervision_timeout": 120,
+    }
+
+    ble_client.interfaces.bluetooth.connect(
+        dev_addr=bt_dut_address,
+        min_conn_interval=conn_params["min_conn_interval"],
+        max_conn_interval=conn_params["max_conn_interval"],
+        conn_latency=conn_params["conn_latency"],
+        supervision_timeout=conn_params["supervision_timeout"],
+    )
+    time.sleep(2)
+
+    # Get the state of the dut
+    state = ble_dut.interfaces.bluetooth.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    time.sleep(120)
+
+    state = ble_dut.interfaces.bluetooth.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.Default
+            | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+            | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+            | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "ble_features": Si91xBLEFeatureBitMap.Default
+            | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+            "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048},
+                "ble": {"count": 1, "stack_len": 2048},
+            },
+        },
+    )
+def test_ble_conn_slave_smp(ble_dut, ble_client):
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert bt_dut_address, "failed to start bel in dut"
+    ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(
+        bt_dut_address=bt_dut_address
+    )
+    assert bt_client_address,"failed top start ble in rpi"
+
+    device_found = False
+    sw = Stopwatch()
+    while sw.elapsed_sec < 30:
+        found_devices = ble_client.interfaces.bluetooth.get_devices()
+        if (
+            bt_dut_address in found_devices
+            and found_devices[bt_dut_address]
+            == ble_dut.interfaces.bluetooth.ble_advertising_data
+        ):
+            device_found = True
+            break
+
+    ble_client.interfaces.bluetooth.stop_scanning()
+    assert device_found
+
+    ble_client.interfaces.bluetooth.pair_and_connect(dev_addr=bt_dut_address)
+    time.sleep(2)
+
+    # Get the state of the dut
+    state = ble_dut.interfaces.bluetooth.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    time.sleep(120)
+
+    state = ble_dut.interfaces.bluetooth.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 @pytest.mark.config(
     "wifi_dut",
     wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
@@ -102,13 +329,13 @@ def test_ble_master_connection(wifi_dut, ble_client):
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     },
 )
-def test_ble_set_local_name(wifi_dut):
+def test_ble_set_local_name(ble_dut):
     logger().info(" ======= set local name task")
     set_local_name = "ble_test_name"
     logger().info(f" ======= Setting BLE local name {set_local_name}")
     time.sleep(5)
-    wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
-    status = wifi_dut.interfaces.wifi.bt_get_local_name()
+    ble_dut.interfaces.bluetooth.bt_set_local_name(set_local_name)
+    status = ble_dut.interfaces.bluetooth.bt_get_local_name()
     logger().info(f" ======= Getting the local name : {status}")
     assert set_local_name == status, "Set local name and get local name not matched "
 
@@ -130,13 +357,13 @@ def test_ble_set_local_name(wifi_dut):
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
         },
     )
-@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_whitelist_with_adv_data_index5(wifi_dut, ble_client):
+@pytest.mark.end_state("ble_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_whitelist_with_adv_data_index5(ble_dut, ble_client):
     logger().info(" ======= Start ble on DUT")
-    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    bt_dut_address = ble_dut.interfaces.wifi.ble_start()
     assert bt_dut_address,"ble initialization failed in dut"
 
-    wifi_dut.interfaces.wifi.ble_add_whitelist_adv_data(enable=1, data_compare_index=0x05, compare_data_length=0x0A,
+    ble_dut.interfaces.bluetooth.ble_add_whitelist_adv_data(enable=1, data_compare_index=0x05, compare_data_length=0x0A,
                                                         data_list=['A', 'U', 'T', 'O', 'M', 'A', 'T', 'I', 'O', 'N'])
 
     time.sleep(5)
@@ -159,20 +386,20 @@ def test_ble_whitelist_with_adv_data_index5(wifi_dut, ble_client):
     assert bt_client_address, "ble initialisation failed in rpi"
     time.sleep(20)
 
-    dut_scan_results= wifi_dut.interfaces.wifi.ble_start_scanning()
+    dut_scan_results= ble_dut.interfaces.bluetooth.ble_start_scanning()
     logger().info(f"dut_scan_results: {dut_scan_results}")
     time.sleep(30)
-    wifi_dut.interfaces.wifi.ble_stop_scanning()
+    ble_dut.interfaces.bluetooth.ble_stop_scanning()
 
-    enable_wifi_ps = wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
     assert enable_wifi_ps == 0, 'failed to enable wlan power save'
-    enable_bt_ps = wifi_dut.interfaces.wifi.enable_bt_power_save(
+    enable_bt_ps = ble_dut.interfaces.bluetooth.enable_bt_power_save(
             psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
             psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps == 0, 'failed to enable bt power save'
-    events = wifi_dut.interfaces.wifi.get_async_events()
+    events = ble_dut.interfaces.bluetooth.get_async_events()
     for event in events:
-        whitelist_data = wifi_dut.interfaces.wifi.parse_and_get_whitelist_data(event.event_data)
+        whitelist_data = ble_dut.interfaces.bluetooth.parse_and_get_whitelist_data(event.event_data)
         assert whitelist_data == "AUTOMATION", "whitelist data not found"
         logger().info(f"=======found advertising data: {whitelist_data}")
 
@@ -208,28 +435,28 @@ def test_Basic_connect_and_disconnect_BLE_AE_C23514(ble_dut, ble_client, ble_sni
     """Test case: This test case will verify basic connection and disconnection of DUT with remote device
                     by doing AE_advertiing"""
     try:
-        ble_dut_address = ble_dut.interfaces.wifi.ble_start(capability=3, set_smp=1)
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=3, set_smp=1)
         logger().info(f"BLE Mac: {ble_dut_address}")
         ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
         assert ble_client_address, "Unable to fetch Bluetooth address from remote device"
-        ble_dut.interfaces.wifi.ble_add_white_list(remote_dev_addr=ble_client_address)
-        ble_dut.interfaces.wifi.bt_set_local_name(bt_local_name="SI917AE")
-        ble_dut.interfaces.wifi.bt_get_local_name()
-        ble_dut.interfaces.wifi.ble_get_max_adv_data_len(max_data_len=251)
-        ble_dut.interfaces.wifi.ble_get_max_no_of_supp_adv_sets(no_adv_sets=2)
-        ble_dut.interfaces.wifi.ble_set_ae_params(remote_dev_addr=ble_client_address)
-        ble_dut.interfaces.wifi.set_ae_set_random_address(random_address=ble_client_address)
+        ble_dut.interfaces.bluetooth.ble_add_white_list(remote_dev_addr=ble_client_address)
+        ble_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name="SI917AE")
+        ble_dut.interfaces.bluetooth.bt_get_local_name()
+        ble_dut.interfaces.bluetooth.ble_get_max_adv_data_len(max_data_len=251)
+        ble_dut.interfaces.bluetooth.ble_get_max_no_of_supp_adv_sets(no_adv_sets=2)
+        ble_dut.interfaces.bluetooth.ble_set_ae_params(remote_dev_addr=ble_client_address)
+        ble_dut.interfaces.bluetooth.set_ae_set_random_address(random_address=ble_client_address)
         time.sleep(5)
-        ble_dut.interfaces.wifi.ble_set_ae_data()
+        ble_dut.interfaces.bluetooth.ble_set_ae_data()
         time.sleep(5)
-        ble_dut.interfaces.wifi.ble_start_ae_advertising()
+        ble_dut.interfaces.bluetooth.ble_start_ae_advertising()
         time.sleep(5)
-        ble_dut.interfaces.wifi.ble_extended_connect_with_params(remote_dev_addr=ble_client_address)
+        ble_dut.interfaces.bluetooth.ble_extended_connect_with_params(remote_dev_addr=ble_client_address)
         time.sleep(5)
     finally:
         logger().info("initiating stop scanning")
         ble_client.interfaces.bluetooth.stop_scanning()
-        ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
+        ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
 
 
 
@@ -248,17 +475,17 @@ def test_Basic_connect_and_disconnect_BLE_AE_C23514(ble_dut, ble_client, ble_sni
             "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "bt_features": Si91xBTFeatureBitMap.Default,
             "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         },
     )
-def test_ble_slave_data_length_100_bytes_tx_rx_(ble_dut, ble_client):
+def test_ble_slave_notify_100_bytes(ble_dut, ble_client):
     with BleLogs(start_collecting_logs=True,
                  bt_log_path="./reports/test_ble_slave_data_length_100_bytes_tx_rx_C19922.log"):
         service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
         char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
 
         logger().info("======= start ble in dut")
-        bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+        bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
         assert bt_dut_address, "failed to initialize ble in dut"
         ble_dut.interfaces.bluetooth.ble_add_service(uid=0x6E)
         ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x6F)
@@ -354,3 +581,136 @@ def test_ble_slave_data_length_100_bytes_tx_rx_(ble_dut, ble_client):
         logger().info("======= start ble adv in dut")
         ble_dut.interfaces.bluetooth.ble_start_advertising()
     ble_dut.interfaces.wifi.ble_stop_advertising()
+
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                                   Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        },
+    )
+def test_ble_gatt_client_master_non_smp(ble_dut, ble_client):
+    # Start DUT
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=0)
+    assert bt_dut_address,"===== failed to invoke ble in dut"
+
+    # Start ble client
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(
+        bt_dut_address=bt_dut_address, service_classes=["BatteryService"]
+    )
+    assert bt_client_address,"===== failed to invoke ble in rpi"
+
+    # Start scanning and connect to ble client
+    ble_dut.interfaces.bluetooth.ble_start_scanning(
+        ble_client_address=bt_client_address, timeout=60
+    )
+    ble_dut.interfaces.bluetooth.ble_stop_scanning()
+    # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
+    timeout = 120
+    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    ble_dut.interfaces.bluetooth.ble_connect(
+        ble_remote_dev_address=bt_client_address,
+        timeout=timeout,
+    )
+    time.sleep(5)
+    # Get the state of the dut
+    state = ble_dut.interfaces.bluetooth.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    # get all profiles
+    ble_dut.interfaces.bluetooth.ble_get_profiles_async(
+        ble_remote_dev_address=bt_client_address
+    )
+    # resolve battery profile
+    ble_dut.interfaces.bluetooth.ble_get_profile_async(
+        ble_remote_dev_address=bt_client_address, uuid=int(BatteryService.UUID, 16)
+    )
+
+    time.sleep(120)
+    # Get the state of the dut afetr 120 seconds
+
+    state = ble_dut.interfaces.bluetooth.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    # Disconnect
+    ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                                   Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        },
+    )
+def test_ble_gatt_client_master_smp(ble_dut, ble_client):
+    # Start DUT
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=1)
+    assert bt_dut_address,"===== failed to invoke ble in dut"
+
+    # Start ble client
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(
+        bt_dut_address=bt_dut_address, service_classes=["BatteryService"]
+    )
+    assert bt_client_address,"===== failed to invoke ble in rpi"
+
+    # Start scanning and connect to ble client
+    ble_dut.interfaces.bluetooth.ble_start_scanning(
+        ble_client_address=bt_client_address, timeout=60
+    )
+    ble_dut.interfaces.bluetooth.ble_stop_scanning()
+    # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
+    timeout = 120
+    logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+    ble_dut.interfaces.bluetooth.ble_connect(
+        ble_remote_dev_address=bt_client_address,
+        timeout=timeout,
+    )
+    time.sleep(5)
+    # Get the state of the dut
+    state = ble_dut.interfaces.bluetooth.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    # get all profiles
+    ble_dut.interfaces.bluetooth.ble_get_profiles_async(
+        ble_remote_dev_address=bt_client_address
+    )
+    # resolve battery profile
+    ble_dut.interfaces.bluetooth.ble_get_profile_async(
+        ble_remote_dev_address=bt_client_address, uuid=int(BatteryService.UUID, 16)
+    )
+
+    time.sleep(120)
+    # Get the state of the dut afetr 120 seconds
+
+    state = ble_dut.interfaces.bluetooth.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected
+
+    # Disconnect
+    ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
