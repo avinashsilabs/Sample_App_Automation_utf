@@ -774,8 +774,8 @@ pytestmark = [
             "ble_features": Si91xBLEFeatureBitMap.Default
             | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-            # | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
             "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
             | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
@@ -2739,3 +2739,105 @@ def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_C133460(
             wifi_obj.disconnect()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+        "ble_stop_scan",
+    ],
+)
+def test_Coex_sdk_BLE_master_WLAN_conn_disconn_C133556(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+    net_perf_client,
+    protocol,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure AP on WPA2 security
+        3. Advertise remote BLE device
+        4. Scan from DUT device and intiate connection from DUT as master
+        5. Join the access point and enable the dhcp
+        6. Enable wlan and bt power save mode in dut after the connection
+        7. Disconnect from DUT BLE device
+        8. Scan and reconnect from DUT
+        9. Repeat step 7 & 8
+    """
+
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        iter_count = utf_constants.get("iter_count")
+        test_type = "ping"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="master",
+        )
+
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            net_perf_client=net_perf_client,
+            sl_collections=sl_collections,
+            protocol=protocol,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+        for i in range(0, iter_count):
+            wifi_obj.start()
+            wifi_obj.wait_for_exit()
+            ble_obj.start()
+            ble_obj.wait_for_exit()
+            logger().info("Checking connection stability for 60 seconds")
+            time.sleep(60)
+            wifi_obj.disconnect()
+            ble_obj.ble_disconnect(disconnect_from="remote")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("sniffer validation is successful")
+        wifi_obj.sniffer_validation_join()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+
+

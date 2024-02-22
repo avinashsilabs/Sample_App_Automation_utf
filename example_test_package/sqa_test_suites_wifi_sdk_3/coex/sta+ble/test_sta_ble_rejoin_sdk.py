@@ -67,8 +67,8 @@ def logger():
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        # | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
@@ -200,8 +200,8 @@ def test_Coex_sdk_rejoin_fun_ble_slave_C133464(
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        # | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
@@ -288,30 +288,53 @@ def test_Coex_sdk_rejoin_ap_deauth_ble_slave_C133465(
             "start capturing with Sniffer by giving the test case name as filename"
         )
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        time.sleep(5)
         logger().info("***** Changing the security of Access Point to Open*****")
         wifi_access_point.interfaces.wifi.start_ap(security="Open")
-        time.sleep(10)
-        logger().info("***** Changing the security of Access Point to WPA2*****")
-        wifi_access_point.interfaces.wifi.start_ap(
-            security="WPA2", passphrase="1234567890"
-        )
-        logger().info("***** Changing the security of Access Point to Open*****")
-        time.sleep(50)
-        logger().info(
-            "Initiating ping from Raspi to DUT to check whether DUT rejoins to AP or not"
-        )
-        status = ping(wifi_obj.device_ip, 30)
-        assert status, "DUT NOT RESPONDING FOR PING REQUEST......Rejoin Failed"
+        time.sleep(20)
         wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter1 = (
             sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                sa_addr=wifi_obj.dut_mac_address, filter_name="deauthentication"
+                sa_addr=wifi_obj.ap_mac_address, filter_name="deauthentication"
             )
         )
         logger().info(f"Validating deauthentication frames")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(
             packet_filter1=packet_filter1
         )["packet_count"], "Sniffer: Unable to find deauthentication packets in sniffer"
+
+        packet_filter1 = (
+            sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=wifi_obj.dut_mac_address, filter_name="probe_request"
+            )
+        )
+        logger().info(f"Validating probe request frames")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter1
+        )["packet_count"], "Sniffer: Unable to find probe request packets in sniffer"
+
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        time.sleep(5)
+
+        logger().info("***** Changing the security of Access Point to WPA2*****")
+        wifi_access_point.interfaces.wifi.start_ap(
+            security="WPA2", passphrase="1234567890"
+        )
+        logger().info("***** Changing the security of Access Point to Open*****")
+        time.sleep(40)
+        status = ping(wifi_obj.device_ip, 30)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST......Rejoin Failed"
+        wifi_sniffer.interfaces.capture.stop_capture()
 
         sl_collections.join_sniffer_validation(
             wifi_access_point,
@@ -346,8 +369,8 @@ def test_Coex_sdk_rejoin_ap_deauth_ble_slave_C133465(
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        # | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp
         | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     },
@@ -477,8 +500,8 @@ def test_Coex_sdk_rejoin_fun_ble_slave_bypass_C133500(
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        # | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp
         | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     },
@@ -564,21 +587,15 @@ def test_Coex_sdk_rejoin_ap_deauth_ble_slave_bypass_C133501(
                 "start capturing with Sniffer by giving the test case name as filename"
             )
             wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+            time.sleep(5)
             logger().info("***** Changing the security of Access Point to Open*****")
             wifi_access_point.interfaces.wifi.start_ap(security="Open")
-
-            time.sleep(10)
-
-            logger().info("***** Changing the security of Access Point to WPA2*****")
-            wifi_access_point.interfaces.wifi.start_ap(
-                security="WPA2", passphrase="1234567890"
-            )
-            logger().info("***** Changing the security of Access Point to Open*****")
-            time.sleep(50)
+            time.sleep(20)
             wifi_sniffer.interfaces.capture.stop_capture()
             packet_filter1 = (
                 sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=wifi_obj.dut_mac_address, filter_name="deauthentication"
+                    sa_addr=wifi_obj.ap_mac_address, filter_name="deauthentication"
                 )
             )
             logger().info(f"Validating deauthentication frames")
@@ -586,6 +603,35 @@ def test_Coex_sdk_rejoin_ap_deauth_ble_slave_bypass_C133501(
                 packet_filter1=packet_filter1
             )["packet_count"], "Sniffer: Unable to find deauthentication packets in sniffer"
 
+            packet_filter1 = (
+                sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                    sa_addr=wifi_obj.dut_mac_address, filter_name="probe_request"
+                )
+            )
+            logger().info(f"Validating probe request frames")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(
+                packet_filter1=packet_filter1
+            )["packet_count"], "Sniffer: Unable to find probe request packets in sniffer"
+
+            logger().info("configuring the Sniffer with the channel")
+            wifi_sniffer.interfaces.capture.configure_interface(
+                channel=wifi_access_point.interfaces.wifi.channel
+            )
+
+            logger().info(
+                "start capturing with Sniffer by giving the test case name as filename"
+            )
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+            time.sleep(5)
+
+            logger().info("***** Changing the security of Access Point to WPA2*****")
+            wifi_access_point.interfaces.wifi.start_ap(
+                security="WPA2", passphrase="1234567890"
+            )
+            logger().info("***** Changing the security of Access Point to Open*****")
+            time.sleep(40)
+            wifi_sniffer.interfaces.capture.stop_capture()
 
             sl_collections.join_sniffer_validation(
                 wifi_access_point,
@@ -617,8 +663,8 @@ def test_Coex_sdk_rejoin_ap_deauth_ble_slave_bypass_C133501(
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        # | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
@@ -747,8 +793,8 @@ def test_Coex_sdk_BLE_ADV_STA_Disconn_C133553(
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        # | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
@@ -900,8 +946,8 @@ def test_Coex_sdk_TCP_while_rejoin_BLE_slave_C133471(
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        # | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {

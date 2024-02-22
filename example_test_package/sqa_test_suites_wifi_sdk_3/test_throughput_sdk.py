@@ -210,11 +210,16 @@ class WifiJoinThread(ThreadBase):
             if self.traffic_type == "RX":
                 self.iteration_count = self.iteration_count
                 for i in range(0, self.iteration_count):
-                    self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
-                    self.dut_addr['device_ip'], protocol=self.protocol, bandwidth="68M")
+                    # Iperf Client Started
+                    if self.protocol == "UDP":
+                        bandwidth = "68M"
+                        self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
+                        self.dut_addr['device_ip'], protocol=self.protocol, bandwidth=bandwidth)
+                    else:
+                        self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
+                        self.dut_addr['device_ip'], protocol=self.protocol)
 
                     self.net_perf_client.interfaces.net_perf.start()
-
                     logger().info("receiving data from Host")
                     # open socket and listen for data
                     timeout = 40
@@ -291,16 +296,17 @@ def test_wlan_standalone_tcp_tx_c20740(wifi_sniffer, wifi_access_point, wifi_cli
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
-                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
-                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV |
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "config_features": 0,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "band": 0,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
 def test_wlan_standalone_tcp_rx_c20741(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,

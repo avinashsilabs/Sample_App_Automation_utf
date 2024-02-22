@@ -113,8 +113,8 @@ def get_pkt_list(wifi_sniffer, dut_mac_address, decryption_key: str, print_layer
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
@@ -242,8 +242,8 @@ def test_Coex_sdk_WLAN_bgscan_BLE_slave_C133585(
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
@@ -367,8 +367,8 @@ def test_Coex_sdk_WLAN_http_get_BLE_slave_C133481(http_server, wifi_dut, http_cl
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
@@ -477,8 +477,8 @@ def test_Coex_sdk_WLAN_http_post_BLE_slave_C133482(http_server, wifi_dut, wifi_a
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
@@ -574,13 +574,13 @@ def test_Coex_sdk_WLAN_http_post_non_exist_ip_BLE_slave_C133483(http_server, wif
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
         | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
         | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
@@ -673,16 +673,17 @@ def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_C133480(wifi_dut, wifi_acc
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default
         | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient
+                          | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
         | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
         | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
@@ -745,8 +746,10 @@ def test_Coex_sdk_WLAN_DNS_Query_BLE_slave_C133583(wifi_dut, wifi_access_point,
                                                   query_timeout=120000,
                                                   timeout=120)
         logger().info(f"dns get response : {result.decode()}")
+        dns_ip = (result.decode()).strip()
         logger().info("Checking the stability for 60 secs")
-        time.sleep(60)
+        wifi_dut.interfaces.wifi.ping(server_ip=dns_ip, num_ping_attempts=60,
+                                           ping_timeout=10, ping_size=64)
         wifi_obj.disconnect()
         ble_obj.ble_disconnect()
         logger().info("Stopping sniffer capture")
@@ -782,8 +785,8 @@ def test_Coex_sdk_WLAN_DNS_Query_BLE_slave_C133583(wifi_dut, wifi_access_point,
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
@@ -854,7 +857,7 @@ def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_C133477(wifi_dut, wifi_access_point,
         wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
                                                   server_port=port1)
         sw = Stopwatch()
-        while sw.elapsed_sec < 30:
+        while sw.elapsed_sec < 120:
             # The api returns 100 bytes of random data
             data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
             logger().info(f"Sending data {data} over socket_no->{sock}")
@@ -910,8 +913,8 @@ def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_C133477(wifi_dut, wifi_access_point,
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
@@ -984,15 +987,18 @@ def test_Coex_sdk_WLAN_SSL_rx_BLE_slave_C133478(wifi_dut, wifi_access_point,
         wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
                                                   server_port=port1)
 
-        logger().info(f"sock: {sock}")
-        buffer_length = 100
-        pkt_count = 1
-        tx_buffer = "".join(
-            random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
-        )
-        ssl_server.interfaces.ssl.send_data(1, pkt_count, buffer_length, message=tx_buffer)
-        buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
-        assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+        sw = Stopwatch()
+        while sw.elapsed_sec < 120:
+
+            logger().info(f"sock: {sock}")
+            buffer_length = 100
+            pkt_count = 1
+            tx_buffer = "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
+            )
+            ssl_server.interfaces.ssl.send_data(1, pkt_count, buffer_length, message=tx_buffer)
+            buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
+            assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
         logger().info("Successfully closed opened socket in the DUT")
         ssl_server.interfaces.ssl.stop_server()
@@ -1033,8 +1039,8 @@ def test_Coex_sdk_WLAN_SSL_rx_BLE_slave_C133478(wifi_dut, wifi_access_point,
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
@@ -1289,8 +1295,8 @@ def test_Coex_sdk_fun_ble_deinit_init_wlan_data_C133566(
             "ble_features": Si91xBLEFeatureBitMap.Default
             | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-            #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
             "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
             | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
@@ -1380,7 +1386,7 @@ def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
         logger().info(f"***** Get host IP address ******")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
 
-        ip_version, ttl, multicast_mac, multicast_ip, device_port, server_port, buffer_length, no_of_pkts, interface = \
+        ip_version, ttl, multicast_mac, multicast_ip, device_port, server_port, buffer_length, no_of_pkts = \
             multicast_client.interfaces.multicast.multicast_params()
 
         logger().info(f"DUT joining to the multicast group {multicast_ip}")
