@@ -859,11 +859,6 @@ def test_wifi_sdk_dutap_verify_beacon_format_c19436(wifi_sniffer, wifi_dut, wifi
                                              testcase_no=19465)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
-            filter_name='beacon')
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  beacon in Sniffer'
         logger().info('********** Validating Beacon interval **********')
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             wlan_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
@@ -872,6 +867,12 @@ def test_wifi_sdk_dutap_verify_beacon_format_c19436(wifi_sniffer, wifi_dut, wifi
         logger().info(f"packet_filter1: {packet_filter1}")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Sniffer: Unable to find beacon_ap_mode_dtim_interval packet in sniffer'
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
+            beacon=beacon, filter_name="beacon_IEs")
+        logger().info(f"packet_filter1: {packet_filter1}")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Sniffer: Unable to find beacon information elements packet in sniffer'
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
