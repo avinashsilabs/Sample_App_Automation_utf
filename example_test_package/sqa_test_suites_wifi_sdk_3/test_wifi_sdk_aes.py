@@ -127,23 +127,26 @@ class WLanThread(ThreadBase):
             raise e
 
 
-@pytest.mark.end_state("wifi_dut")
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLANOnly,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client,
-        "features": Si91xFeatureBitMap.Default,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_tcpip_features": 0,
-        "config_features": 0,
-        "bt_features": 0,
-        "ble_features": 0,
-        "ble_custom_ext_features": 0,
-    },
-)
+pytestmark = [
+    pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+            "oper_mode": Si91xOperatingMode.WiFiClient,
+            "coex_mode": Si91xCoexMode.WLANOnly,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client,
+            "features": Si91xFeatureBitMap.Default,
+            "custom_features": Si91xCustomFeatureBitMap.Default,
+            "ext_tcpip_features": 0,
+            "config_features": 0,
+            "bt_features": 0,
+            "ble_features": 0,
+            "ble_custom_ext_features": 0,
+        },
+    )
+]
+
+
 def test_wifi_sdk_aes_encryption_with_key_size_128_c215179(wifi_dut):
     """This test case verify aes encryption with aes key size 128 """
     try:

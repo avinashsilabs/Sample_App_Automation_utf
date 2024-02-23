@@ -128,23 +128,26 @@ class WLanThread(ThreadBase):
             raise e
 
 
-@pytest.mark.end_state("wifi_dut")
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLANOnly,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client,
-        "features": Si91xFeatureBitMap.Default,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_tcpip_features": 0,
-        "config_features": 0,
-        "bt_features": 0,
-        "ble_features": 0,
-        "ble_custom_ext_features": 0,
-    },
-)
+pytestmark = [
+    pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+            "oper_mode": Si91xOperatingMode.WiFiClient,
+            "coex_mode": Si91xCoexMode.WLANOnly,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client,
+            "features": Si91xFeatureBitMap.Default,
+            "custom_features": Si91xCustomFeatureBitMap.Default,
+            "ext_tcpip_features": 0,
+            "config_features": 0,
+            "bt_features": 0,
+            "ble_features": 0,
+            "ble_custom_ext_features": 0,
+        },
+    )
+]
+
+
 def test_wifi_sdk_sha_mode_256_digest_length_32_c215174(wifi_dut, sl_collections):
     """Verify sha output with sha mode 256 digest length 32"""
     try:
