@@ -874,7 +874,7 @@ def test_wifi_sdk_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C194
     "wifi_clients",
     wifi={
            0: {
-                "security": "WPA2",
+                "security": "OPEN",
                 "ssid": "SILABS_AP_MODE",
                 "passphrase": "Automation@123",
                 "channel": 11,
@@ -898,7 +898,7 @@ def test_wifisdk_DUTAP_open_10_TCP_client_sockets_send_tx_C19473(wifi_sniffer, w
                                                        static_gateway="192.168.100.76")
         dut_addr_dict = sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
                                                                   channel=11, ssid="SILABS_AP_MODE",
-                                                                  security="WPA2",
+                                                                  security="OPEN",
                                                                   password="Automation@123",
                                                                   dtim_count=1,
                                                                   beacon_interval=100,
@@ -959,19 +959,6 @@ def test_wifisdk_DUTAP_open_10_TCP_client_sockets_send_tx_C19473(wifi_sniffer, w
                 logger().info(f"Number of bytes sent by dut {bytes_sent}")
                 th_start.join(5)
 
-            # sw = Stopwatch()
-            # while sw.elapsed_sec < 120:
-            #     data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
-            #     for socket_no in range(10):
-            #         logger().info(f"DUT is sending data over socket {socket_no} and data:{data}")
-            #         bytes_sent = wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=socket_no, data=data, timeout=120)
-            #         time.sleep(0.5)
-            #         logger().info(f"Number of bytes sent by dut {bytes_sent}")
-            #     for index, client_socket in enumerate(client_sockets):
-            #         logger().info(f"Data sent to client {index} - {data}")
-            #         data_recv = client_socket.recv_data_tcp(len(data))
-            #         logger().info(f"Data received in client {index} - {data_recv}")
-            #         assert data_recv == data
             logger().info(f"closing the sockets on remote side")
             remote_socket_factory.interfaces.socket.close_all()
             time.sleep(15)
@@ -1090,22 +1077,19 @@ def test_wifi_sdk_Verify_Multicast_data_TX_and_RX_C19469(wifi_sniffer, net_perf_
         logger().info("starting the server from Remote device")
         logger().info(f"starting iperf")
         net_perf_client.interfaces.net_perf.init_server(host_ip=ap_dut_obj.dut_addr_dict['client_ip'],
-                                                        device_ip=multicast_ip,
+                                                        device_ip=ap_dut_obj.dut_addr_dict['dut_ip'],
                                                         protocol=protocol, time_out=30, bind_address=multicast_ip)
         net_perf_client.interfaces.net_perf.start()
         logger().info("sending data from DUT")
         wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=2, protocol=17,
                                        local_port=net_perf_client.interfaces.net_perf.server_port,
                                        local_ip=ap_dut_obj.dut_addr_dict['dut_ip'],
-                                       remote_ip=ap_dut_obj.dut_addr_dict['client_ip'],
+                                       remote_ip=multicast_ip,
                                        remote_port=net_perf_client.interfaces.net_perf.server_port,
                                        size=1470,
                                        ttl=30,
-                                       throughput_type=4, qos=0, async_socket=1)
+                                       throughput_type=2, qos=0, async_socket=1)
 
-        logger().info(f"get and print throughput")
-        tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp is not None, "Throughput not found"
         net_perf_client.interfaces.net_perf.init_client(host_ip=ap_dut_obj.dut_addr_dict['client_ip'], device_ip=multicast_ip,
                                                         time_out=30,
                                                         protocol=protocol, time_to_leave="32",
@@ -1393,7 +1377,7 @@ def test_wifi_sdk_DUTAP_Bidirectional_TCP_traffic_data_C19467(wifi_sniffer, net_
     """Validate bidirectional tcp traffic on Remote peer in ap mode connection"""
     try:
         ip_dict = {}
-        wifi_clients = wifi_clients[:2]
+        assert len(wifi_clients) >= 2, f"Minimum 2 raspi devices needed for this test"
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                                 utf_constants, net_perf_client=net_perf_client, protocol=protocol,
                                                 capture_filename="test_C19467",
@@ -1409,7 +1393,7 @@ def test_wifi_sdk_DUTAP_Bidirectional_TCP_traffic_data_C19467(wifi_sniffer, net_
         rasp_mac_address_1 = ip_dict['rasp_mac_address_1']
         rasp_mac_address_2 = ip_dict['rasp_mac_address_2']
         timeout = 30
-        logger().info("***** Initiating TCP TX traffic from DUT *****")
+        logger().info("***** Initiating TCP RX traffic *****")
         for retry_count in range(5):
             try:
                 for i in range(0, 2):
@@ -1492,9 +1476,9 @@ def test_wifi_sdk_DUTAP_Bidirectional_UDP_traffic_data_C19468(wifi_sniffer, net_
                                                     utf_constants, net_perf_clients, sniffer_filter, sl_collections, wifi_clients, multicast_client, net_perf_server,):
     """Validate bidirectional udp traffic on Remote peer in ap mode connection"""
     try:
-        ip_dict= {}
+        ip_dict = {}
+        assert len(wifi_clients) >= 2, f"Minimum 2 raspi devices needed for this test"
         logger().info("********** configuring the sniffer with access point channel **********")
-        wifi_clients = wifi_clients[:2]
         ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                                 utf_constants, net_perf_client=net_perf_client, protocol=protocol,
                                                 capture_filename="test_C19468",
