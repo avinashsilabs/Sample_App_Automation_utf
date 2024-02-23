@@ -63,13 +63,27 @@ class WifiJoinThread(ThreadBase):
                 with TimeMeasurer() as T:
                     t_end = time.time() + 1800
 
+                    self.sl_collections.scan(self.wifi_dut)
+                    self.dut_addr['dut_mac_address'] = self.wifi_dut.interfaces.wifi.get_mac_address()
+                    join_status, reason = self.sl_collections.connect(wifi_dut=self.wifi_dut,
+                                                                      wifi_access_point=self.wifi_access_point)
+                    assert join_status, f"....Connection to the AP failed with reason: {reason}...."
+                    logger().info("....Successfully connected to the AP....")
+
+                    ip_status, ip_config = self.sl_collections.configure_ip(wifi_dut=self.wifi_dut)
+                    assert ip_status, f"....Unable to assign IP ADDRESS through DHCP with reason: {ip_config}...."
+
+                    device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+                    logger().info(f"DUT IP is {device_ip}")
+
+                    logger().info(f"DUT MAC ADDRESS :  {self.dut_addr['dut_mac_address']} DUT IP ADDRESS : {device_ip}")
+
+                    logger().info(f"....Pinging to DUT before Power Save")
+
                     while time.time() < t_end:
-                        self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
-                                                                 wifi_access_point=self.wifi_access_point,
-                                                                 retry_count=3, power_save=False,
-                                                                 associated=self.wifi_dut.interfaces.wifi.associated)
-                        self.wifi_dut.interfaces.wifi.leave()
+                        self.sl_collections.ping(device_ip=device_ip, ping_count=10)
                         time.sleep(2)
+                logger().info(f'*** Total time taken = {T.duration} ***')
                 return
 
             self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
