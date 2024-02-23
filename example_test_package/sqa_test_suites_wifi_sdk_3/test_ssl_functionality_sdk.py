@@ -3490,7 +3490,6 @@ def test_wifi_sdk_ssl_tx_with_1aws_2tcp_sockets_c19193(wifi_sniffer, wifi_dut, w
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.skip("sntp test_agent support needed")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -3500,11 +3499,11 @@ def test_wifi_sdk_ssl_tx_with_1aws_2tcp_sockets_c19193(wifi_sniffer, wifi_dut, w
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.Ping | Si91xTCPIPFeatureBitMap.SNTPClient,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints
                                | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "set_send_feature_frame": True,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
     }
@@ -3520,18 +3519,22 @@ def test_wifi_sdk_sntp_functionality_c19191(wifi_sniffer, wifi_dut, wifi_access_
         capture_filename = "test_wifi_sdk_sntp_functionality_c19191"
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
-        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        # wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
-        sntp_server_ip = wifi_dut.interfaces.wifi.sntp_get_server_info()[0]
         logger.info("**************** Creating SNTP Client Session in DUT ***************")
-        wifi_dut.interfaces.wifi.sntp_client_start(server_ip=sntp_server_ip, sntp_timeout=120)
-        time.sleep(30)
+        wifi_dut.interfaces.wifi.sntp_client_start(sntp_timeout=120)
+        time.sleep(10)
         logger.info("**************** Getting SNTP Time and DATE from DUT ***************")
-        wifi_dut.interfaces.wifi.sntp_get_time_data()
+        sntp_time, sntp_date = wifi_dut.interfaces.wifi.sntp_get_time_data()
+        logger.info(f">>>>>>>>>>>>>>> SNTP TIME ----> '{sntp_time}'")
+        logger.info(f">>>>>>>>>>>>>>> SNTP DATE ----> '{sntp_date}'\n")
         logger.info("**************** Getting SNTP Server Information from DUT ***************")
-        sntp_server_address = wifi_dut.interfaces.wifi.sntp_get_server_info()
+        ip_version, sntp_method, sntp_server_address = wifi_dut.interfaces.wifi.sntp_get_server_info()
+        logger.info(f">>>>>>>>>>>>>>> SNTP SERVER {ip_version}")
+        logger.info(f">>>>>>>>>>>>>>> SNTP SERVER ADDRESS: {sntp_server_address}")
+        logger.info(f">>>>>>>>>>>>>>> SNTP {sntp_method}\n")
         logger.info("**************** Deleting SNTP Client Session in DUT ***************")
         wifi_dut.interfaces.wifi.sntp_client_stop()
 
@@ -3547,9 +3550,8 @@ def test_wifi_sdk_sntp_functionality_c19191(wifi_sniffer, wifi_dut, wifi_access_
         assert len(ntp_capture_list), (f"NTP packets are not captured or one of the 4-way handshake packets are not "
                                        f"captured in the sniffer capture")
         for ntp_pkt in ntp_capture_list:
-            logger.info(f"NTP_PACKET:{ntp_pkt}")
             if (ntp_pkt[2] == sntp_server_address) and (ntp_pkt[3] == device_ip):
-                logger.info(f"SNTP response body received in the sniffer {ntp_pkt}")
+                logger.info(f"************** SNTP response body received in the sniffer **************\n{ntp_pkt}")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
