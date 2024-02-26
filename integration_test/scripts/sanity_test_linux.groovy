@@ -19,7 +19,7 @@ pipeline {
     stages {
         stage('Run Sanity test') {
             agent {
-                node "infraswBostonNode"
+                node "infraswHyderabadNode"
             }
             environment {
                 UTF_HWMUX_TOKEN = credentials('utf-dev-hwmux-token')
