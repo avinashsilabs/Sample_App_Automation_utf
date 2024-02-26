@@ -592,3 +592,65 @@ def test_wifi_sdk_wlan_ssl_tx_with_11ax_ble_connect_master_c198671(
 
     finally:
         ble_client.interfaces.bluetooth.close()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}, "ble": {"count": 1, "stack_len": 3584}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+    }
+)
+@pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv"])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.parametrize("traffic, qos", [('0xc8', 0)])
+def test_wifi_sdk_wlan_tcp_rx_with_11ax_ble_connect_and_disconnect_slave_c198678(
+        wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
+        ble_dut, protocol, net_perf_client, traffic, qos):
+    """ Verify the WLAN TCP Tx data transfer with 11ax AP when BLE as Slave Connection and disconnection """
+
+    try:
+        test_name = request.node.name
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
+                                         ble_dut=ble_dut, ble_pairing=0, test_case="198668")
+
+        wifi_obj = WifiThreadFunctionality(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                           wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, qos=qos,
+                                           sniffer_filter=sniffer_filter, wifi_client=wifi_client, traffic=traffic,
+                                           protocol=protocol, net_perf_client=net_perf_client, test_case="198668")
+
+        ble_obj.start()
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        ble_obj.wait_for_exit()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+        ble_obj.ble_disconnect()
+        wifi_obj.sniffer_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
