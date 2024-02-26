@@ -158,7 +158,7 @@ class WifiJoin(ThreadBase):
                         with TimeMeasurer() as t:
                             self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
                                                                            host_name=self.host_ip,
-                                                                           http_url='/SiWG917-B.2.9.0.0.20')
+                                                                           http_url='/SiWG917-B.2.10.1.0.0.6_corrupted_add.rps')
                             # expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
                 return
 
