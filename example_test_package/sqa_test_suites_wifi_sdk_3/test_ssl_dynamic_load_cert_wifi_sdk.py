@@ -1,6 +1,17 @@
-import threading
+import re
 import time
 import pytest
+import string
+import random
+import threading
+from random import randint
+from threading import Thread
+from utf.utils.logger import get_logger
+from utf.utils.stopwatch import Stopwatch
+from utf.utils.iperf.iperf_utils import ping
+from utf.utils.thread_base import ThreadBase
+from utf.utils import get_tls_certificate_dir
+from utf.interfaces.bluetooth import BLEDeviceState
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xCoexMode,
     Si91xTCPIPFeatureBitMap,
@@ -19,19 +30,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xBLEFeatureBitMap,
     Si91xBLECustomFeatureBitMap,
 )
-from utf.utils.stopwatch import Stopwatch
-from utf.utils import get_tls_certificate_dir
-from utf.utils.iperf.iperf_utils import ping
-from utf.utils.logger import get_logger
-from utf.interfaces.bluetooth import BLEDeviceState
-import time
-import re
-from threading import Thread
-from utf.utils.thread_base import ThreadBase
-from random import randint
-import string
-import random
-import threading
+
 
 lock = threading.Lock()
 
@@ -41,17 +40,20 @@ def logger():
 
 
 def text_generator(size=100):
-    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
+    return ''.join(random.choice(string.ascii_uppercase) for _ in range(size))
 
 
 class BleFunctionality(ThreadBase):
-    def __init__(self, wifi_dut=None, ble_client=None, ble_dut_address=None):
+    def __init__(self, wifi_dut=None, ble_client=None, ble_dut_address=None, duration=60):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_client = ble_client
         self.ble_dut_address = ble_dut_address
+        self.char_path = None
+        self.add_service = True
+        self.duration = duration
 
-    def ble_slave_connection(self, data_transfer=True, disconnect=False, wait_time=10):
+    def ble_slave_connection(self, data_transfer=True, disconnect=False, wait_time=5):
 
         logger().info("******************** start ble in dut ********************")
         ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
@@ -78,7 +80,8 @@ class BleFunctionality(ThreadBase):
         self.ble_client.interfaces.bluetooth.stop_scanning()
         assert device_found, "Failed to get DUT-BLE from remote device scan list"
         logger().info("******************** Initiating ble connection from remote ble device ********************")
-        self.ble_client.interfaces.bluetooth.connect(ble_dut_address)
+        self.ble_client.interfaces.bluetooth.connect(ble_dut_address, min_conn_interval=40, max_conn_interval=40,
+                                                     conn_latency=0, supervision_timeout=2000)
         time.sleep(wait_time)
         self.check_connection_status_on_dut()
         self.check_connection_status_on_raspi()
@@ -102,35 +105,35 @@ class BleFunctionality(ThreadBase):
         assert status, f"Remote device '{self.ble_client.name}' is not connected to DUT"
         logger().info("******************** Remote ble device is connected to DUT ********************")
 
-    def add_service(self):
+    def add_char_service(self):
         service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
         char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
 
         services, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
         assert len(services) > 0, "no services fetched"
         assert len(chars) > 0, "fetched characters are empty"
-        char_path, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(
-            services=services,
-            service_uid=service_uid,
-            char_uid=char_uid)
-        assert char_path, "characters are empty"
+        self.char_path, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(
+            services=services, service_uid=service_uid, char_uid=char_uid)
+        assert self.char_path, "characters are empty"
         assert len(char_props) > 0, "length of characters is 0"
-        read_char_value = self.ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+        read_char_value = self.ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=self.char_path)
         logger().info(f"read_char_value = {read_char_value}")
         logger().info("******************** Remote ble device is subscribing to notification ********************")
-        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
-        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
+        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=self.char_path)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=self.char_path,
                                                                                      char_uid=char_uid)
+        self.add_service = False
+        time.sleep(2)
 
-    def ble_data_transfer(self, check_connection=True, wait_time=3, duration=60, add_service=False):
+    def ble_data_transfer(self, check_connection=False, wait_time=3):
         if check_connection:
             self.check_connection_status_on_dut()
             self.check_connection_status_on_raspi()
-        if add_service:
-            self.add_service()
+        if self.add_service:
+            self.add_char_service()
         char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
         sw = Stopwatch()
-        while sw.elapsed_sec <= duration:
+        while sw.elapsed_sec <= self.duration:
             data = text_generator(15)
             if not lock.locked():
                 with lock:
@@ -141,16 +144,24 @@ class BleFunctionality(ThreadBase):
                 time.sleep(wait_time)
                 logger().info("******************** Validating received data in remote ble device ********************")
                 notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+                assert notifications, "Failed to receive data in remote ble device"
                 logger().info(f"Remote device received data: {notifications[-1]}")
                 assert len(notifications) > 0, "Remote device failed to receive data"
                 assert notifications[-1] == data, "Received data is not matched at remote device"
 
-        # logger().info("******************** Remote ble device is unsubscribing from notification ********************")
-        # self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-        # self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+    def unsubscribe_notification(self):
+        char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+        logger().info("******************** Remote ble device is unsubscribing from notification ********************")
+        self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=self.char_path)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+
+    def ble_disconnect_from_raspi(self):
+        logger().info("******************** Initiating ble disconnect from Raspi ********************")
+        self.ble_client.interfaces.bluetooth.disconnect(self.ble_dut_address)
 
     def run(self):
         self.ble_data_transfer()
+        self.unsubscribe_notification()
 
 
 def join_ap(wifi_dut, wifi_access_point, wait_time=3):
@@ -198,7 +209,7 @@ class load_certificates_thread(ThreadBase):
             if element[0] == "open":
                 port = element[2]
                 sw = Stopwatch()
-                while sw.elapsed_sec <= 60:
+                while sw.elapsed_sec <= 180:
                     if not lock.locked():
                         with lock:
                             logger().info(f"Certificate Loading in index{index}")
@@ -1383,12 +1394,9 @@ def test_thread_wifi_sdk_connection_and_transfer_of_index1_index2_when_trying_lo
 )
 @pytest.mark.parametrize("cert1", [["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
                                     "mosquitto-utf.silabs.com.key.pem"]])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_sdk_ssl_dynamic_load_cert_in_concurrent_mode_c19647(wifi_sniffer, wifi_dut, wifi_access_point,
-                                                                  wifi_client,
-                                                                  ssl_server, cert1, logger, sl_collections, request,
-                                                                  sniffer_filter):
+def test_wifi_sdk_ssl_dynamic_load_cert_in_concurrent_mode_19647(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client,
+                                                                 ssl_server, cert1, logger, sl_collections, request,
+                                                                 sniffer_filter):
     """
     Verify the AP behavior and connected STA data transfer when we do load certificate in concurrent mode
     """
@@ -1448,6 +1456,8 @@ def test_wifi_sdk_ssl_dynamic_load_cert_in_concurrent_mode_c19647(wifi_sniffer, 
                                                sniffer_filter, power_save=False)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
 @pytest.mark.config(
@@ -1470,18 +1480,16 @@ def test_wifi_sdk_ssl_dynamic_load_cert_in_concurrent_mode_c19647(wifi_sniffer, 
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
-@pytest.mark.parametrize("cert1, cert2, cert3", [(["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
-                                                   "mosquitto-utf.silabs.com.key.pem"],
-                                                  ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
-                                                   "mosquitto-utf.silabs.com.key.pem"],
-                                                  ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
-                                                   "mosquitto-utf.silabs.com.key.pem"])])
+@pytest.mark.parametrize("cert1, cert2", [(["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                                            "mosquitto-utf.silabs.com.key.pem"],
+                                           ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                                            "mosquitto-utf.silabs.com.key.pem"])])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
-                             "ble_disconnect"])
-def test_wifi_sdk_error_code_check_when_cert_loaded_in_same_index_c19656(wifi_sniffer, wifi_dut, sniffer_filter, cert3,
-                                                                         ble_client, ssl_server, logger, cert1, request,
-                                                                         cert2, sl_collections, wifi_access_point):
+                             "ble_disconnect", "clear_certs"])
+def test_wifi_sdk_error_code_check_when_cert_loaded_in_same_index_c19656(wifi_sniffer, wifi_dut, sniffer_filter, cert1,
+                                                                         ble_client, ssl_server, logger, request, cert2,
+                                                                         sl_collections, wifi_access_point):
     """
     Verify whether device is throwing error or not when trying to load certificate if certificate is already loaded and connected to server(TC_2)
     """
@@ -1494,27 +1502,26 @@ def test_wifi_sdk_error_code_check_when_cert_loaded_in_same_index_c19656(wifi_sn
         logger.info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
-        ble_thread = ble_obj = BleFunctionality(wifi_dut, ble_client)
+        ble_thread = ble_obj = BleFunctionality(wifi_dut, ble_client, duration=80)
         ble_obj.ble_slave_connection()
-        ble_obj.ble_data_transfer(duration=20, add_service=True)
-        result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False,
-                                                     retry_count=3, associated=False)
+        ble_thread.start()
+        time.sleep(3)
+        result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, retry_count=3, associated=False)
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f"AP BSSID : {ap_bssid}")
 
         load_certs_thread = load_certificates_thread(wifi_dut, ssl_server, device_ip, load_cert1, load_cert2)
         load_certs_thread.start()
-        ble_thread.start()
+
         load_certs_thread.wait_for_exit(True)
-        socks = load_certs_thread.return_value
-        time.sleep(10)
-        ble_obj.check_connection_status_on_raspi()
         ble_obj.check_connection_status_on_dut()
+        ble_obj.check_connection_status_on_raspi()
+
 
         sw = Stopwatch()
         error_code = None
-        while sw.elapsed_sec <= 60:
+        while sw.elapsed_sec <= 30:
             if not lock.locked():
                 with lock:
                     try:
@@ -1536,6 +1543,150 @@ def test_wifi_sdk_error_code_check_when_cert_loaded_in_same_index_c19656(wifi_sn
                     f"certificate, which is expected")
         ble_thread.wait_for_exit(True)
 
+        ble_obj.ble_disconnect_from_raspi()
+        socks = load_certs_thread.return_value
+        for sock_id in socks:
+            logger.info(f"Closing socket_id->{sock_id}")
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
+        ssl_server.interfaces.ssl.stop_server()
+        logger.info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                               sniffer_filter)
+    except Exception as error:
+        wifi_dut.interfaces.is_dut_bad_state = True
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.announcement
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}, "ble": {"count": 1, "stack_len": 2048}}
+    }
+)
+@pytest.mark.parametrize("cert1", [("ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                                    "mosquitto-utf.silabs.com.key.pem")])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "ble_disconnect", "clear_certs"])
+def test_wifi_sdk_load_cert_with_wlan_ble_in_connected_state_with_ps_c19651(wifi_sniffer, wifi_dut, wifi_access_point,
+                                                                            ble_client, request, ssl_server, logger,
+                                                                            sniffer_filter, cert1, sl_collections):
+    """
+    Verify whether we are able to load certificates and connect to secure server after module initialization when enable
+    and connect both WLAN and BLE interfaces_TC_2
+    """
+    try:
+        capture_filename = request.node.name
+        port1 = ssl_server.interfaces.ssl.config['device_port1']
+        load_cert1 = ["open", 0, port1, cert1]
+        logger.info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        ble_thread = ble_obj = BleFunctionality(wifi_dut, ble_client)
+        ble_obj.ble_slave_connection()
+        ble_thread.start()
+        time.sleep(15)
+        result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, retry_count=3, associated=False)
+        device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f"AP BSSID : {ap_bssid}")
+
+        load_certs_thread = load_certificates_thread(wifi_dut, ssl_server, device_ip, load_cert1)
+        load_certs_thread.start()
+        load_certs_thread.wait_for_exit(True)
+        ble_thread.wait_for_exit(True)
+        ble_obj.check_connection_status_on_dut()
+        ble_obj.check_connection_status_on_raspi()
+
+        ble_obj.ble_disconnect_from_raspi()
+        socks = load_certs_thread.return_value
+        for sock_id in socks:
+            logger.info(f"Closing socket_id->{sock_id}")
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
+        ssl_server.interfaces.ssl.stop_server()
+        logger.info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                               sniffer_filter)
+    except Exception as error:
+        wifi_dut.interfaces.is_dut_bad_state = True
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.announcement
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}, "ble": {"count": 1, "stack_len": 2048}}
+    }
+)
+@pytest.mark.parametrize("cert1", [("ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                                    "mosquitto-utf.silabs.com.key.pem")])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "ble_disconnect", "clear_certs"])
+def test_wifi_sdk_load_cert_with_wlan_ble_in_connected_state_without_ps_c19652(wifi_sniffer, wifi_dut, sniffer_filter,
+                                                                               sl_collections, wifi_access_point, cert1,
+                                                                               ble_client, request, ssl_server, logger):
+    """
+    Verify whether DUT is able to load certificate with WLAN and BLE in connected state without power save
+    """
+    try:
+        capture_filename = request.node.name
+        port1 = ssl_server.interfaces.ssl.config['device_port1']
+        load_cert1 = ["open", 0, port1, cert1]
+        logger.info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        ble_thread = ble_obj = BleFunctionality(wifi_dut, ble_client)
+        ble_obj.ble_slave_connection()
+        ble_thread.start()
+        time.sleep(15)
+        result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, retry_count=3, power_save=False,
+                                                     associated=False)
+        device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f"AP BSSID : {ap_bssid}")
+
+        load_certs_thread = load_certificates_thread(wifi_dut, ssl_server, device_ip, load_cert1)
+        load_certs_thread.start()
+        load_certs_thread.wait_for_exit(True)
+        ble_thread.wait_for_exit(True)
+        socks = load_certs_thread.return_value
+        ble_obj.check_connection_status_on_dut()
+        ble_obj.check_connection_status_on_raspi()
+
+        ble_obj.ble_disconnect_from_raspi()
         for sock_id in socks:
             logger.info(f"Closing socket_id->{sock_id}")
             wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
@@ -1545,381 +1696,80 @@ def test_wifi_sdk_error_code_check_when_cert_loaded_in_same_index_c19656(wifi_sn
         sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
                                                sniffer_filter, power_save=False)
     except Exception as error:
+        wifi_dut.interfaces.is_dut_bad_state = True
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
 
 
-"""Below testcases needs to be reworked"""
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLANOnly,
-#         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-#         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-#         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-#         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE,
-#         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
-#         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-#         "set_send_feature_frame": True,
-#     }
-# )
-# @pytest.mark.parametrize("cert1, cert2, cert3",
-#                          [
-#                              (["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
-#                                "mosquitto-utf.silabs.com.key.pem"],
-#                               ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
-#                                "mosquitto-utf.silabs.com.key.pem"],
-#                               ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
-#                                "mosquitto-utf.silabs.com.key.pem"]
-#
-#                               )
-#                          ]
-#                          )
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.end_state("wifi_dut",
-#                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-# @pytest.mark.skip()
-# def test_wifi_sdk_dynamic_load_powersave_enabled_testcase14(
-#         wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2, cert3, sl_collections
-# ):
-#     """
-#     @param wifi_access_point:
-#     @param wifi_dut:
-#     @param ssl_server:
-#     @param logger:
-#     @param cert1:
-#     @param cert2:
-#     @param cert3:
-#     @return:
-#     """
-#     try:
-#         pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
-#         buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
-#         port1 = ssl_server.interfaces.ssl.config['device_port1']
-#         port2 = ssl_server.interfaces.ssl.config['device_port2']
-#         port3 = ssl_server.interfaces.ssl.config['device_port3']
-#         # DUT connects to AP after join_ap API is executed
-#         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-#         for cert_index in range(1, 4):
-#             cert = eval("cert" + str(cert_index))
-#             # The below API loads ca-cert into DUT at cert index 0
-#             wifi_dut.interfaces.wifi.load_certificate(Si91xCertificateType.SSLCACertificate,
-#                                                       str(get_tls_certificate_dir().joinpath(cert[0])),
-#                                                       cert_index=cert_index - 1)
-#
-#         # DUT gets ipaddress through DHCP process after start_ip API is executed
-#         device_ip = wifi_dut.interfaces.wifi.start_ip()
-#
-#         # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
-#         # DUT to power save in Wifi+bluetooth mode
-#         power_save_enable = wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-#         assert power_save_enable == 0, 'failed to enable wlan power save'
-#         bt_power_save, result = wifi_dut.interfaces.wifi.enable_bt_power_save(
-#             psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-#             psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-#
-#         # Open ssl server socket in remote device(Raspberry pi or static device)
-#         ssl_server.interfaces.ssl.start_server(server_cert=cert1[1], server_key=cert1[2])
-#         # Open ssl server socket in remote device(Raspberry pi or static device)
-#         ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
-#         # Open ssl server socket in remote device(Raspberry pi or static device)
-#         ssl_server.interfaces.ssl.start_server(port=port3, server_cert=cert3[1], server_key=cert3[2])
-#
-#         # Open ssl client socket in the DUT
-#         for sock_count in range(0, 3):
-#             sock = wifi_dut.interfaces.wifi.socket(protocol=SocketOptions.SSL_ENABLE)
-#             assert sock == sock_count, f"socket id received is wrong, expected is {sock_count}"
-#             logger.info(f"Enabling SSL option for the socket-id->{sock} ")
-#
-#             wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, SocketOptions.SOL_SOCKET,
-#                                                      SocketOptions.SO_SSL_ENABLE,
-#                                                      SocketOptions.SSL_ENABLE)
-#
-#             wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, SocketOptions.SOL_SOCKET,
-#                                                      SocketOptions.SO_CERT_INDEX,
-#                                                      eval("SocketOptions.CERT_INDEX" + str(sock_count)))
-#             if sock_count == 0:
-#                 socket_port = port1
-#                 local_port = randint(5001, 20000)
-#             elif sock_count == 1:
-#                 socket_port = port2
-#                 local_port = randint(20001, 40000)
-#             else:
-#                 socket_port = port3
-#                 local_port = randint(40001, 60000)
-#
-#             # Socket binds at (device_ip, 5001) in DUT
-#             wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port,
-#                                           timeout=15)
-#
-#             wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=ssl_server.interfaces.ssl,
-#                                                       server_port=socket_port)
-#
-#         if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
-#             socket_no = [1, 2, 3]
-#             for socket in socket_no:
-#                 if ssl_server.interfaces.ssl.socket_connection_status(socket):
-#                     ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length)
-#                     result = wifi_dut.interfaces.wifi.send_data_pkts((socket - 1), buffer_length, pkt_count)
-#                     logger.info(f"Number of bytes sent by dut {result}")
-#                     bytes_sent = result
-#                     time.sleep(3)
-#                     bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
-#                     assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer " \
-#                                                          f"not matched on socket {socket} "
-#
-#                 else:
-#                     assert f"failed to connect on socket no {socket}"
-#
-#         for sock_count in range(0, 3):
-#             logger.info(f"Closing socket_id->{sock_count}")
-#             result = wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_count)
-#             logger.info(f"Successfully closed socket_id->{sock_count}")
-#         wifi_dut.interfaces.wifi.leave()
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
-#
-#
-#
-#
-# @pytest.mark.skip()
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.DualBluetoothBLE,
-#         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.ULPGPIOHandshake,
-#         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-#         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
-#         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-#         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE,
-#         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-#     }
-# )
-# @pytest.mark.parametrize("cert1",
-#                          [
-#                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
-#                               "mosquitto-utf.silabs.com.key.pem"],
-#                          ]
-#                          )
-# @pytest.mark.end_state("wifi_dut",
-#                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
-#                              "ble_disconnect"])
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={"thread_config": {"wifi": {"count": 1, "stack_len": 2048}, }})
-# def test_wifi_sdk_load_cert_with_wlan_ble_in_connected_state_C19652(wifi_sniffer, wifi_dut, wifi_access_point,
-#                                                                     ble_client,
-#                                                                     ssl_server,
-#                                                                     wifi_client, logger, cert1, sl_collections):
-#     """
-#     Verify whether DUT is able to load certificate with WLAN and BLE in connected state without power save
-#     """
-#     try:
-#         port1 = ssl_server.interfaces.ssl.config['device_port1']
-#         data1 = "testcase__bledatatransfer_&_loadcertificate__19652"
-#         ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
-#         bt_local_name = "test_C19652"
-#         logger.info("configuring bd local name....")
-#         wifi_dut.interfaces.wifi.bt_set_local_name(bt_local_name)
-#
-#         logger.info("fetching bd local name....")
-#         bd_local_name = wifi_dut.interfaces.wifi.bt_get_local_name()
-#         logger.info(f"bd local name is : {bd_local_name}")
-#
-#         logger.info("start ble on DUT")
-#         ble_dut_addr = wifi_dut.interfaces.wifi.ble_start()
-#         assert ble_dut_addr is not None, "Unable to get ble_dut_address"
-#
-#         logger.info("Creating new custom gatt service in DUT")
-#         wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
-#         logger.info("Adding custom characteristic declaration to the custom service")
-#         wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
-#         logger.info("Adding characteristic value attribute to the service")
-#         wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data1)
-#
-#         logger.info("Start ble advertising on DUT")
-#         # 256(0x100), 512(0x200), 7(0x07)
-#         wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_int_min=256, ble_adv_int_max=512, ble_adv_channel_map=7)
-#
-#         logger.info(f"Begin Scanning for BLE devices")
-#         ble_client.interfaces.bluetooth.close()
-#         time.sleep(2)
-#
-#         ble_client_addr = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_addr)
-#         assert ble_client_addr is not None, "ble client address not found"
-#         time.sleep(5)
-#         ble_client.interfaces.bluetooth.stop_scanning()
-#         logger.info(f"See that we found our device")
-#         found_devices = ble_client.interfaces.bluetooth.get_devices()
-#         assert wifi_dut.interfaces.wifi.ble_address in found_devices
-#         assert (found_devices[wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data)
-#         conn_params = {"min_conn_interval": 40,
-#                        "max_conn_interval": 40,
-#                        "conn_latency": 0,
-#                        "supervision_timeout": 200}
-#
-#         ble_client.interfaces.bluetooth.connect(dev_addr=ble_dut_addr,
-#                                                 min_conn_interval=conn_params["min_conn_interval"],
-#                                                 max_conn_interval=conn_params["max_conn_interval"],
-#                                                 conn_latency=conn_params["conn_latency"],
-#                                                 supervision_timeout=conn_params["supervision_timeout"])
-#         logger.info("BLE Connection success")
-#         time.sleep(2)
-#
-#         logger.info("Configuring remote device to receive notifications from DUT")
-#         service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-#         char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
-#
-#         services, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
-#         assert len(services) > 0, "Unable to fetch services"
-#         assert len(chars) > 0, "Unable to get characteristics list from ble_client"
-#
-#         char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=services,
-#                                                                                                     service_uid=service_uid,
-#                                                                                                     char_uid=char_uid)
-#         assert char_path is not None, "Unable to resolve custom service characteristic from ble_client"
-#         assert len(char_props) > 0, "Unable to get char_props"
-#
-#         logger.info("Subscribing to notifications on ble_client")
-#         ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
-#         ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path, char_uid=char_uid)
-#
-#         logger.info("Sending 50 bytes of data from DUT")
-#         wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data1)
-#
-#         # read value - Notifications not enabled
-#         result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
-#         assert result == data1
-#
-#         logger.info("Get ble device state")
-#         state = wifi_dut.interfaces.wifi.ble_get_device_state()
-#         state_int = int(state) if state.isdigit() else -1
-#         assert state_int == BLEDeviceState.Connected, "Ble device is not connected"
-#         logger.info(" Connected to the BLE device ")
-#
-#         ping_count = 10
-#         wifi_dut.interfaces.wifi.scan(ssid=None)
-#         status = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-#         time.sleep(5)
-#         logger.info(f"wifi_join status: {status}")
-#         mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-#         logger.info(f"DUT MAC_Address: {mac_address}")
-#         ip_fail = 1
-#         for count in range(3):
-#             try:
-#                 device_ip = wifi_dut.interfaces.wifi.start_ip(timeout=25)
-#                 ip_fail = 0
-#                 break
-#             except:
-#                 time.sleep(5)
-#                 logger.info(f"Retry_count:{count}")
-#         assert ip_fail == 0, "Getting IP failed"
-#         logger.info(f"Initiating ping to DUT ip {device_ip} after power save")
-#         wifi_dut.interfaces.wifi.ping(device_ip, ping_size=ping_count)
-#
-#         load_cert1 = ["open", 0, port1, cert1]
-#         result_load_certificate = load_certificates_thread(wifi_dut, ssl_server, load_cert1)
-#         result_load_certificate.start()
-#         result_load_certificate.wait_for_exit(True)
-#         logger.info(f"Loading certificate{result_load_certificate}")
-#
-#         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=0)
-#         wifi_dut.interfaces.wifi.leave()
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
-#
-#
-# @pytest.mark.skip()
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.DualBluetoothBLE,
-#         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.ULPGPIOHandshake,
-#         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-#         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
-#         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-#         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE,
-#         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-#     }
-# )
-# @pytest.mark.parametrize("cert1",
-#                          [
-#                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
-#                               "mosquitto-utf.silabs.com.key.pem"],
-#                          ]
-#                          )
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={"thread_config": {"wifi": {"count": 1, "stack_len": 2048}, }})
-# @pytest.mark.end_state("wifi_dut",
-#                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
-#                              "ble_disconnect"])
-# def test_wifi_sdk_BLE_connectivity_data_tx_after_loadcert0_C19653(wifi_sniffer, wifi_dut, wifi_access_point, ble_client,
-#                                                                   ssl_server,
-#                                                                   wifi_client, logger, cert1, sl_collections):
-#     """
-#     Verify the BLE connectivity and data transfer after loading the certificate and connect to SSL server
-#     """
-#     try:
-#         logger.info(f"test_sdk_BLE_connectivity_data_tx_after_loadcert0_C19653")
-#         ping_count = 10
-#         check_td1 = ble_data_transfer_thread(wifi_dut, ble_client, count=12)
-#         check_td1.start()
-#         time.sleep(2)
-#         device_ip = join_ap(wifi_dut, wifi_access_point)
-#
-#         port = ssl_server.interfaces.ssl.config['device_port1']
-#
-#         wifi_dut.interfaces.wifi.load_certificate(Si91xCertificateType.SSLCACertificate,
-#                                                   str(get_tls_certificate_dir().joinpath(cert1[0])),
-#                                                   cert_index=0)
-#         power_save_enable = wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-#         assert power_save_enable == 0, 'failed to enable wlan power save'
-#         bt_power_save, result = wifi_dut.interfaces.wifi.enable_bt_power_save(
-#             psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-#             psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-#
-#         ssl_server.interfaces.ssl.start_server(port=port, server_cert=cert1[1], server_key=cert1[2])
-#
-#         sock = wifi_dut.interfaces.wifi.socket(protocol=SocketOptions.SSL_ENABLE)
-#         # Enable ssl option for socket opened
-#         wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
-#                                                  SocketOptions.SSL_ENABLE)
-#         # Enable cert index 0 for socket opened
-#         wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
-#                                                  SocketOptions.CERT_INDEX0)
-#
-#         # Socket binds at (device_ip, 5001) in DUT
-#         wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=port,
-#                                       timeout=15)
-#         try:
-#             wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=ssl_server.interfaces.ssl,
-#                                                       server_port=port)
-#         except WlanError as e:
-#             assert e.error_code == 0xff87 or e.error_code == 0xd2
-#             wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=ssl_server.interfaces.ssl,
-#                                                       server_port=port)
-#
-#         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
-#
-#         state = wifi_dut.interfaces.wifi.ble_get_device_state()
-#         state_int = int(state) if state.isdigit() else -1
-#         assert state_int == BLEDeviceState.Connected
-#         logger.info(" Connected to the BLE device ")
-#
-#         check_td1.wait_for_exit(True)
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
-#
-#
-#
+@pytest.mark.announcement
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}, "ble": {"count": 1, "stack_len": 2048}}
+    }
+)
+@pytest.mark.parametrize("cert1", [("ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                                    "mosquitto-utf.silabs.com.key.pem")])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "ble_disconnect", "clear_certs"])
+def test_wifi_sdk_ble_connectivity_data_tx_after_load_cert_c19653(wifi_sniffer, wifi_dut, wifi_access_point, ble_client,
+                                                                  ssl_server, sniffer_filter, logger, cert1, request,
+                                                                  sl_collections):
+    """
+    Verify the BLE connectivity and data transfer after loading the certificate and connect to SSL server
+    """
+    try:
+        capture_filename = request.node.name
+        port1 = ssl_server.interfaces.ssl.config['device_port1']
+        load_cert1 = ["open", 0, port1, cert1]
+        logger.info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        ble_thread = ble_obj = BleFunctionality(wifi_dut, ble_client)
+        ble_obj.ble_slave_connection()
+        ble_thread.start()
+        time.sleep(15)
+        result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, retry_count=3, associated=False)
+        device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f"AP BSSID : {ap_bssid}")
+
+        load_certs_thread = load_certificates_thread(wifi_dut, ssl_server, device_ip, load_cert1)
+        load_certs_thread.start()
+        load_certs_thread.wait_for_exit(True)
+        ble_thread.wait_for_exit(True)
+        ble_obj.check_connection_status_on_dut()
+        ble_obj.check_connection_status_on_raspi()
+
+        ble_obj.ble_disconnect_from_raspi()
+        socks = load_certs_thread.return_value
+        for sock_id in socks:
+            logger.info(f"Closing socket_id->{sock_id}")
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
+        ssl_server.interfaces.ssl.stop_server()
+        logger.info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                               sniffer_filter, power_save=False)
+    except Exception as error:
+        wifi_dut.interfaces.is_dut_bad_state = True
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
 # @pytest.mark.skip()
 # @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # @pytest.mark.config(
@@ -1984,141 +1834,8 @@ def test_wifi_sdk_error_code_check_when_cert_loaded_in_same_index_c19656(wifi_sn
 #         check_td1.wait_for_exit(True)
 #     except Exception as error:
 #         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
 #
-#
-# @pytest.mark.skip()
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.DualBluetoothBLE,
-#         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.ULPGPIOHandshake,
-#         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-#         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
-#         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-#         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE,
-#         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-#     }
-# )
-# @pytest.mark.parametrize("cert1",
-#                          [
-#                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
-#                               "mosquitto-utf.silabs.com.key.pem"],
-#                          ]
-#                          )
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={"thread_config": {"wifi": {"count": 1, "stack_len": 2048}, }})
-# @pytest.mark.end_state("wifi_dut",
-#                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
-#                              "ble_disconnect"])
-# def test_wifi_sdk_load_cert_with_wlan_ble_in_connected_state_C19651(wifi_sniffer, wifi_dut, wifi_access_point,
-#                                                                     ble_client,
-#                                                                     net_perf_client, ssl_server,
-#                                                                     wifi_client, logger, cert1, sl_collections):
-#     """
-#     Verify whether we are able to load certificates and connect to secure server after module initialization when enable and connect both WLAN and BLE interfaces_TC_2
-#     """
-#     try:
-#         port1 = ssl_server.interfaces.ssl.config['device_port1']
-#         data1 = "VzwQ"
-#         ping_count = 10
-#         ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
-#         bt_local_name = "test_C19651"
-#         logger.info("configuring bd local name....")
-#         wifi_dut.interfaces.wifi.bt_set_local_name(bt_local_name)
-#
-#         logger.info("fetching bd local name....")
-#         bd_local_name = wifi_dut.interfaces.wifi.bt_get_local_name()
-#         logger.info(f"bd local name is : {bd_local_name}")
-#
-#         logger.info("start ble on DUT")
-#         ble_dut_addr = wifi_dut.interfaces.wifi.ble_start()
-#         assert ble_dut_addr is not None, "Unable to get ble_dut_address"
-#
-#         logger.info("Creating new custom gatt service in DUT")
-#         wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
-#         logger.info("Adding custom characteristic declaration to the custom service")
-#         wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
-#         logger.info("Adding characteristic value attribute to the service")
-#         wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data1)
-#
-#         logger.info("Start ble advertising on DUT")
-#         # 256(0x100), 512(0x200), 7(0x07)
-#         wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_int_min=256, ble_adv_int_max=512, ble_adv_channel_map=7)
-#
-#         logger.info(f"Begin Scanning for BLE devices")
-#         ble_client.interfaces.bluetooth.close()
-#         time.sleep(2)
-#
-#         ble_client_addr = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_addr)
-#         assert ble_client_addr is not None, "ble client address not found"
-#         time.sleep(5)
-#         ble_client.interfaces.bluetooth.stop_scanning()
-#         logger.info(f"See that we found our device")
-#         found_devices = ble_client.interfaces.bluetooth.get_devices()
-#         assert wifi_dut.interfaces.wifi.ble_address in found_devices
-#         assert (found_devices[wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data)
-#         conn_params = {"min_conn_interval": 40,
-#                        "max_conn_interval": 40,
-#                        "conn_latency": 0,
-#                        "supervision_timeout": 200}
-#
-#         ble_client.interfaces.bluetooth.connect(dev_addr=ble_dut_addr,
-#                                                 min_conn_interval=conn_params["min_conn_interval"],
-#                                                 max_conn_interval=conn_params["max_conn_interval"],
-#                                                 conn_latency=conn_params["conn_latency"],
-#                                                 supervision_timeout=conn_params["supervision_timeout"])
-#         logger.info("BLE Connection success")
-#         time.sleep(2)
-#
-#         logger.info("Configuring remote device to receive notifications from DUT")
-#         service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-#         char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
-#
-#         services, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
-#         assert len(services) > 0, "Unable to fetch services"
-#         assert len(chars) > 0, "Unable to get characteristics list from ble_client"
-#
-#         char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=services,
-#                                                                                                     service_uid=service_uid,
-#                                                                                                     char_uid=char_uid)
-#         assert char_path is not None, "Unable to resolve custom service characteristic from ble_client"
-#         assert len(char_props) > 0, "Unable to get char_props"
-#
-#         logger.info("Subscribing to notifications on ble_client")
-#         ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
-#         ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path, char_uid=char_uid)
-#
-#         logger.info("Sending notifications from DUT")
-#
-#         wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data1)
-#         wifi_dut.interfaces.wifi.ble_notify_value()
-#
-#         # read value - Notifications not enabled
-#         result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
-#         assert result == data1
-#
-#         device_ip = join_ap(wifi_dut, wifi_access_point)
-#
-#         load_cert1 = ["open", 0, port1, cert1]
-#         result_load_certificate = load_certificates_thread(wifi_dut, ssl_server, load_cert1)
-#         result_load_certificate.start()
-#         result_load_certificate.wait_for_exit(True)
-#         logger.info(f"Loading certificate{result_load_certificate}")
-#
-#         logger.info("Get ble device state")
-#         state = wifi_dut.interfaces.wifi.ble_get_device_state()
-#         state_int = int(state) if state.isdigit() else -1
-#         assert state_int == BLEDeviceState.Connected, "Ble device is not connected"
-#         logger.info(" Connected to the BLE device ")
-#
-#         wifi_dut.interfaces.wifi.bsdSockClose(0)
-#         wifi_dut.interfaces.wifi.leave()
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
 #
 #
 # @pytest.mark.skip()
@@ -2203,7 +1920,7 @@ def test_wifi_sdk_error_code_check_when_cert_loaded_in_same_index_c19656(wifi_sn
 #
 
 
-# @pytest.mark.skip()
+"""Below testcase is not supported in WSDK"""
 # @pytest.mark.config(
 #     "wifi_dut",
 #     wifi=
