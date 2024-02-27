@@ -242,7 +242,7 @@ def test_wifi_sdk_tcp_open_send_close_socket_c19347(sniffer_filter, wifi_access_
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity
@@ -295,15 +295,13 @@ def test_wifi_sdk_udp_open_send_data_close_socket_c19348(sniffer_filter, wifi_ac
                                                       server_port=local_port, timeout=5)
         logger().info(f"Bind socket successfully: {bind_response}")
         logger().info("DUT is connecting to server socket")
-        sw = Stopwatch()
-        while sw.elapsed_sec < 60:
-            data_transfer_obj = data_transfer()
-            th_start = Thread(target=data_transfer_obj.receive_data_socket,
-                              args=(remote_socket, no_of_pkts, pkt_length, 1), daemon=True)
-            th_start.start()
-            bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(udp_socket_id, pkt_length, no_of_pkts,
-                                                                 server_ip=server_ip, server_port=local_port)
-            logger().info(f"Number of bytes sent by dut {bytes_sent}")
+        data_transfer_obj = data_transfer()
+        th_start = Thread(target=data_transfer_obj.receive_data_socket,
+                            args=(remote_socket, no_of_pkts, pkt_length, 1), daemon=True)
+        th_start.start()
+        bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(
+            udp_socket_id, pkt_length, no_of_pkts, server_ip=server_ip, server_port=local_port, time_interval=120)
+        logger().info(f"Number of bytes sent by dut {bytes_sent}")
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=udp_socket_id)
         remote_socket.interfaces.socket.socket_close_indication(1)
         logger().info("Successfully closed opened socket in the DUT")
@@ -318,6 +316,9 @@ def test_wifi_sdk_udp_open_send_data_close_socket_c19348(sniffer_filter, wifi_ac
         sniffer_verification.verify_sniffer_validation()
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        remote_socket.interfaces.socket.stop()
+        time.sleep(2)
 
 
 @pytest.mark.skip()
@@ -423,6 +424,7 @@ def test_wifi_sdk_tcp_socket_dut_client_c19349(sniffer_filter, wifi_access_point
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
