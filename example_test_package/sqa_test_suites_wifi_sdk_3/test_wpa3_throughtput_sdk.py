@@ -128,19 +128,39 @@ class WifiConnectionThread(ThreadBase):
                         logger().info("data transfer successful")
                         time.sleep(3)
                 if self.traffic_type == "RX":
+                    self.iteration_count = self.iteration_count
                     for i in range(0, self.iteration_count):
-                    # Iperf Client Started
+                        # Iperf Client Started
                         if self.protocol == "UDP":
                             bandwidth = "68M"
                             self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
                             self.dut_addr['device_ip'], protocol=self.protocol, bandwidth=bandwidth)
-                        else:
+                            logger().info(f"***** start listening  ******")
+                            self.net_perf_client.interfaces.net_perf.start()
+                            timeout = 40
+                            self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type,
+                                                                protocol=protocol,
+                                                                local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                                local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                                remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                                size=size, ttl=30, throughput_type=throughput_type,
+                                                                qos=0,
+                                                                async_socket=1, timeout=timeout + 2)
+                            logger().info("data received is successful")
+                            time.sleep(3)
+
+                        elif self.protocol == "TCP":
                             self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
                             self.dut_addr['device_ip'], protocol=self.protocol)
 
-                        self.net_perf_client.interfaces.net_perf.start()
+                        def start_client():
+                            time.sleep(1)
+                            logger().info(f"***** start listening  ******")
+                            self.net_perf_client.interfaces.net_perf.start()
 
-                        logger().info("receiving data from Host")
+                        client_thread1 = Thread(target=start_client, args=(), )
+                        client_thread1.start()
+
                         # open socket and listen for data
                         timeout = 40
                         self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
@@ -148,7 +168,8 @@ class WifiConnectionThread(ThreadBase):
                                                             local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
                                                             remote_port=self.net_perf_client.interfaces.net_perf.client_port,
                                                             size=size, ttl=30, throughput_type=throughput_type, qos=0,
-                                                            async_socket=1, timeout=timeout+2)
+                                                            async_socket=1, timeout=timeout + 2)
+                        client_thread1.join()
                         logger().info("data received is successful")
                         time.sleep(3)
 
@@ -194,11 +215,11 @@ class WifiConnectionThread(ThreadBase):
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.Default,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
@@ -238,11 +259,11 @@ def test_wifi_sdk_2_4_tcp_rx_wpa3_C122121(wifi_sniffer, wifi_access_point, wifi_
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.Default,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
@@ -282,11 +303,11 @@ def test_wifi_sdk_2_4_udp_rx_wpa3_C122123(wifi_sniffer, wifi_access_point, wifi_
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.Default,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
@@ -326,11 +347,11 @@ def test_wifi_sdk_2_4_tcp_tx_wpa3_C122120(wifi_sniffer, wifi_access_point, wifi_
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.Default,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
