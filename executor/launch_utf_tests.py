@@ -8,7 +8,6 @@ DOCKERFILE_PATH = "executor/Dockerfile"
 WORKSPACE_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 
-
 def get_milestone_branch_from_git_branch():
     rc = subprocess.Popen('git log', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdout, stderr = rc.communicate()
@@ -18,6 +17,7 @@ def get_milestone_branch_from_git_branch():
     milestone.sort()
     current_milestone = "release/milestone" + str(milestone[-1])
     return current_milestone
+
 
 class AppUtfLauncher(UtfLauncher):
     def __init__(self, **kwargs):
