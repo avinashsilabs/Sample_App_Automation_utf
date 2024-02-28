@@ -201,6 +201,16 @@ devices:
                 channel: 1
                 cipher: 'AES'
 
+    static_ap:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                security: WPA2
+                ssid: 'TESTTEST-DLIN_3'
+                passphrase: 'thisisatestnetwork'
+                channel: 1
+
+
     dlink810_ap_static:
         interfaces:
             wifi:

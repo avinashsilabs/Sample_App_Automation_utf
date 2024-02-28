@@ -1,0 +1,27 @@
+root_path: integration_test
+test_sequence:
+  - id: 3c2180399098481a882df805f60b72191d8aa470
+    test_src_map_id: SM00989::1
+    test_case_id: test_wifi_join_ap_wpa3
+    test_function: test_wifi_join_ap_wpa3
+    test_id: test_wifi_join_ap_wpa3::1
+    test_module: test_cases/test_wifi_client.py
+    test_markers:
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.wifi_access_point('static_ap',)
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'security': 'WPA2','ssid':
+        'Pixel_2180','passphrase': '19031903'})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'Pixel_2180','passphrase': '19031903'})
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - ap
+      - join
+      - wifi
+      - wifi_client
+      - wpa3
+    test_case_name: test_wifi_join_ap_wpa3

@@ -9,6 +9,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.test_src_map_id('SM11994')
 def test_version(wifi_dut, logger):
     expected_version = parse_version()
     if expected_version is None:

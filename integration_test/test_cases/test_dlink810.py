@@ -48,6 +48,7 @@ class TestAccessPointConfig:
             ),
         ],
     )
+    @pytest.mark.test_src_map_id('SM11859')
     def test_wifi_ap_configuration_lb(
         self,
         wifi_client,
@@ -84,6 +85,7 @@ class TestAccessPointConfig:
             ),
         ],
     )
+    @pytest.mark.test_src_map_id('SM11864')
     def test_wifi_ap_configuration_hb(
         self,
         wifi_client,

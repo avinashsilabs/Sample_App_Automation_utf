@@ -26,6 +26,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.test_src_map_id('SM11838')
 def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client, logger):
     send_text = "yAbdcUK0tAOSMhCT4d6U"
     recv_text = "9cDKpYOnOJeqYPsL987v"
@@ -97,6 +98,7 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client, logger):
     logger.info(f"Scan in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('SM11842')
 def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client, logger):
     send_text = "sA0L9b1xEgGuUqN5YOlx"
     recv_text = "H2D7yZKRhKULU9Xil5Yv"

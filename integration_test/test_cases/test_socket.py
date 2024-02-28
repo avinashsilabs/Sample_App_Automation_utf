@@ -27,6 +27,7 @@ pytestmark = [
     ),
 ]
 
+@pytest.mark.test_src_map_id('SM11953')
 def test_socket_basic(wifi_networked_dut, remote_socket, logger):
     device_ip = wifi_networked_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -46,6 +47,7 @@ def test_socket_basic(wifi_networked_dut, remote_socket, logger):
 
 @pytest.mark.skip
 @pytest.mark.parametrize('iteration', [0,1,2,3,4,5])
+@pytest.mark.test_src_map_id('SM11958')
 def test_socket(wifi_networked_dut, iteration):
 
     wifi_networked_dut.interfaces.wifi.set_ssl_certificate(

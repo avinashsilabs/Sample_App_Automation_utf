@@ -28,6 +28,7 @@ pytestmark = [
 ]
 
 @pytest.mark.firmware_app("test_aws")
+@pytest.mark.test_src_map_id('SM11747')
 def test_python_client(firmware_loader, wifi_access_point, aws_iot_dut):
     topic_1 = "sdk/test/Python"
     topic_2 = "sdk/test/java"
@@ -51,6 +52,7 @@ def test_python_client(firmware_loader, wifi_access_point, aws_iot_dut):
 
 
 @pytest.mark.firmware_app("test_aws")
+@pytest.mark.test_src_map_id('SM11751')
 def test_aws_device_shadow(firmware_loader, wifi_access_point, aws_iot_dut):
     aws_iot_dut.interfaces.aws_iot.aws_iot_shadow_init()
     time.sleep(2)
@@ -66,6 +68,7 @@ def test_aws_device_shadow(firmware_loader, wifi_access_point, aws_iot_dut):
         time.sleep(10)
 
 
+@pytest.mark.test_src_map_id('SM11755')
 def test_aws_iot_client(aws_iot_client):
     topic_1 = "sdk/test/Python"
     topic_2 = "sdk/test/java"

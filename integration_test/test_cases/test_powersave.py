@@ -16,6 +16,7 @@ pytestmark = [
 ]
 
 @pytest.mark.dut("rs9116_sapi")
+@pytest.mark.test_src_map_id('SM11928')
 def test_power_save(wifi_dut, wifi_networked_dut, logger):
 
     awake = wifi_networked_dut.interfaces.wifi.get_wake_gpio()

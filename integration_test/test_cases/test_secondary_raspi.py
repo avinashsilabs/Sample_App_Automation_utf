@@ -13,6 +13,7 @@ def reset_dut():
     pass
 
 @pytest.mark.bt_client("secondary_raspi_bt_client")
+@pytest.mark.test_src_map_id('SM11937')
 def test_secondary_raspi_shell(bt_client):
     shell = bt_client.interfaces.shell
     rc, stdout, stderr = shell.execute("ls -al")
@@ -23,6 +24,7 @@ def test_secondary_raspi_shell(bt_client):
     logger().info(stderr.decode())
 
 @pytest.mark.bt_client("secondary_raspi_bt_client")
+@pytest.mark.test_src_map_id('SM11942')
 def test_secondary_raspi_bt(bt_client):
     bt = bt_client.interfaces.bluetooth
     bt.bt_adapter.set_link_mode(BTClientLinkMode.Master)

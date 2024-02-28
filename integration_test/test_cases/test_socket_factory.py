@@ -40,6 +40,7 @@ class ServerSocketXferThread(ThreadBase):
         self.server_socket.socket_close_indication(1)
 
 
+@pytest.mark.test_src_map_id('SM11965')
 def test_socket_factory_tcp_server(
     wifi_networked_dut, wifi_access_point, remote_socket_factory, logger
 ):
@@ -62,6 +63,7 @@ def test_socket_factory_tcp_server(
 
 
 @pytest.mark.parametrize("num_sockets", [3])
+@pytest.mark.test_src_map_id('SM11969')
 def test_multiple_sockets_tcp_server(
     wifi_networked_dut, wifi_access_point, remote_socket_factory, num_sockets, logger
 ):
@@ -146,6 +148,7 @@ class ClientSocketXferThread(ThreadBase):
               "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(10)
           },
       )
+@pytest.mark.test_src_map_id('SM11973')
 def test_multiple_sockets_tcp_client(
     wifi_networked_dut, wifi_access_point, remote_socket_factory, num_sockets, logger
 ):

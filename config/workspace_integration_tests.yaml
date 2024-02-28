@@ -1,0 +1,9 @@
+tests_dir: integration_test
+manifest_dir: manifest
+utf_core_dir: utf_core
+utf_extension_dirs:
+  - utf_wiseconnect
+  - utf_wiseconnect_3
+test_executor_script: executor/launch_utf_tests.py
+hwmux_group_name: ''
+python_venv_dir: venv

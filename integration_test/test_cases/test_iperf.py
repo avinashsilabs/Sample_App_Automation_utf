@@ -18,6 +18,7 @@ pytestmark = [
 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
+@pytest.mark.test_src_map_id('SM11882')
 def test_device_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # preparing wifi_dut
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -58,6 +59,7 @@ def test_device_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_cli
 @pytest.mark.config("net_perf_client",
                     net_perf={"host_role": IperfConstants.SERVER_MODE, "tos_value": IperfTrafficType.Video})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
+@pytest.mark.test_src_map_id('SM11887')
 def test_host_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # preparing wifi_dut
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)

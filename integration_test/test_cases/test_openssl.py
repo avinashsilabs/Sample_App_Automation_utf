@@ -3,6 +3,7 @@ import pytest
 import requests
 
 
+@pytest.mark.test_src_map_id('SM11908')
 def test_openssl(openssl):
     # flush he messages, which are already there (like accept etc)
     openssl.interfaces.server.start()
@@ -26,6 +27,7 @@ def test_openssl(openssl):
     assert "Hi" in messages[0]
 
 
+@pytest.mark.test_src_map_id('SM11912')
 def test_server_stopped(openssl):
     # flush he messages, which are already there (like accept etc)
     openssl.interfaces.server.start()
@@ -40,6 +42,7 @@ def test_server_stopped(openssl):
     assert openssl.interfaces.client.is_running() is False
 
 
+@pytest.mark.test_src_map_id('SM11916')
 def test_server_not_running(openssl):
     openssl.interfaces.client.start()
     time.sleep(1)
@@ -52,6 +55,7 @@ def test_server_not_running(openssl):
         "tls_version": "-tls1"
     }
 )
+@pytest.mark.test_src_map_id('SM11920')
 def test_client_server_different_tls_version(openssl):
     openssl.interfaces.server.start()
     time.sleep(1)
@@ -68,6 +72,7 @@ def test_client_server_different_tls_version(openssl):
         "http": True
     }
 )
+@pytest.mark.test_src_map_id('SM11924')
 def test_http_server(openssl):
     openssl.interfaces.server.start()
     time.sleep(1)

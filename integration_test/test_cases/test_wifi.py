@@ -24,10 +24,12 @@ pytestmark = [
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_access_point", wifi=None)
 @pytest.mark.wifi_access_point("dlink810_ap")
+@pytest.mark.test_src_map_id('SM12007')
 def test_prepare_static_ap(wifi_access_point, logger):
     logger.info(f"Starting tests on {wifi_access_point.name}")
 
 
+@pytest.mark.test_src_map_id('SM12011')
 def test_wifi_dhcp(wifi_associated_dut, logger):
     with TimeMeasurer() as t:
         result = wifi_associated_dut.interfaces.wifi.start_ip()
@@ -37,12 +39,14 @@ def test_wifi_dhcp(wifi_associated_dut, logger):
     logger.info(f"Got {result} via DHCP in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('SM12015')
 def test_wifi_ping(wifi_networked_dut, logger):
     with TimeMeasurer() as t:
         wifi_networked_dut.interfaces.wifi.ping(wifi_networked_dut.interfaces.wifi.ip.gateway)
     logger.info(f"Ping completed in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('SM12019')
 def test_wifi_leave(wifi_networked_dut, logger):
     with TimeMeasurer() as t:
         wifi_networked_dut.interfaces.wifi.leave()

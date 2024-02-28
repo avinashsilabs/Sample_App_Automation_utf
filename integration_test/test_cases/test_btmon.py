@@ -3,6 +3,7 @@ import pytest
 
 
 @pytest.mark.bt_clients(["raspi_bt_client", "secondary_raspi_bt_client"])
+@pytest.mark.test_src_map_id('SM11851')
 def test_bt_mon_bt_clients(bt_clients):
 
     assert len(bt_clients) == 2
@@ -32,6 +33,7 @@ def test_bt_mon_bt_clients(bt_clients):
 
 
 @pytest.mark.ble_clients(["raspi_ble_client", "secondary_raspi_ble_client"])
+@pytest.mark.test_src_map_id('SM11854')
 def test_bt_mon_ble_clients(ble_clients):
 
     assert len(ble_clients) == 2

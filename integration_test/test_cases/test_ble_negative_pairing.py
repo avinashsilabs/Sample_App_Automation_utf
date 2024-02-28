@@ -29,6 +29,7 @@ pytestmark = [
         (3, "NoInputNoOutput", -1),  # Do not respond to authorization request
     ],
 )
+@pytest.mark.test_src_map_id('SM11813')
 def test_ble_advertisement_wrong_pass_key(
     wifi_dut,
     wifi_access_point,
@@ -100,6 +101,7 @@ def test_ble_advertisement_wrong_pass_key(
         (3, "NoInputNoOutput", -1),  # Do not respond to authorization request
     ],
 )
+@pytest.mark.test_src_map_id('SM11819')
 def test_ble_scanning_wrong_pass_key(
     wifi_dut,
     wifi_access_point,

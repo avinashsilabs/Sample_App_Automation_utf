@@ -26,6 +26,7 @@ class WebsocketEventHandler:
 
 @pytest.mark.wifi_access_point("raspi_wifi")
 @pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.test_src_map_id('SM11998')
 def test_websocket_server_and_linux_client(
     http_server, http_client, wifi_access_point, logger
 ):

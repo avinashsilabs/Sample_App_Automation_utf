@@ -15,6 +15,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.test_src_map_id('SM11733')
 def test_async_rejoin_errors(wifi_networked_dut, wifi_access_point, logger):
     # verify ping
     time.sleep(2)
@@ -42,6 +43,7 @@ def test_async_rejoin_errors(wifi_networked_dut, wifi_access_point, logger):
     logger.info(f"Received rejoin error event after {t.duration:.2f}s")
 
 
+@pytest.mark.test_src_map_id('SM11737')
 def test_async_rejoin_errors_using_queue(wifi_networked_dut, wifi_access_point, logger):
     # verify ping
     time.sleep(2)
@@ -63,6 +65,7 @@ def test_async_rejoin_errors_using_queue(wifi_networked_dut, wifi_access_point, 
     logger.info(f"Received rejoin error event after {t.duration:.2f}s")
 
 
+@pytest.mark.test_src_map_id('SM11742')
 def test_async_rejoin_errors_using_wait_for_event(
     wifi_networked_dut, wifi_access_point, logger
 ):

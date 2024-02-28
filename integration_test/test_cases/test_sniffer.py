@@ -1,6 +1,6 @@
 import pytest
 from typing import Dict, List, Tuple
-from pyshark.packet.layer import Layer
+# from pyshark.packet.layer import Layer
 import time
 
 
@@ -12,6 +12,7 @@ import time
         ("ether host 88:da:1a:e4:ba:44", "mac_filter", True),
     ],
 )
+@pytest.mark.test_src_map_id('SM36351')
 def test_sniffer_icmp_inspection(
     wifi_sniffer, wifi_access_point, wifi_dut, capture_filter, capture_filename, inspect_during_capture, logger
 ):
@@ -68,6 +69,7 @@ def test_sniffer_icmp_inspection(
     assert packet_layer_stats["total"] > 0
 
 
+@pytest.mark.test_src_map_id('SM36355')
 def test_live_sniffer(
     wifi_sniffer, wifi_access_point, wifi_dut
 ):
@@ -99,7 +101,7 @@ def test_live_sniffer(
 
 def iterate_packets(
     capture_interface, decryption_key: str, print_layers: list, logger
-) -> Tuple[Dict[str, int], List[Layer]]:
+) -> Tuple[Dict[str, int], List]:
     packet_layer_stats = {}
     eapol_layers = []
     total_packet_count = 0
@@ -115,7 +117,7 @@ def iterate_packets(
                 eapol_layers.append(layer)
             if layer_name in print_layers:
                 logger.info(layer)
-            if not layer_name in packet_layer_stats:
+            if layer_name not in packet_layer_stats:
                 packet_layer_stats[layer_name] = 0
             packet_layer_stats[layer_name] += 1
     packet_layer_stats["total"] = total_packet_count

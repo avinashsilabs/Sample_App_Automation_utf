@@ -53,6 +53,7 @@ class MqttDutPublish(ThreadBase, Loggable):
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
     },
 )
+@pytest.mark.test_src_map_id('SM11904')
 def test_mqtt_dut_thread(
     mqtt_server, mqtt_client, wifi_client, wifi_access_point, wifi_dut, mqtt_dut, logger
 ):

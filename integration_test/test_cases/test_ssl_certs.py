@@ -24,6 +24,7 @@ pytestmark = [
 @pytest.mark.parametrize("cert_type, cert_filename", [
     (RS9116CertificateType.SSLCACertificate, 'ca-cert-with-crlf.pem')
 ])
+@pytest.mark.test_src_map_id('SM11978')
 def test_cert_load(wifi_dut, cert_type, cert_filename):
     cert_type_val = cert_type if type(cert_type) == int else eval(cert_type)
     wifi_dut.interfaces.wifi.set_ssl_certificate(

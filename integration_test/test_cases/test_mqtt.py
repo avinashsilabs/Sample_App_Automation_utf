@@ -30,6 +30,7 @@ def parameterize_mqtt_server(harness, request):
     request.applymarker(pytest.mark.wifi_access_point(request.param[1]))
 
 
+@pytest.mark.test_src_map_id('SM11895')
 def test_mqtt_server_and_linux_client(
     mqtt_server, mqtt_client, wifi_client, wifi_access_point
 ):
@@ -76,6 +77,7 @@ def test_mqtt_server_and_linux_client(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
     },
 )
+@pytest.mark.test_src_map_id('SM11900')
 def test_mqtt_dut(
     mqtt_server, mqtt_client, wifi_client, wifi_access_point, wifi_dut, mqtt_dut, logger
 ):

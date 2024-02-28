@@ -26,6 +26,7 @@ pytestmark = [
 
 
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('SM11808')
 def test_ble_link_loss_dut_scanning(
     firmware_loader, wifi_dut, wifi_access_point, ble_client, logger
 ):

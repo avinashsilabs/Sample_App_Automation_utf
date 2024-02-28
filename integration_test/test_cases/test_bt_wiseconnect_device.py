@@ -16,6 +16,7 @@ from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
     },
 )
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('SM11847')
 def test_ble_phy_wiseconnect_dut(ble_client, wifi_dut, logger):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(

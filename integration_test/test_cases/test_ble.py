@@ -26,6 +26,7 @@ pytestmark = [
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
+@pytest.mark.test_src_map_id('SM11772')
 def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client, logger):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -79,6 +80,7 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client, logger):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
+@pytest.mark.test_src_map_id('SM11777')
 def test_ble_scanning(wifi_dut, wifi_access_point, ble_client, logger):
 
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -126,6 +128,7 @@ def test_ble_scanning(wifi_dut, wifi_access_point, ble_client, logger):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
+@pytest.mark.test_src_map_id('SM11782')
 def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client, logger):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -238,6 +241,7 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client, logger):
 
 # For now as we are not sure about the changes required on the DUT side the start_smp_scan is tested using mobile
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('SM11787')
 def test_ble_gatt_client_slave(ble_client, logger):
     logger.info("""
         Put the mobile in advertising mode.. 
@@ -280,6 +284,7 @@ def test_ble_gatt_client_slave(ble_client, logger):
 
 @pytest.mark.firmware_app("test_multi_gatt_conn")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
+@pytest.mark.test_src_map_id('SM11792')
 def test_ble_gatt_client_master(firmware_loader, wifi_dut, wifi_access_point, ble_client, logger):
     # # Join Wi-Fi Access Point
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -355,6 +360,7 @@ def test_ble_gatt_client_master(firmware_loader, wifi_dut, wifi_access_point, bl
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
+@pytest.mark.test_src_map_id('SM11798')
 def test_ble_gatt_server_slave_with_hid_service(wifi_dut, wifi_access_point, ble_client, logger):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(

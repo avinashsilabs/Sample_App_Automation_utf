@@ -64,6 +64,7 @@ def pdu_switch(switch, sleep_time, logger):
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"]
 )
+@pytest.mark.test_src_map_id('SM11982')
 def test_ssl_client_tx_rejoin(
     wifi_dut, wifi_access_point, ssl_server, cert1, switch, logger
 ):

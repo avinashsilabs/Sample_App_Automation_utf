@@ -21,6 +21,7 @@ pytestmark = [
     ("cgi-bin/cgi_example.py", "GET", None)
     ]
 )
+@pytest.mark.test_src_map_id('SM11873')
 def test_http_server_and_linux_client(
     http_server, http_client, wifi_access_point, logger, index_path, method, content
 ):
@@ -44,6 +45,7 @@ def test_http_server_and_linux_client(
 @pytest.mark.parametrize(
     "index_path", ["index_long_crlf.html", "index_long_lf.html"]
 )
+@pytest.mark.test_src_map_id('SM11878')
 def test_http_server_and_dut_client(
     http_server, http_dut, wifi_access_point, logger, index_path
 ):
