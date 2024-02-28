@@ -48,9 +48,9 @@ pipeline {
                     }
                 }
                 stage('Run Integration Tests') {
-//                    environment {
-//                        MILESTONE_BRANCH_NAME = 'release/milestone54'
-//                    }
+                    environment {
+                        MILESTONE_BRANCH_NAME = 'staging_milestone'
+                    }
                     steps {
                         withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser_jenkins_ssh', keyFileVariable: 'MWLABUSER_JENKINS_SSH', passphraseVariable: 'PASSPHRASE_UNUSED', usernameVariable: 'USERNAME_UNUSED')]) {
                             hwmuxReserveAnyGroupFromLabel(HWMUX_GROUP_LABEL, null, UTF_HWMUX_TOKEN, "HWMUX_GROUP_JSON")  {
