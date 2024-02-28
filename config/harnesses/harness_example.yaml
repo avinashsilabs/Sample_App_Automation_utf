@@ -1116,6 +1116,16 @@ devices:
             client:
                 type: 'openssl.client'
 
+    nrf_52840_ble_client:
+        interfaces:
+            bluetooth:
+                type: 'bluetooth.blatann'
+                serial: serial
+                vid: 0x1915
+                pid: 0xC00A
+                serial_number: 'CA8B51D6DB51' # configure nrf52840 dongle serial number
+                port: 'auto'
+
     nrf_52840_sniffer:
         interfaces:
             linux_shell:
@@ -1279,6 +1289,11 @@ defaults:
 
     power_meters:
         - 'nrf_ppk2_device'
+
+    nrf_ble_client: 'nrf_52840_ble_client'
+
+    nrf_ble_clients:
+        - 'nrf_52840_ble_client'
 
     ble_client: 'raspi_ble_client'
 
