@@ -17,65 +17,69 @@ pipeline {
         )
     }
     stages {
-        stage('Run integration tests set 3') {
+        stage('Run Smoke tests') {
             agent {
-                label 'NB0015129'
+                node "infraswHyderabadNode"
             }
             environment {
                 UTF_HWMUX_TOKEN = credentials('utf-dev-hwmux-token')
-                PYTHON3 = "t:\\python_3_9_2_x64\\python.exe"
-                HWMUX_GROUP_LABEL = "utf_dev_team_hyd_integration_test"
-                HWMUX_GROUP_JSON_FILE_NAME = "integration_tests_3_hwmux_group.json"
-                HARNESS_NAME= "__hwmux__integration_tests_3.yaml"
+                HWMUX_GROUP_LABEL = "utf-dev-team-hyd-smoke-test"
+                HWMUX_GROUP_JSON_FILE_NAME = "utf-dev-team-hyd-smoke-test_hwmux_group.json"
+                HARNESS_NAME= "__hwmux__utf-dev-team-hyd-smoke-test.yaml"
                 TEST_CONFIG_FILE = ".sequence_manager/test_execution_definitions/integration_test_3.yaml"
             }
             stages {
                 stage('Setup Environment') {
                     steps {
-                        bat """
-                            if not EXIST venv\\pyvenv.cfg (
-                               %PYTHON3%  -m venv venv
-                            )
-                            call workspace_setup.bat skip_gui
-                        """
+                        sh '''
+                        . $PYTHON3_VENV_DIR/bin/activate
+                        python3 -m pip install --upgrade pip
+
+                        ./workspace_setup.sh
+
+                        PYTHON3_VENV_DIR=$SCRIPT_DIR/../venv/pyvenv.cfg
+
+                        if ! command -v ./yq &> /dev/null
+                        then
+                           curl -k -L https://artifactory.silabs.net/artifactory/tcmgr-generic-production/yq/yq_linux_amd64 --output yq
+                           chmod +x yq
+                        fi
+                        '''
                     }
                 }
                 stage('Run Integration Tests') {
+                    environment {
+                        MILESTONE_BRANCH_NAME = 'staging_milestone'
+                    }
                     steps {
-                        hwmuxReserveAnyGroupFromLabel(HWMUX_GROUP_LABEL, null, UTF_HWMUX_TOKEN, "HWMUX_GROUP_JSON")  {
-                            timeout(time: 120, unit: 'MINUTES') {
-                                writeFile(file: env.HWMUX_GROUP_JSON_FILE_NAME, text: env.HWMUX_GROUP_JSON)
-                                bat(label: "Run UTF Launcher", script: """
-                                    type %HWMUX_GROUP_JSON_FILE_NAME% | utf_core\\tools\\jq.exe -r .metadata.host_ip  > tmp_host_ip
-                                    set /p UTF_DOCKER_TARGET= < tmp_host_ip
-                                    del tmp_host_ip
+                        withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser_jenkins_ssh', keyFileVariable: 'MWLABUSER_JENKINS_SSH', passphraseVariable: 'PASSPHRASE_UNUSED', usernameVariable: 'USERNAME_UNUSED')]) {
+                            hwmuxReserveAnyGroupFromLabel(HWMUX_GROUP_LABEL, null, UTF_HWMUX_TOKEN, "HWMUX_GROUP_JSON")  {
+                                timeout(time: 120, unit: 'MINUTES') {
+                                    writeFile(file: env.HWMUX_GROUP_JSON_FILE_NAME, text: env.HWMUX_GROUP_JSON)
+                                    sh(label: "Run UTF Launcher", script: '''
+                                        UTF_DOCKER_TARGET=$(./yq eval '.metadata.host_ip' $HWMUX_GROUP_JSON_FILE_NAME)
+                                        ./yq eval '.metadata.harness' $HWMUX_GROUP_JSON_FILE_NAME  -P > config/harnesses/$HARNESS_NAME
+                                        rm -rf reports
 
-                                    if not exist yq.exe (
-                                        curl -k -L https://github.com/mikefarah/yq/releases/download/v4.21.1/yq_windows_amd64.exe --output yq.exe
-                                    )
-                                    type %HWMUX_GROUP_JSON_FILE_NAME%  | yq.exe .metadata.harness -P > config\\harnesses\\%HARNESS_NAME%
+                                        . $PYTHON3_VENV_DIR/bin/activate
+                                        cp utf_core/unit_tests/.coveragerc integration_test/.coveragerc
 
-                                    rd /s /q reports
+                                        PYTEST_COMMAND="pytest --tb=native --tmconfig integration_test/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest_without_aws_test_agent.yaml integration_test"
+                                        ./executor/launch_utf_tests.sh --harness $HARNESS_NAME --target $UTF_DOCKER_TARGET --pytest_command "$PYTEST_COMMAND"
+                                        exitcode=$?
 
-                                    call venv\\scripts\\activate
-                                    copy utf_core\\unit_tests\\.coveragerc integration_test\\.coveragerc
-                                    pushd executor
-
-                                    set "PYTEST_COMMAND=pytest --tb=native --tmconfig integration_test/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest_without_aws_test_agent.yaml integration_test"
-
-                                    call launch_utf_tests.bat --harness %HARNESS_NAME% --target %UTF_DOCKER_TARGET% --pytest_command "%PYTEST_COMMAND%"
-                                    set exitcode=%ERRORLEVEL%
-
-                                    ssh -o StrictHostKeyChecking=no pi@%UTF_DOCKER_TARGET% "sudo reboot"
-                                    :: wait a bit for reboot, otherwise next job may fail
-                                    ping -n 15 %UTF_DOCKER_TARGET%
-                                    exit /b %exitcode%
-                                """)
-                                dir('integration_test') {
-                                    archiveArtifacts artifacts: env.TEST_CONFIG_FILE
+                                        set +e
+                                        ssh -i $MWLABUSER_JENKINS_SSH -o StrictHostKeyChecking=no pi@$UTF_DOCKER_TARGET "sudo reboot"
+                                        # wait a bit for reboot, otherwise next job may fail
+                                        sleep 15
+                                        exit $exitcode
+                                    ''')
+    //                                dir('integration_test') {
+    //                                    archiveArtifacts artifacts: env.TEST_CONFIG_FILE
+    //                                }
+                                    archiveArtifacts artifacts: "reports/pytest-log.txt,reports/junit_report.xml,reports/pytest-report.html"
+                                    junit allowEmptyResults: false, testResults: "reports/junit_report.xml"
                                 }
-                                archiveArtifacts artifacts: "reports/pytest-log.txt,reports/junit_report.xml,reports/pytest-report.html"
-                                junit allowEmptyResults: false, testResults: "reports/junit_report.xml"
                             }
                         }
                     }
