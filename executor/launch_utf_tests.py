@@ -8,6 +8,7 @@ DOCKERFILE_PATH = "executor/Dockerfile"
 WORKSPACE_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 
+
 def get_milestone_branch_from_git_branch():
     rc = subprocess.Popen('git log', shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     stdout, stderr = rc.communicate()
@@ -18,22 +19,18 @@ def get_milestone_branch_from_git_branch():
     current_milestone = "release/milestone" + str(milestone[-1])
     return current_milestone
 
-
 class AppUtfLauncher(UtfLauncher):
     def __init__(self, **kwargs):
         UtfLauncher.__init__(self, **kwargs)
 
     def get_params_defaults(self) -> dict:
-        milestone_branch = os.environ.get("MILESTONE_BRANCH_NAME")
-        if not milestone_branch:
-            milestone_branch = get_milestone_branch_from_git_branch()
         return {
             UtfLauncherCmdOption.workspace_root: WORKSPACE_ROOT,
             UtfLauncherCmdOption.reports_dir:  os.path.join(WORKSPACE_ROOT, "reports"),
             UtfLauncherCmdOption.container_name: "wifitest_1",
             UtfLauncherCmdOption.docker_image_tag: "wifitest:latest",
             UtfLauncherCmdOption.docker_file_path: DOCKERFILE_PATH,
-            UtfLauncherCmdOption.docker_flags: f"-e MILESTONE={milestone_branch}",
+            UtfLauncherCmdOption.docker_flags: "-e MILESTONE=" + os.environ.get("MILESTONE_BRANCH_NAME", get_milestone_branch_from_git_branch()),
             UtfLauncherCmdOption.docker_base_image: "utfsilabs/rpi_ubuntu:2023_05_17_android_sdk",
             UtfLauncherCmdOption.username: "pi",
             UtfLauncherCmdOption.password: "raspberry",
