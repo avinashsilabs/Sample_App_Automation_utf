@@ -64,7 +64,7 @@ pipeline {
                                         . $PYTHON3_VENV_DIR/bin/activate
                                         cp utf_core/unit_tests/.coveragerc integration_test/.coveragerc
 
-                                        PYTEST_COMMAND="pytest --tb=native --tmconfig integration_test/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest_without_aws_test_agent.yaml integration_test"
+                                        PYTEST_COMMAND="pytest --tb=native --tmconfig integration_test/$TEST_CONFIG_FILE --manifest /app/manifest/manifest_without_aws_test_agent.yaml integration_test"
                                         ./executor/launch_utf_tests.sh --harness $HARNESS_NAME --target $UTF_DOCKER_TARGET --pytest_command "$PYTEST_COMMAND"
                                         exitcode=$?
 
