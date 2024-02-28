@@ -95,7 +95,8 @@ def test_power_meter_keysight_benchvue_win_wcf_scope(power_meter):
     parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
     __print_throughput(parsed_result)
     assert parsed_result["Scp File Name"] is not None
-    
+
+
 def test_power_meter_using_nrf_ppk_mp(power_meters, plotter):
     # Initialize Instrument
     power_meters[0].interfaces.power_meter.initialize_instrument()
@@ -123,4 +124,57 @@ def test_power_meter_using_nrf_ppk_mp(power_meters, plotter):
         # Assert the generated html file size
         plot_file_size = os.path.getsize(plotter.interfaces.plotter.plot_file_path)
         assert plot_file_size > 0
-    
+
+
+def test_power_meter_keysight_benchvue_win_wcf_data_logger_channels_settings(power_meter):
+    # Init power meter by specifying module name as datalogger or scope
+    power_meter.interfaces.power_meter.init_power_meter(data_log_file_name="UTF1_Data_Log")
+    # Init power meter module
+    power_meter.interfaces.power_meter.init_power_meter_module("data_logger")
+    # set power meter out put channels
+    power_meter.interfaces.power_meter.set_output_channels_settings([{"channel": "1",
+                                                                      "emulation_mode": "2 Quadrant Power Supply",
+                                                                      "voltage": "3.3000", "current_limit": "1.00000",
+                                                                      "voltage_slew": "MAX",
+                                                                      "voltage_meter_range": "Auto",
+                                                                      "current_meter_range": "Auto",
+                                                                      "trace_current": True, "trace_power": True},
+                                                                     {"channel": "2",
+                                                                      "emulation_mode": "Voltage Measure",
+                                                                      "trace_voltage": True, "trace_current": False,
+                                                                      "trace_power": True}])
+    # start capture power meter datalog/scope
+    power_meter.interfaces.power_meter.start_capture()
+
+    # Parse result as throughput object
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(
+        power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+
+
+def test_power_meter_keysight_benchvue_win_wcf_scope_channels_settings(power_meter):
+    # Init power meter by specifying module name as datalogger or scope
+    power_meter.interfaces.power_meter.init_power_meter()
+    # Init power meter module
+    power_meter.interfaces.power_meter.init_power_meter_module("scope")
+    # set power meter out put channels
+    power_meter.interfaces.power_meter.set_output_channels_settings([{"channel": "1",
+                                                                      "emulation_mode": "2 Quadrant Power Supply",
+                                                                      "voltage": "3.3000", "current_limit": "1.00000",
+                                                                      "voltage_slew": "MAX",
+                                                                      "voltage_meter_range": "Auto",
+                                                                      "current_meter_range": "Auto",
+                                                                      "trace_current": True, "trace_power": True},
+                                                                     {"channel": "2",
+                                                                      "emulation_mode": "Voltage Measure",
+                                                                      "trace_voltage": True, "trace_current": False,
+                                                                      "trace_power": True}])
+    # start capture power meter datalog/scope
+    power_meter.interfaces.power_meter.start_capture()
+
+    # Parse result as throughput object
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(
+        power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Scp File Name"] is not None
