@@ -23,9 +23,9 @@ pipeline {
             }
             environment {
                 UTF_HWMUX_TOKEN = credentials('utf-dev-hwmux-token')
-                HWMUX_GROUP_LABEL = "utf-dev-team-hyd-smoke-test"
-                HWMUX_GROUP_JSON_FILE_NAME = "utf-dev-team-hyd-smoke-test_hwmux_group.json"
-                HARNESS_NAME= "__hwmux__utf-dev-team-hyd-smoke-test.yaml"
+                HWMUX_GROUP_LABEL = "utf_dev_team_hyd_integration_test"
+                HWMUX_GROUP_JSON_FILE_NAME = "integration_tests_3_hwmux_group.json"
+                HARNESS_NAME= "__hwmux__integration_tests_3.yaml"
                 TEST_CONFIG_FILE = ".sequence_manager/test_execution_definitions/integration_test_3.yaml"
             }
             stages {
