@@ -7,6 +7,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xBLEFeatureBitMap,
     Si91xBLECustomFeatureBitMap, Si91xConfigFeatureBitMap, Si91xAesType, Si91xAesOperation, Si91xAesKeySize,
     Si91xKeyType, Si91xWrapIVMode)
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
 
 
@@ -29,6 +30,7 @@ def logger():
      Author: Harshitha 
      
 """
+
 
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, test_case_no=None):
@@ -122,6 +124,84 @@ class WLanThread(ThreadBase):
                 assert input_message == final_decrypted_data, f"encryption data and decryption data are not matched"
                 logger().info("Encryption data and decryption data are both same ")
 
+            if self.test_case_no == 215182:
+                data = "12345678901234567890"
+                key = "12345678901234567890123456789012"
+                encrypted_data = self.wifi_dut.interfaces.wifi.aes_encrypt(aes_mode=Si91xAesType.SL_SI91X_AES_ECB,
+                                                                           enc_mode=Si91xAesOperation.SL_SI91X_AES_ENCRYPT,
+                                                                           msg=data,
+                                                                           key_size=Si91xAesKeySize.SL_SI91X_AES_KEY_SIZE_128,
+                                                                           wrap_iv_mode=Si91xWrapIVMode.SL_SI91X_WRAP_IV_ECB_MODE,
+                                                                           key_type=Si91xKeyType.SL_SI91X_TRANSPARENT_KEY,
+                                                                           key=key,
+                                                                           expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
+                logger().info(f"encrypted data is -> {encrypted_data}")
+                logger().info(
+                    f"Input message data length exceed, observed error code 0x00021 which is expected")
+                decrypted_data = self.wifi_dut.interfaces.wifi.aes_decrypt(aes_mode=Si91xAesType.SL_SI91X_AES_ECB,
+                                                                           enc_mode=Si91xAesOperation.SL_SI91X_AES_DECRYPT,
+                                                                           key_size=Si91xAesKeySize.SL_SI91X_AES_KEY_SIZE_128,
+                                                                           wrap_iv_mode=Si91xWrapIVMode.SL_SI91X_WRAP_IV_ECB_MODE,
+                                                                           key_type=Si91xKeyType.SL_SI91X_TRANSPARENT_KEY,
+                                                                           key=key,
+                                                                           msg_len=len(data),
+                                                                           expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
+                logger().info(f"decrypted data is -> {decrypted_data}")
+                logger().info(
+                    f"Input message data length exceed, observed error code 0x00021 which is expected")
+
+            if self.test_case_no == 215183:
+                data = "123456789012345678901234567890123456"
+                key = "12345678901234567890123456789012"
+                encrypted_data = self.wifi_dut.interfaces.wifi.aes_encrypt(aes_mode=Si91xAesType.SL_SI91X_AES_ECB,
+                                                                           enc_mode=Si91xAesOperation.SL_SI91X_AES_ENCRYPT,
+                                                                           msg=data,
+                                                                           key_size=Si91xAesKeySize.SL_SI91X_AES_KEY_SIZE_256,
+                                                                           wrap_iv_mode=Si91xWrapIVMode.SL_SI91X_WRAP_IV_ECB_MODE,
+                                                                           key_type=Si91xKeyType.SL_SI91X_TRANSPARENT_KEY,
+                                                                           key=key,
+                                                                           expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
+                logger().info(f"encrypted data is -> {encrypted_data}")
+                logger().info(
+                    f"Input message data length exceed, observed error code 0x00021 which is expected")
+                decrypted_data = self.wifi_dut.interfaces.wifi.aes_decrypt(aes_mode=Si91xAesType.SL_SI91X_AES_ECB,
+                                                                           enc_mode=Si91xAesOperation.SL_SI91X_AES_DECRYPT,
+                                                                           key_size=Si91xAesKeySize.SL_SI91X_AES_KEY_SIZE_256,
+                                                                           wrap_iv_mode=Si91xWrapIVMode.SL_SI91X_WRAP_IV_ECB_MODE,
+                                                                           key_type=Si91xKeyType.SL_SI91X_TRANSPARENT_KEY,
+                                                                           key=key,
+                                                                           msg_len=len(data),
+                                                                           expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
+                logger().info(f"decrypted data is -> {decrypted_data}")
+                logger().info(
+                    f"Input message data length exceed, observed error code 0x00021 which is expected")
+
+            if self.test_case_no == 215184:
+                data = "12345678901234567890"
+                key = "12345678901234567890123456789012"
+                encrypted_data = self.wifi_dut.interfaces.wifi.aes_encrypt(aes_mode=Si91xAesType.SL_SI91X_AES_ECB,
+                                                                           enc_mode=Si91xAesOperation.SL_SI91X_AES_ENCRYPT,
+                                                                           msg=data,
+                                                                           key_size=Si91xAesKeySize.SL_SI91X_AES_KEY_SIZE_192,
+                                                                           wrap_iv_mode=Si91xWrapIVMode.SL_SI91X_WRAP_IV_ECB_MODE,
+                                                                           key_type=Si91xKeyType.SL_SI91X_TRANSPARENT_KEY,
+                                                                           key=key,
+                                                                           expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
+                logger().info(f"encrypted data is -> {encrypted_data}")
+                logger().info(
+                    f"Input message data length exceed, observed error code 0x00021 which is expected")
+                decrypted_data = self.wifi_dut.interfaces.wifi.aes_decrypt(aes_mode=Si91xAesType.SL_SI91X_AES_ECB,
+                                                                           enc_mode=Si91xAesOperation.SL_SI91X_AES_DECRYPT,
+                                                                           key_size=Si91xAesKeySize.SL_SI91X_AES_KEY_SIZE_192,
+                                                                           wrap_iv_mode=Si91xWrapIVMode.SL_SI91X_WRAP_IV_ECB_MODE,
+                                                                           key_type=Si91xKeyType.SL_SI91X_TRANSPARENT_KEY,
+                                                                           key=key,
+                                                                           msg_len=len(data),
+                                                                           expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
+                logger().info(f"decrypted data is -> {decrypted_data}")
+                logger().info(
+                    f"Input message data length exceed, observed error code 0x00021 which is expected")
+
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case {self.test_case_no} thread: {str(e)} ****\n\n")
             raise e
@@ -147,34 +227,61 @@ pytestmark = [
 ]
 
 
-def test_wifi_sdk_aes_encryption_with_key_size_128_c215179(wifi_dut):
+def test_wifi_sdk_aes_encryption_with_key_size_128_c215179(wifi_dut, sl_collections):
     """This test case verify aes encryption with aes key size 128 """
     try:
         wlan_obj = WLanThread(wifi_dut=wifi_dut, test_case_no=215179)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as e:
-        logger().info(f"\n****** Testcase failed with {e}******")
-        raise e
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-def test_wifi_sdk_aes_encryption_with_key_size_256_c215180(wifi_dut):
+def test_wifi_sdk_aes_encryption_with_key_size_256_c215180(wifi_dut, sl_collections):
     """This test case verify aes encryption with aes key size 256 """
     try:
         wlan_obj = WLanThread(wifi_dut=wifi_dut, test_case_no=215180)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as e:
-        logger().info(f"\n****** Testcase failed with {e}******")
-        raise e
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-def test_wifi_sdk_aes_encryption_with_key_size_192_c215181(wifi_dut):
+def test_wifi_sdk_aes_encryption_with_key_size_192_c215181(wifi_dut, sl_collections):
     """This test case verify aes encryption with aes key size 192 """
     try:
         wlan_obj = WLanThread(wifi_dut=wifi_dut, test_case_no=215181)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as e:
-        logger().info(f"\n****** Testcase failed with {e}******")
-        raise e
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+def test_wifi_sdk_aes_decryption_with_key_size_128_c215182(wifi_dut, sl_collections):
+    """This test case verify aes decryption with aes key size 128 """
+    try:
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, test_case_no=215182)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+def test_wifi_sdk_aes_decryption_with_key_size_256_c215183(wifi_dut, sl_collections):
+    """This test case verify aes decryption with aes key size 256 """
+    try:
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, test_case_no=215183)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+def test_wifi_sdk_aes_decryption_with_key_size_192_c215184(wifi_dut, sl_collections):
+    """This test case verify aes decryption with aes key size 192 """
+    try:
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, test_case_no=215184)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
