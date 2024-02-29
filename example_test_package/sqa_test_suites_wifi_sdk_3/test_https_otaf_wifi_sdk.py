@@ -35,7 +35,7 @@ def logger():
 
 class WifiJoin(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, net_perf_client=None, wifi_client=None,
-                 protocol=None, sl_collections=None, http_server=None, test_case=None, switch=None):
+                 protocol=None, sl_collections=None, http_server=None, test_case=None, switch=None, wifi_clients=None):
         super().__init__()
         self.host_ip = None
         self.wifi_dut = wifi_dut
@@ -44,6 +44,7 @@ class WifiJoin(ThreadBase):
         self.wifi_sniffer = wifi_sniffer
         self.net_perf_client = net_perf_client
         self.wifi_client = wifi_client
+        self.wifi_clients = wifi_clients
         self.switch = switch
         self.protocol = protocol
         self.sl_collections = sl_collections
@@ -51,173 +52,222 @@ class WifiJoin(ThreadBase):
         self.http_server = http_server
         self.test_case = test_case
         self.twelve_hour = 43200
+        self.clients_connected = True
+        self.fw_version_before_upgrade = None
+        self.fw_version_after_upgrade = None
+
+    def connect_clients_to_dut_as_ap(self, wifi_clients, wifi_dut, count=3, ping_count=10, dut_ip=None):
+        ip_dict = {}
+        connected = False
+        if self.clients_connected:
+            logger().info(f"Disconnecting clients from DUT-AP before associating to DUT-AP")
+            for client in wifi_clients:
+                client.interfaces.wifi.leave()
+            self.clients_connected = False
+        for i in range(len(wifi_clients)):
+            logger().info(f"RASPI-STA{i + 1}:'{wifi_clients[i].name}' is joining to DUT-AP")
+            wifi_clients[i].interfaces.wifi.join()
+            time.sleep(5)
+            if dut_ip is None:
+                ip_dict['dut_ip'] = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+            else:
+                ip_dict['dut_ip'] = dut_ip
+            logger().info(f"********* Dut as AP IP **********: {ip_dict['dut_ip']}")
+            for retry_count in range(count):
+                try:
+                    logger().info(f"RASPI-STA{i + 1}:'{wifi_clients[i].name}' is successfully connected to DUT-AP")
+                    logger().info(f"Initiating wlan ping from client '{wifi_clients[i].name}' to DUT")
+                    ip_dict[f'client{i + 1}_ip'] = wifi_clients[i].interfaces.wifi.get_ip_address()
+                    logger().info(f"Client{i + 1}_ip: {ip_dict[f'client{i + 1}_ip']}")
+                    rc, stdout, stderr = wifi_clients[i].interfaces.wifi.shell.execute(
+                        f"sudo ping -c {ping_count} {ip_dict['dut_ip']}")
+                    assert rc == 0, f"RASPI-STA{i + 1} failed to ping DUT"
+                    logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+                    connected = True
+                    break
+                except Exception as error:
+                    logger().info(f"RASPI-STA{i + 1} failed to ping DUT:\n{error}...retry count -> {count + 1}")
+                    time.sleep(10)
+            assert connected, f"RASPI-STA{i + 1} is disconnected from DUT-AP"
+        self.clients_connected = True
+        return ip_dict
 
     def run(self):
         try:
-            status_http = self.http_server.interfaces.http.started
-            assert status_http, 'Server is inactive'
-            logger().info(f'http server state is {status_http}')
+            with TimeMeasurer() as T:
+                status_http = self.http_server.interfaces.http.started
+                assert status_http, 'Server is inactive'
+                logger().info(f'http server state is {status_http}')
 
-            logger().info(" **** configuring the sniffer with access point channel **** ")
-            self.wifi_sniffer.interfaces.capture.configure_interface(
-                channel=self.wifi_access_point.interfaces.wifi.channel)
-            logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-            self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_case)
+                logger().info(" **** configuring the sniffer with access point channel **** ")
+                self.wifi_sniffer.interfaces.capture.configure_interface(
+                    channel=self.wifi_access_point.interfaces.wifi.channel)
+                logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+                self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_case)
 
-            self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-            logger().info("pinging to server ip....")
-            status = ping(self.host_ip, 10)
-            logger().info(f'Ping status = {status}')
+                if self.test_case != '19762':
+                    self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
 
-            logger().info("dut fw version before upgrade...")
-            fw_version_before_upgrade = self.wifi_dut.interfaces.wifi.version()
-            logger().info(f"*** dut fw version before upgrade = {fw_version_before_upgrade} ***")
+                if self.test_case != '19762':
+                    logger().info("pinging to server ip....")
+                    status = ping(self.host_ip, 10)
+                    logger().info(f'Ping status = {status}')
 
-            if self.test_case == '19774':
-                self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
-                                                               host_name=self.host_ip,
-                                                               expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
+                logger().info("dut fw version before upgrade...")
+                self.fw_version_before_upgrade = self.wifi_dut.interfaces.wifi.version()
+                logger().info(f"*** dut fw version before upgrade = {self.fw_version_before_upgrade} ***")
+
+                if self.test_case == '19774':
+                    self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
+                                                                   host_name=self.host_ip,
+                                                                   expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
+                    logger().info("stop Sniffer capture...")
+                    self.wifi_sniffer.interfaces.capture.stop_capture()
+                    return
+
+                if self.test_case == '19766':
+                    self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                                  beacon_missed_count=40,
+                                                                                  first_time_retry_enable=0)
+
+                if self.test_case == '19773':
+                    with TimeMeasurer() as T:
+                        t_end = time.time() + self.twelve_hour
+                        while time.time() < t_end:
+                            self.fw_version_before_upgrade = self.wifi_dut.interfaces.wifi.version()
+                            logger().info(f"*** dut fw version before upgrade = {self.fw_version_before_upgrade} ***")
+                            logger().info("scanning for ap...")
+                            self.wifi_dut.interfaces.wifi.scan()
+                            self.wifi_dut.interfaces.wifi.join_ap(access_point=self.wifi_access_point)
+                            self.wifi_dut.interfaces.wifi.start_ip()
+                            with TimeMeasurer() as t:
+                                self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
+                                                                               host_name=self.host_ip)
+
+                            if t.duration > 40:
+                                logger().info('*** Firmware upgrade time is more ***')
+                            else:
+                                logger().info(f'*** Firmware upgrade time = {t.duration}')
+
+                            logger().info(f'*** Firmware upgrade time: {t.duration} ***')
+                            self.wifi_dut.interfaces.wifi.reset()
+                            time.sleep(15)
+                            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+                            self.wifi_dut.interfaces.wifi.init(load_certificate=False)
+                            self.wifi_dut.interfaces.wifi.initialize_thread()
+                            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+                            self.fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
+                            logger().info(f"*** dut fw version after upgrade = {self.fw_version_after_upgrade} ***")
+                            assert self.fw_version_before_upgrade != self.fw_version_after_upgrade, \
+                                "Firmware after matched with the previous firmware"
+                            self.wifi_dut.interfaces.wifi.default_fw = True
+                            self.wifi_dut.interfaces.wifi.close()
+                            self.wifi_dut.interfaces.wifi.reset()
+                            time.sleep(15)
+                            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+                            self.wifi_dut.interfaces.wifi.init(load_certificate=False)
+                            self.wifi_dut.interfaces.wifi.initialize_thread()
+                            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+                    return
+
+                logger().info("scanning for ap...")
+                self.wifi_dut.interfaces.wifi.scan()
+                if self.test_case == '19757':
+                    self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
+                                                                   host_name=self.host_ip,
+                                                                   expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
+                    logger().info("stop Sniffer capture...")
+                    self.wifi_sniffer.interfaces.capture.stop_capture()
+                    return
+                self.wifi_dut.interfaces.wifi.join_ap(access_point=self.wifi_access_point)
+                self.dut_addr = self.wifi_dut.interfaces.wifi.start_ip()
+                time.sleep(10)
+
+                logger().info("Performing firmware upgrade....")
+
+                if self.test_case == '19772':
+                    with TimeMeasurer() as T:
+                        t_end = time.time() + self.twelve_hour
+                        while time.time() < t_end:
+                            with TimeMeasurer() as t:
+                                self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
+                                                                               host_name=self.host_ip,
+                                                                               http_url='/SiWG917-B.2.10.1.0.0.6_corrupted_add.rps')
+                                # expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
+                    return
+
+                if self.test_case == '19775':
+                    self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
+                                                                   host_name=self.host_ip,
+                                                                   http_url='/SiWG917-B.2.9.0.0.20.bin')
+                    # expected_status=SLStatus.SL_STATUS_SI91X_WRONG_PACKET_INFO)
+                    logger().info("stop Sniffer capture...")
+                    self.wifi_sniffer.interfaces.capture.stop_capture()
+                    return
+
+                if self.test_case == '19776':
+                    self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
+                                                                   host_name=self.host_ip,
+                                                                   http_url='/RS9116.2.5.0.4_remove.xls',
+                                                                   expected_status=SLStatus.SL_STATUS_SI91X_HTTP_OTAF_INVALID_PACKET)
+                    logger().info("stop Sniffer capture...")
+                    self.wifi_sniffer.interfaces.capture.stop_capture()
+                    return
+
+                if self.test_case == '19778':
+                    self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
+                                                                   host_name=self.host_ip,
+                                                                   http_url='/RS9116.2.5.0.4_empty.rps',
+                                                                   expected_status=SLStatus.SL_STATUS_SI91X_WRONG_PACKET_INFO)
+                    logger().info("stop Sniffer capture...")
+                    self.wifi_sniffer.interfaces.capture.stop_capture()
+                    return
+
+                if self.test_case == '19777':
+                    self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
+                                                                   host_name=self.host_ip,
+                                                                   expected_status=SLStatus.SL_STATUS_SI91X_FEATURE_NOT_ENABLED)
+                    logger().info("stop Sniffer capture...")
+                    self.wifi_sniffer.interfaces.capture.stop_capture()
+                    return
+
+                if self.test_case == '19762':
+                    self.sl_collections.configure_dut_in_static_ip(self.wifi_dut, static_ip="192.168.100.76",
+                                                                   static_subnet="255.255.255.0",
+                                                                   static_gateway="192.168.100.76")
+                    logger().info(" ********** Starting DUT as an AP ********* ")
+                    self.wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148564", security="WPA2", psk="Automation@123",
+                                                           channel=11, dtim_beacon_count="1", beacon_interval="100")
+                    self.connect_clients_to_dut_as_ap(wifi_clients=self.wifi_clients, wifi_dut=self.wifi_dut)
+
+                self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+
+                if self.test_case == '19766':
+                    return
+
+                with TimeMeasurer() as t:
+                    self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
+                                                                   host_name=self.host_ip, timeout=150)
+
+                if t.duration > 40:
+                    logger().info(f'*** Firmware upgrade time is more that is {t.duration} ***')
+                else:
+                    logger().info(f'*** Firmware upgrade time = {t.duration}')
+
                 logger().info("stop Sniffer capture...")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-                return
+                self.wifi_dut.interfaces.wifi.reset()
+                time.sleep(15)
+                self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+                self.wifi_dut.interfaces.wifi.init(load_certificate=False)
+                self.wifi_dut.interfaces.wifi.initialize_thread()
+                self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+                self.fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
+                logger().info(f"*** dut fw version after upgrade = {self.fw_version_after_upgrade} ***")
+                assert self.fw_version_before_upgrade != self.fw_version_after_upgrade, \
+                    "Firmware after matched with the previous firmware"
+            logger().info(f'*** Time required is {T.duration} ***')
 
-            if self.test_case == '19766':
-                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
-                                                                              beacon_missed_count=40,
-                                                                              first_time_retry_enable=0)
-
-            if self.test_case == '19773':
-                with TimeMeasurer() as T:
-                    t_end = time.time() + self.twelve_hour
-                    while time.time() < t_end:
-                        fw_version_before_upgrade = self.wifi_dut.interfaces.wifi.version()
-                        logger().info(f"*** dut fw version before upgrade = {fw_version_before_upgrade} ***")
-                        logger().info("scanning for ap...")
-                        self.wifi_dut.interfaces.wifi.scan()
-                        self.wifi_dut.interfaces.wifi.join_ap(access_point=self.wifi_access_point)
-                        self.wifi_dut.interfaces.wifi.start_ip()
-                        with TimeMeasurer() as t:
-                            self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
-                                                                           host_name=self.host_ip)
-
-                        if t.duration > 40:
-                            logger().info('*** Firmware upgrade time is more ***')
-                        else:
-                            logger().info(f'*** Firmware upgrade time = {t.duration}')
-
-                        logger().info(f'*** Firmware upgrade time: {t.duration} ***')
-                        self.wifi_dut.interfaces.wifi.reset()
-                        time.sleep(15)
-                        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-                        self.wifi_dut.interfaces.wifi.init(load_certificate=False)
-                        self.wifi_dut.interfaces.wifi.initialize_thread()
-                        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
-                        fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
-                        logger().info(f"*** dut fw version after upgrade = {fw_version_after_upgrade} ***")
-                        assert fw_version_before_upgrade != fw_version_after_upgrade, \
-                            "Firmware after matched with the previous firmware"
-                        self.wifi_dut.interfaces.wifi.default_fw = True
-                        self.wifi_dut.interfaces.wifi.close()
-                        self.wifi_dut.interfaces.wifi.reset()
-                        time.sleep(15)
-                        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-                        self.wifi_dut.interfaces.wifi.init(load_certificate=False)
-                        self.wifi_dut.interfaces.wifi.initialize_thread()
-                        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
-                return
-
-            logger().info("scanning for ap...")
-            self.wifi_dut.interfaces.wifi.scan()
-            if self.test_case == '19757':
-                self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
-                                                               host_name=self.host_ip,
-                                                               expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
-                logger().info("stop Sniffer capture...")
-                self.wifi_sniffer.interfaces.capture.stop_capture()
-                return
-            self.wifi_dut.interfaces.wifi.join_ap(access_point=self.wifi_access_point)
-            self.dut_addr = self.wifi_dut.interfaces.wifi.start_ip()
-            time.sleep(10)
-
-            if self.test_case == '19766':
-                logger().info('*** Turning off PDU Switch ***')
-
-                self.switch.interfaces.pdu_switch.turn_off(delay=10)
-                self.switch.interfaces.pdu_switch.turn_on(delay=60)
-
-                time.sleep(20)
-
-                self.sl_collections.ping(self.dut_addr)
-
-            logger().info("Performing firmware upgrade....")
-
-            if self.test_case == '19772':
-                with TimeMeasurer() as T:
-                    t_end = time.time() + self.twelve_hour
-                    while time.time() < t_end:
-                        with TimeMeasurer() as t:
-                            self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
-                                                                           host_name=self.host_ip,
-                                                                           http_url='/SiWG917-B.2.10.1.0.0.6_corrupted_add.rps')
-                            # expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
-                return
-
-            if self.test_case == '19775':
-                self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
-                                                               host_name=self.host_ip,
-                                                               http_url='/SiWG917-B.2.9.0.0.20.bin')
-                # expected_status=SLStatus.SL_STATUS_SI91X_WRONG_PACKET_INFO)
-                logger().info("stop Sniffer capture...")
-                self.wifi_sniffer.interfaces.capture.stop_capture()
-                return
-
-            if self.test_case == '19776':
-                self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
-                                                               host_name=self.host_ip,
-                                                               http_url='/RS9116.2.5.0.4_remove.xls',
-                                                               expected_status=SLStatus.SL_STATUS_SI91X_HTTP_OTAF_INVALID_PACKET)
-                logger().info("stop Sniffer capture...")
-                self.wifi_sniffer.interfaces.capture.stop_capture()
-                return
-
-            if self.test_case == '19778':
-                self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
-                                                               host_name=self.host_ip,
-                                                               http_url='/RS9116.2.5.0.4_empty.rps',
-                                                               expected_status=SLStatus.SL_STATUS_SI91X_WRONG_PACKET_INFO)
-                logger().info("stop Sniffer capture...")
-                self.wifi_sniffer.interfaces.capture.stop_capture()
-                return
-
-            if self.test_case == '19777':
-                self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
-                                                               host_name=self.host_ip,
-                                                               expected_status=SLStatus.SL_STATUS_SI91X_FEATURE_NOT_ENABLED)
-                logger().info("stop Sniffer capture...")
-                self.wifi_sniffer.interfaces.capture.stop_capture()
-                return
-
-            with TimeMeasurer() as t:
-                self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
-                                                               host_name=self.host_ip)
-
-            if t.duration > 40:
-                logger().info('*** Firmware upgrade time is more ***')
-            else:
-                logger().info(f'*** Firmware upgrade time = {t.duration}')
-
-            logger().info("stop Sniffer capture...")
-            self.wifi_sniffer.interfaces.capture.stop_capture()
-            self.wifi_dut.interfaces.wifi.reset()
-            time.sleep(15)
-            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-            self.wifi_dut.interfaces.wifi.init(load_certificate=False)
-            self.wifi_dut.interfaces.wifi.initialize_thread()
-            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
-            fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
-            logger().info(f"*** dut fw version after upgrade = {fw_version_after_upgrade} ***")
-            assert fw_version_before_upgrade != fw_version_after_upgrade, \
-                "Firmware after matched with the previous firmware"
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
             raise e
@@ -679,7 +729,25 @@ def test_wifi_sdk_https_fw_upgrade_failure_with_junk_rps_overnight_c19772(http_s
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'security': 'WPA2',
+        'channel': 11,
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "TEST_C148564",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0"
+        }
+    }
+)
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config(
     "wifi_dut",
@@ -691,7 +759,7 @@ def test_wifi_sdk_https_fw_upgrade_failure_with_junk_rps_overnight_c19772(http_s
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
                            Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
                            Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient |
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient |
                           Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF | Si91xExtTCPIPFeatureBitMap.Default,
@@ -703,16 +771,19 @@ def test_wifi_sdk_https_fw_upgrade_failure_with_junk_rps_overnight_c19772(http_s
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.wifi_clients(["raspi_wifi"])
 def test_wifi_sdk_https_fw_upgrade_in_concurrent_mode_and_measure_time_c19762(http_server, wifi_client, wifi_sniffer,
-                                                                              wifi_access_point, wifi_dut,
+                                                                              wifi_access_point, wifi_dut, wifi_clients,
                                                                               sl_collections):
     """This Test case is validating Firmware updation in Concurrent mode"""
     try:
-        test_case = '19758'
-        wlan_obj = WifiJoin(http_server=http_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
-                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+        test_case = '19762'
+        wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
+                            wifi_clients=wifi_clients, wifi_client=wifi_client)
 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
