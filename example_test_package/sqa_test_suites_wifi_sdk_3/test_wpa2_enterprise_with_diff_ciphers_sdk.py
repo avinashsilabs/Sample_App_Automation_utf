@@ -3723,3 +3723,65 @@ def test_wsdk_WPA2_EAP_Conn_TLS_when_server_cert_parsing_not_proper_C113906(wifi
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
+def test_wsdk_WPA2_eap_conn_with_peap_cert_not_loaded_C113851(
+        wifi_dut, wifi_access_point, wifi_sniffer, radius_server, sl_collections, request, sniffer_filter):
+
+    """ WPA2 Enterprise Connection when the PEAP CA Certificate is not loaded """
+
+    try:
+        test_name = request.node.name
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Mac Address of DUT: {dut_mac_address}")
+        wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
+                                                   cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
+            max_retry_attempts=0, scan_interval=4, beacon_missed_count=40, first_time_retry_enable=0, eap_flags=2)
+        wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
+        wifi_dut.interfaces.wifi.set_eap_credentials()
+        wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
+                                      passphrase=wifi_access_point.interfaces.wifi.passphrase,
+                                      security="wpa2_enterprise", uid="user1", enc="peap", timeout_ms=1,
+                                      expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
+        logger().info(f"Connection failed when certificate is not loaded into the device, "
+                      f"error code 0x10008 which is expected")
+
+        wifi_dut.interfaces.wifi.start_ip(expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
+        logger().info(f"IP config failed when command given in incorrect state, error code 0x10021 which is expected")
+        time.sleep(1)
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=ap_mac_address, da_addr=dut_mac_address, filter_name='eap_connection_failure')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count'], 'Unable to find EAP failure frames sent from AP in sniffer'
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
