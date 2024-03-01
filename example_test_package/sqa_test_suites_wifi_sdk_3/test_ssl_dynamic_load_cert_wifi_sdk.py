@@ -56,7 +56,6 @@ class BleFunctionality(ThreadBase):
         self.duration = duration
 
     def ble_slave_connection(self, data_transfer=True, disconnect=False, wait_time=5):
-
         logger().info("******************** start ble in dut ********************")
         ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
         assert ble_dut_address, "Failed to initialize ble in dut"
@@ -96,7 +95,7 @@ class BleFunctionality(ThreadBase):
     def check_connection_status_on_dut(self):
         logger().info("******************** Checking connection status of BLE from DUT ********************")
         state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
-        state_int = int(state) if state.isdigit() else -1
+        state_int = int(state) if state.isdigit() else int(re.search(r'\w+\s+(\d)', state.decode()).group(1))
         assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
         logger().info("******************** DUT is connected to remote ble device ********************")
 
@@ -110,7 +109,6 @@ class BleFunctionality(ThreadBase):
     def add_char_service(self):
         service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
         char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
-
         services, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
         assert len(services) > 0, "no services fetched"
         assert len(chars) > 0, "fetched characters are empty"
@@ -146,7 +144,7 @@ class BleFunctionality(ThreadBase):
                 logger().info("******************** Validating received data in remote ble device ********************")
                 notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
                 assert notifications, "Failed to receive data in remote ble device"
-                logger().info(f"Remote device received data: {notifications[-1]}")
+                logger().info(f"Remote ble device received data: {notifications[-1]}")
                 assert len(notifications) > 0, "Remote device failed to receive data"
                 assert len(notifications[-1]) == len(data), "Received data is not matched at remote device"
 
@@ -223,7 +221,6 @@ class load_certificates_thread(ThreadBase):
                                 Si91xCertIdentifier.SL_NET_TLS_SERVER_CREDENTIAL_START,
                                 cert_index=index)
                         break
-
                 local_port = randint(5001, 20000)
                 logger().info(f"SSL start server on port {port}")
                 self.ssl_server.interfaces.ssl.start_server(port=port, server_cert=element[3][1],
@@ -231,18 +228,13 @@ class load_certificates_thread(ThreadBase):
                 server_ip = self.ssl_server.interfaces.ssl.server_ip
                 self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
                 sock = self.wifi_dut.interfaces.wifi.socket()
-                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP",
-                                                              option_val="tls_1_2")
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
                 self.wifi_dut.interfaces.wifi.bsdSsetCustomSyncSockopt(socket_fd=sock, cert_index=index)
-                self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.device_ip,
-                                                   server_port=local_port,
+                self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.device_ip, server_port=local_port,
                                                    timeout=15)
                 logger().info(f"DUT with sock id {sock} connecting to server with port number:{port}")
-                self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
-                                                               server_port=port)
+                self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=port)
                 list_sock.append(sock)
-
-        logger().info(f"APPENDING INTO LIST RESULT{list_sock}")
         return list_sock
 
 
@@ -256,7 +248,6 @@ class data_tx_rx_thread(ThreadBase):
         self.sleep_time = sleep_time
 
     def run(self):
-
         for element in self.result_load_certificate:
             for count in range(self.send_count):
                 if not lock.locked():
@@ -1511,7 +1502,6 @@ def test_wifi_sdk_error_code_check_when_cert_loaded_in_same_index_c19656(wifi_sn
 
         load_certs_thread = load_certificates_thread(wifi_dut, ssl_server, device_ip, load_cert1, load_cert2)
         load_certs_thread.start()
-
         load_certs_thread.wait_for_exit(True)
         ble_obj.check_connection_status_on_raspi()
         ble_obj.check_connection_status_on_dut()
@@ -1691,7 +1681,6 @@ def test_wifi_sdk_load_cert_with_wlan_ble_in_connected_state_without_ps_c19652(w
         load_certs_thread.start()
         load_certs_thread.wait_for_exit(True)
         ble_thread.wait_for_exit(True)
-
         ble_obj.check_connection_status_on_dut()
         ble_obj.check_connection_status_on_raspi()
 
@@ -2035,7 +2024,7 @@ def test_wifi_sdk_wlan_ble_connection_load_cert_time_gt_200ms_c19657(wifi_sniffe
                 command = f'wifi.load_cert {address} -c ca_cert -i tls_server -n 1'
                 status, data = wifi_dut.interfaces.wifi.issue_command(command, 30)
             wifi_dut.interfaces.wifi.verify_status(status, SLStatus.SL_STATUS_OK)
-            logger.info(f"************** Time taken to load certificate is --> '{t.duration}' seconds **************")
+            logger.info(f"************** Time taken to load certificate is --> '{t.duration}' seconds **************\n")
             assert t.duration > 0.2, "Time taken to load certificate is less than 200ms"
             wifi_dut.interfaces.wifi.memory_free(address)
             time.sleep(3)
@@ -2056,3 +2045,4 @@ def test_wifi_sdk_wlan_ble_connection_load_cert_time_gt_200ms_c19657(wifi_sniffe
     except Exception as error:
         wifi_dut.interfaces.wifi.is_dut_bad_state = True
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
