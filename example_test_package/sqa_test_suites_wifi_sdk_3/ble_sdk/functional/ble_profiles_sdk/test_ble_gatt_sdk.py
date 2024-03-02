@@ -169,14 +169,13 @@ def test_ble_sdk_link_loss_profiles_from_rd1_c19874(wifi_dut, ble_client, sl_col
         wifi_dut.interfaces.wifi.ble_add_service(uid=0x1803)
         wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x2A06)
         wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x2A06)
-        ble_obj = BleFunctionality(wifi_dut, ble_client, bt_dut_address=bt_dut_address)
+        ble_obj = BleFunctionality(wifi_dut, ble_client, bt_dut_address=bt_dut_address, powersave=True)
         ble_obj.ble_adv()
         time.sleep(60)
         ble_obj.check_device_state_on_rasp()
         servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
         assert len(servs) > 0, "no services fetched"
         assert len(chars) > 0, "fetched characters are empty"
-
         char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
                                                                                                     service_uid=service_uid,
                                                                                                     char_uid=char_uid)
