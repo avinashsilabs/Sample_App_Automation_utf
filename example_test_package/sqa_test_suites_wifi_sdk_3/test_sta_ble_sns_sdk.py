@@ -42,7 +42,7 @@ class WifiJoinThread(ThreadBase):
         self.sl_collections = sl_collections
         self.sniffer_filter = sniffer_filter
         self.device_ip = None
-        self.dut_addr = None
+        self.dut_addr = {}
         self.ap_mac_address = None
         self.test_case = test_case
 
