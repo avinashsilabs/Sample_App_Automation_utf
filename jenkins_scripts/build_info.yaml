@@ -23,3 +23,4 @@ rps_path :
       path : "connectivity_firmware"
       customerid : "0"
       rps_prefix : "SiWG917-B"
+      security_bit: "0"

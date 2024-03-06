@@ -4,6 +4,7 @@ Rps_Path=$2 #rps_path is defined in build_info.yaml , which describes the path i
 Rps_Prefix=$3 #rps_prefix is defined in build_info.yaml , which describes the first prefix in rps file name like RS9116W 
 Customer_Id=$4 #Customer_Id is defined in build_info.yaml , which describes the customer id of the rps file
 Build_type=$5 #Build_type is defined in build_info.yaml , which describes the type of firmware like RS9116_A10, RS9116_A11
+Security_bit=$6
 prefix=$( echo $FIRMWARE |cut -d '.' -f1 )
 major=$( echo $FIRMWARE |cut -d '.' -f2 )
 minor=$( echo $FIRMWARE |cut -d '.' -f3 )
