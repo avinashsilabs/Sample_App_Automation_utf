@@ -1680,7 +1680,6 @@ def test_ble_sdk_scan_in_advertising_state_C19839(ble_dut, ble_clients, sl_colle
     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
-        scan_result = ""
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=f"reports/test_ble_sdk_scan_in_advertising_state_C19839.logs_{int(time.time())}"):
             assert len(ble_clients) >= 2, f"MINIMUM 2 RASPI DEVICES NEEDED"
@@ -1696,15 +1695,9 @@ def test_ble_sdk_scan_in_advertising_state_C19839(ble_dut, ble_clients, sl_colle
             logger().info(f"ble_client_address1: {ble_client_address1}")
             time.sleep(5)
 
-            ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address1, timeout=120)
+            scan_result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address1,
+                                                                          timeout=120, async_timeout=30)
             time.sleep(15)
-            events = ble_dut.interfaces.bluetooth.get_async_events()
-            for event in events:
-                if event.event_type == AsyncEventIdentifiers.ADVERTISE:
-                    if "rsi_ble_simple_central_on_adv_report_event" in event.event_data:
-                        logger().info(f" event data : {event.event_data}")
-                        scan_result = event.event_data
-
             logger().info(f"SCAN RESULT IS: '{scan_result}")
             assert str(ble_client_address1) in str(
                 scan_result), "REMOTE DEVICE 1 ADDRESS ISN'T PRESENT IN DUT SCAN RESULTS"
@@ -1713,11 +1706,15 @@ def test_ble_sdk_scan_in_advertising_state_C19839(ble_dut, ble_clients, sl_colle
             logger().info(" **** START ADVERTISING FROM DUT **** ")
             ble_dut.interfaces.bluetooth.ble_start_advertising(ble_dir_addr=ble_dut_address)
             time.sleep(5)
+            logger().info("enabling the power save modes ")
+            ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+            ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                         psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
 
             logger().info(" **** START SCANNING DUT FROM REMOTE DEVICE 2 **** ")
             ble_client_address2 = ble_client2.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
             assert ble_client_address2, "FAILED TO INITIATE BLE IN REMOTE DEVICE 2"
-            time.sleep(20)
+            time.sleep(15)
             logger().info(f" **** ble_client_address2: {ble_client_address2} **** ")
 
             found_devices_list = ble_client2.interfaces.bluetooth.get_devices()
@@ -1725,11 +1722,6 @@ def test_ble_sdk_scan_in_advertising_state_C19839(ble_dut, ble_clients, sl_colle
             assert ble_dut.interfaces.bluetooth.ble_address in found_devices_list, "DUT ISN'T LISTED IN SCAN RESULTS"
             logger().info("FOUND DUT BD ADDRESS IN SCAN RESULTS")
 
-            logger().info("enabling the power save modes ")
-            ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-            ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                         psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-            time.sleep(5)
             logger().info("DISABLING ADVERTISEMENT AND SCANNING FROM RASPI AND DUT")
             ble_dut.interfaces.wifi.ble_stop_scanning()
             ble_client1.interfaces.bluetooth.stop_advertising()
