@@ -1,18 +1,13 @@
+import random
+import string
 import time
 import pytest
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingMode, Si91xFeatureBitMap, \
-    Si91xTCPIPFeatureBitMap, \
-    Si91xCustomFeatureBitMap, \
-    Si91xCustomFeatureBitMap, \
-    Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xBLECustomFeatureBitMap, Si91xBTFeatureBitMap, \
-    Si91xBLEFeatureBitMap, Si91xConfigFeatureBitMap, Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes
+    Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap, \
+    Si91xExtTCPIPFeatureBitMap, Si91xBLECustomFeatureBitMap, Si91xBTFeatureBitMap, Si91xBLEFeatureBitMap, \
+    Si91xConfigFeatureBitMap, Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.sl_status import SLStatus
-
-
-def logger():
-    return get_logger(__name__)
-
 
 """ The testcases added in this file run below test steps for DUT-Si91x
         1. Initiates the DUT Coex wlan and BLE mode.
@@ -22,10 +17,13 @@ def logger():
         1. DUT(Si91x)
         2. Raspberry PI4
         
-        
     Author: Gopinatha N 
-
 """
+
+
+def logger():
+    return get_logger(__name__)
+
 
 pytestmark = [
     pytest.mark.config(
@@ -93,7 +91,6 @@ def test_ble_set_local_name_5_8_10_11_13_16_bytes_c37544(ble_dut):
             assert "SL_STATUS_OK" in ''.join(map(str, status)), "Local name length is more than 16 bytes."
             logger().info(f"ble set local name {set_local_name} is successfully with {len(set_local_name)} bytes.")
             local_name_set_count += 1
-
         except Exception as error:
             logger().info(f"error message{error}")
             logger().info(f"ble set local name:{local_names[local_name_set_count]} is not successfully with"
@@ -102,7 +99,89 @@ def test_ble_set_local_name_5_8_10_11_13_16_bytes_c37544(ble_dut):
                           f"{hex(SLStatus.SL_STATUS_BT_Invalid_NAME_LENGTH_WHEN_SET_TO_MORE_THAN_16_BYTES)}")
             local_name_not_set_count += 1
             continue
-
     assert local_name_set_count == len(local_names), ("All given list of elements are not successfully "
                                                       "to set local names.")
     logger().info("All given list of elements are successfully to set all local names.")
+
+
+@pytest.mark.start_state("ble_dut", wifi=['init'])
+def test_ble_sdk_set_local_name_gt_16_special_characters_c37556(ble_dut, sl_collections):
+    """
+    Verify RSI_BLE is throwing error or not when we set local name more than 16 characters with only special characters.
+    """
+    try:
+        local_name = ''.join(random.choices("@#$%^&*(", k=18))
+        logger().info(f"Setting bt local name: {local_name}")
+        status_code = ble_dut.interfaces.bluetooth.bt_set_local_name(local_name)[0]
+        assert status_code == 0x04E66, f"DUT sent wrong error code:'{hex(status_code)}', expected error code is 0x04E66"
+        logger().info(f"DUT sent error code '{hex(status_code)}' which is expected.")
+    except Exception as error:
+        sl_collections.exception_handling(ble_dut, error)
+
+
+@pytest.mark.start_state("ble_dut", wifi=['init'])
+def test_ble_sdk_set_local_name_gt_16_chars_with_only_numbers_c37557(ble_dut, sl_collections):
+    """
+    Verify RSI_BLE is throwing error or not when we set local name more than 16 characters with only Numbers.
+    """
+    try:
+        local_name = ''.join(random.choices(string.digits, k=20))
+        logger().info(f"Setting bt local name: {local_name}")
+        status_code = ble_dut.interfaces.bluetooth.bt_set_local_name(local_name)[0]
+        assert status_code == 0x04E66, f"DUT sent wrong error code:'{hex(status_code)}', expected error code is 0x04E66"
+        logger().info(f"DUT sent error code '{hex(status_code)}' which is expected.")
+    except Exception as error:
+        sl_collections.exception_handling(ble_dut, error)
+
+
+@pytest.mark.start_state("ble_dut", wifi=['init'])
+def test_ble_sdk_set_local_name_gt_16_chars_with_combination_of_alphanumeric_special_chars_c37558(ble_dut,
+                                                                                                  sl_collections):
+    """
+    Verify RSI_BLE is throwing error or not when we set local name more than 16 characters with combination of
+    alphanumeric and special characters.
+    """
+    try:
+        local_name = ''.join(random.choices(string.ascii_uppercase[:10] + string.digits + "@#$%^&*(#@$", k=20))
+        logger().info(f"Setting bt local name: {local_name}")
+        status_code = ble_dut.interfaces.bluetooth.bt_set_local_name(local_name)[0]
+        assert status_code == 0x04E66, f"DUT sent wrong error code:'{hex(status_code)}', expected error code is 0x04E66"
+        logger().info(f"DUT sent error code '{hex(status_code)}' which is expected.")
+    except Exception as error:
+        sl_collections.exception_handling(ble_dut, error)
+
+
+@pytest.mark.start_state("ble_dut", wifi=['init'])
+def test_ble_sdk_set_local_name_with_combination_of_alphanumeric_special_chars_c37559(ble_dut, sl_collections):
+    """
+    Verify RSI_BLE is able to accept the local name when we set local name with combination of alphanumeric and special
+    characters.
+    """
+    try:
+        set_local_name = ''.join(random.choices(string.ascii_uppercase[:10] + string.digits + "@#$%^&*(#@$", k=16))
+        logger().info(f"Setting bt local name: {set_local_name}")
+        status_code = ble_dut.interfaces.bluetooth.bt_set_local_name(set_local_name)[0]
+        assert status_code == 0x0000, f"DUT sent wrong status code:'{hex(status_code)}', expected status code is 0x0000"
+        get_local_name = ble_dut.interfaces.bluetooth.bt_get_local_name(timeout=10)
+        assert set_local_name == get_local_name, "set_local_name and get_local_name are not matching"
+        logger().info(f"set_local_name and get_local_name are matching ---> {get_local_name}")
+    except Exception as error:
+        sl_collections.exception_handling(ble_dut, error)
+
+
+@pytest.mark.start_state("ble_dut", wifi=['init'])
+def test_ble_sdk_set_local_name_with_only_special_chars_c37560(ble_dut, sl_collections):
+    """
+    Verify RSI_BLE is able to accept the local name when we set local name with ONLY special characters.
+    """
+    try:
+        set_local_name = ''.join(random.choices("@#$%^&*(", k=16))
+        logger().info(f"Setting bt local name: {set_local_name}")
+        status_code = ble_dut.interfaces.bluetooth.bt_set_local_name(set_local_name)[0]
+        assert status_code == 0x0000, f"DUT sent wrong status code:'{hex(status_code)}', expected status code is 0x0000"
+        get_local_name = ble_dut.interfaces.bluetooth.bt_get_local_name(timeout=10)
+        assert set_local_name == get_local_name, "set_local_name and get_local_name are not matching"
+        logger().info(f"set_local_name and get_local_name are matching ---> {get_local_name}")
+    except Exception as error:
+        sl_collections.exception_handling(ble_dut, error)
+
