@@ -239,7 +239,7 @@ pipeline {
                                         sh '''
                                         cd manifest
                                         # Specify a local directory to save the downloaded files
-                                        jf rt dl --flat --url "https://artifactory.silabs.net/artifactory"  --insecure-tls --user $ARTIFACTORY_CREDENTIALS_USR --password $ARTIFACTORY_CREDENTIALS_PSW  "iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${ARTIFACTORY_FOLDER}/${FIRMWARE_NAME}/${SL_NET_COMMIT}"                          
+                                        jf rt dl --flat --url "https://artifactory.silabs.net/artifactory"  --insecure-tls --user $ARTIFACTORY_CREDENTIALS_USR --password $ARTIFACTORY_CREDENTIALS_PSW  "iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${ARTIFACTORY_FOLDER}/${FIRMWARE_NAME}/${SL_NET_COMMIT}/"                          
                                         ls -l
                                                                         
                                         '''
