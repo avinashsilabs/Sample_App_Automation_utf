@@ -1534,7 +1534,7 @@ def test_wifi_sdk_sntp_connection_wpa2_enterprise_eap_tls_c113796(wifi_dut, wifi
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                     sl_collections=sl_collections, test_name=test_name, http_Otaf="tls")
+                                     eap_type="tls", sl_collections=sl_collections, test_name=test_name)
         wifi_thread.start()
         wifi_thread.wait_for_exit()
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
@@ -1548,26 +1548,15 @@ def test_wifi_sdk_sntp_connection_wpa2_enterprise_eap_tls_c113796(wifi_dut, wifi
         wifi_dut.interfaces.wifi.sntp_client_stop()
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_dut.interfaces.wifi.leave()
-        if wifi_access_point.interfaces.wifi.security == SecurityMode.WPAEnterprise:
-            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                sa_addr=ap_mac_address, da_addr=wifi_thread.dut_addr['dut_mac_address'],
-                filter_name='beacon_wpa2_entr_wfa_check')
-        else:
-            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                sa_addr=ap_mac_address, da_addr=wifi_thread.dut_addr['dut_mac_address'],
-                filter_name='beacon_wpa2_entr_akms_check')
-        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=wifi_thread.dut_addr['dut_mac_address'],
-            da_addr=ap_mac_address, filter_name='assoc_req_resp_eapol_4_way_handshake')
-        packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                        wifi_access_point=wifi_access_point,
+                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification.verify_sniffer_validation()
+        packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             da_addr=ap_mac_address,
             sa_addr=wifi_thread.dut_addr['dut_mac_address'], filter_name='eap_type_tls_verification')
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
-            'packet_count'], 'Unable to find beacons in sniffer'
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count'], \
-            'Unable to find assoc_req_resp_eapol_4_way_handshake packet in sniffer'
-
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)[
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
             'packet_count'], 'Unable to find EAP frames sent from AP in sniffer'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
