@@ -3517,9 +3517,9 @@ def test_wifi_sdk_sntp_functionality_c19191(wifi_sniffer, wifi_dut, wifi_access_
     """
     try:
         capture_filename = "test_wifi_sdk_sntp_functionality_c19191"
-        ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
-        device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
-        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections,
+                                 listen_interval=700)
+        device_ip, dut_mac_address = ssl_obj.join_get_ip()
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
