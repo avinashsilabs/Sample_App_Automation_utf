@@ -682,7 +682,35 @@ def test_sdk_ble_advertising_with_whitelist_filter_policy_0x01_C19841(wifi_dut, 
         logger().info(" **** ADDING REMOTE DEVICE 1 TO WHITELIST **** ")
         wifi_dut.interfaces.wifi.ble_add_white_list(ble_white_list_address)
         ble_obj = BleScan(wifi_dut=wifi_dut, ble_clients=ble_client1, ble_dut_address=bt_dut_address)
-        ble_obj.ble_adv(filter_type=1)
+        logger().info(" **** START ADVERTISEMENT FROM DUT **** ")
+        wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_filter_type=1)
+        logger().info(f"enable wlan and bt power save in dut")
+        enable_wifi_ps = wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        assert enable_wifi_ps == 0, 'failed to enable wlan power save'
+        enable_bt_ps = wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps == 0, 'failed to enable bt power save'
+        hci_scan_params = "0x01 0x10 0x00 0x10 0x00 0x00 0x00"
+        ble_client1.interfaces.bluetooth.set_scan_params(
+            hci_scan_params=hci_scan_params
+        )
+        devices = ble_client1.interfaces.bluetooth.start_scanning_with_hci(timeout=10)
+        ble_client1.interfaces.bluetooth.stop_scanning_with_hci()
+        assert bt_dut_address in devices, "Device not found"
+        target_device = devices[bt_dut_address]
+        logger().info(f"***************{devices}********************")
+        assert "Name" in target_device, "Name not resolved in advertising report"
+        ble_client1.interfaces.bluetooth.hci_tool_manager.create_connection(bt_dut_address)
+        time.sleep(5)
+        try:
+            logger().info("....CONNECT TO DUT AND MAC ADDRESS....")
+            connect_state = ble_client1.interfaces.bluetooth.connect(bt_dut_address)
+            logger().info(f"THE STATE IS: {connect_state}")
+            assert connect_state, "UNABLE TO CONNECT TO THE GIVEN ADDRESS"
+        except Exception:
+            wifi_dut.interfaces.wifi.ble_stop_advertising()
+        time.sleep(60)
         state_int = ble_obj.check_device_state()
         if (state_int > 0):
             logger().info("DISCONNECTING THE BT HOST....")
@@ -718,6 +746,7 @@ def test_sdk_ble_advertising_with_whitelist_filter_policy_0x01_C19841(wifi_dut, 
             assert "UNABLE TO DISCONNECT SINCE THE CONNECTION NEVER EXISTED"
         ble_client2.interfaces.bluetooth.close()
         time.sleep(10)
+
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
