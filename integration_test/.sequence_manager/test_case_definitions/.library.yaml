@@ -492,6 +492,31 @@ test_cases:
       - gatt
       - master
     test_case_name: test_ble_gatt_client_master
+  - id: 956c62b09c5259934af90d33bd5af764c629bf2e
+    test_src_map_id: SM34190::1
+    test_case_id: test_ble_gatt_client_master_hci
+    test_function: test_ble_gatt_client_master_hci
+    test_id: test_ble_gatt_client_master_hci::1
+    test_module: test_cases/test_ble.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})
+      - pytest.mark.dut('rs9116_sapi',)
+      - pytest.mark.framework_integration_test()
+      - pytest.mark.firmware_app('test_multi_gatt_conn',)
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - ble
+      - client
+      - gatt
+      - hci
+      - master
+    test_case_name: test_ble_gatt_client_master_hci
   - id: d0247f2e087bdf5896087c7b7af35d01ef1982d9
     test_src_map_id: SM11798::1
     test_case_id: test_ble_gatt_server_slave_with_hid_service
@@ -877,39 +902,6 @@ test_cases:
       - filter
       - policy
     test_case_name: test_sdk_ble_whitelist
-  - id: a2f84403ddc14de3ea547fe6b5712eb84540b6ef
-    test_src_map_id: C19878::1
-    test_case_id: test_validate_add_services_in_server_slave_C19878
-    test_function: test_validate_add_services_in_server_slave_C19878
-    test_id: test_validate_add_services_in_server_slave_C19878::1
-    test_module: test_cases/test_ble_whitelist.py
-    test_markers:
-      - >-
-        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
-        1,'stack_len': 2048},'ble': {'count': 1,'stack_len': 2048}},'oper_mode':
-        0,'coex_mode':
-        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
-        Si91xFeatureBitMap.WPSSupportDisabled|Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1|Si91xFeatureBitMap.ULPGPIOHandshake,'tcpip_features':
-        Si91xTCPIPFeatureBitMap.Default,'custom_features':
-        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_tcpip_features':
-        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'ext_custom_features':
-        Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid|Si91xExtCustomFeatureBitMap.Default|Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE|Si91xExtCustomFeatureBitMap.FeatureLowPower,'config_features':
-        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'bt_features':
-        Si91xBTFeatureBitMap.Default,'ble_features':
-        Si91xBLEFeatureBitMap.Default|Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid|Si91xBLEFeatureBitMap.RS9113_Si91x_Compatible_Feature|Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE|Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS|Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX|Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC,'ble_custom_ext_features':
-        Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST|Si91xBLECustomFeatureBitMap.Default|Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS})
-    test_params: []
-    version: 0
-    enabled: true
-    labels:
-      - C19878
-      - add
-      - ble_whitelist
-      - server
-      - services
-      - slave
-      - validate
-    test_case_name: test_validate_add_services_in_server_slave_C19878
   - id: 8853c4b63fd3c3d7d364feca5d882785e9b13961
     test_src_map_id: SM11825::1
     test_case_id: test_bt_a2dp_dut_as_src
