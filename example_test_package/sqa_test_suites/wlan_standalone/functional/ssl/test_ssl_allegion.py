@@ -4857,7 +4857,7 @@ def test_2SSL_tcp_ack_feature_testcaseTC19136(
 @pytest.mark.parametrize("domain_name", ["a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated", "disable_store_config"])
-def test_TC19138_feature_test(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket, domain_name,
+def test_feature_test_TC19138(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket, domain_name,
                               logger):
     ping_count = 10
     listen_interval = 700
@@ -4964,7 +4964,7 @@ def test_TC19138_feature_test(wifi_sniffer, wifi_dut, wifi_access_point, ssl_ser
 @pytest.mark.parametrize("domain_name", ["a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated", "disable_store_config"])
-def test_TC19140_auto_connection_reconnection_after_reset(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server,
+def test_auto_connection_reconnection_after_reset_TC19140(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server,
                                                           remote_socket, domain_name, logger):
     ping_count = 10
     listen_interval = 700
@@ -5118,7 +5118,7 @@ def test_TC19140_auto_connection_reconnection_after_reset(wifi_sniffer, wifi_dut
     ["a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com", "a1ctxhjnkhtvqq.iot.us-east-2.amazonaws.com"], ])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
-def test_TC19186_awscloud_with_different_certificate(
+def test_awscloud_with_different_certificate_TC19186(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket, domain_name, logger
 ):
     try:
