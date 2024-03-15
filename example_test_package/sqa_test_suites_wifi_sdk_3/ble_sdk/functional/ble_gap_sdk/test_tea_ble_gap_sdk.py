@@ -89,11 +89,14 @@ def test_ble_set_local_name_5_8_10_11_13_16_bytes_c37544(ble_dut):
             status = ble_dut.interfaces.bluetooth.bt_set_local_name(set_local_name)
             logger().info(f"ble set local name status :{status}")
             assert "SL_STATUS_OK" in ''.join(map(str, status)), "Local name length is more than 16 bytes."
-            logger().info(f"ble set local name {set_local_name} is successfully with {len(set_local_name)} bytes.")
+            logger().info(f"ble set local name {set_local_name} is successful with {len(set_local_name)} bytes.")
+            get_local_name = ble_dut.interfaces.bluetooth.bt_get_local_name(timeout=10)
+            assert set_local_name == get_local_name, "set_local_name and get_local_name are not matching"
+            logger().info(f"set_local_name and get_local_name are matching ---> {get_local_name}")
             local_name_set_count += 1
         except Exception as error:
             logger().info(f"error message{error}")
-            logger().info(f"ble set local name:{local_names[local_name_set_count]} is not successfully with"
+            logger().info(f"ble set local name:{local_names[local_name_set_count]} is not successful with"
                           f" {len(local_names[local_name_set_count])} bytes.")
             logger().info(f"ble set local name status :"
                           f"{hex(SLStatus.SL_STATUS_BT_Invalid_NAME_LENGTH_WHEN_SET_TO_MORE_THAN_16_BYTES)}")
