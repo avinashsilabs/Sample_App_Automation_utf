@@ -3027,7 +3027,11 @@ def test_wsdk_WPA2_EAP_TLS_when_not_loaded_private_key_in_certs_C113861(wifi_dut
             wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                      beacon_missed_count=40, first_time_retry_enable=0)
             wifi_dut.interfaces.wifi.load_certs(
-                eap_cert=["wifi-user_no_private.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+                eap_cert=["wifi-user_public.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+            wifi_dut.interfaces.wifi.load_certs(
+                eap_cert=["wifi-user_inter_root_ca.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+            wifi_dut.interfaces.wifi.load_certs(
+                eap_cert=["wifi-user-root-ca.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
             wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
             wifi_dut.interfaces.wifi.set_eap_credentials()
             wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
@@ -3192,7 +3196,11 @@ def test_wsdk_WPA2_EAP_TLS_when_no_root_ca_in_certs_C113859(wifi_dut, wifi_acces
             wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
                                                        cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
             wifi_dut.interfaces.wifi.load_certs(
-                eap_cert=["wifi-user_no_root-ca.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+                eap_cert=["wifi-user_private.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+            wifi_dut.interfaces.wifi.load_certs(
+                eap_cert=["wifi-user_public.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+            wifi_dut.interfaces.wifi.load_certs(
+                eap_cert=["wifi-user_inter_root_ca.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
             wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
             wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                      beacon_missed_count=40, first_time_retry_enable=0)
@@ -3280,6 +3288,12 @@ def test_wsdk_WPA2_EAP_TLS_with_no_client_certs_C113860(wifi_dut, wifi_access_po
             wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
             wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                      beacon_missed_count=40, first_time_retry_enable=0)
+            wifi_dut.interfaces.wifi.load_certs(
+                eap_cert=["wifi-user_private.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+            wifi_dut.interfaces.wifi.load_certs(
+                eap_cert=["wifi-user-inter-root-ca.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+            wifi_dut.interfaces.wifi.load_certs(
+                eap_cert=["wifi-user-root-ca.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
             wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
             wifi_dut.interfaces.wifi.set_eap_credentials()
             wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
