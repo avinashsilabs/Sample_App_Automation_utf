@@ -275,7 +275,7 @@ devices:
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
-                outlet: 5
+                outlet: 1
                 # use_persistent_state: true will set a persistent state, that the outlet will revert
                 # to after reboot or power cycle
                 # use_persistent_state: false will set a transient state only, and the outlet will revert
@@ -320,6 +320,60 @@ devices:
                 interface: 'wlan0'
                 standard: 'n'
                 ip_address: '10.207.17.161'
+
+    raspi_wifi_ssh1:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+                remote: 10.207.17.163
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+            wifi:
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                supports: [ 'wifi_ap', 'wifi_client' ]
+                interface: 'wlan0'
+                standard: 'n'
+                ip_address: '10.207.17.163'
+
+    raspi_wifi_ssh2:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+                remote: 10.207.17.152
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+            wifi:
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                supports: [ 'wifi_ap', 'wifi_client' ]
+                interface: 'wlan0'
+                standard: 'n'
+                ip_address: '10.207.17.152'
+
+    raspi_wifi_ssh3:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+                remote: 10.207.17.150
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+            wifi:
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                supports: [ 'wifi_ap', 'wifi_client' ]
+                interface: 'wlan0'
+                standard: 'n'
+                ip_address: '10.207.17.150'
 
     raspi_ble_client:
         interfaces:
@@ -1058,6 +1112,9 @@ defaults:
     wifi_clients:
         - 'raspi_wifi'
         - 'raspi_wifi_ssh'
+        - 'raspi_wifi_ssh1'
+        - 'raspi_wifi_ssh2'
+        - 'raspi_wifi_ssh3'
 
     wifi_sniffer: 'airpcap'
 

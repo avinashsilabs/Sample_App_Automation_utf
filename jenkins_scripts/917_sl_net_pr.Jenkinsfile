@@ -166,7 +166,7 @@ pipeline {
                                                                     unzip ${FIRMWARE_NAME}.zip
 
                                                                     cp -r ${FIRMWARE_NAME}/${rps_file_path}/*.rps ../utf_core/src/utf/interfaces/http/www
-                                                                    mv ${FIRMWARE_NAME}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${FIRMWARE_NAME}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps  
+                                                                    mv ${FIRMWARE_NAME}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps  ${FIRMWARE_NAME}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
                                                                     cp -r ${FIRMWARE_NAME}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../utf_core/src/utf/interfaces/http/www
                                                                     cp -r ${FIRMWARE_NAME}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../manifest/
                                                                 fi
@@ -191,7 +191,7 @@ pipeline {
                                                                     unzip ${FIRMWARE_NAME}.zip
 
                                                                     cp ${FIRMWARE_NAME}/${rps_file_path}/*.rps ../utf_core/src/utf/interfaces/http/www
-                                                                    mv ${FIRMWARE_NAME}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${FIRMWARE_NAME}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps  
+                                                                    mv ${FIRMWARE_NAME}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps  ${FIRMWARE_NAME}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
                                                                     cp ${FIRMWARE_NAME}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../utf_core/src/utf/interfaces/http/www
                                                                     cp ${FIRMWARE_NAME}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../manifest/
                                                                 fi
