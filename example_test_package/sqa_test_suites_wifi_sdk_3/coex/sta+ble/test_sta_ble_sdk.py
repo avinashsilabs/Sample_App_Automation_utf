@@ -212,13 +212,17 @@ class WifiJoinThread(ThreadBase):
 
     def set_power_save(self):
 
-        self.wifi_dut.interfaces.wifi.set_performance_profile(
-            mode="power_save_low_latency"
-        )
-        self.wifi_dut.interfaces.wifi.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave,
-        )
+        if self.power_save:
+
+            self.wifi_dut.interfaces.wifi.set_performance_profile(
+                mode="power_save_low_latency"
+            )
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(
+                psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave,
+            )
+        else:
+            logger().info("skipping power save beacuse power save flag set to be false in harness")
 
     def join_to_ap(self, skip_power_save=False):
 
