@@ -3316,8 +3316,8 @@ def test_wifi_sdk_ssl_three_sockets_load_remove_certs_connection_c19163(wifi_sni
                         assert error_code, (
                             "DUT did not send error code when trying to connect ssl server without loading "
                             "certificate, which is not expected")
-                    logger.info("DUT sent error code when trying to connect ssl server without loading certificate, "
-                                "which is expected")
+                        logger.info("DUT sent error code when trying to connect ssl server without loading "
+                                    "certificate, which is expected")
                 if iteration == 0:
                     sniff = False
                     logger.info("Disconnection DUT from 3rd party AP")
@@ -3440,7 +3440,6 @@ def test_wifi_sdk_ssl_tx_with_1aws_2tcp_sockets_c19193(wifi_sniffer, wifi_dut, w
     try:
         domain_name = "a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com"
         capture_filename = "test_wifi_sdk_ssl_tx_with_1aws_2tcp_sockets_c19193"
-
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
@@ -3503,7 +3502,8 @@ def test_wifi_sdk_ssl_tx_with_1aws_2tcp_sockets_c19193(wifi_sniffer, wifi_dut, w
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints
                                | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
     }
@@ -3517,9 +3517,9 @@ def test_wifi_sdk_sntp_functionality_c19191(wifi_sniffer, wifi_dut, wifi_access_
     """
     try:
         capture_filename = "test_wifi_sdk_sntp_functionality_c19191"
-        ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
-        device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
-        # wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections,
+                                 listen_interval=700)
+        device_ip, dut_mac_address = ssl_obj.join_get_ip()
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 

@@ -2,7 +2,9 @@ import time
 import pytest
 
 from utf.interfaces.bluetooth.bluez import BatteryService
-from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import BatteryLevelCharacteristic
+from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import (
+    BatteryLevelCharacteristic,
+)
 from utf.interfaces.bluetooth.hid_recorder import HidRecorder
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode
 from utf.interfaces.wifi import WlanError
@@ -26,7 +28,7 @@ pytestmark = [
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
-@pytest.mark.test_src_map_id('SM11772')
+@pytest.mark.test_src_map_id("SM11772")
 def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client, logger):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -51,8 +53,11 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client, logger):
     sw = Stopwatch()
     while sw.elapsed_sec < 30:
         found_devices = ble_client.interfaces.bluetooth.get_devices()
-        if bt_dut_address in found_devices and \
-                found_devices[bt_dut_address] == wifi_dut.interfaces.wifi.ble_advertising_data:
+        if (
+            bt_dut_address in found_devices
+            and found_devices[bt_dut_address]
+            == wifi_dut.interfaces.wifi.ble_advertising_data
+        ):
             device_found = True
             break
     assert device_found
@@ -80,9 +85,8 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client, logger):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
-@pytest.mark.test_src_map_id('SM11777')
+@pytest.mark.test_src_map_id("SM11777")
 def test_ble_scanning(wifi_dut, wifi_access_point, ble_client, logger):
-
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
@@ -128,7 +132,7 @@ def test_ble_scanning(wifi_dut, wifi_access_point, ble_client, logger):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
-@pytest.mark.test_src_map_id('SM11782')
+@pytest.mark.test_src_map_id("SM11782")
 def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client, logger):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -155,15 +159,20 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client, logger):
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     # Begin Scanning for BLE devices
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(
+        bt_dut_address=bt_dut_address
+    )
     assert bt_client_address is not None
 
     device_found = False
     sw = Stopwatch()
     while sw.elapsed_sec < 30:
         found_devices = ble_client.interfaces.bluetooth.get_devices()
-        if bt_dut_address in found_devices and \
-                found_devices[bt_dut_address] == wifi_dut.interfaces.wifi.ble_advertising_data:
+        if (
+            bt_dut_address in found_devices
+            and found_devices[bt_dut_address]
+            == wifi_dut.interfaces.wifi.ble_advertising_data
+        ):
             device_found = True
             break
 
@@ -179,45 +188,71 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client, logger):
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected
 
-    #resolving charecteristic
-    servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+    # resolving charecteristic
+    (
+        servs,
+        chars,
+    ) = (
+        ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+    )
     assert len(servs) > 0
     assert len(chars) > 0
 
-    char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
-                                                                                           service_uid=service_uid,                                                                             char_uid=char_uid)
+    (
+        char_path,
+        char_props,
+    ) = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(
+        services=servs, service_uid=service_uid, char_uid=char_uid
+    )
     assert char_path is not None
     assert len(char_props) > 0
 
     # read value - Notifications not enabled
-    result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+    result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(
+        char_path=char_path
+    )
     assert result == data1
 
     # subscribe to notifications
-    ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
-    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path, char_uid=char_uid)
+    ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(
+        char_path=char_path
+    )
+    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(
+        char_path=char_path, char_uid=char_uid
+    )
 
     # notify only
     wifi_dut.interfaces.wifi.ble_notify_value()
 
     # write/read new value - Notifications enabled
-    ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(char_path=char_path, data=data2)
+    ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(
+        char_path=char_path, data=data2
+    )
     time.sleep(0.1)
-    result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+    result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(
+        char_path=char_path
+    )
     assert result == data2
 
-
     # write value - Notifications enabled
-    ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(char_path=char_path, data=data3)
+    ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(
+        char_path=char_path, data=data3
+    )
 
     # auto notify
-    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path, char_uid=char_uid)
+    ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(
+        char_path=char_path, char_uid=char_uid
+    )
     wifi_dut.interfaces.wifi.ble_start_notify_value(interval_ms=500, count=2)
     time.sleep(1)
 
     # subscribe to notifications
-    ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-    ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+    ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(
+        char_path=char_path
+    )
+    ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(
+        char_uid=char_uid
+    )
     time.sleep(1)
     # notify only - disabled notifications - should raise exception
     with pytest.raises(WlanError) as exc_info:
@@ -241,21 +276,25 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client, logger):
 
 # For now as we are not sure about the changes required on the DUT side the start_smp_scan is tested using mobile
 @pytest.mark.skip()
-@pytest.mark.test_src_map_id('SM11787')
+@pytest.mark.test_src_map_id("SM11787")
 def test_ble_gatt_client_slave(ble_client, logger):
-    logger.info("""
+    logger.info(
+        """
         Put the mobile in advertising mode.. 
         Make sure that local name is part of advertisement
-        Assign the device local name to the local_name variable...""")
+        Assign the device local name to the local_name variable..."""
+    )
 
-    bt_dut_address = None # to be determined once the device is found in scanning
+    bt_dut_address = None  # to be determined once the device is found in scanning
     local_name = "ROG_Phone3"
 
     # Begin Scanning for BLE devices
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address="0", service_classes=["BatteryService"])
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(
+        bt_dut_address="0", service_classes=["BatteryService"]
+    )
     assert bt_client_address is not None
 
-    logged_devices = [] # to avoid logging the device again
+    logged_devices = []  # to avoid logging the device again
     device_found = False
     sw = Stopwatch()
     while sw.elapsed_sec < 100:
@@ -278,14 +317,18 @@ def test_ble_gatt_client_slave(ble_client, logger):
     ble_client.interfaces.bluetooth.connect(bt_dut_address)
     ble_client.interfaces.bluetooth.stop_scanning()
 
-    logger.info("Sleeping for 30 sec.. Perform Gatt operations on mobile and check if it is working...")
+    logger.info(
+        "Sleeping for 30 sec.. Perform Gatt operations on mobile and check if it is working..."
+    )
     time.sleep(60)
 
 
 @pytest.mark.firmware_app("test_multi_gatt_conn")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
-@pytest.mark.test_src_map_id('SM11792')
-def test_ble_gatt_client_master(firmware_loader, wifi_dut, wifi_access_point, ble_client, logger):
+@pytest.mark.test_src_map_id("SM11792")
+def test_ble_gatt_client_master(
+    firmware_loader, wifi_dut, wifi_access_point, ble_client, logger
+):
     # # Join Wi-Fi Access Point
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
 
@@ -294,18 +337,24 @@ def test_ble_gatt_client_master(firmware_loader, wifi_dut, wifi_access_point, bl
     assert bt_dut_address is not None
 
     # Start ble client
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
-                                                                      service_classes=["BatteryService"])
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(
+        bt_dut_address=bt_dut_address, service_classes=["BatteryService"]
+    )
     assert bt_client_address is not None
 
     # Start scanning and connect to ble client
-    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
+    wifi_dut.interfaces.wifi.ble_start_scanning(
+        ble_client_address=bt_client_address, timeout=60
+    )
     wifi_dut.interfaces.wifi.ble_stop_scanning()
     # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
     timeout = 120
     logger.info(f"Initiating connection this can take upto {timeout} seconds....")
-    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
-                                         expected="RSI_BLE_SECURITY_KEYS_EVENT")
+    wifi_dut.interfaces.wifi.ble_connect(
+        ble_remote_dev_address=bt_client_address,
+        timeout=timeout,
+        expected="RSI_BLE_SECURITY_KEYS_EVENT",
+    )
 
     # Get the state of the dut
     state = wifi_dut.interfaces.wifi.ble_get_device_state()
@@ -313,18 +362,28 @@ def test_ble_gatt_client_master(firmware_loader, wifi_dut, wifi_access_point, bl
     assert state_int == BLEDeviceState.Connected
 
     # get all profiles
-    uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
+    uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(
+        ble_remote_dev_address=bt_client_address
+    )
     assert BatteryService.UUID in uuids
 
     # resolve battery profile
-    start_handle, end_handle = wifi_dut.interfaces.wifi.ble_get_profile_async(ble_remote_dev_address=bt_client_address,
-                                                             uuid=int(BatteryService.UUID, 16))
+    start_handle, end_handle = wifi_dut.interfaces.wifi.ble_get_profile_async(
+        ble_remote_dev_address=bt_client_address, uuid=int(BatteryService.UUID, 16)
+    )
     assert start_handle is not None
     assert end_handle is not None
 
     # resolve characteristics of battery profile
-    uuids, write_handles, char_properties = wifi_dut.interfaces.wifi.ble_get_char_services_async(ble_remote_dev_address=bt_client_address,
-                    start_handle=int(start_handle, 16), end_handle=int(end_handle, 16))
+    (
+        uuids,
+        write_handles,
+        char_properties,
+    ) = wifi_dut.interfaces.wifi.ble_get_char_services_async(
+        ble_remote_dev_address=bt_client_address,
+        start_handle=int(start_handle, 16),
+        end_handle=int(end_handle, 16),
+    )
     assert BatteryLevelCharacteristic.BLEVEL_UUID in uuids
     index = uuids.index(BatteryLevelCharacteristic.BLEVEL_UUID)
 
@@ -335,33 +394,87 @@ def test_ble_gatt_client_master(firmware_loader, wifi_dut, wifi_access_point, bl
     assert write_handle > 0
 
     # read value
-    val=wifi_dut.interfaces.wifi.ble_get_att_value_async(ble_remote_dev_address=bt_client_address,
-                                                     char_property=write_handle)
+    val = wifi_dut.interfaces.wifi.ble_get_att_value_async(
+        ble_remote_dev_address=bt_client_address, char_property=write_handle
+    )
     assert int(val) > 0
 
     # enable notifications
     since_time = time.perf_counter_ns()
-    wifi_dut.interfaces.wifi.ble_set_att_int_value_async(ble_remote_dev_address=bt_client_address,
-                                                     char_property=(write_handle+1), value=1)
+    wifi_dut.interfaces.wifi.ble_set_att_int_value_async(
+        ble_remote_dev_address=bt_client_address,
+        char_property=(write_handle + 1),
+        value=1,
+    )
     time.sleep(6)
     events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
     assert len(events) > 0
-    latest_val = events[-1].event_data #capturing the last value notified by Gatt server
+    latest_val = events[
+        -1
+    ].event_data  # capturing the last value notified by Gatt server
     assert int(latest_val) < int(val)
 
     # read value
-    val = wifi_dut.interfaces.wifi.ble_get_att_value_async(ble_remote_dev_address=bt_client_address,
-                                                                char_property=write_handle)
+    val = wifi_dut.interfaces.wifi.ble_get_att_value_async(
+        ble_remote_dev_address=bt_client_address, char_property=write_handle
+    )
     assert int(val) <= int(latest_val)
-
 
     # Disconnect
     wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
 
+@pytest.mark.firmware_app("test_multi_gatt_conn")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
-@pytest.mark.test_src_map_id('SM11798')
-def test_ble_gatt_server_slave_with_hid_service(wifi_dut, wifi_access_point, ble_client, logger):
+@pytest.mark.test_src_map_id("SM34190")
+def test_ble_gatt_client_master_hci(firmware_loader, wifi_dut, ble_client, logger):
+    with ble_client.interfaces.bluetooth.ble_logs(
+        start_collecting_logs=True,
+        bt_log_path=f"reports/test_ble_gatt_client_master{int(time.time())}.log",
+    ):
+        # Start DUT
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
+        assert bt_dut_address is not None
+
+        # Start ble client
+        bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+            bt_dut_address=bt_dut_address,
+            service_classes=["BatteryService"],
+            hci_adv_params="0x20 0x00 0xA0 0x00 0x00 0x00 0x00 00 00 00 00 00 00 0x07 0x00",
+        )
+        assert bt_client_address is not None
+
+        # Start scanning and connect to ble client
+        wifi_dut.interfaces.wifi.ble_start_scanning(
+            ble_client_address=bt_client_address, timeout=60
+        )
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
+        timeout = 120
+        logger.info(f"Initiating connection this can take upto {timeout} seconds....")
+        wifi_dut.interfaces.wifi.ble_connect(
+            ble_remote_dev_address=bt_client_address,
+            timeout=timeout,
+            expected="RSI_BLE_SECURITY_KEYS_EVENT",
+        )
+
+        # Get the state of the dut
+        state = wifi_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected
+
+        # get all profiles
+        uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(
+            ble_remote_dev_address=bt_client_address
+        )
+        assert BatteryService.UUID in uuids
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "ble_disconnect"])
+@pytest.mark.test_src_map_id("SM11798")
+def test_ble_gatt_server_slave_with_hid_service(
+    wifi_dut, wifi_access_point, ble_client, logger
+):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
             "This test case is only currently implemented for SAPI"
@@ -384,15 +497,20 @@ def test_ble_gatt_server_slave_with_hid_service(wifi_dut, wifi_access_point, ble
     wifi_dut.interfaces.wifi.ble_start_advertising()
 
     # Begin Scanning for BLE devices
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(
+        bt_dut_address=bt_dut_address
+    )
     assert bt_client_address is not None
 
     device_found = False
     sw = Stopwatch()
     while sw.elapsed_sec < 30:
         found_devices = ble_client.interfaces.bluetooth.get_devices()
-        if bt_dut_address in found_devices and \
-                found_devices[bt_dut_address] == wifi_dut.interfaces.wifi.ble_advertising_data:
+        if (
+            bt_dut_address in found_devices
+            and found_devices[bt_dut_address]
+            == wifi_dut.interfaces.wifi.ble_advertising_data
+        ):
             device_found = True
             break
 
@@ -412,13 +530,22 @@ def test_ble_gatt_server_slave_with_hid_service(wifi_dut, wifi_access_point, ble
     # Send keyboard interrupts from DUT
     # Receive key strokes on Raspi
 
-    test_data = ['0xb', '0x0',
-                 '0x12', '0x0',
-                 '0xa', '0x0',
-                 ]
-    test_data_expected_from_raspi = ["11,00,00,0b,00,00,00,00,00,00,00,00", "11,00,00,00,00,00,00,00,00,00,00,00",
-                                     "11,00,00,12,00,00,00,00,00,00,00,00", "11,00,00,00,00,00,00,00,00,00,00,00",
-                                     "11,00,00,0a,00,00,00,00,00,00,00,00", "11,00,00,00,00,00,00,00,00,00,00,00"]
+    test_data = [
+        "0xb",
+        "0x0",
+        "0x12",
+        "0x0",
+        "0xa",
+        "0x0",
+    ]
+    test_data_expected_from_raspi = [
+        "11,00,00,0b,00,00,00,00,00,00,00,00",
+        "11,00,00,00,00,00,00,00,00,00,00,00",
+        "11,00,00,12,00,00,00,00,00,00,00,00",
+        "11,00,00,00,00,00,00,00,00,00,00,00",
+        "11,00,00,0a,00,00,00,00,00,00,00,00",
+        "11,00,00,00,00,00,00,00,00,00,00,00",
+    ]
 
     with HidRecorder() as hid_recorder:
         for item in test_data:

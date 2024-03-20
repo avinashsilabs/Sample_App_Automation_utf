@@ -60,7 +60,6 @@ def logger():
 
 
 class FilterPacket:
-
     @staticmethod
     def get_association_id():
         """
@@ -451,7 +450,6 @@ class FilterPacket:
 
                 logger().info(
                     f'PS-Poll data packet time = {time_diff_list[0]}, Qos Data packet time = {time_diff_list[1]}')
-
                 time_diff_ps_poll_and_data_frame = datetime.datetime.strptime(time_diff_list[1],
                                                                               '%H:%M:%S.%f') - datetime.datetime.strptime(
                     time_diff_list[0], '%H:%M:%S.%f')
@@ -546,7 +544,6 @@ class FilterPacket:
                 logger().info(f'\n PS-POLL = {ps_key}, NULL frame with pm bit 0 = {null_key}, Qos Data = {data_key},'
                               f' NULL frame with pm bit 1 = {null_key1}\n')
                 pm1_status = False
-
                 data_frame_status = False
                 null_frame_status = False
                 time_diff_list = []
@@ -1131,7 +1128,6 @@ class FilterPacket:
         assoc_id = int(assoc_id, 16)
         tim_aid = 0
         beacon = int('0x0008', 16)
-        null_frame = int('0x0024', 16)
         ps_poll = int('0x001a', 16)
         ''' Validation of power save and data along with more data bit '''
         filter_file = open(f'./reports/Powersave_capture.txt', 'r')
@@ -1146,7 +1142,8 @@ class FilterPacket:
         no_of_filtered_packets = len(frame_list)
         no_of_filtered_packets = no_of_filtered_packets - 10  # removing last 10 frames from the capture
         for frame_number in range(no_of_filtered_packets):
-            if (frame_list[frame_number][2] == str(null_frame)) and (frame_list[frame_number][4] == '1'):
+            if ((str(frame_list[frame_number][2]) in ['0x0024', str(int('0x0024', 16))]) and
+                    (str(frame_list[frame_number][4]).lower() in ['1', 'true'])):
                 logger().info("found Null frame with PM '1'")
                 logger().info(frame_list[frame_number])
                 first_beacon_time = float(frame_list[frame_number][1])

@@ -87,9 +87,9 @@ def test_enable_and_disable_whitelist_for_100_iterations_c19955(wifi_dut, ble_cl
                 assert bt_dut_address is not None
                 ble_client1.interfaces.bluetooth.close()
                 logger().info(f"\n\n************Start ble client******************\n\n")
-                bt_client_address1 = ble_client1.interfaces.bluetooth.start_smp_adv_whitelist_with_hci_tool(
+                bt_client_address1 = ble_client1.interfaces.bluetooth.start_smp_adv_with_hci_tool(
                     bt_dut_address=bt_dut_address,
-                    hci_whitelist_adv_data="0x1F "  # Number of bytes that follow in the advertisement(payload length)
+                    hci_adv_data="0x1F "  # Number of bytes that follow in the advertisement(payload length)
                                            "0x00 0x00 0x00 0x00 0x00 "  # prepend 00s at start, based on whitelist data index(5 here)
                                            "0x41, 0x55, 0x54, 0x4F, 0x4D, 0x41 "  # whitelist data
                                            "0x54, 0x49, 0x4F, 0x4E, 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00",
@@ -106,7 +106,7 @@ def test_enable_and_disable_whitelist_for_100_iterations_c19955(wifi_dut, ble_cl
                 )
                 time.sleep(5)
                 ble_client2.interfaces.bluetooth.close()
-                bt_client_address2 = ble_client2.interfaces.bluetooth.start_smp_adv_whitelist_with_hci_tool(
+                bt_client_address2 = ble_client2.interfaces.bluetooth.start_smp_adv_with_hci_tool(
                     bt_dut_address=bt_dut_address,
                     # append 00s at end, based on length of payload
                     hci_adv_params="0x20 0x00 "  # Advertising_Interval_Min

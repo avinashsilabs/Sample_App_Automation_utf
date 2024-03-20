@@ -17,6 +17,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xModuleType,
     Si91xPowerSaveModes,
     Si91xPowerSaveProcedureTypes,
+    Si91xJoinFeatureBitMap
 )
 from utf.utf_config import UtfConfig
 from utf.interfaces.iperf.iperf_constants import IperfConstants
@@ -211,13 +212,17 @@ class WifiJoinThread(ThreadBase):
 
     def set_power_save(self):
 
-        self.wifi_dut.interfaces.wifi.set_performance_profile(
-            mode="power_save_low_latency"
-        )
-        self.wifi_dut.interfaces.wifi.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave,
-        )
+        if self.power_save:
+
+            self.wifi_dut.interfaces.wifi.set_performance_profile(
+                mode="power_save_low_latency"
+            )
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(
+                psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave,
+            )
+        else:
+            logger().info("skipping power save beacuse power save flag set to be false in harness")
 
     def join_to_ap(self, skip_power_save=False):
 
@@ -234,6 +239,8 @@ class WifiJoinThread(ThreadBase):
                 pwr_save = False
             else:
                 pwr_save = self.power_save
+                self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
+                                                                      Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
             self.dut_addr = self.sl_collections.join_to_wifi_network(
                 wifi_dut=self.wifi_dut,
                 wifi_access_point=self.wifi_access_point,
