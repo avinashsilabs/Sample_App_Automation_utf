@@ -1,0 +1,1142 @@
+root_path: example_test_package
+test_sequence:
+  - id: e4eb41263b9986b03a6ea3b4906b76ddf33a352e
+    test_case_id: test_wifi_sdk_scan_check_rssi_c19060
+    test_function: test_wifi_sdk_scan_check_rssi_c19060
+    test_id: test_wifi_sdk_scan_check_rssi_c19060::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_scan_2_4_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode':
+        Si91xOperatingMode.WiFiClient,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.Default,'bt_features': 0,'ble_features':
+        0,'ble_custom_ext_features': 0})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - c19060
+      - check
+      - rssi
+      - scan
+      - scan_2_4_sdk
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_scan_check_rssi_c19060
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: fa2dbb74fd8cdd1f693c6a6e1159119cd0c2906a
+    test_case_id: test_wifi_sdk_scan_ssid_32bytes_c19064
+    test_function: test_wifi_sdk_scan_ssid_32bytes_c19064
+    test_id: test_wifi_sdk_scan_ssid_32bytes_c19064::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_scan_2_4_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode':
+        Si91xOperatingMode.WiFiClient,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.Default,'bt_features': 0,'ble_features':
+        0,'ble_custom_ext_features': 0})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - c19064
+      - scan
+      - scan_2_4_sdk
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - ssid
+      - wifi
+    test_case_name: test_wifi_sdk_scan_ssid_32bytes_c19064
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: f34a1854deacf96cc9f097dc5432bcf6b8e4866a
+    test_case_id: test_wifi_sdk_apmode_wpa2_aes_34765
+    test_function: test_wifi_sdk_apmode_wpa2_aes_34765
+    test_id: test_wifi_sdk_apmode_wpa2_aes_34765::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode':
+        Si91xOperatingMode.AccessPoint,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.PSKSecurity,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|Si91xTCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SANITY_AP','passphrase': '12345678','channel': 11,'interface':
+        'wlan0'}})
+      - pytest.mark.wifi_clients(['raspi_wifi'],)
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - aes
+      - apmode
+      - sdk
+      - sqa_sanity_sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+      - wpa2
+    test_case_name: test_wifi_sdk_apmode_wpa2_aes_34765
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 53c7d76baf6388b34aa4195fb14893c50524cebb
+    test_case_id: test_wifi_sdk_concurrent_mode_sta_ap_C34756
+    test_function: test_wifi_sdk_concurrent_mode_sta_ap_C34756
+    test_id: test_wifi_sdk_concurrent_mode_sta_ap_C34756::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode':
+        Si91xOperatingMode.ConcurrentMode,'coex_mode':
+        Si91xCoexMode.WLANOnly,'features':
+        Si91xFeatureBitMap.WPSSupportDisabled,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default|Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|Si91xTCPIPFeatureBitMap.DHCPv4Server|Si91xTCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'Concurent_ap','passphrase': 'Automation@123','channel': 11,'interface':
+        'wlan0'}})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'ssid':
+        'Concurent_sta','security': 'WPA2','passphrase': 'test1234','channel':
+        11})
+      - pytest.mark.wifi_clients(['raspi_wifi'],)
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C34756
+      - ap
+      - concurrent
+      - mode
+      - sdk
+      - sqa_sanity_sdk
+      - sqa_test_suites_wifi_sdk_3
+      - sta
+      - wifi
+    test_case_name: test_wifi_sdk_concurrent_mode_sta_ap_C34756
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 03cd47f6a1f66499590a40e685c3ae382265828e
+    test_case_id: test_wifi_sdk_dut_soft_start_and_stop_ap_in_multiple_iterations_C191351[8]
+    test_function: test_wifi_sdk_dut_soft_start_and_stop_ap_in_multiple_iterations_C191351
+    test_id: >-
+      test_wifi_sdk_dut_soft_start_and_stop_ap_in_multiple_iterations_C191351[8]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_start_and_stop_soft_ap.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode':
+        Si91xOperatingMode.AccessPoint,'coex_mode':
+        Si91xCoexMode.WLANOnly,'features':
+        Si91xFeatureBitMap.Aggregation|Si91xFeatureBitMap.PSKSecurity,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|Si91xTCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.Default,'security': 'WPA2','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','channel': 8,'beacon':
+        100})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','channel':
+        '8','interface': 'wlan0'},1: {'security': 'WPA2','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','channel':
+        '8','interface': 'wlan0'}})
+    test_params:
+      - name: channel
+        value: 8
+    version: 0
+    enabled: true
+    labels:
+      - C191351
+      - ap
+      - dut
+      - iterations
+      - multiple
+      - sdk
+      - soft
+      - sqa_test_suites_wifi_sdk_3
+      - start
+      - start_and_stop_soft_ap
+      - stop
+      - wifi
+    test_case_name: test_wifi_sdk_dut_soft_start_and_stop_ap_in_multiple_iterations_C191351[8]
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: a7232d1313a00880e664997811858208633d7fa8
+    test_case_id: >-
+      test_wifi_sdk_dut_soft_start_ap_stop_ap_with_different_beacon_intervals_concurrent_C191359[8]
+    test_function: >-
+      test_wifi_sdk_dut_soft_start_ap_stop_ap_with_different_beacon_intervals_concurrent_C191359
+    test_id: >-
+      test_wifi_sdk_dut_soft_start_ap_stop_ap_with_different_beacon_intervals_concurrent_C191359[8]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_start_and_stop_soft_ap.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode':
+        Si91xOperatingMode.ConcurrentMode,'coex_mode':
+        Si91xCoexMode.WLANOnly,'features':
+        Si91xFeatureBitMap.WPSSupportDisabled,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default|Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|Si91xTCPIPFeatureBitMap.DHCPv4Server|Si91xTCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,'security':
+        'WPA2','ssid': 'SILABS_AP_MODE','passphrase':
+        'Automation@123','channel': 8})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','channel':
+        '8','interface': 'wlan0'}})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'ssid':
+        'Concurent_ap','security': 'WPA2','passphrase': 'test1234','channel':
+        8})
+    test_params:
+      - name: channel
+        value: 8
+    version: 0
+    enabled: true
+    labels:
+      - C191359
+      - ap
+      - beacon
+      - concurrent
+      - dut
+      - intervals
+      - sdk
+      - soft
+      - sqa_test_suites_wifi_sdk_3
+      - start
+      - start_and_stop_soft_ap
+      - stop
+      - wifi
+    test_case_name: >-
+      test_wifi_sdk_dut_soft_start_ap_stop_ap_with_different_beacon_intervals_concurrent_C191359[8]
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 44083512f1d5fa932838ec94d3cdb72d119c0a2e
+    test_case_id: test_wifi_sdk_set_get_rtc_TC19051[tolerance_threshold0-11]
+    test_function: test_wifi_sdk_set_get_rtc_TC19051
+    test_id: test_wifi_sdk_set_get_rtc_TC19051[tolerance_threshold0-11]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_rtc_ap_wifi_sqa_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode':
+        Si91xOperatingMode.AccessPoint,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Aggregation|Si91xFeatureBitMap.PSKSecurity,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default|Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|Si91xTCPIPFeatureBitMap.DHCPv4Server|Si91xTCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid|Si91xCustomFeatureBitMap.RealTimeClockFromHost,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,'security':
+        'Open','ssid': 'Ayush123','passphrase': 'Ayush@123','channel': 11})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'channel': 11,'ssid':
+        'Ayush123','security': 'Open','passphrase': 'Ayush@123','interface':
+        'wlan0'})
+    test_params:
+      - name: tolerance_threshold
+        value:
+          - -1
+          - 2
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - TC19051
+      - get
+      - rtc
+      - rtc_ap_wifi_sqa_sdk
+      - sdk
+      - set
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_set_get_rtc_TC19051[tolerance_threshold0-11]
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 47d5f1f8306bbccc7011d47df08ff21e03ccf812
+    test_case_id: test_wifi_sdk_check_set_rtc_functionality_19050
+    test_function: test_wifi_sdk_check_set_rtc_functionality_19050
+    test_id: test_wifi_sdk_check_set_rtc_functionality_19050::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_rtc_ap_wifi_sqa_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode':
+        Si91xOperatingMode.AccessPoint,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Aggregation|Si91xFeatureBitMap.PSKSecurity,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default|Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|Si91xTCPIPFeatureBitMap.DHCPv4Server|Si91xTCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid|Si91xCustomFeatureBitMap.RealTimeClockFromHost,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,'security':
+        'Open','ssid': 'Ayush123','passphrase': 'Ayush@123','channel': 11})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'channel': 11,'ssid':
+        'Ayush123','security': 'Open','passphrase': 'Ayush@123','interface':
+        'wlan0'})
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - check
+      - functionality
+      - rtc
+      - rtc_ap_wifi_sqa_sdk
+      - sdk
+      - set
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_check_set_rtc_functionality_19050
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: ff01aec6b1330017dd65128159876f9b11f5870a
+    test_case_id: test_wifi_sdk_check_set_rtc_functionality_twice_c19049
+    test_function: test_wifi_sdk_check_set_rtc_functionality_twice_c19049
+    test_id: test_wifi_sdk_check_set_rtc_functionality_twice_c19049::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_rtc_sta_wifi_sqa_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode':
+        Si91xOperatingMode.WiFiClient,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid|Si91xCustomFeatureBitMap.RealTimeClockFromHost,'bt_features':
+        0,'ble_features': 0,'ble_custom_ext_features': 0})
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - 'pytest.mark.config(''wifi_access_point'',wifi={''security'': ''WPA2''})'
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','unassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - c19049
+      - check
+      - functionality
+      - rtc
+      - rtc_sta_wifi_sqa_sdk
+      - sdk
+      - set
+      - sqa_test_suites_wifi_sdk_3
+      - twice
+      - wifi
+    test_case_name: test_wifi_sdk_check_set_rtc_functionality_twice_c19049
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 92039a79ac9c269a163042f77ddfdcb7076d003b
+    test_case_id: test_udp_rx_by_enabling_aggregation_c19032[UDP]_1
+    test_function: test_udp_rx_by_enabling_aggregation_c19032
+    test_id: test_udp_rx_by_enabling_aggregation_c19032[UDP]_1::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_wmm_aggregation_sdk.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - pytest.mark.start_state('wifi_sniffer',wifi='ap_enabled')
+      - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable'])
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid})
+    test_params:
+      - name: protocol
+        value: UDP
+    version: 0
+    enabled: true
+    labels:
+      - aggregation
+      - c19032
+      - enabling
+      - rx
+      - sqa_test_suites_wifi_sdk_3
+      - udp
+      - wmm_aggregation_sdk
+    test_case_name: test_udp_rx_by_enabling_aggregation_c19032[UDP]
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: b09e5d40768e281e7c725212d31beb7804b912b5
+    test_case_id: test_udp_data_rx_with_BE_BK_VI_VO_c22116[0x80-4-qos_video_rx-UDP]
+    test_function: test_udp_data_rx_with_BE_BK_VI_VO_c22116
+    test_id: test_udp_data_rx_with_BE_BK_VI_VO_c22116[0x80-4-qos_video_rx-UDP]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_wmm_qos_sdk.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - pytest.mark.start_state('wifi_sniffer',wifi='ap_enabled')
+      - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable'])
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+    test_params:
+      - name: traffic
+        value: '0x80'
+      - name: qos
+        value: 4
+      - name: filter_name
+        value: qos_video_rx
+      - name: protocol
+        value: UDP
+    version: 0
+    enabled: true
+    labels:
+      - BE
+      - BK
+      - VI
+      - VO
+      - c22116
+      - data
+      - rx
+      - sqa_test_suites_wifi_sdk_3
+      - udp
+      - wmm_qos_sdk
+    test_case_name: test_udp_data_rx_with_BE_BK_VI_VO_c22116[0x80-4-qos_video_rx-UDP]
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 677cc9275da9a138b799dd3838afc26b1951a1dd
+    test_case_id: test_tcp_data_rx_with_BE_BK_VI_VO_c22115[0xc8-6-qos_voice_rx-TCP]
+    test_function: test_tcp_data_rx_with_BE_BK_VI_VO_c22115
+    test_id: test_tcp_data_rx_with_BE_BK_VI_VO_c22115[0xc8-6-qos_voice_rx-TCP]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_wmm_qos_sdk.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - pytest.mark.start_state('wifi_sniffer',wifi='ap_enabled')
+      - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable'])
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+    test_params:
+      - name: traffic
+        value: '0xc8'
+      - name: qos
+        value: 6
+      - name: filter_name
+        value: qos_voice_rx
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - BE
+      - BK
+      - VI
+      - VO
+      - c22115
+      - data
+      - rx
+      - sqa_test_suites_wifi_sdk_3
+      - tcp
+      - wmm_qos_sdk
+    test_case_name: test_tcp_data_rx_with_BE_BK_VI_VO_c22115[0xc8-6-qos_voice_rx-TCP]
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: b6fe5b1846fcb42d3b8b758571d2465cdc3ed72f
+    test_case_id: test_wifi_sdk_device_as_ap_and_sta_c19324
+    test_function: test_wifi_sdk_device_as_ap_and_sta_c19324
+    test_id: test_wifi_sdk_device_as_ap_and_sta_c19324::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_wlan_concurrent_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode':
+        Si91xOperatingMode.ConcurrentMode,'coex_mode':
+        Si91xCoexMode.WLANOnly,'features':
+        Si91xFeatureBitMap.WPSSupportDisabled,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default|Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|Si91xTCPIPFeatureBitMap.DHCPv4Server|Si91xTCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,'security':
+        'WPA2','ssid': 'SILABS_AP_MODE','passphrase':
+        'Automation@123','channel': 11})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'ssid':
+        'Concurent_ap','security': 'WPA2','passphrase': 'test1234','channel':
+        11})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','channel':
+        11,'interface': 'wlan0'}})
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - ap
+      - c19324
+      - device
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - sta
+      - wifi
+      - wlan_concurrent_sdk
+    test_case_name: test_wifi_sdk_device_as_ap_and_sta_c19324
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: a73620b39e2d6ec24ca9198cdb72be170a09711b
+    test_case_id: test_wifi_sdk_DUTAP_Validate_UDP_Tx_data_C19463[UDP]
+    test_function: test_wifi_sdk_DUTAP_Validate_UDP_Tx_data_C19463
+    test_id: test_wifi_sdk_DUTAP_Validate_UDP_Tx_data_C19463[UDP]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_apmode_network_stack_l1_and_l2_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode':
+        Si91xOperatingMode.AccessPoint,'coex_mode':
+        Si91xCoexMode.WLANOnly,'features':
+        Si91xFeatureBitMap.Aggregation|Si91xFeatureBitMap.PSKSecurity,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|Si91xTCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.Default,'security': 'WPA2','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','beacon': 100,'channel':
+        11})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','channel':
+        11,'interface': 'wlan0'}})
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+    test_params:
+      - name: protocol
+        value: UDP
+    version: 0
+    enabled: true
+    labels:
+      - C19463
+      - DUTAP
+      - Tx
+      - UDP
+      - Validate
+      - apmode_network_stack_l1_and_l2_sdk
+      - data
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_DUTAP_Validate_UDP_Tx_data_C19463[UDP]
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 0150ab428f195f6e44b88729bf1764c5ea30426b
+    test_case_id: test_wifi_sdk_ble_undirected_connectable_adv_c19801
+    test_function: test_wifi_sdk_ble_undirected_connectable_adv_c19801
+    test_id: test_wifi_sdk_ble_undirected_connectable_adv_c19801::1
+    test_module: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_adv_sdk/test_ble_advertise_wifi_sqa_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048},'ble': {'count': 1,'stack_len': 2048}},'oper_mode':
+        0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.WPSSupportDisabled|Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1|Si91xFeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid|Si91xExtCustomFeatureBitMap.Default|Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE|Si91xExtCustomFeatureBitMap.FeatureLowPower,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'bt_features':
+        Si91xBTFeatureBitMap.Default,'ble_features':
+        Si91xBLEFeatureBitMap.Default|Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid|Si91xBLEFeatureBitMap.RS9113_Si91x_Compatible_Feature|Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE|Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS|Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX|Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC,'ble_custom_ext_features':
+        Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST|Si91xBLECustomFeatureBitMap.Default|Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['ble_stop_adv','wifi_powersave_disable'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - adv
+      - ble
+      - ble_adv_sdk
+      - ble_advertise_wifi_sqa_sdk
+      - ble_sdk
+      - c19801
+      - connectable
+      - functional
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - undirected
+      - wifi
+    test_case_name: test_wifi_sdk_ble_undirected_connectable_adv_c19801
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 1396cf0b0d61827f8113aad0470048de95153f22
+    test_case_id: test_wifi_sdk_set_localname_configured_with_17bytes_C71442
+    test_function: test_wifi_sdk_set_localname_configured_with_17bytes_C71442
+    test_id: test_wifi_sdk_set_localname_configured_with_17bytes_C71442::1
+    test_module: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_adv_sdk/test_ble_advertise_wifi_sqa_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048},'ble': {'count': 1,'stack_len': 2048}},'oper_mode':
+        0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.WPSSupportDisabled|Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1|Si91xFeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid|Si91xExtCustomFeatureBitMap.Default|Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE|Si91xExtCustomFeatureBitMap.FeatureLowPower,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'bt_features':
+        Si91xBTFeatureBitMap.Default,'ble_features':
+        Si91xBLEFeatureBitMap.Default|Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid|Si91xBLEFeatureBitMap.RS9113_Si91x_Compatible_Feature|Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE|Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS|Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX|Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC,'ble_custom_ext_features':
+        Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST|Si91xBLECustomFeatureBitMap.Default|Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - pytest.mark.end_state('wifi_dut',wifi=['ble_stop_adv'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C71442
+      - ble_adv_sdk
+      - ble_advertise_wifi_sqa_sdk
+      - ble_sdk
+      - configured
+      - functional
+      - localname
+      - sdk
+      - set
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_set_localname_configured_with_17bytes_C71442
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 637076039d8560f3d0c0a6302bd13a5d454ee4fa
+    test_case_id: test_Wifi_sdk_Data_BLE_AI_20ms_C20166[UDP]
+    test_function: test_Wifi_sdk_Data_BLE_AI_20ms_C20166
+    test_id: test_Wifi_sdk_Data_BLE_AI_20ms_C20166[UDP]::1
+    test_module: sqa_test_suites_wifi_sdk_3/coex/test_sta_ble_intervals_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default|Si91xFeatureBitMap.WPSSupportDisabled|Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1|Si91xFeatureBitMap.ULPGPIOHandshake|Si91xFeatureBitMap.Aggregation|Si91xFeatureBitMap.PSKSecurity|Si91xFeatureBitMap.OpenMode,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid|Si91xExtCustomFeatureBitMap.Default|Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE|Si91xExtCustomFeatureBitMap.FeatureLowPower,'bt_features':
+        Si91xBTFeatureBitMap.Default,'ble_features':
+        Si91xBLEFeatureBitMap.Default|Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid|Si91xBLEFeatureBitMap.RS9113_Si91x_Compatible_Feature|Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE|Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS|Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX|Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC,'ble_custom_ext_features':
+        Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST|Si91xBLECustomFeatureBitMap.Default|Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS,'thread_config':
+        {'wifi': {'count': 1,'stack_len': 2048},'ble': {'count': 1,'stack_len':
+        2048}}})
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'security':
+        'WPA2','passphrase': '1234567890'})
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','disassociated','ble_stop_adv'])
+    test_params:
+      - name: protocol
+        value: UDP
+    version: 0
+    enabled: true
+    labels:
+      - AI
+      - BLE
+      - C20166
+      - Data
+      - Wifi
+      - coex
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - sta_ble_intervals_sdk
+    test_case_name: test_Wifi_sdk_Data_BLE_AI_20ms_C20166[UDP]
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 799b51ed6a4c01df8f5988a663dd2b6cac5c615a
+    test_case_id: test_wifi_sdk_AP_conn_BLE_AI_10240ms_C20168
+    test_function: test_wifi_sdk_AP_conn_BLE_AI_10240ms_C20168
+    test_id: test_wifi_sdk_AP_conn_BLE_AI_10240ms_C20168::1
+    test_module: sqa_test_suites_wifi_sdk_3/coex/test_sta_ble_intervals_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default|Si91xFeatureBitMap.WPSSupportDisabled|Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1|Si91xFeatureBitMap.ULPGPIOHandshake|Si91xFeatureBitMap.Aggregation|Si91xFeatureBitMap.PSKSecurity|Si91xFeatureBitMap.OpenMode,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid|Si91xExtCustomFeatureBitMap.Default|Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE|Si91xExtCustomFeatureBitMap.FeatureLowPower,'bt_features':
+        Si91xBTFeatureBitMap.Default,'ble_features':
+        Si91xBLEFeatureBitMap.Default|Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid|Si91xBLEFeatureBitMap.RS9113_Si91x_Compatible_Feature|Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE|Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS|Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX|Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC,'ble_custom_ext_features':
+        Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST|Si91xBLECustomFeatureBitMap.Default|Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS,'thread_config':
+        {'wifi': {'count': 1,'stack_len': 2048},'ble': {'count': 1,'stack_len':
+        2048}}})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'security':
+        'WPA2','passphrase': '1234567890'})
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','disassociated','ble_stop_adv'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - AI
+      - AP
+      - BLE
+      - C20168
+      - coex
+      - conn
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - sta_ble_intervals_sdk
+      - wifi
+    test_case_name: test_wifi_sdk_AP_conn_BLE_AI_10240ms_C20168
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: d441a77bf21742ae3b0d42f7882e553e58b2ae82
+    test_case_id: test_wlan_sdk_ap_alone_device_as_client_udp_tx_c20787[11-1-UDP]
+    test_function: test_wlan_sdk_ap_alone_device_as_client_udp_tx_c20787
+    test_id: test_wlan_sdk_ap_alone_device_as_client_udp_tx_c20787[11-1-UDP]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_throughput_ap_alone_sdk.py
+    test_markers:
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - pytest.mark.start_state('wifi_dut',device='reset',wifi='init')
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        Si91xOperatingMode.AccessPoint,'coex_mode':
+        Si91xCoexMode.WLANOnly,'features':
+        Si91xFeatureBitMap.WPSSupportDisabled|Si91xFeatureBitMap.Aggregation|Si91xFeatureBitMap.OpenMode,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid|Si91xCustomFeatureBitMap.NWP160MHz,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|Si91xTCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|Si91xExtTCPIPFeatureBitMap.WaitForSocketClose|Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,'security':
+        'WPA2','ssid': 'SILABS_AP_C19444','passphrase': '12345678','beacon':
+        100,'channel': 11})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19444','passphrase': '12345678','channel': 11,'interface':
+        'wlan0'})
+    test_params:
+      - name: channel
+        value: 11
+      - name: dtim_period
+        value: 1
+      - name: protocol
+        value: UDP
+    version: 0
+    enabled: true
+    labels:
+      - alone
+      - ap
+      - c20787
+      - client
+      - device
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - throughput_ap_alone_sdk
+      - tx
+      - udp
+      - wlan
+    test_case_name: test_wlan_sdk_ap_alone_device_as_client_udp_tx_c20787[11-1-UDP]
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: bc5b853aa587baf454b42273fe19e3c2917bf119
+    test_case_id: test_wifi_sdk_conn_deconn_reconn_wpa3_C34508
+    test_function: test_wifi_sdk_conn_deconn_reconn_wpa3_C34508
+    test_id: test_wifi_sdk_conn_deconn_reconn_wpa3_C34508::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_wpa3_functional_sdk.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - 'pytest.mark.config(''wifi_access_point'',wifi={''security'': ''WPA3''})'
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','unassociated'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.Default|Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE|Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode|Si91xExtCustomFeatureBitMap.FeatureLowPower|Si91xExtCustomFeatureBitMap.IEEE802_11W,'bt_features':
+        0,'ble_features': 0,'ble_custom_ext_features': 0})
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C34508
+      - conn
+      - deconn
+      - reconn
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+      - wpa3
+      - wpa3_functional_sdk
+    test_case_name: test_wifi_sdk_conn_deconn_reconn_wpa3_C34508
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 0ecf6e92f8395e8428c140868aa750bd8c5b73bd
+    test_case_id: test_wifi_sdk_2_4_udp_rx_wpa3_c34515[UDP]
+    test_function: test_wifi_sdk_2_4_udp_rx_wpa3_c34515
+    test_id: test_wifi_sdk_2_4_udp_rx_wpa3_c34515[UDP]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_wpa3_functional_sdk.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - 'pytest.mark.config(''wifi_access_point'',wifi={''security'': ''WPA3''})'
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','unassociated'])
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.Default|Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE|Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode|Si91xExtCustomFeatureBitMap.FeatureLowPower|Si91xExtCustomFeatureBitMap.IEEE802_11W,'bt_features':
+        0,'ble_features': 0,'ble_custom_ext_features': 0})
+    test_params:
+      - name: protocol
+        value: UDP
+    version: 0
+    enabled: true
+    labels:
+      - c34515
+      - rx
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - udp
+      - wifi
+      - wpa3
+      - wpa3_functional_sdk
+    test_case_name: test_wifi_sdk_2_4_udp_rx_wpa3_c34515[UDP]
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 6b05482e4d394460be985f7eb7f4a3a51eb162ab
+    test_case_id: test_wifi_sdk_request_timeout_keep_alive_30s_c19750[4]
+    test_function: test_wifi_sdk_request_timeout_keep_alive_30s_c19750
+    test_id: test_wifi_sdk_request_timeout_keep_alive_30s_c19750[4]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_request_timeout_sdk.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - pytest.mark.start_state('wifi_sniffer',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','unassociated','set_default_timeout_config'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'enable_timeout_config':
+        True,'keep_alive_timeout_value': 30})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'channel': 4,'security':
+        'OPEN'})
+    test_params:
+      - name: channel
+        value: 4
+    version: 0
+    enabled: true
+    labels:
+      - alive
+      - c19750
+      - keep
+      - request
+      - request_timeout_sdk
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - timeout
+      - wifi
+    test_case_name: test_wifi_sdk_request_timeout_keep_alive_30s_c19750[4]
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: bcb0511c771fdfb8b10595f9dbf2a2b750131080
+    test_case_id: test_wifi_sdk_sta_keep_alive_10s_with_bg_scan_C19637[4]
+    test_function: test_wifi_sdk_sta_keep_alive_10s_with_bg_scan_C19637
+    test_id: test_wifi_sdk_sta_keep_alive_10s_with_bg_scan_C19637[4]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_request_timeout_sdk.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - pytest.mark.start_state('wifi_sniffer',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','unassociated','set_default_timeout_config'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'enable_timeout_config':
+        True,'keep_alive_timeout_value': 10})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'channel': 4,'security':
+        'OPEN'})
+    test_params:
+      - name: channel
+        value: 4
+    version: 0
+    enabled: true
+    labels:
+      - C19637
+      - alive
+      - bg
+      - keep
+      - request_timeout_sdk
+      - scan
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - sta
+      - wifi
+    test_case_name: test_wifi_sdk_sta_keep_alive_10s_with_bg_scan_C19637[4]
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: d97c5266f79ebdf89a9dbc0ee02c142c1bc6aaaf
+    test_case_id: test_wifi_sdk_check_get_rtc_functionality_c19052
+    test_function: test_wifi_sdk_check_get_rtc_functionality_c19052
+    test_id: test_wifi_sdk_check_get_rtc_functionality_c19052::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_rtc_sta_wifi_sqa_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode':
+        Si91xOperatingMode.WiFiClient,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid|Si91xCustomFeatureBitMap.RealTimeClockFromHost,'bt_features':
+        0,'ble_features': 0,'ble_custom_ext_features': 0})
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - 'pytest.mark.config(''wifi_access_point'',wifi={''security'': ''WPA2''})'
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','unassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - c19052
+      - check
+      - functionality
+      - get
+      - rtc
+      - rtc_sta_wifi_sqa_sdk
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_check_get_rtc_functionality_c19052
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: c364bff8ae66d7f115e1d742176c44cd9761f0f6
+    test_case_id: test_wifi_sdk_get_rtc_without_enabling_feature_c19054
+    test_function: test_wifi_sdk_get_rtc_without_enabling_feature_c19054
+    test_id: test_wifi_sdk_get_rtc_without_enabling_feature_c19054::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_rtc_sta_wifi_sqa_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode':
+        Si91xOperatingMode.WiFiClient,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'bt_features':
+        0,'ble_features': 0,'ble_custom_ext_features': 0})
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','unassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - c19054
+      - enabling
+      - feature
+      - get
+      - rtc
+      - rtc_sta_wifi_sqa_sdk
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_get_rtc_without_enabling_feature_c19054
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: b6a40482d9981c71574cb97f60321ccb92a91053
+    test_case_id: test_wifi_sdk_mqtt_qos1_connect_subscribe_publish_TC127757
+    test_function: test_wifi_sdk_mqtt_qos1_connect_subscribe_publish_TC127757
+    test_id: test_wifi_sdk_mqtt_qos1_connect_subscribe_publish_TC127757::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_mqtt_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.Default|Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE|Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode|Si91xExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature|Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'set_send_feature_frame':
+        True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','unassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - TC127757
+      - connect
+      - mqtt
+      - mqtt_sdk
+      - qos1
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - subscribe
+      - wifi
+    test_case_name: test_wifi_sdk_mqtt_qos1_connect_subscribe_publish_TC127757
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: f3da3849095915695267a334c59ecd794c5be24d
+    test_case_id: test_wifi_sdk_mqtt_qos0_connect_publish_max_data_TC127827
+    test_function: test_wifi_sdk_mqtt_qos0_connect_publish_max_data_TC127827
+    test_id: test_wifi_sdk_mqtt_qos0_connect_publish_max_data_TC127827::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_mqtt_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.Default|Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE|Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode|Si91xExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature|Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'set_send_feature_frame':
+        True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','unassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - TC127827
+      - connect
+      - data
+      - max
+      - mqtt
+      - mqtt_sdk
+      - qos0
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_mqtt_qos0_connect_publish_max_data_TC127827
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: c9e7b53b0d6b6991c167a324a4cfde567345c005
+    test_case_id: test_wifi_sdk_dns_server_obtaining_ip_through_dhcp_handshake_c19297
+    test_function: test_wifi_sdk_dns_server_obtaining_ip_through_dhcp_handshake_c19297
+    test_id: test_wifi_sdk_dns_server_obtaining_ip_through_dhcp_handshake_c19297::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_dns_server_sdk.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - pytest.mark.start_state('wifi_sniffer',wifi='ap_enabled')
+      - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default|Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|Si91xTCPIPFeatureBitMap.DNSClient|Si91xTCPIPFeatureBitMap.DHCPv4Client,'bt_features':
+        0,'ble_features': 0,'ble_custom_ext_features': 0})
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - c19297
+      - dhcp
+      - dns
+      - dns_server_sdk
+      - handshake
+      - ip
+      - obtaining
+      - sdk
+      - server
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_dns_server_obtaining_ip_through_dhcp_handshake_c19297
+    library_name: ''
+    visible: true
+    iterations: 1

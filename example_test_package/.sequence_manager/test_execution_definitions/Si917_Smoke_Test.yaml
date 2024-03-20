@@ -1,0 +1,53 @@
+root_path: example_test_package
+test_sequence:
+  - id: 0c6c00c85214ae0c07a6919b2b7931150d0e3907
+    test_case_id: test_wifi_sdk_firmware_version_C34753_1
+    test_function: test_wifi_sdk_firmware_version_C34753
+    test_id: test_wifi_sdk_firmware_version_C34753_1::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_wifi_sdk.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C34753
+      - firmware
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - version
+      - wifi
+      - wifi_sdk
+    test_case_name: test_wifi_sdk_firmware_version_C34753
+    library_name: ''
+    visible: true
+    iterations: 1
+  - id: 2bc47b86565c510c7a649f1718b07d4f666da658
+    test_case_id: test_wifi_sdk_Connectivity_with_WPA2_security_AP_C34757
+    test_function: test_wifi_sdk_Connectivity_with_WPA2_security_AP_C34757
+    test_id: test_wifi_sdk_Connectivity_with_WPA2_security_AP_C34757::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_wifi_sdk.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'security':
+        'WPA2','passphrase': '123456789'})
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.end_state('wifi_dut',wifi=['disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - AP
+      - C34757
+      - Connectivity
+      - WPA2
+      - sdk
+      - security
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+      - wifi_sdk
+    test_case_name: test_wifi_sdk_Connectivity_with_WPA2_security_AP_C34757
+    library_name: ''
+    visible: true
+    iterations: 1

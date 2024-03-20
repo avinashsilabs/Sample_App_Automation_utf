@@ -798,3 +798,52 @@ def test_wifi_sdk_device_as_ap_and_sta_c19318(sl_collections, wifi_access_point,
 
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_device_as_ap_and_sta_c19323(sl_collections, wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
+                                      protocol, net_perf_client, utf_constants, sniffer_filter):
+    """ To Verify Dut Behaviour in AP and STA connection by enabling concurrent mode, checking remote terminate event"""
+    try:
+        conc_obj = ConcurrentThread(wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants, wifi_access_point, net_perf_client=net_perf_client, protocol=protocol, testcase_no=19312,
+                                    capture_filename="test_c19313", ping=True, traffic_type="Tx", stop_sniffer=False)
+        conc_obj.start()
+        conc_obj.wait_for_exit()
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        for event in events:
+            if event.event_type == AsyncEventIdentifiers.TCP_REMOTE_TERMINATE:
+                remote_terminate = event.event_data
+                assert remote_terminate, f"unable to find remote terminate event"
+                logger().info("Remote terminate event is received by DUT when tcp socket connected is closed")
+        time.sleep(5)
+        conc_obj.ap_sta_disconnection()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        conc_obj.concurrent_sniffer_validation()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()

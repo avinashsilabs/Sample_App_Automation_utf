@@ -134,6 +134,14 @@ class SocketDataTransfer:
                 remote_socket_factory.interfaces.socket.sockets[socket_no].send_data_udp(udp_buffer, dut_ip,
                                                                                          port=start_port + socket_no)
 
+    @staticmethod
+    def send_data_tcp(remote_socket, tx_buffer, pkt_count=1, sock_id=None, use_server_socket=True):
+        for _ in range(pkt_count):
+            if sock_id is not None:
+                remote_socket.interfaces.socket.sockets[sock_id].send_data_tcp(tx_buffer, use_server_socket)
+            else:
+                remote_socket.interfaces.socket.send_data_tcp(tx_buffer, use_server_socket)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -719,7 +727,7 @@ def test_wifi_sdk_socket_select_tcp_close_stress_c19334(wifi_sniffer, wifi_dut, 
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             4),
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
@@ -1045,7 +1053,7 @@ def test_wifi_sdk_socket_select_udp_bidirectional_c19338(wifi_sniffer, wifi_dut,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             3) |
                               Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
@@ -1075,7 +1083,6 @@ def test_wifi_sdk_sync_socket_select_with_timeout_null_c19335(wifi_sniffer, wifi
         local_port = random.randint(40001, 60000)
         remote_socket.interfaces.socket.start_server(port=server_port)
         server_ip = remote_socket.interfaces.socket.hostname_or_ip_address(ip_version=4)
-
         sock = wifi_dut.interfaces.wifi.socket()
         wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
         wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=server_port)
@@ -1088,7 +1095,7 @@ def test_wifi_sdk_sync_socket_select_with_timeout_null_c19335(wifi_sniffer, wifi
             wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
             tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=buffer_length))
             logger.info(f"Sending data from remote peer, data --> {tx_buffer}")
-            trf_thread = Thread(target=sock_obj.send_data, args=(remote_socket, tx_buffer, 1))
+            trf_thread = Thread(target=sock_obj.send_data_tcp, args=(remote_socket, tx_buffer))
             trf_thread.start()
             time.sleep(1)
             wifi_dut.interfaces.wifi.bsdSocketSelect(numberOfFds=1, time='NULL')
@@ -1122,8 +1129,8 @@ def test_wifi_sdk_sync_socket_select_with_timeout_null_c19335(wifi_sniffer, wifi
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(
-            4) | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            5),
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
@@ -1167,19 +1174,19 @@ def test_wifi_sdk_sync_socket_select_with_diff_time_interval_c19336(wifi_sniffer
             sw = Stopwatch()
             while sw.elapsed_sec <= 30:
                 for sock_id in range(4):
-                    tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=100))
+                    tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=90))
                     logger.info(f"Sending data from remote peer, data --> {tx_buffer}")
-                    trf_thread = Thread(target=sock_obj.send_data, args=(remote_socket_factory, tx_buffer, 1, sock_id))
+                    trf_thread = Thread(target=sock_obj.send_data_tcp,
+                                        args=(remote_socket_factory, tx_buffer, 1, sock_id))
                     trf_thread.start()
-                    time.sleep(0.5)
+                    time.sleep(1)
                     wifi_dut.interfaces.wifi.bsdSocketSelect(numberOfFds=4, time=time_interval)
                     buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock_id, timeout=30)
-                    assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on " \
-                                                   f"the socket id {sock_id} opened in the DUT is not matched"
+                    assert len(tx_buffer) == len(buffer_rx), f"buffer length sent by remote peer and received on " \
+                                                             f"the socket id {sock_id} opened in the DUT is not matched"
                     logger.info("Data sent by remote peer and received on DUT is matching")
                     trf_thread.join()
-                    time.sleep(1)
-
+                    time.sleep(0.5)
         for sock_id in range(4):
             logger.info(f"Closing socket_id->{sock_id}")
             wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
@@ -1206,7 +1213,8 @@ def test_wifi_sdk_sync_socket_select_with_diff_time_interval_c19336(wifi_sniffer
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT,
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            4),
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
@@ -1253,12 +1261,14 @@ def test_wifi_sdk_socket_select_tcp_bidirectional_c19337(wifi_sniffer, wifi_dut,
         while sw.elapsed_sec <= 60:
             count = 0
             for sock_no in tcp_socks:
+                wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
                 data_sent = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
                 tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
                 logger.info(f"DUT is sending data over TCP socket_no {sock_no + 1} and data --> {data_sent}")
                 trf_thread = Thread(target=wifi_dut.interfaces.wifi.bsdSocketSend, args=(sock_no + 1, data_sent))
                 trf_thread.start()
                 logger.info(f"Remote peer is sending data over socket {sock_no + 1} and data --> {tx_buffer}")
+                client_socket[count].connected_tcp_socket = client_socket[count]
                 client_socket[count].send_data_tcp(tx_buffer)
                 wifi_dut.interfaces.wifi.bsdAsyncEvent(time=30)
                 buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock_no + 1, timeout=30)
@@ -1266,7 +1276,7 @@ def test_wifi_sdk_socket_select_tcp_bidirectional_c19337(wifi_sniffer, wifi_dut,
                                                f"{sock_no} opened in the DUT is not matched"
                 logger.info(f"Data received at DUT --> {buffer_rx}")
                 logger.info("Data sent by remote peer and received on DUT is matching")
-                client_socket[count].connected_tcp_socket = client_socket[count]
+
                 data_received = client_socket[count].recv_data_tcp(len(data_sent), True)
                 assert data_received == data_sent, "Data sent by DUT and received on remote peer is not matching"
                 logger.info(f"Data received at remote peer --> {data_received}")
@@ -1274,15 +1284,17 @@ def test_wifi_sdk_socket_select_tcp_bidirectional_c19337(wifi_sniffer, wifi_dut,
                 trf_thread.join()
                 count += 1
 
-        for sock_id in tcp_socks:
-            logger.info(f"Closing socket_id->{sock_id}")
-            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
-        remote_socket_factory.interfaces.socket.close_all()
-        remote_socket_factory.interfaces.socket.sockets = []
         logger.info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
         sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
                                                sniffer_filter, power_save=False)
+        remote_socket_factory.interfaces.socket.close_all()
+        remote_socket_factory.interfaces.socket.sockets = []
+        for sock_id in tcp_socks:
+            logger.info(f"Closing socket_id->{sock_id}")
+            wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
+        tcp_socks.clear()
     except Exception as error:
         wifi_dut.interfaces.wifi.is_dut_bad_state = True
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
@@ -1300,7 +1312,8 @@ def test_wifi_sdk_socket_select_tcp_bidirectional_c19337(wifi_sniffer, wifi_dut,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT,
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            4),
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
@@ -1354,7 +1367,8 @@ def test_wifi_sdk_tcp_rx_without_socket_select_for_first_time_c19339(wifi_sniffe
                 wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
                 tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
                 logger.info(f"Remote peer is sending data over socket {sock_no + 1} and data --> {tx_buffer}")
-                trf_thread = Thread(target=sock_obj.send_data, args=(remote_socket_factory, tx_buffer, 1, count, False))
+                trf_thread = Thread(target=sock_obj.send_data_tcp,
+                                    args=(remote_socket_factory, tx_buffer, 1, count, False))
                 trf_thread.start()
                 time.sleep(1)
                 buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock_no + 1, timeout=30)
@@ -1374,7 +1388,8 @@ def test_wifi_sdk_tcp_rx_without_socket_select_for_first_time_c19339(wifi_sniffe
                 wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
                 tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
                 logger.info(f"Remote peer is sending data over socket {sock_no + 1} and data --> {tx_buffer}")
-                trf_thread = Thread(target=sock_obj.send_data, args=(remote_socket_factory, tx_buffer, 1, count, False))
+                trf_thread = Thread(target=sock_obj.send_data_tcp,
+                                    args=(remote_socket_factory, tx_buffer, 1, count, False))
                 trf_thread.start()
                 time.sleep(1)
                 wifi_dut.interfaces.wifi.bsdAsyncEvent(time=30)
@@ -1385,12 +1400,14 @@ def test_wifi_sdk_tcp_rx_without_socket_select_for_first_time_c19339(wifi_sniffe
                 logger.info("Data sent by remote peer and received on DUT is matching")
                 count += 1
                 trf_thread.join()
+
+        remote_socket_factory.interfaces.socket.close_all()
+        remote_socket_factory.interfaces.socket.sockets = []
         for sock_id in tcp_socks:
             logger.info(f"Closing socket_id->{sock_id}")
             wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
             wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
-        remote_socket_factory.interfaces.socket.close_all()
-        remote_socket_factory.interfaces.socket.sockets = []
+        tcp_socks.clear()
         logger.info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
         sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,

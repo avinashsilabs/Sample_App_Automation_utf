@@ -192,6 +192,19 @@ devices:
                 ssid: "wifi_smoketest_9117_B0_3CCP"
                 passphrase: '12345678'
                 protected_management_frame: 'Disable'
+                #ipv6 configuration
+                connection_type: 'STATIC_IPV6'
+                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1bcz"
+                wan_ipv6_gateway: "2401:4900:1cb3:3444::1"
+                wan_prefix_length: "64"
+                ipv6_state: "1" #0= "stateless" 1="stateful"
+                lan_ipv6_address: "2401:3500:133c:1341:1134:ffed:13cd:1134"
+                lan_prefix_length: "64"
+                #                lan_ipv6_prefix: "2401:3500:133c:1341::"
+                lan_ip_pool_start: "2401:3500:133c:1341::1000"
+                lan_ip_pool_end: "2401:3500:133c:1341::2000"
+                lan_lease_time: "86400"
+                ap_test_ip: '192.168.50.1' #AP LOGIN IP (TEST IP)
                 skip_assertion_failure: True
                 # radius server configuration
                 radius_ip: "10.207.17.153"
@@ -213,6 +226,52 @@ devices:
                 password: '1234'
                 # valid outlet numbers are 1-8
                 outlet: 1
+                # use_persistent_state: true will set a persistent state, that the outlet will revert
+                # to after reboot or power cycle
+                # use_persistent_state: false will set a transient state only, and the outlet will revert
+                # back to the persistent state after reboot or power cycle
+                use_persistent_state: false
+
+    switched_ap1:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                ssid: "Savage-Test"
+                security: 'WPA2'
+                channel: 11
+                passphrase: 'F6E49FCE'
+                switch_config: 'pdu_switch'
+            pdu_switch:
+                # switch type is Digital Logging v222
+                type: 'switch.dli_v222_pdu'
+                hostname: '10.207.18.22'
+                user: 'admin'
+                password: '1234'
+                # valid outlet numbers are 1-8
+                outlet: 8
+                # use_persistent_state: true will set a persistent state, that the outlet will revert
+                # to after reboot or power cycle
+                # use_persistent_state: false will set a transient state only, and the outlet will revert
+                # back to the persistent state after reboot or power cycle
+                use_persistent_state: false
+
+    switched_ap2:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                ssid: "Savage-Test"
+                security: 'WPA2'
+                channel: 11
+                passphrase: 'F6E49FCE'
+                switch_config: 'pdu_switch'
+            pdu_switch:
+                # switch type is Digital Logging v222
+                type: 'switch.dli_v222_pdu'
+                hostname: '10.207.18.22'
+                user: 'admin'
+                password: '1234'
+                # valid outlet numbers are 1-8
+                outlet: 5
                 # use_persistent_state: true will set a persistent state, that the outlet will revert
                 # to after reboot or power cycle
                 # use_persistent_state: false will set a transient state only, and the outlet will revert
@@ -528,7 +587,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 80
-                interface: 'wlan0'
+                interface: 'eth1'
 
     raspi_lighttpd_tls:
         interfaces:
@@ -1010,6 +1069,10 @@ defaults:
 
     switch: 'switched_ap'
 
+    switches:
+        - 'switched_ap1'
+        - 'switched_ap2'
+
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
         baud: 115200
@@ -1030,7 +1093,7 @@ defaults:
         disable_sniffer_validation: false
 
         # firmware path for http/https otaf
-        http_url: '/RS9116.2.5.0.4.rps'
+        http_url: '/SiWG917-B.2.10.1.3.0.1.rps'
 
         pll_mode: 0
         rf_type: 1
@@ -1198,6 +1261,8 @@ defaults:
         device_filter_addresses : ''
         stop_after_elapsed_time: false
 
+    thread_params:
+        buffer_len: 128
 # The logger section is optional and can be used to modify the logging level for different modules
 logger:
     DLink810AccessPoint: DEBUG
@@ -1210,9 +1275,9 @@ start_state:
         device: 'reset'
         wifi: 'init'
 
-end_state:
-    wifi_access_point:
-        wifi: 'ap_disabled'
+#end_state:
+#    wifi_access_point:
+#        wifi: 'ap_disabled'
 
 constants:
     time_duration:
@@ -1227,5 +1292,7 @@ constants:
         value: 30
     generate_bytes:
         value: 30
+    hostname:
+        value: 'rs9116test'
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']

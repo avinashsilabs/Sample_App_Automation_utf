@@ -44,9 +44,9 @@ def test_ble_ibeacon_adv_params(wifi_dut, ble_client):
     # Start ble client
     # for more information on hci_adv_params download Specification Details from
     # https://www.bluetooth.com/specifications/specs/core-specification-5-2/
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_ibeacon_with_hci_tool(
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
-        hci_ibeacon_adv_params="1E "  # Number of bytes that follow in the advertisement(payload length)
+        hci_adv_data="1E "  # Number of bytes that follow in the advertisement(payload length)
         "02 01 02 1A FF 4C 00 02 15 "  # iBeacon prefix
         "FB 0B 57 A2 82 28 44 CD 91 3A 94 A1 22 BA 12 06 "  # UUID
         "11 22 "  # Major
@@ -98,9 +98,9 @@ def test_ble_whitelist_adv_data(wifi_dut, ble_client):
     # Start ble client
     # for more information on hci_adv_params download Specification Details from
     # https://www.bluetooth.com/specifications/specs/core-specification-5-2/
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_whitelist_with_hci_tool(
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
         bt_dut_address=bt_dut_address,
-        hci_whitelist_adv_data="1F "  # Number of bytes that follow in the advertisement(payload length)
+        hci_adv_data="1F "  # Number of bytes that follow in the advertisement(payload length)
                                "00 00 00 00 00 "  # prepend 00s at start, based on whitelist data index(5 here)
                                "48 55 53 41 49 4E "  # whitelist data
                                "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
@@ -224,7 +224,7 @@ def test_ble_scan_resp_adv_params(wifi_dut, ble_client):
         "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
         "0x07 "  # Advertising_Channel_Map
         "0x00",  # Advertising_Filter_Policy
-        scan_resp_name_params="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
+        scan_resp_data="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
         "0x66 0x69 0x5f 0x74 0x65 0x73 "
         "0x74 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
         "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00",

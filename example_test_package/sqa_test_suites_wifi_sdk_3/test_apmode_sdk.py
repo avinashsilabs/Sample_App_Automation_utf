@@ -1,6 +1,7 @@
 import time
 import pytest
 from utf.utf_config import UtfConfig
+import re
 from utf.interfaces.wifi import WlanError
 from utf.utils.iperf.iperf_utils import print_dict
 from utf.utils.thread_base import ThreadBase
@@ -33,6 +34,68 @@ def logger():
 def __print_throughput(iperf_throughput: dict):
     if iperf_throughput is not None:
         print_dict("##     ", iperf_throughput)
+
+class FilterPacket:
+    def __init__(self, open_file=True, line=None, IE=None):
+        """
+        Class for parsing sniffer capture to get beacon interval and dtim period.
+        """
+        self.open_file = open_file
+        self.line = line
+        self.IE = IE
+
+        if self.open_file:
+            filter_file = open(f'./reports/filter2_file.txt', 'r')
+            self.line = filter_file.readlines()
+
+    def filter_ies(self, packet_filter):
+        logger().info(f"**********************")
+        for self.IE in self.line:
+            if packet_filter in self.IE:
+                break
+        return self.IE
+
+    def get_ssid(self):
+        packet_filter = "SSID:"
+        self.IE = self.filter_ies(packet_filter=packet_filter)
+        return self.IE
+
+    def get_supported_rates(self):
+        packet_filter = "Supported Rates:"
+        self.filter_ies(packet_filter=packet_filter)
+        return self.IE
+
+
+    def get_channel_info(self):
+        packet_filter = "Current Channel:"
+        self.filter_ies(packet_filter=packet_filter)
+        return self.IE
+
+
+    def get_country_info(self):
+        packet_filter = "Code:"
+        self.filter_ies(packet_filter=packet_filter)
+        return self.IE
+
+
+    def get_rsn_info(self):
+        packet_filter = "RSN Version:"
+        self.filter_ies(packet_filter=packet_filter)
+        return self.IE
+
+
+    def get_tim_info(self):
+        packet_filter = "DTIM period:"
+        self.filter_ies(packet_filter=packet_filter)
+        return self.IE
+
+
+    def get_erp_info(self):
+        packet_filter = "Tag Number: ERP"
+        self.filter_ies(packet_filter=packet_filter)
+        return self.IE
+
+
 
 class ApModeClientConnections(ThreadBase):
     def __init__(self, wifi_dut, wifi_clients, wifi_sniffer,
@@ -251,7 +314,7 @@ def test_wifi_sdk_ap_mode_tx_rules_us_region_c19454(wifi_dut, wifi_clients, wifi
     """ Verify Ap mode connection when region selected is US and region
         parameters are defined by user"""
     try:
-        assert len(wifi_clients) == 1, f"Minimum 4 raspi devices needed for this test"
+        assert len(wifi_clients) == 4, f"Minimum 4 raspi devices needed for this test"
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                              utf_constants, capture_filename="test_C19454",
                                              testcase_no=19454)
@@ -882,35 +945,39 @@ def test_wifi_sdk_dutap_tcp_tx_rx_c19447(wifi_sniffer, net_perf_client, wifi_dut
          }
 )
 def test_wifi_sdk_dutap_verify_beacon_format_c19436(wifi_sniffer, wifi_dut, wifi_access_point,
-                                                    utf_constants, sl_collections, wifi_clients, sniffer_filter):
+                                                    utf_constants, sl_collections, wifi_clients, sniffer_filter, request):
     """Verify beacon format sent by APUT"""
     try:
         beacon = 100
+        capture_filename = request.node.name
+        packet_filter2 = "    Type/Subtype: Beacon (0x0008)"
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
-                                             utf_constants, capture_filename="test_C19436",
-                                             testcase_no=19465)
+                                             utf_constants, capture_filename=capture_filename,
+                                             testcase_no=19465, sniffer_stop=True)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
-        # packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-        #     sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
-        #     filter_name='beacon')
-        # assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-        #     'Unable to find  beacon in Sniffer'
-        logger().info('********** Validating Beacon interval **********')
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            wlan_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
-            radio_ch=ap_dut_obj.channel,
-            beacon=beacon, filter_name="beacon_ap_mode_dtim_interval")
-        logger().info(f"packet_filter1: {packet_filter1}")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Sniffer: Unable to find beacon_ap_mode_dtim_interval packet in sniffer'
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
-            beacon=beacon, filter_name="beacon_IEs")
-        logger().info(f"packet_filter1: {packet_filter1}")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Sniffer: Unable to find beacon information elements packet in sniffer'
-
+        dut_mac_address = ap_dut_obj.dut_addr_dict['dut_mac_address']
+        packet_filter1 = f'(wlan.addr == {dut_mac_address}) && (wlan.fc.type_subtype==8)'
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        # logger().info(f"*******{packet_filter1}**********")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
+                                                                  packet_filter2=packet_filter2), "not found beacon from DUT "
+        IE_obj = FilterPacket(open_file=True)
+        ssid = IE_obj.get_ssid()
+        logger().info(f"*******{ssid}*********")
+        supported_rates = IE_obj.get_supported_rates()
+        logger().info(f"*******{supported_rates}*********")
+        channel = IE_obj.get_channel_info()
+        logger().info(f"*******{channel}******")
+        country_code = IE_obj.get_country_info()
+        logger().info(f"*******{country_code}******")
+        dtim_period = IE_obj.get_tim_info()
+        logger().info(f"*******{dtim_period}******")
+        ERP_info = IE_obj.get_erp_info()
+        logger().info(f"*******{ERP_info}******")
+        RSN_info = IE_obj.get_rsn_info()
+        logger().info(f"*******{RSN_info}******")
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -965,6 +1032,8 @@ def test_wifi_sdk_dut_apmode_11n_htcaps_support_c19446(wifi_sniffer, wifi_dut, c
         for i in range(0, 1):
             logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
             wifi_clients[i].interfaces.wifi.leave()
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
             filter_name='beacon')
@@ -1058,7 +1127,7 @@ def test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449(wifi_sniffer, wifi_dut, wifi_c
         wifi_dut.interfaces.wifi.init(mode="ap", config_required=False)
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                              utf_constants, capture_filename="test_C19449",
-                                             testcase_no=19465)
+                                             testcase_no=19465, sniffer_stop=True)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
         sl_collections.ap_sniffer_validation(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
@@ -1204,7 +1273,7 @@ def test_wifi_sdk_dutap_fixed_data_rate_c19441(wifi_sniffer, wifi_dut,
     try:
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                              utf_constants,  net_perf_client=net_perf_client, protocol=protocol, capture_filename="test_c19441",
-                                             testcase_no=19465, traffic_type="Tx", enable_data_rate=True, leave=False)
+                                             testcase_no=19465, traffic_type="Tx", enable_data_rate=True, leave=False, sniffer_stop=True)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
         for i in range(0, 1):

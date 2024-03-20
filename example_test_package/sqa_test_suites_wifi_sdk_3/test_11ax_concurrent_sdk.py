@@ -144,21 +144,20 @@ def test_conn_ping_on_different_security_modes_C148302(wifi_dut, wifi_access_poi
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(security="WPA2", ssid="TEST_C148302", channel=11, dtim_beacon_count="1",
                                           beacon_interval="100", psk="Automation@123")
-        ip_dict = con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut)
-        dut_ip = ip_dict['dut_ip']
-        client1_ip = ip_dict['client1_ip']
-
-        logger().info("\n\nChecking connection stability by pinging from RASPI to DUT as AP")
-        logger().info(f"********* Dut IP **********: {dut_ip}")
-        sl_collections.ping(dut_ip, 30, 5)
-        logger().info(f"********* Raspi STA1 IP **********: {client1_ip}")
-        status = con_obj.ping_from_wifi_client(wifi_client, dut_ip)
-        assert status, f"RASPI-STA1 failed to ping to DUT as AP"
+        con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut)
+        logger().info("\n\nChecking DUT STA connectivity")
+        logger().info(f"********* Dut STA IP **********: {dut_sta_ip}")
+        sl_collections.ping(dut_sta_ip, 30, 5)
 
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
-                                               sniffer_filter, power_save=False)
+        validation = True
+        packet_filter = f'((wlan.addr == {dut_mac_address}) and (wlan.ext_tag.number == 35)) and ' \
+                        f'(wlan.fc.type_subtype == 0x0000)'
+        logger().info("Validating Assoc Req with HE information")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter)['packet_count'], \
+            'Unable to find Assoc Req  with HE information in sniffer'
+
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
@@ -201,23 +200,30 @@ def test_terminate_ap_while_running_sta_C148303(wifi_dut, wifi_access_point, wif
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148303", security="WPA2", psk="Automation@123", channel=11,
                                           dtim_beacon_count="1", beacon_interval="100")
-        ip_dict = con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut)
-        dut_ip = ip_dict['dut_ip']
-        client1_ip = ip_dict['client1_ip']
+        con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut)
 
-        logger().info("\n\nChecking connection stability by pinging from RASPI to DUT as AP")
-        logger().info(f"********* Dut IP **********: {dut_ip}")
-        sl_collections.ping(dut_ip, 30, 5)
-        logger().info(f"********* Raspi STA1 IP **********: {client1_ip}")
-        status = con_obj.ping_from_wifi_client(wifi_client, dut_ip)
-        assert status, f"RASPI-STA1 failed to ping to DUT as AP"
+        validation = True
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        packet_filter = f'((wlan.addr == {dut_mac_address}) and (wlan.ext_tag.number == 35)) and ' \
+                        f'(wlan.fc.type_subtype == 0x0000)'
+        logger().info("Validating Assoc Req with HE information")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter)['packet_count'], \
+            'Unable to find Assoc Req with HE information in sniffer'
 
         logger().info(" Terminate the AP")
         wifi_dut.interfaces.wifi.sl_net_down(mode="ap")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        logger().info("\n\nChecking DUT STA connectivity")
+        logger().info(f"********* Dut STA IP **********: {dut_sta_ip}")
+        sl_collections.ping(dut_sta_ip, 30, 5)
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
-                                               sniffer_filter, power_save=False)
+
+        logger().info("beacons checking from DUT AP")
+        beacon_filter = f'wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 8'
+        assert not wifi_sniffer.interfaces.capture.sniffer_validation(validation, beacon_filter)['packet_count'],\
+            'Found beacons from DUT-AP'
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
@@ -262,14 +268,28 @@ def test_terminate_sta_while_running_ap_C148304(wifi_dut, wifi_access_point, wif
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148304", security="WPA2", psk="Automation@123", channel=11,
                                           dtim_beacon_count="1", beacon_interval="100")
         ip_dict = con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut)
-        dut_ap_ip = ip_dict['dut_ip']
+        dut_ip = ip_dict['dut_ip']
+        client1_ip = ip_dict['client1_ip']
+
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        validation = True
+        packet_filter = f'((wlan.addr == {dut_mac_address}) and (wlan.ext_tag.number == 35)) and ' \
+                        f'(wlan.fc.type_subtype == 0x0000)'
+        logger().info("Validating Assoc Req with HE information")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter)['packet_count'], \
+            'Unable to find Assoc Req  with HE information in sniffer'
 
         logger().info("Dut going to leave the AP")
         wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+
+        logger().info(f"********* Raspi STA1 IP **********: {client1_ip}")
+        status = con_obj.ping_from_wifi_client(wifi_client, dut_ip)
+        assert status, f"RASPI-STA1 failed to ping to DUT as AP"
+
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
-                                               sniffer_filter, power_save=False)
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
@@ -337,21 +357,19 @@ def test_conn_ping_on_EU_region_C148306(wifi_dut, wifi_access_point, wifi_sniffe
         wifi_dut.interfaces.wifi.set_wifi_region(region_code=Si91xRegionCode.Europe)
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148306_AP", security="WPA2", psk="Automation@123", channel=13,
                                           dtim_beacon_count="1", beacon_interval="100")
-        ip_dict = con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut)
-        dut_ip = ip_dict['dut_ip']
-        client1_ip = ip_dict['client1_ip']
-
-        logger().info("\n\nChecking connection stability by pinging from RASPI to DUT as AP")
-        logger().info(f"********* Dut IP **********: {dut_ip}")
-        sl_collections.ping(dut_ip, 30, 5)
-        logger().info(f"********* Raspi STA1 IP **********: {client1_ip}")
-        status = con_obj.ping_from_wifi_client(wifi_client, dut_ip)
-        assert status, f"RASPI-STA1 failed to ping to DUT as AP"
+        con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut)
+        logger().info("\n\nChecking DUT STA connectivity")
+        logger().info(f"********* Dut STA IP **********: {dut_sta_ip}")
+        sl_collections.ping(dut_sta_ip, 30, 5)
 
         logger().info("Stop sniffer finally")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
-                                               sniffer_filter, power_save=False)
+        validation = True
+        packet_filter = f'((wlan.addr == {dut_mac_address}) and (wlan.ext_tag.number == 35)) and ' \
+                        f'(wlan.fc.type_subtype == 0x0000)'
+        logger().info("Validating Assoc Req with HE information")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter)['packet_count'], \
+            'Unable to find Assoc Req  with HE information in sniffer'
+
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
@@ -399,21 +417,20 @@ def test_conn_ping_on_STA_in_JP_and_AP_in_US_region_C148307(wifi_dut, wifi_acces
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148307", security="WPA2", psk="Automation@123", channel=11,
                                           dtim_beacon_count="1", beacon_interval="100")
-        ip_dict = con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut)
-        dut_ip = ip_dict['dut_ip']
-        client1_ip = ip_dict['client1_ip']
-
-        logger().info("\n\nChecking connection stability by pinging from RASPI to DUT as AP")
-        logger().info(f"********* Dut IP **********: {dut_ip}")
-        sl_collections.ping(dut_ip, 30, 5)
-        logger().info(f"********* Raspi STA1 IP **********: {client1_ip}")
-        status = con_obj.ping_from_wifi_client(wifi_client, dut_ip)
-        assert status, f"RASPI-STA1 failed to ping to DUT as AP"
+        con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut)
+        logger().info("\n\nChecking DUT STA connectivity")
+        logger().info(f"********* Dut STA IP **********: {dut_sta_ip}")
+        sl_collections.ping(dut_sta_ip, 30, 5)
 
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
-                                               sniffer_filter, power_save=False)
+        validation = True
+        packet_filter = f'((wlan.addr == {dut_mac_address}) and (wlan.ext_tag.number == 35)) and ' \
+                        f'(wlan.fc.type_subtype == 0x0000)'
+        logger().info("Validating Assoc Req with HE information")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter)['packet_count'], \
+            'Unable to find Assoc Req  with HE information in sniffer'
+
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
@@ -457,27 +474,27 @@ def test_conn_ping_on_sta_in_open_and_ap_in_wpa2_security_modes_C148308(wifi_dut
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148308", security="WPA2", psk="Automation@123", channel=11,
                                           dtim_beacon_count="1", beacon_interval="100")
-        ip_dict = con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut)
-        dut_ip = ip_dict['dut_ip']
-        client1_ip = ip_dict['client1_ip']
-
-        logger().info("\n\nChecking connection stability by pinging from RASPI to DUT as AP")
-        logger().info(f"********* Dut IP **********: {dut_ip}")
-        sl_collections.ping(dut_ip, 30, 5)
-        logger().info(f"********* Raspi STA1 IP **********: {client1_ip}")
-        status = con_obj.ping_from_wifi_client(wifi_client, dut_ip)
-        assert status, f"RASPI-STA1 failed to ping to DUT as AP"
+        con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut)
+        logger().info("\n\nChecking DUT STA connectivity")
+        logger().info(f"********* Dut STA IP **********: {dut_sta_ip}")
+        sl_collections.ping(dut_sta_ip, 30, 5)
 
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
-                                               sniffer_filter, power_save=False)
+        validation = True
+        packet_filter = f'((wlan.addr == {dut_mac_address}) and (wlan.ext_tag.number == 35)) and ' \
+                        f'(wlan.fc.type_subtype == 0x0000)'
+        logger().info("Validating Assoc Req with HE information")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter)['packet_count'], \
+            'Unable to find Assoc Req  with HE information in sniffer'
+
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
-'''need to re-validate, facing issue from station side set WPA3 security'''
+
+'''UTF JIRA: UTF-4705, facing issue from station side set WPA3 security'''
 @pytest.mark.skip()
 @pytest.mark.config(
     'wifi_access_point',
@@ -521,21 +538,20 @@ def test_conn_ping_on_wpa3_security_mode_C148309(wifi_dut, wifi_access_point, wi
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148309", security="WPA3", psk="Automation@123", channel=11,
                                           dtim_beacon_count="1", beacon_interval="100")
-        ip_dict = con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut)
-        dut_ip = ip_dict['dut_ip']
-        client1_ip = ip_dict['client1_ip']
-
-        logger().info("\n\nChecking connection stability by pinging from RASPI to DUT as AP")
-        logger().info(f"********* Dut IP **********: {dut_ip}")
-        sl_collections.ping(dut_ip, 30, 5)
-        logger().info(f"********* Raspi STA1 IP **********: {client1_ip}")
-        status = con_obj.ping_from_wifi_client(wifi_client, dut_ip)
-        assert status, f"RASPI-STA1 failed to ping to DUT as AP"
+        con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut)
+        logger().info("\n\nChecking DUT STA connectivity")
+        logger().info(f"********* Dut STA IP **********: {dut_sta_ip}")
+        sl_collections.ping(dut_sta_ip, 30, 5)
 
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
-                                               sniffer_filter, power_save=False)
+        validation = True
+        packet_filter = f'((wlan.addr == {dut_mac_address}) and (wlan.ext_tag.number == 35)) and ' \
+                        f'(wlan.fc.type_subtype == 0x0000)'
+        logger().info("Validating Assoc Req with HE information")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter)['packet_count'], \
+            'Unable to find Assoc Req  with HE information in sniffer'
+
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
@@ -602,11 +618,19 @@ def test_conn_ping_on_multi_client_C148310(wifi_dut, wifi_access_point, wifi_sni
         logger().info(f"********* Raspi STA2 IP **********: {client2_ip}")
         status = con_obj.ping_from_wifi_client(wifi_clients[1], dut_ip)
         assert status, f"RASPI-STA2 failed to ping to DUT as AP"
+        logger().info("\n\nChecking DUT STA connectivity")
+        logger().info(f"********* Dut STA IP **********: {dut_sta_ip}")
+        sl_collections.ping(dut_sta_ip, 30, 5)
 
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
-                                               sniffer_filter, power_save=False)
+        validation = True
+        packet_filter = f'((wlan.addr == {dut_mac_address}) and (wlan.ext_tag.number == 35)) and ' \
+                        f'(wlan.fc.type_subtype == 0x0000)'
+        logger().info("Validating Assoc Req with HE information")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter)['packet_count'], \
+            'Unable to find Assoc Req  with HE information in sniffer'
+
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:

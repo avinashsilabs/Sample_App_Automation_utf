@@ -161,12 +161,11 @@ pytestmark=[
                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC |
                             Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID |
                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
-                            Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE |
-                            Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+                            Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
                                        Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
-                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-                                       # Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp |
                                Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
        },
@@ -431,12 +430,12 @@ def test_ble_sdk_io_cap_displayonly_C19855(ble_dut, ble_client, sl_collections):
 
         logger().info("enabling the power save modes ")
         ble_obj.power_save()
-        logger().info(f"Sucessfully Enabled Powersave")
+        logger().info(f"Successfully Enabled Powersave")
         time.sleep(60)
 
         logger().info(f"Initiating BLE disconnection from DUT")
         ble_obj.ble_disconnect()
-        logger().info(f"Sucessfully BLE disconncted")
+        logger().info(f"Successfully BLE disconnected")
 
         ble_client.interfaces.bluetooth.close()
         time.sleep(5)
@@ -461,12 +460,12 @@ def test_ble_sdk_io_cap_display_yesno_C19856(ble_dut, ble_client, sl_collections
 
         logger().info("enabling the power save modes ")
         ble_obj.power_save()
-        logger().info(f"Sucessfully Enabled Powersave")
+        logger().info(f"Successfully Enabled Powersave")
         time.sleep(60)
 
         logger().info(f"Initiating BLE disconnection from DUT")
         ble_obj.ble_disconnect()
-        logger().info(f"Sucessfully BLE disconncted")
+        logger().info(f"Successfully BLE disconnected")
 
         ble_client.interfaces.bluetooth.close()
         time.sleep(5)
@@ -491,12 +490,12 @@ def test_ble_sdk_io_cap_keyboard_only_C19857(ble_dut, ble_client, sl_collections
 
         logger().info("enabling the power save modes ")
         ble_obj.power_save()
-        logger().info(f"Sucessfully Enabled Powersave")
+        logger().info(f"Successfully Enabled Powersave")
         time.sleep(60)
 
         logger().info(f"Initiating BLE disconnection from DUT")
         ble_obj.ble_disconnect()
-        logger().info(f"Sucessfully BLE disconncted")
+        logger().info(f"Successfully BLE disconnected")
 
         ble_client.interfaces.bluetooth.close()
         time.sleep(5)
@@ -521,12 +520,12 @@ def test_ble_sdk_io_cap_no_input_output_C19858(ble_dut, ble_client, sl_collectio
 
         logger().info("enabling the power save modes ")
         ble_obj.power_save()
-        logger().info(f"Sucessfully Enabled Powersave")
+        logger().info(f"Successfully Enabled Powersave")
         time.sleep(60)
 
         logger().info(f"Initiating BLE disconnection from DUT")
         ble_obj.ble_disconnect()
-        logger().info(f"Sucessfully BLE disconncted")
+        logger().info(f"Successfully BLE disconnected")
 
         ble_client.interfaces.bluetooth.close()
         time.sleep(5)
@@ -1110,7 +1109,7 @@ def test_ble_sdk_scan_resp_8_bytes_C19821(ble_dut, ble_client, sl_collections):
                            "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
                            "0x07 "  # Advertising_Channel_Map
                            "0x00"  # Advertising_Filter_Policy
-            , scan_resp_name_params="0x00 0x09 0x09 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+            , scan_resp_data="0x00 0x09 0x09 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
                                     "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
                                     "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
         )
@@ -1172,7 +1171,7 @@ def test_ble_sdk_scan_resp_20_bytes_C19822(ble_dut, ble_client, sl_collections):
                            "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
                            "0x07 "  # Advertising_Channel_Map
                            "0x00"  # Advertising_Filter_Policy
-            , scan_resp_name_params="0x0c 0x0b 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 0x65 0x61 "
+            , scan_resp_data="0x0c 0x0b 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 0x65 0x61 "
                                     "0x61 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
                                     "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
         )
@@ -1234,7 +1233,7 @@ def test_ble_sdk_scan_resp_30_bytes_C19823(ble_dut, ble_client, sl_collections):
                            "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
                            "0x07 "  # Advertising_Channel_Map
                            "0x00"  # Advertising_Filter_Policy
-            , scan_resp_name_params="0x16 0x15 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 "
+            , scan_resp_data="0x16 0x15 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 "
                                     "0x65 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 "
                                     "0x61 0x61 0x61 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
         )
@@ -1296,7 +1295,7 @@ def test_ble_sdk_scan_resp_39_bytes_C19824(ble_dut, ble_client, sl_collections):
                            "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
                            "0x07 "  # Advertising_Channel_Map
                            "0x00"  # Advertising_Filter_Policy
-            , scan_resp_name_params="0x1F 0x1E 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 0x65 0x61 "
+            , scan_resp_data="0x1F 0x1E 0x09 0x61 0x75 0x74 0x6f 0x6d 0x61 0x74 0x65 0x61 "
                                     "0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 "
                                     "0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x61 0x00 0x00 "
         )
@@ -1358,7 +1357,7 @@ def test_ble_sdk_dut_master_undirected_connectable_c19833(ble_dut, ble_client, s
                                "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
                                "0x07 "  # Advertising_Channel_Map
                                "0x00"  # Advertising_Filter_Policy
-                , scan_resp_name_params="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
+                , scan_resp_data="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
                                         "0x66 0x69 0x5f 0x74 0x65 0x73 " \
                                         "0x74 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
                                         "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
@@ -1402,48 +1401,61 @@ def test_ble_sdk_dut_master_directed_connectable_c19834(ble_dut, ble_client, sl_
             logger().info("start ble...")
             ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
             assert ble_dut_address, "unable to fetch bd address"
-            logger().info(f"Configuring Remote LE device in Undirected connectable advertising mode")
-            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
-                bt_dut_address=ble_dut_address,
-                hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
-                               "0x40 0x00 "  # Advertising_Interval_Max
-                               "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
-                               "0x01 "  # Own_Address_Type
-                               "0x00 "  # Peer_Address_Type
-                               "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
-                               "0x07 "  # Advertising_Channel_Map
-                               "0x00 "  # Advertising_Filter_Policy
-                , scan_resp_name_params="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
-                                        "0x66 0x69 0x5f 0x74 0x65 0x73 " \
-                                        "0x74 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
-                                        "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
-            )
-            time.sleep(1)
-            assert ble_client_address, "failed to initiate ble in remote device"
-            logger().info(f"ble client add..{ble_client_address}")
-            ble_client.interfaces.bluetooth.stop_advertising()
-            time.sleep(5)
-            ble_client.interfaces.bluetooth.close()
 
+            t1 = BleMaster_SCANThread(ble_dut, ble_client)
+            t1.start()
             mac_list = ble_dut_address.split(":")
             mac_list.reverse()
             mac_list = ["0x" + s for s in mac_list]
             peer_address = " ".join(mac_list)
-            logger().info(f"peer_address {peer_address}")
-            time.sleep(5)
+            logger().info(f"peer_address: {peer_address}")
 
-            hci_adv_params = f"0x20 0x00 0x20 0x00 0x01 0x00 0x00 {peer_address} 0x07 0x00"
+            logger().info(f"Configuring Remote LE device in Directed connectable advertising mode")
             ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
-                bt_dut_address=ble_dut_address, hci_adv_params=hci_adv_params)
+                bt_dut_address=ble_dut_address,
+                hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
+                               "0x40 0x00 "  # Advertising_Interval_Max
+                               "0x01 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                               "0x00 "  # Own_Address_Type
+                               "0x00 "  # Peer_Address_Type
+                               f"{peer_address} "  # Peer_Address
+                               "0x07 "  # Advertising_Channel_Map
+                               "0x00"  # Advertising_Filter_Policy
+                , scan_resp_data="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
+                                        "0x66 0x69 0x5f 0x74 0x65 0x73 " \
+                                        "0x74 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+                                        "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
+            )
             assert ble_client_address, "failed to initiate ble in remote device"
-
-            logger().info("Start scanning....")
-            ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
+            logger().info(f"ble client add..{ble_client_address}")
+            logger().info(f"remote address:*********{peer_address}*******")
 
             logger().info("enabling the power save modes ")
             ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
             ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                          psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+
+            ble_client.interfaces.bluetooth.close()
+            time.sleep(5)
+            logger().info(f"Configuring Remote LE device in Directed connectable advertising mode")
+            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+                bt_dut_address=ble_dut_address,
+                hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
+                               "0x40 0x00 "  # Advertising_Interval_Max
+                               "0x01 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                               "0x00 "  # Own_Address_Type
+                               "0x00 "  # Peer_Address_Type
+                               f"{peer_address} "  # Peer_Address
+                               "0x07 "  # Advertising_Channel_Map
+                               "0x00"  # Advertising_Filter_Policy
+                , scan_resp_data="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
+                                        "0x66 0x69 0x5f 0x74 0x65 0x73 " \
+                                        "0x74 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+                                        "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
+            )
+            assert ble_client_address, "failed to initiate ble in remote device"
+            t1.wait_for_exit(True)
+            t1.return_value
 
             logger().info("stop scanning")
             ble_dut.interfaces.bluetooth.ble_stop_scanning()
@@ -1487,7 +1499,7 @@ def test_ble_sdk_undirected_conn_verification_c19835(ble_dut, ble_client, sl_col
                                "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
                                "0x07 "  # Advertising_Channel_Map
                                "0x00"  # Advertising_Filter_Policy
-                , scan_resp_name_params="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
+                , scan_resp_data="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
                                         "0x66 0x69 0x5f 0x74 0x65 0x73 " \
                                         "0x74 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
                                         "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
@@ -1553,7 +1565,7 @@ def test_ble_sdk_undirected_discon_verification_c19836(ble_dut, ble_client, sl_c
                                "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
                                "0x07 "  # Advertising_Channel_Map
                                "0x00"  # Advertising_Filter_Policy
-                , scan_resp_name_params="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
+                , scan_resp_data="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
                                         "0x66 0x69 0x5f 0x74 0x65 0x73 " \
                                         "0x74 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
                                         "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
@@ -1680,7 +1692,6 @@ def test_ble_sdk_scan_in_advertising_state_C19839(ble_dut, ble_clients, sl_colle
     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
-        scan_result = ""
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=f"reports/test_ble_sdk_scan_in_advertising_state_C19839.logs_{int(time.time())}"):
             assert len(ble_clients) >= 2, f"MINIMUM 2 RASPI DEVICES NEEDED"
@@ -1696,15 +1707,9 @@ def test_ble_sdk_scan_in_advertising_state_C19839(ble_dut, ble_clients, sl_colle
             logger().info(f"ble_client_address1: {ble_client_address1}")
             time.sleep(5)
 
-            ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address1, timeout=120)
+            scan_result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address1,
+                                                                          timeout=120, async_timeout=30)
             time.sleep(15)
-            events = ble_dut.interfaces.bluetooth.get_async_events()
-            for event in events:
-                if event.event_type == AsyncEventIdentifiers.ADVERTISE:
-                    if "rsi_ble_simple_central_on_adv_report_event" in event.event_data:
-                        logger().info(f" event data : {event.event_data}")
-                        scan_result = event.event_data
-
             logger().info(f"SCAN RESULT IS: '{scan_result}")
             assert str(ble_client_address1) in str(
                 scan_result), "REMOTE DEVICE 1 ADDRESS ISN'T PRESENT IN DUT SCAN RESULTS"
@@ -1713,11 +1718,15 @@ def test_ble_sdk_scan_in_advertising_state_C19839(ble_dut, ble_clients, sl_colle
             logger().info(" **** START ADVERTISING FROM DUT **** ")
             ble_dut.interfaces.bluetooth.ble_start_advertising(ble_dir_addr=ble_dut_address)
             time.sleep(5)
+            logger().info("enabling the power save modes ")
+            ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+            ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                         psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
 
             logger().info(" **** START SCANNING DUT FROM REMOTE DEVICE 2 **** ")
             ble_client_address2 = ble_client2.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
             assert ble_client_address2, "FAILED TO INITIATE BLE IN REMOTE DEVICE 2"
-            time.sleep(20)
+            time.sleep(15)
             logger().info(f" **** ble_client_address2: {ble_client_address2} **** ")
 
             found_devices_list = ble_client2.interfaces.bluetooth.get_devices()
@@ -1725,11 +1734,6 @@ def test_ble_sdk_scan_in_advertising_state_C19839(ble_dut, ble_clients, sl_colle
             assert ble_dut.interfaces.bluetooth.ble_address in found_devices_list, "DUT ISN'T LISTED IN SCAN RESULTS"
             logger().info("FOUND DUT BD ADDRESS IN SCAN RESULTS")
 
-            logger().info("enabling the power save modes ")
-            ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-            ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                         psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-            time.sleep(5)
             logger().info("DISABLING ADVERTISEMENT AND SCANNING FROM RASPI AND DUT")
             ble_dut.interfaces.wifi.ble_stop_scanning()
             ble_client1.interfaces.bluetooth.stop_advertising()

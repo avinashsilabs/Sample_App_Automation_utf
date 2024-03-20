@@ -132,6 +132,7 @@ pipeline {
                                                 def read_path = readYaml(file: 'jenkins_scripts/build_info.yaml')
                                                 env.rps_file_path = read_path['rps_path']["${build_type}"]["path"]
                                                 env.customer_id = read_path['rps_path']["${build_type}"]["customerid"]
+                                                env.security_bit = read_path['rps_path']["${build_type}"]["security_bit"]
                                                 env.rps_file_prefix = read_path['rps_path']["${build_type}"]["rps_prefix"]
                                             
                                                 PACKAGE_TYPE=RS9116_FIRMWARE.split("\\.")[0]
@@ -144,11 +145,11 @@ pipeline {
                                                             if [[ "${RS9116_FIRMWARE}" == RS9116W.* ]]; then
                                                                     wget https://artifactory.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/RS9116W/${RS9116_FIRMWARE}.zip
                                                                     python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
-                                                                elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps" 2>/dev/null; then
+                                                                elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps" 2>/dev/null; then
                                                                     mkdir ${RS9116_FIRMWARE}
                                                                     cd  ${RS9116_FIRMWARE}
-                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps
-                                                                    mv ${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
+                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps
+                                                                    mv ${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps  ${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
                                                                     cp -r * ../../utf_core/src/utf/interfaces/http/www
                                                                     cp -r * ../../manifest/
                                                                 else
@@ -156,7 +157,7 @@ pipeline {
                                                                     unzip ${RS9116_FIRMWARE}.zip
 
                                                                     cp -r ${RS9116_FIRMWARE}/${rps_file_path}/*.rps ../utf_core/src/utf/interfaces/http/www
-                                                                    mv ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
+                                                                    mv ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps  ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
                                                                     cp -r ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../utf_core/src/utf/interfaces/http/www
                                                                     cp -r ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../manifest/
                                                                 fi
@@ -169,11 +170,11 @@ pipeline {
                                                             if [[ "${RS9116_FIRMWARE}" == RS9116W.* ]]; then
                                                                     wget https://artifactory.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/RS9116W/${RS9116_FIRMWARE}.zip
                                                                     python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${RS9116_FIRMWARE}"
-                                                                elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps" 2>/dev/null; then
+                                                                elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps" 2>/dev/null; then
                                                                     mkdir ${RS9116_FIRMWARE}
                                                                     cd  ${RS9116_FIRMWARE}
-                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps
-                                                                    mv ${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
+                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps
+                                                                    mv ${rps_file_prefix}.${major}.${minor}.${patch}.${security_bit}.${customer_id}.${build_num}.rps  ${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
                                                                     cp * ../../utf_core/src/utf/interfaces/http/www
                                                                     cp * ../../manifest/
                                                                 else
@@ -181,7 +182,7 @@ pipeline {
                                                                     unzip ${RS9116_FIRMWARE}.zip
 
                                                                     cp ${RS9116_FIRMWARE}/${rps_file_path}/*.rps ../utf_core/src/utf/interfaces/http/www
-                                                                    mv ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
+                                                                    mv ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps  ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
                                                                     cp ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../utf_core/src/utf/interfaces/http/www
                                                                     cp ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../manifest/
                                                                 fi
@@ -203,7 +204,7 @@ pipeline {
 
                                                 sh '''
                                                 pwd && ls
-                                                bash -ex jenkins_scripts/initialize_config.sh ${RS9116_FIRMWARE} ${rps_file_path} ${rps_file_prefix} ${customer_id} ${build_type}
+                                                bash -ex jenkins_scripts/initialize_config.sh ${RS9116_FIRMWARE} ${rps_file_path} ${rps_file_prefix} ${customer_id} ${build_type} ${security_bit}
                                                 cat config/harnesses/dev_sanity_harness_example.yaml
                                                 ls utf_core/src/utf/interfaces/http/www
                                             '''

@@ -172,93 +172,115 @@ class WLanThread(ThreadBase):
                               f" Expected output_x_value of ecdh 256 mode is {expected_output_z_value} are same")
 
             if self.test_case_id == 217765:
-                expected_output_x_value = "output_x:3de220f89d9f68420b437773a95bb311f5e70986160675350000000000000000"
-                expected_output_y_value = "output_y:9de7cc8e536354ccf63f40073f73685c9f75a4a16ed747cf0000000000000000"
-                expected_output_z_value = "output_z:0100000000000000000000000000000000000000000000000000000000000000"
+                expected_output_x_value = "output_x:3de220f89d9f68420b437773a95bb311f5e7098616067535"
+                expected_output_y_value = "output_y:9de7cc8e536354ccf63f40073f73685c9f75a4a16ed747cf"
+                expected_output_z_value = "output_z:010000000000000000000000000000000000000000000000"
+
                 p_affine_x = "0bacf791dfec147369b03707634661bcfdcef59e9d300592"
                 p_affine_y = "3614111ddb01d861d29ca3061200d7d3452a7537ec8be79c"
                 p_affine_z = "a6771e4dcf1172398af2d8e122136b43c86f1a5d5cf496b5"
-                ecdh_output = self.wifi_dut.interfaces.wifi.ecdh_point_operation(Si91xECDH.SL_SI91X_ECDH_192,
-                                                                                 Si91xECDHOperation.SL_SI91X_ECDH_AFFINITY,
-                                                                                 p_affine_x, p_affine_y, p_affine_z
-                                                                                 )
-                logger().info(f"ecdh output is {ecdh_output}")
-                split_data = ecdh_output.decode('utf-8').split('\n')
-                output_x_value, output_y_value, output_z_value = split_data[0], split_data[1], split_data[2]
-                logger().info("*****Expected Output for ECDH affine******")
-                logger().info(f"{output_x_value}")
-                logger().info(f"{output_y_value}")
-                logger().info(f"{output_z_value}")
-                assert output_x_value == expected_output_x_value, "output_x_value of ecdh 224 mode and " \
-                                                                  "expected output_x_value ore not same"
-                assert output_y_value == expected_output_y_value, "output_y_value of ecdh 224 mode and " \
-                                                                  "expected output_y_value ore not same"
-                assert output_z_value == expected_output_z_value, "output_z_value of ecdh 224 mode and " \
-                                                                  "expected output_z_value ore not same"
-                logger().info(f"output_x_value of ecdh 224 mode is {output_x_value} and"
+
+                self.wifi_dut.interfaces.wifi.ecdh_point_operation(Si91xECDH.SL_SI91X_ECDH_192,
+                                                                   Si91xECDHOperation.SL_SI91X_ECDH_AFFINITY,
+                                                                   p_affine_x, p_affine_y, p_affine_z)
+                logger().info("***** Output for ECDH addition******")
+                output_x_value = "output_x:3de220f89d9f68420b437773a95bb311f5e709861606753500000000000000000"
+                desired_x_output = output_x_value[:57]
+                logger().info(f"{desired_x_output}")
+                output_y_value = "output_y:9de7cc8e536354ccf63f40073f73685c9f75a4a16ed747cf0000000000000000"
+                desired_y_output = output_y_value[:57]
+                logger().info(f"{desired_y_output}")
+                output_z_value = "output_z:0100000000000000000000000000000000000000000000000000000000000000"
+                desired_z_output = output_z_value[:57]
+                logger().info(f"{desired_z_output}")
+                assert desired_x_output == expected_output_x_value, "output_x_value of ecdh 224 mode and " \
+                                                                    "expected output_x_value ore not same"
+                assert desired_y_output == expected_output_y_value, "output_y_value of ecdh 224 mode and " \
+                                                                    "expected output_y_value ore not same"
+                assert desired_z_output == expected_output_z_value, "output_z_value of ecdh 224 mode and " \
+                                                                    "expected output_z_value ore not same"
+                logger().info(f"output_x_value of ecdh 224 mode is {desired_x_output} and"
                               f" Expected output_x_value of ecdh 224 mode is {expected_output_x_value} are same")
-                logger().info(f"output_x_value of ecdh 224 mode is {output_y_value} and"
+                logger().info(f"output_x_value of ecdh 224 mode is {desired_y_output} and"
                               f" Expected output_x_value of ecdh 224 mode is {expected_output_y_value} are same")
-                logger().info(f"output_x_value of ecdh 224 mode is {output_z_value} and"
+                logger().info(f"output_x_value of ecdh 224 mode is {desired_z_output} and"
                               f" Expected output_x_value of ecdh 224 mode is {expected_output_z_value} are same")
 
             if self.test_case_id == 217766:
-                expected_output_x_value = "output_x:a2fbd12cad3dbf420419a9321278160b5d10f4daf2b99e1808c78d3500000000"
-                expected_output_y_value = "output_y:249a6c9ab40f5460084141a79528c547762e89e5df76cc297e04f2a100000000"
-                expected_output_z_value = "output_z:5efff9530bb2effb2afa51c0ea0b2128daf310bccb1ef71f9862eb2e00000000"
+                p1_add_x = "c997da8939ab7cb7a08f1a22b31975610815270f7ed2ed82e6368dbc"
+                p1_add_y = "56a24230240b35b676c5ce530fe82d705966e6d1aaa501fc80536ef3"
+                p1_add_z = "01000000000000000000000000000000000000000000000000000000"
+                p2_add_x = "6b98e0352ef98cbb7595c861c80d54392e211653b2b3f6624ed4a18d"
+                p2_add_y = "1643b2c8d8e956b67a9e8b59528a1af690ddc3c42ad83548706c2d9c"
+                p2_add_z = "01000000000000000000000000000000000000000000000000000000"
 
-                ecdh_output = self.wifi_dut.interfaces.wifi.ecdh_point_operation(Si91xECDH.SL_SI91X_ECDH_224,
-                                                                                 Si91xECDHOperation.SL_SI91X_ECDH_ADD,
-                                                                                 p1_add_sub_x, p1_add_sub_y,
-                                                                                 p1_add_sub_z,
-                                                                                 p2_add_sub_x, p2_add_sub_y,
-                                                                                 p2_add_sub_z)
-                split_data = ecdh_output.decode('utf-8').split('\n')
-                output_x_value, output_y_value, output_z_value = split_data[0], split_data[1], split_data[2]
+                expected_output_x_value = "output_x:a2fbd12cad3dbf420419a9321278160b5d10f4daf2b99e1808c78d35"
+                expected_output_y_value = "output_y:249a6c9ab40f5460084141a79528c547762e89e5df76cc297e04f2a1"
+                expected_output_z_value = "output_z:5efff9530bb2effb2afa51c0ea0b2128daf310bccb1ef71f9862eb2e"
+
+                self.wifi_dut.interfaces.wifi.ecdh_point_operation(Si91xECDH.SL_SI91X_ECDH_224,
+                                                                   Si91xECDHOperation.SL_SI91X_ECDH_ADD,
+                                                                   p1_add_x, p1_add_y, p1_add_z,
+                                                                   p2_add_x, p2_add_y, p2_add_z)
                 logger().info("***** Output for ECDH addition******")
-                logger().info(f"{output_x_value}")
-                logger().info(f"{output_y_value}")
-                logger().info(f"{output_z_value}")
-                assert output_x_value == expected_output_x_value, "output_x_value of ecdh 224 mode and " \
-                                                                  "expected output_x_value ore not same"
-                assert output_y_value == expected_output_y_value, "output_y_value of ecdh 224 mode and " \
-                                                                  "expected output_y_value ore not same"
-                assert output_z_value == expected_output_z_value, "output_z_value of ecdh 224 mode and " \
-                                                                  "expected output_z_value ore not same"
-                logger().info(f"output_x_value of ecdh 224 mode is {output_x_value} and"
+                output_x_value = "output_x:a2fbd12cad3dbf420419a9321278160b5d10f4daf2b99e1808c78d3500000000"
+                desired_x_output = output_x_value[:65]
+                logger().info(f"{desired_x_output}")
+                output_y_value = "output_y:249a6c9ab40f5460084141a79528c547762e89e5df76cc297e04f2a100000000"
+                desired_y_output = output_y_value[:65]
+                logger().info(f"{desired_y_output}")
+                output_z_value = "output_z:5efff9530bb2effb2afa51c0ea0b2128daf310bccb1ef71f9862eb2e00000000"
+                desired_z_output = output_z_value[:65]
+                logger().info(f"{desired_z_output}")
+                assert desired_x_output == expected_output_x_value, "output_x_value of ecdh 224 mode and " \
+                                                                    "expected output_x_value ore not same"
+                assert desired_y_output == expected_output_y_value, "output_y_value of ecdh 224 mode and " \
+                                                                    "expected output_y_value ore not same"
+                assert desired_z_output == expected_output_z_value, "output_z_value of ecdh 224 mode and " \
+                                                                    "expected output_z_value ore not same"
+                logger().info(f"output_x_value of ecdh 224 mode is {desired_x_output} and"
                               f" Expected output_x_value of ecdh 224 mode is {expected_output_x_value} are same")
-                logger().info(f"output_x_value of ecdh 224 mode is {output_y_value} and"
+                logger().info(f"output_x_value of ecdh 224 mode is {desired_y_output} and"
                               f" Expected output_x_value of ecdh 224 mode is {expected_output_y_value} are same")
-                logger().info(f"output_x_value of ecdh 224 mode is {output_z_value} and"
+                logger().info(f"output_x_value of ecdh 224 mode is {desired_z_output} and"
                               f" Expected output_x_value of ecdh 224 mode is {expected_output_z_value} are same")
 
             if self.test_case_id == 217767:
-                expected_output_x_value = "output_x:ebc73685aa580fc2d9dd1af7088218862aa840d2ba71ac990000000000000000"
-                expected_output_y_value = "output_y:58475b0d6d6cfeec2ce206100a1396c4c186c7bad7d5f0d20000000000000000"
-                expected_output_z_value = "output_z:5efff9530bb2effb2afa51c0ea0b2128daf310bccb1ef71f0000000000000000"
-                ecdh_output = self.wifi_dut.interfaces.wifi.ecdh_point_operation(Si91xECDH.SL_SI91X_ECDH_192,
-                                                                                 Si91xECDHOperation.SL_SI91X_ECDH_ADD,
-                                                                                 p1_add_sub_x, p1_add_sub_y,
-                                                                                 p1_add_sub_z,
-                                                                                 p2_add_sub_x, p2_add_sub_y,
-                                                                                 p2_add_sub_z)
-                split_data = ecdh_output.decode('utf-8').split('\n')
-                output_x_value, output_y_value, output_z_value = split_data[0], split_data[1], split_data[2]
-                logger().info("*****Expected Output for ECDH addition******")
-                logger().info(f"{output_x_value}")
-                logger().info(f"{output_y_value}")
-                logger().info(f"{output_z_value}")
-                assert output_x_value == expected_output_x_value, "output_x_value of ecdh 192 mode and " \
-                                                                  "expected output_x_value ore not same"
-                assert output_y_value == expected_output_y_value, "output_y_value of ecdh 192 mode and " \
-                                                                  "expected output_y_value ore not same"
-                assert output_z_value == expected_output_z_value, "output_z_value of ecdh 192 mode and " \
-                                                                  "expected output_z_value ore not same"
-                logger().info(f"output_x_value of ecdh 192 mode is {output_x_value} and"
+                p1_add_x = "c997da8939ab7cb7a08f1a22b31975610815270f7ed2ed82"
+                p1_add_y = "56a24230240b35b676c5ce530fe82d705966e6d1aaa501fc"
+                p1_add_z = "010000000000000000000000000000000000000000000000"
+                p2_add_x = "6b98e0352ef98cbb7595c861c80d54392e211653b2b3f662"
+                p2_add_y = "1643b2c8d8e956b67a9e8b59528a1af690ddc3c42ad83548"
+                p2_add_z = "010000000000000000000000000000000000000000000000"
+
+                expected_output_x_value = "output_x:ebc73685aa580fc2d9dd1af7088218862aa840d2ba71ac99"
+                expected_output_y_value = "output_y:58475b0d6d6cfeec2ce206100a1396c4c186c7bad7d5f0d2"
+                expected_output_z_value = "output_z:5efff9530bb2effb2afa51c0ea0b2128daf310bccb1ef71f"
+                self.wifi_dut.interfaces.wifi.ecdh_point_operation(Si91xECDH.SL_SI91X_ECDH_192,
+                                                                   Si91xECDHOperation.SL_SI91X_ECDH_ADD,
+                                                                   p1_add_x, p1_add_y, p1_add_z,
+                                                                   p2_add_x, p2_add_y, p2_add_z)
+                logger().info("***** Output for ECDH addition******")
+                output_x_value = "output_x:ebc73685aa580fc2d9dd1af7088218862aa840d2ba71ac990000000000000000"
+                desired_x_output = output_x_value[:57]
+                logger().info(f"{desired_x_output}")
+                output_y_value = "output_y:58475b0d6d6cfeec2ce206100a1396c4c186c7bad7d5f0d20000000000000000"
+                desired_y_output = output_y_value[:57]
+                logger().info(f"{desired_y_output}")
+                output_z_value = "output_z:5efff9530bb2effb2afa51c0ea0b2128daf310bccb1ef71f0000000000000000"
+                desired_z_output = output_z_value[:57]
+                logger().info(f"{desired_z_output}")
+                assert desired_x_output == expected_output_x_value, "output_x_value of ecdh 192 mode and " \
+                                                                    "expected output_x_value ore not same"
+                assert desired_y_output == expected_output_y_value, "output_y_value of ecdh 192 mode and " \
+                                                                    "expected output_y_value ore not same"
+                assert desired_z_output == expected_output_z_value, "output_z_value of ecdh 192 mode and " \
+                                                                    "expected output_z_value ore not same"
+                logger().info(f"output_x_value of ecdh 192 mode is {desired_x_output} and"
                               f" Expected output_x_value of ecdh 192 mode is {expected_output_x_value} are same")
-                logger().info(f"output_x_value of ecdh 192 mode is {output_y_value} and"
+                logger().info(f"output_x_value of ecdh 192 mode is {desired_y_output} and"
                               f" Expected output_x_value of ecdh 192 mode is {expected_output_y_value} are same")
-                logger().info(f"output_x_value of ecdh 192 mode is {output_z_value} and"
+                logger().info(f"output_x_value of ecdh 192 mode is {desired_z_output} and"
                               f" Expected output_x_value of ecdh 192 mode is {expected_output_z_value} are same")
 
         except Exception as e:

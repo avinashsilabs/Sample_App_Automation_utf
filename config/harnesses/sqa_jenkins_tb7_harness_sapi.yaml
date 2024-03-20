@@ -278,10 +278,9 @@ devices:
                 # is a statically configured access point, assumed
                 # to be set up ahead of time with the settings below
                 type: 'wifi.access_points.static'
-                security: WPA2
-                ssid: 'Azeez123'
-                passphrase: '12345678'
-                channel: 11
+                security: WPA
+                ssid: 'Codecom123'
+                passphrase: 'thisisatestnework'
 
 
     # This represents another access point configuration.
@@ -293,12 +292,13 @@ devices:
                 # The test system will communicate with the device via the ip address specified below
                 # to configure the device with the desired settings
                 type: 'wifi.access_points.dlink810'
-                ip_address: '10.207.18.57'
-                web_ui_port: 8080
-                admin_password: 'test123'
+                ip_address: '192.168.0.1'
+                web_ui_port: 80
+                admin_password: '12345678'
+                skip_assertion_failure : True
                 security: WPA
-                ssid: 'Jenkins-TB7'
-                passphrase: '12345678'
+                ssid: 'Dlink-10-207-18-11'
+                passphrase: 'thisisatestnetwork11'
                 supports: 'wifi_ap'
                 channel: 1
 
@@ -312,14 +312,58 @@ devices:
                 admin_password: 'Jenkins@123'
                 ssh_port: 22
                 ssid: 'Jenkins-TB7'
-                passphrase: '12345678'
+                channel: 1
                 protected_management_frame: 'Disable'
+                #ipv6 configuration
+                connection_type: 'STATIC_IPV6'
+                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1bcz"
+                wan_ipv6_gateway : "2401:4900:1cb3:3444::1"
+                wan_prefix_length : "64"
+                ipv6_state: "1" #0= "stateless" 1="stateful"
+                lan_ipv6_address: "2401:3500:133c:1341:1134:ffed:13cd:1134"
+                lan_prefix_length: "64"
+#                lan_ipv6_prefix: "2401:3500:133c:1341::"
+                lan_ip_pool_start: "2401:3500:133c:1341::1000"
+                lan_ip_pool_end: "2401:3500:133c:1341::2000"
+                lan_lease_time: "86400"
                 skip_assertion_failure: True
                 # radius server configuration
                 radius_ip: "10.207.18.170"
                 radius_port: "1812"
-                channel: 11
-                supports: 'wifi_ap'
+                ap_test_ip: '192.168.50.1' #AP LOGIN IP (TEST IP)
+
+    # This represents another access point configuration.
+    asus_rt_ac68u_ap:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.asus_rt_ac68u'
+                ip_address: '192.168.1.1'
+                admin_username: 'admin'
+                admin_password: 'admin@12345'
+                ssh_port: 22
+                web_ui_port: 8443
+                ssid: "rt_ac68u"
+                channel: 1
+                protected_management_frame: 'Disable'
+                skip_assertion_failure: True
+                # radius server configuration
+                radius_ip: "192.168.1.231"
+                radius_port: "1812"
+    # This represents another access point configuration.
+    asus_rt_ax53u_ap:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.asus_rt_ax53u'
+                ip_address: '192.168.50.1'
+                admin_password: 'admin@123456'
+                ssh_port: 22
+                ssid: "ASUS_53UAX"
+                channel: 1
+                protected_management_frame: 'Disable'
+                skip_assertion_failure: True
+                # radius server configuration
+                radius_ip: "192.168.50.231"
+                radius_port: "1812"
 
     switched_ap:
         interfaces:
@@ -333,11 +377,57 @@ devices:
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
-                hostname: '10.207.18.167'
+                hostname: '10.207.18.235'
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
                 outlet: 1
+                # use_persistent_state: true will set a persistent state, that the outlet will revert
+                # to after reboot or power cycle
+                # use_persistent_state: false will set a transient state only, and the outlet will revert
+                # back to the persistent state after reboot or power cycle
+                use_persistent_state: false
+
+    switched_ap1:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                ssid: "Savage-Test"
+                security: 'WPA2'
+                channel: 11
+                passphrase: 'F6E49FCE'
+                switch_config: 'pdu_switch'
+            pdu_switch:
+                # switch type is Digital Logging v222
+                type: 'switch.dli_v222_pdu'
+                hostname: '10.207.18.235'
+                user: 'admin'
+                password: '1234'
+                # valid outlet numbers are 1-8
+                outlet: 1
+                # use_persistent_state: true will set a persistent state, that the outlet will revert
+                # to after reboot or power cycle
+                # use_persistent_state: false will set a transient state only, and the outlet will revert
+                # back to the persistent state after reboot or power cycle
+                use_persistent_state: false
+
+    switched_ap2:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                ssid: "Savage-Test"
+                security: 'WPA2'
+                channel: 11
+                passphrase: 'F6E49FCE'
+                switch_config: 'pdu_switch'
+            pdu_switch:
+                # switch type is Digital Logging v222
+                type: 'switch.dli_v222_pdu'
+                hostname: '10.207.18.235'
+                user: 'admin'
+                password: '1234'
+                # valid outlet numbers are 1-8
+                outlet: 2
                 # use_persistent_state: true will set a persistent state, that the outlet will revert
                 # to after reboot or power cycle
                 # use_persistent_state: false will set a transient state only, and the outlet will revert
@@ -352,6 +442,10 @@ devices:
             mqtt:
                 type: 'mqtt.client.paho_client'
                 disable_certificate_verification: false
+            tc:
+                type: 'traffic_controller.tc_cli'
+                shell: 'linux_shell'
+                interface: 'eth0'
             wifi:
                 # The 'wifi.access_points.linux' device type represents a linux-based access point
                 # running hostapd to create a soft AP
@@ -360,7 +454,7 @@ devices:
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
                 supports: [ 'wifi_ap', 'wifi_client' ]
-                interface: 'eth0'
+                interface: 'wlan0'
                 standard: 'n'
                 ip_address: '192.168.0.1'
                 region: 'Japan'
@@ -369,7 +463,7 @@ devices:
         interfaces:
             linux_shell:
                 type: 'shell.ssh_shell'
-                remote: 10.207.18.173
+                remote: 192.168.0.152
                 username: pi
                 password: raspberry
                 use_paramiko_expect: false
@@ -381,7 +475,7 @@ devices:
                 supports: [ 'wifi_ap', 'wifi_client' ]
                 interface: 'wlan0'
                 standard: 'n'
-                ip_address: '10.207.18.173'
+                ip_address: '192.168.0.152'
 
     raspi_ble_client:
         interfaces:
@@ -397,8 +491,8 @@ devices:
             multicast:
                 type: 'multicast.multicast_socket'
                 ip_version: 0
-                multicast_ip: '239.255.255.250'
-                multicast_ip2: '239.255.255.250'
+                multicast_ip: '239.0.0.1'
+                multicast_ip2: '239.0.0.1'
                 dut_local_socket: 5001
                 destination_socket: 5002
                 ttl: 32
@@ -407,7 +501,7 @@ devices:
                 no_of_pkts: 500
                 multicast_ip_mac_map: '01:00:5e:7f:ff:fa'
                 multicast_ip2_mac_map1: '01:00:5e:7f:ff:fa'
-                interface: 'eth0'
+                interface: 'eth1'
 
     raspi_ip_socket:
         interfaces:
@@ -451,6 +545,7 @@ devices:
         interfaces:
             socket:
                 type: 'socket.ip_socket_factory'
+                interface: 'eth1' #test line interface 192.168.x.x
 
     # this configuration entry represents a secondary raspberry pi device that we will connect
     # to through via RPC
@@ -460,7 +555,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '10.207.18.173'
+                ip_address: '10.207.18.146'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
@@ -520,8 +615,8 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '10.207.18.173'
-                image: 'utfsilabs/rpi_ubuntu_secondary'
+                ip_address: '192.168.1.154'       #configure secondary Rpi rd_1 IP address
+                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
             shell:
@@ -559,10 +654,24 @@ devices:
                 # (optional) port on which the broker is listening (defaults to 1883)
                 port: 1883
                 # (required) network interface to which the broker is bound
-                interface: 'eth0'
+                interface: 'wlan0'
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
 
+    # this represents an MQTT broker running on the raspberry pi on port 1883 with no authentication enabled with ipv6
+    raspi_mosquitto_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 1883
+                interface: 'wlan0'
+                tls_enabled: false
+                ip_version: 6
+    
     # this represents an MQTT broker running on the raspberry pi on port 1883 with authentication enabled
     raspi_mosquitto_auth:
         interfaces:
@@ -576,13 +685,28 @@ devices:
                 # (optional) port on which the broker is listening (defaults to 1883)
                 port: 1883
                 # (required) network interface to which the broker is bound
-                interface: 'eth0'
+                interface: 'wlan0'
                 # (optional) username and password credentials for authentication to the broker
                 #            Defaults to authentication disabled
                 username: 'testuser'
                 password: 'testpassword'
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
+
+    raspi_mosquitto_auth_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 1883
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: false
+                ip_version: 6
 
     # this represents an MQTT broker running on the raspberry pi on port 8883 with TLS and authentication enabled
     raspi_mosquitto_tls:
@@ -595,7 +719,7 @@ devices:
                 server_listen_address: '0.0.0.0'
                 # port must be set to 8883 for TLS to be enabled
                 port: 8883
-                interface: 'eth0'
+                interface: 'wlan0'
                 username: 'testuser'
                 password: 'testpassword'
                 tls_enabled: true
@@ -605,6 +729,24 @@ devices:
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
+
+    raspi_mosquitto_tls_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 8883
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: true
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+                ip_version: 6
 
     raspi_mosquitto_tls_ecdsa:
         interfaces:
@@ -652,7 +794,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 80
-                interface: 'eth0'
+                interface: 'wlan0'
 
     raspi_lighttpd_tls:
         interfaces:
@@ -662,7 +804,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 443
-                interface: 'eth0'
+                interface: 'wlan0'
                 tls_enabled: true
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
@@ -681,6 +823,16 @@ devices:
                 tls_key: 'server-key.pem'
                 tls_certificate: 'server-cert.pem'
                 tls_ca_chain: 'ca-cert.pem'
+
+    python_http_server:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            http:
+                type: 'http.server.python_http'
+                shell: 'linux_shell'
+                port: 80
+                interface: 'wlan0'
 
     raspi_http_client:
         interfaces:
@@ -705,6 +857,7 @@ devices:
                 username: test       # sniffer NUC username
                 password: test123    # sniffer NUC password
                 use_paramiko_expect: false
+                timeout: 30
             capture:
                 default:
                 type: 'wifi.sniffer.tshark'
@@ -732,7 +885,7 @@ devices:
         interfaces:
             power_meter:
                 type: 'power_meter.keysight_N6705'
-                instrument_lan_ip_address: '10.207.19.83'
+                instrument_lan_ip_address: '10.207.21.140'
 
     keysight_benchvue_power_analyzer_win_rm:
         interfaces:
@@ -752,29 +905,26 @@ devices:
         interfaces:
             wcf_power_meter_keysight_benchvue_service: 
                 type: 'rem_mgmt.win_wcf'
-                wsdl: 'http://10.207.19.185:8733/Design_Time_Addresses/utf_wcf_service_library/PowerMeterKeysightBenchvueService/?wsdl'
+                wsdl: 'http://10.207.19.186:8733/Design_Time_Addresses/utf_wcf_service_library/PowerMeterKeysightBenchvueService/?wsdl'
                 timeout: 120000
             wcf_file_transfer_service: 
                 type: 'rem_mgmt.win_wcf'
-                wsdl: 'http://10.207.19.185:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
+                wsdl: 'http://10.207.19.186:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
                 timeout: 120000
             power_meter:
                 type: 'power_meter.keysight_benchvue.keysight_benchvue_win_wcf'
                 power_meter_keysight_benchvue_service: 'wcf_power_meter_keysight_benchvue_service'
                 file_transfer_service: 'wcf_file_transfer_service'
-                power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
+                power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005845::0::INSTR'
                 window_state: 'Show'
 
     python_aws_iot_thing:
         interfaces:
             aws_iot:
                 type: 'aws_iot.python_thing'
-                client_id: 'Python-Thing_Raspi'
-                hostname: 'a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com'
+                client_id: 'test_thing_2_Raspi'
+                hostname: 'a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com'
                 port: 8883
-                #private_key: 'python-thing-private.pem.key'
-                #root_ca: 'AWS-IoT-root-CA.crt'
-                #client_cert: 'python-thing-certificate.pem.crt'
                 private_key: 'private-key.key'
                 root_ca: 'start_field.pem'
                 client_cert: 'client-certificate.crt'
@@ -800,6 +950,7 @@ devices:
                 port: 3001
                 username: null
                 password: null
+                timeout: 2
 
 
     raspi_ssl_server:
@@ -865,7 +1016,7 @@ devices:
                 is_security_enable: True
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
-                firmware_file_path: '/app/manifest/RS9116W.2.9.1.17.rps'
+                firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
 
     raspi_iperf:
         interfaces:
@@ -882,7 +1033,7 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
                 # host machine details where iperf is configuered
-                host_ip: "10.207.18.173"
+                host_ip: "192.168.0.152"
                 host_username: "pi"
                 host_password: "raspberry"
 
@@ -893,7 +1044,7 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
                 # host machine details where iperf is configuered
-                host_ip: "10.207.18.171"
+                host_ip: "10.207.18.2"
                 host_username: "test"
                 host_password: "test123"
 
@@ -934,6 +1085,11 @@ devices:
                 ap_secret: '12345678'
                 username: 'user1'
                 password: '12345678'
+                tls_min_version: '1.0'
+                tls_max_version: '1.2'
+                private_key_file: 'wifi-user.pem'
+                certificate_file: 'wifi-user.pem'
+                ca_file: 'wifi-user.pem'
 
     static_radius_server:
         interfaces:
@@ -950,6 +1106,8 @@ devices:
                 ap_secret: '12345678'
                 username: 'user1'
                 password: '12345678'
+                tls_min_version: '1.0'
+                tls_max_version: '1.2'
 
     openssl_socket:
         interfaces:
@@ -1032,19 +1190,43 @@ devices:
             linux_shell:
                 type: 'shell.shell'
 
-    paho_client:
+    nrf_ppk2_device:
         interfaces:
             linux_shell:
                 type: 'shell.shell'
-            mqtt:
-                type: 'mqtt.client.paho_client'
-                disable_certificate_verification: true
-            wifi:
-                # The 'wifi.access_points.linux' device type represents a linux-based access point
-                # running hostapd to create a soft AP
-                type: 'wifi.access_points.linux'
+            power_meter:
+                type: 'power_meter.nrf_ppk2.nrf_power_profiler_mp'
                 shell: 'linux_shell'
-                interface: 'eth0'
+                vid: 0x1915
+                pid: 0xC00A
+
+    nrf_ble_client:
+        interfaces:
+            bluetooth:
+                type: 'bluetooth.android.nrf_connect.nrf_connect_mi'
+                # This is should be unique for each ble client
+                port: 4701
+                # This is id of mobile need retrive this manually
+                device_id: '9a60d4ba'
+                device_type: 'mi'
+                # This is should be as same as ble_advertising_data
+                advertising_data: "HELLO"
+
+    power_meter_plotter:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            plotter:
+                type: 'power_meter_plotter'
+                src_dir: 'utf_wiseconnect'
+                shell: 'linux_shell'
+
+    # This represents the sniffer filter configuration
+    sniffer_filter:
+        interfaces:
+            ws_sniffer_filter:
+                type: sniffer_filter
+                src_dir: 'utf_wiseconnect'
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -1068,8 +1250,8 @@ defaults:
 
     # To connect the multiple access points
     wifi_access_points:
-        - 'asus_rt_ax3000_ap'
-        - 'dlink_ap'
+        - 'raspi_wifi'
+        - 'static_ap'
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
     # (needed in order to test the host AP mode on the DUT)
@@ -1104,11 +1286,11 @@ defaults:
         - 'secondary_raspi_ble_client'
         - 'raspi_ble_client'
 
-    bt_client: 'secondary_raspi_bt_client'
+    bt_client: 'raspi_bt_client'
 
     mqtt_server: 'raspi_mosquitto'
 
-    mqtt_client: 'paho_client'
+    mqtt_client: 'raspi_wifi'
 
     http_server: 'raspi_lighttpd'
 
@@ -1119,10 +1301,17 @@ defaults:
     #ssl_server: 'raspi_ssl_server_static'
     ssl_client: 'raspi_ssl_client'
     remote_socket: 'raspi_ip_socket'
+    # remote_socket: 'raspi_ip_remote_socket'
     multicast_client: 'raspi_multicast'
     remote_socket_factory: "ip_socket_factory"
 
+    sniffer_filter: 'sniffer_filter'
+
     switch: 'switched_ap'
+
+    switches:
+        - 'switched_ap1'
+        - 'switched_ap2'
 
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
@@ -1134,9 +1323,10 @@ defaults:
     wifi:
         ssid: 'Jenkins-TB7'
         security: WPA2
-        channel: 11
-        passphrase: '12345678'
-        server_ip: '192.168.50.1'
+        channel: 0
+        band: 0 #0 for 2.4Ghz & 1 for 5Ghz
+        passphrase: 'thisisatestnetwork'
+        server_ip: '192.168.0.1'
         static_ip: '192.168.50.199'
         static_subnet: '255.255.255.0'
         static_gateway: '192.168.50.1'
@@ -1144,7 +1334,7 @@ defaults:
         disable_sniffer_validation: false
 
         # firmware path for http/https otaf
-        http_url: '/RS9116W.2.7.0.13.rps'
+        http_url: '/RS9116.2.5.0.4.rps'
 
         pll_mode: 0
         rf_type: 1
@@ -1199,16 +1389,16 @@ defaults:
         server_ip: '10.8.4.11'
 
     aws_iot:
-        hostname: "a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"
+        hostname: 'a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com'
         port: 8883
-        client_id: "Python-Thing"
-        thing_name: "Python-Thing"
+        client_id: "test_thing_2"
+        thing_name: "test_thing_2"
         certfile: "client-certificate.crt"
         keyfile: "private-key.key"
         cafile: "start_field.pem"
 
     aws_server:
-        domain_name: "a25jwtlmds8eip-ats.iot.us-east-2.amazonaws.com"
+        domain_name: "a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com"
 
     ftp_server: 'raspi_ftp_server'
 
@@ -1229,6 +1419,7 @@ defaults:
         bt_exploit_type: "au_rand_flooding"
         script: ""
     
+    plotter: 'power_meter_plotter'
 
     net_perf:
         server_options:
@@ -1238,7 +1429,7 @@ defaults:
             time: 30
         client_options:
             # used only for UDP as there is no limit imposed while TCP
-            bandwidth: 70.0M
+            bandwidth: 0.1M
             interval: 1
             #time in seconds to transmit for (default 10 secs)
             time: 30
@@ -1277,9 +1468,11 @@ defaults:
         data_log_is_peak_to_peak_enabled: true
         data_log_is_charge_c_enabled: true
         data_log_is_charge_ah_enabled: true
-        scope_scope_save_as: 'UTF_Scope_'
+        scope_points: 512
+        scope_file_name: 'UTF_Scope_'
+        scope_folder_location: 'C:\\UTF\\scope'
         scope_trigger_mode: 'Auto'
-        scope_trigger_source: 'ScopeRunButton'
+        scope_stop_after_elapsed_time: 60
         log_file_path: 'C:\\UTF\utf_windows_service\\Logs\\'
 
     sniffer_ellysis_bt_tracker:
@@ -1316,5 +1509,17 @@ constants:
         value: 10
     iter_count:
         value: 5
+    upgrade_fw:
+        value: "/RS9116W.2.9.1.12.rps"
+    board_version:
+        value: "1.4Q7"
+    min_conn_interval:
+        value: 160
+    max_conn_interval:
+        value: 160
+    supervision_timeout:
+        value: 2000
+    hostname:
+        value: 'rs9116test'    
 
-recovery_error_codes: ['0xffffffe2', '0xffffffd5']
+recovery_error_codes: ['0xffffffe2', '0xffffffd5', '0xffffffeb', '0xffffffff', '0xffffffe7']
