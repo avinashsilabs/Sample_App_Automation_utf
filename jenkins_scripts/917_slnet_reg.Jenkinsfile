@@ -142,7 +142,7 @@ pipeline {
                                                 env.rps_file_path = read_path['rps_path']["${build_type}"]["path"]
                                                 env.customer_id = read_path['rps_path']["${build_type}"]["customerid"]
                                                 env.rps_file_prefix = read_path['rps_path']["${build_type}"]["rps_prefix"]
-                                            
+                                                env.security_bit = read_path['rps_path']["${build_type}"]["security_bit"]
                                                 PACKAGE_TYPE=FIRMWARE_NAME.split("\\.")[0]
                                                 withEnv(["PACKAGE_TYPE=${PACKAGE_TYPE}","rps_file_prefix=${rps_file_prefix}","customer_id=${customer_id}","rps_file_path=${rps_file_path}"]){
                                                     if(BUILD_LOCATION == "build_artifacts"){
@@ -153,11 +153,11 @@ pipeline {
                                                             if [[ "${FIRMWARE_NAME}" == RS9116W.* ]]; then
                                                                     wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/RS9116W/${FIRMWARE_NAME}.zip 
                                                                     python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${FIRMWARE_NAME}" 
-                                                                elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${FIRMWARE_NAME}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps" 2>/dev/null; then
+                                                                elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${FIRMWARE_NAME}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps" 2>/dev/null; then
                                                                     mkdir ${FIRMWARE_NAME}
                                                                     cd  ${FIRMWARE_NAME}
                                                                     wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${FIRMWARE_NAME}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps   
-                                                                    mv ${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps  
+                                                                    mv ${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps  ${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps  
                                                                     cp -r * ../../utf_core/src/utf/interfaces/http/www
                                                                     cp -r * ../../manifest/
                                                                 else
@@ -178,11 +178,11 @@ pipeline {
                                                             if [[ "${FIRMWARE_NAME}" == RS9116W.* ]]; then
                                                                     wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/RS9116W/${FIRMWARE_NAME}.zip
                                                                     python3 ../jenkins_scripts/normalize_release_packages.py "${BUILD_LOCATION}" "${FIRMWARE_NAME}" 
-                                                                elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${FIRMWARE_NAME}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps" 2>/dev/null; then
+                                                                elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${FIRMWARE_NAME}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps" 2>/dev/null; then
                                                                     mkdir ${FIRMWARE_NAME}
                                                                     cd  ${FIRMWARE_NAME}
-                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${FIRMWARE_NAME}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps   
-                                                                    mv ${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps  
+                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${FIRMWARE_NAME}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps   
+                                                                    mv ${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps  ${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps  
                                                                     cp * ../../utf_core/src/utf/interfaces/http/www
                                                                     cp * ../../manifest/                                               
                                                                 else
@@ -212,7 +212,7 @@ pipeline {
                 
                                                 sh '''
                                                 pwd && ls
-                                                bash -ex jenkins_scripts/initialize_config.sh ${FIRMWARE_NAME} ${rps_file_path} ${rps_file_prefix} ${customer_id} ${build_type}
+                                                bash -ex jenkins_scripts/initialize_config.sh ${FIRMWARE_NAME} ${rps_file_path} ${rps_file_prefix} ${customer_id} ${build_type} ${security_bit}
                                                 cat config/harnesses/dev_sanity_harness_example.yaml
                                                 ls utf_core/src/utf/interfaces/http/www
                                             '''
@@ -239,7 +239,7 @@ pipeline {
                                         sh '''
                                         cd manifest
                                         # Specify a local directory to save the downloaded files
-                                        jf rt dl --flat --url "https://artifactory.silabs.net/artifactory"  --insecure-tls --user $ARTIFACTORY_CREDENTIALS_USR --password $ARTIFACTORY_CREDENTIALS_PSW  "iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${ARTIFACTORY_FOLDER}/${FIRMWARE_NAME}/${SL_NET_COMMIT}"                          
+                                        jf rt dl --flat --url "https://artifactory.silabs.net/artifactory"  --insecure-tls --user $ARTIFACTORY_CREDENTIALS_USR --password $ARTIFACTORY_CREDENTIALS_PSW  "iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${ARTIFACTORY_FOLDER}/${FIRMWARE_NAME}/${SL_NET_COMMIT}/"                          
                                         ls -l
                                                                         
                                         '''
