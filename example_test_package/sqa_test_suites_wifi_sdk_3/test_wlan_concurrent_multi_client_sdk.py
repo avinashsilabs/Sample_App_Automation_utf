@@ -1416,7 +1416,7 @@ def test_wifi_sdk_udp_rx_in_wpa3_when_remote_clients_conn_disconect_in_conc_mode
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.Default |
                           Si91xTCPIPFeatureBitMap.SSL,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-                              | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             1) | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
@@ -1535,7 +1535,7 @@ def test_wifi_sdk_ssl_rx_func_when_tcp_trf_btwn_clients_in_conc_mode_c148593(sl_
                           Si91xTCPIPFeatureBitMap.SSL,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
                               | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD
-                              | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(1),
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1),
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
@@ -1654,7 +1654,7 @@ def test_wifi_sdk_ssl_tx_func_when_udp_trf_btwn_clients_in_conc_mode_c148594(sl_
                               | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD
                               | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT
                               | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT
-                              | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(3),
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(3),
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
@@ -1785,7 +1785,7 @@ def test_wifi_sdk_ssl_tx_with_tls_v1_2_in_when_2_clients_connected_in_conc_mode_
                           Si91xTCPIPFeatureBitMap.SSL,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
                               | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD
-                              | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(1),
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1),
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
@@ -1938,7 +1938,7 @@ def test_wifi_sdk_ssl_tx_with_tls_v1_0_rejoin_when_two_clients_connected_in_conc
                               | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD
                               | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT
                               | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT
-                              | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(3),
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(3),
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
@@ -2088,7 +2088,7 @@ def test_wifi_sdk_ssl_rx_with_tls_v1_2_in_when_4_clients_connected_in_conc_mode_
                               | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD
                               | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT
                               | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT
-                              | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(3),
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(3),
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
@@ -2236,7 +2236,7 @@ def test_wifi_sdk_ssl_tx_with_rejoin_when_2_clients_connected_in_conc_mode_c1485
                               | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD
                               | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT
                               | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT
-                              | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(3),
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(3),
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
 
@@ -2344,7 +2344,7 @@ def test_wifi_sdk_https_post_func_when_2_clients_connected_in_conc_mode_c148563(
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.Ping | Si91xTCPIPFeatureBitMap.DHCPv4Server,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(1) |
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1) |
                               Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
@@ -2495,7 +2495,7 @@ def test_wifi_sdk_mqtt_with_qos0_when_3_clients_connected_in_conc_mode_c148579(w
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.Ping | Si91xTCPIPFeatureBitMap.DHCPv4Server,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(1) |
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1) |
                               Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
@@ -2646,7 +2646,7 @@ def test_wifi_sdk_mqtt_with_qos1_when_3_clients_connected_in_conc_mode_c148580(w
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
                               | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD
-                              | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(1),
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1),
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
@@ -2789,7 +2789,7 @@ def test_wifi_sdk_tcp_tx_when_4_clients_connected_in_conc_mode_c148569(sl_collec
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
                               | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD
-                              | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(1),
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1),
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }

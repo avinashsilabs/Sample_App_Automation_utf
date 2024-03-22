@@ -191,7 +191,7 @@ pytestmark = [
                                    | Si91xExtCustomFeatureBitMap.IEEE802_11W,
             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
                                   | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD
-                                  | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(1),
+                                  | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1),
             "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
                                | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "set_send_feature_frame": True,
