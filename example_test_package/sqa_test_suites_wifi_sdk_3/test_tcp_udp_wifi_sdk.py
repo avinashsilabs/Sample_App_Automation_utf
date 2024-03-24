@@ -24,6 +24,7 @@ from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficTyp
 from random import randint
 import random
 import string
+from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
 
 """The testcases added in this file run below test steps for DUT(Soc917)
         1. Configuration of DUT in 2G/5G : BGN
@@ -1341,3 +1342,107 @@ def test_5tcp_5udp_dut_server_socket_c19353(
     finally:
         remote_socket_factory.interfaces.socket.close_all()
         remote_socket_factory.interfaces.socket.sockets = []
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_tcp_remote_terminate_c19362(
+        wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket_factory,
+        remote_socket, wifi_client):
+
+    """TCP remote terminate after Tx from module"""
+    try:
+        test_name = request.node.name
+        no_of_pkts = 100
+        pkt_length = 1460
+        local_port = 5001
+        server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+
+        wifi_thread = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                     sl_collections=sl_collections, test_name=test_name, sniffer_filter=sniffer_filter,
+                                     wifi_client=wifi_client)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+
+        remote_socket.interfaces.socket.start_server(port=local_port)
+        socket_id = wifi_dut.interfaces.wifi.Asyncsocket(domain="AF_INET", stream_type="SOCK_STREAM",
+                                                         protocol="IPPROTO_TCP")
+        logger().info(f"Socket open successfully : {socket_id}")
+        logger().info(f"Successfully opened tcp client socket and socket id received is {socket_id} which is expected")
+
+        wifi_dut.interfaces.wifi.bind(socket_fd=socket_id, device_ip=wifi_thread.dut_addr['device_ip'],
+                                      server_port=local_port, timeout=5, asynch=1)
+
+        logger().info("DUT is connecting to server socket")
+        connect_status = False
+        for count in range(3):
+            try:
+                wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=socket_id, server_ip=server_ip,
+                                                          server_port=local_port)
+                connect_status = True
+                break
+            except:
+                logger().info(f"Socket connection failed in DUT...retry_count:{count + 1}")
+                time.sleep(10)
+        assert connect_status, "Socket connection failed in DUT"
+        logger().info("Socket connection is successful")
+        time.sleep(5)
+
+        data_transfer_obj = data_transfer()
+        th_start = Thread(target=data_transfer_obj.receive_data_socket, args=(remote_socket, no_of_pkts, pkt_length, 0),
+                          daemon=True)
+        th_start.start()
+        bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(
+            socket_id=socket_id, pkt_length=pkt_length, no_of_pkts=no_of_pkts, time_interval=120, server_ip=server_ip,
+            server_port=local_port)
+        logger().info(f"Number of bytes sent by dut {bytes_sent}")
+        time.sleep(2)
+        logger().info("Data sent by DUT and received on remote peer is matching")
+        bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(
+            socket_id=socket_id, pkt_length=pkt_length, no_of_pkts=no_of_pkts, time_interval=120,
+            server_ip=server_ip, server_port=local_port)
+        logger().info(f"Number of bytes sent by dut {bytes_sent}")
+        wifi_dut.interfaces.wifi.set_remote_terminate_callback()
+        time.sleep(2)
+        remote_socket.interfaces.socket.stop()
+        event_data_output = ""
+        time.sleep(7)
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        for event in events:
+            if event.event_type == AsyncEventIdentifiers.REMOTE_TERMINATE:
+                event_data_output = event.event_data
+
+        logger().info(f" ***************** EVENT DATA IS : {event_data_output} ********************** ")
+
+        assert "Remote Terminate" in event_data_output, "expected error code not found. Expected is Remote Terminate"
+        logger().info("*********** Remote Termination is Successful *************")
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
