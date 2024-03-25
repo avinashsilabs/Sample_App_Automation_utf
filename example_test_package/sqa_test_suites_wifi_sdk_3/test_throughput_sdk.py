@@ -260,6 +260,55 @@ class WifiJoinThread(ThreadBase):
         self.wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
 
+    def wlan_data_transfer_without_async(self):
+        logger().info("starting the sniffer capture")
+        self.wifi_sniffer.interfaces.capture.configure_interface(
+            channel=self.wifi_access_point.interfaces.wifi.channel)
+        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
+        self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                 wifi_access_point=self.wifi_access_point,
+                                                                 associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                 retry_count=3, ping_after_power_save=False,
+                                                                 ping_count=self.ping_count, power_save=False)
+        time.sleep(2)
+        self.wifi_dut.interfaces.wifi.switch_host_frequency()
+        time.sleep(2)
+        host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Remote device ip :{host_ip}")
+
+        if self.test_case_no == 146663:
+            protocols = ["TCP"]
+            traffic_types = ["RX"]
+            for protocol in protocols:
+                for traffic_type in traffic_types:
+                    self.sl_collections.run_traffic(
+                        wifi_dut=self.wifi_dut,
+                        net_perf_client=self.net_perf_client,
+                        protocol=protocol,
+                        device_ip=self.dut_addr['device_ip'],
+                        host_ip=host_ip,
+                        timeout=35,
+                        traffic_type=traffic_type,
+                    )
+        if self.test_case_no == 146664:
+            protocols = ["UDP"]
+            traffic_types = ["RX"]
+            for protocol in protocols:
+                for traffic_type in traffic_types:
+                    self.sl_collections.run_traffic(
+                        wifi_dut=self.wifi_dut,
+                        net_perf_client=self.net_perf_client,
+                        protocol=protocol,
+                        device_ip=self.dut_addr['device_ip'],
+                        host_ip=host_ip,
+                        timeout=35,
+                        traffic_type=traffic_type,
+                    )
+        self.wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
+        self.wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(2)
+
 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -896,7 +945,7 @@ def test_wlan_standalone_udp_tx_with_11n_C146709(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_udp_rx_with_11n_C146709(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_udp_rx_with_11n_C146710(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -912,3 +961,87 @@ def test_wlan_standalone_udp_rx_with_11n_C146709(wifi_sniffer, wifi_access_point
         wlan_obj.wait_for_exit()
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV |
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "config_features": 0,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
+    }
+)
+def test_wlan_standalone_without_async_tcp_rx_C146663(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+                                       protocol, utf_constants, request, sl_collections):
+    ping_count = utf_constants.get("ping_count")
+    iter_count = utf_constants.get("iter_count")
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                              protocol=protocol, sl_collections=sl_collections, test_case_no=146663,
+                              ping_count=ping_count, data_transfer=True, traffic_type="RX", iteration_count=iter_count
+                              )
+    try:
+        wlan_obj.wlan_data_transfer_without_async()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV |
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "config_features": 0,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
+    }
+)
+def test_wlan_standalone_without_async_udp_rx_C146664(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+                                       protocol, utf_constants, request, sl_collections):
+    ping_count = utf_constants.get("ping_count")
+    iter_count = utf_constants.get("iter_count")
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                              protocol=protocol, sl_collections=sl_collections, test_case_no=146664,
+                              ping_count=ping_count, data_transfer=True, traffic_type="RX", iteration_count=iter_count
+                              )
+    try:
+        wlan_obj.wlan_data_transfer_without_async()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
