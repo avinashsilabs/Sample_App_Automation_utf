@@ -16,7 +16,7 @@ from utf_wiseconnect.devices.rs911x import (
     SocketType,
     Cipher,
     DefaultCipher,
-    )
+)
 from test_ssl_advertize_ciphers_rsa import ssl_connection_tx_rx
 
 """The testcases added in this file run below test steps for DUT-RS9116
@@ -53,9 +53,10 @@ pytestmark = [
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "ca_cert": "ca_ecdsa.crt",
             "set_send_feature_frame": True,
-            }
-        )
-    ]
+        }
+    )
+]
+
 
 @pytest.mark.parametrize("cert",
                          [["server_ecdsa.crt",
@@ -70,10 +71,11 @@ pytestmark = [
                          [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 def test_advertise_ciphers_ssl_tx_TC19616(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger, cert
-        ):
+):
     capture_filename = "test_advertise_ciphers_ssl_tx_TC19616"
     ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 0, server_cert=cert[0], server_key=cert[1])
+
 
 @pytest.mark.parametrize("cert",
                          [["server_ecdsa.crt",
@@ -88,7 +90,7 @@ def test_advertise_ciphers_ssl_tx_TC19616(
                          [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 def test_advertise_ciphers_ssl_rx_TC19617(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger, cert
-        ):
+):
     capture_filename = "test_advertise_ciphers_ssl_rx_TC19617"
     ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                          logger, 1, server_cert=cert[0], server_key=cert[1])
