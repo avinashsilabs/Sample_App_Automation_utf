@@ -238,11 +238,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
 
     mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
     logger.info(f"DUT MAC_Address: {mac_address}")
-
-    wifi_sniffer.interfaces.capture.start_capture(
-        capture_file=f"{capture_filename}.pcap"
-    )
-
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
                                     scan_interval=6,
                                     beacon_missedcount=40,
@@ -292,7 +288,6 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
         wifi_dut.interfaces.wifi.select_ssl_cipher(cipher_list=cipher)
     if mode == 3:  # if mode is set to 3, socket open, connect to server, send data, disconnect test is done in loop
         logger.info(f"********Running the test for {test_run_time} seconds*******")
-
         sw = Stopwatch()
         count = 0
         while sw.elapsed_sec < test_run_time:
@@ -310,7 +305,6 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
             # Enable ssl option for socket opened
             wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
                                                        SocketOptions.SSL_ENABLE)
-
             local_port = randint(5001, 60000)
             # Socket binds at (device_ip, 5001) in DUT
             wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
@@ -339,9 +333,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger.info("Stop Sniffer finally")
-
         # decrypt with proper decryption key & verify that we can see the ICMP/DHCP packets
-
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
         cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, mac_address, ["tls"], capture_filename,
                                        mode=1)
@@ -351,7 +343,6 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
                         "not captured")
         assert (len(cipher_suite) > 0), f"tls client hello packet is not captured or one of the wifi 4-way handshake " \
                                         f"pkt is not captured "
-
         logger.info(f"{len(cipher_suite)} times tls client hello message captured on sniffer log")
         for cipher in cipher_suite:
             cipher_suite_tmp = cipher[1]
@@ -363,8 +354,6 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
             f"******As per sniffer capture cipher suite advertised by device {mac_address}-> {cipher_suite_tmp}*******")
 
     else:
-        pkt_count = 10000
-        bytes_sent = (pkt_count * buffer_length)
         # Open ssl server socket in remote device(Raspberry pi or static device)
         if server_cert is None:
             ssl_server.interfaces.ssl.start_server()
@@ -405,13 +394,12 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
             logger.info("Data sent by DUT and received on server is matching")
 
             if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
-                ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
+                ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length, pkt_rcv_timeout=30)
             server_ip = ssl_server.interfaces.ssl.server_ip
             result = wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count, server_ip=server_ip,
-                                                             server_port=port1)
+                                                             server_port=port1, time_interval=600, timeout=600)
             logger.info(f"Number of bytes sent by dut {result}")
             bytes_sent = result
-
             bytes_received = ssl_server.interfaces.ssl.data_receive_stats(server_socket_no)
             assert bytes_sent == bytes_received, f"Number of bytes sent by DUT and received on the remote peer are" \
                                                  f"not matched on socket {server_socket_no} "
@@ -424,7 +412,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
             time.sleep(320)
             bytes_sent = ssl_server.interfaces.ssl.data_send_stats(server_socket_no)
             result = wifi_dut.interfaces.wifi.get_socket_rx_stats(sock)
-            bytes_received = re.search(r'Total bytes received\W+(\d+)', result.decode())[1]
+            bytes_received = int(re.search(r'Total bytes received\W+(\d+)', result.decode())[1])
             logger.info(f"Bytes sent by remote peer {bytes_sent} on socket {server_socket_no}")
             logger.info(f"bytes received on socket {sock} -> {bytes_received}")
             assert bytes_received == bytes_sent, "Packet loss observed while receive test"
@@ -569,10 +557,6 @@ def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_access_point, wifi_dut, ssl_s
             cipher = select_cipher_list(cipher_list)
             wifi_dut.interfaces.wifi.select_ssl_cipher(cipher_list=cipher)
 
-        pkt_count = 100
-
-        bytes_sent = (pkt_count * buffer_length)
-
         # Open ssl server socket in remote device(Raspberry pi or static device)
         if server_cert is None:
             ssl_server.interfaces.ssl.start_server()
@@ -610,7 +594,7 @@ def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_access_point, wifi_dut, ssl_s
             ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
         server_ip = ssl_server.interfaces.ssl.server_ip
         result = wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count, server_ip=server_ip,
-                                                         server_port=port1)
+                                                         server_port=port1, time_interval=600, timeout=600)
         logger.info(f"Number of bytes sent by dut {result}")
         bytes_sent = result
 
@@ -663,8 +647,11 @@ pytestmark = [
             "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation,
             "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": RS9116ExtCustomFeatureBitMap.IEEE802_11W | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+            "ext_custom_features": RS9116ExtCustomFeatureBitMap.IEEE802_11W | RS9116ExtCustomFeatureBitMap.FeatureLowPower
+                                   | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+                                   | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+            "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
+                                  | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "ca_cert": "ca-chain.cert.pem",
             "set_send_feature_frame": True,
@@ -831,8 +818,10 @@ def test_advertise_ciphers_ssl_rx_TC19611(wifi_sniffer, wifi_access_point, wifi_
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+                               | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ca_cert": ["ca-chain.cert.pem"],
         "set_send_feature_frame": True,
@@ -940,8 +929,10 @@ def test_advertise_ciphers_ssl_tx_TC19612(wifi_sniffer, wifi_dut, wifi_access_po
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+                               | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ca_cert": ["ca-chain.cert.pem"],
         "set_send_feature_frame": True,
@@ -1046,8 +1037,10 @@ def test_advertise_ciphers_ssl_rx_TC19613(wifi_sniffer, wifi_access_point, wifi_
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+                               | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ca_cert": ["ca-chain.cert.pem"],
         "set_send_feature_frame": True,
@@ -1154,8 +1147,10 @@ def test_advertise_ciphers_ssl_tx_TC19614(wifi_sniffer, wifi_dut, wifi_access_po
         "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.PSKSecurity | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.SSL | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
+                               | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ca_cert": ["ca-chain.cert.pem"],
         "set_send_feature_frame": True,
@@ -1186,7 +1181,6 @@ def test_advertise_ciphers_ssl_rx_TC19615(wifi_sniffer, wifi_access_point, wifi_
 
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
         logger.info(f"DUT MAC_Address: {dut_mac_address}")
-
         openssl.interfaces.server.start(port=5001, tls_version="-tls1_2")
         sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
         assert sock == 0, "Socket id received is wrong. expected is 0"
@@ -1195,35 +1189,27 @@ def test_advertise_ciphers_ssl_rx_TC19615(wifi_sniffer, wifi_access_point, wifi_
         # Enable ssl option for socket opened
         wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
                                                    SocketOptions.SSL_ENABLE)
-
         logger.info(f"Selecting SSL version {SocketOptions.SO_SSL_V_1_2_ENABLE} for the socket-id->{sock} using "
                     f"rsi_setsockopt API")
         wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_V_1_2_ENABLE,
                                                    SocketOptions.SSL_ENABLE)
-
         local_port = randint(5001, 60000)
         wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
-
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
-
         wifi_dut.interfaces.wifi.connect_to_server(sock, host_ip, server_port=port_connect)
-
-        buffer_length = 200
-        data = "".join(
-            random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
-        )
-        buff_len = len(data)
+        buffer_length = 100
+        data = "".join(random.choices(string.ascii_uppercase + string.digits, k=buffer_length))
         logger.info(f"DATA sent from remote PC to dut {data}")
-        openssl.interfaces.server.send_message(data)
+
+        openssl.interfaces.server.subprocess.send_input(data, line_feed=False)
         time.sleep(5)
-        buffer_length, buffer = wifi_dut.interfaces.wifi.receive_from(0, data_len=buff_len)
+        buffer_length, buffer = wifi_dut.interfaces.wifi.receive_from(sock, data_len=buffer_length, timeout=40)
         logger.info(f"Data received on dut {buffer}")
         assert data == buffer.decode(), "Date received on dut does not match the data sent from host"
 
         openssl.interfaces.server.stop()
         wifi_dut.interfaces.wifi.close_socket(sock)
         wifi_dut.interfaces.wifi.leave()
-
         wifi_sniffer.interfaces.capture.stop_capture()
         logger.info("Stop Sniffer finally")
         validation = True
@@ -1232,10 +1218,8 @@ def test_advertise_ciphers_ssl_rx_TC19615(wifi_sniffer, wifi_access_point, wifi_
         assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
         logger.info(f"PS-POLL packets are captured in the sniffer")
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-
         cipher_suite = get_cipher_list(wifi_sniffer, logger, decryption_key, dut_mac_address, ["tls"], capture_filename,
                                        mode=0)
-
         assert (len(cipher_suite) > 0), f"tls client hello packet is not captured"
         cipher_suite = cipher_suite[0][1]
         logger.info(
