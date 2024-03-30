@@ -516,3 +516,157 @@ def test_wlan_standalone_tcp_rx_416_256K_11n_C146716(wifi_sniffer, wifi_access_p
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+
+    }
+)
+def test_wlan_ble_connected_tcp_tx_416_256K_c20746(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+                                       protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    iter_count = utf_constants.get("iter_count")
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                              protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
+                              ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
+                              ble_conn=True, iteration_count=iter_count, traffic_type="TX", test_case_no=20740,
+                              )
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+
+    }
+)
+def test_wlan_ble_connected_tcp_rx_416_256K_c20747(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+                                       protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    iter_count = utf_constants.get("iter_count")
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                              protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
+                              ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
+                              ble_conn=True, iteration_count=iter_count, traffic_type="RX", test_case_no=20741,
+                              )
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+# @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+
+    }
+)
+def test_wlan_ble_connected_udp_tx_416_256K_c20744(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+                                       protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    iter_count = utf_constants.get("iter_count")
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                              protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
+                              ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
+                              ble_conn=True, iteration_count=iter_count, traffic_type="TX", test_case_no=20738,
+                              )
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+
+    }
+)
+def test_wlan_ble_connected_udp_rx_416_256K_c20745(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+                                       protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    iter_count = utf_constants.get("iter_count")
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                              protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
+                              ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
+                              ble_conn=True, iteration_count=iter_count, traffic_type="RX", test_case_no=20739,
+                              )
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
