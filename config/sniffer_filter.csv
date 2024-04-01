@@ -1,5 +1,6 @@
 ﻿Column1,Column2,Column3
 Column1,Column2,Column3
+Column1,Column2,Column3
 ,,
 beacon,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 8)
 beacon_ap_mode_us_region,(wlan.addr == {{ wlan_addr }}) and (wlan_radio.channel == {{ radio_ch }}), and ((wlan.fc.type_subtype == 8) and (wlan.country_info.code == US))
@@ -23,6 +24,7 @@ beacon_assoc_id_ps_poll_with_pm_bit_enable_assoc_id,(wlan.ta == {{ da_addr }} an
 beacon_assoc_id_ps_poll_with_pm_bit_enable_qos_dtim_3,(wlan.fc.type_subtype == 0x001a or wlan.fc.type_subtype == 0x0028), or (wlan.tim.dtim_count == 0 and wlan.tim.dtim_period == 3 and wlan.tim.aid ==  {{association_id}})
 beacon_wpa2_entr_wfa_check,(wlan.sa == {{ sa_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff), and (wlan.fc.type_subtype == 0x0008) and (wlan.wfa.ie.wpa.type == 1) 
 beacon_wpa2_entr_akms_check,(wlan.sa == {{ sa_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff), and (wlan.fc.type_subtype == 0x0008) and (wlan.rsn.akms.type == 1)
+beacon_mbssid,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 8) and (wlan.tag.number == 71)
 probe_request,(wlan.sa == {{ sa_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff), and (wlan.fc.type_subtype == 4)
 probe_request_HT,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 4) and (wlan.tag.number == 45 )
 probe_request_HE,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 4) and (wlan.tag.number == 35 )
@@ -36,6 +38,7 @@ association_request,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), a
 association_request_HE,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 0)  and (wlan.ext_tag.number == 35 )
 association_response,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 1)
 assoc_req_resp,(wlan.sa == {{ sa_addr }}) and (wlan.ta == {{ ta_addr }}), or (wlan.fc.type_subtype == 0x0000) || (wlan.fc.type_subtype == 0x0001)
+assoc_mbssid,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 0x0000) and (wlan.extcap == 0x48)
 deauthentication,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 12)
 authentication,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 11)
 ps_poll,(wlan.addr == {{ sa_addr }}), and (wlan.fc.type_subtype == 0x001a) and (wlan.fc.pwrmgt == 1)
