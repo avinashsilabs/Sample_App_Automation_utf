@@ -396,6 +396,7 @@ def ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, 
             if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
                 ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length, pkt_rcv_timeout=30)
             server_ip = ssl_server.interfaces.ssl.server_ip
+            pkt_count = 100
             result = wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count, server_ip=server_ip,
                                                              server_port=port1, time_interval=600, timeout=600)
             logger.info(f"Number of bytes sent by dut {result}")
@@ -593,6 +594,7 @@ def wlan_ssl_connect_disconnect(wifi_sniffer, wifi_access_point, wifi_dut, ssl_s
         if ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
             ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
         server_ip = ssl_server.interfaces.ssl.server_ip
+        pkt_count = 100
         result = wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count, server_ip=server_ip,
                                                          server_port=port1, time_interval=600, timeout=600)
         logger.info(f"Number of bytes sent by dut {result}")
