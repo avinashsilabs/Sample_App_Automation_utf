@@ -3882,15 +3882,14 @@ def test_wsdk_WPA2_eap_conn_with_peap_cert_not_loaded_C113851(
 
     try:
         test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
         dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"Mac Address of DUT: {dut_mac_address}")
         wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
                                                    cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
             max_retry_attempts=0, scan_interval=4, beacon_missed_count=40, first_time_retry_enable=0, eap_flags=2)
         wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
@@ -3912,6 +3911,11 @@ def test_wsdk_WPA2_eap_conn_with_peap_cert_not_loaded_C113851(
             sa_addr=ap_mac_address, da_addr=dut_mac_address, filter_name='eap_connection_failure')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count'], 'Unable to find EAP failure frames sent from AP in sniffer'
+
+        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_mac_address,
+                                                                                        filter_name='beacon_wpa2_entr_akms_check')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)[
+            'packet_count'], 'Unable to find packet in sniffer'
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
