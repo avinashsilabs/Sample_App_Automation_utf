@@ -200,7 +200,8 @@ def test_static_ip_assignment_with_existing_ip_C101962(wifi_sniffer, wifi_dut, w
         logger().info("============ ip address sending ================")
         time.sleep(10)
         wifi_client.interfaces.wifi.config["interface"] = "wlan0"
-        wifi_client_ip, dut_ip, wifi_client_gateway_ip = wifi_client_join(wifi_client, wifi_access_point, dhcp_start, dhcp_end)
+        wifi_client_ip, dut_ip, wifi_client_gateway_ip = wifi_client_join(wifi_client, wifi_access_point, dhcp_start,
+                                                                          dhcp_end)
         ap_client_ip = wifi_access_point.interfaces.wifi.read_ip_client_address("rs9116test")
         time.sleep(10)
         with pytest.raises(WlanError) as exc_info:
@@ -460,7 +461,8 @@ def test_static_ip_assignment_with_and_Without_ip_Conflict_to_DUT_C101965(wifi_s
             capture_file=capture_file)
         time.sleep(3)
         wifi_client.interfaces.wifi.config["interface"] = "wlan0"
-        wifi_client_ip, dut_ip, wifi_client_gateway_ip = wifi_client_join(wifi_client, wifi_access_point, dhcp_start, dhcp_end)
+        wifi_client_ip, dut_ip, wifi_client_gateway_ip = wifi_client_join(wifi_client, wifi_access_point, dhcp_start,
+                                                                          dhcp_end)
         time.sleep(10)
         result = wifi_dut.interfaces.wifi.version()
         logger().info(f" DUT_Version: {result}")
@@ -1329,7 +1331,8 @@ def test_SSL_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101979(wifi_sniffer
             capture_file='test_SSL_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101979')
         time.sleep(3)
         wifi_client.interfaces.wifi.config["interface"] = "wlan0"
-        wifi_client_ip, dut_ip, wifi_client_gateway_ip = wifi_client_join(wifi_client, wifi_access_point, dhcp_start, dhcp_end)
+        wifi_client_ip, dut_ip, wifi_client_gateway_ip = wifi_client_join(wifi_client, wifi_access_point, dhcp_start,
+                                                                          dhcp_end)
         result = wifi_dut.interfaces.wifi.version()
         logger().info(f" DUT_Version: {result}")
         result = wifi_dut_mac_address(wifi_dut)
@@ -1480,18 +1483,17 @@ def test_static_ip_ip_conflict_with_multiple_times_in_loop_C101980(wifi_sniffer,
             logger().info(f" Error code expected for iteration count {i} ")
             with pytest.raises(WlanError) as exc_info:
                 result[i] = wifi_dut.interfaces.wifi.start_ip_in_static_mode(mode="static",
-                                                                          static_ip=wifi_client_ip,
-                                                                          static_subnet="255.255.255.0",
-                                                                          static_gateway=wifi_client_gateway_ip,
-                                                                          timeout=40,
-                                                                          vap_id=0)
+                                                                             static_ip=wifi_client_ip,
+                                                                             static_subnet="255.255.255.0",
+                                                                             static_gateway=wifi_client_gateway_ip,
+                                                                             timeout=40,
+                                                                             vap_id=0)
                 logger().info(f"result of static ip mode set for iteration {i} is : {result[i]}")
             assert exc_info.value.error_code == 0xFF75, "The 0xFF75 Error is expected for this test"
         logger().info(f" ====== STOPPING THE capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
-
 
 
 @pytest.mark.config(
@@ -1579,6 +1581,7 @@ def test_IP_Conflict_Detection_When_DHCP_Fails_C101985(wifi_sniffer,
                                                          dhcp_lease="36000")
 
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1614,7 +1617,7 @@ def test_IP_Conflict_Detection_When_DHCP_Fails_C101985(wifi_sniffer,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "reset"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
 def test_static_ip_assignment_when_dut_in_concurrent_Mode_C101967(firmware_loader, wifi_sniffer,
                                                                   wifi_dut,
@@ -1674,6 +1677,7 @@ def test_static_ip_assignment_when_dut_in_concurrent_Mode_C101967(firmware_loade
         wifi_dut.interfaces.wifi.leave()
 
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1709,10 +1713,9 @@ def test_static_ip_assignment_when_dut_in_concurrent_Mode_C101967(firmware_loade
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "reset"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
-def test_Dynamic_IP_Assignment_when_dut_in_concurrent_Mode_C101973(firmware_loader, wifi_sniffer,
-                                                                   wifi_dut,
+def test_Dynamic_IP_Assignment_when_dut_in_concurrent_Mode_C101973(firmware_loader, wifi_sniffer, wifi_dut,
                                                                    wifi_access_point, wifi_client, utf_constants):
     try:
         validation = True
@@ -1720,6 +1723,13 @@ def test_Dynamic_IP_Assignment_when_dut_in_concurrent_Mode_C101973(firmware_load
         ping_count = utf_constants.get("ping_count")
         capture_file = "test_Dynamic_IP_Assignment_when_dut_in_concurrent_Mode_C101973"
         file_name = "test_Dynamic_IP_Assignment_when_dut_in_concurrent_Mode_C101973"
+        logger().info(" ====== configuring the sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info(f"=========== configured the sniffer on {channel} on NUC.")
+        logger().info(f" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file)
+        time.sleep(3)
+
         ap_ip = wifi_access_point.interfaces.wifi.ap_test_ip
         assert ap_ip, "Please Add the AP test ip in the ap section of harness"
         logger().info(f"AP Ip {ap_ip}")
@@ -1734,12 +1744,7 @@ def test_Dynamic_IP_Assignment_when_dut_in_concurrent_Mode_C101973(firmware_load
                                         beacon_missedcount=40,
                                         first_time_retry=0)
         wifi_dut.interfaces.wifi.associated = False
-        logger().info(" ====== configuring the sniffer with access point channel ====== ")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        logger().info(f"=========== configured the sniffer on {channel} on NUC.")
-        logger().info(f" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file)
-        time.sleep(3)
+
         ##### preparing wifi_dut as access point - AP Mode
         logger().info(f"starting RSI_DUT as ACCESS Point in channel no {channel}")
         ap_mac = wifi_access_point.interfaces.wifi.bssid
@@ -1876,7 +1881,6 @@ def test_Dynamic_IP_assignment_when_DHCP_Pool_Exhausted_in_concurrent_Mode_C1019
         wifi_dut.interfaces.wifi.leave()
 
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1989,6 +1993,8 @@ def test_Dynamic_IP_assignment_with_and_without_ip_Conflict_in_concurrent_Mode_C
                                                          dhcp_lease="3600")
         wifi_dut.interfaces.wifi.leave()
 
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -2022,7 +2028,7 @@ def test_Dynamic_IP_assignment_with_and_without_ip_Conflict_in_concurrent_Mode_C
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "reset"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
 def test_static_ip_with_and_without_ipconflict_when_dut_in_concurrent_Mode_C101970(firmware_loader, wifi_sniffer,
                                                                                    wifi_dut,
@@ -2078,11 +2084,17 @@ def test_static_ip_with_and_without_ipconflict_when_dut_in_concurrent_Mode_C1019
                                                                       vap_id=0)
             logger().info(f"result : {result}")
         assert exc_info.value.error_code == 0xFF75, "The 0xFF75 Error is expected for this test"
-
-        wifi_dut.interfaces.wifi.start_ip_in_static_mode(mode="static",
-                                                         static_ip=dut_ip,
-                                                         static_subnet="255.255.255.0",
-                                                         static_gateway=wifi_client_gateway_ip, timeout=40, vap_id=0)
+        ip_fail = False
+        for count in range(3):
+            try:
+                wifi_dut.interfaces.wifi.start_ip(mode="static", ip_address=dut_ip, subnet="255.255.255.0",
+                                                  gateway=wifi_client_gateway_ip, vap_id=0, timeout=120, retries=6)
+                ip_fail = True
+                break
+            except:
+                logger().info(f"IP setting in DUT is failed, retry_count:{count + 1}")
+                time.sleep(15)
+        assert ip_fail, "IP Setting in DUT is failed"
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
         status = ping(device_ip, ping_count)
         assert status is True, "DUT is not responding to ping request from third party device"
@@ -2187,6 +2199,7 @@ def test_static_ip_assignment_with_ip_conflict_in_concurrent_Mode_C101968(firmwa
         wifi_sniffer.interfaces.capture.stop_capture()
     finally:
         wifi_dut.interfaces.wifi.leave()
+
 
 @pytest.mark.config(
     "wifi_dut",

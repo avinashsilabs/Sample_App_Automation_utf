@@ -312,7 +312,6 @@ def join_ap(wifi_dut, wifi_access_point, wait_time=3):
 
 
 def load_certificates(wifi_dut, ssl_server, *lst: list):
-    logger().info("THREAD EXEC")
     list_sock = []
     for i in lst:
         index = i[1]
@@ -323,22 +322,17 @@ def load_certificates(wifi_dut, ssl_server, *lst: list):
                                                          cert_index=index,
                                                          )
             device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-
             ssl_server.interfaces.ssl.start_server(port=port, server_cert=i[3][1], server_key=i[3][2])
-
             sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
             # Enable ssl option for socket opened
             wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_ENABLE,
                                                        SocketOptions.SSL_ENABLE)
-
             list_sock.append(sock)
             logger().info(f"List sockets{list_sock}")
             # Enable cert index 0 for socket opened
             wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_CERT_INDEX,
                                                        eval("SocketOptions.CERT_INDEX" + str(index)))
-
             wifi_dut.interfaces.wifi.bind(sock, device_ip, port)
-            # # if
             connect = 1
             for count in range(3):
                 try:
@@ -349,8 +343,7 @@ def load_certificates(wifi_dut, ssl_server, *lst: list):
                 except:
                     time.sleep(5)
                     logger().info(f"Retry_count:{count}")
-            assert connect == 0
-
+            assert connect == 0, "ssl connection failed"
     logger().info(f"APPENDING INTO LIST RESULT{list_sock}")
     return list_sock
 
@@ -381,26 +374,21 @@ class load_certificates_thread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
                 device_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-
                 self.ssl_server.interfaces.ssl.start_server(port=port, server_cert=element[3][1],
                                                             server_key=element[3][2])
-
                 sock = self.wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
                 # Enable ssl option for socket opened
                 self.wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET,
                                                                 SocketOptions.SO_SSL_ENABLE,
                                                                 SocketOptions.SSL_ENABLE)
-
                 list_sock.append(sock)
                 logger().info(f"List sockets{list_sock}")
                 # Enable cert index 0 for socket opened
                 self.wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET,
                                                                 SocketOptions.SO_CERT_INDEX,
                                                                 eval("SocketOptions.CERT_INDEX" + str(index)))
-
                 # Socket binds at (device_ip, 5001) in DUT
                 self.wifi_dut.interfaces.wifi.bind(sock, device_ip, port)
-                # # if
                 connect = 1
                 for count in range(3):
                     try:
@@ -413,8 +401,6 @@ class load_certificates_thread(ThreadBase):
                         time.sleep(4)
                         logger().info(f"Retry_count:{count}")
                 assert connect == 0
-
-                # list_sock[index] = list_sock.append(sock)
         logger().info(f"APPENDING INTO LIST RESULT{list_sock}")
         return list_sock
 
@@ -2385,13 +2371,11 @@ def test_BLE_connectivity_data_tx_after_loadcert0_loadcert1_C19654(wifi_sniffer,
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_disconnect"])
-def test_load_cert_with_wlan_ble_in_connected_state_C19651(wifi_sniffer, wifi_dut, wifi_access_point, ble_client,
-                                                           net_perf_client, ssl_server,
-                                                           wifi_client, logger, cert1):
+def test_load_cert_with_wlan_ble_in_connected_state_C19651(wifi_dut, wifi_access_point, ble_client, ssl_server, logger,
+                                                           cert1):
     try:
-        port1 = ssl_server.interfaces.ssl.config['device_port1']
+        port1 = randint(5001, 5010)
         data1 = "VzwQ"
-        ping_count = 10
         ble_client.interfaces.bluetooth.gatt_adapter.notifications.clear()
         bt_local_name = "test_C19651"
         logger.info("configuring bd local name....")
@@ -2415,7 +2399,6 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19651(wifi_sniffer, wifi_du
         logger.info("Start ble advertising on DUT")
         # 256(0x100), 512(0x200), 7(0x07)
         wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_int_min=256, ble_adv_int_max=512, ble_adv_channel_map=7)
-
         logger.info(f"Begin Scanning for BLE devices")
         ble_client.interfaces.bluetooth.close()
         time.sleep(2)
@@ -2460,26 +2443,20 @@ def test_load_cert_with_wlan_ble_in_connected_state_C19651(wifi_sniffer, wifi_du
         ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path, char_uid=char_uid)
 
         logger.info("Sending notifications from DUT")
-
         wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F, data=data1)
         wifi_dut.interfaces.wifi.ble_notify_value()
-
         # read value - Notifications not enabled
         result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
         assert result == data1
-
-        device_ip = join_ap(wifi_dut, wifi_access_point)
-
+        join_ap(wifi_dut, wifi_access_point)
         load_cert1 = ["open", 0, port1, cert1]
         result_load_certificate = load_certificates(wifi_dut, ssl_server, load_cert1)
         logger.info(f"Loading certificate{result_load_certificate}")
-
         logger.info("Get ble device state")
         state = wifi_dut.interfaces.wifi.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected, "Ble device is not connected"
         logger.info(" Connected to the BLE device ")
-
         wifi_dut.interfaces.wifi.close_socket(0)
         wifi_dut.interfaces.wifi.leave()
     finally:

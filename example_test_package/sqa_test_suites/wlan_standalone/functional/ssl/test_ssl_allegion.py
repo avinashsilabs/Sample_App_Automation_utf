@@ -2627,7 +2627,8 @@ def test_ssl_three_sockets_connectivity_check_loading_wrong_certs_TC19165(
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT | RS9116ExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             3),
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "ca_cert": ["ca-chain.cert.pem", "ca-chain.cert.pem", "ca-chain.cert.pem"]
+        "ca_cert": ["ca-chain.cert.pem", "ca-chain.cert.pem", "ca-chain.cert.pem"],
+        "set_send_feature_frame": True
     }
 )
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -2706,11 +2707,12 @@ def test_ssl_three_sockets_socket_select_tx_rx_data_testcase_c19166(wifi_sniffer
 
         for iteration in range(1, repeat_count):
             logger.info(f"#####################################################Iteration count -> {iteration}")
-            for socket in range(0, 3):
+            for socket in range(3):
                 if socket < 2:
                     wifi_dut.interfaces.wifi.set_fd(socket_count=3, start_sock_no=0)
                     socket_id = 2
                     wifi_dut.interfaces.wifi.socket_select(socket_id, select_timeout=60)
+                    time.sleep(5)
                 buffer_length = 100
                 pkt_count = 1
                 tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=buffer_length))
@@ -2720,19 +2722,21 @@ def test_ssl_three_sockets_socket_select_tx_rx_data_testcase_c19166(wifi_sniffer
                     sw = Stopwatch()
                     sock_list = []
                     while sw.elapsed_sec <= 60:
-                        time.sleep(10)
+                        time.sleep(5)
                         events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
                         for event in events:
-                            if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
+                            if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT or sock_select_event:
                                 socket_select_event_payload = event.event_data
                                 since_time = event.timestamp + 1
-                                logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
-                                sock_fd = int(re.search(r'fd_id:(\d+)', socket_select_event_payload.decode())[1])
-                                sock_id = get_socket_id(sock_fd)
                                 sock_select_event = True
-                                if sock_id is not None:
-                                    sock_list.append(sock_id)
-                                logger.info(f"Socket select event received")
+                                logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
+                            if 'fd_id' in str(event.event_data).lower():
+                                sock_fd = int(re.search(r'fd_id:(\d+)', event.event_data.decode())[1])
+                                sock_id = get_socket_id(sock_fd)
+                                sock_list.append(sock_id)
+                                sock_select_event = True
+                                since_time = event.timestamp + 1
+                                break
                         if sock_select_event:
                             break
                     assert sock_select_event, "Socket select asynchronous event is not received"
@@ -3633,9 +3637,7 @@ def test_tcp_three_sockets_send_data_testcaseTC19189(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_sntp_TC19191(
-        wifi_sniffer, wifi_dut, wifi_access_point, logger
-):
+def test_sntp_TC19191(wifi_sniffer, wifi_dut, wifi_access_point, logger):
     try:
         listen_interval = 700
         capture_filename = "test_sntp__TC19191"
@@ -3647,14 +3649,14 @@ def test_sntp_TC19191(
         sntp_server_address = wifi_dut.interfaces.wifi.get_sntp_server_ip()
         wifi_dut.interfaces.wifi.sntp_create(server_ip=sntp_server_address)
         time.sleep(10)
+        sntp_event = False
         asynchronous_request_time = 0
         events = wifi_dut.interfaces.wifi.get_async_events(since_time=asynchronous_request_time)
         for event in events:
             if event.event_type == RS9116AsyncEventType.SNTP_EVENT:
                 sntp_event = event.event_data
                 asynchronous_request_time = event.timestamp + 1
-            else:
-                assert 1, f"SNTP asynchronous event is not received by DUT after connection request was sent to SNTP server"
+        assert sntp_event, f"SNTP asynchronous event is not received by DUT after connection request was sent to SNTP server"
         sntp_status = int(sntp_event.split(b":")[1])
         assert sntp_status == 1, "SNTP status received in asynchronous message for SNTP connection request is wrong " \
                                  "expected is 1 "
@@ -5684,9 +5686,10 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_PSK_TC19194(wifi_sni
         wifi_access_points[1].interfaces.wifi.start_ap()
         time.sleep(15)
         wifi_access_points[0].interfaces.wifi.stop_ap()
+        time.sleep(5)
 
         wifi_dut.interfaces.wifi.wireless_deinit()
-        time.sleep(5)
+        time.sleep(10)
         with pytest.raises(WlanError) as e:
             wifi_dut.interfaces.wifi.dut_init(timeout=50, retries=0)
         # De-Authentication received from AP
