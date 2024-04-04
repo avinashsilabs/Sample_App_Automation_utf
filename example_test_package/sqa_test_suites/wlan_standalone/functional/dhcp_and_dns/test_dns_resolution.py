@@ -490,7 +490,17 @@ def test_when_both_pri_sec_set_to_0_statically_c19305(
 
     logger().info(f"***** preparing wifi_dut to join third party AP ******")
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
-    wifi_dut.interfaces.wifi.start_ip()
+    retries = 3
+    for retry in (0, retries):
+        try:
+            wifi_dut.interfaces.wifi.start_ip()
+            break
+
+        except Exception as Ex:
+            logger().info(f"Exception occurred while start_ip :{str(Ex)}")
+            logger().info(f"start_ip failed with retries {retries}")
+            if retry == retries - 1:
+                raise
 
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode("utf-8")
     logger().info(f"Device is {device_ip}")
