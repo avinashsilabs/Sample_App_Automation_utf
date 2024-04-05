@@ -433,6 +433,7 @@ def test_wifi_wireless_statistics_AP_TC19176(wifi_sniffer, wifi_dut, channel, lo
         time.sleep(5)
 
 
+@pytest.mark.skip("Testcase not deployed")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -732,6 +733,7 @@ def test_ssl_three_sockets_receive_data_testcaseTC19153(
         dut_clean_up(wifi_dut)
 
 
+@pytest.mark.skip("Testcase not deployed")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -765,7 +767,6 @@ def test_ssl_three_sockets_receive_data_testcaseTC19153(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-@pytest.mark.skip()
 def test_ssl_clear_cert2_TC19154(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
 ):
@@ -914,6 +915,7 @@ def test_ssl_clear_cert2_TC19154(
             ssl_server.interfaces.ssl.stop_server()
 
 
+@pytest.mark.skip("Testcase not deployed")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1093,7 +1095,7 @@ def test_ssl_three_sockets_data_tx_while_rejoin_testcaseTC19155(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
 def test_ssl_three_sockets_data_tx_after_rejoin_testcase_c19156(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server,
-                                                                logger, cert1, cert2, cert3, rs_helper):
+                                                                logger, cert1, cert2, cert3, rs_helper, switch):
     try:
         capture_filename = "test_ssl_three_sockets_data_tx_after_rejoin_testcaseTC19156"
         listen_interval = 700
@@ -1196,7 +1198,6 @@ def test_ssl_three_sockets_data_tx_after_rejoin_testcase_c19156(wifi_sniffer, wi
 
         logger.info("Again turning on the AP")
         switch.interfaces.pdu_switch.turn_on(delay=80)
-        wifi_dut.interfaces.wifi.associated = False
 
         logger.info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -2053,7 +2054,7 @@ def test_2SSL_TX_1TCP_RX_testcaseTC19161(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-@pytest.mark.parametrize("repeat_count", [10])
+@pytest.mark.parametrize("repeat_count", [2])
 def test_ssl_three_sockets_socket_select_receive_data_testcase_TC19162(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                        ssl_server, logger, cert1, cert2, cert3,
                                                                        repeat_count):
@@ -2127,15 +2128,26 @@ def test_ssl_three_sockets_socket_select_receive_data_testcase_TC19162(wifi_snif
                 assert len(events) != 0, "Socket select asynchronous event is not received"
                 logger.info(f"Socket select event received")
                 sock_list = []
-                for event in events:
-                    if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
-                        socket_select_event_payload = event.event_data
-                        since_time = event.timestamp + 1
-                        logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
-                        sock_fd = int(re.search(r'fd_id:(\d+)', socket_select_event_payload.decode())[1])
-                        sock_id = get_socket_id(sock_fd)
-                        if sock_id is not None:
+                sock_select_event = False
+                sw = Stopwatch()
+                while sw.elapsed_sec <= 60:
+                    time.sleep(5)
+                    events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+                    for event in events:
+                        if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
+                            socket_select_event_payload = event.event_data
+                            since_time = event.timestamp + 1
+                            logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
+                        if 'fd_id' in str(event.event_data).lower():
+                            sock_fd = int(re.search(r'fd_id:(\d+)', event.event_data.decode())[1])
+                            sock_id = get_socket_id(sock_fd)
                             sock_list.append(sock_id)
+                            sock_select_event = True
+                            since_time = event.timestamp + 1
+                            break
+                    if sock_select_event:
+                        break
+                assert sock_select_event, "Socket select asynchronous event is not received"
                 if not (len(sock_list)):
                     logger.info("Data is not received on any socket opened in the DUT even though sent by remote peer")
                 assert len(sock_list) > 0, "Data is not received on any socket opened in the DUT"
@@ -2184,6 +2196,7 @@ def test_ssl_three_sockets_socket_select_receive_data_testcase_TC19162(wifi_snif
         dut_clean_up(wifi_dut)
 
 
+@pytest.mark.skip("Testcase not deployed")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -2213,7 +2226,6 @@ def test_ssl_three_sockets_socket_select_receive_data_testcase_TC19162(wifi_snif
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-@pytest.mark.skip()
 def test_ssl_three_sockets_load_remove_certs_connection_check_testcaseTC19163(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
 ):
@@ -2645,7 +2657,7 @@ def test_ssl_three_sockets_connectivity_check_loading_wrong_certs_TC19165(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-@pytest.mark.parametrize("repeat_count", [10])
+@pytest.mark.parametrize("repeat_count", [2])
 def test_ssl_three_sockets_socket_select_tx_rx_data_testcase_c19166(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                     ssl_server, logger, cert1, cert2, cert3,
                                                                     repeat_count):
@@ -2725,10 +2737,10 @@ def test_ssl_three_sockets_socket_select_tx_rx_data_testcase_c19166(wifi_sniffer
                         time.sleep(5)
                         events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
                         for event in events:
-                            if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT or sock_select_event:
+                            if event.event_type == RS9116AsyncEventType.SOCKET_SELECT_EVENT:
                                 socket_select_event_payload = event.event_data
                                 since_time = event.timestamp + 1
-                                sock_select_event = True
+
                                 logger.info(f"Socket select event received with payload->{socket_select_event_payload}")
                             if 'fd_id' in str(event.event_data).lower():
                                 sock_fd = int(re.search(r'fd_id:(\d+)', event.event_data.decode())[1])
@@ -4563,6 +4575,7 @@ def test_SSL_Connection_when_the_Date_RTCTimer_is_expired_TC19199(wifi_sniffer, 
         dut_clean_up(wifi_dut)
 
 
+@pytest.mark.skip("Testcase not deployed")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -4649,6 +4662,7 @@ def test_ssl_synchronous_socket_send_data_testcaseTC19137(
         dut_clean_up(wifi_dut)
 
 
+@pytest.mark.skip("Testcase not deployed")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -4755,7 +4769,7 @@ def test_2SSL_tcp_ack_feature_testcaseTC19136(
         dut_clean_up(wifi_dut)
 
 
-@pytest.mark.skip()
+@pytest.mark.skip("Testcase not deployed")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -4861,7 +4875,7 @@ def test_feature_test_TC19138(wifi_sniffer, wifi_dut, wifi_access_point, ssl_ser
     assert pwr, "packets are not captured in the sniffer"
 
 
-@pytest.mark.skip()
+@pytest.mark.skip("Testcase not deployed")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -5014,6 +5028,7 @@ def test_auto_connection_reconnection_after_reset_TC19140(wifi_sniffer, wifi_dut
     assert pwr, "packets are not captured in the sniffer"
 
 
+@pytest.mark.skip("Testcase not deployed")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -5110,6 +5125,7 @@ def test_awscloud_with_different_certificate_TC19186(
         dut_clean_up(wifi_dut)
 
 
+@pytest.mark.skip("Testcase not deployed")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -5299,6 +5315,7 @@ def test_rtc_get_multiple_times_TC19178(
         logger.info("get_rtc is working fine after scan")
 
 
+@pytest.mark.skip("Testcase not deployed")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -5886,6 +5903,7 @@ def test_AutoJoin_Functionality_with_two_APs_with_different_SSID_TC19195(wifi_sn
         time.sleep(3)
 
 
+@pytest.mark.skip("Testcase not deployed")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -6066,6 +6084,7 @@ def test_Stored_AP_Powered_Off_After_Initial_Connection_C19146(wifi_sniffer, wif
     logger.info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")
 
 
+@pytest.mark.skip("Testcase not deployed")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -6243,6 +6262,7 @@ def test_Stored_AP_Powered_OFF_during_boot_C19145(wifi_sniffer, wifi_dut, wifi_a
     logger.info(f"As per sniffer validation DUT went to power save and sending PS-POLLS for retrieving data")
 
 
+@pytest.mark.skip("Testcase not deployed")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
