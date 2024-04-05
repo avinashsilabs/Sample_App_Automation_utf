@@ -2184,7 +2184,7 @@ def test_wifi_sdk_mqtt_keep_alive_60_and_12_hours_with_qos0_TC127797(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c127799(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, switch):
     """QOS1: Subscribe to MQTT server with SSL connection and publish data. check rejoin functionality after
@@ -2236,15 +2236,9 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1277
                 logger().info('******* Turn on Access point **********')
                 switch.interfaces.pdu_switch.turn_on(delay=60)
                 check_flag = True
-
+        time.sleep(2)
         logger().info("MQTT client unsubscribes to the topic")
         wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
-        time.sleep(2)
-        logger().info("Disconnecting from MQTT Server")
-        wifi_dut.interfaces.wifi.mqtt_client_disconnect()
-        time.sleep(1)
-        logger().info("Disconnecting from DUT")
-        wifi_dut.interfaces.wifi.leave()
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info(
@@ -2297,7 +2291,7 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1277
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoinC127828(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, switch):
     """QOS1: Subscribe to MQTT server with SSL connection and publish maximum data of 1351 bytes oversubscribed topic
@@ -2349,15 +2343,9 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoinC12782
                 logger().info('******* Turn on Access point **********')
                 switch.interfaces.pdu_switch.turn_on(delay=60)
                 check_flag = True
-
+        time.sleep(2)
         logger().info("MQTT client unsubscribes to the topic")
         wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
-        time.sleep(2)
-        logger().info("Disconnecting from MQTT Server")
-        wifi_dut.interfaces.wifi.mqtt_client_disconnect()
-        time.sleep(1)
-        logger().info("Disconnecting from DUT")
-        wifi_dut.interfaces.wifi.leave()
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info(
@@ -2407,7 +2395,7 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoinC12782
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_mqtt_qos0_connect_publish_rejoin_TC127758(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections,
         switch):
