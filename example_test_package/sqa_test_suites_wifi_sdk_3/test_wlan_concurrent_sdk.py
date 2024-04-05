@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 import time
 from typing import Dict
+from random import randint
 import test_apmode_sdk as ap
 from threading import Thread
 from utf.utils.time_measurer import TimeMeasurer
@@ -417,6 +418,78 @@ def test_wifi_sdk_device_as_ap_and_sta_c19313(sl_collections, wifi_access_point,
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+def test_wifi_sdk_device_as_ap_and_sta_c19323(sl_collections, wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
+                                      utf_constants, sniffer_filter, remote_socket):
+    """ To Verify Dut Behaviour with the 3rd AP connection by enabling concurrent mode"""
+    try:
+        local_port = randint(5001, 6000)
+        conc_obj = ConcurrentThread(wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants, wifi_access_point, testcase_no=19312,
+                                    capture_filename="test_c19314")
+        conc_obj.start()
+        conc_obj.wait_for_exit()
+        remote_socket.interfaces.socket.start_server(port=local_port)
+        server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+        server_port = remote_socket.interfaces.socket.server_port
+        tcp_socket_id = wifi_dut.interfaces.wifi.socket()
+        logger().info(f"Socket open successfully : {tcp_socket_id}")
+        logger().info(
+            f"Successfully opened tcp client socket and socket id received is {tcp_socket_id} which is expected")
+        bind_response = wifi_dut.interfaces.wifi.bind(tcp_socket_id, conc_obj.dut_addr_dict['dut_ip'], 4,
+                                                      server_port=server_port, timeout=5)
+        logger().info(f"Bind socket successfully: {bind_response}")
+        logger().info("DUT is connecting to server socket")
+        connect_status = False
+        for count in range(3):
+            try:
+                wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=tcp_socket_id, server_ip=server_ip,
+                                                          server_port=server_port)
+                connect_status = True
+                break
+            except:
+                logger().info(f"Socket connection failed in DUT...retry_count:{count + 1}")
+                time.sleep(10)
+        assert connect_status, "Socket connection failed in DUT"
+        send_bytes = wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=tcp_socket_id, data="Thisisfromclient",
+                                                            timeout=120)
+        logger().info(f'SEND-Bytes = {send_bytes}')
+        wifi_dut.interfaces.wifi.set_remote_terminate_callback()
+        remote_socket.interfaces.socket.socket_close_indication(1)
+        time.sleep(8)
+        event_data_output = ""
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        for event in events:
+            if event.event_type == AsyncEventIdentifiers.REMOTE_TERMINATE:
+                event_data_output = event.event_data
+                logger().info(f"*****{event_data_output}*******")
+        assert "Remote Terminate" in event_data_output, "expected error code not found. Expected is Remote Terminate"
+        logger().info(f" ***************** EVENT DATA IS : {event_data_output} ********************** ")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
 @pytest.mark.config(
@@ -799,51 +872,3 @@ def test_wifi_sdk_device_as_ap_and_sta_c19318(sl_collections, wifi_access_point,
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
-
-@pytest.mark.config(
-    'wifi_access_point',
-    wifi={
-        'ssid': 'Concurent_ap',
-        'security': 'WPA2',
-        'passphrase': 'test1234',
-        'channel': 11,
-    }
-)
-@pytest.mark.config(
-    "wifi_clients",
-    wifi={
-           0: {
-                "security": "WPA2",
-                "ssid": "SILABS_AP_MODE",
-                "passphrase": "Automation@123",
-                "channel": 11,
-                "interface": "wlan0",
-               }
-         }
-)
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_wifi_sdk_device_as_ap_and_sta_c19323(sl_collections, wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
-                                      protocol, net_perf_client, utf_constants, sniffer_filter):
-    """ To Verify Dut Behaviour in AP and STA connection by enabling concurrent mode, checking remote terminate event"""
-    try:
-        conc_obj = ConcurrentThread(wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants, wifi_access_point, net_perf_client=net_perf_client, protocol=protocol, testcase_no=19312,
-                                    capture_filename="test_c19313", ping=True, traffic_type="Tx", stop_sniffer=False)
-        conc_obj.start()
-        conc_obj.wait_for_exit()
-        events = wifi_dut.interfaces.wifi.get_async_events()
-        for event in events:
-            if event.event_type == AsyncEventIdentifiers.TCP_REMOTE_TERMINATE:
-                remote_terminate = event.event_data
-                assert remote_terminate, f"unable to find remote terminate event"
-                logger().info("Remote terminate event is received by DUT when tcp socket connected is closed")
-        time.sleep(5)
-        conc_obj.ap_sta_disconnection()
-        logger().info("Stop sniffer finally")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        conc_obj.concurrent_sniffer_validation()
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
-    finally:
-        wifi_dut.interfaces.wifi.stop_ap()
