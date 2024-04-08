@@ -31,6 +31,20 @@ from utf_wiseconnect_3.tests.devices.si91x import (
 def logger():
     return get_logger(__name__)
 
+"""
+    setup requirement:
+        1. DUT(Soc917)
+        2. Raspberry PI4
+
+    Test Steps:
+        1. Initiates the DUT Coex wlan and BT mode
+        2. Enable the wlan and bt power save mode in dut after the connection
+        3. Initiates ble in DUT 
+        4. Connect to the remote device/connect to the dut
+        5. Measure the power numbers
+
+    Author: Jyothi Nagireddy
+"""
 
 def __print_throughput(throughput: dict):
     if throughput is not None:
@@ -436,7 +450,7 @@ def test_ble_sdk_connect_with_200ms_0dBm_C20659(power_meter, wifi_dut, ble_clien
             "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid ,
             "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "bt_features": Si91xBTFeatureBitMap.Default,
             "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
@@ -533,7 +547,7 @@ def test_ble_sdk_connect_with_1_28ms_0dBm_C20660(power_meter, wifi_dut, ble_clie
             "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid ,
             "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "bt_features": Si91xBTFeatureBitMap.Default,
             "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
@@ -592,7 +606,11 @@ def test_ble_sdk_connect_with_200ms_4dBm_C20661(power_meter, wifi_dut, ble_clien
                                                     max_conn_interval=conn_params["max_conn_interval"],
                                                     conn_latency=conn_params["conn_latency"],
                                                     supervision_timeout=conn_params["supervision_timeout"])
-            time.sleep(5)
+            time.sleep(60)
+            logger().info("Checking connection status of BLE")
+            state = wifi_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
             ble_conn_config = bt_logs.read_ble_connection_params(conn_params)
             logger().info(f"**********{ble_conn_config} values in btmon logs")
             assert ble_conn_config["Status"] == "Success"
@@ -633,7 +651,7 @@ def test_ble_sdk_connect_with_200ms_4dBm_C20661(power_meter, wifi_dut, ble_clien
             "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid ,
             "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "bt_features": Si91xBTFeatureBitMap.Default,
             "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
@@ -689,7 +707,11 @@ def test_ble_sdk_connect_with_1_28ms_4dBm_C20662(power_meter, wifi_dut, ble_clie
                                                     max_conn_interval=conn_params["max_conn_interval"],
                                                     conn_latency=conn_params["conn_latency"],
                                                     supervision_timeout=conn_params["supervision_timeout"])
-            time.sleep(5)
+            time.sleep(60)
+            logger().info("Checking connection status of BLE")
+            state = wifi_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
             ble_conn_config = bt_logs.read_ble_connection_params(conn_params)
             logger().info(f"**********{ble_conn_config} values in btmon logs")
             assert ble_conn_config["Status"] == "Success"
@@ -726,7 +748,7 @@ def test_ble_sdk_connect_with_1_28ms_4dBm_C20662(power_meter, wifi_dut, ble_clie
             "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "bt_features": Si91xBTFeatureBitMap.Default,
             "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
@@ -813,7 +835,7 @@ def test_ble_sdk_advertise_non_connectable_power_1065ms_C20654(power_meter, wifi
             "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "bt_features": Si91xBTFeatureBitMap.Default,
             "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
@@ -887,7 +909,6 @@ def test_ble_sdk_advertise_connectable_power_20ms_C20653(power_meter, wifi_dut, 
 
 
 # ********************************************************************************************************************
-@pytest.mark.skip()
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -898,7 +919,7 @@ def test_ble_sdk_advertise_connectable_power_20ms_C20653(power_meter, wifi_dut, 
             "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid ,
             "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "bt_features": Si91xBTFeatureBitMap.Default,
             "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
@@ -973,7 +994,7 @@ def test_ble_sdk_advertise_connectable_power_4dBm_C20658(power_meter, wifi_dut, 
             "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "bt_features": Si91xBTFeatureBitMap.Default,
             "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
@@ -1035,7 +1056,6 @@ def test_ble_sdk_per_1mbps_tx_0dBm_C20663(power_meter, bt_dut, bt_client, sl_col
 
 
 # ********************************************************************************************************************
-@pytest.mark.skip()
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1046,7 +1066,7 @@ def test_ble_sdk_per_1mbps_tx_0dBm_C20663(power_meter, bt_dut, bt_client, sl_col
             "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "bt_features": Si91xBTFeatureBitMap.Default,
             "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
@@ -1110,29 +1130,28 @@ def test_ble_sdk_per_1mbps_tx_10dBm_C20664(power_meter, bt_dut, bt_client, sl_co
 # ********************************************************************************************************************
 
 @pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
-                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode
-                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-        "ble_features": Si91xBLEFeatureBitMap.Default,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
-    },
-)
+        "wifi_dut",
+        wifi={
+            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        },
+    )
 def test_ble_sdk_connect_with_idlelink_200ms_C20655(power_meter, wifi_dut, ble_client, sl_collections):
     """BLE_2.4G Idle-link connection,200ms. (empty packet, 0 bytes)"""
     try:
         logger().info("Initializing BLE")
         # Set up DUT for BLE advertising
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=3, bond_info=0, set_smp=1, timeout=10)
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
         logger().info("configure bt local name....")
         wifi_dut.interfaces.wifi.bt_set_local_name(bt_local_name='Silabsautomation')
         logger().info("Advertising DUT ")
@@ -1140,7 +1159,7 @@ def test_ble_sdk_connect_with_idlelink_200ms_C20655(power_meter, wifi_dut, ble_c
                                                        ble_adv_int_max=2048, ble_adv_channel_map=7)
         logger().info("Initiating power save")
         wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
-        wifi_dut.interfaces.wifi.bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
         logger().info("Initiating scan from remote device")
         # Begin Scanning for BLE devices
