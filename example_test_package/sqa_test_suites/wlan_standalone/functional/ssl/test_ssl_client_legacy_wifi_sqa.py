@@ -139,7 +139,7 @@ def join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, log
     if ip_fail:
         logger.info(f"DUT unable to get IP address")
         assert ip_fail == 0, "ip setting in DUT has failed"
-    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
+    # The below two apis put DUT to power save. Both Wi-Fi power save and BT power save apis need to be called to put
     # DUT to power save in Wifi+bluetooth mode
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
@@ -699,11 +699,10 @@ def test_ssl_client_cipher_list_testcase_TC19132(wifi_sniffer, wifi_access_point
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_cipher"])
-def test_ssl_client_ciphersuite_mismatch_testcase_TC19133(
-        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
-):
+def test_ssl_client_cipher_suite_mismatch_testcase_TC19133(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+                                                           logger):
     try:
-        capture_filename = "test_ssl_client_ciphersuite_mismatch_testcase_TC19133"
+        capture_filename = "test_ssl_client_cipher_suite_mismatch_testcase_TC19133"
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
@@ -744,23 +743,20 @@ def test_ssl_client_ciphersuite_mismatch_testcase_TC19133(
 
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
         logger.info(f"DECRYPTION KEY-->{decryption_key}")
-
-        ssl_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"],
-                               capture_filename,
-                               mode=0)
+        packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"],
+                     capture_filename, mode=0)
     except Exception as error:
         dut_recovery(wifi_dut, error)
         raise error
     finally:
+        wifi_dut.interfaces.wifi.inited = False
         dut_clean_up(wifi_dut)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ssl_socket_limit_testcase_TC19121(
-        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
-):
+def test_ssl_socket_limit_testcase_TC19121(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger):
     try:
         capture_filename = "test_ssl_socket_limit_testcase_TC19121"
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
@@ -828,23 +824,20 @@ def test_ssl_socket_limit_testcase_TC19121(
         logger.info(f"PS-POLL packets are captured in the sniffer")
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
         logger.info(f"DECRYPTION KEY-->{decryption_key}")
-
-        ssl_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"],
-                               capture_filename,
-                               mode=0)
+        packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"],
+                     capture_filename, mode=0)
     except Exception as error:
         dut_recovery(wifi_dut, error)
         raise error
     finally:
+        wifi_dut.interfaces.wifi.inited = False
         dut_clean_up(wifi_dut)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ssl_client_version_1_2_testcase_TC19119(
-        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
-):
+def test_ssl_client_version_1_2_testcase_TC19119(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger):
     try:
         capture_filename = "test_ssl_client_version_1_2_testcase_TC19119"
         port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -854,7 +847,7 @@ def test_ssl_client_version_1_2_testcase_TC19119(
         # The below api parses DUTs IP address
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
         # Open ssl server socket in remote device(Raspberry pi or static device)
-        ssl_server.interfaces.ssl.start_server(version="ssl_1.2")
+        ssl_server.interfaces.ssl.start_server(port=port1, version="ssl_1.2")
         # Open ssl client socket in the DUT
         sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
         assert sock == 0, "Socket id received is wrong. expected is 0"
@@ -865,12 +858,13 @@ def test_ssl_client_version_1_2_testcase_TC19119(
                                                    SocketOptions.SSL_ENABLE)
 
         logger.info(f"Selecting SSL version {SocketOptions.SO_SSL_V_1_0_ENABLE} for the socket-id->{sock} using "
-                    f"rsi_setsockopt API")
+                    f"rsi_set_sockopt API")
         wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_V_1_0_ENABLE,
                                                    SocketOptions.SSL_ENABLE)
         local_port = randint(5001, 60000)
         # Socket binds at (device_ip, 5001) in DUT
         wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
+        time.sleep(3)
         with pytest.raises(WlanError) as exc_info:
             # ssl socket opened in DUT connects to the server
             wifi_dut.interfaces.wifi.connect_to_server(sock, ssl_server.interfaces.ssl, server_port=port1)
@@ -887,14 +881,13 @@ def test_ssl_client_version_1_2_testcase_TC19119(
         logger.info(f"PS-POLL packets are captured in the sniffer")
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
         logger.info(f"DECRYPTION KEY-->{decryption_key}")
-
-        ssl_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"],
-                               capture_filename,
-                               mode=0)
+        packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"],
+                     capture_filename, mode=0)
     except Exception as error:
         dut_recovery(wifi_dut, error)
         raise error
     finally:
+        wifi_dut.interfaces.wifi.inited = False
         dut_clean_up(wifi_dut)
 
 
@@ -1235,19 +1228,16 @@ def test_ssl_client_rx_while_rejoining_C19135(switch, wifi_dut, wifi_access_poin
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "clear_certs"])
-def test_ssl_client_1_2version_server_1_0_testcase_TC19120(
-        wifi_sniffer, wifi_dut, wifi_access_point, openssl, wifi_client, logger):
+def test_ssl_client_1_2version_server_1_0_testcase_TC19120(wifi_sniffer, wifi_dut, wifi_access_point, openssl,
+                                                           wifi_client, logger):
     try:
         capture_filename = "test_ssl_server_1_0version_client_1_2_testcase_TC19120"
-        ping_count = 10
-        port_connect = 5001
+        port_connect = randint(5001, 5010)
         result = wifi_dut.interfaces.wifi.version()
         logger.info(f"DUT firmware version: {result}")
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         # configure interface for the channel of the access point
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         for count in range(1, 3):
             try:
                 scan_fail = 1
@@ -1265,15 +1255,8 @@ def test_ssl_client_1_2version_server_1_0_testcase_TC19120(
 
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
         logger.info(f"DUT MAC_Address: {dut_mac_address}")
-
-        wifi_sniffer.interfaces.capture.start_capture(
-            capture_file=f"{capture_filename}.pcap"
-        )
-
-        wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
-                                        scan_interval=4,
-                                        beacon_missedcount=40,
-                                        first_time_retry=0)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=0, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
         for count in range(1, 3):
             try:
                 join_fail = 1
@@ -1308,9 +1291,7 @@ def test_ssl_client_1_2version_server_1_0_testcase_TC19120(
                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
         wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
-
-        openssl.interfaces.server.start(port=5001, tls_version="-tls1")
-
+        openssl.interfaces.server.start(port=port_connect, tls_version="-tls1")
         sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
         assert sock == 0, "Socket id received is wrong. expected is 0"
         logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
@@ -1326,7 +1307,7 @@ def test_ssl_client_1_2version_server_1_0_testcase_TC19120(
 
         local_port = randint(5001, 60000)
         wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
-
+        time.sleep(3)
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
 
         with pytest.raises(WlanError) as exc_info:
@@ -1348,9 +1329,7 @@ def test_ssl_client_1_2version_server_1_0_testcase_TC19120(
         logger.info(f"DECRYPTION KEY-->{decryption_key}")
 
         ssl_pkt = packet_check(wifi_sniffer, logger, decryption_key, dut_mac_address, ap_bssid, ["tls"],
-                               capture_filename,
-                               mode=0)
-
+                               capture_filename, mode=0)
         if len(ssl_pkt) > 0:
             for i in ssl_pkt:
                 if re.search(".*Client Hello", i):
@@ -1364,6 +1343,7 @@ def test_ssl_client_1_2version_server_1_0_testcase_TC19120(
         dut_recovery(wifi_dut, error)
         raise error
     finally:
+        wifi_dut.interfaces.wifi.inited = False
         dut_clean_up(wifi_dut)
 
 

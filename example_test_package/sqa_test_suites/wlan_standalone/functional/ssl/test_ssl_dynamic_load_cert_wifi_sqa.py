@@ -1798,7 +1798,6 @@ def test_dynamic_load_auto_join_TC19645(wifi_sniffer, wifi_access_point, wifi_du
         dut_clean_up(wifi_dut)
 
 
-@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -1828,11 +1827,11 @@ def test_dynamic_load_auto_join_TC19645(wifi_sniffer, wifi_access_point, wifi_du
                          )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_connection_and_transfer_of_index0_index1_when_trying_loadcert_index2_TC19642(wifi_sniffer, wifi_access_point,
+def test_connection_and_transfer_of_index0_index1_when_trying_loadcert_index2_TC19642(wifi_access_point,
                                                                                       wifi_dut, ssl_server, logger,
                                                                                       cert1, cert2, cert3):
     try:
-        device_ip = join_ap(wifi_dut, wifi_access_point)
+        join_ap(wifi_dut, wifi_access_point)
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         port2 = ssl_server.interfaces.ssl.config['device_port2']
         port3 = ssl_server.interfaces.ssl.config['device_port3']
@@ -1862,7 +1861,6 @@ def test_connection_and_transfer_of_index0_index1_when_trying_loadcert_index2_TC
         dut_clean_up(wifi_dut)
 
 
-@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
@@ -1892,11 +1890,11 @@ def test_connection_and_transfer_of_index0_index1_when_trying_loadcert_index2_TC
                          )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_connection_and_transfer_of_index0_index2_when_trying_loadcert_index1_TC19648(wifi_sniffer, wifi_access_point,
+def test_connection_and_transfer_of_index0_index2_when_trying_loadcert_index1_TC19648(wifi_access_point,
                                                                                       wifi_dut, ssl_server, logger,
                                                                                       cert1, cert2, cert3):
     try:
-        device_ip = join_ap(wifi_dut, wifi_access_point)
+        join_ap(wifi_dut, wifi_access_point)
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         port2 = ssl_server.interfaces.ssl.config['device_port2']
         port3 = ssl_server.interfaces.ssl.config['device_port3']
