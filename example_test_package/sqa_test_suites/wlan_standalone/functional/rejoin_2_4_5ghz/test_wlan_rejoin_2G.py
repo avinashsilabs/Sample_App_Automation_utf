@@ -31,6 +31,7 @@ from utf.interfaces.shell.ssh_shell import SSHShell
 def logger():
     return get_logger(__name__)
 
+
 ping_count = 10
 """Author : Vivek"""
 
@@ -263,7 +264,6 @@ def clean_up_method(wifi_dut, switch):
         logger().info("******* Recovering the DUT  **********")
         wifi_dut.interfaces.wifi.reset()
     logger().info("\n ----------------------------Cleaning UP of DUT is Completed ----------------------------")
-
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -513,6 +513,7 @@ def test_rejoin_max_retry_failure_c19722(wifi_sniffer, wifi_access_point, wifi_d
     finally:
         clean_up_method(wifi_dut, switch)
 
+
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -567,7 +568,7 @@ def test_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_d
         logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
         logger().info(f"***** preparing wifi_dut ******")
-        wifi_dut.interfaces.wifi.join_ap(wifi_access_point,channel=0)
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point, channel=0)
 
         ip_config = wifi_dut.interfaces.wifi.start_ip()
         dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
@@ -588,7 +589,6 @@ def test_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_d
         status = ping(dut_ip, ping_count)
         assert status is True, "DUT is not responding to ping request from third party device"
         logger().info(f"ping is successful")
-
 
         logger().info("\n\n ****** Access point is going to turn off  ******")
         switch.interfaces.pdu_switch.turn_off(delay=30)
@@ -625,7 +625,8 @@ def test_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_d
             logger().info(f"True list = {true_result_list}")
             logger().info(f"false list = {false_result_list}")
 
-        assert Probe_not_captured_channel_list == [],logger().info(f"******* unable to find the Probe requests  in all these channels:{Probe_not_captured_channel_list} ")
+        assert Probe_not_captured_channel_list == [], logger().info(
+            f"******* unable to find the Probe requests  in all these channels:{Probe_not_captured_channel_list} ")
 
         logger().info(f"******* Probe requests are captured in all the channels:{Probe_captured_channel_list} ")
 
@@ -639,6 +640,7 @@ def test_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_d
         raise e
     finally:
         clean_up_method(wifi_dut, switch)
+
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -654,7 +656,7 @@ def test_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_d
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
-def test_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,  switch, utf_constants):
+def test_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, switch, utf_constants):
     """select particular channels(ex: select 1,6,11) and Check rejoin is happening only in selected channels or not and
            Verify whether module is sending probe request only in selected channel"""
     try:
@@ -1284,7 +1286,7 @@ def test_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_point, wifi
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
-def test_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
+def test_rejoin_scan_interval_1sec_c19737(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants):
     """Set scan interval to 1 sec in rejoin params command Verify scan interval time in rejoin process"""
     try:
         end_time = utf_constants.get("time_duration")
@@ -1292,7 +1294,7 @@ def test_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_point, wifi_
         scan_interval = 1
         send_bytes = 1000
         validation = True
-        packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
+
         time_delta = 1
         status = False
         probe_time_delta_obj = FilterPacket()
@@ -1333,16 +1335,18 @@ def test_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_point, wifi_
                     assert send_response
 
         # wifi_dut.interfaces.wifi.close_socket(tcp_socket_id)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_scan_interval_1sec')
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_rejoin_scan_interval_1sec.pcap')
+        time.sleep(5)
 
         logger().info("\n\n ****** Access point is going to turn off  ******")
-        switch.interfaces.pdu_switch.turn_off()
+        switch.interfaces.pdu_switch.turn_off(delay=5)
 
         """validate rejoin retry failure"""
         logger().info("Checking for rejoin fail event from dut, this may take some time....")
         sw = Stopwatch()
         rejoin_msg = 0
         end_time = 200
+        wifi_dut.interfaces.wifi.associated = False
         while sw.elapsed_sec <= end_time:
             events = wifi_dut.interfaces.wifi.get_async_events()
             if len(events):
@@ -1358,11 +1362,11 @@ def test_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_point, wifi_
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(5)
-        wifi_dut.interfaces.wifi.associated = False
 
         packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
                          f'and wlan.ssid == {wifi_access_point.interfaces.wifi.ssid} and wlan.fc.type_subtype == 0x0004 ' \
                          f'and wlan.da == ff:ff:ff:ff:ff:ff'
+        packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
         result = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
             'packet_count']
         probe_packets_time_delta_list = probe_time_delta_obj.delta_between_probe_packet()
@@ -1386,8 +1390,7 @@ def test_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_point, wifi_
             assert True
         else:
             logger().info(f'Expected scan interval {scan_interval}sec not found between Probe request packets')
-            assert False
-
+            assert False, f'Expected scan interval {scan_interval}sec not found between Probe request packets'
     except Exception as e:
         recovery_error_codes = ['0xffffffe2', '0xffffffd5']
         for error_code in recovery_error_codes:
@@ -1598,6 +1601,7 @@ def test_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wifi_dut, sw
         raise e
     finally:
         clean_up_method(wifi_dut, switch)
+
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
@@ -2427,6 +2431,7 @@ def test_rejoin_eap_peap_c19732(switch, wifi_sniffer, wifi_access_point, wifi_du
         clean_up_method(wifi_dut, switch)
         wifi_sniffer.interfaces.capture.stop_capture()
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -2436,7 +2441,7 @@ def test_rejoin_eap_peap_c19732(switch, wifi_sniffer, wifi_access_point, wifi_du
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tx_wait_time": 16000,
-        }
+    }
 )
 @pytest.mark.config(
     "wifi_access_points",
@@ -2484,7 +2489,8 @@ def test_rejoin_roaming_c19728(wifi_access_points, wifi_dut, switches, wifi_snif
         wifi_sniffer.interfaces.capture.start_capture(capture_file='rejoin_AP1')
         wifi_dut.interfaces.wifi.set_roaming(roaming_threshold=25, roaming_hysterisis=4)
         logger().info("enable rejoin")
-        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_value, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_value, scan_interval=4, beacon_missedcount=40,
+                                        first_time_retry=0)
 
         logger().info("Joining into wifi_access_point")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_points[1])
@@ -2496,7 +2502,7 @@ def test_rejoin_roaming_c19728(wifi_access_points, wifi_dut, switches, wifi_snif
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
         logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
-        ap_bssid_1 = wifi_access_point[1].interfaces.wifi.bssid
+        ap_bssid_1 = wifi_access_points[1].interfaces.wifi.bssid
         logger().info(f'AP BSSID = {ap_bssid_1}')
 
         wifi_status = wifi_dut.interfaces.wifi.get_wireless_info()
@@ -2538,7 +2544,6 @@ def test_rejoin_roaming_c19728(wifi_access_points, wifi_dut, switches, wifi_snif
         logger().info("pdu switch state for AP0: " + str(state))
         assert state == 'true', 'Please check PDU outlet manually'
 
-
         switches[1].interfaces.pdu_switch.turn_off()
         state = switches[1].interfaces.pdu_switch.get_state()
         logger().info("pdu switch state for AP1: " + str(state))
@@ -2561,7 +2566,7 @@ def test_rejoin_roaming_c19728(wifi_access_points, wifi_dut, switches, wifi_snif
                 break
         assert connection_flag == True, 'DUT unable to make connection with AP0 with in 120 seconds'
 
-        ap_bssid_0 = wifi_access_point[0].interfaces.wifi.bssid
+        ap_bssid_0 = wifi_access_points[0].interfaces.wifi.bssid
         logger().info(f'AP BSSID = {ap_bssid_0}')
 
         logger().info("enabling dhcp in DUT.......")
@@ -2641,7 +2646,7 @@ def test_rejoin_roaming_c19728(wifi_access_points, wifi_dut, switches, wifi_snif
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "tx_wait_time": 16000,
-        }
+    }
 )
 @pytest.mark.config(
     "wifi_access_points",
@@ -2691,7 +2696,8 @@ def test_rejoin_roaming_c19726(wifi_access_points, wifi_dut, switches, wifi_snif
         wifi_sniffer.interfaces.capture.start_capture(capture_file='rejoin_AP1')
         wifi_dut.interfaces.wifi.set_roaming(roaming_threshold=25, roaming_hysterisis=4)
         logger().info("enable rejoin")
-        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_value, scan_interval=4, beacon_missedcount=40, first_time_retry=0)
+        wifi_dut.interfaces.wifi.rejoin(rejoin_max=rejoin_value, scan_interval=4, beacon_missedcount=40,
+                                        first_time_retry=0)
 
         logger().info("Joining into wifi_access_point")
         wifi_dut.interfaces.wifi.join_ap(wifi_access_points[1])
@@ -2703,7 +2709,7 @@ def test_rejoin_roaming_c19726(wifi_access_points, wifi_dut, switches, wifi_snif
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
         logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
-        ap_bssid_1 = wifi_access_point[1].interfaces.wifi.bssid
+        ap_bssid_1 = wifi_access_points[1].interfaces.wifi.bssid
         logger().info(f'AP BSSID = {ap_bssid_1}')
 
         wifi_status = wifi_dut.interfaces.wifi.get_wireless_info()
@@ -2767,7 +2773,7 @@ def test_rejoin_roaming_c19726(wifi_access_points, wifi_dut, switches, wifi_snif
                 break
         assert connection_flag == True, 'DUT unable to make connection with AP0 with in 120 seconds'
 
-        ap_bssid_0 = wifi_access_point[0].interfaces.wifi.bssid
+        ap_bssid_0 = wifi_access_points[0].interfaces.wifi.bssid
         logger().info(f'AP BSSID = {ap_bssid_0}')
 
         logger().info("enabling dhcp in DUT.......")
@@ -2864,7 +2870,7 @@ def test_rejoin_with_bad_rssi_C19727(wifi_dut, wifi_access_point, wifi_sniffer, 
         logger().info(f"\n\n #####===>>>>> Getting the RSSI value from the Scan: {get_rssi_value} #####=====>>>>>\n\n")
 
         att_channel = 2
-        set_db_value = 80-get_rssi_value
+        set_db_value = 80 - get_rssi_value
         wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel, set_db_value)
         time.sleep(10)
 

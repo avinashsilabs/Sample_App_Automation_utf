@@ -733,21 +733,19 @@ def test_mqtt_retain_with_qos1_TC127826(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-# The test case should produce error 0xFFFFFFD3 as username or password is more than 60 bytes
-def test_mqtt_check_error_0xFFFFFFD3_C127802(
-        wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger
-):
-    # The api generates 65 bytes of random data
-    username = ''.join(random.choices(string.ascii_uppercase + string.digits, k=65))
+def test_mqtt_check_error_0xFFFFFFD3_C127802(wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger):
+    """
+    If password is given more than 60 bytes 0xFFFFFFD3 error code should be seen
+    """
+    password = ''.join(random.choices(string.ascii_uppercase + string.digits, k=65))
     capture_filename = "test_mqtt_check_error_0xFFFFFFD3_C127802"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
-    logger.info(f"username is {username}")
+    logger.info(f"password is '{password}'")
     with pytest.raises(WlanError) as exc_info:
-        # DUT tries to connect to mqtt server
-        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt, username=username)
-        logger.info(f"DUT sent {exc_info.value.error_code} code when the username or password is more than 60 bytes")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(mqtt_server.interfaces.mqtt, password=password)
     assert exc_info.value.error_code == 0xFFFFFFD3, "DUT sent wrong error code, expected is 0xFFFFFFD3"
+    logger.info(f"DUT sent {exc_info.value.error_code} code when the username or password is more than 60 bytes")
 
     logger.info("Stop the sniffer")
     wifi_sniffer.interfaces.capture.stop_capture()
