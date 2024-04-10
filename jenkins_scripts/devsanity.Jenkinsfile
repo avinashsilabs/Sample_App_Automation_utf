@@ -157,7 +157,7 @@ pipeline {
                                                                     unzip ${RS9116_FIRMWARE}.zip
 
                                                                     cp -r ${RS9116_FIRMWARE}/${rps_file_path}/*.rps ../utf_core/src/utf/interfaces/http/www
-                                                                    mv ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps  ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
+                                                                    mv ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
                                                                     cp -r ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../utf_core/src/utf/interfaces/http/www
                                                                     cp -r ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../manifest/
                                                                 fi
@@ -174,7 +174,7 @@ pipeline {
                                                                     mkdir ${RS9116_FIRMWARE}
                                                                     cd  ${RS9116_FIRMWARE}
                                                                     wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-staging/wifi_release_packages/release_packages/${PACKAGE_TYPE}/${RS9116_FIRMWARE}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps
-                                                                    mv ${rps_file_prefix}.${major}.${minor}.${patch}.${security_bit}.${customer_id}.${build_num}.rps  ${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
+                                                                    mv ${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps  ${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
                                                                     cp * ../../utf_core/src/utf/interfaces/http/www
                                                                     cp * ../../manifest/
                                                                 else
@@ -182,7 +182,7 @@ pipeline {
                                                                     unzip ${RS9116_FIRMWARE}.zip
 
                                                                     cp ${RS9116_FIRMWARE}/${rps_file_path}/*.rps ../utf_core/src/utf/interfaces/http/www
-                                                                    mv ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps  ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
+                                                                    mv ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps  ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps
                                                                     cp ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../utf_core/src/utf/interfaces/http/www
                                                                     cp ${RS9116_FIRMWARE}/${rps_file_path}/${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps ../manifest/
                                                                 fi
