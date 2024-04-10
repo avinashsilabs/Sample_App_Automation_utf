@@ -567,6 +567,25 @@ devices:
                 root_ca: 'AWS-IoT-root-CA.crt'
                 client_cert: 'python-thing-certificate.pem.crt'
 
+    azure_iot:
+            interfaces:
+                hub:
+                    type: 'azure_iot.azure_iot_hub'
+                    connection_string_hub: 'HostName=iot-hub-utf.azure-devices.net;SharedAccessKeyName=service;SharedAccessKey=Z3JlZW5zaG90Q2FyZQ=='
+                    hostname: 'silabssample.azure-devices.net'
+                    event_hub_connection_string: "Endpoint=sb://iothub-ns-silabshyda-25118973-20f98fa458.servicebus.windows.net/;SharedAccessKeyName=iothubowner;SharedAccessKey=hN6vCGNtCvRXg7Uhre8OwR360cL8az8FBCObXSES4fI=;EntityPath=silabshydazure"
+                    event_hub_name: "silabshydazure"
+                    consumer_group: "$Default"
+
+                device:
+                    type: 'azure_iot.azure_iot_device'
+                    connection_string_device: 'HostName=SilabsHYDAzure.azure-devices.net;DeviceId=symmetric_device;SharedAccessKey=Vn0P8z6gqR5ShVvv6ouQOT0eAcQFQB9GLfG0teX+ZpI='
+                    device_type: 'SYMMETRIC_DEVICE'
+                    hostname: 'silabssample.azure-devices.net'
+                    device_id: 'x509_device'
+                    cert_file: 'newcert.pem'
+                    key_file: 'privatekey.pem'
+
     raspi_iperf:
         interfaces:
             net_perf:
@@ -752,6 +771,9 @@ defaults:
     remote_socket_factory: "ip_socket_factory"
 
     aws_iot_client: 'python_aws_iot_thing'
+    
+    azure_iot_client: 'azure_iot'
+
     
     bt_vulnerability_sniffer: 'bt_braktooth'
 
