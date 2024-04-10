@@ -1,6 +1,8 @@
 # Test author: Vinod.G
 # Test suite: Advertise CCM based more cipher suites for TLS_1.2
+import time
 import pytest
+from utf.utils.logger import get_logger
 from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,
     RS9116TCPIPFeatureBitMap,
@@ -15,8 +17,7 @@ from utf_wiseconnect.devices.rs911x import (
     SocketType,
     Cipher,
     DefaultCipher,
-    )
-from utf import UtfDatabaseProperties
+)
 from test_ssl_advertize_ciphers_rsa import wlan_ssl_connect_disconnect
 from test_ssl_advertize_ciphers_rsa import ssl_connection_tx_rx
 
@@ -39,6 +40,28 @@ from test_ssl_advertize_ciphers_rsa import ssl_connection_tx_rx
         5. NUC Wifi Sniffer
 """
 
+
+def logger():
+    return get_logger(__name__)
+
+
+def dut_clean_up(wifi_dut):
+    logger().info("\n\n ---------------------------- Cleaning UP the DUT -------------------------------")
+    try:
+        logger().info("Closing all sockets opened in DUT")
+        wifi_dut.interfaces.wifi.close_sockets()
+        logger().info("Disconnect from AP")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
+        time.sleep(5)
+    except Exception as err:
+        logger().info(
+            f"******* Exception occurred while cleaning up the DUT\nException is:{err}\nRecovering the DUT using reset **********")
+        wifi_dut.interfaces.wifi.reset()
+        time.sleep(20)
+    logger().info("\n ---------------------------- Cleaning UP of DUT is Completed -------------------")
+
+
 pytestmark = [
     pytest.mark.config(
         "wifi_dut",
@@ -54,9 +77,10 @@ pytestmark = [
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
             "ca_cert": "ca-chain.cert.pem",
             "set_send_feature_frame": True,
-            }
-        )
-    ]
+        }
+    )
+]
+
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -64,12 +88,17 @@ pytestmark = [
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
 @pytest.mark.parametrize("test_run_time", [100])
-def test_advertise_all_ciphers_ssl_regression_TC19618(
-        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger, test_run_time
-        ):
-    capture_filename = "test_advertise_all_ciphers_ssl_regression_TC19618"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
-                         logger, 3, test_run_time=test_run_time)
+def test_advertise_all_ciphers_ssl_regression_TC19618(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+                                                      cipher_list, logger, test_run_time):
+    try:
+        capture_filename = "test_advertise_all_ciphers_ssl_regression_TC19618"
+        ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
+                             logger, 3, test_run_time=test_run_time)
+    except Exception as error:
+        raise error
+    finally:
+        dut_clean_up(wifi_dut)
+
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -77,13 +106,18 @@ def test_advertise_all_ciphers_ssl_regression_TC19618(
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
 @pytest.mark.parametrize("test_run_time", [100])
-def test_advertise_all_ciphers_wlan_regression_TC19619(
-        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger, test_run_time
-        ):
-    capture_filename = "test_advertise_all_ciphers_wlan_regression_TC19619"
+def test_advertise_all_ciphers_wlan_regression_TC19619(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+                                                       cipher_list, logger, test_run_time):
+    try:
+        capture_filename = "test_advertise_all_ciphers_wlan_regression_TC19619"
 
-    wlan_ssl_connect_disconnect(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename,
-                                cipher_list, logger, server_cert=None, server_key=None, test_run_time=test_run_time)
+        wlan_ssl_connect_disconnect(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename,
+                                    cipher_list, logger, server_cert=None, server_key=None, test_run_time=test_run_time)
+    except Exception as error:
+        raise error
+    finally:
+        dut_clean_up(wifi_dut)
+
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -98,12 +132,17 @@ def test_advertise_all_ciphers_wlan_regression_TC19619(
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.parametrize("test_run_time", [100])
-def test_advertise_specific_ciphers_ssl_regression_TC19620(
-        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger, test_run_time
-        ):
-    capture_filename = "test_advertise_specific_ciphers_ssl_regression_TC19620"
-    ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
-                         logger, 3, test_run_time=test_run_time)
+def test_advertise_specific_ciphers_ssl_regression_TC19620(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+                                                           cipher_list, logger, test_run_time):
+    try:
+        capture_filename = "test_advertise_specific_ciphers_ssl_regression_TC19620"
+        ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
+                             logger, 3, test_run_time=test_run_time)
+    except Exception as error:
+        raise error
+    finally:
+        dut_clean_up(wifi_dut)
+
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -118,10 +157,13 @@ def test_advertise_specific_ciphers_ssl_regression_TC19620(
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.parametrize("test_run_time", [100])
-def test_advertise_specific_ciphers_wlan_ssl_regression_TC19621(
-        wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger, test_run_time
-        ):
-    capture_filename = "test_advertise_specific_ciphers_ssl_regression_TC19621"
-
-    wlan_ssl_connect_disconnect(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename,
-                                cipher_list, logger, server_cert=None, server_key=None, test_run_time=test_run_time)
+def test_advertise_specific_ciphers_wlan_ssl_regression_TC19621(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+                                                                cipher_list, logger, test_run_time):
+    try:
+        capture_filename = "test_advertise_specific_ciphers_ssl_regression_TC19621"
+        wlan_ssl_connect_disconnect(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename,
+                                    cipher_list, logger, server_cert=None, server_key=None, test_run_time=test_run_time)
+    except Exception as error:
+        raise error
+    finally:
+        dut_clean_up(wifi_dut)

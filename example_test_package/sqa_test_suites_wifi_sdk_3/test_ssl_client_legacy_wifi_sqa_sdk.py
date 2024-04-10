@@ -118,7 +118,7 @@ pytestmark = [
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
                                    | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
                 1),
             "bt_features": Si91xBTFeatureBitMap.Default,
             "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC |

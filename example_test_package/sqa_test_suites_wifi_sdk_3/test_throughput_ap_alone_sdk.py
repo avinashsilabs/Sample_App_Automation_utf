@@ -73,42 +73,19 @@ class WifiJoinThread(ThreadBase):
         self.dtim_period = dtim_period
 
     def run(self):
-        if self.test_case_no == 20790:
-            transfer_type = 1
-            protocol = 6
-            throughput_type = 3
-            size = 1460
-
-        if self.test_case_no == 20789:
-            transfer_type = 2
-            protocol = 17
-            throughput_type = 4
-            size = 1470
-
-        if self.test_case_no == 20788:
-            transfer_type = 1
-            protocol = 6
-            throughput_type = 1
-            size = 1460
-
-        if self.test_case_no == 20787:
-            transfer_type = 2
-            protocol = 17
-            throughput_type = 2
-            size = 1470
-
-        logger().info("starting the sniffer again")
+        logger().info("starting the sniffer capture")
         self.wifi_sniffer.interfaces.capture.configure_interface(
             channel=self.channel)
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
         ping_count = self.ping_count
         beacon = 100
+        ht_caps =1
         logger().info("********* configuring static ip to DUT *********")
         self.wifi_dut.interfaces.wifi.start_ip(static_ip="192.168.100.76", static_subnet='255.255.255.0',
                                           static_gateway='192.168.100.76')
         logger().info(" ********** Starting DUT as an AP ********* ")
         self.wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_C19444", security="WPA2", psk="12345678", channel=self.channel,
-                                          dtim_beacon_count=self.dtim_period,
+                                          dtim_beacon_count=self.dtim_period, ht_caps=ht_caps,
                                           beacon_interval=beacon)
         logger().info("********** Raspberry pi Client connected to DUT AP*********")
         self.wifi_client.interfaces.wifi.join()
@@ -130,52 +107,64 @@ class WifiJoinThread(ThreadBase):
         assert self.wifi_client.interfaces.wifi.ping(server_ip=device_ip), f"ping failed"
 
         self.wifi_dut.interfaces.wifi.switch_host_frequency()
+        time.sleep(2)
 
-        if self.data_transfer:
-            if self.traffic_type == "TX":
-                self.iteration_count = self.iteration_count
-                for i in range(0, self.iteration_count):
-                    # starting iperf
-                    self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip,
-                                                                         protocol=self.protocol)
-                    self.net_perf_client.interfaces.net_perf.start()
-                    logger().info("sending data from DUT")
-                    timeout = 40
-                    self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
-                                                        local_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                        local_ip=device_ip, remote_ip=host_ip,
-                                                        remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0,
-                                                        timeout=timeout+2)
-                    # # get and print throughput
-                    time.sleep(3)
-                    tp = self.net_perf_client.interfaces.net_perf.process_output()
-                    assert tp is not None, "Throughput not found"
-                    logger().info("data transfer successful")
-            if self.traffic_type == "RX":
-                self.iteration_count = self.iteration_count
-                for i in range(0, self.iteration_count):
-                    if self.protocol == "UDP":
-                        bandwidth = "68M"
-                        self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip,
-                                                                             protocol=self.protocol, bandwidth=bandwidth)
-                    else:
-                        self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip,
-                                                                             protocol=self.protocol)
-
-                    self.net_perf_client.interfaces.net_perf.start()
-
-                    logger().info("receiving data from Host")
-                    # open socket and listen for data
-                    timeout = 40
-                    self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
-                                                        local_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                        local_ip=device_ip, remote_ip=host_ip,
-                                                        remote_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0,
-                                                        async_socket=0, timeout=timeout+2)
-                    time.sleep(3)
-                    logger().info("data received is successful")
+        if self.test_case_no == 20790:
+            protocols = ["TCP"]
+            traffic_types = ["RX"]
+            for protocol in protocols:
+                for traffic_type in traffic_types:
+                    self.sl_collections.run_traffic(
+                        wifi_dut=self.wifi_dut,
+                        net_perf_client=self.net_perf_client,
+                        protocol=protocol,
+                        device_ip=device_ip,
+                        host_ip=host_ip,
+                        timeout=35,
+                        traffic_type=traffic_type,
+                    )
+        if self.test_case_no == 20789:
+            protocols = ["UDP"]
+            traffic_types = ["RX"]
+            for protocol in protocols:
+                for traffic_type in traffic_types:
+                    self.sl_collections.run_traffic(
+                        wifi_dut=self.wifi_dut,
+                        net_perf_client=self.net_perf_client,
+                        protocol=protocol,
+                        device_ip=device_ip,
+                        host_ip=host_ip,
+                        timeout=35,
+                        traffic_type=traffic_type,
+                    )
+        if self.test_case_no == 20788:
+            protocols = ["TCP"]
+            traffic_types = ["TX"]
+            for protocol in protocols:
+                for traffic_type in traffic_types:
+                    self.sl_collections.run_traffic(
+                        wifi_dut=self.wifi_dut,
+                        net_perf_client=self.net_perf_client,
+                        protocol=protocol,
+                        device_ip=device_ip,
+                        host_ip=host_ip,
+                        timeout=35,
+                        traffic_type=traffic_type,
+                    )
+        if self.test_case_no == 20787:
+            protocols = ["UDP"]
+            traffic_types = ["TX"]
+            for protocol in protocols:
+                for traffic_type in traffic_types:
+                    self.sl_collections.run_traffic(
+                        wifi_dut=self.wifi_dut,
+                        net_perf_client=self.net_perf_client,
+                        protocol=protocol,
+                        device_ip=device_ip,
+                        host_ip=host_ip,
+                        timeout=35,
+                        traffic_type=traffic_type,
+                    )
         logger().info(f"*********Initiating the disconnect from Raspi-STA **********")
         self.wifi_client.interfaces.wifi.leave()
         self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -194,8 +183,8 @@ class WifiJoinThread(ThreadBase):
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
@@ -243,7 +232,7 @@ def test_wlan_sdk_ap_alone_device_as_server_tcp_rx_c20790(wifi_sniffer, wifi_cli
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
@@ -292,7 +281,7 @@ def test_wlan_sdk_ap_alone_device_as_server_udp_rx_c20789(wifi_sniffer, wifi_cli
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
@@ -341,7 +330,7 @@ def test_wlan_sdk_ap_alone_device_as_client_tcp_tx_c20788(wifi_sniffer, wifi_cli
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |

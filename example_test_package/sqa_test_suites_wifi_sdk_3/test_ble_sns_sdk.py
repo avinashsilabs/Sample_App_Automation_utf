@@ -40,7 +40,7 @@ pytestmark = [
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0  | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
@@ -153,7 +153,7 @@ def test_wifi_sdk_ble_connect_disconnect_30_minutes_c148509(sl_collections, wifi
 
 
 def test_wifi_sdk_ble_radio_init_deinit_30_min_c148508(sl_collections, wifi_dut, ble_client):
-    """This Test Case verifies BLE init radio and deinit radio functionality for 30 minutes"""
+    """This Test Case verifies BLE init radio and de-init radio functionality for 30 minutes"""
     test_case = '148508'
     ble_obj = BLEMasterSNS(wifi_dut=wifi_dut, sl_collections=sl_collections, test_case=test_case, ble_client=ble_client)
 

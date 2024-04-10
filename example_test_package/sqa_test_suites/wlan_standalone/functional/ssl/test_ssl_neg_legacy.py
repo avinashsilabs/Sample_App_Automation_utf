@@ -16,8 +16,7 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116PowerSaveProcedureTypes,
     RS9116CustomFeatureBitMap,
     DeviceConstants,
-    )
-
+)
 from utf.interfaces.wifi import WlanError
 from utf.utils.iperf.iperf_utils import ping
 import time
@@ -46,7 +45,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
-        )
+    )
     for count in range(1, 3):
         try:
             scan_fail = 1
@@ -67,7 +66,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
 
     wifi_sniffer.interfaces.capture.start_capture(
         capture_file=f"{capture_filename}.pcap"
-        )
+    )
 
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
                                     scan_interval=6,
@@ -92,12 +91,12 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
         try:
             # DUT gets ipaddress through DHCP process after start_ip API is executed
             logger.info("DUT gets ipaddress through DHCP ")
-            ip_address = wifi_dut.interfaces.wifi.start_ip(timeout=60)
+            ip_address = wifi_dut.interfaces.wifi.start_ip(timeout=120, retries=6)
             ip_fail = 0
             break
         except:
             logger.info(f"Get IP address through dhcp process is failed. retry count -> {count}")
-            time.sleep(1)
+            time.sleep(15)
     if ip_fail:
         logger.info(f"DUT unable to get IP address")
         assert ip_fail == 0, "ip setting in DUT has failed"
@@ -127,13 +126,13 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ca_cert": "ca-chain.cert.pem",
         "set_send_feature_frame": True,
-        }
-    )
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_ssl_socket_limit_https_testcase_TC19124(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
-        ):
+):
     capture_filename = "test_ssl_socket_limit_select_testcase_TC19124"
 
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)

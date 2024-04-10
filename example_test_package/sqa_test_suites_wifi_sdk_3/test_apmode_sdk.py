@@ -136,6 +136,7 @@ class ApModeClientConnections(ThreadBase):
             self.beacon_interval = "100"
             self.no_of_clients = 1
 
+
         if self.testcase_no == 19484:
             self.ssid = "SILABS_AP_MODE"
             self.security = "WPA2"
@@ -163,6 +164,15 @@ class ApModeClientConnections(ThreadBase):
             self.dtim_count = "1"
             self.beacon_interval = "100"
             self.no_of_clients = 4
+
+        if self.testcase_no == 477826:
+            self.ssid = "SILABS_AP_MODE"
+            self.security = "WPA2"
+            self.password = "Automation@123"
+            self.channel = "13"
+            self.dtim_count = "1"
+            self.beacon_interval = "100"
+            self.no_of_clients = 1
 
         if self.testcase_no == 19444:
             self.ssid = "SILABS_AP_C19444"
@@ -610,12 +620,13 @@ def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer,  wifi_du
         "passphrase": "12345678", "beacon": 100,
         "channel": 14,
         "region": 1,
-        "region_code": "us"
+        "region_code": "korean"
 
     },
 )
 @pytest.mark.parametrize("channel", [14])
-def test_wifi_sdk_dutap_usregion_unsupported_channel_c19458(wifi_dut, wifi_sniffer, channel, sl_collections):
+def test_wifi_sdk_dutap_korean_region_unsupported_channel_c19458(wifi_dut, wifi_sniffer, channel, sl_collections):
+    """Try to configure Channel 14 in AP with Country Korea and check the DUT behavior"""
     try:
         logger().info("********* configuring static ip to DUT *********")
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.168", static_subnet="255.255.255.0",
@@ -1288,6 +1299,165 @@ def test_wifi_sdk_dutap_fixed_data_rate_c19441(wifi_sniffer, wifi_dut,
             filter_name='mgmt_data_rates_data_rate_54mbps_apmode')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
             'Unable to find any packets for Data/Qos/Null packet for 54 Mbps data rates'
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2",
+        "beacon": 100,
+        "region": 1,
+        "region_code": "korea",
+
+    },
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 13,
+                "interface": "wlan0",
+                "country": "KR"
+               }
+         }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_dutap_korea_region_ap_mode_rx_C477826(wifi_dut, wifi_sniffer, sl_collections, wifi_clients, utf_constants, net_perf_client, protocol):
+    """Verify whether 3rd party STA  is able to connect or not when DUT is bring up AP in Korea Region"""
+    try:
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+                                                utf_constants,
+                                                capture_filename="test_C477826",
+                                                testcase_no=477826, leave=False, sniffer_stop=False)
+        ap_dut_obj.start()
+        ap_dut_obj.wait_for_exit()
+        timeout = 30
+        sl_collections.run_traffic(wifi_dut, net_perf_client, protocol, ap_dut_obj.dut_addr_dict['dut_ip'],
+                                   ap_dut_obj.dut_addr_dict['client_ip'], timeout,
+                                   traffic_type="RX")
+        for i in range(0, 1):
+            logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
+            wifi_clients[i].interfaces.wifi.leave()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2",
+        "ssid": "RS9117_AP",
+        "passphrase": "12345678", "beacon": 100,
+        "channel": 14,
+        "region": 1,
+        "region_code": "Korea"
+
+    },
+)
+@pytest.mark.parametrize("channel", [14])
+def test_wifi_sdk_dutap_korea_region_unsupported_channel_C477827(wifi_dut, wifi_sniffer, channel, sl_collections):
+    """Try to configure Channel 14 in AP with Country Korea and check the DUT behavior"""
+    try:
+        logger().info("********* configuring static ip to DUT *********")
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.168", static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.168")
+        logger().info(" ********** Starting DUT as an AP with region as Korean and channel as 14 ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", psk="12345678", channel=channel,
+                                          dtim_beacon_count=4,
+                                          beacon_interval=100,
+                                          ht_caps=0)
+
+
+    except Exception as Err:
+        if "0x1000a" in str(Err):
+            logger().info(f"expected error code: {Err}")
+        else:
+            raise Err
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2",
+        "beacon": 100,
+        "channel": 1,
+        "region": 1,
+        "region_code": "korea",
+
+    },
+)
+def test_wifi_sdk_dutap_korean_region_ap_mode_C477825(wifi_dut, wifi_sniffer, sl_collections, sniffer_filter):
+    """Verify whether DUT is able bringup in AP mode with Korea Country and check the region field in Beacon"""
+    try:
+        logger().info("********* configuring the sniffer with access point channel *********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=1)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C477825')
+        time.sleep(3)
+        logger().info("********* configuring static ip to DUT *********")
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.168", static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.168")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", psk="12345678", channel=1,
+                                          dtim_beacon_count=4,
+                                          beacon_interval=100,
+                                          ht_caps=0)
+        time.sleep(15)
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"*********{dut_mac_address}**********")
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            wlan_addr=dut_mac_address, radio_ch=1,
+            filter_name="beacon_ap_mode_korea_region")
+        logger().info(f"packet_filter1: {packet_filter1}")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find beacon frame with Region korea in Sniffer'
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

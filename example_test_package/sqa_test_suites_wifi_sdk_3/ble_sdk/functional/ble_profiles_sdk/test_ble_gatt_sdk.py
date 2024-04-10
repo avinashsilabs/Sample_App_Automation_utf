@@ -373,6 +373,7 @@ def test_ble_sdk_validate_adding_service_in_slave_role_C19878(ble_dut, ble_clien
             bt_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0)
             assert bt_dut_address, "Failed to load bt address..."
             index = 1
+            logger().info("********Adding Heartrate Service to the dut..UUID VALUE : 0x180D************")
             ble_dut.interfaces.bluetooth.ble_add_service(uid=0x180D)
             # ble_add_char_serv_att 10807 26 1 2 -> Heart rate measurement(0x2A37)
             ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x2A37, service_handler_num=index, permissions=0x2,
@@ -423,9 +424,11 @@ def test_ble_sdk_validate_adding_service_in_slave_role_C19878(ble_dut, ble_clien
             state_int = int(state) if state.isdigit() else -1
             assert state_int == BLEDeviceState.Connected, "Device isn't in connected state"
 
+            logger().info(f"******fetching services and characterstics from remote")
             servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
             assert len(servs) > 0, "no services fetched"
             assert len(chars) > 0, "fetched characters are empty"
+            logger().info(f"****** resolve characterstics from remote--> char uid1")
 
             char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
                                                                                                         service_uid=service_uid,
@@ -433,6 +436,7 @@ def test_ble_sdk_validate_adding_service_in_slave_role_C19878(ble_dut, ble_clien
             logger().info(f"char_path is {char_path}")
             assert char_path, "characters are empty"
             assert len(char_props) > 0, "length of characters is 0"
+            logger().info(f"****** resolve characterstics from remote--> char uid2")
 
             char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
                                                                                                         service_uid=service_uid,
@@ -440,6 +444,8 @@ def test_ble_sdk_validate_adding_service_in_slave_role_C19878(ble_dut, ble_clien
             logger().info(f"char_path is {char_path}")
             assert char_path, "characters are empty"
             assert len(char_props) > 0, "length of characters is 0"
+
+            logger().info(f"****** resolve characterstics from remote--> char uid3")
 
             char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
                                                                                                         service_uid=service_uid,
