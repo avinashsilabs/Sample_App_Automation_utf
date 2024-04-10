@@ -356,6 +356,20 @@ devices:
                 socket_type: 0   #0- TCP, 1 - UDP
                 interface: 'eth0'
 
+    raspi_multi_socket:
+        interfaces:
+            socket:
+                type: 'socket.ip_multi_sockets'
+                ip_version: 0
+                dut_local_socket: 5001
+                destination_socket: 5001
+                server_ip: '192.168.100.50'
+                time: 30
+                buffer_length: 1470
+                no_of_pkts: 500
+                socket_type: 1  #0- TCP, 1 - UDP
+                interface: 'eth0'
+
     raspi_ip_remote_socket:
         interfaces:
             socket:
@@ -671,7 +685,7 @@ devices:
 
     keysight_benchvue_power_analyzer_win_rm:
         interfaces:
-            windows_shell: 
+            windows_shell:
                 type: 'rem_mgmt.win_rm'
                 host_ip: '10.207.19.185'
                 username: 'test'
@@ -682,14 +696,14 @@ devices:
                 utf_power_meter_keysight_benchvue_cli_path: 'C:\\UTF\\utf_power_meter_keysight_benchvue_cli\\utf_power_meter_keysight_benchvue_cli.exe'
                 power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
                 window_state: 'Show'
-    
+
     keysight_benchvue_power_analyzer_win_wcf:
         interfaces:
-            wcf_power_meter_keysight_benchvue_service: 
+            wcf_power_meter_keysight_benchvue_service:
                 type: 'rem_mgmt.win_wcf'
                 wsdl: 'http://10.207.19.185:8733/Design_Time_Addresses/utf_wcf_service_library/PowerMeterKeysightBenchvueService/?wsdl'
                 timeout: 120000
-            wcf_file_transfer_service: 
+            wcf_file_transfer_service:
                 type: 'rem_mgmt.win_wcf'
                 wsdl: 'http://10.207.19.185:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
                 timeout: 120000
@@ -813,7 +827,7 @@ devices:
                 type: sniffer_filter
                 src_dir: 'utf_wiseconnect'
 
-    
+
     secondary_raspi_iperf:
         interfaces:
             net_perf:
@@ -855,7 +869,7 @@ devices:
             ftp_client:
                 type: 'ftp.client.ftplib_ftp_client'
                 tls_enabled: false
-    
+
     raspi_ftp_client_tls:
         interfaces:
             ftp_client:
@@ -881,7 +895,7 @@ devices:
 
     static_radius_server:
         interfaces:
-            ssh_shell: 
+            ssh_shell:
                 type: 'shell.ssh_shell'
                 remote: '192.168.50.210'  # configure Free Radius Server NUC IP
                 username: test       # NUC username
@@ -1062,6 +1076,7 @@ defaults:
     #ssl_server: 'raspi_ssl_server_static'
     ssl_client: 'raspi_ssl_client'
     remote_socket: 'raspi_ip_socket'
+    remote_multi_socket: 'raspi_multi_socket'
     # remote_socket: 'raspi_ip_remote_socket'
     multicast_client: 'raspi_multicast'
     remote_socket_factory: "ip_socket_factory"
