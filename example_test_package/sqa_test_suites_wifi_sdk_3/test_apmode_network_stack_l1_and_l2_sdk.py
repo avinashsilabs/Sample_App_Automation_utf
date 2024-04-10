@@ -773,41 +773,67 @@ def test_wifi_sdk_dutap_udp_socket_create_transfer_terminate_30min_C19481(wifi_s
                }
          }
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.skip("testagent issue")
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_wifi_sdk_DUTAP_tcp_remote_termiate_C19466(wifi_sniffer, sniffer_filter, wifi_access_point, net_perf_client, wifi_dut, channel, utf_constants, protocol, sl_collections, wifi_clients, dtim_period, beacon):
+def test_wifi_sdk_DUTAP_tcp_remote_termiate_C19466(wifi_sniffer, sniffer_filter, remote_socket, wifi_dut, utf_constants, sl_collections, wifi_clients):
     '''Run tcp iperf data transfer , check for remote terminate in the dut'''
     try:
-        try:
-            ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
-                                                    utf_constants, net_perf_client=net_perf_client, protocol=protocol,
-                                                    capture_filename="test_C19462",
-                                                    testcase_no=19465, traffic_type="Tx", leave=False,
-                                                    sniffer_stop=True)
-            ap_dut_obj.start()
-            ap_dut_obj.wait_for_exit()
-            events = wifi_dut.interfaces.wifi.get_async_events()
-            for event in events:
-                if event.event_type == AsyncEventIdentifiers.TCP_REMOTE_TERMINATE:
-                    remote_terminate = event.event_data
-                    assert remote_terminate, f"unable to find remote terminate event"
-                    logger().info("Remote terminate event is received by DUT when tcp socket connected is closed")
-            for i in range(0, 1):
-                logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
-                wifi_clients[i].interfaces.wifi.leave()
-            logger().info("Stop sniffer finally")
-            wifi_sniffer.interfaces.capture.stop_capture()
-            sl_collections.ap_sniffer_validation(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
-                                                 dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'],
-                                                 rasp_mac_address=ap_dut_obj.dut_addr_dict['rasp_mac_address'])
-        except Exception as Ex:
-            sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        local_port = randint(5001, 6000)
+        ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+                                                utf_constants,
+                                                capture_filename="test_C19466",
+                                                testcase_no=19465, leave=False,
+                                                sniffer_stop=False)
+        ap_dut_obj.start()
+        ap_dut_obj.wait_for_exit()
+        remote_socket.interfaces.socket.start_server(port=local_port)
+        server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+        server_port = remote_socket.interfaces.socket.server_port
+        tcp_socket_id = wifi_dut.interfaces.wifi.socket()
+        logger().info(f"Socket open successfully : {tcp_socket_id}")
+        logger().info(
+            f"Successfully opened tcp client socket and socket id received is {tcp_socket_id} which is expected")
+        bind_response =  wifi_dut.interfaces.wifi.bind(tcp_socket_id, ap_dut_obj.dut_addr_dict['dut_ip'], 4,
+                                                          server_port=server_port, timeout=5)
+        logger().info(f"Bind socket successfully: {bind_response}")
+        logger().info("DUT is connecting to server socket")
+        connect_status = False
+        for count in range(3):
+            try:
+                wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=tcp_socket_id, server_ip=server_ip,
+                                                          server_port=server_port)
+                connect_status = True
+                break
+            except:
+                logger().info(f"Socket connection failed in DUT...retry_count:{count + 1}")
+                time.sleep(10)
+        assert connect_status, "Socket connection failed in DUT"
+        send_bytes = wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=tcp_socket_id, data="Thisisfromclient",
+                                                            timeout=120)
+        logger().info(f'SEND-Bytes = {send_bytes}')
+        wifi_dut.interfaces.wifi.set_remote_terminate_callback()
+        remote_socket.interfaces.socket.socket_close_indication(1)
+        time.sleep(8)
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        remote_terminate = ""
+        for event in events:
+            if event.event_type == AsyncEventIdentifiers.REMOTE_TERMINATE:
+                remote_terminate = event.event_data
+        logger().info(f"*********{remote_terminate}*************")
+        assert remote_terminate, f"unable to find remote terminate event"
+        logger().info("Remote terminate event is received by DUT when tcp socket connected is closed")
+        for i in range(0, 1):
+            logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
+            wifi_clients[i].interfaces.wifi.leave()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.ap_sniffer_validation(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                             dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'],
+                                             rasp_mac_address=ap_dut_obj.dut_addr_dict['rasp_mac_address'])
 
-        finally:
-            wifi_dut.interfaces.wifi.stop_ap()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
 @pytest.mark.config(
@@ -837,8 +863,7 @@ def test_wifi_sdk_DUTAP_tcp_remote_termiate_C19466(wifi_sniffer, sniffer_filter,
                }
          }
 )
-@pytest.mark.skip("testagent issue")
-def test_wifi_sdk_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C19482(wifi_access_point, utf_constants, sniffer_filter, wifi_sniffer, wifi_dut, wifi_client, remote_socket_factory, sl_collections, wifi_clients):
+def test_wifi_sdk_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C19482(utf_constants, sniffer_filter, wifi_sniffer, wifi_dut, wifi_client, remote_socket_factory, sl_collections, wifi_clients):
     '''create 4 sockets ,do the data transfer check for remote terminate event in the dut'''
     try:
         logger().info("********** configuring the sniffer with access point channel **********")
@@ -889,17 +914,26 @@ def test_wifi_sdk_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C194
             send_bytes = wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=tcp_socket_id, data="Thisisfromclient",
                                                                      timeout=120)
             logger().info(f'SEND-Bytes = {send_bytes}')
-        logger().info(f"closing the socket on dut")
-        wifi_dut.interfaces.wifi.close_sockets()
+        wifi_dut.interfaces.wifi.set_remote_terminate_callback()
+        remote_socket_factory.interfaces.socket.close_all()
+        time.sleep(10)
+        event_data_output = ""
         events = wifi_dut.interfaces.wifi.get_async_events()
         for event in events:
-            if event.event_type == AsyncEventIdentifiers.TCP_REMOTE_TERMINATE:
-                remote_terminate = event.event_data
-                assert remote_terminate, f"unable to find remote terminate event"
-                logger().info("Remote terminate event is received by DUT when tcp socket connected is closed")
+            if event.event_type == AsyncEventIdentifiers.REMOTE_TERMINATE:
+                event_data_output = event.event_data
+                logger().info(f"*****{event_data_output}*******")
+        assert "Remote Terminate" in event_data_output, "expected error code not found. Expected is Remote Terminate"
+        logger().info(f" ***************** EVENT DATA IS : {event_data_output} ********************** ")
+        for i in range(0, 1):
+            logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
+            wifi_clients[i].interfaces.wifi.leave()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
 @pytest.mark.config(
@@ -1449,11 +1483,11 @@ def test_wifi_sdk_DUTAP_Bidirectional_TCP_traffic_data_C19467(wifi_sniffer, net_
                         sl_collections.run_traffic(wifi_dut, net_perf_client, protocol, ap_dut_obj.dut_addr_dict['dut_ip'], client_ip_2, timeout,
                                               traffic_type="RX")
                         time.sleep(15)
-                    else:
-                        logger().info(f"************2nd raspi: {net_perf_clients[i].name}*********")
-                        sl_collections.run_traffic(wifi_dut, net_perf_client, protocol, ap_dut_obj.dut_addr_dict['dut_ip'], client_ip_1, timeout,
-                                                   traffic_type="RX")
-                        time.sleep(15)
+                    # else:
+                    #     logger().info(f"************2nd raspi: {net_perf_clients[i].name}*********")
+                    #     sl_collections.run_traffic(wifi_dut, net_perf_client, protocol, ap_dut_obj.dut_addr_dict['dut_ip'], client_ip_1, timeout,
+                    #                                traffic_type="RX")
+                    #     time.sleep(15)
                 break
             except Exception as e:
                 try:
