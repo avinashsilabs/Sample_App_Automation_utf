@@ -19,7 +19,7 @@ pipeline {
     stages {
         stage('Run Sanity test') {
             agent {
-                label 'NB0015129'
+                label 'NB0015361'
             }
             environment {
                 UTF_HWMUX_TOKEN = credentials('utf-dev-hwmux-token')
@@ -65,7 +65,6 @@ pipeline {
 
                                     call launch_utf_tests.bat --harness %HARNESS_NAME% --target %UTF_DOCKER_TARGET% --pytest_command "%PYTEST_COMMAND%"
                                     set exitcode=%ERRORLEVEL%
-
                                     ssh -o StrictHostKeyChecking=no pi@%UTF_DOCKER_TARGET% "sudo reboot"
                                     :: wait a bit for reboot, otherwise next job may fail
                                     ping -n 15 %UTF_DOCKER_TARGET%
