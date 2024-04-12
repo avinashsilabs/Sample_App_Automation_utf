@@ -1,6 +1,5 @@
 import time
 import pytest
-from utf.utils.logger import get_logger
 
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xTCPIPFeatureBitMap,
@@ -10,15 +9,10 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xConfigFeatureBitMap,
     Si91xCustomFeatureBitMap,
     Si91xExtCustomFeatureBitMap,
-    Si91xAwsQos,
-    Si91xCertificateType,
     Si91xModuleType,
-    Si91xCertIdentifier,
     Si91xBTFeatureBitMap,
     Si91xBLEFeatureBitMap,
     Si91xBLECustomFeatureBitMap,
-    Si91xPowerSaveModes,
-    Si91xPowerSaveProcedureTypes,
 )
 
 pytestmark = [
@@ -41,7 +35,7 @@ pytestmark = [
             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
             | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
             | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT
-            | Si91xModuleType.EXT_TCP_IP_TOTAL_SELECTS(1),
+            | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1), # TODO : not sure if this correct
             "bt_features": Si91xBTFeatureBitMap.Default,
             "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS
             | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC
