@@ -166,3 +166,4 @@ TWT,,
 twt_requesting_sta_1, (wlan.twt.requester == 1), and (wlan.sa == {{ sa_addr }} and wlan.da == {{ da_addr }})
 twt_responding_sta_0, (wlan.twt.requester == 0), and (wlan.sa == {{ sa_addr }} and wlan.da == {{ da_addr }})
 twt_assoc_request_frame, (wlan.ext_tag.he_mac_cap.twt_req_support == 1), and ((wlan.fc.type_subtype == 0) and (wlan.sa == {{ sa_addr }} and wlan.da == {{ da_addr }}))
+twt_teardown_check, wlan.addr == {{sa_addr}}, and wlan.s1g.action == 7
