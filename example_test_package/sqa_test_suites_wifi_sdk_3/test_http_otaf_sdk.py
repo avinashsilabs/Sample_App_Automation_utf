@@ -66,6 +66,7 @@ class WifiJoin(ThreadBase):
         self.wifi_dut.interfaces.wifi.initialize_thread()
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
         fw_after_upgrade = self.wifi_dut.interfaces.wifi.version()
+        self.wifi_dut.interfaces.wifi.inited = False
         time.sleep(5)
         return fw_after_upgrade
 
