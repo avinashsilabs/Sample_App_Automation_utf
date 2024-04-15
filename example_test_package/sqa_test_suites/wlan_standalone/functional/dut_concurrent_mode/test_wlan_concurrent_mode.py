@@ -14,6 +14,7 @@ from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
 from datetime import datetime
 import uuid
+from utf.interfaces.wifi import SecurityMode
 
 """
     setup requirement:
@@ -885,7 +886,11 @@ def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_d
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "Open", "ssid": "RS9116_AP_C19318", "channel": 8, "interface": "wlan0"}
+    wifi={
+        "ssid": "RS9116_AP_C19318",
+        "interface": "wlan0",
+        "channel": 8,
+    },
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
@@ -898,7 +903,7 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
     channel = wifi_access_point.interfaces.wifi.channel
     ping_iterations = 10
     wifi_dut.interfaces.wifi.associated = False
-    logger().info(" ====== configuring the sniffer with access point channel ====== ")
+    logger().info(" ====== configuring the sniffer with access point channel ======")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19318')
@@ -907,9 +912,9 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
     # preparing wifi_dut as access point - AP Mode
     logger().info("Bringing up DUT in AP mode")
     wifi_dut.interfaces.wifi.start_ap(ssid="RS9116_AP_C19318", security="Open", channel=8)
-    logger().info("joining 3rd party client to DUT ap")
     time.sleep(5)
-    wifi_client.interfaces.wifi.join()
+    logger().info("joining 3rd party client to DUT ap")
+    wifi_client.interfaces.wifi.join(security=SecurityMode.Open)
 
     logger().info("fetching gateway ip of ap")
     device_ip_dut_as_ap = wifi_client.interfaces.wifi.client_gateway_ip

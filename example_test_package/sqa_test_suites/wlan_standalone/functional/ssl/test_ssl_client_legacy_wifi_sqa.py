@@ -139,7 +139,7 @@ def join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, log
     if ip_fail:
         logger.info(f"DUT unable to get IP address")
         assert ip_fail == 0, "ip setting in DUT has failed"
-    # The below two apis put DUT to power save. Both Wi-Fi power save and BT power save apis need to be called to put
+    # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
     # DUT to power save in Wifi+bluetooth mode
     wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
@@ -1002,6 +1002,7 @@ def test_ssl_max_sockets_testcaseTC19128(wifi_sniffer, wifi_dut, wifi_access_poi
         dut_recovery(wifi_dut, error)
         raise error
     finally:
+        wifi_dut.interfaces.wifi.inited = False
         dut_clean_up(wifi_dut)
 
 
