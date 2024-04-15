@@ -2,6 +2,7 @@ import time
 import pytest
 from utf.utf_config import UtfConfig
 import re
+from utf.utils.stopwatch import Stopwatch
 from utf.interfaces.wifi import WlanError
 from utf.utils.iperf.iperf_utils import print_dict
 from utf.utils.thread_base import ThreadBase
@@ -136,6 +137,14 @@ class ApModeClientConnections(ThreadBase):
             self.beacon_interval = "100"
             self.no_of_clients = 1
 
+        if self.testcase_no == 37595:
+            self.ssid = "SILABS_AP_MODE"
+            self.security = "WPA2"
+            self.password = "Automation@123"
+            self.channel = "1"
+            self.dtim_count = "1"
+            self.beacon_interval = "100"
+            self.no_of_clients = 1
 
         if self.testcase_no == 19484:
             self.ssid = "SILABS_AP_MODE"
@@ -1464,3 +1473,129 @@ def test_wifi_sdk_dutap_korean_region_ap_mode_C477825(wifi_dut, wifi_sniffer, sl
 
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,
+        "region": 1,
+        "region_code": "us"
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 1,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.parametrize("channel", [1])
+def test_wifi_sdk_dut_socket_info_udp_client_socket_C37595(wifi_sniffer, wifi_dut, channel,
+                                                       sl_collections, wifi_clients, utf_constants, sniffer_filter, remote_socket):
+    """Verify socket ID info/number remains same at all stages while running UDP client in AP mode"""
+    try:
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+                                             utf_constants,
+                                             capture_filename="test_C37595",
+                                             testcase_no=37595,  leave=False,
+                                             sniffer_stop=False)
+        ap_dut_obj.start()
+        ap_dut_obj.wait_for_exit()
+        remote_socket.interfaces.socket.start_server(socket_type=1)
+        local_port = 5001
+        logger().info(f"DUT opens tcp client socket")
+        udp_socket_id = wifi_dut.interfaces.wifi.socket(domain="AF_INET", stream_type="SOCK_DGRAM",
+                                                        protocol="IPPROTO_UDP")
+        logger().info(f"Socket ID after creating socket: {udp_socket_id}")
+        wifi_dut.interfaces.wifi.get_sockets_info()
+        logger().info("Initiating socket bind from DUT")
+        wifi_dut.interfaces.wifi.bind(udp_socket_id, device_ip=ap_dut_obj.dut_addr_dict['dut_ip'],
+                                      server_port=local_port)
+        sw = Stopwatch()
+        while sw.elapsed_sec < 60:
+            send_bytes =  wifi_dut.interfaces.wifi.bsdSocketSendTo(socket_fd=udp_socket_id, data="Thisisfromclient", ip_addr= ap_dut_obj.dut_addr_dict['rasp_mac_address'], ip_len=4, port=123)
+
+        wifi_dut.interfaces.wifi.get_sockets_info()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,
+        "region": 1,
+        "region_code": "us"
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 1,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.parametrize("channel", [1])
+def test_wifi_sdk_dut_socket_info_udp_server_socket_C37594(wifi_sniffer, wifi_dut, channel,
+                                                       sl_collections, wifi_clients, utf_constants, sniffer_filter, remote_socket):
+    try:
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+                                             utf_constants,
+                                             capture_filename="test_C37594",
+                                             testcase_no=37595, leave=False,
+                                             sniffer_stop=False)
+        ap_dut_obj.start()
+        ap_dut_obj.wait_for_exit()
+        sock = wifi_dut.interfaces.wifi.Asyncsocket(stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP")
+        wifi_dut.interfaces.wifi.get_sockets_info()
+        wifi_dut.interfaces.wifi.bind(sock, ap_dut_obj.dut_addr_dict['dut_ip'], server_port=5001)
+        sw = Stopwatch()
+        while sw.elapsed_sec < 60:
+            send_bytes = wifi_dut.interfaces.wifi.bsdSocketSendTo(socket_fd=sock, data="Thisisfromclient",
+                                                                  ip_addr=ap_dut_obj.dut_addr_dict['client_ip'],
+                                                                  ip_len=4, port=5001)
+
+        wifi_dut.interfaces.wifi.get_sockets_info()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
