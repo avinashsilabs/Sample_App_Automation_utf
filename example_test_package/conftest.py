@@ -223,6 +223,7 @@ def pytest_runtest_protocol(item, nextitem):
             TestResultsModelAttrs.module_name: module_name,
             TestResultsModelAttrs.tool_chain: tool_chain,
         }
+        item.test_src_map_id = case_id
         item.user_properties.append((TestUserPropertiesSource.TEST_CASE_ID, case_id))
         item.user_properties.append(
             (TestUserPropertiesSource.TEST_CUSTOM_INFO, custom_values)
