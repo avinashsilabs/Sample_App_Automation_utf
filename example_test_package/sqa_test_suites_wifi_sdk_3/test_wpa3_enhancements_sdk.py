@@ -609,11 +609,11 @@ def test_wifi_sdk_DUT_reconnection_hunting_pecking_C113908(wifi_sniffer, wifi_ac
             wifi_access_points[0].interfaces.wifi.stop_ap()
             time.sleep(10)
             wifi_access_points[0].interfaces.wifi.start_ap()
-            logger().info("Dut going to leave the AP")
             time.sleep(60)
             status = ping(device_ip, ping_count)
             assert status is True, "DUT is not responding to ping request from third party device"
-            logger().info("Dut going to leave the AP")
+        logger().info("Dut going to leave the AP")
+        wifi_dut.interfaces.wifi.leave()
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
