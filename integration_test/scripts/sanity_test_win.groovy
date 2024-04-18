@@ -28,6 +28,7 @@ pipeline {
                 HWMUX_GROUP_JSON_FILE_NAME = "integration_tests_3_hwmux_group.json"
                 HARNESS_NAME= "__hwmux__integration_tests_3.yaml"
                 TEST_CONFIG_FILE = ".sequence_manager/test_execution_definitions/sanity_test.yaml"
+                MWLABUSER_JENKINS_SSH = credentials('mwlabuser_jenkins_ssh')
             }
             stages {
                 stage('Setup Environment') {
@@ -42,39 +43,41 @@ pipeline {
                 }
                 stage('Launch Tests') {
                     steps {
-                        hwmuxReserveAnyGroupFromLabel(HWMUX_GROUP_LABEL, null, UTF_HWMUX_TOKEN, "HWMUX_GROUP_JSON")  {
-                            timeout(time: 120, unit: 'MINUTES') {
-                                writeFile(file: env.HWMUX_GROUP_JSON_FILE_NAME, text: env.HWMUX_GROUP_JSON)
-                                bat(label: "Run UTF Launcher", script: """
-                                    type %HWMUX_GROUP_JSON_FILE_NAME% | utf_core\\tools\\jq.exe -r .metadata.host_ip  > tmp_host_ip
-                                    set /p UTF_DOCKER_TARGET= < tmp_host_ip
-                                    del tmp_host_ip
-
-                                    if not exist yq.exe (
-                                        curl -k -L https://github.com/mikefarah/yq/releases/download/v4.21.1/yq_windows_amd64.exe --output yq.exe
-                                    )
-                                    type %HWMUX_GROUP_JSON_FILE_NAME%  | yq.exe .metadata.harness -P > config\\harnesses\\%HARNESS_NAME%
-
-                                    rd /s /q reports
-
-                                    call venv\\scripts\\activate
-                                    copy utf_core\\unit_tests\\.coveragerc integration_test\\.coveragerc
-                                    pushd executor
-
-                                    set "PYTEST_COMMAND=pytest --tb=native --tmconfig integration_test/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest_without_aws_test_agent.yaml integration_test"
-
-                                    call launch_utf_tests.bat --harness %HARNESS_NAME% --target %UTF_DOCKER_TARGET% --pytest_command "%PYTEST_COMMAND%"
-                                    set exitcode=%ERRORLEVEL%
-                                    ssh -o StrictHostKeyChecking=no pi@%UTF_DOCKER_TARGET% "sudo reboot"
-                                    :: wait a bit for reboot, otherwise next job may fail
-                                    ping -n 15 %UTF_DOCKER_TARGET%
-                                    exit /b %exitcode%
-                                """)
-                                dir('integration_test') {
-                                    archiveArtifacts artifacts: env.TEST_CONFIG_FILE
+                        script {
+                            withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser_jenkins_ssh', keyFileVariable: 'MWLABUSER_JENKINS_SSH', passphraseVariable: 'PASSPHRASE_UNUSED', usernameVariable: 'USERNAME_UNUSED')]) {
+                                hwmuxReserveAnyGroupFromLabel(HWMUX_GROUP_LABEL, null, UTF_HWMUX_TOKEN, "HWMUX_GROUP_JSON")  {
+                                    timeout(time: 120, unit: 'MINUTES') {
+                                        writeFile(file: env.HWMUX_GROUP_JSON_FILE_NAME, text: env.HWMUX_GROUP_JSON)
+                                        bat(label: "Run UTF Launcher", script: """
+                                            type %HWMUX_GROUP_JSON_FILE_NAME% | utf_core\\tools\\jq.exe -r .metadata.host_ip  > tmp_host_ip
+                                            set /p UTF_DOCKER_TARGET= < tmp_host_ip
+                                            del tmp_host_ip
+    
+                                            if not exist yq.exe (
+                                                curl -k -L https://github.com/mikefarah/yq/releases/download/v4.21.1/yq_windows_amd64.exe --output yq.exe
+                                            )
+                                            type %HWMUX_GROUP_JSON_FILE_NAME%  | yq.exe .metadata.harness -P > config\\harnesses\\%HARNESS_NAME%
+    
+                                            rd /s /q reports
+    
+                                            call venv\\scripts\\activate
+                                            copy utf_core\\unit_tests\\.coveragerc integration_test\\.coveragerc
+                                            pushd executor
+    
+                                            set "PYTEST_COMMAND=pytest --tb=native --tmconfig integration_test/%TEST_CONFIG_FILE% --manifest /app/manifest/manifest_without_aws_test_agent.yaml integration_test"
+    
+                                            call launch_utf_tests.bat --harness %HARNESS_NAME% --target %UTF_DOCKER_TARGET% --pytest_command "%PYTEST_COMMAND%"
+                                            
+                                            set exitcode=%ERRORLEVEL%
+                                            exit /b %exitcode%
+                                        """)
+                                        dir('integration_test') {
+                                            archiveArtifacts artifacts: env.TEST_CONFIG_FILE
+                                        }
+                                        archiveArtifacts artifacts: "reports/pytest-log.txt,reports/junit_report.xml,reports/pytest-report.html"
+                                        junit allowEmptyResults: false, testResults: "reports/junit_report.xml"
+                                    }
                                 }
-                                archiveArtifacts artifacts: "reports/pytest-log.txt,reports/junit_report.xml,reports/pytest-report.html"
-                                junit allowEmptyResults: false, testResults: "reports/junit_report.xml"
                             }
                         }
                     }
