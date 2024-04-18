@@ -4,7 +4,7 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,
     RS9116ConfigFeatureBitMap, \
     RS9116TCPIPFeatureBitMap, RS9116StoreConfiguration, RS9116Region, RS9116RegionCode, RS9116ModuleType, \
     RS9116CustomFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116CertificateType, RS9116PowerSaveProcedureTypes, \
-    RS9116ExtCustomFeatureBitMap, RS9116JoinFeatureBitMap
+    RS9116ExtCustomFeatureBitMap, RS9116JoinFeatureBitMap, DeviceConstants
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 import time
 from utf.utils.logger import get_logger
@@ -13,6 +13,7 @@ from utf.interfaces.cli import CLITransportException
 from utf.utils.iperf.iperf_utils import print_dict
 from utf.interfaces.wifi import WlanError
 from utf.utils import mac_address_to_string
+from retry import retry
 
 """
     setup requirement:
@@ -39,10 +40,8 @@ iter_count = 5
 
 # this thread used for wifi join
 class Wifi_data_tx():
-    def __init__(self, wifi_dut=None, \
-                 wifi_access_point=None, \
-                 wifi_client=None, \
-                 net_perf_client=None, protocol=None, device_ip=None):
+    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_client=None, net_perf_client=None, protocol=None,
+                 device_ip=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -102,10 +101,10 @@ class cleanup_store_config():
                 self.wifi_dut.interfaces.wifi.wireless_init(oper_mode=0, coex_mode=9, retries=1)
                 time.sleep(10)
                 return True
-            except:
+            except Exception as err:
                 logger().info("clean up process failed ,retrying for 3 times")
-                # if tries==2:
-                #     return
+                if tries == 2:
+                    raise err
 
     def disconnect(self):
 
@@ -119,6 +118,7 @@ class cleanup_store_config():
             return True
         except:
             logger().info("clean up process failed")
+            self.dut_recovery()
 
 
 class wifi_join:
@@ -183,6 +183,14 @@ class wifi_eap_join:
                     raise
 
 
+@retry(Exception, delay=15, tries=3)
+def get_ip(wifi_dut):
+    logger().info("DUT gets ip address through DHCP")
+    wifi_dut.interfaces.wifi.start_ip(timeout=120, retries=6)
+    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    return device_ip
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -220,10 +228,7 @@ def test_store_config_open_C19081(wifi_sniffer, wifi_access_point, wifi_dut):
         assert join_obj.join_to_ap(), "Join failed"
 
         logger().info("Getting the IP")
-        # DUT gets ipaddress through DHCP process after start_ip API is executed
-        wifi_dut.interfaces.wifi.start_ip()
-        # The below api parses DUTs IP address
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        device_ip = get_ip(wifi_dut)
         logger().info(f"Found device ip : {device_ip}")
 
         bssid = wifi_access_point.interfaces.wifi.bssid
@@ -354,12 +359,9 @@ def test_store_config_band_5_WPA2_C19085(wifi_sniffer, wifi_access_point, wifi_d
         join_obj = wifi_join(wifi_dut, wifi_access_point)
         assert join_obj.join_to_ap(), "Join failed"
 
-        logger().info("getting the ip")
-        # DUT gets ipaddress through DHCP process after start_ip API is executed
-        wifi_dut.interfaces.wifi.start_ip()
-        # The below api parses DUTs IP address
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-        logger().info(f"device ip : {device_ip}")
+        logger().info("Getting the IP")
+        device_ip = get_ip(wifi_dut)
+        logger().info(f"Found device ip : {device_ip}")
 
         logger().info("Enable Auto Configuration")
         # Save the wireless configuration in the flash
@@ -507,12 +509,8 @@ def test_store_config_region_US_EU_JP_C19088(wifi_sniffer, wifi_access_point, wi
             assert join_obj.join_to_ap(), "Join failed"
 
             logger().info("Getting the IP")
-            # DUT gets ipaddress through DHCP process after start_ip API is executed
-            wifi_dut.interfaces.wifi.start_ip()
-
-            # The below api parses DUTs IP address
-            device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-            logger().info(f"Found the device ip : {device_ip}")
+            device_ip = get_ip(wifi_dut)
+            logger().info(f"Found device ip : {device_ip}")
 
             logger().info("Getting the DUT mac")
             dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -669,12 +667,9 @@ def test_store_config_band_dual_C19090(wifi_sniffer, wifi_dut, wifi_access_point
                                               security=wifi_access_point.interfaces.wifi.security,
                                               passphrase=wifi_access_point.interfaces.wifi.passphrase)
 
-                logger().info("Getting the ip")
-                # DUT gets ipaddress through DHCP process after start_ip API is executed
-                wifi_dut.interfaces.wifi.start_ip()
-                # The below api parses DUTs IP address
-                device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-                logger().info(f"Device ip : {device_ip}")
+                logger().info("Getting the IP")
+                device_ip = get_ip(wifi_dut)
+                logger().info(f"Found device ip : {device_ip}")
 
                 logger().info("Getting the DUT mac")
                 dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -816,13 +811,9 @@ def test_Store_Config_LP_Power_Save_C19089(wifi_dut, wifi_access_point, wifi_sni
         bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP MAC: {bssid}")
 
-        # Enables the DHCP in DUT
-        result = wifi_dut.interfaces.wifi.start_ip()
-        assert isinstance(
-            result, wifi_dut.interfaces.wifi.IPConfig
-        ), f"Failed to get IP address. Result = {result}"
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-        logger().info(f"Device ip : {device_ip}")
+        logger().info("Getting the IP")
+        device_ip = get_ip(wifi_dut)
+        logger().info(f"Found device ip : {device_ip}")
 
         logger().info("Initiating power save")
         # Enables the power Save in wifi mode
@@ -953,12 +944,9 @@ def test_store_config_without_powersave_C19103(wifi_sniffer, wifi_access_point, 
         bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP MAC: {bssid}")
 
-        logger().info("getting the ip")
-        # DUT gets ipaddress through DHCP process after start_ip API is executed
-        wifi_dut.interfaces.wifi.start_ip()
-        # The below api parses DUTs IP address
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-        logger().info(f"device ip : {device_ip}")
+        logger().info("Getting the IP")
+        device_ip = get_ip(wifi_dut)
+        logger().info(f"Found device ip : {device_ip}")
 
         logger().info("Initiating power save")
         # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
@@ -1089,12 +1077,9 @@ def test_store_config_aggregation_C19101(wifi_sniffer, wifi_access_point, wifi_d
         bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP MAC: {bssid}")
 
-        logger().info("getting the ip")
-        # DUT gets ipaddress through DHCP process after start_ip API is executed
-        wifi_dut.interfaces.wifi.start_ip()
-        # The below api parses DUTs IP address
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-        logger().info(f"device ip : {device_ip}")
+        logger().info("Getting the IP")
+        device_ip = get_ip(wifi_dut)
+        logger().info(f"Found device ip : {device_ip}")
 
         logger().info("Enable Auto Configuration")
         # Save the wireless configuration in the flash
@@ -1241,12 +1226,10 @@ def test_wireless_config_WPA2_C19093(wifi_sniffer, wifi_access_point, wifi_clien
         join_obj = wifi_join(wifi_dut, wifi_access_point)
         assert join_obj.join_to_ap(), "Join failed"
 
-        logger().info("getting the ip")
-        # DUT gets ipaddress through DHCP process after start_ip API is executed
-        wifi_dut.interfaces.wifi.start_ip()
-        # The below api parses DUTs IP address
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-        logger().info(f"device ip : {device_ip}")
+        logger().info("Getting the IP")
+        device_ip = get_ip(wifi_dut)
+        logger().info(f"Found device ip : {device_ip}")
+
         # Ping to dut from third party device
         status = ping(device_ip, ping_count)
         assert status, "DUT is not responding to ping request from third party device after store configuration"
@@ -1394,12 +1377,10 @@ def test_wireless_config_5GHZ_C19097(wifi_sniffer, wifi_access_point, wifi_clien
         join_obj = wifi_join(wifi_dut, wifi_access_point)
         assert join_obj.join_to_ap(), "Join failed"
 
-        logger().info("getting the ip")
-        # DUT gets ipaddress through DHCP process after start_ip API is executed
-        wifi_dut.interfaces.wifi.start_ip()
-        # The below api parses DUTs IP address
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-        logger().info(f"device ip : {device_ip}")
+        logger().info("Getting the IP")
+        device_ip = get_ip(wifi_dut)
+        logger().info(f"Found device ip : {device_ip}")
+
         ping_count = 60
         # Ping to dut from third party device
         status = ping(device_ip, ping_count)
@@ -1550,12 +1531,10 @@ def test_wireless_config_Dual_1_C19095(wifi_sniffer, wifi_access_point, wifi_cli
         join_obj = wifi_join(wifi_dut, wifi_access_point)
         assert join_obj.join_to_ap(), "Join failed"
 
-        logger().info("getting the ip")
-        # DUT gets ipaddress through DHCP process after start_ip API is executed
-        wifi_dut.interfaces.wifi.start_ip()
-        # The below api parses DUTs IP address
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-        logger().info(f"device ip : {device_ip}")
+        logger().info("Getting the IP")
+        device_ip = get_ip(wifi_dut)
+        logger().info(f"Found device ip : {device_ip}")
+
         # Ping to dut from third party device
         status = ping(device_ip, ping_count)
         assert status, "DUT is not responding to ping request from third party device after store configuration"
@@ -1611,7 +1590,7 @@ def test_wireless_config_Dual_1_C19095(wifi_sniffer, wifi_access_point, wifi_cli
 
             logger().info("Initiating power save")
             # The below two apis put DUT to power save. Both wifi power save and BT power save apis need to be called to put
-            # DUT to power save in Wifi+bluetooth mode
+            # DUT to power save in Wi-Fi+bluetooth mode
             wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
             wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
@@ -1706,13 +1685,9 @@ def test_wireless_config_Dual_2_C19096(wifi_sniffer, wifi_access_point, wifi_cli
         join_obj = wifi_join(wifi_dut, wifi_access_point)
         assert join_obj.join_to_ap(), "Join failed"
 
-        logger().info("getting the ip")
-        # DUT gets ipaddress through DHCP process after start_ip API is executed
-        wifi_dut.interfaces.wifi.start_ip()
-        # The below api parses DUTs IP address
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-        logger().info(f"device ip : {device_ip}")
-        # Ping to dut from third party device
+        logger().info("Getting the IP")
+        device_ip = get_ip(wifi_dut)
+        logger().info(f"Found device ip : {device_ip}")
 
         bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP MAC: {bssid}")
@@ -1838,8 +1813,8 @@ def test_wireless_config_Dual_2_C19096(wifi_sniffer, wifi_access_point, wifi_cli
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_store_config_in_WPA2_EAP_TLS_C19084(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, \
-                                             net_perf_client, protocol, radius_server):
+def test_store_config_in_WPA2_EAP_TLS_C19084(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+                                             protocol, radius_server):
     try:
         testcase = "test_store_config_in_WPA2_EAP_TLS_C19084"
         validation = True
@@ -1852,14 +1827,10 @@ def test_store_config_in_WPA2_EAP_TLS_C19084(wifi_sniffer, wifi_access_point, wi
 
         join_obj = wifi_eap_join(wifi_dut, wifi_access_point, eap_method="TLS")
         assert join_obj.join_to_ap(), "Join failed"
-        # Get IP through DHCP
-        result = wifi_dut.interfaces.wifi.start_ip()
-        assert isinstance(
-            result, wifi_dut.interfaces.wifi.IPConfig
-        ), f"Failed to get IP address. Result = {result}"
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
 
-        logger().info(f"Found device ip :{device_ip}")
+        logger().info("Getting the IP")
+        device_ip = get_ip(wifi_dut)
+        logger().info(f"Found device ip : {device_ip}")
 
         logger().info("Getting the DUT mac")
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -1993,14 +1964,9 @@ def test_store_config_in_WPA2_EAP_TTLS_C19098(wifi_sniffer, wifi_access_point, w
         join_obj = wifi_eap_join(wifi_dut, wifi_access_point, eap_method="TTLS")
         assert join_obj.join_to_ap(), "Join failed"
 
-        # Get IP through DHCP
-        result = wifi_dut.interfaces.wifi.start_ip()
-        assert isinstance(
-            result, wifi_dut.interfaces.wifi.IPConfig
-        ), f"Failed to get IP address. Result = {result}"
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
-        logger().info(f"Found device ip :{device_ip}")
+        logger().info("Getting the IP")
+        device_ip = get_ip(wifi_dut)
+        logger().info(f"Found device ip : {device_ip}")
 
         logger().info("Getting the DUT mac")
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -2129,14 +2095,9 @@ def test_store_config_error_handling_TTLS_C19083(wifi_sniffer, wifi_access_point
         join_obj = wifi_eap_join(wifi_dut, wifi_access_point, eap_method="TTLS")
         assert join_obj.join_to_ap(), "Join failed"
 
-        # Get IP through DHCP
-        result = wifi_dut.interfaces.wifi.start_ip()
-        assert isinstance(
-            result, wifi_dut.interfaces.wifi.IPConfig
-        ), f"Failed to get IP address. Result = {result}"
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-
-        logger().info(f"Found device ip :{device_ip}")
+        logger().info("Getting the IP")
+        device_ip = get_ip(wifi_dut)
+        logger().info(f"Found device ip : {device_ip}")
 
         logger().info("Getting the DUT mac")
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
@@ -2225,10 +2186,7 @@ def test_store_config_custom_feat_bit_20_C19091(wifi_sniffer, wifi_access_point,
         assert join_obj.join_to_ap(), "Join failed"
 
         logger().info("Getting the IP")
-        # DUT gets ipaddress through DHCP process after start_ip API is executed
-        ip_address = wifi_dut.interfaces.wifi.start_ip()
-        # The below api parses DUTs IP address
-        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
+        device_ip = get_ip(wifi_dut)
         logger().info(f"Found device ip : {device_ip}")
 
         bssid = wifi_access_point.interfaces.wifi.bssid
@@ -2348,10 +2306,7 @@ def test_store_config_custom_feat_bit_20_C19092(wifi_sniffer, wifi_access_point,
         assert join_obj.join_to_ap(), "Join failed"
 
         logger().info("Getting the IP")
-        # DUT gets ipaddress through DHCP process after start_ip API is executed
-        ip_address = wifi_dut.interfaces.wifi.start_ip()
-        # The below api parses DUTs IP address
-        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_address)
+        device_ip = get_ip(wifi_dut)
         logger().info(f"Found device ip : {device_ip}")
 
         bssid = wifi_access_point.interfaces.wifi.bssid
