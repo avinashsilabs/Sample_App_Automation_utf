@@ -207,6 +207,7 @@ class WifiJoin(ThreadBase):
                                                               f" firmware through otaf"
         except Exception as e:
             logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
+            raise e
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
