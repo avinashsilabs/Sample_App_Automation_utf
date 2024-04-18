@@ -1,0 +1,581 @@
+root_path: example_test_package
+test_sequence:
+  - id: 6f13a032bc1922cdad5a088aa412a72700ad29e2
+    test_src_map_id: C34753::1
+    test_case_id: test_wifi_sdk_firmware_version_C34753
+    test_function: test_wifi_sdk_firmware_version_C34753
+    test_id: test_wifi_sdk_firmware_version_C34753::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        13,'features': 151,'config_features': 67108865,'tcpip_features':
+        2147483652,'bt_features': 0,'ble_features': 0,'ble_custom_ext_features':
+        0,'thread_config': {'wifi': {'count': 1,'stack_len': 2048}}})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C34753
+      - firmware
+      - sdk
+      - sqa_sanity_sdk
+      - sqa_test_suites_wifi_sdk_3
+      - version
+      - wifi
+    test_case_name: test_wifi_sdk_firmware_version_C34753
+  - id: b6a40482d9981c71574cb97f60321ccb92a91053
+    test_src_map_id: TC127757::2
+    test_case_id: test_wifi_sdk_mqtt_qos1_connect_subscribe_publish_TC127757
+    test_function: test_wifi_sdk_mqtt_qos1_connect_subscribe_publish_TC127757
+    test_id: test_wifi_sdk_mqtt_qos1_connect_subscribe_publish_TC127757::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_mqtt_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode': 13,'features':
+        151,'tcpip_features': 2147483652,'custom_features':
+        2147483648,'ext_custom_features': 542638080,'ext_tcpip_features':
+        2147680256,'config_features': 67108865,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','unassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - TC127757
+      - connect
+      - mqtt
+      - mqtt_sdk
+      - qos1
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - subscribe
+      - wifi
+    test_case_name: test_wifi_sdk_mqtt_qos1_connect_subscribe_publish_TC127757
+  - id: f3da3849095915695267a334c59ecd794c5be24d
+    test_src_map_id: TC127827::2
+    test_case_id: test_wifi_sdk_mqtt_qos0_connect_publish_max_data_TC127827
+    test_function: test_wifi_sdk_mqtt_qos0_connect_publish_max_data_TC127827
+    test_id: test_wifi_sdk_mqtt_qos0_connect_publish_max_data_TC127827::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_mqtt_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode': 13,'features':
+        151,'tcpip_features': 2147483652,'custom_features':
+        2147483648,'ext_custom_features': 542638080,'ext_tcpip_features':
+        2147680256,'config_features': 67108865,'set_send_feature_frame': True})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['mqtt_disconnect','wifi_powersave_disable','unassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - TC127827
+      - connect
+      - data
+      - max
+      - mqtt
+      - mqtt_sdk
+      - qos0
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_mqtt_qos0_connect_publish_max_data_TC127827
+  - id: 10188b9b0e9d6bfad36995b3506155664781f0e7
+    test_src_map_id: C127803::2
+    test_case_id: >-
+      test_wifi_sdk_Connect_subscribe_to_MQTT_server_with_SSL_connection_and_publish_data_C127803
+    test_function: >-
+      test_wifi_sdk_Connect_subscribe_to_MQTT_server_with_SSL_connection_and_publish_data_C127803
+    test_id: >-
+      test_wifi_sdk_Connect_subscribe_to_MQTT_server_with_SSL_connection_and_publish_data_C127803::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_mqtt_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode': 13,'features':
+        151,'tcpip_features': 2147484932,'custom_features':
+        2147483648,'ext_custom_features': 542638080,'ext_tcpip_features':
+        2147680256,'config_features': 67108865,'set_send_feature_frame':
+        True,'ca_cert':
+        ['ca-chain.cert.pem','SL_NET_SIGNING_CERTIFICATE','SL_NET_TLS_SERVER_CREDENTIAL_START']})
+      - 'pytest.mark.config(''wifi_access_point'',wifi={''channel'': 11})'
+      - pytest.mark.mqtt_server('raspi_mosquitto_tls',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C127803
+      - Connect
+      - MQTT
+      - SSL
+      - connection
+      - data
+      - mqtt_sdk
+      - sdk
+      - server
+      - sqa_test_suites_wifi_sdk_3
+      - subscribe
+      - wifi
+    test_case_name: >-
+      test_wifi_sdk_Connect_subscribe_to_MQTT_server_with_SSL_connection_and_publish_data_C127803
+  - id: 6df67314a0125933f9a66afaa75f6b6e6224aa51
+    test_src_map_id: C19780::2
+    test_case_id: test_sdk_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780
+    test_function: test_sdk_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780
+    test_id: test_sdk_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_http_otaf_sdk.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode': 0,'features':
+        181,'config_features': 67108865,'tcpip_features':
+        2147484804,'custom_features': 2147483648,'ext_tcpip_features':
+        2147745792,'ext_custom_features': 2690121728})
+      - pytest.mark.end_state('wifi_dut',wifi=['load_default_fw'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C19780
+      - STA
+      - alone
+      - fw
+      - http
+      - http_otaf_sdk
+      - measure
+      - mode
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - time
+      - upgrade
+    test_case_name: test_sdk_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780
+  - id: 9be6e4081c421645c31950b6640235133947f0be
+    test_src_map_id: C19454::2
+    test_case_id: test_wifi_sdk_ap_mode_tx_rules_us_region_c19454
+    test_function: test_wifi_sdk_ap_mode_tx_rules_us_region_c19454
+    test_id: test_wifi_sdk_ap_mode_tx_rules_us_region_c19454::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_apmode_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 6,'coex_mode': 13,'features':
+        6,'tcpip_features': 2147483664,'ext_tcpip_features':
+        2147483648,'custom_features': 2147483648,'ext_custom_features':
+        537919488,'security': 'WPA2','ssid': 'SILABS_AP_MODE','passphrase':
+        'Automation@123','channel': 11,'region': 1,'region_code': 'us'})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','country':
+        'US','channel': '11','interface': 'wlan0'},1: {'security':
+        'WPA2','ssid': 'SILABS_AP_MODE','passphrase':
+        'Automation@123','country': 'US','channel': '11','interface':
+        'wlan0'},2: {'security': 'WPA2','ssid': 'SILABS_AP_MODE','passphrase':
+        'Automation@123','country': 'US','channel': '11','interface':
+        'wlan0'},3: {'security': 'WPA2','ssid': 'SILABS_AP_MODE','passphrase':
+        'Automation@123','country': 'US','channel': '11','interface': 'wlan0'}})
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - ap
+      - apmode_sdk
+      - c19454
+      - mode
+      - region
+      - rules
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - tx
+      - us
+      - wifi
+    test_case_name: test_wifi_sdk_ap_mode_tx_rules_us_region_c19454
+  - id: 845217048e5525aafd3f9218a240b3b57f837bc5
+    test_src_map_id: C19319::1
+    test_case_id: test_wifi_sdk_device_as_ap_and_sta_c19319
+    test_function: test_wifi_sdk_device_as_ap_and_sta_c19319
+    test_id: test_wifi_sdk_device_as_ap_and_sta_c19319::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_wlan_concurrent_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': '9','coex_mode': '0','features':
+        '128','tcpip_features': '2147483668','ext_tcpip_features':
+        '65536','custom_features': '2147483648','ext_custom_features':
+        '536870912','security': 'WPA2','ssid': 'SILABS_AP_MODE','passphrase':
+        'Automation@123','channel': 11})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'standard':
+        '11n','security': 'WPA2','cipher': 'AES','channel': 11})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','channel':
+        11,'interface': 'wlan0'}})
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - ap
+      - c19319
+      - device
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - sta
+      - wifi
+      - wlan_concurrent_sdk
+    test_case_name: test_wifi_sdk_device_as_ap_and_sta_c19319
+  - id: d97c5266f79ebdf89a9dbc0ee02c142c1bc6aaaf
+    test_src_map_id: C19052::1
+    test_case_id: test_wifi_sdk_check_get_rtc_functionality_c19052
+    test_function: test_wifi_sdk_check_get_rtc_functionality_c19052
+    test_id: test_wifi_sdk_check_get_rtc_functionality_c19052::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_rtc_sta_wifi_sqa_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode': 13,'features':
+        151,'config_features': 67108865,'tcpip_features':
+        2147483652,'custom_features': 2415919104,'bt_features':
+        0,'ble_features': 0,'ble_custom_ext_features': 0})
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - 'pytest.mark.config(''wifi_access_point'',wifi={''security'': ''WPA2''})'
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','unassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - c19052
+      - check
+      - functionality
+      - get
+      - rtc
+      - rtc_sta_wifi_sqa_sdk
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_check_get_rtc_functionality_c19052
+  - id: 689e5594fddcf16bc5e8ffbeec2520e47cdfea90
+    test_src_map_id: C20738::2
+    test_case_id: test_wlan_standalone_udp_tx_c20738[UDP]_1
+    test_function: test_wlan_standalone_udp_tx_c20738
+    test_id: test_wlan_standalone_udp_tx_c20738[UDP]_1::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_throughput_sdk.py
+    test_markers:
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - 'pytest.mark.config(''wifi_access_point'',wifi={''standard'': ''gnbax''})'
+      - pytest.mark.start_state('wifi_dut',device='reset',wifi='init')
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        0,'features': 133,'custom_features': 2147483664,'ext_custom_features':
+        537919488,'tcpip_features': 2147483652,'ext_tcpip_features':
+        2147549200,'bt_features': 0,'ble_features': 0,'ble_custom_ext_features':
+        0,'band': 0,'thread_config': {'wifi': {'count': 2,'stack_len': 3584}}})
+    test_params:
+      - name: protocol
+        value: UDP
+    version: 0
+    enabled: true
+    labels:
+      - c20738
+      - sqa_test_suites_wifi_sdk_3
+      - standalone
+      - throughput_sdk
+      - tx
+      - udp
+      - wlan
+    test_case_name: test_wlan_standalone_udp_tx_c20738[UDP]
+  - id: aa38bb989841456c8bb5004f53f4c5dd8c3bd1e8
+    test_src_map_id: C20739::2
+    test_case_id: test_wlan_standalone_udp_rx_c20739[UDP]_1
+    test_function: test_wlan_standalone_udp_rx_c20739
+    test_id: test_wlan_standalone_udp_rx_c20739[UDP]_1::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_throughput_sdk.py
+    test_markers:
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
+      - 'pytest.mark.config(''wifi_access_point'',wifi={''standard'': ''gnbax''})'
+      - pytest.mark.start_state('wifi_dut',device='reset',wifi='init')
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        0,'features': 133,'custom_features': 2147483664,'ext_custom_features':
+        537919488,'tcpip_features': 2147483652,'ext_tcpip_features':
+        2147549200,'bt_features': 0,'ble_features': 0,'ble_custom_ext_features':
+        0,'band': 0,'thread_config': {'wifi': {'count': 2,'stack_len': 3584}}})
+    test_params:
+      - name: protocol
+        value: UDP
+    version: 0
+    enabled: true
+    labels:
+      - c20739
+      - rx
+      - sqa_test_suites_wifi_sdk_3
+      - standalone
+      - throughput_sdk
+      - udp
+      - wlan
+    test_case_name: test_wlan_standalone_udp_rx_c20739[UDP]
+  - id: 772637f7a02447348288bb1a590f24960585a2ff
+    test_src_map_id: C133475::2
+    test_case_id: test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475[TCP]
+    test_function: test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475
+    test_id: test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475[TCP]::1
+    test_module: sqa_test_suites_wifi_sdk_3/coex/sta+ble/test_sta_ble_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        '13','features': '183','ext_tcpip_features':
+        '2147549184','ext_custom_features': '2689073152','ble_features':
+        '3894286868','ble_custom_ext_features': '51204','config_features':
+        '67108865','thread_config': {'wifi': {'count': 1,'stack_len':
+        2048},'ble': {'count': 1,'stack_len': 2048}}})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'security':
+        'WPA2','passphrase': '1234567890'})
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['bt_powersave_disable','wifi_powersave_disable','disassociated','ble_stop_scan'])
+    test_params:
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - BLE
+      - C133475
+      - Coex
+      - TCP
+      - TX
+      - UDP
+      - WLAN
+      - WPA2
+      - coex
+      - sdk
+      - slave
+      - sqa_test_suites_wifi_sdk_3
+      - sta+ble
+      - sta_ble_sdk
+    test_case_name: test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475[TCP]
+  - id: 4bf34fe00459c69f401c4bc35e91ed74f2ec3f4a
+    test_src_map_id: C19031::2
+    test_case_id: test_udp_tx_by_enabling_aggregation_c19031[UDP]_1
+    test_function: test_udp_tx_by_enabling_aggregation_c19031
+    test_id: test_udp_tx_by_enabling_aggregation_c19031[UDP]_1::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_wmm_aggregation_sdk.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - pytest.mark.start_state('wifi_sniffer',wifi='ap_enabled')
+      - pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable'])
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode': 13,'features':
+        151,'config_features': 67108865,'ext_tcpip_features':
+        2147549184,'custom_features': 2147483648})
+    test_params:
+      - name: protocol
+        value: UDP
+    version: 0
+    enabled: true
+    labels:
+      - aggregation
+      - c19031
+      - enabling
+      - sqa_test_suites_wifi_sdk_3
+      - tx
+      - udp
+      - wmm_aggregation_sdk
+    test_case_name: test_udp_tx_by_enabling_aggregation_c19031[UDP]
+  - id: 7045889fc4eae9bd96554e3dabaf1e4946847131
+    test_src_map_id: C19442::2
+    test_case_id: test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442
+    test_function: test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442
+    test_id: test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_apmode_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 6,'coex_mode': 13,'features':
+        6,'tcpip_features': 2147485712,'ext_tcpip_features':
+        2147483648,'custom_features': 2147483648,'ext_custom_features':
+        537919488,'security': 'WPA2','ssid': 'SILABS_AP_MODE','passphrase':
+        'Automation@123','beacon': 100,'channel': '11','region':
+        1,'region_code': 'us'})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','channel':
+        '11','interface': 'wlan0'},1: {'security': 'WPA2','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','channel':
+        '11','interface': 'wlan0'},2: {'security': 'WPA2','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','channel':
+        '11','interface': 'wlan0'},3: {'security': 'WPA2','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','channel':
+        '11','interface': 'wlan0'}})
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - apmode_sdk
+      - c19430
+      - c19442
+      - connect
+      - max
+      - ping
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - stas
+      - wifi
+    test_case_name: test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442
+  - id: 4c7bc4017dafb7223ec6a4d289c58112c577a5af
+    test_src_map_id: C19318::1
+    test_case_id: test_wifi_sdk_device_as_ap_and_sta_c19318[TCP]
+    test_function: test_wifi_sdk_device_as_ap_and_sta_c19318
+    test_id: test_wifi_sdk_device_as_ap_and_sta_c19318[TCP]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_wlan_concurrent_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 9,'coex_mode': 0,'features':
+        128,'tcpip_features': 2147483668,'ext_tcpip_features':
+        65536,'custom_features': 2147483648,'ext_custom_features':
+        536870912,'security': 'OPEN','ssid': 'SILABS_AP_MODE','passphrase':
+        'Automation@123','channel': 11})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'ssid':
+        'Concurent_ap','security': 'WPA2','passphrase': 'test1234','channel':
+        11})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'OPEN','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','channel':
+        11,'interface': 'wlan0'}})
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+    test_params:
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - ap
+      - c19318
+      - device
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - sta
+      - wifi
+      - wlan_concurrent_sdk
+    test_case_name: test_wifi_sdk_device_as_ap_and_sta_c19318[TCP]
+  - id: 5ac0b8005482a2aaf7cf07e0c6135f1249a1d395
+    test_src_map_id: C19018::2
+    test_case_id: test_wifi_sdk_connectivity_wpa2_eap_tls_c19018
+    test_function: test_wifi_sdk_connectivity_wpa2_eap_tls_c19018
+    test_id: test_wifi_sdk_connectivity_wpa2_eap_tls_c19018::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_wlan_sta_enterprise_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 3584}},'oper_mode': 2,'coex_mode': 13,'features':
+        150,'tcpip_features': 2147485700,'custom_features':
+        2147483648,'ext_custom_features': 542638080,'ext_tcpip_features':
+        2147549184,'config_features': 67108865,'bt_features': 0,'ble_features':
+        0,'ble_custom_ext_features': 0,'band': 0,'eap_cert':
+        ['wifi-user.pem','SL_NET_CERTIFICATE','SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID']})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'security':
+        'WPA2Enterprise','passphrase': '12345678'})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['unassociated','wifi_powersave_disable','bt_powersave_disable','clear_certs'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - c19018
+      - connectivity
+      - eap
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - tls
+      - wifi
+      - wlan_sta_enterprise_sdk
+      - wpa2
+    test_case_name: test_wifi_sdk_connectivity_wpa2_eap_tls_c19018
+  - id: 27a5de2c9747232e2651a03dd6030778d9c6bd86
+    test_src_map_id: C19019::2
+    test_case_id: test_wifi_sdk_connectivity_wpa2_eap_ttls_c19019
+    test_function: test_wifi_sdk_connectivity_wpa2_eap_ttls_c19019
+    test_id: test_wifi_sdk_connectivity_wpa2_eap_ttls_c19019::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_wlan_sta_enterprise_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 3584}},'oper_mode': 2,'coex_mode': 13,'features':
+        150,'tcpip_features': 2147485700,'custom_features':
+        2147483648,'ext_custom_features': 542638080,'ext_tcpip_features':
+        2147549184,'config_features': 67108865,'bt_features': 0,'ble_features':
+        0,'ble_custom_ext_features': 0,'band': 0})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'security':
+        'WPA2Enterprise','passphrase': '12345678'})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['unassociated','wifi_powersave_disable','bt_powersave_disable','clear_certs'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - c19019
+      - connectivity
+      - eap
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - ttls
+      - wifi
+      - wlan_sta_enterprise_sdk
+      - wpa2
+    test_case_name: test_wifi_sdk_connectivity_wpa2_eap_ttls_c19019
+  - id: 9e483fad9c27a1e710a0d77769e56b55874fe779
+    test_src_map_id: C133461::2
+    test_case_id: test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_C133461
+    test_function: test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_C133461
+    test_id: test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_C133461::1
+    test_module: sqa_test_suites_wifi_sdk_3/coex/sta+ble/test_sta_ble_eap_bypass_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 3584},'ble': {'count': 1,'stack_len': 2048}},'oper_mode':
+        2,'coex_mode': 13,'ext_custom_features':
+        2690121728,'ext_tcpip_features': 2147549184,'ble_features':
+        3894286868,'ble_custom_ext_features': 51204,'config_features':
+        67108865,'eap_cert':
+        ['wifi-user.pem','SL_NET_CERTIFICATE','SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID']})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'security':
+        'WPA2Enterprise','passphrase': '12345678'})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['unassociated','wifi_powersave_disable','bt_powersave_disable','ble_stop_adv','clear_certs'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - BLE
+      - C133461
+      - WLAN
+      - adv
+      - coex
+      - conn
+      - eap
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - sta+ble
+      - sta_ble_eap_bypass_sdk
+      - tls
+    test_case_name: test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_C133461

@@ -1,0 +1,614 @@
+root_path: example_test_package
+test_sequence:
+  - id: 6f13a032bc1922cdad5a088aa412a72700ad29e2
+    test_src_map_id: C34753::1
+    test_case_id: test_wifi_sdk_firmware_version_C34753
+    test_function: test_wifi_sdk_firmware_version_C34753
+    test_id: test_wifi_sdk_firmware_version_C34753::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        13,'features': 151,'config_features': 67108865,'tcpip_features':
+        2147483652,'bt_features': 0,'ble_features': 0,'ble_custom_ext_features':
+        0,'thread_config': {'wifi': {'count': 1,'stack_len': 2048}}})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C34753
+      - firmware
+      - sdk
+      - sqa_sanity_sdk
+      - sqa_test_suites_wifi_sdk_3
+      - version
+      - wifi
+    test_case_name: test_wifi_sdk_firmware_version_C34753
+  - id: 0f64d924e5deed7fc3aef9780760e9653de21cf0
+    test_src_map_id: C34788::2
+    test_case_id: test_wifi_sdk_join_WORLD_2_4_C34788[TCP]
+    test_function: test_wifi_sdk_join_WORLD_2_4_C34788
+    test_id: test_wifi_sdk_join_WORLD_2_4_C34788[TCP]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        13,'features': 151,'config_features': 67108865,'tcpip_features':
+        2147483652,'bt_features': 0,'ble_features': 0,'ble_custom_ext_features':
+        0,'region': 1,'region_code': 'worldwide','thread_config': {'wifi':
+        {'count': 1,'stack_len': 2048}}})
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'channel': 11,'region':
+        'Asia'})
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','disassociated'])
+    test_params:
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C34788
+      - WORLD
+      - join
+      - sdk
+      - sqa_sanity_sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_join_WORLD_2_4_C34788[TCP]
+  - id: d5e31b7d66c5034fc67416b17ffe54b711aa46e4
+    test_src_map_id: C34786::2
+    test_case_id: test_wifi_sdk_join_EU_2_4_C34786[TCP]
+    test_function: test_wifi_sdk_join_EU_2_4_C34786
+    test_id: test_wifi_sdk_join_EU_2_4_C34786[TCP]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        13,'features': 151,'config_features': 67108865,'tcpip_features':
+        2147483652,'bt_features': 0,'ble_features': 0,'ble_custom_ext_features':
+        0,'region': 1,'region_code': 'europe','thread_config': {'wifi':
+        {'count': 1,'stack_len': 2048}}})
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'channel': 12,'region':
+        'Europe'})
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','disassociated'])
+    test_params:
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C34786
+      - EU
+      - join
+      - sdk
+      - sqa_sanity_sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_join_EU_2_4_C34786[TCP]
+  - id: 7c070bcf0904e10f574a91a82d32fa9468dbd164
+    test_src_map_id: C34785::2
+    test_case_id: test_wifi_sdk_join_US_2_4_C34785[TCP]
+    test_function: test_wifi_sdk_join_US_2_4_C34785
+    test_id: test_wifi_sdk_join_US_2_4_C34785[TCP]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        13,'features': 151,'config_features': 67108865,'tcpip_features':
+        2147483652,'bt_features': 0,'ble_features': 0,'ble_custom_ext_features':
+        0,'region': 1,'region_code': 'us','thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}}})
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'channel': 11,'region':
+        'US'})
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','disassociated'])
+    test_params:
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C34785
+      - US
+      - join
+      - sdk
+      - sqa_sanity_sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_join_US_2_4_C34785[TCP]
+  - id: ad4da9f9f81cd2f5e43ef5b047ef44408d07cd6a
+    test_src_map_id: C34757::2
+    test_case_id: test_wifi_sdk_Connectivity_with_WPA2_security_AP_C34757[TCP]
+    test_function: test_wifi_sdk_Connectivity_with_WPA2_security_AP_C34757
+    test_id: test_wifi_sdk_Connectivity_with_WPA2_security_AP_C34757[TCP]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        13,'features': 151,'config_features': 67108865,'tcpip_features':
+        2147483652,'bt_features': 0,'ble_features': 0,'ble_custom_ext_features':
+        0,'thread_config': {'wifi': {'count': 1,'stack_len': 2048}}})
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'security':
+        'WPA2','passphrase': '123456789'})
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','disassociated'])
+    test_params:
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - AP
+      - C34757
+      - Connectivity
+      - WPA2
+      - sdk
+      - security
+      - sqa_sanity_sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_Connectivity_with_WPA2_security_AP_C34757[TCP]
+  - id: 854c032865f3603fc1f6b4adf0db0b933c3b9d1b
+    test_src_map_id: C34770::2
+    test_case_id: test_wifi_sdk_ble_slave_C34770
+    test_function: test_wifi_sdk_ble_slave_C34770
+    test_id: test_wifi_sdk_ble_slave_C34770::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        13,'features': 183,'ext_tcpip_features':
+        2147549184,'ext_custom_features': 2689073152,'bt_features':
+        3221225472,'ble_features': 3894286868,'ble_custom_ext_features':
+        18436,'config_features': 67108865,'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048},'ble': {'count': 1,'stack_len': 2048}}})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'security':
+        'WPA2','passphrase': '123456789'})
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.end_state('wifi_dut',wifi=['ble_stop_adv'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C34770
+      - ble
+      - sdk
+      - slave
+      - sqa_sanity_sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_ble_slave_C34770
+  - id: 8cfb168cf1618bce326ba2787e63d9d0f9141cac
+    test_src_map_id: C34771::2
+    test_case_id: test_wifi_sdk_ble_master_C34771
+    test_function: test_wifi_sdk_ble_master_C34771
+    test_id: test_wifi_sdk_ble_master_C34771::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        13,'features': 183,'ext_tcpip_features':
+        2147549184,'ext_custom_features': 2689073152,'bt_features':
+        3221225472,'ble_features': 3894286868,'ble_custom_ext_features':
+        18436,'config_features': 67108865,'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048},'ble': {'count': 1,'stack_len': 2048}}})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'security':
+        'WPA2','passphrase': '123456789'})
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.end_state('wifi_dut',wifi=['ble_stop_scan'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C34771
+      - ble
+      - master
+      - sdk
+      - sqa_sanity_sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_ble_master_C34771
+  - id: 9a5e020d68732268241e4a43b151608a297ed64e
+    test_src_map_id: C34774::1
+    test_case_id: test_wifi_sdk_ble_dual_role_C34774
+    test_function: test_wifi_sdk_ble_dual_role_C34774
+    test_id: test_wifi_sdk_ble_dual_role_C34774::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        13,'features': 183,'ext_tcpip_features':
+        2147549184,'ext_custom_features': 2689073152,'bt_features':
+        3221225472,'ble_features': 3894286868,'ble_custom_ext_features':
+        18436,'config_features': 67108865,'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048},'ble': {'count': 1,'stack_len': 2048}}})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'security':
+        'WPA2','passphrase': '123456789'})
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.end_state('wifi_dut',wifi=['ble_stop_adv','ble_stop_scan'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C34774
+      - ble
+      - dual
+      - role
+      - sdk
+      - sqa_sanity_sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_ble_dual_role_C34774
+  - id: 4513dd0961cf35732f149d32cf391ff914568228
+    test_src_map_id: C34778::2
+    test_case_id: test_Coex_sdk_connectivity_ping_sta_ble_C34778
+    test_function: test_Coex_sdk_connectivity_ping_sta_ble_C34778
+    test_id: test_Coex_sdk_connectivity_ping_sta_ble_C34778::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        13,'features': 183,'ext_tcpip_features':
+        2147549184,'ext_custom_features': 2689073152,'bt_features':
+        3221225472,'ble_features': 3894286868,'ble_custom_ext_features':
+        18436,'config_features': 67108865,'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048},'ble': {'count': 1,'stack_len': 2048}}})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'security':
+        'WPA2','passphrase': '1234567890'})
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','disassociated','ble_stop_adv'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C34778
+      - Coex
+      - ble
+      - connectivity
+      - ping
+      - sdk
+      - sqa_sanity_sdk
+      - sqa_test_suites_wifi_sdk_3
+      - sta
+    test_case_name: test_Coex_sdk_connectivity_ping_sta_ble_C34778
+  - id: f34a1854deacf96cc9f097dc5432bcf6b8e4866a
+    test_src_map_id: SM59548::1
+    test_case_id: test_wifi_sdk_apmode_wpa2_aes_34765
+    test_function: test_wifi_sdk_apmode_wpa2_aes_34765
+    test_id: test_wifi_sdk_apmode_wpa2_aes_34765::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 6,'coex_mode': 13,'features':
+        2,'tcpip_features': 2147483664,'ext_tcpip_features':
+        2147483648,'custom_features': 2147483648,'ext_custom_features':
+        537919488})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SANITY_AP','passphrase': '12345678','channel': 11,'interface':
+        'wlan0'}})
+      - pytest.mark.wifi_clients(['raspi_wifi'],)
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - aes
+      - apmode
+      - sdk
+      - sqa_sanity_sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+      - wpa2
+    test_case_name: test_wifi_sdk_apmode_wpa2_aes_34765
+  - id: 53c7d76baf6388b34aa4195fb14893c50524cebb
+    test_src_map_id: C34756::1
+    test_case_id: test_wifi_sdk_concurrent_mode_sta_ap_C34756
+    test_function: test_wifi_sdk_concurrent_mode_sta_ap_C34756
+    test_id: test_wifi_sdk_concurrent_mode_sta_ap_C34756::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 9,'coex_mode': 0,'features':
+        128,'tcpip_features': 2147483668,'ext_tcpip_features':
+        65536,'custom_features': 2147483648,'ext_custom_features': 536870912})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'Concurent_ap','passphrase': 'Automation@123','channel': 11,'interface':
+        'wlan0'}})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'ssid':
+        'Concurent_sta','security': 'WPA2','passphrase': 'test1234','channel':
+        11})
+      - pytest.mark.wifi_clients(['raspi_wifi'],)
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C34756
+      - ap
+      - concurrent
+      - mode
+      - sdk
+      - sqa_sanity_sdk
+      - sqa_test_suites_wifi_sdk_3
+      - sta
+      - wifi
+    test_case_name: test_wifi_sdk_concurrent_mode_sta_ap_C34756
+  - id: 026cb6447d705c5e0321610ed3144de2b1656942
+    test_src_map_id: C19312::1
+    test_case_id: test_wifi_sdk_concurrent_mode_sta_ap_c19312[TCP]
+    test_function: test_wifi_sdk_concurrent_mode_sta_ap_c19312
+    test_id: test_wifi_sdk_concurrent_mode_sta_ap_c19312[TCP]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_wlan_concurrent_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 9,'coex_mode': 0,'features':
+        128,'tcpip_features': 2147483668,'ext_tcpip_features':
+        65536,'custom_features': 2147483648,'ext_custom_features':
+        536870912,'security': 'WPA2','ssid': 'SILABS_AP_MODE','passphrase':
+        'Automation@123','channel': 11})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','channel':
+        11,'interface': 'wlan0'}})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'ssid':
+        'Concurent_ap','security': 'WPA2','passphrase': 'test1234','channel':
+        11})
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+    test_params:
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - ap
+      - c19312
+      - concurrent
+      - mode
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - sta
+      - wifi
+      - wlan_concurrent_sdk
+    test_case_name: test_wifi_sdk_concurrent_mode_sta_ap_c19312[TCP]
+  - id: 0f8eaf9b0df2de0c17484bcc258e0d80e5e89d41
+    test_src_map_id: C19209::3
+    test_case_id: test_wifi_sdk_https_get_functionality_c19209[index.html]
+    test_function: test_wifi_sdk_https_get_functionality_c19209
+    test_id: test_wifi_sdk_https_get_functionality_c19209[index.html]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_https_get_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode': 13,'features':
+        151,'config_features': 67108865,'tcpip_features':
+        2147484804,'ext_tcpip_features': 2147549184,'ext_custom_features':
+        542638080,'ca_cert':
+        ['ca-chain.cert.pem','SL_NET_SIGNING_CERTIFICATE','SL_NET_TLS_SERVER_CREDENTIAL_START']})
+      - pytest.mark.http_server('raspi_lighttpd_tls',)
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','unassociated'])
+    test_params:
+      - name: index_path
+        value: index.html
+    version: 0
+    enabled: true
+    labels:
+      - c19209
+      - functionality
+      - get
+      - https
+      - https_get_sdk
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+    test_case_name: test_wifi_sdk_https_get_functionality_c19209[index.html]
+  - id: 79c67289708fdd37c12b601c9cd2ecefb4a0de81
+    test_src_map_id: C19449::2
+    test_case_id: test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449[11]
+    test_function: test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449
+    test_id: test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449[11]::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_apmode_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        13,'features': 6,'tcpip_features': 2147483668,'ext_tcpip_features':
+        2147483648,'custom_features': 2147483648,'ext_custom_features':
+        537919488,'security': 'WPA2','ssid': 'SILABS_AP_MODE','passphrase':
+        'Automation@123','channel': 11})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SILABS_AP_MODE','passphrase': 'Automation@123','channel':
+        11,'interface': 'wlan0'}})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'ssid':
+        'external_ap','security': 'WPA2','passphrase': 'test1234','channel':
+        11})
+    test_params:
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - ap
+      - apmode_sdk
+      - c19449
+      - dut
+      - reset
+      - sdk
+      - soft
+      - sqa_test_suites_wifi_sdk_3
+      - sta
+      - wifi
+    test_case_name: test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449[11]
+  - id: 4cae2eb0518fd94f85c3f55d1f2b7cf7ee4763a9
+    test_src_map_id: C19878::2
+    test_case_id: test_ble_sdk_validate_adding_service_in_slave_role_C19878
+    test_function: test_ble_sdk_validate_adding_service_in_slave_role_C19878
+    test_id: test_ble_sdk_validate_adding_service_in_slave_role_C19878::1
+    test_module: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_profiles_sdk/test_ble_gatt_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048},'ble': {'count': 1,'stack_len': 2048}},'oper_mode':
+        0,'coex_mode': '13','features': '176','tcpip_features':
+        '2147483652','custom_features': '2147483648','ext_tcpip_features':
+        '2147483648','ext_custom_features': '2689073152','config_features':
+        '67108865','bt_features': '3221225472','ble_features':
+        '3894286868','ble_custom_ext_features': '18436'})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C19878
+      - adding
+      - ble
+      - ble_gatt_sdk
+      - ble_profiles_sdk
+      - ble_sdk
+      - functional
+      - role
+      - sdk
+      - service
+      - slave
+      - sqa_test_suites_wifi_sdk_3
+      - validate
+    test_case_name: test_ble_sdk_validate_adding_service_in_slave_role_C19878
+  - id: 728f5d8c454a466ebc2e6bdbb636135556704c89
+    test_src_map_id: C19851::2
+    test_case_id: test_ble_sdk_io_cap_displayonly_C19851
+    test_function: test_ble_sdk_io_cap_displayonly_C19851
+    test_id: test_ble_sdk_io_cap_displayonly_C19851::1
+    test_module: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_gap_sdk/test_ble_gap_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048},'ble': {'count': 1,'stack_len': 2048}},'oper_mode':
+        0,'coex_mode': 13,'features': 176,'tcpip_features':
+        2147483652,'custom_features': 2147483648,'ext_custom_features':
+        2690121728,'bt_features': 3221225472,'ext_tcpip_features':
+        2147483648,'ble_features': 3357415956,'ble_custom_ext_features':
+        51204,'config_features': 67108865})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['ble_stop_adv','wifi_powersave_disable','bt_powersave_disable'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C19851
+      - ble
+      - ble_gap_sdk
+      - ble_sdk
+      - cap
+      - displayonly
+      - functional
+      - io
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+    test_case_name: test_ble_sdk_io_cap_displayonly_C19851
+  - id: e9690d1938b2f5d6c4a831f776ad539e43903f24
+    test_src_map_id: C19917::2
+    test_case_id: test_ble_sdk_dual_role_1slave_1master_conn_disconn_reconn_C19917
+    test_function: test_ble_sdk_dual_role_1slave_1master_conn_disconn_reconn_C19917
+    test_id: test_ble_sdk_dual_role_1slave_1master_conn_disconn_reconn_C19917::1
+    test_module: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_multi_slave/test_multi_slave_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048},'ble': {'count': 1,'stack_len': 2048}},'oper_mode':
+        0,'coex_mode': 13,'features': 176,'tcpip_features':
+        2147483652,'custom_features': 2147483648,'ext_tcpip_features':
+        2147483648,'ext_custom_features': 2689073152,'config_features':
+        67108865,'bt_features': 3221225472,'ble_features':
+        3894286868,'ble_custom_ext_features': 51204})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['ble_stop_adv','ble_stop_scan','wifi_powersave_disable','bt_powersave_disable'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C19917
+      - ble
+      - ble_multi_slave
+      - ble_sdk
+      - conn
+      - disconn
+      - dual
+      - functional
+      - multi_slave_sdk
+      - reconn
+      - role
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+    test_case_name: test_ble_sdk_dual_role_1slave_1master_conn_disconn_reconn_C19917
+  - id: 3885149911888871a62dbe68f9c5feeb4d6539c6
+    test_src_map_id: C19744::2
+    test_case_id: test_wifi_sdk_rejoin_in_japan_region_c19744
+    test_function: test_wifi_sdk_rejoin_in_japan_region_c19744
+    test_id: test_wifi_sdk_rejoin_in_japan_region_c19744::1
+    test_module: sqa_test_suites_wifi_sdk_3/test_wlan_rejoin_2G_sdk.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','unassociated'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode': 13,'features':
+        151,'custom_features': 2147484672,'config_features':
+        67108865,'ext_tcpip_features': 2147549184,'bt_features':
+        0,'ble_features': 0,'ble_custom_ext_features': 0,'region':
+        1,'region_code': 'japan'})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'region':
+        'Europe','channel': 13})
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - c19744
+      - japan
+      - region
+      - rejoin
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - wifi
+      - wlan_rejoin_2G_sdk
+    test_case_name: test_wifi_sdk_rejoin_in_japan_region_c19744

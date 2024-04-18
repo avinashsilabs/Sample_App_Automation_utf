@@ -1,0 +1,76 @@
+id: a054fd10-ee75-46fe-9542-a5463859411a
+name: SQA_sanity_Si917_04.17.24
+description: ''
+test_cases:
+  - test_case_id: 6f13a032bc1922cdad5a088aa412a72700ad29e2
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py::test_wifi_sdk_firmware_version_C34753
+    iterations: 1
+  - test_case_id: 0f64d924e5deed7fc3aef9780760e9653de21cf0
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py::test_wifi_sdk_join_WORLD_2_4_C34788[TCP]
+    iterations: 1
+  - test_case_id: d5e31b7d66c5034fc67416b17ffe54b711aa46e4
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py::test_wifi_sdk_join_EU_2_4_C34786[TCP]
+    iterations: 1
+  - test_case_id: 7c070bcf0904e10f574a91a82d32fa9468dbd164
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py::test_wifi_sdk_join_US_2_4_C34785[TCP]
+    iterations: 1
+  - test_case_id: ad4da9f9f81cd2f5e43ef5b047ef44408d07cd6a
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py::test_wifi_sdk_Connectivity_with_WPA2_security_AP_C34757[TCP]
+    iterations: 1
+  - test_case_id: 854c032865f3603fc1f6b4adf0db0b933c3b9d1b
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py::test_wifi_sdk_ble_slave_C34770
+    iterations: 1
+  - test_case_id: 8cfb168cf1618bce326ba2787e63d9d0f9141cac
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py::test_wifi_sdk_ble_master_C34771
+    iterations: 1
+  - test_case_id: 9a5e020d68732268241e4a43b151608a297ed64e
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py::test_wifi_sdk_ble_dual_role_C34774
+    iterations: 1
+  - test_case_id: 4513dd0961cf35732f149d32cf391ff914568228
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py::test_Coex_sdk_connectivity_ping_sta_ble_C34778
+    iterations: 1
+  - test_case_id: f34a1854deacf96cc9f097dc5432bcf6b8e4866a
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py::test_wifi_sdk_apmode_wpa2_aes_34765
+    iterations: 1
+  - test_case_id: 53c7d76baf6388b34aa4195fb14893c50524cebb
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py::test_wifi_sdk_concurrent_mode_sta_ap_C34756
+    iterations: 1
+  - test_case_id: 026cb6447d705c5e0321610ed3144de2b1656942
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_wlan_concurrent_sdk.py::test_wifi_sdk_concurrent_mode_sta_ap_c19312[TCP]
+    iterations: 1
+  - test_case_id: 0f8eaf9b0df2de0c17484bcc258e0d80e5e89d41
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_https_get_sdk.py::test_wifi_sdk_https_get_functionality_c19209[index.html]
+    iterations: 1
+  - test_case_id: 79c67289708fdd37c12b601c9cd2ecefb4a0de81
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_apmode_sdk.py::test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449[11]
+    iterations: 1
+  - test_case_id: 4cae2eb0518fd94f85c3f55d1f2b7cf7ee4763a9
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_profiles_sdk/test_ble_gatt_sdk.py::test_ble_sdk_validate_adding_service_in_slave_role_C19878
+    iterations: 1
+  - test_case_id: 728f5d8c454a466ebc2e6bdbb636135556704c89
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_gap_sdk/test_ble_gap_sdk.py::test_ble_sdk_io_cap_displayonly_C19851
+    iterations: 1
+  - test_case_id: e9690d1938b2f5d6c4a831f776ad539e43903f24
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_multi_slave/test_multi_slave_sdk.py::test_ble_sdk_dual_role_1slave_1master_conn_disconn_reconn_C19917
+    iterations: 1
+  - test_case_id: 3885149911888871a62dbe68f9c5feeb4d6539c6
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_wlan_rejoin_2G_sdk.py::test_wifi_sdk_rejoin_in_japan_region_c19744
+    iterations: 1
