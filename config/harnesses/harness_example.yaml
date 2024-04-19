@@ -331,6 +331,31 @@ devices:
                 radius_ip: "192.168.50.176"
                 radius_port: "1812"
                 ap_test_ip: '192.168.50.1' #AP LOGIN IP (TEST IP)
+                guest_networks:
+                    - band : "2g"
+                      index: "1"
+                      ssid: "ASUS_B0_2G_Guest"
+                      security: WPA2
+                    - band : "2g"
+                      index: "2"
+                      ssid: "ASUS_B0_5G_Guest2"
+                      security: WPA2
+                    - band : "2g"
+                      index: "3"
+                      ssid: "ASUS_B0_5G_Guest3"
+                      security: WPA2
+                    - band : "5g"
+                      index: "1"
+                      ssid: "ASUS_B0_5G_Guest"
+                      security: WPA2
+                    - band : "5g"
+                      index: "2"
+                      ssid: "ASUS_B0_5G_Guest2"
+                      security: WPA2
+                    - band : "5g"
+                      index: "3"
+                      ssid: "ASUS_B0_5G_Guest3"
+                      security: WPA2
 
     # This represents another access point configuration.
     asus_rt_ac68u_ap:
