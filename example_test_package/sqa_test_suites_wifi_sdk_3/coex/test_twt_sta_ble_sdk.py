@@ -40,7 +40,7 @@ class WLanTwTThread(ThreadBase):
                  implicit_twt=1, un_announced_twt=1, triggered_twt=0, twt_channel=0, twt_protection=0,
                  restrict_tx_outside_tsp=1, twt_retry_limit=6, twt_retry_interval=10, req_type=1, negotiation_type=0,
                  wifi_dut=None, sl_collections=None, wifi_sniffer=None, wifi_access_point=None,
-                 test_case=None, sniffer_filter=None, open_tcp_socket=False, power_save=False, disable_twt=False):
+                 test_case=None, sniffer_filter=None, open_tcp_socket=False, power_save=True, disable_twt=False):
         super().__init__()
         # Define all the parameters
         self.twt_enable = twt_enable
