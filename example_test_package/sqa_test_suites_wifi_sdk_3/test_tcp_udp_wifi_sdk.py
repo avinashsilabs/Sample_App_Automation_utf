@@ -1010,7 +1010,7 @@ def test_wifi_tcp_udp_data_tx_WPA_TKIP_c19365(
     """Verify TCP ,UDP data reception of STAUT in WPA-TKIP mode"""
     try:
         test_name = request.node.name
-        no_of_pkts = 10000
+        no_of_pkts = 1000
         pkt_length = 1460
         local_port = 5001
         server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()

@@ -4,7 +4,7 @@ import re
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xOperatingMode, Si91xTCPIPFeatureBitMap, Si91xBTFeatureBitMap, Si91xBLEFeatureBitMap, \
-    Si91xBLECustomFeatureBitMap
+    Si91xBLECustomFeatureBitMap, Si91xExtCustomFeatureBitMap
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utils.iperf.iperf_utils import ping
@@ -394,6 +394,7 @@ pytestmark = [
             "features": Si91xFeatureBitMap.Default,
             "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.Default,
             "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
