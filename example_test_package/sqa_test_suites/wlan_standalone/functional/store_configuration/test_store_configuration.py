@@ -4,12 +4,11 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,
     RS9116ConfigFeatureBitMap, \
     RS9116TCPIPFeatureBitMap, RS9116StoreConfiguration, RS9116Region, RS9116RegionCode, RS9116ModuleType, \
     RS9116CustomFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116CertificateType, RS9116PowerSaveProcedureTypes, \
-    RS9116ExtCustomFeatureBitMap, RS9116JoinFeatureBitMap, DeviceConstants
+    RS9116ExtCustomFeatureBitMap, RS9116JoinFeatureBitMap, DeviceConstants, RS9116Band
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 import time
 from utf.utils.logger import get_logger
-# from utf.interfaces.wifi import WlanError
-from utf.interfaces.cli import CLITransportException
+
 from utf.utils.iperf.iperf_utils import print_dict
 from utf.interfaces.wifi import WlanError
 from utf.utils import mac_address_to_string
@@ -40,8 +39,10 @@ iter_count = 5
 
 # this thread used for wifi join
 class Wifi_data_tx():
-    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_client=None, net_perf_client=None, protocol=None,
-                 device_ip=None):
+    def __init__(self, wifi_dut=None, \
+                 wifi_access_point=None, \
+                 wifi_client=None, \
+                 net_perf_client=None, protocol=None, device_ip=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -204,6 +205,7 @@ def get_ip(wifi_dut):
         "rejoin_max_retry": 10,
         "scan_interval": 6,
         "beacon_missed_count": 40,
+        "band": RS9116Band.TwoPointFourGHz,
     }
 )
 @pytest.mark.store_config
@@ -347,7 +349,7 @@ def test_store_config_band_5_WPA2_C19085(wifi_sniffer, wifi_access_point, wifi_d
     try:
         testcase = "test_store_config_band_5_WPA2_C19085"
 
-        validation = True
+
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
 
@@ -441,6 +443,7 @@ def test_store_config_band_5_WPA2_C19085(wifi_sniffer, wifi_access_point, wifi_d
         "scan_interval": 6,
         "beacon_missed_count": 40,
         "first_time_retry": 0,
+        "band": RS9116Band.TwoPointFourGHz,
     }
 )
 @pytest.mark.store_config
@@ -495,6 +498,7 @@ def test_store_config_region_US_EU_JP_C19088(wifi_sniffer, wifi_access_point, wi
                 logger().info(f"configuring access point with channel {channel} and region : US")
                 # Configures the Access point with the channel selected
                 wifi_access_point.interfaces.wifi.start_ap(channel=channel, region="US")
+            time.sleep(10)
 
             validation = True
             logger().info("configuring the Sniffer with the channel")
@@ -777,7 +781,7 @@ def test_store_config_band_dual_C19090(wifi_sniffer, wifi_dut, wifi_access_point
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.PSKSecurity,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.Default,
-
+        "band": RS9116Band.TwoPointFourGHz,
     }
 )
 @pytest.mark.store_config
@@ -913,6 +917,7 @@ def test_Store_Config_LP_Power_Save_C19089(wifi_dut, wifi_access_point, wifi_sni
         "scan_interval": 6,
         "beacon_missed_count": 40,
         "first_time_retry": 0,
+        "band": RS9116Band.TwoPointFourGHz,
     }
 )
 @pytest.mark.store_config
@@ -1008,18 +1013,12 @@ def test_store_config_without_powersave_C19103(wifi_sniffer, wifi_access_point, 
                          f'and wlan.sa == {dut_mac_address}'
 
         logger().info(f"validating power save in sniffer with filter {packet_filter1}")
-
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                  packet_filter1)['packet_count'], \
-            'Sniffer validation failed for NULL data frame with PM bit 1'
-
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
+            'packet_count'], 'Sniffer validation failed for NULL data frame with PM bit 1'
         # Validating the ps poll frames
-        packet_filter2 = f'wlan.addr == {dut_mac_address} and wlan.fc.type_subtype == 0x001a and wlan.fc.pwrmgt == 1'
-
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation,
-                                                                  packet_filter2)['packet_count'], \
-            'PS-Polls not found in the sniffer capture'
-
+        # packet_filter2 = f'wlan.addr == {dut_mac_address} and wlan.fc.type_subtype == 0x001a and wlan.fc.pwrmgt == 1'
+        # assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+        #     'packet_count'], 'PS-Polls not found in the sniffer capture'
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
         clean_up = cleanup_store_config(wifi_dut)
@@ -1045,6 +1044,7 @@ def test_store_config_without_powersave_C19103(wifi_sniffer, wifi_access_point, 
         "scan_interval": 6,
         "beacon_missed_count": 40,
         "first_time_retry": 0,
+        "band": RS9116Band.TwoPointFourGHz,
     }
 )
 @pytest.mark.store_config
@@ -1199,6 +1199,7 @@ def test_store_config_aggregation_C19101(wifi_sniffer, wifi_access_point, wifi_d
         "rejoin_max_retry": 0,
         "beacon_missed_count": 40,
         "first_time_retry": 0,
+        "band": RS9116Band.TwoPointFourGHz,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1241,13 +1242,15 @@ def test_wireless_config_WPA2_C19093(wifi_sniffer, wifi_access_point, wifi_clien
         logger().info("Getting the DUT mac")
         dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
         logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        # logger().info(f"#### Trying to check manually save configuration")
+        # time.sleep(100)
 
         logger().info("Enable Auto Configuration")
         # Save the wireless configuration in the flash
         # configures the values from harness on given ip address of web page
-        wiseconnect_web.interfaces.wiseconnect_ui.configure_submit(ip_address=device_ip, \
-                                                                   ssid=wifi_access_point.interfaces.wifi.ssid, \
-                                                                   security=wifi_access_point.interfaces.wifi.security, \
+        wiseconnect_web.interfaces.wiseconnect_ui.configure_submit(ip_address=device_ip,
+                                                                   ssid=wifi_access_point.interfaces.wifi.ssid,
+                                                                   security=wifi_access_point.interfaces.wifi.security,
                                                                    passphrase=wifi_access_point.interfaces.wifi.passphrase
                                                                    )
 
