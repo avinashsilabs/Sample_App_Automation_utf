@@ -1152,12 +1152,11 @@ def test_sntp_connection_wpa2_enterprise_C113796(wifi_access_point, wifi_sniffer
             if event.event_type == RS9116AsyncEventType.SNTP_EVENT:
                 sntp_event = event.event_data
                 asynchronous_request_time = event.timestamp + 1
-            else:
-                assert 1, f"SNTP asynchronous event is not received by DUT after connection request was sent to SNTP server"
-        sntp_event_status = int(sntp_event.split(b":")[1])
+        assert asynchronous_request_time, f"SNTP asynchronous event is not received by DUT after connection request " \
+                                          f"was sent to SNTP server"
+        sntp_event_status = int(re.search(r'SNTP_STATUS:\s+(\d+)', sntp_event.decode()).group(1))
         command_type, sntp_time = wifi_dut.interfaces.wifi.get_sntp_time()
-        command_type1, sntp_date_time = wifi_dut.interfaces.wifi.get_sntp_timedate()
-        sntp_date_time_response = sntp_date_time.decode().split('.')[0]
+        command_type1, sntp_date_time_response = wifi_dut.interfaces.wifi.get_sntp_timedate()
         command_type2, ip_version, server_ip = wifi_dut.interfaces.wifi.get_sntp_server_info()
         sntp_status = {
             1: "SNTP status received in asynchronous message for SNTP connection request is wrong expected is 1 ",
@@ -1178,15 +1177,17 @@ def test_sntp_connection_wpa2_enterprise_C113796(wifi_access_point, wifi_sniffer
         wifi_dut.interfaces.wifi.sntp_delete()
         logger().info("wait for 5 seconds to receive SNTP asynchronous messages")
         time.sleep(5)
+        asynchronous_request_time = 0
         events = wifi_dut.interfaces.wifi.get_async_events(since_time=asynchronous_request_time)
         for event in events:
             if event.event_type == RS9116AsyncEventType.SNTP_EVENT:
                 sntp_event = event.event_data
-            else:
-                assert 1, f"SNTP asynchronous event is not received by DUT after SNTP delete is initiated"
-        sntp_status = int(sntp_event.split(b":")[1])
-        assert sntp_status == 1, "SNTP status received in asynchronous message for SNTP delete request is wrong expected " \
-                                 "is 1 "
+                asynchronous_request_time = event.timestamp + 1
+        assert asynchronous_request_time, f"SNTP asynchronous event is not received by DUT after connection request " \
+                                          f"was sent to SNTP server"
+        sntp_status = int(re.search(r'SNTP_STATUS:\s+(\d+)', sntp_event.decode()).group(1))
+        assert sntp_status == 1, "SNTP status received in asynchronous message for SNTP delete request is wrong " \
+                                 "expected is 1"
         time.sleep(2)
         wifi_dut.interfaces.wifi.leave(timeout=30)
         wifi_sniffer.interfaces.capture.stop_capture()
