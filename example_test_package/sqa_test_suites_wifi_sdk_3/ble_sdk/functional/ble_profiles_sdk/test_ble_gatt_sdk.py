@@ -69,6 +69,7 @@ class BleFunctionality(ThreadBase):
                 psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                 psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
             assert enable_bt_ps == 0, 'failed to enable bt power save'
+        self.ble_client.interfaces.bluetooth.close()
         logger().info("scanning for ble client.. ")
         bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.bt_dut_address)
         assert bt_client_address, "The client address is not found"
@@ -97,12 +98,12 @@ class BleFunctionality(ThreadBase):
                 bt_dut_address=bt_dut_address, service_classes=["HeartRateService"]
             )
             assert self.bt_client_address is not None, "init failed for rpi"
-        if self.battery_service:
+        elif self.battery_service:
             self.bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
                 bt_dut_address=bt_dut_address, service_classes=["BatteryService"]
             )
             assert self.bt_client_address is not None, "init failed for rpi"
-        if self.ht:
+        elif self.ht:
             self.bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
                 bt_dut_address=bt_dut_address, service_classes=["HeartRateService", "HealthThermometerService"]
             )
@@ -132,6 +133,48 @@ class BleFunctionality(ThreadBase):
         time.sleep(60)
         return self.bt_client_address
 
+    def add_services_on_dut(self, uuid=None, Charc_serv=None):
+        index = 1
+        logger().info(f"adding services on dut")
+        self.wifi_dut.interfaces.wifi.ble_add_service(uid=uuid)
+        self.wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=Charc_serv, service_handler_num=index,
+                                                       permissions=0x10,
+                                                       value_handler_num=index + 1)
+        self.wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=Charc_serv, value_handler_num=index + 1,
+                                                      permissions=0x10)
+
+    def resolving_services_on_remote(self, service_uuid=None, char_uuid=None):
+        servs, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+        assert len(servs) > 0, "no services fetched"
+        assert len(chars) > 0, "fetched characters are empty"
+
+        char_path, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
+                                                                                                    service_uid=service_uuid,
+                                                                                                    char_uid=char_uuid)
+        logger().info(f"char_path is {char_path}")
+        assert char_path, "characters are empty"
+        assert len(char_props) > 0, "length of characters is 0"
+        return char_path
+    def tx_on_dut(self, char_path=None, char_uuid=None, data=None):
+        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
+                                                                                char_uid=char_uuid)
+        self.wifi_dut.interfaces.wifi.ble_set_local_att_value(notify_data=data, val_handle=12)
+        time.sleep(3)
+        # unsubscribe to notifications
+        self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uuid)
+        time.sleep(1)
+        logger().info("\n\n\n ***** validating Received notifications on Remote *****\n\n")
+        notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uuid]
+        # logger().info("\n * NOtifications: \n {} \n\n".format(notifications))
+        assert len(notifications) > 0, "received data is empty"
+        assert data in notifications[0], "failed to fetch data"
+        return notifications
+
+
+
+
     def check_device_state_on_dut(self):
         logger().info("Checking connection status of BLE")
         state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
@@ -160,7 +203,7 @@ pytestmark = [
             "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "bt_features": Si91xBTFeatureBitMap.Default,
             "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST ,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST ,
         },
     )
 ]
@@ -285,80 +328,252 @@ def test_ble_sdk_fetch_profiles_from_RD1_C19862(wifi_dut, ble_client, utf_consta
         ble_client.interfaces.bluetooth.close()
 
 
-@pytest.mark.skip()
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
-                                         "ble_disconnect"])
-def test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876(wifi_dut, ble_client, utf_constants, sl_collections):
+
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876(ble_dut, ble_clients, utf_constants, sl_collections):
     try:
-        logger().info(" ******* Start BLE GATT Service ******* ")
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-        assert bt_dut_address, "Failed to load bt address..."
-        # adding service, attributes, values
-        index = 1
-        # ble_add_service 6157 -> Heart rate service(0x180D)
-        wifi_dut.interfaces.wifi.ble_add_service(uid=0x180D)
-        # ble_add_char_serv_att 10808 26 1 2 -> Body sensor location(0x2A38)
-        wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x2A38, service_handler_num=index + 2,
-                                                           value_handler_num=index + 3)
-        wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x2A38, value_handler_num=index + 3)
-
-        # ble_add_char_serv_att 10809 26 1 2 -> Heart rate control point(0x2A39)
-        wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x2A39, service_handler_num=index + 4,
-                                                           value_handler_num=index + 5)
-        wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x2A39, value_handler_num=index + 5)
-
-        logger().info("start ble advertising....")
-        wifi_dut.interfaces.wifi.ble_start_advertising()
-
-        enable_wifi_ps = wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-        assert enable_wifi_ps == 0, 'failed to enable wlan power save'
-        enable_bt_ps = wifi_dut.interfaces.wifi.enable_bt_power_save(
+        with BleLogs(start_collecting_logs=True,
+        bt_log_path=f"reports/test_wifi_sdk_C19876_{int(time.time())}") as bt_logs:
+            assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+            ble_client1 = ble_clients[0]
+            ble_client2 = ble_clients[1]
+            service_uid = "0000180d-0000-1000-8000-00805f9b34fb"
+            char_uid1 = "00002a37-0000-1000-8000-00805f9b34fb"
+            logger().info(" ******* Start BLE GATT Service ******* ")
+            bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
+            assert bt_dut_address, "Failed to load bt address..."
+            # # adding service, attributes, values
+            index = 1
+            logger().info(f"adding heart_rate service")
+            ble_dut.interfaces.bluetooth.ble_add_service(uid=0x180D)
+            # ble_add_char_serv_att 10807 26 1 2 -> Heart rate measurement(0x2A37)
+            ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x2A37, service_handler_num=index,
+            permissions=0x2,
+            value_handler_num=index + 1)
+            ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x2A37, value_handler_num=index + 1,
+            permissions=0x2)
+            # ble_add_char_serv_att 10808 26 1 2 -> Body sensor location(0x2A38)
+            ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x2A38, service_handler_num=index + 3,
+            value_handler_num=index + 4, permissions=0x2)
+            ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x2A38, value_handler_num=index + 4,
+            permissions=0x2)
+            # ble_add_char_serv_att 10809 26 1 2 -> Heart rate control point(0x2A39)
+            ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x2A39, service_handler_num=index + 5,
+            value_handler_num=index + 6, permissions=0x2)
+            ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x2A39, value_handler_num=index + 6,
+            permissions=0x2)
+            # Advertise data from DUT
+            logger().info("start ble advertising....")
+            ble_dut.interfaces.bluetooth.ble_start_advertising()
+            enable_wifi_ps = ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
+            assert enable_wifi_ps == 0, 'failed to enable wlan power save'
+            enable_bt_ps = ble_dut.interfaces.bluetooth.enable_bt_power_save(
             psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
             psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-        assert enable_bt_ps == 0, 'failed to enable bt power save'
-
-        logger().info("scanning for ble client.. ")
-        bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
-                                                                           service_classes=[HeartRateService])
-        assert bt_client_address, "The client address is not found"
-        time.sleep(5)
-        ble_client.interfaces.bluetooth.stop_scanning()
-
-        logger().info("verifying device in scan list...")
-        found_devices = ble_client.interfaces.bluetooth.get_devices()
-
-        assert wifi_dut.interfaces.wifi.ble_address in found_devices, "failed to find dut address in scan list..."
-        assert (found_devices[
-                    wifi_dut.interfaces.wifi.ble_address] == wifi_dut.interfaces.wifi.ble_advertising_data), \
+            assert enable_bt_ps == 0, 'failed to enable bt power save'
+            ble_client1.interfaces.bluetooth.close()
+            logger().info("scanning for ble client.. ")
+            bt_client_address = ble_client1.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+            assert bt_client_address, "The client address is not found"
+            time.sleep(5)
+            logger().info(f"ble_client1 address {bt_client_address}")
+            ble_client1.interfaces.bluetooth.stop_scanning()
+            ble_dut.interfaces.bluetooth.ble_scanning = False
+            ble_dut.interfaces.bluetooth.ble_advertising = False
+            logger().info("verifying device in scan list...")
+            found_devices = ble_client1.interfaces.bluetooth.get_devices()
+            assert ble_dut.interfaces.bluetooth.ble_address in found_devices, "failed to find dut address in scan list..."
+            assert (found_devices[
+            ble_dut.interfaces.bluetooth.ble_address] == ble_dut.interfaces.bluetooth.ble_advertising_data), \
             "failed to find dut in scan list..."
+            logger().info("connecting to dut....")
+            ble_client1.interfaces.bluetooth.connect(bt_dut_address)
+            time.sleep(60)
+            status = ble_client1.interfaces.bluetooth.get_connection_status(bt_dut_address)
+            logger().info(f"Connection status in remote device '{ble_client1}' is:{status}")
+            assert status, f"Remote device '{ble_client1.name}' is not connected to DUT"
+            servs, chars = ble_client1.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+            assert len(servs) > 0, "no services fetched"
+            assert len(chars) > 0, "fetched characters are empty"
+            char_path, char_props = ble_client1.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
+                                                                                                        service_uid=service_uid,
+                                                                                                        char_uid=char_uid1)
 
-        logger().info("connecting to dut....")
-        ble_client.interfaces.bluetooth.connect(bt_dut_address)
-        # stability for 60sec and then disconnection
-        time.sleep(60)
-
-        logger().info("verifying dut state after the conn......")
-        state = wifi_dut.interfaces.bluetooth.ble_get_device_state()
-        state_int = int(state) if state.isdigit() else -1
-        assert state_int == BLEDeviceState.Connected, "Device isn't in connected state"
-        servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
-        assert len(servs) > 0, "no services fetched"
-        assert len(chars) > 0, "fetched characters are empty"
-        # bt_client_address = ble_obj.ble_gatt_scan()
-        # ble_obj.check_device_state_on_dut()
-        uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
-        assert (BatteryService.UUID) in uuids, "able to fetch the battery profile"
-        # # Disconnect
-        wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
-        logger().info(" Issued BLE disconnect ")
-
+            logger().info(f"char_path is {char_path}")
+            ble_client2.interfaces.bluetooth.close()
+            bt_client_address2 = ble_client2.interfaces.bluetooth.start_smp_adv(
+            bt_dut_address=bt_dut_address, service_classes=["HeartRateService", "HealthThermometerService"]
+            )
+            assert bt_client_address2 is not None, "init failed for rpi"
+            ble_dut.interfaces.bluetooth.ble_start_scanning(
+            ble_client_address=bt_client_address2, timeout=30
+            )
+            ble_dut.interfaces.wifi.ble_stop_scanning()
+            time.sleep(5)
+            try:
+                logger().info(f"Initiating connection")
+                ble_dut.interfaces.bluetooth.ble_connect(
+                ble_remote_dev_address=bt_client_address2, ble_conn_interval_min=128, ble_conn_interval_max=128,
+                timeout=60, ble_supervision_timeout=3200,
+                )
+            except Exception:
+                ble_dut.interfaces.wifi.ble_stop_advertising()
+            time.sleep(60)
+            status = ble_client2.interfaces.bluetooth.get_connection_status(bt_dut_address)
+            logger().info(f"Connection status in remote device_2 {ble_client2} is:{status}")
+            assert status, f"Remote device '{ble_client2}' is not connected to DUT"
+            logger().info(f"get all profiles")
+            uuids = ble_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address2,
+            timeout=20)
+            assert HeartRateService.UUID.lower() in uuids
+            assert HealthThermometerService.UUID in uuids
     except Exception as error:
-        sl_collections.exception_handling(wifi_dut, error)
+        sl_collections.exception_handling(ble_dut, error)
 
     finally:
-        ble_client.interfaces.bluetooth.close()
+        logger().info(f"Removing services on dut")
+        ble_dut.interfaces.wifi.ble_remove_service()
+        ble_client1.interfaces.bluetooth.disconnect(bt_dut_address)
+        time.sleep(5)
+        ble_client2.interfaces.bluetooth.disconnect(bt_dut_address)
 
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19877(ble_dut, ble_clients, utf_constants, sl_collections):
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=f"reports/test_wifi_sdk_C19877_{int(time.time())}") as bt_logs:
+            assert len(ble_clients) >= 3, f"Minimum 3 Raspi devices needed"
+            ble_client1 = ble_clients[0]
+            ble_client2 = ble_clients[1]
+            ble_client3 = ble_clients[2]
+            service_uid = "0000180d-0000-1000-8000-00805f9b34fb"
+            char_uid1 = "00002a37-0000-1000-8000-00805f9b34fb"
 
+            logger().info(" ******* Start BLE GATT Service ******* ")
+            bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
+            assert bt_dut_address, "Failed to load bt address..."
+            index = 1
+            logger().info(f"adding heart_rate service")
+            ble_dut.interfaces.bluetooth.ble_add_service(uid=0x180D)
+            # ble_add_char_serv_att 10807 26 1 2 -> Heart rate measurement(0x2A37)
+            ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x2A37, service_handler_num=index,
+                                                               permissions=0x2,
+                                                               value_handler_num=index + 1)
+            ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x2A37, value_handler_num=index + 1,
+                                                              permissions=0x2)
+            # ble_add_char_serv_att 10808 26 1 2 -> Body sensor location(0x2A38)
+            ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x2A38, service_handler_num=index + 3,
+                                                               value_handler_num=index + 4, permissions=0x2)
+            ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x2A38, value_handler_num=index + 4,
+                                                              permissions=0x2)
+            # ble_add_char_serv_att 10809 26 1 2 -> Heart rate control point(0x2A39)
+            ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x2A39, service_handler_num=index + 5,
+                                                               value_handler_num=index + 6, permissions=0x2)
+            ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x2A39, value_handler_num=index + 6,
+                                                              permissions=0x2)
+            logger().info("start ble advertising....")
+            ble_dut.interfaces.bluetooth.ble_start_advertising()
+            enable_wifi_ps = ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
+            assert enable_wifi_ps == 0, 'failed to enable wlan power save'
+            enable_bt_ps = ble_dut.interfaces.bluetooth.enable_bt_power_save(
+                psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+            assert enable_bt_ps == 0, 'failed to enable bt power save'
+            ble_client1.interfaces.bluetooth.close()
+            logger().info("scanning for ble client.. ")
+            bt_client_address = ble_client1.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+            assert bt_client_address, "The client address is not found"
+            time.sleep(5)
+            logger().info("ble_client1 address {bt_client_address}")
+            ble_client1.interfaces.bluetooth.stop_scanning()
+            ble_dut.interfaces.bluetooth.ble_scanning = False
+            ble_dut.interfaces.bluetooth.ble_advertising = False
+            logger().info("verifying device in scan list...")
+            found_devices = ble_client1.interfaces.bluetooth.get_devices()
+            assert ble_dut.interfaces.bluetooth.ble_address in found_devices, "failed to find dut address in scan list..."
+            assert (found_devices[
+                        ble_dut.interfaces.bluetooth.ble_address] == ble_dut.interfaces.bluetooth.ble_advertising_data), \
+                "failed to find dut in scan list..."
+            logger().info("connecting to d`ut....")
+            ble_client1.interfaces.bluetooth.connect(bt_dut_address)
+            time.sleep(60)
+            status = ble_client1.interfaces.bluetooth.get_connection_status(bt_dut_address)
+            logger().info(f"Connection status in remote device '{ble_client1}' is:{status}")
+            assert status, f"Remote device '{ble_client1.name}' is not connected to DUT"
+            servs, chars = ble_client1.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+            assert len(servs) > 0, "no services fetched"
+            assert len(chars) > 0, "fetched characters are empty"
+            char_path, char_props = ble_client1.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
+                                                                                                        service_uid=service_uid,
+                                                                                                        char_uid=char_uid1)
+
+            logger().info(f"char_path is {char_path}")
+            ble_client2.interfaces.bluetooth.close()
+            bt_client_address2 = ble_client2.interfaces.bluetooth.start_smp_adv(
+                bt_dut_address=bt_dut_address, service_classes=["HeartRateService", "HealthThermometerService"]
+            )
+            assert bt_client_address2 is not None, "init failed for rpi"
+            logger().info(f"Start scanning and connect to ble client")
+            ble_dut.interfaces.bluetooth.ble_start_scanning(
+                ble_client_address=bt_client_address2, timeout=30
+            )
+            ble_dut.interfaces.wifi.ble_stop_scanning()
+            time.sleep(5)
+            try:
+                logger().info(f"Initiating connection...")
+                ble_dut.interfaces.bluetooth.ble_connect(
+                    ble_remote_dev_address=bt_client_address2, ble_conn_interval_min=128, ble_conn_interval_max=128,
+                    timeout=60, ble_supervision_timeout=3200,
+                )
+            except Exception:
+                ble_dut.interfaces.wifi.ble_stop_advertising()
+            time.sleep(60)
+            status = ble_client2.interfaces.bluetooth.get_connection_status(bt_dut_address)
+            logger().info(f"Connection status in remote device_2 {ble_client2} is:{status}")
+            assert status, f"Remote device '{ble_client2}' is not connected to DUT"
+            uuids = ble_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address2,
+                                                                   timeout=20)
+            assert HeartRateService.UUID.lower() in uuids
+            assert HealthThermometerService.UUID in uuids
+            ble_client3.interfaces.bluetooth.close()
+            bt_client_address3 = ble_client3.interfaces.bluetooth.start_smp_adv(
+                bt_dut_address=bt_dut_address, service_classes=["HeartRateService", "HealthThermometerService"]
+            )
+            assert bt_client_address3 is not None, "init failed for rpi"
+            logger().info(f"Start scanning and connect to ble client")
+            ble_dut.interfaces.bluetooth.ble_start_scanning(
+                ble_client_address=bt_client_address3, timeout=30
+            )
+            ble_dut.interfaces.wifi.ble_stop_scanning()
+            time.sleep(5)
+            try:
+                logger().info(f"Initiating connection")
+                ble_dut.interfaces.bluetooth.ble_connect(
+                    ble_remote_dev_address=bt_client_address3, ble_conn_interval_min=128, ble_conn_interval_max=128,
+                    timeout=60, ble_supervision_timeout=3200,
+                )
+            except Exception:
+                ble_dut.interfaces.wifi.ble_stop_advertising()
+            time.sleep(60)
+            status = ble_client3.interfaces.bluetooth.get_connection_status(bt_dut_address)
+            logger().info(f"Connection status in remote device_3 {ble_client3} is:{status}")
+            assert status, f"Remote device '{ble_client3}' is not connected to DUT"
+            logger().info(f"get all profiles")
+            uuids = ble_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address3,
+                                                                   timeout=20)
+            assert HeartRateService.UUID.lower() in uuids
+            assert HealthThermometerService.UUID in uuids
+    except Exception as error:
+        sl_collections.exception_handling(ble_dut, error)
+
+    finally:
+        logger().info(f"Removing services on dut")
+        ble_dut.interfaces.wifi.ble_remove_service()
+        ble_client1.interfaces.bluetooth.disconnect(bt_dut_address)
+        time.sleep(5)
+        ble_client2.interfaces.bluetooth.disconnect(bt_dut_address)
+        time.sleep(5)
+        ble_client3.interfaces.bluetooth.disconnect(bt_dut_address)
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_sdk_validate_adding_service_in_slave_role_C19878(ble_dut, ble_client, utf_constants, sl_collections):
@@ -584,4 +799,108 @@ def test_ble_sdk_connect_disconnect_multiple_times_from_RD1_C19875(wifi_dut, ble
         sl_collections.exception_handling(wifi_dut, error)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_enable_heartrate_service_in_server_role_C19879(wifi_dut, ble_client, utf_constants, sl_collections):
+    """ENABLE HEART RATE SERVICE IN SERVER ROLE"""
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=f"reports/test_wifi_sdk_C19879_{int(time.time())}") as bt_logs:
+            service_uuid = "0000180d-0000-1000-8000-00805f9b34fb"
+            char_uuid = "00002a37-0000-1000-8000-00805f9b34fb"
+            data = "74bpm"
+            # service_added = True
+            logger().info(" ******* Start BLE Service ******* ")
+            bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
+            assert bt_dut_address, "Failed to load bt address..."
+            # start BLE in DUT
+            ble_obj = BleFunctionality(wifi_dut, ble_client, bt_dut_address=bt_dut_address, powersave=True)
+            logger().info(f"Adding heartrate service on dut")
+            ble_obj.add_services_on_dut(uuid=0x180D, Charc_serv=0x2A37)
+            ble_obj.ble_adv()
+            time.sleep(60)
+            ble_obj.check_device_state_on_rasp()
+            char_path =ble_obj.resolving_services_on_remote(service_uuid=service_uuid, char_uuid=char_uuid)
+            notifications = ble_obj.tx_on_dut(char_path=char_path, char_uuid=char_uuid, data=data)
+            logger().info(f"*********Heartrate Measurement received on remote : {notifications}***********")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+        time.sleep(2)
+        logger().info(f"Removing services on dut")
+        wifi_dut.interfaces.wifi.ble_remove_service()
+        ble_client.interfaces.bluetooth.close()
+
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_enable_blood_pressure_in_server_role_C19883(wifi_dut, ble_client, utf_constants, sl_collections):
+    """ENABLE BLOOD PRESSURE IN SERVER ROLE"""
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=f"reports/test_wifi_sdk_C19883_{int(time.time())}") as bt_logs:
+            service_uuid = "00001810-0000-1000-8000-00805f9b34fb"  # BloodPressureService
+            char_uuid = "00002a35-0000-1000-8000-00805f9b34fb"  # BatteryLevelCharacteristic
+            data = "83.0"
+            # service_added = True
+            logger().info(" ******* Start BLE Service ******* ")
+            bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
+            assert bt_dut_address, "Failed to load bt address..."
+            # start BLE in DUT
+            ble_obj = BleFunctionality(wifi_dut, ble_client, bt_dut_address=bt_dut_address, powersave=True)
+            logger().info(f"Adding blood pressure on dut")
+            ble_obj.add_services_on_dut(uuid=0x1810, Charc_serv=0x2A35)
+            ble_obj.ble_adv()
+            time.sleep(60)
+            ble_obj.check_device_state_on_rasp()
+            char_path =ble_obj.resolving_services_on_remote(service_uuid=service_uuid, char_uuid=char_uuid)
+            notifications = ble_obj.tx_on_dut(char_path=char_path, char_uuid=char_uuid, data=data)
+            logger().info(f"*********Blood pressure measurement received on remote : Systolic:{notifications}***********")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+        time.sleep(2)
+        logger().info(f"Removing services on dut")
+        wifi_dut.interfaces.wifi.ble_remove_service()
+        ble_client.interfaces.bluetooth.close()
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_enable_health_thermometer_in_server_role_C19885(wifi_dut, ble_client, utf_constants, sl_collections):
+    """ENABLE health thermometer IN SERVER ROLE"""
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=f"reports/test_wifi_sdk_C19885_{int(time.time())}") as bt_logs:
+            service_uuid = "00001809-0000-1000-8000-00805f9b34fb"  # health_thermometer_service
+            char_uuid = "00002a1c-0000-1000-8000-00805f9b34fb"
+            data = "38.0'c"
+            # service_added = True
+            logger().info(" ******* Start BLE Service ******* ")
+            bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
+            assert bt_dut_address, "Failed to load bt address..."
+            # start BLE in DUT
+            ble_obj = BleFunctionality(wifi_dut, ble_client, bt_dut_address=bt_dut_address, powersave=True)
+            logger().info(f"Adding health thermometer on dut")
+            ble_obj.add_services_on_dut(uuid=0x1809, Charc_serv=0x2A1C)
+            ble_obj.ble_adv()
+            time.sleep(60)
+            ble_obj.check_device_state_on_rasp()
+            char_path =ble_obj.resolving_services_on_remote(service_uuid=service_uuid, char_uuid=char_uuid)
+            notifications = ble_obj.tx_on_dut(char_path=char_path, char_uuid=char_uuid, data=data)
+            logger().info(f"*********Health thermometer measurement received on remote : {notifications}******")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+        time.sleep(2)
+        logger().info(f"Removing services on dut")
+        wifi_dut.interfaces.wifi.ble_remove_service()
         ble_client.interfaces.bluetooth.close()
