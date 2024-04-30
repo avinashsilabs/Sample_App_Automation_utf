@@ -209,7 +209,7 @@ def pdu_switch(switch, sleep_time, logger):
     logger.info("Successfully powered off AP")
     time.sleep(sleep_time)
     logger.info("Again turning on the AP")
-    switch.interfaces.pdu_switch.turn_on()
+    switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 def join_get_ip_ssl(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger, cert1=None, cert2=None,
