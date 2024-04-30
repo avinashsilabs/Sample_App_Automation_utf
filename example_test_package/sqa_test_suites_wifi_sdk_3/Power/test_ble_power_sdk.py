@@ -146,7 +146,11 @@ class M4_Sleep_Thread(ThreadBase):
 
     def run(self):
         logger().info(f"Enabling M4 power save")
-        self.wifi_dut.interfaces.wifi.m4_powersave(time_to_sleep=90000)
+        if self.deep_sleep_without_ret:
+            self.wifi_dut.interfaces.wifi.m4_power_manager_deep_sleep(state=0,
+                                                                      sleep_time=100000)
+        else:
+            self.wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=100000)
 
 
 class Power_Device:
