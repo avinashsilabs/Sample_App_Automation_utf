@@ -2004,7 +2004,7 @@ def test_wsdk_WPA2_EAP_header_removed_TLSv12_C113862(wifi_dut, wifi_access_point
             logger().info(f"\n\n Event data is: {output} \n\n")
             result = output.strip().split(':')[1].lstrip()
             logger().info(f"\n\n Reason code:{result} \n\n")
-            assert result == '53', "Unable to get expected reason code hence test is failed"
+            assert result == '0x4D', "Unable to get expected reason code hence test is failed"
             logger().info(f"Observed Expected Error Code, Hence test cases is passed")
             dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
             logger().info(f"Mac Address of DUT: {dut_mac_address}")
@@ -2665,7 +2665,7 @@ def test_wsdk_WPA2_EAP_client_cert_parsing_TLSv12_C113902(wifi_dut, wifi_access_
             logger().info(f"\n\n Event data is: {output} \n\n")
             result = output.strip().split(':')[1].lstrip()
             logger().info(f"\n\n Reason code:{result} \n\n")
-            assert result == '45', "Unable to get expected reason code hence test is failed"
+            assert result == '0x4B', "Unable to get expected reason code hence test is failed"
             logger().info(f"Observed Expected Error Code, Hence test cases is passed")
             dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
             logger().info(f"Mac Address of DUT: {dut_mac_address}")
@@ -2748,7 +2748,7 @@ def test_wsdk_WPA2_EAP_tls_few_lines_removed_from_cert_C113893(wifi_dut, wifi_ac
             logger().info(f"\n\n Event data is: {output} \n\n")
             result = output.strip().split(':')[1].lstrip()
             logger().info(f"\n\n Reason code:{result} \n\n")
-            assert result == '46', "Unable to get expected reason code hence test is failed"
+            assert result == '47', "Unable to get expected reason code hence test is failed"
             logger().info(f"Observed Expected Error Code, Hence test cases is passed")
             dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
             logger().info(f"Mac Address of DUT: {dut_mac_address}")
