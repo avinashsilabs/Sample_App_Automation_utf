@@ -13,7 +13,8 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116CustomFeatureBitMap,
     RS9116TCPIPFeatureBitMap,RS9116CoexMode)
 from utf.utils.time_measurer import TimeMeasurer
-from utf.utils.iperf.iperf_utils import ping, print_dict
+from utf.utils.iperf.iperf_utils import ping
+from utf.utils import print_dict
 import time
 from utf_wiseconnect.utils.rs911x_version import parse_version
 from utf.interfaces.iperf.iperf_constants import IperfConstants

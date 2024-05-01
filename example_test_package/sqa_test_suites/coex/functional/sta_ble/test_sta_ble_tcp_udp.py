@@ -23,7 +23,7 @@ from utf_wiseconnect.devices.rs911x import (RS9116CoexMode, RS9116TCPIPFeatureBi
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.interfaces.bluetooth.bluez.gatt_application.heart_rate_service import HeartRateService
 from utf.utils.time_measurer import TimeMeasurer
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 
 lock = threading.RLock()
 

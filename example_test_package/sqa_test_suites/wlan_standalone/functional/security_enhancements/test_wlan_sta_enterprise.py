@@ -13,7 +13,7 @@ import time
 from utf.interfaces.wifi import SecurityMode, WlanError
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.utils.commander import reset_device
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from retry import retry
 

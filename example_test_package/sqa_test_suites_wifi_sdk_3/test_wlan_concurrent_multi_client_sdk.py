@@ -21,7 +21,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xCertificateType,
     Si91xCertIdentifier
 )
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from retry import retry
 from threading import Thread

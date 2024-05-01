@@ -409,7 +409,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '10.207.18.146'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
                 username: pi
                 password: 'raspberry'
 
@@ -469,7 +469,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.1.154'       #configure secondary Rpi rd_1 IP address
-                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
                 username: pi
                 password: 'raspberry'
             shell:
@@ -997,7 +997,7 @@ devices:
             linux_shell:
                 type: 'shell.shell'
             power_meter:
-                type: 'power_meter.nrf_power_profiler'
+                type: 'power_meter.nrf_ppk2.nrf_power_profiler'
                 shell: 'linux_shell'
                 vid: 0x1915
                 pid: 0xC00A
@@ -1211,6 +1211,7 @@ defaults:
         bt_exploit_type: "au_rand_flooding"
         script: ""
     
+    plotter: 'power_meter_plotter'
 
     net_perf:
         server_options:
@@ -1251,7 +1252,7 @@ defaults:
         data_log_stop_after_elapsed_time: 60
         data_log_source: 'Software'
         data_log_sample_period: 'Custom'
-        data_log_custom_sample_period: 1.00309
+        data_log_custom_sample_period: 0.1024
         data_log_enable_min_max_logging: false
         data_log_is_avg_enabled: true
         data_log_is_min_enabled: true
@@ -1259,9 +1260,11 @@ defaults:
         data_log_is_peak_to_peak_enabled: true
         data_log_is_charge_c_enabled: true
         data_log_is_charge_ah_enabled: true
-        scope_scope_save_as: 'UTF_Scope_'
+        scope_points: 512
+        scope_file_name: 'UTF_Scope_'
+        scope_folder_location: 'C:\\UTF\\scope'
         scope_trigger_mode: 'Auto'
-        scope_trigger_source: 'ScopeRunButton'
+        scope_stop_after_elapsed_time: 60
         log_file_path: 'C:\\UTF\utf_windows_service\\Logs\\'
 
     sniffer_ellysis_bt_tracker:

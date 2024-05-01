@@ -1,5 +1,5 @@
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, \
     Si91xBTFeatureBitMap, Si91xBLECustomFeatureBitMap, Si91xBLEFeatureBitMap, Si91xOperatingMode
@@ -66,6 +66,7 @@ class WifiJoin(ThreadBase):
         self.wifi_dut.interfaces.wifi.initialize_thread()
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
         fw_after_upgrade = self.wifi_dut.interfaces.wifi.version()
+        self.wifi_dut.interfaces.wifi.inited = False
         time.sleep(5)
         return fw_after_upgrade
 
@@ -206,6 +207,7 @@ class WifiJoin(ThreadBase):
                                                               f" firmware through otaf"
         except Exception as e:
             logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
+            raise e
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])

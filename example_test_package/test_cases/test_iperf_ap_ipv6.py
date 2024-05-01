@@ -2,7 +2,7 @@ from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 import pytest
 from utf.interfaces.iperf.iperf_device_output_parser import Result
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 import time
 
 

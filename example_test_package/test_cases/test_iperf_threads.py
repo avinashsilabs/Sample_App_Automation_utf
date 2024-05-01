@@ -12,7 +12,8 @@ from utf.interfaces.wifi import WlanError
 from utf.utils.stopwatch import Stopwatch
 from utf.utils.thread_base import ThreadBase
 from utf.interfaces.iperf.iperf_device_output_parser import Result
-from utf.utils.iperf.iperf_utils import print_dict, ping
+from utf.utils import print_dict
+from utf.utils.iperf.iperf_utils import ping
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \

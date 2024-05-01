@@ -5,7 +5,7 @@ import os
 from utf.utils.thread_base import ThreadBase
 from utf.utf_config import UtfConfig
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf.utils.stopwatch import Stopwatch
 from utf.interfaces.wifi import WlanError
 from utf.utils.logger import get_logger
@@ -146,7 +146,11 @@ class M4_Sleep_Thread(ThreadBase):
 
     def run(self):
         logger().info(f"Enabling M4 power save")
-        self.wifi_dut.interfaces.wifi.m4_powersave(time_to_sleep=90000)
+        if self.deep_sleep_without_ret:
+            self.wifi_dut.interfaces.wifi.m4_power_manager_deep_sleep(state=0,
+                                                                      sleep_time=100000)
+        else:
+            self.wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=100000)
 
 
 class Power_Device:

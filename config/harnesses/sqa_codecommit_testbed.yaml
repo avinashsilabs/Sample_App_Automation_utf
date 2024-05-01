@@ -541,7 +541,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '10.207.18.201'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
                 username: pi
                 password: 'raspberry'
 
@@ -601,7 +601,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '10.207.18.201'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
                 username: pi
                 password: 'raspberry'
             shell:
@@ -1402,7 +1402,7 @@ constants:
     iter_count:
         value: 5
     upgrade_fw:
-        value: "/RS9116W.2.9.2.9.rps"
+        value: "/RS9116W.2.9.2.12.rps"
     board_version:
         value: "1.4Q7"
 

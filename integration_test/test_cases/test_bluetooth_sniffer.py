@@ -1,7 +1,7 @@
 import pytest
 from utf.utils.logger import get_logger
 import os
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 import time
 
 def logger():

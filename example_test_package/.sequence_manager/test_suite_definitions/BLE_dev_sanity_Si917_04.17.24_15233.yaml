@@ -1,0 +1,20 @@
+id: f81e4630-0491-4faf-a45b-b5e6101eb742
+name: BLE_dev_sanity_Si917_04.17.24
+description: ''
+test_cases:
+  - test_case_id: 44bc2f3ef5284fa65d4de3bf6a0c6792f91249d4
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_gap_sdk/test_ble_gap_sdk.py::test_ble_sdk_scan_connectable_undirected_adv_C19805
+    iterations: 1
+  - test_case_id: 4cae2eb0518fd94f85c3f55d1f2b7cf7ee4763a9
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_profiles_sdk/test_ble_gatt_sdk.py::test_ble_sdk_validate_adding_service_in_slave_role_C19878
+    iterations: 1
+  - test_case_id: 583a6c3bca55129cd659f3444ac794f0ab2150a5
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_gap_sdk/test_ble_gap_sdk.py::test_ble_sdk_scan_non_connectable_undirected_adv_C19807
+    iterations: 1
+  - test_case_id: 83a9463b504a24f89b8fbd5bc38d342842e464dc
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_gap_sdk/test_ble_gap_sdk.py::test_ble_sdk_scannable_undirected_adv_C19808
+    iterations: 1

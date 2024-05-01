@@ -1,5 +1,6 @@
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
-from utf.utils.iperf.iperf_utils import print_dict, logger
+from utf.utils import print_dict
+from utf.utils.iperf.iperf_utils import logger
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
     RS9116PowerSaveModes, \
     RS9116TCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap, RS9116CustomFeatureBitMap, RS9116PowerSaveProcedureTypes

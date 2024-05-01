@@ -13,11 +13,12 @@ from utf_wiseconnect.devices.rs911x import (
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.interfaces.iperf.iperf_device_output_parser import Result
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.iperf.iperf_utils import ping
 from utf.interfaces.wifi import WlanError
 from utf.interfaces.shell.ssh_shell import SSHShell
+from utf.interfaces.wifi import SecurityMode
 
 """Test Author = Rakesh Nayini 
     Reworked by CG, Rashmi & team
@@ -366,7 +367,6 @@ def test_dut_ap_mode_tx_rules_JPregion_C19456(firmware_loader, wifi_sniffer, wif
         wifi_clients[i].interfaces.wifi.leave()
 
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -487,6 +487,7 @@ def test_dut_ap_mode_tx_rules_USregion_C19454(firmware_loader, wifi_sniffer, wif
     for i in range(0, len(wifi_clients)):
         logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
         wifi_clients[i].interfaces.wifi.leave()
+
 
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
@@ -2080,10 +2081,9 @@ def test_DUT_AP_Mode_soft_reset_ap_to_sta_C19450(firmware_loader, wifi_sniffer, 
 @pytest.mark.config(
     "wifi_client",
     wifi={
-        "security": "Open",
         "ssid": "SILABS_AP_C19451",
         "interface": "wlan0",
-        "channel": 11,
+        "channel": 3,
     },
 )
 @pytest.mark.store_config
@@ -2091,6 +2091,7 @@ def test_DUT_AP_Mode_soft_reset_ap_to_sta_C19450(firmware_loader, wifi_sniffer, 
 @pytest.mark.parametrize("channel", [11])
 def test_DUT_AP_Mode_store_config_C19451(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel, utf_constants):
     ping_count = utf_constants.get("ping_count")
+    cfg_enable = False
     try:
         validation = True
         dut_ip = wifi_dut.interfaces.wifi.ip
@@ -2108,11 +2109,10 @@ def test_DUT_AP_Mode_store_config_C19451(firmware_loader, wifi_sniffer, wifi_dut
         time.sleep(3)
 
         logger().info(" ********** Starting DUT as an AP ********* ")
-        wifi_dut.interfaces.wifi.start_ap(channel=channel)
-        time.sleep(10)
-
+        wifi_dut.interfaces.wifi.start_ap(channel=channel, ssid="SILABS_AP_C19451")
+        time.sleep(5)
         logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
-        wifi_client.interfaces.wifi.join(ssid="SILABS_AP_C19451")
+        wifi_client.interfaces.wifi.join(security=SecurityMode.Open, ssid="SILABS_AP_C19451")
         time.sleep(10)
 
         dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
@@ -2144,6 +2144,7 @@ def test_DUT_AP_Mode_store_config_C19451(firmware_loader, wifi_sniffer, wifi_dut
         wifi_dut.interfaces.wifi.config_save()
         logger().info("Enable the wireless configuration in the DUT")
         wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
+        cfg_enable = True
         time.sleep(20)
 
         for count in range(3):
@@ -2164,7 +2165,7 @@ def test_DUT_AP_Mode_store_config_C19451(firmware_loader, wifi_sniffer, wifi_dut
         time.sleep(20)
 
         logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
-        wifi_client.interfaces.wifi.join(ssid="SILABS_AP_C19451")
+        wifi_client.interfaces.wifi.join(security=SecurityMode.Open, ssid="SILABS_AP_C19451")
         time.sleep(10)
 
         dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
@@ -2178,6 +2179,7 @@ def test_DUT_AP_Mode_store_config_C19451(firmware_loader, wifi_sniffer, wifi_dut
 
         logger().info("Disable store configuration")
         wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
+        cfg_enable = False
 
         logger().info("Stopping sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -2193,9 +2195,10 @@ def test_DUT_AP_Mode_store_config_C19451(firmware_loader, wifi_sniffer, wifi_dut
             "unable to find assoc request,assoc response packets in sniffer"
 
     except Exception as error:
-        logger().info("Disable store configuration")
-        wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
-        time.sleep(5)
+        if cfg_enable:
+            logger().info("Disable store configuration")
+            wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
+            time.sleep(5)
         logger().info("clean_up_dut")
         wifi_dut.interfaces.wifi.reset()
         raise error
@@ -2343,7 +2346,8 @@ def test_DUT_AP_Mode_store_config_wpa2_C19452(firmware_loader, wifi_sniffer, wif
 
 
 # This test case is not working [keep alive packets or deauth packets are not getting because some background task is always running in Raspi-STA].Hence this test case can not be automated.
-@pytest.mark.skip("This test case is not working [keep alive packets or deauth packets are not getting because some background task is always running in Raspi-STA].Hence this test case can not be automated.")
+@pytest.mark.skip(
+    "This test case is not working [keep alive packets or deauth packets are not getting because some background task is always running in Raspi-STA].Hence this test case can not be automated.")
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
     "wifi_dut",

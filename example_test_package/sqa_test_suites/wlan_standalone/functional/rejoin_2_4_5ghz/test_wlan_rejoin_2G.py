@@ -1359,6 +1359,9 @@ def test_rejoin_scan_interval_1sec_c19737(switch, wifi_sniffer, wifi_access_poin
                 break
         assert rejoin_msg == 1, f"rejoin fail event not found even after AP is switched off for {end_time} seconds"
 
+        logger().info("\n\n ****** Access point is going to turn on  ******")
+        switch.interfaces.pdu_switch.turn_on(delay=30)
+
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(5)

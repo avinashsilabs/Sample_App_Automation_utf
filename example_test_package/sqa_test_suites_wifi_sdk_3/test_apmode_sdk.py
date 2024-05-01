@@ -1,9 +1,13 @@
 import time
 import pytest
+from random import randint
+import random
+import string
 from utf.utf_config import UtfConfig
 import re
+from utf.utils.stopwatch import Stopwatch
 from utf.interfaces.wifi import WlanError
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingMode, Si91xFeatureBitMap, Si91xTCPIPFeatureBitMap, \
     Si91xCustomFeatureBitMap, \
@@ -136,6 +140,14 @@ class ApModeClientConnections(ThreadBase):
             self.beacon_interval = "100"
             self.no_of_clients = 1
 
+        if self.testcase_no == 37595:
+            self.ssid = "SILABS_AP_MODE"
+            self.security = "WPA2"
+            self.password = "Automation@123"
+            self.channel = "1"
+            self.dtim_count = "1"
+            self.beacon_interval = "100"
+            self.no_of_clients = 1
 
         if self.testcase_no == 19484:
             self.ssid = "SILABS_AP_MODE"
@@ -512,10 +524,10 @@ def test_wifi_sdk_dutap_diff_beacon_intervals_c19443(wifi_sniffer, wifi_dut, bea
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                          wlan_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
                          radio_ch=ap_dut_obj.channel,
-                         beacon=beacon, filter_name="beacon_ap_mode_dtim_interval")
+                         beacon=beacon, filter_name="beacon_ap_mode_beacon_interval")
         logger().info(f"packet_filter1: {packet_filter1}")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Sniffer: Unable to find beacon_ap_mode_dtim_interval packet in sniffer'
+            'Sniffer: Unable to find beacon_ap_mode_beacon_interval packet in sniffer'
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -910,10 +922,10 @@ def test_wifi_sdk_dutap_tcp_tx_rx_c19447(wifi_sniffer, net_perf_client, wifi_dut
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             wlan_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
             radio_ch=ap_dut_obj.channel,
-            beacon=beacon, filter_name="beacon_ap_mode_dtim_interval")
+            beacon=beacon, filter_name="beacon_ap_mode_beacon_interval")
         logger().info(f"packet_filter1: {packet_filter1}")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Sniffer: Unable to find beacon_ap_mode_dtim_interval packet in sniffer'
+            'Sniffer: Unable to find beacon_ap_mode_beacon_interval packet in sniffer'
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
            filter_name="beacon_HT_capability")
@@ -974,6 +986,14 @@ def test_wifi_sdk_dutap_verify_beacon_format_c19436(wifi_sniffer, wifi_dut, wifi
         # logger().info(f"*******{packet_filter1}**********")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
                                                                   packet_filter2=packet_filter2), "not found beacon from DUT "
+        logger().info('********** Validating Beacon interval **********')
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            wlan_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'],
+            radio_ch=ap_dut_obj.channel,
+            beacon=beacon, filter_name="beacon_ap_mode_beacon_interval")
+        logger().info(f"packet_filter1: {packet_filter1}")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Sniffer: Unable to find beacon_ap_mode_beacon_interval packet in sniffer'
         IE_obj = FilterPacket(open_file=True)
         ssid = IE_obj.get_ssid()
         logger().info(f"*******{ssid}*********")
@@ -1464,3 +1484,146 @@ def test_wifi_sdk_dutap_korean_region_ap_mode_C477825(wifi_dut, wifi_sniffer, sl
 
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,
+        "region": 1,
+        "region_code": "us"
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 1,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.parametrize("channel", [1])
+def test_wifi_sdk_dut_socket_info_udp_client_socket_C37595(wifi_sniffer, wifi_dut, channel,
+                                                       sl_collections, wifi_clients, utf_constants, sniffer_filter, remote_socket):
+    """Verify socket ID info/number remains same at all stages while running UDP client in AP mode"""
+    try:
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+                                             utf_constants,
+                                             capture_filename="test_C37595",
+                                             testcase_no=37595,  leave=False,
+                                             sniffer_stop=False)
+        ap_dut_obj.start()
+        ap_dut_obj.wait_for_exit()
+        remote_socket.interfaces.socket.start_server(socket_type=1)
+        assert remote_socket.interfaces.socket.started == True, f"failed to start the server"
+        logger().info(f" remote server started")
+        # assert status_remote_server, 'Server is inactive'
+        # logger().info(f'remote server state is {status_remote_server}')
+        local_port = 5001
+        logger().info(f"DUT opens tcp client socket")
+        udp_socket_id = wifi_dut.interfaces.wifi.socket(domain="AF_INET", stream_type="SOCK_DGRAM",
+                                                        protocol="IPPROTO_UDP")
+        logger().info(f"Socket ID after creating socket: {udp_socket_id}")
+        wifi_dut.interfaces.wifi.get_sockets_info()
+        logger().info("Initiating socket bind from DUT")
+        wifi_dut.interfaces.wifi.bind(udp_socket_id, device_ip=ap_dut_obj.dut_addr_dict['dut_ip'],
+                                      server_port=local_port)
+        sw = Stopwatch()
+        while sw.elapsed_sec < 60:
+            data = "Thisisfromclient"
+            send_bytes =  wifi_dut.interfaces.wifi.bsdSocketSendTo(socket_fd=udp_socket_id, data=data, ip_addr= ap_dut_obj.dut_addr_dict['client_ip'], ip_len=4, port=local_port)
+            logger().info("Setting UDP socket receive timeout in remote server")
+            remote_socket.interfaces.socket.set_recv_timeout(use_client_socket=True, socket_type=1)
+            recv_data = remote_socket.interfaces.socket.recv_data_udp(data_size=len(data))
+            logger().info(f"data received : {recv_data}")
+
+        wifi_dut.interfaces.wifi.get_sockets_info()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,
+        "region": 1,
+        "region_code": "us"
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 1,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.parametrize("channel", [1])
+def test_wifi_sdk_dut_socket_info_udp_server_socket_C37594(wifi_sniffer, wifi_dut, channel,
+                                                       sl_collections, wifi_clients, utf_constants, sniffer_filter, remote_socket):
+    try:
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+                                             utf_constants,
+                                             capture_filename="test_C37594",
+                                             testcase_no=37595, leave=False,
+                                             sniffer_stop=False)
+        ap_dut_obj.start()
+        ap_dut_obj.wait_for_exit()
+        logger().info(f"Starting the remote server")
+        remote_socket.interfaces.socket.start_server(socket_type=1)
+        assert remote_socket.interfaces.socket.started == True, f"failed to start the server"
+        logger().info(f" remote server started")
+        sock = wifi_dut.interfaces.wifi.Asyncsocket(stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP")
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=ap_dut_obj.dut_addr_dict['dut_ip'], server_port=5001, timeout=15,
+                                      asynch=1)
+        data_sent = ''.join(random.choices(string.ascii_uppercase + string.digits, k=50))
+        data_length = len(data_sent)
+        logger().info(f"sending data from remote")
+        remote_socket.interfaces.socket.send_data_udp(
+            tx_buffer=data_sent, server_ip=ap_dut_obj.dut_addr_dict['dut_ip'], port=5001)
+        time.sleep(3)
+        buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=0)
+        logger().info(f"###################### Buffer Data  {data_sent}  ######################")
+        logger().info(f"###################### Buffer Data Length  {data_length}  ######################")
+        logger().info(f"###################### Received Data: {buffer_rx} ######################")
+        assert data_length == len(
+            buffer_rx), f"buffer length sent by remote peer and received on the socket id {0} opened in the DUT is not matched "
+
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+

@@ -7,7 +7,8 @@ import pytest
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.utils.time_measurer import TimeMeasurer
-from utf.utils.iperf.iperf_utils import print_dict, ping
+from utf.utils import print_dict
+from utf.utils.iperf.iperf_utils import ping
 from datetime import datetime
 import uuid
 import re

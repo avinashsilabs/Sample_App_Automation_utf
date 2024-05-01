@@ -11,7 +11,8 @@ from random import randint
 from utf.utils.thread_base import ThreadBase
 import random
 import string
-from utf.utils.iperf.iperf_utils import ping, print_dict
+from utf.utils.iperf.iperf_utils import ping
+from utf.utils import print_dict
 
 def logger():
     return get_logger(__name__)

@@ -13,7 +13,7 @@ from utf_wiseconnect.devices.rs911x import (
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 from utf.interfaces.bluetooth import BTSocketRole
 from utf.utils.time_measurer import TimeMeasurer
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 import time
 import os
 from utf.utf_config import UtfConfig
