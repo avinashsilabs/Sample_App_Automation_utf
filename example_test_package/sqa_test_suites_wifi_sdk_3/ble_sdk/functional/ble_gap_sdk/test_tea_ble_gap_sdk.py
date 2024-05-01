@@ -8,6 +8,7 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingM
     Si91xConfigFeatureBitMap, Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+from utf.interfaces.bluetooth import BLEDeviceState
 
 """ The testcases added in this file run below test steps for DUT-Si91x
         1. Initiates the DUT Coex wlan and BLE mode.
@@ -188,3 +189,52 @@ def test_ble_sdk_set_local_name_with_only_special_chars_c37560(ble_dut, sl_colle
     except Exception as error:
         sl_collections.exception_handling(ble_dut, error)
 
+
+def test_ble_rejects_smp_pair_c147312(ble_dut, ble_client, sl_collections):
+    logger().info("ble start in DUT")
+    ble_dut_address = ble_dut.interfaces.wifi.ble_start(capability=0, set_smp=1, smp_pair=1)
+    logger().info(f"DUT BLE Address :{ble_dut_address}")
+    assert ble_dut_address, "Unable to find ble_dut_address"
+
+    logger().info("\n\n\n ***** Advertising from DUT ***** \n\n\n")
+    ble_dut.interfaces.wifi.ble_start_advertising()
+
+    dut_state = int(ble_dut.interfaces.wifi.ble_get_device_state())
+    logger().info(f"DUT Advertising Status :{dut_state}")
+    assert dut_state == 1
+    logger().info("\n\n\n ***** DUT Advertising is Successful ***** \n\n\n")
+
+    logger().info("\n\n\n ***** Wlan and BLE Power Save from DUT ***** \n\n\n")
+    ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+    ble_dut.interfaces.wifi.enable_bt_power_save(
+        psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+        psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+
+    logger().info("\n\n\n ***** Scan and Connect from Remote (raspi) ***** \n\n\n")
+    # Scan Start From Remote
+    logger().info(f"Scan with SMP from Remote")
+    ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
+
+    assert ble_client_address, "The client address is not found"
+    time.sleep(5)
+    ble_client.interfaces.bluetooth.stop_scanning()
+
+    logger().info("verifying device in scan list...")
+    found_devices = ble_client.interfaces.bluetooth.get_devices()
+
+    assert ble_dut.interfaces.wifi.ble_address in found_devices, "failed to find dut address in scan list..."
+    assert (found_devices[
+                ble_dut.interfaces.wifi.ble_address] == ble_dut.interfaces.wifi.ble_advertising_data), \
+        "failed to find dut in scan list..."
+    logger().info("Device found in scan list")
+    ble_dut.interfaces.wifi.ble_scanning = False
+    ble_dut.interfaces.wifi.ble_advertising = False
+    # connecting to dut
+    logger().info("Connect start from remote to dut ")
+    ble_client.interfaces.bluetooth.pair_and_connect(dev_addr=ble_dut_address, timeout=30)
+    time.sleep(2)
+    # Get the state of the dut
+    logger().info("Checking connection status of BLE")
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == 0, "DUT BLE device is in connected state"
