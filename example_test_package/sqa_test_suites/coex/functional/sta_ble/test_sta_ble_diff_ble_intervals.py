@@ -3,7 +3,7 @@ from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.interfaces.iperf.iperf_device_output_parser import Result
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf.utils.iperf.iperf_utils import ping
 from utf.utils.iperf.iperf_utils import get_host_ip, ping
 from utf.interfaces.bluetooth import BLEDeviceState

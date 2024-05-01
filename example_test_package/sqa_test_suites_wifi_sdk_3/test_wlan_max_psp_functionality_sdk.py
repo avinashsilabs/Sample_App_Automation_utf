@@ -5,7 +5,8 @@ from datetime import datetime
 import datetime
 from utf.utils.logger import get_logger
 from utf.utils.stopwatch import Stopwatch
-from utf.utils.iperf.iperf_utils import print_dict, ping
+from utf.utils import print_dict
+from utf.utils.iperf.iperf_utils import ping
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xTCPIPFeatureBitMap,
     Si91xExtTCPIPFeatureBitMap,

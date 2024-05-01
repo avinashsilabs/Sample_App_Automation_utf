@@ -6,7 +6,8 @@ from utf.utils.thread_base import ThreadBase
 from utf.utf_config import UtfConfig
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utils.logger import get_logger
-from utf.utils.iperf.iperf_utils import ping, print_dict
+from utf.utils.iperf.iperf_utils import ping
+from utf.utils import print_dict
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI

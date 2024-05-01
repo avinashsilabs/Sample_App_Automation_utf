@@ -4,7 +4,7 @@ import os
 from utf.utf_config import UtfConfig
 
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,

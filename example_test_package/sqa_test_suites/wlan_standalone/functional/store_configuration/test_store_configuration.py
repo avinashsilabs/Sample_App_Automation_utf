@@ -9,7 +9,7 @@ from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficTyp
 import time
 from utf.utils.logger import get_logger
 
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf.interfaces.wifi import WlanError
 from utf.utils import mac_address_to_string
 from retry import retry

@@ -4,7 +4,7 @@ from utf.utils.time_measurer import TimeMeasurer
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf.utils.iperf.iperf_utils import ping
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xCoexMode,

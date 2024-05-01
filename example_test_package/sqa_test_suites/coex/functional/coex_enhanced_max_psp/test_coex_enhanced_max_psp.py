@@ -8,7 +8,8 @@ from utf.interfaces.wifi import WlanError
 from utf.utils.stopwatch import Stopwatch
 from utf.utils.thread_base import ThreadBase
 from utf.interfaces.iperf.iperf_device_output_parser import Result
-from utf.utils.iperf.iperf_utils import print_dict, ping
+from utf.utils import print_dict
+from utf.utils.iperf.iperf_utils import ping
 from utf.utils.logger import get_logger
 from utf.utils.time_measurer import TimeMeasurer
 from numpy import arange

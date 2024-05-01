@@ -12,7 +12,7 @@ from utf_wiseconnect.devices.rs911x import RS9116ExtCustomFeatureBitMap,RS9116Jo
     RS9116CoexMode,RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, RS9116PowerSaveModes, RS9116PowerSaveProcedureTypes,\
     RS9116CustomFeatureBitMap, RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap
 from utf import UtfDatabaseProperties
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from retry import retry
 from test_wlan_sta_enterprise import SnifferValidationProcess

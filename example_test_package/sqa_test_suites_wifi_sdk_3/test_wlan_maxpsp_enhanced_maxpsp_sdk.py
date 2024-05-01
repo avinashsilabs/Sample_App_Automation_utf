@@ -14,7 +14,7 @@ from utf.utils.logger import get_logger
 from utf.interfaces.wifi import SecurityMode
 from utf.interfaces.shell.ssh_shell import SSHShell
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xOperatingMode,
     Si91xCoexMode,

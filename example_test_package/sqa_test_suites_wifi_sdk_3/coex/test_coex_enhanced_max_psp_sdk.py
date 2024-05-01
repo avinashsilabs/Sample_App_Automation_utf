@@ -35,7 +35,8 @@ from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.interfaces.bluetooth import BTSocketRole
-from utf.utils.iperf.iperf_utils import print_dict, ping
+from utf.utils import print_dict
+from utf.utils.iperf.iperf_utils import ping
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from numpy import arange
 from utf.utils.thread_base import ThreadBase

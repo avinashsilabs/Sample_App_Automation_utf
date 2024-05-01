@@ -5,7 +5,8 @@ import datetime
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 import pytest
 from utf.interfaces.iperf.iperf_device_output_parser import Result
-from utf.utils.iperf.iperf_utils import print_dict, ping
+from utf.utils import print_dict
+from utf.utils.iperf.iperf_utils import ping
 from utf.utils.logger import get_logger
 import time
 from retry import retry

@@ -7,7 +7,7 @@ from typing import Dict
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116FeatureBitMap, RS9116ConfigFeatureBitMap, \
     RS9116PowerSaveModes, RS9116TCPIPFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap, \
     RS9116CustomFeatureBitMap, \

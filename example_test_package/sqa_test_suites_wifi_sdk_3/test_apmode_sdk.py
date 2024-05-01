@@ -7,7 +7,7 @@ from utf.utf_config import UtfConfig
 import re
 from utf.utils.stopwatch import Stopwatch
 from utf.interfaces.wifi import WlanError
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingMode, Si91xFeatureBitMap, Si91xTCPIPFeatureBitMap, \
     Si91xCustomFeatureBitMap, \

@@ -18,7 +18,7 @@ from utf_wiseconnect.devices.rs911x import (RS9116CoexMode, RS9116PowerSaveModes
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.interfaces.iperf.iperf_device_output_parser import Result
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf.utils.iperf.iperf_utils import ping
 from utf.utils.stopwatch import Stopwatch
 import time

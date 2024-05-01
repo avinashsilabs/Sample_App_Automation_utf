@@ -30,7 +30,8 @@ from utf.interfaces.socket import SOCKET_TYPE_TCP, SOCKET_TYPE_UDP
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.interfaces.iperf.iperf_device_output_parser import Result
-from utf.utils.iperf.iperf_utils import print_dict, ping
+from utf.utils import print_dict
+from utf.utils.iperf.iperf_utils import ping
 from utf.utils.subprocess_manager import SubprocessManager
 from random import randint
 from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands

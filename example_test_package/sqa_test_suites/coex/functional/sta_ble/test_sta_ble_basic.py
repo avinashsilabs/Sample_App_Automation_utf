@@ -12,7 +12,7 @@ import math
 from utf.utils.iperf.iperf_utils import ping, get_host_ip
 from utf.interfaces.wifi import WlanError
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf_wiseconnect.devices.rs911x import (
     RS9116CoexMode,

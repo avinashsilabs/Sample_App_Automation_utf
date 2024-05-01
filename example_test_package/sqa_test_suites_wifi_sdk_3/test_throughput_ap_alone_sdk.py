@@ -15,7 +15,7 @@ from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.stopwatch import Stopwatch
 from utf.utils.logger import get_logger
 from utf.utils.defaults import defaults
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 import string
 import random
 from utf.utils.iperf.iperf_utils import ping

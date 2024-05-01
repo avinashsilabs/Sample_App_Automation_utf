@@ -10,7 +10,7 @@ import time
 from utf.utils.logger import get_logger
 # from utf.interfaces.wifi import WlanError
 from utf.interfaces.cli import CLITransportException
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf.interfaces.wifi import WlanError
 from utf.utils import mac_address_to_string
 from utf.interfaces.switch import Switch

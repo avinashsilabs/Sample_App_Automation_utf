@@ -10,7 +10,7 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,
     RS9116TCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap, RS9116FeatureBitMap, RS9116CustomFeatureBitMap, \
     RS9116BTFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, RS9116ConfigFeatureBitMap, SocketOptions, SocketType, \
     RS9116PowerSaveProcedureTypes, RS9116StoreConfiguration
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf.utils.iperf.iperf_utils import ping

@@ -2,7 +2,7 @@ import time
 import pytest
 from utf_wiseconnect.devices.rs911x import RS9116FeatureBitMap,RS9116ConfigFeatureBitMap,RS9116Band
 from utf.utils.logger import get_logger
-from utf.utils.iperf.iperf_utils import print_dict
+from utf.utils import print_dict
 
 def logger():
     return get_logger(__name__)
