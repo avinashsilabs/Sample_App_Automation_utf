@@ -189,7 +189,7 @@ devices:
                 ip_address: '10.207.18.207'
                 admin_password: 'admin@1234'
                 ssh_port: 22
-                ssid: "Azeez123"
+                ssid: "Azeez123456789"
                 passphrase: '12345678'
                 channel: 11
                 security: "WPA2"
@@ -200,6 +200,34 @@ devices:
                 radius_ip: "10.207.17.220"
                 radius_port: "1812"
                 ap_test_ip: '192.168.50.1' #AP LOGIN IP (TEST IP)
+                guest_networks:
+                    - band: "2g"
+                      index: "1"
+                      ssid: "ASUS_B0_2G_Guest"
+                      passphrase: '12345678'
+                      security: WPA2
+                    - band: "2g"
+                      index: "2"
+                      ssid: "ASUS_B0_2G_Guest2"
+                      passphrase: '12345678'
+                      security: WPA2
+                    - band: "2g"
+                      index: "3"
+                      ssid: "ASUS_B0_2G_Guest3"
+                      passphrase: '12345678'
+                      security: WPA2
+                    - band: "5g"
+                      index: "1"
+                      ssid: "ASUS_B0_5G_Guest"
+                      security: WPA2
+                    - band: "5g"
+                      index: "2"
+                      ssid: "ASUS_B0_5G_Guest2"
+                      security: WPA2
+                    - band: "5g"
+                      index: "3"
+                      ssid: "ASUS_B0_5G_Guest3"
+                      security: WPA2
 
     asus_rt_ac68u_ap:
         interfaces:
@@ -1013,6 +1041,9 @@ devices:
                 password: '12345678'
                 tls_min_version: '1.0'
                 tls_max_version: '1.2'
+                private_key_file: 'wifi-user.pem'
+                certificate_file: 'wifi-user.pem'
+                ca_file: 'wifi-user.pem'
 
     static_radius_server:
         interfaces:
@@ -1286,13 +1317,22 @@ defaults:
     iop_sockets:
         server_ip: '10.207.18.220'
         server_port: '8007'
+        time_duration: 12
         att_channel: 1
         db_value: 2
-        att_enable: true
+        att_enable: False
         domain: 'AF_INET'
         protocol: 'IPPROTO_TCP'
         stream_type: 'SOCK_STREAM'
         ip_len: 4
+
+    iot_sockets:
+        protocol: 'tcp'
+        address_family: 'ipv4'
+        port: '8007'
+        ip_len: 4
+        server_ip: '10.207.18.220'
+        stream_type: 'stream'
 
     sntp_server:
         server_ip: '10.8.4.11'
@@ -1421,5 +1461,7 @@ constants:
         value: 30
     generate_bytes:
         value: 30
+    t_profile_bssid:
+        value: "AZEEZ_AUTOMATION_2G"
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
