@@ -128,11 +128,57 @@ class WLanTwTThread(ThreadBase):
             self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
                                                                      power_save=self.power_save,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated)
+
+            if self.test_case == '113739':
+                try:
+                    self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
+                                                          twt_flow_id=self.twt_flow_id,
+                                                          wake_duration=self.wake_duration,
+                                                          wake_duration_unit=self.wake_duration_unit,
+                                                          wake_duration_tol=self.wake_duration_tol,
+                                                          wake_int_exp=self.wake_int_exp,
+                                                          wake_int_exp_tol=self.wake_int_exp_tol,
+                                                          wake_int_mantissa=self.wake_int_mantissa,
+                                                          wake_int_mantissa_tol=self.wake_int_mantissa_tol,
+                                                          implicit_twt=self.implicit_twt,
+                                                          un_announced_twt=self.un_announced_twt,
+                                                          triggered_twt=self.triggered_twt,
+                                                          twt_channel=self.twt_channel,
+                                                          twt_protection=self.twt_protection,
+                                                          restrict_tx_outside_tsp=self.restrict_tx_outside_tsp,
+                                                          twt_retry_limit=self.twt_retry_limit,
+                                                          twt_retry_interval=self.twt_retry_interval,
+                                                          req_type=4,
+                                                          negotiation_type=self.negotiation_type)
+                    logger().info("***** TWT is failed for first time trying for second time *****")
+
+                except Exception as e:
+                    self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
+                                                          twt_flow_id=self.twt_flow_id,
+                                                          wake_duration=self.wake_duration,
+                                                          wake_duration_unit=self.wake_duration_unit,
+                                                          wake_duration_tol=self.wake_duration_tol,
+                                                          wake_int_exp=self.wake_int_exp,
+                                                          wake_int_exp_tol=self.wake_int_exp_tol,
+                                                          wake_int_mantissa=self.wake_int_mantissa,
+                                                          wake_int_mantissa_tol=self.wake_int_mantissa_tol,
+                                                          implicit_twt=self.implicit_twt,
+                                                          un_announced_twt=self.un_announced_twt,
+                                                          triggered_twt=self.triggered_twt,
+                                                          twt_channel=self.twt_channel,
+                                                          twt_protection=self.twt_protection,
+                                                          restrict_tx_outside_tsp=self.restrict_tx_outside_tsp,
+                                                          twt_retry_limit=self.twt_retry_limit,
+                                                          twt_retry_interval=self.twt_retry_interval,
+                                                          req_type=self.req_type,
+                                                          negotiation_type=self.negotiation_type)
+                    logger().info("***** TWT is set successfully for second time *****")
+
             # Check test case 113733 and turn off the switch
             if self.test_case == '113733':
                 self.switch.interfaces.pdu_switch.turn_off(delay=10)
 
-            if self.test_case != '113725' and self.test_case != '113733':
+            if self.test_case != '113725' and self.test_case != '113733' and self.test_case != '113739':
                 # Call set_twt API
                 self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
                                                       twt_flow_id=self.twt_flow_id,
@@ -266,7 +312,7 @@ class WLanTwTThread(ThreadBase):
         # Wake interval : TWT Wake Interval Mantissa *2^Wake Interval Exponent
         # Wake Period : Minimum TWT Wake Duration * Wake Duration Time
         if filter == 1:
-            self.wake_interval_req = self.mantissa_req * (2 ** self.wake_interval_exponent_req)
+            self.wake_interval_req = self.mantissa_req * (2 ** int(self.wake_interval_exponent_req))
             self.wake_period_req = self.minimum_wake_duration_req * self.wake_duration_time
             logger().info(f'***** Wake Interval Req= {self.wake_interval_req}')
             logger().info(f'***** Wake Period Req = {self.wake_period_req}')
@@ -358,6 +404,7 @@ def test_wifi_sdk_verify_twt_request_when_enabled_before_join_c113727(wifi_dut, 
         1. Create thread for twt functionality
         2. Run the thread
         3. Exit the thread
+        4. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -385,6 +432,7 @@ def test_wifi_sdk_verify_twt_suggest_when_enabled_before_join_c113728(wifi_dut, 
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -413,6 +461,7 @@ def test_wifi_sdk_verify_twt_demand_when_enabled_before_join_c113729(wifi_dut, w
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -440,6 +489,7 @@ def test_wifi_sdk_verify_twt_request_when_enabled_after_join_c113730(wifi_dut, w
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -467,6 +517,7 @@ def test_wifi_sdk_verify_twt_suggest_when_enabled_after_join_c113731(wifi_dut, w
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -494,6 +545,7 @@ def test_wifi_sdk_verify_twt_demand_when_enabled_after_join_c113732(wifi_dut, wi
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -590,11 +642,10 @@ def test_wifi_sdk_verify_default_retry_interval_for_twt_c113735(wifi_dut, wifi_a
 def test_wifi_sdk_verify_whether_dut_able_to_teardown_with_second_twt_enablement_c113738(wifi_dut, wifi_access_point,
                                                                                          sl_collections, wifi_sniffer,
                                                                                          sniffer_filter):
-    """Verify whether DUT is able to tear down the current TWT agreement when create another TWT"""
     """
     Test Steps:
         1. Create thread for twt functionality
-        2. Enable power-save mode
+        2. Enable powersave mode
         3. Run the thread
         4. Exit the thread
     """
@@ -604,6 +655,33 @@ def test_wifi_sdk_verify_whether_dut_able_to_teardown_with_second_twt_enablement
                                  power_save=True, test_case='113738')
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        logger().info(f"Exception occurred: {Ex}")
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_verify_whether_dut_able_to_setup_second_time_when_first_twt_fails_c113739(wifi_dut, wifi_access_point,
+                                                                                            sl_collections,
+                                                                                            wifi_sniffer,
+                                                                                            sniffer_filter):
+    """
+    Test Steps:
+        1. Create thread for twt functionality
+        2. Enable powersave mode
+        3. Run the thread
+        4. Exit the thread
+        5. Close the socket
+    """
+    try:
+        wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, open_tcp_socket=True,
+                                 power_save=True, test_case='113739')
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
         logger().info(f"Exception occurred: {Ex}")
 
@@ -623,6 +701,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_implicit_twt_c113742(wifi_dut
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -650,6 +729,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_twt_c113744(wifi_
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -677,6 +757,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_announced_twt_c113745(wifi_du
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -704,6 +785,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_announced_and_triggered_twt_c
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -731,6 +813,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_and_triggered_twt
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -757,6 +840,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_duration_c11
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -785,6 +869,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_duration_tol
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -813,6 +898,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_exp
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -841,6 +927,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_exp
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -871,6 +958,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_and_triggered_twt
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -900,6 +988,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_and_triggered_twt
         2. Enable power-save mode
         3. Run the thread
         4. Exit the thread
+        5. Close the socket
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
