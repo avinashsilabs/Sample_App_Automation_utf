@@ -1526,10 +1526,11 @@ def test_wifi_sdk_dut_socket_info_udp_client_socket_C37595(wifi_sniffer, wifi_du
                                              sniffer_stop=False)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
-        logger().info(f"Starting the remote server")
-        status_remote_server = remote_socket.interfaces.socket.start_server(socket_type=1)
-        assert status_remote_server, 'Server is inactive'
-        logger().info(f'remote server state is {status_remote_server}')
+        remote_socket.interfaces.socket.start_server(socket_type=1)
+        assert remote_socket.interfaces.socket.started == True, f"failed to start the server"
+        logger().info(f" remote server started")
+        # assert status_remote_server, 'Server is inactive'
+        # logger().info(f'remote server state is {status_remote_server}')
         local_port = 5001
         logger().info(f"DUT opens tcp client socket")
         udp_socket_id = wifi_dut.interfaces.wifi.socket(domain="AF_INET", stream_type="SOCK_DGRAM",
@@ -1600,8 +1601,8 @@ def test_wifi_sdk_dut_socket_info_udp_server_socket_C37594(wifi_sniffer, wifi_du
         ap_dut_obj.wait_for_exit()
         logger().info(f"Starting the remote server")
         remote_socket.interfaces.socket.start_server(socket_type=1)
-        # for count in range(4):
-        #     server_port = start_port + count
+        assert remote_socket.interfaces.socket.started == True, f"failed to start the server"
+        logger().info(f" remote server started")
         sock = wifi_dut.interfaces.wifi.Asyncsocket(stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP")
         wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=ap_dut_obj.dut_addr_dict['dut_ip'], server_port=5001, timeout=15,
                                       asynch=1)
