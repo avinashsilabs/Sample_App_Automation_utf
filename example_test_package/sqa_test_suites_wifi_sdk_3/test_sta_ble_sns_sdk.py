@@ -2,7 +2,7 @@ import pytest
 import time
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xTCPIPFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xBTFeatureBitMap, \
-    Si91xCustomFeatureBitMap, Si91xBLECustomFeatureBitMap, Si91xBLEFeatureBitMap
+    Si91xCustomFeatureBitMap, Si91xBLECustomFeatureBitMap, Si91xBLEFeatureBitMap, Si91xJoinFeatureBitMap
 from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
 from utf.utils.time_measurer import TimeMeasurer
@@ -85,6 +85,10 @@ class WifiJoinThread(ThreadBase):
                         time.sleep(2)
                 logger().info(f'*** Total time taken = {T.duration} ***')
                 return
+
+            if self.test_case == '148544' or self.test_case == '148547':
+                self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
+                                                                      Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
 
             self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated,
@@ -277,7 +281,7 @@ def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_Ble_adv_C148543(
         ble_obj.start()
 
         with TimeMeasurer() as T:
-            t_end = time.time() + 10 * 30
+            t_end = time.time() + 1800
             while time.time() < t_end:
                 wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut,
                                           wifi_access_point=wifi_access_point, wifi_client=wifi_client,
@@ -321,11 +325,11 @@ def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_Ble_conn_C148544(
         ble_obj.wait_for_exit()
 
         with TimeMeasurer() as T:
-            t_end = time.time() + 60 * 30
+            t_end = time.time() + 1800
             while time.time() < t_end:
                 wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_client=wifi_client,
                                           wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                          sniffer_filter=sniffer_filter)
+                                          sniffer_filter=sniffer_filter, test_case='148544')
                 wifi_obj.start()
                 wifi_obj.wait_for_exit()
                 wifi_obj.disconnect()
@@ -364,15 +368,16 @@ def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_ble_scanning_C148547(
         ble_obj.start()
         time.sleep(5)
         with TimeMeasurer() as T:
-            t_end = time.time() + 10 * 30
+            t_end = time.time() + 1800
             while time.time() < t_end:
                 wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut,
                                           wifi_access_point=wifi_access_point, wifi_client=wifi_client,
-                                          sl_collections=sl_collections, sniffer_filter=sniffer_filter)
+                                          sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='148547')
                 wifi_obj.start()
                 wifi_obj.wait_for_exit()
                 wifi_obj.disconnect()
         ble_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop the Sniffer")
         logger().info(
@@ -409,7 +414,7 @@ def test_wifi_sdk_ble_adv_20ms_and_wlan_scanning_C148545(
                                                        timeout=20)
 
         with TimeMeasurer() as T:
-            t_end = time.time() + 60 * 30
+            t_end = time.time() + 1800
             while time.time() < t_end:
                 logger().info(f"Initiating Scan")
                 scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0, sleep_time=0.01)

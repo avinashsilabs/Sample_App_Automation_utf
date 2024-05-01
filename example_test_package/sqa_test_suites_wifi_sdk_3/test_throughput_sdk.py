@@ -13,6 +13,7 @@ from utf_wiseconnect.utils.rs911x_version import parse_version
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.stopwatch import Stopwatch
 from utf.utils.logger import get_logger
+from utf.interfaces.bluetooth import BLEDeviceState
 from utf.utils.defaults import defaults
 import string
 import random
@@ -39,6 +40,18 @@ def logger():
     Author: Benazeer K 
 """
 
+
+class ble_notify(ThreadBase):
+    def __init__(self, wifi_dut):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+
+    def run(self):
+        data = "testwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdata"
+        sw = Stopwatch()
+        while sw.elapsed_sec < 35:
+            self.wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
+            time.sleep(3)
 
 class WifiJoinThread(ThreadBase):
     """This function is responsible for wifi connectivity ,powersave ,data transfer"""
@@ -75,25 +88,25 @@ class WifiJoinThread(ThreadBase):
         self.ble_data_transfer = ble_data_transfer
 
     def run(self):
-        if self.test_case_no == 20740:
+        if self.test_case_no == 20740 or self.test_case_no == 20750:
             transfer_type = 1
             protocol = 6
             throughput_type = 1
             size = 1460
 
-        if self.test_case_no == 20741:
+        if self.test_case_no == 20741 or self.test_case_no == 20751:
             transfer_type = 1
             protocol = 6
             throughput_type = 3
             size = 1460
 
-        if self.test_case_no == 20738:
+        if self.test_case_no == 20738 or self.test_case_no == 20748:
             transfer_type = 2
             protocol = 17
             throughput_type = 2
             size = 1470
 
-        if self.test_case_no == 20739:
+        if self.test_case_no == 20739 or self.test_case_no == 20749:
             transfer_type = 2
             protocol = 17
             throughput_type = 4
@@ -140,46 +153,71 @@ class WifiJoinThread(ThreadBase):
 
         if self.ble_data_transfer:
             logger().info(f"BLE Data Transfer going to start")
-            if self.mode == "ble_master":
-                logger().info(f"Start DUT")
-                bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
-                assert bt_dut_address is not None
-                logger().info(f"Start ble client")
-                ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-                assert ble_client_address is not None
-                time.sleep(10)
-                logger().info(f"Start scanning and connect to ble client")
-                self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=30)
-                timeout = 120
-                logger().info(f"connect")
-                self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=ble_client_address, timeout=timeout)
+            service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
+            char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
 
-            if self.mode == "ble_slave":
-                logger().info(f" this thread used for sta+ble as a slave")
-                logger().info(f"Set up DUT for BLE advertising")
-                ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
-                assert ble_dut_address is not None
-                self.wifi_dut.interfaces.wifi.ble_start_advertising()
-                logger().info(f"Begin Scanning for BLE devices")
-                bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
-                assert bt_client_address is not None
-                time.sleep(5)
-                self.ble_client.interfaces.bluetooth.stop_scanning()
-                logger().info(f"See that we found our device")
+            logger().info("================== Start BLE in DUT ====================")
+            bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
+            assert bt_dut_address, "failed to initialize ble in dut"
+            self.wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
+            self.wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
+            self.wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F)
+
+            logger().info("=============== Start BLE ADV in DUT ====================")
+            self.wifi_dut.interfaces.wifi.ble_start_advertising()
+
+            logger().info("============== start scanning in remote ble device ======================")
+            bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+            assert bt_client_address, "failed to start scan in remote device"
+
+            device_found = False
+            sw = Stopwatch()
+            while sw.elapsed_sec < 30:
                 found_devices = self.ble_client.interfaces.bluetooth.get_devices()
-                assert self.wifi_dut.interfaces.wifi.ble_address in found_devices
-                assert (
-                        found_devices[self.wifi_dut.interfaces.wifi.ble_address]
-                        == self.wifi_dut.interfaces.wifi.ble_advertising_data
-                )
-                self.ble_client.interfaces.bluetooth.connect(ble_dut_address)
-                logger().info(f"Connection success")
+                if bt_dut_address in found_devices and \
+                        found_devices[bt_dut_address] == self.wifi_dut.interfaces.wifi.ble_advertising_data:
+                    device_found = True
+                    break
+
+            self.ble_client.interfaces.bluetooth.stop_scanning()
+            assert device_found, "no device found"
+
+            logger().info("============== connect to ble dut =========================")
+            self.ble_client.interfaces.bluetooth.connect(bt_dut_address)
+            time.sleep(10)
+
+            logger().info("======= get connection state")
+            state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            assert state_int == BLEDeviceState.Connected, "======= device is in disconnection state"
+
+            servs, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+            assert len(servs) > 0, "no services fetched"
+            assert len(chars) > 0, "fetched characters are empty"
+
+            char_path, char_props = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(
+                services=servs,
+                service_uid=service_uid,
+                char_uid=char_uid)
+            assert char_path, "characters are empty"
+            assert len(char_props) > 0, "length of characters is 0"
+
+            self.ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+            # subscribe to notifications
+            self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+            self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
+                                                                                         char_uid=char_uid)
 
         self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                  wifi_access_point=self.wifi_access_point,
                                                                  associated=self.wifi_dut.interfaces.wifi.associated,
                                                                  retry_count=3, ping_after_power_save=False,
                                                                  ping_count=self.ping_count, power_save=False)
+        if self.test_case_no == 20750 or self.test_case_no == 20751 or self.test_case_no == 20748 or \
+                self.test_case_no == 20749:
+            logger().info(f"BLE Data Transfer is going to start")
+            ble_data = ble_notify(self.wifi_dut)
+            ble_data.start()
         time.sleep(2)
         self.wifi_dut.interfaces.wifi.switch_host_frequency()
         time.sleep(2)
@@ -231,29 +269,49 @@ class WifiJoinThread(ThreadBase):
                         self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
                         self.dut_addr['device_ip'], protocol=self.protocol)
 
-                    def start_client():
-                        time.sleep(1)
-                        logger().info(f"***** start listening  ******")
-                        self.net_perf_client.interfaces.net_perf.start()
+                        def start_client():
+                            time.sleep(1)
+                            logger().info(f"***** start listening  ******")
+                            self.net_perf_client.interfaces.net_perf.start()
 
-                    client_thread1 = Thread(target=start_client, args=(), )
-                    client_thread1.start()
+                        client_thread1 = Thread(target=start_client, args=(), )
+                        client_thread1.start()
 
-                    # open socket and listen for data
-                    timeout = 40
-                    self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
-                                                        local_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                        local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
-                                                        remote_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                        size=size, ttl=30, throughput_type=throughput_type, qos=0,
-                                                        async_socket=1, timeout=timeout + 2)
-                    client_thread1.join()
-                    logger().info("data received is successful")
-                    time.sleep(3)
+                        # open socket and listen for data
+                        timeout = 40
+                        self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
+                                                            local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                            local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                            remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                            size=size, ttl=30, throughput_type=throughput_type, qos=0,
+                                                            async_socket=1, timeout=timeout + 2)
+                        client_thread1.join()
+                        logger().info("data received is successful")
+                        time.sleep(3)
 
         if self.ble_conn:
             self.bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
             time.sleep(2)
+
+        if self.ble_data_transfer:
+            data = "testwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdata"
+            logger().info(f"unsubcribing the ble notifications")
+            self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+            time.sleep(1)
+
+            logger().info("====================== Validate Data ===========================")
+            notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+            logger().info(f' *********************** Notification is {notifications} ***********************')
+            assert len(notifications) > 0, "received data is empty"
+            assert notifications[0] == data, "failed to fetch data"
+
+            logger().info("******************** ble_remove_service ***********************")
+            self.wifi_dut.interfaces.wifi.ble_remove_service()
+
+            logger().info("================== Disconnecting from DUT ========================")
+            self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+            self.ble_client.interfaces.bluetooth.close()
 
         self.wifi_dut.interfaces.wifi.leave()
         time.sleep(2)
@@ -642,12 +700,13 @@ def test_wlan_ble_connected_udp_rx_c20745(wifi_sniffer, wifi_access_point, wifi_
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 3, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 3, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
 
     }
 )
@@ -656,13 +715,12 @@ def test_wlan_ble_conn_with_data_trans_tcp_tx_c20750(wifi_sniffer, wifi_access_p
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
     testcase = request.node.name
-    connection_type = 'master'
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
                               protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
                               ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
-                              ble_conn=True, iteration_count=iter_count, traffic_type="TX", test_case_no=20740,
-                              ble_data_transfer=True, mode=connection_type
+                              iteration_count=iter_count, traffic_type="TX", test_case_no=20750,
+                              ble_data_transfer=True
                               )
     try:
         wlan_obj.start()
@@ -682,27 +740,27 @@ def test_wlan_ble_conn_with_data_trans_tcp_tx_c20750(wifi_sniffer, wifi_access_p
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 3, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 3, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
 
     }
 )
-def test_wlan_ble_conn_with_data_transtcp_rx_c20751(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_conn_with_data_trans_tcp_rx_c20751(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
     testcase = request.node.name
-    connection_type = 'master'
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
                               protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
                               ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
-                              ble_conn=True, iteration_count=iter_count, traffic_type="RX", test_case_no=20741,
-                              ble_data_transfer=True, mode=connection_type
+                              iteration_count=iter_count, traffic_type="RX", test_case_no=20751,
+                              ble_data_transfer=True
                               )
     try:
         wlan_obj.start()
@@ -722,12 +780,13 @@ def test_wlan_ble_conn_with_data_transtcp_rx_c20751(wifi_sniffer, wifi_access_po
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 3, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 3, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
 
     }
 )
@@ -736,13 +795,12 @@ def test_wlan_ble_conn_with_data_trans_udp_tx_c20748(wifi_sniffer, wifi_access_p
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
     testcase = request.node.name
-    connection_type = 'master'
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
                               protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
                               ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
-                              ble_conn=True, iteration_count=iter_count, traffic_type="TX", test_case_no=20738,
-                              ble_data_transfer=True, mode=connection_type
+                              iteration_count=iter_count, traffic_type="TX", test_case_no=20748,
+                              ble_data_transfer=True
                               )
     try:
         wlan_obj.start()
@@ -762,12 +820,13 @@ def test_wlan_ble_conn_with_data_trans_udp_tx_c20748(wifi_sniffer, wifi_access_p
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 3, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 3, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
 
     }
 )
@@ -776,13 +835,12 @@ def test_wlan_ble_conn_with_data_trans_udp_rx_c20749(wifi_sniffer, wifi_access_p
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
     testcase = request.node.name
-    connection_type = 'master'
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
                               protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
                               ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
-                              ble_conn=True, iteration_count=iter_count, traffic_type="RX", test_case_no=20739,
-                              ble_data_transfer=True, mode=connection_type
+                              iteration_count=iter_count, traffic_type="RX", test_case_no=20749,
+                              ble_data_transfer=True
                               )
     try:
         wlan_obj.start()

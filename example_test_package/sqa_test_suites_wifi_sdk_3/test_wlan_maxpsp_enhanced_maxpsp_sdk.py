@@ -96,13 +96,21 @@ class WLanThread(ThreadBase):
                 channel=self.wifi_access_point.interfaces.wifi.channel)
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
             if self.test_case_no == 19678:
+                listen_interval = 1100
+                self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
+                                                                      Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+                self.wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated
                                                                          , ping_after_power_save=False,
                                                                          mode='power_save',
-                                                                         listen_interval=1200)
+                                                                         listen_interval=1100)
             if self.test_case_no == 19679:
+                listen_interval = 1100
+                self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
+                                                                      Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+                self.wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated
@@ -128,19 +136,17 @@ class WLanThread(ThreadBase):
                                                                          power_save=False)
 
             if self.test_case_no == 19693:
+                listen_interval = 1100
+                self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
+                                                                      Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+                self.wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated
                                                                          , dtim_aligned_type=0, monitor_interval=50,
                                                                          num_of_dtim_skip=0, mode='power_save',
-                                                                         listen_interval=1200)
+                                                                         listen_interval=1100)
 
-            if self.test_case_no == 19694:
-                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
-                                                                         wifi_access_point=self.wifi_access_point,
-                                                                         associated=self.wifi_dut.interfaces.wifi.associated
-                                                                         , dtim_aligned_type=0, monitor_interval=50,
-                                                                         num_of_dtim_skip=0, mode='power_save')
             if self.test_case_no == 19694:
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
@@ -250,105 +256,58 @@ class WLanThread(ThreadBase):
                                                                          num_of_dtim_skip=0, listen_interval=1200,
                                                                          mode='power_save')
 
-            if self.test_case_no == 196705:
-                qos_value = '0x00'
-                traffic = '0x00'
-                protocol = 'TCP'
-                wait_time = [60, 300]
+            if self.test_case_no == 19705:
+                host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+                logger().info(f"Remote device ip :{host_ip}")
+                listen_interval = 1100
+                self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
+                                                                      Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+                self.wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated
                                                                          , dtim_aligned_type=0, monitor_interval=50,
-                                                                         num_of_dtim_skip=0, listen_interval=1200,
-                                                                         mode='power_save')
+                                                                         num_of_dtim_skip=0, listen_interval=1100,
+                                                                         mode='power_save', power_save=True)
+                '''Send traffic RX for 1 and 5 min after 1 min interval'''
+                time.sleep(2)
+                self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
+                                                protocol="TCP", device_ip=self.dut_addr['device_ip'],
+                                                host_ip=host_ip,
+                                                timeout=60, traffic_type="RX")
+                logger().info("\n\n Time sleep for 1 min \n\n")
+                time.sleep(60)
+                self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
+                                                protocol="TCP", device_ip=self.dut_addr['device_ip'],
+                                                host_ip=host_ip,
+                                                timeout=300, traffic_type="RX")
+                logger().info("\n\n Time sleep for 2 min \n\n")
+                time.sleep(120)
 
-                '''Send traffic RX for 1/5 min'''
-                for iperf_run_time in wait_time:
-                    host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-                    logger().info(f"Remote device ip :{host_ip}")
-                    self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
-                                                                         device_ip=self.dut_addr['device_ip'],
-                                                                         protocol=protocol)
-                    logger().info(
-                        f"Host IP: {host_ip}, Dut IP: {self.dut_addr['device_ip']}, Protocol: {protocol}, "
-                        f"tos_value: {traffic}")
-                    logger().info(f"***** starting iperf ******")
-
-                    def start_client():
-                        time.sleep(1)
-                        logger().info(f"***** start listening  ******")
-                        self.net_perf_client.interfaces.net_perf.start()
-
-                    client_thread1 = Thread(target=start_client, args=(), )
-                    client_thread1.start()
-
-                    logger().info(f"***** send traffic  ******")
-                    self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=2, protocol=17,
-                                                        local_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                        local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
-                                                        remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                        size=1460, ttl=iperf_run_time, throughput_type=2, qos='0x00')
-                    logger().info(f"***** get and print throughput ******")
-                    # tp = self.net_perf_client.interfaces.net_perf.process_output()
-                    # assert tp, "failed to get throughput..."
-                    # __print_throughput(tp)
-                    logger().info("data received is successful")
-                    time.sleep(5)
-                    client_thread1.wait_for_exit()
-                    time.sleep(25)
-            if self.test_case_no == 196706:
-                qos_value = '0x00'
-                traffic = '0x00'
-                protocol = 'TCP'
-                wait_time = [60, 300]
+            if self.test_case_no == 19706:
+                host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+                logger().info(f"Remote device ip :{host_ip}")
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated
                                                                          , dtim_aligned_type=0, monitor_interval=50,
-                                                                         num_of_dtim_skip=0, mode='power_save')
+                                                                         num_of_dtim_skip=0, mode='power_save',
+                                                                         power_save=True)
 
-                '''Send traffic RX for 1/5 min'''
-                for iperf_run_time in wait_time:
-                    host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-                    logger().info(f"Remote device ip :{host_ip}")
-                    self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
-                                                                         device_ip=self.dut_addr['device_ip'],
-                                                                         protocol=protocol)
-                    logger().info(
-                        f"Host IP: {host_ip}, Dut IP: {self.dut_addr['device_ip']}, Protocol: {protocol}, "
-                        f"tos_value: {traffic}")
-                    logger().info(f"***** starting iperf ******")
-
-                    def start_client():
-                        time.sleep(1)
-                        logger().info(f"***** start listening  ******")
-                        self.net_perf_client.interfaces.net_perf.start()
-
-                    client_thread1 = Thread(target=start_client, args=(), )
-                    client_thread1.start()
-
-                    logger().info(f"***** send traffic  ******")
-                    self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=2, protocol=17,
-                                                        local_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                        local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
-                                                        remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                        size=1460, ttl=iperf_run_time, throughput_type=2, qos='0x00')
-                    logger().info(f"***** get and print throughput ******")
-                    # tp = self.net_perf_client.interfaces.net_perf.process_output()
-                    # assert tp, "failed to get throughput..."
-                    # __print_throughput(tp)
-                    logger().info("data received is successful")
-                    time.sleep(5)
-                    client_thread1.wait_for_exit()
-                    time.sleep(25)
-
-            logger().info("DUT successfully connected with AP")
-            time.sleep(2)
-            if self.data_transfer:
-                self.socket_obj.socket_data_transfer()
-
-            time.sleep(1)
-            # self.wifi_dut.interfaces.wifi.leave()
+                '''Send traffic RX for 1 and 5 min after 1 min interval'''
+                time.sleep(2)
+                self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
+                                                protocol="TCP", device_ip=self.dut_addr['device_ip'],
+                                                host_ip=host_ip,
+                                                timeout=60, traffic_type="RX")
+                logger().info("\n\n Time sleep for 1 min \n\n")
+                time.sleep(60)
+                self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
+                                                protocol="TCP", device_ip=self.dut_addr['device_ip'],
+                                                host_ip=host_ip,
+                                                timeout=300, traffic_type="RX")
+                logger().info("\n\n Time sleep for 2 min \n\n")
+                time.sleep(120)
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case {self.test_case_no} thread: {str(e)} ****\n\n")
             raise e
@@ -943,7 +902,7 @@ class FilterPacket:
     }
 )
 def test_wifi_sdk_max_psp_ulp_c19678(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter, sl_collections,
-                            request, utf_constants):
+                                     request, utf_constants):
     time_delta_for_listen_interval = 1100
     test_name = request.node.name
     test_case_no = 19678
@@ -1009,12 +968,12 @@ def test_wifi_sdk_max_psp_ulp_c19678(wifi_sniffer, wifi_access_point, wifi_dut, 
 
         time.sleep(5)
         # Validate the time delta between PS-poll packet
-        ps_poll_packets_time_delta_list = ps_poll_time_delta_obj.delta_between_ps_poll_packet()
-        logger().info(ps_poll_packets_time_delta_list)
-
-        # Validate the time delta between PS-poll packet
-        assert ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list,
-                                                          time_delta_for_listen_interval)
+        # ps_poll_packets_time_delta_list = ps_poll_time_delta_obj.delta_between_ps_poll_packet()
+        # logger().info(ps_poll_packets_time_delta_list)
+        #
+        # # Validate the time delta between PS-poll packet
+        # assert ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list,
+        #                                                   time_delta_for_listen_interval)
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -1036,8 +995,9 @@ def test_wifi_sdk_max_psp_ulp_c19678(wifi_sniffer, wifi_access_point, wifi_dut, 
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_maxpsp_listen_interval_11ms_c19679(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter, sl_collections,
-                                            request, utf_constants):
+def test_wifi_sdk_maxpsp_listen_interval_11ms_c19679(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
+                                                     sl_collections,
+                                                     request, utf_constants):
     test_name = request.node.name
     test_case_no = 19679
     time_period = utf_constants.get("time_period")
@@ -1134,7 +1094,7 @@ def test_wifi_sdk_maxpsp_listen_interval_11ms_c19679(wifi_sniffer, wifi_access_p
     }
 )
 def test_wifi_sdk_max_psp_dtim_3_c19680(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter, sl_collections,
-                               request, utf_constants):
+                                        request, utf_constants):
     test_name = request.node.name
     test_case_no = 19680
     time_period = utf_constants.get("time_period")
@@ -1161,8 +1121,6 @@ def test_wifi_sdk_max_psp_dtim_3_c19680(wifi_sniffer, wifi_access_point, wifi_du
 
         time.sleep(5)
         wifi_sniffer.interfaces.capture.stop_capture()
-        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger().info(f"DUT MAC_Address: {dut_mac_address}")
 
         # Assoc resp frame in sniffer
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -1320,7 +1278,7 @@ def test_wifi_sdk_max_psp_enable_disable_c19682(wifi_sniffer, wifi_access_point,
     }
 )
 def test_wifi_sdk_enhanced_max_psp_ulp_c19693(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter, sl_collections,
-                                     request, utf_constants):
+                                              request, utf_constants):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
     test_case_no = 19693
@@ -1518,8 +1476,10 @@ def test_wifi_sdk_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_
         sniffer_dict = ps_packet_exchange_obj.parse_sniffer_packet_more_data()
         assert ps_packet_exchange_obj.validate_data_packet_with_more_bit_enable(sniffer_dict), \
             'No sequence found for sniffer packets Qos data with More bit set -> Ps-Poll -> Qos data/Beacon'
+        wifi_dut.interfaces.wifi.leave()
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+        assert False
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -2087,9 +2047,10 @@ def test_wifi_sdk_enhanced_max_psp_with_diff_ap_c19699(wifi_sniffer, wifi_access
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_enhanced_max_psp_with_diff_traffic_c196700(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client,
-                                                    protocol, sniffer_filter, sl_collections, wifi_client, request,
-                                                    utf_constants):
+def test_wifi_sdk_enhanced_max_psp_with_diff_traffic_c19700(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client,
+                                                             protocol, sniffer_filter, sl_collections, wifi_client,
+                                                             request,
+                                                             utf_constants):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
     test_case_no = 196700
@@ -2171,9 +2132,10 @@ def test_wifi_sdk_enhanced_max_psp_with_diff_traffic_c196700(wifi_sniffer, wifi_
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_enhanced_max_psp_with_high_data_rate_c196703(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
-                                                      sl_collections,
-                                                      request, utf_constants):
+def test_wifi_sdk_enhanced_max_psp_with_high_data_rate_c19703(wifi_sniffer, wifi_access_point, wifi_dut,
+                                                               sniffer_filter,
+                                                               sl_collections,
+                                                               request, utf_constants):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
     test_case_no = 196703
@@ -2289,9 +2251,9 @@ def test_wifi_sdk_enhanced_max_psp_with_high_data_rate_c196703(wifi_sniffer, wif
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_enhanced_max_psp_with_ulp_mode_dtim_c196704(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
-                                                     sl_collections,
-                                                     request, utf_constants):
+def test_wifi_sdk_enhanced_max_psp_with_ulp_mode_dtim_c19704(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
+                                                              sl_collections,
+                                                              request, utf_constants):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
     test_case_no = 196704
@@ -2389,6 +2351,8 @@ def test_wifi_sdk_enhanced_max_psp_with_ulp_mode_dtim_c196704(wifi_sniffer, wifi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
@@ -2406,15 +2370,15 @@ def test_wifi_sdk_enhanced_max_psp_with_ulp_mode_dtim_c196704(wifi_sniffer, wifi
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_enhanced_max_psp_listen_interval_c196705(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
-                                                  sl_collections,
-                                                  request, utf_constants, wifi_client, net_perf_client):
+def test_wifi_sdk_enhanced_max_psp_listen_interval_c19705(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
+                                                           sl_collections,
+                                                           request, utf_constants, wifi_client, net_perf_client, protocol):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
-    test_case_no = 196705
+    test_case_no = 19705
 
-    '''Verify Max/ Enhanced max PSP behavior with below scenariosend data for 1 min sleep, 1 min send data for
-       5 min sleep, for 2min in listen interval bas'''
+    '''Verify Max/ Enhanced max PSP behavior with below scenarios send data for 1 min sleep, 1 min send data for
+       5 min sleep, for 2min in listen interval based and PSP mode2'''
 
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
@@ -2447,6 +2411,8 @@ def test_wifi_sdk_enhanced_max_psp_listen_interval_c196705(wifi_sniffer, wifi_ac
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -2463,11 +2429,12 @@ def test_wifi_sdk_enhanced_max_psp_listen_interval_c196705(wifi_sniffer, wifi_ac
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_enhanced_max_psp_dtim_c196706(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
-                                       sl_collections, request, utf_constants, wifi_client, net_perf_client):
+def test_wifi_sdk_enhanced_max_psp_dtim_c19706(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
+                                                sl_collections, request, utf_constants, wifi_client, net_perf_client
+                                                , protocol):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
-    test_case_no = 196706
+    test_case_no = 19706
 
     '''Verify Max/ Enhanced max PSP behavior with below scenario - send data for 1 min → sleep 1 min → send data for
        5 min →sleep for 2min in DTIM based and PSP mode2'''

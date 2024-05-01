@@ -49,7 +49,7 @@ def wifi_client_join(wifi_client, wifi_access_point, dhcp_start="192.168.50.2", 
         value = randint(wifi_client_start_ip, dhcp_end_value)
     dut_ip = re.sub("\d{1,3}$", str(value), dut_ip)
     assert ipaddress.ip_address(wifi_client_ip) > ipaddress.IPv4Address(
-        '169.254.255.255'), f"RASPI IP Address is static ip--{wifi_client_ip} hense test is terminating"
+        '169.254.255.255'), f"RASPI IP Address is static ip--{wifi_client_ip} hence test is terminating"
     return wifi_client_ip, dut_ip, wifi_client_gateway_ip
 
 
@@ -1052,7 +1052,7 @@ def test_UDP_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101976(wifi_sniffer
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
@@ -1093,17 +1093,30 @@ def test_UDP_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101977(wifi_sniffer
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         logger().info("sending static ipconfiguration address")
         with pytest.raises(WlanError) as exc_info:
-            result = wifi_dut.interfaces.wifi.start_ip_in_static_mode(mode="static",
-                                                                      static_ip=wifi_client_ip,
-                                                                      static_subnet="255.255.255.0",
-                                                                      static_gateway=wifi_client_gateway_ip, timeout=40,
-                                                                      vap_id=0)
-            logger().info(f"result : {result}")
+            for count in range(3):
+                try:
+                    wifi_dut.interfaces.wifi.start_ip_in_static_mode(mode="static", static_ip=wifi_client_ip,
+                                                                     static_subnet="255.255.255.0",
+                                                                     static_gateway=wifi_client_gateway_ip,
+                                                                     timeout=40, vap_id=0)
+                except Exception as err:
+                    if '0xff75' in str(err):
+                        raise err
+                    time.sleep(15)
         assert exc_info.value.error_code == 0xFF75, "The 0xFF75 Error is expected for this test"
-        wifi_dut.interfaces.wifi.start_ip_in_static_mode(mode="static",
-                                                         static_ip=dut_ip,
-                                                         static_subnet="255.255.255.0",
-                                                         static_gateway=wifi_client_gateway_ip, timeout=40, vap_id=0)
+        for count in range(3):
+            try:
+                wifi_dut.interfaces.wifi.start_ip_in_static_mode(mode="static",
+                                                                 static_ip=dut_ip,
+                                                                 static_subnet="255.255.255.0",
+                                                                 static_gateway=wifi_client_gateway_ip, timeout=40,
+                                                                 vap_id=0)
+                break
+            except Exception as err:
+                if count == 2:
+                    raise err
+                time.sleep(15)
+
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
         status = ping(device_ip, ping_count)
         assert status is True, "DUT is not responding to ping request from third party device"
@@ -1614,10 +1627,10 @@ def test_IP_Conflict_Detection_When_DHCP_Fails_C101985(wifi_sniffer,
     wifi={"security": "WPA2", "ssid": "IPConflict_Sil_916", "passphrase": "test1234", "channel": 8,
           "interface": "wlan0"}
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init', "reset"])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "reset"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
 def test_static_ip_assignment_when_dut_in_concurrent_Mode_C101967(firmware_loader, wifi_sniffer,
                                                                   wifi_dut,
@@ -1710,13 +1723,13 @@ def test_static_ip_assignment_when_dut_in_concurrent_Mode_C101967(firmware_loade
     wifi={"security": "WPA2", "ssid": "IPConflict_Sil_916", "passphrase": "test1234", "channel": 8,
           "interface": "wlan0"}
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init', "reset"])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "reset"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
 def test_Dynamic_IP_Assignment_when_dut_in_concurrent_Mode_C101973(firmware_loader, wifi_sniffer, wifi_dut,
-                                                                   wifi_access_point, wifi_client, utf_constants):
+                                                                   wifi_access_point, utf_constants):
     try:
         validation = True
         channel = wifi_access_point.interfaces.wifi.channel
@@ -1745,7 +1758,7 @@ def test_Dynamic_IP_Assignment_when_dut_in_concurrent_Mode_C101973(firmware_load
                                         first_time_retry=0)
         wifi_dut.interfaces.wifi.associated = False
 
-        ##### preparing wifi_dut as access point - AP Mode
+        # preparing wifi_dut as access point - AP Mode
         logger().info(f"starting RSI_DUT as ACCESS Point in channel no {channel}")
         ap_mac = wifi_access_point.interfaces.wifi.bssid
         logger().info(f'ap mac is {ap_mac}')
@@ -1912,7 +1925,7 @@ def test_Dynamic_IP_assignment_when_DHCP_Pool_Exhausted_in_concurrent_Mode_C1019
     wifi={"security": "WPA2", "ssid": "IPConflict_Sil_916", "passphrase": "test1234", "channel": 8,
           "interface": "wlan0"}
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init', "reset"])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
@@ -2025,10 +2038,10 @@ def test_Dynamic_IP_assignment_with_and_without_ip_Conflict_in_concurrent_Mode_C
     "wifi_client",
     wifi={"security": "WPA2", "ssid": "IPConflict_Sil_916", "passphrase": "test1234", "channel": 8}
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init', "reset"])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "reset"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
 def test_static_ip_with_and_without_ipconflict_when_dut_in_concurrent_Mode_C101970(firmware_loader, wifi_sniffer,
                                                                                    wifi_dut,

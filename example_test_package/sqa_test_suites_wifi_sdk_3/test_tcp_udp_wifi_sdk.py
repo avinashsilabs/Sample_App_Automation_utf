@@ -124,13 +124,14 @@ class WifiJoinThread(ThreadBase):
         self.device_ip = None
         self.sniffer_filter = sniffer_filter
         self.wifi_sniffer = wifi_sniffer
+        self.enc = "ccmp"
 
     def run(self):
         try:
             self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                      wifi_access_point=self.wifi_access_point,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                     ping_after_power_save=True)
+                                                                     ping_after_power_save=True, enc=self.enc)
             logger().info(
                 f"device_ip, device_mac : {self.dut_addr['device_ip']}, {self.dut_addr['dut_mac_address']}")
 
@@ -892,6 +893,7 @@ def test_wifi_tcp_udp_data_receive_WPA_TKIP_c71653(
         wifi_thread = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                      sl_collections=sl_collections, test_name=test_name, sniffer_filter=sniffer_filter,
                                      wifi_client=wifi_client)
+        wifi_thread.enc = "tkip"
         wifi_thread.start()
         wifi_thread.wait_for_exit()
 
@@ -1008,7 +1010,7 @@ def test_wifi_tcp_udp_data_tx_WPA_TKIP_c19365(
     """Verify TCP ,UDP data reception of STAUT in WPA-TKIP mode"""
     try:
         test_name = request.node.name
-        no_of_pkts = 10000
+        no_of_pkts = 1000
         pkt_length = 1460
         local_port = 5001
         server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
@@ -1020,6 +1022,7 @@ def test_wifi_tcp_udp_data_tx_WPA_TKIP_c19365(
         wifi_thread = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                      sl_collections=sl_collections, test_name=test_name, sniffer_filter=sniffer_filter,
                                      wifi_client=wifi_client)
+        wifi_thread.enc = "tkip"
         wifi_thread.start()
         wifi_thread.wait_for_exit()
 

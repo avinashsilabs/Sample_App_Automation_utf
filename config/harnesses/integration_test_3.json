@@ -180,7 +180,7 @@
                "docker_host": {
                   "type": "docker",
                   "ip_address": "192.168.14.3",
-                  "image": "utfsilabs/rpi_ubuntu_secondary:2022_09_14",
+                  "image": "utfsilabs/rpi_ubuntu_secondary:2024_04_17",
                   "username": "pi",
                   "password": "raspberry"
                },
@@ -240,7 +240,7 @@
                "docker_host": {
                   "type": "docker",
                   "ip_address": "192.168.14.3",
-                  "image": "utfsilabs/rpi_ubuntu_secondary:2022_09_14",
+                  "image": "utfsilabs/rpi_ubuntu_secondary:2024_04_17",
                   "username": "pi",
                   "password": "raspberry"
                },

@@ -1,0 +1,143 @@
+root_path: example_test_package
+test_sequence:
+  - id: 44bc2f3ef5284fa65d4de3bf6a0c6792f91249d4
+    test_src_map_id: C19805::2
+    test_case_id: test_ble_sdk_scan_connectable_undirected_adv_C19805
+    test_function: test_ble_sdk_scan_connectable_undirected_adv_C19805
+    test_id: test_ble_sdk_scan_connectable_undirected_adv_C19805::1
+    test_module: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_gap_sdk/test_ble_gap_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048},'ble': {'count': 1,'stack_len': 2048}},'oper_mode':
+        0,'coex_mode': '13','features': '176','tcpip_features':
+        '2147483652','custom_features': '2147483648','ext_custom_features':
+        '2690121728','bt_features': '3221225472','ext_tcpip_features':
+        '2147483648','ble_features': '3357415956','ble_custom_ext_features':
+        '51204','config_features': '67108865'})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['ble_stop_scan','wifi_powersave_disable','bt_powersave_disable'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C19805
+      - adv
+      - ble
+      - ble_gap_sdk
+      - ble_sdk
+      - connectable
+      - functional
+      - scan
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - undirected
+    test_case_name: test_ble_sdk_scan_connectable_undirected_adv_C19805
+  - id: 4cae2eb0518fd94f85c3f55d1f2b7cf7ee4763a9
+    test_src_map_id: C19878::2
+    test_case_id: test_ble_sdk_validate_adding_service_in_slave_role_C19878
+    test_function: test_ble_sdk_validate_adding_service_in_slave_role_C19878
+    test_id: test_ble_sdk_validate_adding_service_in_slave_role_C19878::1
+    test_module: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_profiles_sdk/test_ble_gatt_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048},'ble': {'count': 1,'stack_len': 2048}},'oper_mode':
+        0,'coex_mode': '13','features': '176','tcpip_features':
+        '2147483652','custom_features': '2147483648','ext_tcpip_features':
+        '2147483648','ext_custom_features': '2689073152','config_features':
+        '67108865','bt_features': '3221225472','ble_features':
+        '3894286868','ble_custom_ext_features': '18436'})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C19878
+      - adding
+      - ble
+      - ble_gatt_sdk
+      - ble_profiles_sdk
+      - ble_sdk
+      - functional
+      - role
+      - sdk
+      - service
+      - slave
+      - sqa_test_suites_wifi_sdk_3
+      - validate
+    test_case_name: test_ble_sdk_validate_adding_service_in_slave_role_C19878
+  - id: 583a6c3bca55129cd659f3444ac794f0ab2150a5
+    test_src_map_id: C19807::2
+    test_case_id: test_ble_sdk_scan_non_connectable_undirected_adv_C19807
+    test_function: test_ble_sdk_scan_non_connectable_undirected_adv_C19807
+    test_id: test_ble_sdk_scan_non_connectable_undirected_adv_C19807::1
+    test_module: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_gap_sdk/test_ble_gap_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048},'ble': {'count': 1,'stack_len': 2048}},'oper_mode':
+        0,'coex_mode': '13','features': '176','tcpip_features':
+        '2147483652','custom_features': '2147483648','ext_custom_features':
+        '2690121728','bt_features': '3221225472','ext_tcpip_features':
+        '2147483648','ble_features': '3357415956','ble_custom_ext_features':
+        '51204','config_features': '67108865'})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['ble_stop_scan','wifi_powersave_disable','bt_powersave_disable'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C19807
+      - adv
+      - ble
+      - ble_gap_sdk
+      - ble_sdk
+      - connectable
+      - functional
+      - non
+      - scan
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - undirected
+    test_case_name: test_ble_sdk_scan_non_connectable_undirected_adv_C19807
+  - id: 83a9463b504a24f89b8fbd5bc38d342842e464dc
+    test_src_map_id: C19808::2
+    test_case_id: test_ble_sdk_scannable_undirected_adv_C19808
+    test_function: test_ble_sdk_scannable_undirected_adv_C19808
+    test_id: test_ble_sdk_scannable_undirected_adv_C19808::1
+    test_module: >-
+      sqa_test_suites_wifi_sdk_3/ble_sdk/functional/ble_gap_sdk/test_ble_gap_sdk.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048},'ble': {'count': 1,'stack_len': 2048}},'oper_mode':
+        0,'coex_mode': '13','features': '176','tcpip_features':
+        '2147483652','custom_features': '2147483648','ext_custom_features':
+        '2690121728','bt_features': '3221225472','ext_tcpip_features':
+        '2147483648','ble_features': '3357415956','ble_custom_ext_features':
+        '51204','config_features': '67108865'})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['ble_stop_scan','wifi_powersave_disable','bt_powersave_disable'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C19808
+      - adv
+      - ble
+      - ble_gap_sdk
+      - ble_sdk
+      - functional
+      - scannable
+      - sdk
+      - sqa_test_suites_wifi_sdk_3
+      - undirected
+    test_case_name: test_ble_sdk_scannable_undirected_adv_C19808

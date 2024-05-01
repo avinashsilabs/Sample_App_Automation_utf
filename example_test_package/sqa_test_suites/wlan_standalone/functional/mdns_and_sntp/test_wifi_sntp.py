@@ -1,3 +1,4 @@
+import re
 import time
 import pytest
 from utf_wiseconnect.devices.rs911x import (
@@ -16,7 +17,7 @@ from utf_wiseconnect.devices.rs911x import (
     RS9116AsyncEventType,
     RS9116PowerSaveProcedureTypes,
     RS9116CustomFeatureBitMap
-    )
+)
 from typing import Dict
 from utf.interfaces.wifi import WlanError
 from datetime import datetime
@@ -48,7 +49,7 @@ def get_ntp_list(wifi_sniffer, dut_mac_address, decryption_key: str, print_layer
             encryption_type="WPA-PWD",
             decryption_key=decryption_key,
             capture_file_filter=local_capture_file
-            ):
+    ):
         for layer in packet.layers:
             layer_name = layer.layer_name.lower()
             if layer_name == "wlan":
@@ -76,7 +77,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
-        )
+    )
     for count in range(1, 3):
         try:
             scan_fail = 1
@@ -97,7 +98,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
     logger.info("Start the sniffer")
     wifi_sniffer.interfaces.capture.start_capture(
         capture_file=f"{capture_filename}.pcap"
-        )
+    )
 
     wifi_dut.interfaces.wifi.rejoin(rejoin_max=0,
                                     scan_interval=6,
@@ -156,16 +157,14 @@ pytestmark = [
             "ext_custom_features": RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
             "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose,
             "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-            }
-        )
-    ]
+        }
+    )
+]
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_sntp_unicast_TC19015(
-        wifi_sniffer, wifi_dut, wifi_access_point, logger
-        ):
+def test_sntp_unicast_c19015(wifi_sniffer, wifi_dut, wifi_access_point, logger):
     capture_filename = "test_sntp_unicast_TC19015"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
@@ -180,36 +179,35 @@ def test_sntp_unicast_TC19015(
         if event.event_type == RS9116AsyncEventType.SNTP_EVENT:
             sntp_event = event.event_data
             asynchronous_request_time = event.timestamp + 1
-        else:
-            assert 1, f"SNTP asynchronous event is not received by DUT after connection request was sent to SNTP server"
-    sntp_status = int(sntp_event.split(b":")[1])
+    assert asynchronous_request_time, "SNTP asynchronous event is not received by DUT after connection request was " \
+                                      "sent to SNTP server"
+    sntp_status = int(re.search(r'SNTP_STATUS:\s+(\d+)', sntp_event.decode()).group(1))
     assert sntp_status == 1, "SNTP status received in asynchronous message for SNTP connection request is wrong " \
                              "expected is 1 "
-
     command_type, sntp_time = wifi_dut.interfaces.wifi.get_sntp_time()
     assert command_type == 2, "Command type received for the body of get_sntp_time response is wrong, expected is 2"
-    command_type, sntp_date_time = wifi_dut.interfaces.wifi.get_sntp_timedate()
-    sntp_date_time_response = sntp_date_time.decode().split('.')[0]
+    command_type, sntp_date_time_response = wifi_dut.interfaces.wifi.get_sntp_timedate()
     assert command_type == 3, "Command type received for the body of get_sntp_timedate response is wrong, expected is 3"
     command_type, ip_version, server_ip = wifi_dut.interfaces.wifi.get_sntp_server_info()
-    assert command_type == 6, "Command type received for the body of get_sntp_server_info response is wrong, expected " \
-                              "is 6"
+    assert command_type == 6, "Command type received for the body of get_sntp_server_info response is wrong, " \
+                              "expected is 6"
     assert ip_version == 4, "Ip version received for the body of get_sntp_server_info response is wrong, expected " \
                             "is 4"
     assert server_ip == sntp_server_address, f"SNTP server ip address received for the body of get_sntp_server_info " \
-                                             f"response is wrong, expected " \
-                                             "is {sntp_server_address}"
+                                             f"response is wrong, expected is {sntp_server_address}"
 
     wifi_dut.interfaces.wifi.sntp_delete()
     logger.info("wait for 5 seconds to receive SNTP asynchronous messages")
     time.sleep(5)
+    asynchronous_request_time = 0
     events = wifi_dut.interfaces.wifi.get_async_events(since_time=asynchronous_request_time)
     for event in events:
         if event.event_type == RS9116AsyncEventType.SNTP_EVENT:
             sntp_event = event.event_data
-        else:
-            assert 1, f"SNTP asynchronous event is not received by DUT after SNTP delete is initiated"
-    sntp_status = int(sntp_event.split(b":")[1])
+            asynchronous_request_time = event.timestamp + 1
+    assert asynchronous_request_time, "SNTP asynchronous event is not received by DUT after connection request was " \
+                                      "sent to SNTP server"
+    sntp_status = int(re.search(r'SNTP_STATUS:\s+(\d+)', sntp_event.decode()).group(1))
     assert sntp_status == 1, "SNTP status received in asynchronous message for SNTP delete request is wrong expected " \
                              "is 1 "
     time.sleep(2)
@@ -221,7 +219,6 @@ def test_sntp_unicast_TC19015(
                     f"sniffer file")
     assert len(ntp_capture_list) > 0, f"NTP packets are not captured or one of the 4-way handshake pkts are not " \
                                       f"captured in the sniffer file "
-
     for ntp_pkt in ntp_capture_list:
         if (ntp_pkt[2] == sntp_server_address) and (ntp_pkt[3] == device_ip):
             logger.info(
@@ -234,9 +231,7 @@ def test_sntp_unicast_TC19015(
             if "Transmit Timestamp:" in count:
                 sntp_transmit_time_sniffer = count.split("Transmit Timestamp:")[1].split(".")[0].strip()
         logger.info(f"Date and Time sent by SNTP server as per sniffer capture {sntp_transmit_time_sniffer}")
-
     logger.info(f"Date and time sent by DUT {sntp_date_time_response}")
-
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
@@ -248,9 +243,7 @@ def test_sntp_unicast_TC19015(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(30, 600)])
-def test_sntp_keepalive_TC19016(
-        wifi_sniffer, wifi_dut, wifi_access_point, keep_alive_time, idle_time, logger
-        ):
+def test_sntp_keepalive_c19016(wifi_sniffer, wifi_dut, wifi_access_point, keep_alive_time, idle_time, logger):
     capture_filename = "test_sntp_keepalive_TC19016"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
@@ -265,16 +258,15 @@ def test_sntp_keepalive_TC19016(
         if event.event_type == RS9116AsyncEventType.SNTP_EVENT:
             sntp_event = event.event_data
             asynchronous_request_time = event.timestamp + 1
-        else:
-            assert 1, f"SNTP asynchronous event is not received by DUT after connection request was sent to SNTP server"
-    sntp_status = int(sntp_event.split(b":")[1])
+    assert asynchronous_request_time, "SNTP asynchronous event is not received by DUT after connection request was " \
+                                      "sent to SNTP server"
+    sntp_status = int(re.search(r'SNTP_STATUS:\s+(\d+)', sntp_event.decode()).group(1))
     assert sntp_status == 1, "SNTP status received in asynchronous message for SNTP connection request is wrong " \
                              "expected is 1 "
     command_type, sntp_time = wifi_dut.interfaces.wifi.get_sntp_time()
     assert command_type == 2, "Command type received for the body of get_sntp_time response is wrong, expected is 2"
-    command_type, sntp_date_time = wifi_dut.interfaces.wifi.get_sntp_timedate()
+    command_type, sntp_date_time_response = wifi_dut.interfaces.wifi.get_sntp_timedate()
     assert command_type == 3, "Command type received for the body of get_sntp_timedate response is wrong, expected is 3"
-    sntp_date_time_response = sntp_date_time.decode().split('.')[0]
 
     command_type, ip_version, server_ip = wifi_dut.interfaces.wifi.get_sntp_server_info()
     assert command_type == 6, "Command type received for the body of get_sntp_server_info response is wrong, expected " \
@@ -289,13 +281,15 @@ def test_sntp_keepalive_TC19016(
     wifi_dut.interfaces.wifi.sntp_delete()
     logger.info("wait for 5 seconds to receive SNTP asynchronous messages")
     time.sleep(5)
+    asynchronous_request_time = 0
     events = wifi_dut.interfaces.wifi.get_async_events(since_time=asynchronous_request_time)
     for event in events:
         if event.event_type == RS9116AsyncEventType.SNTP_EVENT:
             sntp_event = event.event_data
-        else:
-            assert 1, f"SNTP asynchronous event is not received by DUT after SNTP delete is initiated"
-    sntp_status = int(sntp_event.split(b":")[1])
+            asynchronous_request_time = event.timestamp + 1
+    assert asynchronous_request_time, "SNTP asynchronous event is not received by DUT after connection request was " \
+                                      "sent to SNTP server"
+    sntp_status = int(re.search(r'SNTP_STATUS:\s+(\d+)', sntp_event.decode()).group(1))
     assert sntp_status == 1, "SNTP status received in asynchronous message for SNTP delete request is wrong expected " \
                              "is 1 "
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -312,19 +306,16 @@ def test_sntp_keepalive_TC19016(
                 f"As per sniffer SNTP packets received  on DUT mac address {dut_mac_address}---->{ntp_pkt[0]}")
             sntp_pkt_sniffer = ntp_pkt[0]
             break
-
     sntp_pkt_fields = sntp_pkt_sniffer.split("\n")
     for count in sntp_pkt_fields:
         if "Transmit Timestamp:" in count:
             sntp_transmit_time_sniffer = count.split("Transmit Timestamp:")[1].split(".")[0].strip()
     logger.info(f"Date and Time sent by SNTP server as per sniffer capture {sntp_transmit_time_sniffer}")
-
     logger.info(f"Date and time sent by DUT {sntp_date_time_response}")
     timestamp = []
     for ntp_pkt in ntp_capture_list:
         if ntp_pkt[2] == device_ip:
             timestamp.append(ntp_pkt[1])
-
     if len(timestamp):
         for count in range(0, len(timestamp) - 1):
             time_diff = float(timestamp[count + 1]) - float(timestamp[count])
@@ -333,7 +324,6 @@ def test_sntp_keepalive_TC19016(
         logger.info(
             f"As per sniffer, Number of NTP keep alive packets sent by mac address {dut_mac_address}->{len(timestamp)} while the test has been running for "
             f"{idle_time} sec when keep alive time configured is {keep_alive_time}")
-
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
@@ -344,9 +334,7 @@ def test_sntp_keepalive_TC19016(
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
-def test_sntp_ludp_coexit_TC19017(
-        wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger
-        ):
+def test_sntp_ludp_coexit_c19017(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger):
     capture_filename = "test_sntp_ludp_coexit_TC19017"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     # The below api parses DUTs IP address
@@ -366,7 +354,6 @@ def test_sntp_ludp_coexit_TC19017(
     sntp_server_address = wifi_dut.interfaces.wifi.get_sntp_server_ip()
     wifi_dut.interfaces.wifi.sntp_create(server_ip=sntp_server_address)
     logger.info("wait for 10 seconds to receive SNTP asynchronous messages")
-
     time.sleep(10)
     asynchronous_request_time = 0
     events = wifi_dut.interfaces.wifi.get_async_events(since_time=asynchronous_request_time)
@@ -374,21 +361,22 @@ def test_sntp_ludp_coexit_TC19017(
         if event.event_type == RS9116AsyncEventType.SNTP_EVENT:
             sntp_event = event.event_data
             asynchronous_request_time = event.timestamp + 1
-        else:
-            assert 1, f"SNTP asynchronous event is not received by DUT after connection request was sent to SNTP server"
-    sntp_status = int(sntp_event.split(b":")[1])
+    assert asynchronous_request_time, "SNTP asynchronous event is not received by DUT after connection request was " \
+                                      "sent to SNTP server"
+    sntp_status = int(re.search(r'SNTP_STATUS:\s+(\d+)', sntp_event.decode()).group(1))
     assert sntp_status == 2, "SNTP connection is successful even though the UDP socket at 123 port is already opened " \
                              "in the DUT which is not expected "
-
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.wlan_get_status()
     assert exc_info.value.error_code == 0xBB23, f"DUT sent wrong error code. expected is {0xBB23}"
-    logger.info(f"DUT sent error code-> {hex(exc_info.value.error_code)} when trying to open SNTP client, but already a "
-                f"socket is opened "
-                f"at port number 123")
+    logger.info(
+        f"DUT sent error code-> {hex(exc_info.value.error_code)} when trying to open SNTP client, but already a "
+        f"socket is opened "
+        f"at port number 123")
     validation = True
     packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
     snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
     assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
     logger.info(f"PS-POLL packets are captured in the sniffer")
     wifi_dut.interfaces.wifi.leave()
+

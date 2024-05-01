@@ -1688,8 +1688,7 @@ def test_Wifi_sdk_scan_BLE_SI_10240ms_SW_5000ms_C148613(
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
                               | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
-        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
@@ -1802,8 +1801,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_AI_20ms_C20176(
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
                               | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
-        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
@@ -1914,8 +1912,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_AI_10240ms_C20177(
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
                               | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
-        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
@@ -2025,8 +2022,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_SI_7_5ms_SW_2_5ms_C20178(
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
                               | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
-        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
@@ -2136,8 +2132,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_SI_10240ms_SW_3440ms_C20179(
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
                               | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
-        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,

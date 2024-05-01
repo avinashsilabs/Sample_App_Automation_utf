@@ -1,0 +1,72 @@
+id: 665fd791-930f-4741-b947-641ae153e500
+name: WIFI_dev_sanity_Si917_04.17.24
+description: ''
+test_cases:
+  - test_case_id: 6f13a032bc1922cdad5a088aa412a72700ad29e2
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_sqa_sanity_sdk.py::test_wifi_sdk_firmware_version_C34753
+    iterations: 1
+  - test_case_id: b6a40482d9981c71574cb97f60321ccb92a91053
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_mqtt_sdk.py::test_wifi_sdk_mqtt_qos1_connect_subscribe_publish_TC127757
+    iterations: 1
+  - test_case_id: f3da3849095915695267a334c59ecd794c5be24d
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_mqtt_sdk.py::test_wifi_sdk_mqtt_qos0_connect_publish_max_data_TC127827
+    iterations: 1
+  - test_case_id: 10188b9b0e9d6bfad36995b3506155664781f0e7
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_mqtt_sdk.py::test_wifi_sdk_Connect_subscribe_to_MQTT_server_with_SSL_connection_and_publish_data_C127803
+    iterations: 1
+  - test_case_id: 6df67314a0125933f9a66afaa75f6b6e6224aa51
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_http_otaf_sdk.py::test_sdk_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780
+    iterations: 1
+  - test_case_id: 9be6e4081c421645c31950b6640235133947f0be
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_apmode_sdk.py::test_wifi_sdk_ap_mode_tx_rules_us_region_c19454
+    iterations: 1
+  - test_case_id: 845217048e5525aafd3f9218a240b3b57f837bc5
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_wlan_concurrent_sdk.py::test_wifi_sdk_device_as_ap_and_sta_c19319
+    iterations: 1
+  - test_case_id: d97c5266f79ebdf89a9dbc0ee02c142c1bc6aaaf
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_rtc_sta_wifi_sqa_sdk.py::test_wifi_sdk_check_get_rtc_functionality_c19052
+    iterations: 1
+  - test_case_id: 689e5594fddcf16bc5e8ffbeec2520e47cdfea90
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_throughput_sdk.py::test_wlan_standalone_udp_tx_c20738[UDP]_1
+    iterations: 1
+  - test_case_id: aa38bb989841456c8bb5004f53f4c5dd8c3bd1e8
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_throughput_sdk.py::test_wlan_standalone_udp_rx_c20739[UDP]_1
+    iterations: 1
+  - test_case_id: 772637f7a02447348288bb1a590f24960585a2ff
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/coex/sta+ble/test_sta_ble_sdk.py::test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475[TCP]
+    iterations: 1
+  - test_case_id: 4bf34fe00459c69f401c4bc35e91ed74f2ec3f4a
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_wmm_aggregation_sdk.py::test_udp_tx_by_enabling_aggregation_c19031[UDP]_1
+    iterations: 1
+  - test_case_id: 7045889fc4eae9bd96554e3dabaf1e4946847131
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_apmode_sdk.py::test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442
+    iterations: 1
+  - test_case_id: 4c7bc4017dafb7223ec6a4d289c58112c577a5af
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_wlan_concurrent_sdk.py::test_wifi_sdk_device_as_ap_and_sta_c19318[TCP]
+    iterations: 1
+  - test_case_id: 5ac0b8005482a2aaf7cf07e0c6135f1249a1d395
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_wlan_sta_enterprise_sdk.py::test_wifi_sdk_connectivity_wpa2_eap_tls_c19018
+    iterations: 1
+  - test_case_id: 27a5de2c9747232e2651a03dd6030778d9c6bd86
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_wlan_sta_enterprise_sdk.py::test_wifi_sdk_connectivity_wpa2_eap_ttls_c19019
+    iterations: 1
+  - test_case_id: 9e483fad9c27a1e710a0d77769e56b55874fe779
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/coex/sta+ble/test_sta_ble_eap_bypass_sdk.py::test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_C133461
+    iterations: 1

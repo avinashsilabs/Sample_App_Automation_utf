@@ -105,8 +105,8 @@ class WifiJoin(ThreadBase):
                 logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
                 self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_case)
 
-                if self.test_case != '19762':
-                    self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+                http_interface = self.http_server.interfaces.http.interface
+                self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address(http_interface)
 
                 if self.test_case != '19762':
                     logger().info("pinging to server ip....")
@@ -239,8 +239,6 @@ class WifiJoin(ThreadBase):
                     self.wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148564", security="WPA2", psk="Automation@123",
                                                            channel=11, dtim_beacon_count="1", beacon_interval="100")
                     self.connect_clients_to_dut_as_ap(wifi_clients=self.wifi_clients, wifi_dut=self.wifi_dut)
-
-                self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
 
                 if self.test_case == '19766':
                     return

@@ -66,6 +66,7 @@ class WifiJoin(ThreadBase):
         self.wifi_dut.interfaces.wifi.initialize_thread()
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
         fw_after_upgrade = self.wifi_dut.interfaces.wifi.version()
+        self.wifi_dut.interfaces.wifi.inited = False
         time.sleep(5)
         return fw_after_upgrade
 
@@ -206,6 +207,7 @@ class WifiJoin(ThreadBase):
                                                               f" firmware through otaf"
         except Exception as e:
             logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
+            raise e
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])

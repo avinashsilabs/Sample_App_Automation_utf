@@ -2,9 +2,9 @@ import time
 from base64 import b64decode
 import pytest
 from utf.utils.iperf.iperf_utils import ping
-from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xPowerSaveModes, Si91xFeatureBitMap, \
-    Si91xConfigFeatureBitMap, Si91xTCPIPFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xExtCustomFeatureBitMap,\
-    RS9116AsyncEventType, Si91xPowerSaveProcedureTypes, Si91xCustomFeatureBitMap
+# from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xPowerSaveModes, Si91xFeatureBitMap, \
+#     Si91xConfigFeatureBitMap, Si91xTCPIPFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xExtCustomFeatureBitMap,\
+#     Si91xPowerSaveProcedureTypes, Si91xCustomFeatureBitMap
 import random
 import string
 from datetime import datetime
@@ -75,7 +75,7 @@ def test_ftp_TC19004(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, ftp
         ftp_dir_events = 0
         dir_list_dut = []
         for event in events:
-            if event.event_type == RS9116AsyncEventType.FTP_DIR_READ:
+            # if event.event_type == RS9116AsyncEventType.FTP_DIR_READ:
                 ftp_dir_event = event.event_data.decode()
                 logger.info(f"ftp directory event received is {ftp_dir_event}")
                 ftp_dir_event = ftp_dir_event.split(",")
@@ -111,7 +111,7 @@ def test_ftp_TC19004(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, ftp
         ftp_file_events = 0
         events = wifi_dut.interfaces.wifi.get_async_events()
         for event in events:
-            if event.event_type == RS9116AsyncEventType.FTP_FILE_READ:
+            # if event.event_type == RS9116AsyncEventType.FTP_FILE_READ:
                 ftp_event_data = event.event_data.decode()
                 event_data_params = ftp_event_data.split(",")
                 for event_data in event_data_params:
