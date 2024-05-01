@@ -78,6 +78,7 @@ pytestmark = [
 
 
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('SM54246')
 def test_azure_dut_to_cloud(
     wifi_access_point, wifi_dut, azure_iot_client, sl_collections, logger, timeout=120
 ):
@@ -110,6 +111,7 @@ def test_azure_dut_to_cloud(
     assert "hi" in azure_iot_client.interfaces.hub.received_messages
 
 
+@pytest.mark.test_src_map_id('SM54252')
 def test_azure_cloud_to_dut(
     wifi_access_point, wifi_dut, azure_iot_client, sl_collections, logger, timeout=120
 ):

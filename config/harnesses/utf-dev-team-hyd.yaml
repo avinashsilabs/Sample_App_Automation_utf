@@ -637,6 +637,18 @@ devices:
                 device_type: 'mi'
                 # This is should be as same as ble_advertising_data
                 advertising_data: "HELLO"
+    
+    
+
+    nrf_52840_ble_client:
+        interfaces:
+            bluetooth:
+                type: 'bluetooth.nrf_blatann'
+                serial: serial
+                vid: 0x1915
+                pid: 0xC00A
+                serial_number: 'CA8B51D6DB51' # configure nrf52840 dongle serial number
+                port: 'auto'
 
     power_meter_plotter:
         interfaces:
@@ -697,6 +709,11 @@ defaults:
     ble_client: 'raspi_ble_client'
 
     bt_client: 'raspi_bt_client'
+
+    nrf_ble_client: 'nrf_52840_ble_client'
+
+    nrf_ble_clients:
+        - 'nrf_52840_ble_client'
 
     mqtt_server: 'raspi_mosquitto'
 

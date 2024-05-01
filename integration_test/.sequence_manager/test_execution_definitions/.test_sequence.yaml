@@ -1,27 +1,42 @@
 root_path: integration_test
 test_sequence:
-  - id: 956c62b09c5259934af90d33bd5af764c629bf2e
-    test_src_map_id: SM34190::1
-    test_case_id: test_ble_gatt_client_master_hci
-    test_function: test_ble_gatt_client_master_hci
-    test_id: test_ble_gatt_client_master_hci::1
-    test_module: test_cases/test_ble.py
-    test_markers:
-      - >-
-        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
-        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})
-      - pytest.mark.dut('rs9116_sapi',)
-      - pytest.mark.framework_integration_test()
-      - pytest.mark.firmware_app('test_multi_gatt_conn',)
-      - >-
-        pytest.mark.end_state('wifi_dut',wifi=['disassociated','ble_disconnect'])
+  - id: 09ab868fa24377302646d8fe2f033e38297583eb
+    test_src_map_id: SM24449::1
+    test_case_id: test_central_without_passcode_pairing
+    test_function: test_central_without_passcode_pairing
+    test_id: test_central_without_passcode_pairing::1
+    test_module: test_cases/test_nrf_ble.py
+    test_markers: []
     test_params: []
     version: 0
     enabled: true
     labels:
-      - ble
-      - client
-      - gatt
-      - hci
-      - master
-    test_case_name: test_ble_gatt_client_master_hci
+      - central
+      - nrf_ble
+      - pairing
+      - passcode
+      - code
+      - nrf
+      - smp
+      - bonding
+      - lesc
+      - mitm
+      - raspi
+    test_case_name: test_central_without_passcode_pairing
+  - id: 2d315eb608c5ddd6c81943f3d56e329d0f4148d0
+    test_src_map_id: SM54282::1
+    test_case_id: test_central_with_passcode_pairing
+    test_function: test_central_with_passcode_pairing
+    test_id: test_central_with_passcode_pairing::1
+    test_module: test_cases/test_nrf_ble.py
+    test_markers: []
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - central
+      - nrf_ble
+      - pairing
+      - passcode
+      - code
+    test_case_name: test_central_with_passcode_pairing

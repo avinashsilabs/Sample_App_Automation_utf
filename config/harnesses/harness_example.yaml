@@ -1119,7 +1119,7 @@ devices:
     nrf_52840_ble_client:
         interfaces:
             bluetooth:
-                type: 'bluetooth.blatann'
+                type: 'bluetooth.nrf_blatann'
                 serial: serial
                 vid: 0x1915
                 pid: 0xC00A

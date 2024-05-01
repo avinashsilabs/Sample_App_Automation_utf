@@ -45,6 +45,7 @@ ENV TESTS_DIR=example_test_package
 
 # Copy tests, integration tests, config, firmware and startup script
 
+COPY .vscode/ ./.vscode/
 COPY common/ ./common/
 COPY executor/docker_startup.sh .
 COPY integration_test/ ./integration_test/

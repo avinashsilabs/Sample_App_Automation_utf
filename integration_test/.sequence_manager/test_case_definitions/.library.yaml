@@ -381,6 +381,73 @@ test_cases:
       - s3
       - url
     test_case_name: test_s3_url
+  - id: 9d8403f46b4c62081b1fbeb23cf5765bc4195149
+    test_src_map_id: SM54246::1
+    test_case_id: test_azure_dut_to_cloud
+    test_function: test_azure_dut_to_cloud
+    test_id: test_azure_dut_to_cloud::1
+    test_module: test_cases/test_azure_iot.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default|Si91xFeatureBitMap.WPSSupportDisabled|Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1|Si91xFeatureBitMap.ULPGPIOHandshake|Si91xFeatureBitMap.Aggregation|Si91xFeatureBitMap.PSKSecurity|Si91xFeatureBitMap.OpenMode,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default|Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|Si91xTCPIPFeatureBitMap.Ping|Si91xTCPIPFeatureBitMap.SSL|Si91xTCPIPFeatureBitMap.DNSClient|Si91xTCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid|Si91xExtCustomFeatureBitMap.Default|Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE|Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode|Si91xExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|Si91xExtTCPIPFeatureBitMap.WaitForSocketClose|4096|Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT,'bt_features':
+        Si91xBTFeatureBitMap.Default,'ble_features':
+        Si91xBLEFeatureBitMap.Default|Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid|Si91xBLEFeatureBitMap.RS9113_Si91x_Compatible_Feature|Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE|Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS|Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX|Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC,'ble_custom_ext_features':
+        Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST|Si91xBLECustomFeatureBitMap.Default|Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'set_send_feature_frame':
+        True,'thread_config': {'wifi': {'count': 2,'stack_len':
+        3584}},'ca_cert':
+        ['azure_baltimore_ca.pem','SL_NET_SIGNING_CERTIFICATE','SL_NET_TLS_SERVER_CREDENTIAL_START'],'client_cert':
+        ['azure_client_cert.pem','SL_NET_CERTIFICATE','SL_NET_TLS_CLIENT_CREDENTIAL_START'],'client_key':
+        ['azure_client_key.pem','SL_NET_PRIVATE_KEY','SL_NET_TLS_CLIENT_CREDENTIAL_START']})
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - azure
+      - azure_iot
+      - cloud
+      - dut
+    test_case_name: test_azure_dut_to_cloud
+  - id: 50a62e4c3c37255aa7024c1b536a91ee1aae64ef
+    test_src_map_id: SM54252::1
+    test_case_id: test_azure_cloud_to_dut
+    test_function: test_azure_cloud_to_dut
+    test_id: test_azure_cloud_to_dut::1
+    test_module: test_cases/test_azure_iot.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        Si91xCoexMode.BLE|Si91xCoexMode.DualBluetoothBLE|Si91xCoexMode.Bluetooth|Si91xCoexMode.WLAN,'features':
+        Si91xFeatureBitMap.Default|Si91xFeatureBitMap.WPSSupportDisabled|Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1|Si91xFeatureBitMap.ULPGPIOHandshake|Si91xFeatureBitMap.Aggregation|Si91xFeatureBitMap.PSKSecurity|Si91xFeatureBitMap.OpenMode,'tcpip_features':
+        Si91xTCPIPFeatureBitMap.Default|Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|Si91xTCPIPFeatureBitMap.Ping|Si91xTCPIPFeatureBitMap.SSL|Si91xTCPIPFeatureBitMap.DNSClient|Si91xTCPIPFeatureBitMap.DHCPv4Client,'custom_features':
+        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid|Si91xExtCustomFeatureBitMap.Default|Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE|Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode|Si91xExtCustomFeatureBitMap.FeatureLowPower,'ext_tcpip_features':
+        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|Si91xExtTCPIPFeatureBitMap.WaitForSocketClose|4096|Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT,'bt_features':
+        Si91xBTFeatureBitMap.Default,'ble_features':
+        Si91xBLEFeatureBitMap.Default|Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid|Si91xBLEFeatureBitMap.RS9113_Si91x_Compatible_Feature|Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE|Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS|Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX|Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC,'ble_custom_ext_features':
+        Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST|Si91xBLECustomFeatureBitMap.Default|Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS,'config_features':
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'set_send_feature_frame':
+        True,'thread_config': {'wifi': {'count': 2,'stack_len':
+        3584}},'ca_cert':
+        ['azure_baltimore_ca.pem','SL_NET_SIGNING_CERTIFICATE','SL_NET_TLS_SERVER_CREDENTIAL_START'],'client_cert':
+        ['azure_client_cert.pem','SL_NET_CERTIFICATE','SL_NET_TLS_CLIENT_CREDENTIAL_START'],'client_key':
+        ['azure_client_key.pem','SL_NET_PRIVATE_KEY','SL_NET_TLS_CLIENT_CREDENTIAL_START']})
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - azure
+      - azure_iot
+      - cloud
+      - dut
+    test_case_name: test_azure_cloud_to_dut
   - id: b14572316e0440f416c2e5a1661fd8d992b6c4dc
     test_src_map_id: SM11772::1
     test_case_id: test_ble_advertisement
@@ -1636,6 +1703,143 @@ test_cases:
       - mqtt_thread
       - thread
     test_case_name: test_mqtt_dut_thread
+  - id: a74e8fd07ecf54af4bc36e61157180d728d3f0bb
+    test_src_map_id: SM07362::1
+    test_case_id: test_nrf_ble_advertisement
+    test_function: test_nrf_ble_advertisement
+    test_id: test_nrf_ble_advertisement::1
+    test_module: test_cases/test_nrf_ble.py
+    test_markers:
+      - >-
+        pytest.mark.config('ble_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - advertisement
+      - ble
+      - nrf
+      - nrf_ble
+      - blatann
+    test_case_name: test_nrf_ble_advertisement
+  - id: c02b93e94c42670531b33a32f4b66a45ebd3609e
+    test_src_map_id: SM07369::1
+    test_case_id: test_nrf_ble_scanning
+    test_function: test_nrf_ble_scanning
+    test_id: test_nrf_ble_scanning::1
+    test_module: test_cases/test_nrf_ble.py
+    test_markers:
+      - >-
+        pytest.mark.config('ble_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - ble
+      - nrf
+      - nrf_ble
+      - scanning
+      - central
+    test_case_name: test_nrf_ble_scanning
+  - id: bf885634c4b396feabe194a820509c0affc71fc0
+    test_src_map_id: SM07381::1
+    test_case_id: test_nrf_ble_gatt_server_slave
+    test_function: test_nrf_ble_gatt_server_slave
+    test_id: test_nrf_ble_gatt_server_slave::1
+    test_module: test_cases/test_nrf_ble.py
+    test_markers:
+      - >-
+        pytest.mark.config('ble_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN})
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - ble
+      - gatt
+      - nrf
+      - nrf_ble
+      - server
+      - slave
+      - blatann
+    test_case_name: test_nrf_ble_gatt_server_slave
+  - id: 09ab868fa24377302646d8fe2f033e38297583eb
+    test_src_map_id: SM24449::1
+    test_case_id: test_central_without_passcode_pairing
+    test_function: test_central_without_passcode_pairing
+    test_id: test_central_without_passcode_pairing::1
+    test_module: test_cases/test_nrf_ble.py
+    test_markers: []
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - central
+      - nrf_ble
+      - pairing
+      - passcode
+      - code
+      - nrf
+      - smp
+      - bonding
+      - lesc
+      - mitm
+      - raspi
+    test_case_name: test_central_without_passcode_pairing
+  - id: 2d315eb608c5ddd6c81943f3d56e329d0f4148d0
+    test_src_map_id: SM54282::1
+    test_case_id: test_central_with_passcode_pairing
+    test_function: test_central_with_passcode_pairing
+    test_id: test_central_with_passcode_pairing::1
+    test_module: test_cases/test_nrf_ble.py
+    test_markers: []
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - central
+      - nrf_ble
+      - pairing
+      - passcode
+      - code
+    test_case_name: test_central_with_passcode_pairing
+  - id: 6a754aaea5dc525d58dec0664bf3b0b3c903f549
+    test_src_map_id: SM03839::1
+    test_case_id: test_peripheral_without_passcode_pairing
+    test_function: test_peripheral_without_passcode_pairing
+    test_id: test_peripheral_without_passcode_pairing::1
+    test_module: test_cases/test_nrf_ble.py
+    test_markers: []
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - nrf_ble
+      - pairing
+      - passcode
+      - peripheral
+      - nrf
+      - smp
+    test_case_name: test_peripheral_without_passcode_pairing
+  - id: afe99ddac366919838a1ae0654b4751836699009
+    test_src_map_id: SM54975::1
+    test_case_id: test_peripheral_with_passcode_pairing
+    test_function: test_peripheral_with_passcode_pairing
+    test_id: test_peripheral_with_passcode_pairing::1
+    test_module: test_cases/test_nrf_ble.py
+    test_markers: []
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - nrf_ble
+      - pairing
+      - passcode
+      - peripheral
+      - witho
+    test_case_name: test_peripheral_with_passcode_pairing
   - id: af9c514ed6572b6b06b1afb2274216547a63fe99
     test_src_map_id: SM11908::1
     test_case_id: test_openssl

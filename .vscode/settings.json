@@ -1,14 +1,17 @@
 {
     "files.associations": {
-        "rsi_common_apis.h": "c",
-        "sl_cli_types.h": "c",
-        "rsi_wlan_apis.h": "c",
-        "rsi_m4.h": "c"
+        "*.h": "c",
+        "*.c": "c"
     },
     "search.exclude": {
-        "**/rs911x": true,
-        "**/sqa_test_application": true,
-        "**/tcmgr": true
+        "**/tcmgr": true,
+        "**/venv": true,
+        "**/reports": true
     },
-    "search.useIgnoreFiles": false
+    "search.useIgnoreFiles": false,
+    "python.analysis.extraPaths": [
+        "./utf_core/src",
+        "./utf_wiseconnect"
+    ],
+    "python.analysis.typeCheckingMode": "basic"
 }

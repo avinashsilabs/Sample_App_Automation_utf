@@ -19,6 +19,28 @@
                 }
             ],
             "justMyCode": true
+        },
+        {
+            "name": "Pytest",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "integration_test",
+                "--tb",
+                "native",
+                "--skip_parametrization",
+                "-v",
+                "--manifest",
+                "manifest/blank_manifest.yaml",
+                "--tmconfig",
+                "integration_test/.sequence_manager/test_execution_definitions/.test_sequence.yaml"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}:${workspaceFolder}/utf_core/src:${workspaceFolder}/utf_wiseconnect"
+            }
         }
     ]
 }
