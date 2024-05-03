@@ -103,6 +103,11 @@ class WLanTwTThread(ThreadBase):
             # Get the mac address of the wifi_access_point
             self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
 
+            # Check Test Case 113764 and enable BG scan
+            if self.test_case == '113764':
+                self.wifi_dut.interfaces.wifi.set_advanced_scan_configuration(adv_active_channel_time=15,
+                                                                              adv_passive_channel_time=20)
+
             if self.test_case == '113725':
                 # Call set_twt API
                 self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
@@ -363,7 +368,7 @@ def test_wifi_sdk_verify_twt_in_assoc_req_c113725(wifi_dut, wifi_access_point, s
         wlan_obj.wait_for_exit()
 
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -387,7 +392,7 @@ def test_wifi_sdk_verify_twt_functionality_when_enabled_through_join_c113726(wif
         wlan_obj.wait_for_exit()
 
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -414,7 +419,7 @@ def test_wifi_sdk_verify_twt_request_when_enabled_before_join_c113727(wifi_dut, 
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -442,7 +447,7 @@ def test_wifi_sdk_verify_twt_suggest_when_enabled_before_join_c113728(wifi_dut, 
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -471,7 +476,7 @@ def test_wifi_sdk_verify_twt_demand_when_enabled_before_join_c113729(wifi_dut, w
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -499,7 +504,7 @@ def test_wifi_sdk_verify_twt_request_when_enabled_after_join_c113730(wifi_dut, w
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -527,7 +532,7 @@ def test_wifi_sdk_verify_twt_suggest_when_enabled_after_join_c113731(wifi_dut, w
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -555,7 +560,7 @@ def test_wifi_sdk_verify_twt_demand_when_enabled_after_join_c113732(wifi_dut, wi
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -581,7 +586,7 @@ def test_wifi_sdk_verify_default_retry_attempts_for_twt_c113733(wifi_dut, wifi_a
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -607,7 +612,7 @@ def test_wifi_sdk_verify_configured_retry_attempts_for_twt_c113734(wifi_dut, wif
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -632,7 +637,7 @@ def test_wifi_sdk_verify_default_retry_interval_for_twt_c113735(wifi_dut, wifi_a
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -656,7 +661,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_teardown_with_second_twt_enablement
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -683,7 +688,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_second_time_when_first_twt_fa
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -711,7 +716,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_implicit_twt_c113742(wifi_dut
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -739,7 +744,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_twt_c113744(wifi_
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -767,7 +772,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_announced_twt_c113745(wifi_du
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -795,7 +800,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_announced_and_triggered_twt_c
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -823,7 +828,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_and_triggered_twt
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -850,7 +855,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_duration_c11
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -879,7 +884,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_duration_tol
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -908,7 +913,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_exp
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -937,7 +942,63 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_exp
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_mantissa_c113752(wifi_dut,
+                                                                                              wifi_access_point,
+                                                                                              sl_collections,
+                                                                                              wifi_sniffer,
+                                                                                              sniffer_filter):
+    """Verify whether DUT is able to create TWT setup within the  Wake Interval Mantissa"""
+    """
+    Test Steps:
+        1. Create thread for twt functionality
+        2. Run the thread
+        3. Exit the thread
+        4. Close the socket
+    """
+    try:
+        wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, test_case='113730')
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_mantissa_tolerance_c113753(wifi_dut,
+                                                                                                        wifi_access_point,
+                                                                                                        sl_collections,
+                                                                                                        wifi_sniffer,
+                                                                                                        sniffer_filter):
+    """Verify whether DUT is able to create TWT setup within the  Wake Interval Mantissa Tolerance"""
+    """
+    Test Steps:
+        1. Create thread for twt functionality
+        2. Run the thread
+        3. Exit the thread
+        4. Close the socket
+    """
+    try:
+        wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, test_case='113730')
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -968,7 +1029,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_and_triggered_twt
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -998,4 +1059,32 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_and_triggered_twt
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_verify_whether_dut_able_to_setup_twt_with_bg_scan_after_join_c113764(wifi_dut, wifi_access_point,
+                                                                                       sl_collections, wifi_sniffer,
+                                                                                       sniffer_filter):
+    """Verify whether DUT is able to create TWT setup with BG Scan when we call  TWT config api after join and
+    also verify the DUT behavior whether it is able to wakeup and receive data based on the TWT agreement"""
+    """
+    Test Steps:
+        1. Create thread for twt functionality
+        2. Enable power-save mode
+        3. Run the thread
+        4. Exit the thread
+        5. Close the socket
+    """
+    try:
+        wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, open_tcp_socket=True,
+                                 power_save=True, test_case='113764')
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
