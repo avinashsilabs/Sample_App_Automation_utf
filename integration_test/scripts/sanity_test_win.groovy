@@ -19,7 +19,7 @@ pipeline {
     stages {
         stage('Run Sanity test') {
             agent {
-                label 'NB0015361'
+                label 'NB0014294'
             }
             environment {
                 UTF_HWMUX_TOKEN = credentials('utf-dev-hwmux-token')
@@ -33,16 +33,12 @@ pipeline {
                 MWLABUSER_JENKINS_SSH = credentials('mwlabuser_jenkins_ssh')
             }
             stages {
-                stage('Checkout Source') {
-                    steps {
-                        node('NB0015361') {
-                            git branch: 'master', credentialsId: '87616d18-3af5-4fa6-b20f-538f92b10079', url: 'ssh://git@stash.silabs.com/toolchain_external/python_3_9_2_x64.git'
-                        }
-                    }
-                }
                 stage('Setup Environment') {
                     steps {
                             bat """
+                                if not exist %PYTHON3_HOME% (
+                                    git clone --depth 1 -b %PYTHON3_TAG% ssh://git@stash.silabs.com/toolchain_external/python_3_9_12_win64.git %PYTHON3_HOME%
+                                )
                                 if not EXIST venv\\pyvenv.cfg (
                                    %PYTHON3%  -m venv venv
                                 )
