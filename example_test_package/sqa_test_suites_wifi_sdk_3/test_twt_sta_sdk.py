@@ -644,6 +644,31 @@ def test_wifi_sdk_verify_default_retry_interval_for_twt_c113735(wifi_dut, wifi_a
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_verify_whether_dut_accepts_rejects_alternate_twt_setup_c113736(wifi_dut, wifi_access_point,
+                                                                                 sl_collections, wifi_sniffer,
+                                                                                 sniffer_filter):
+    """Verify whether DUT is able to accept or reject the alternate TWT setup request when TWT session is active"""
+    """
+    Test Steps:
+        1. Create thread for twt functionality
+        2. Enable power-save mode
+        3. Run the thread
+        4. Exit the thread
+    """
+    try:
+        wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, power_save=True,
+                                 test_case='113736')
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        logger().info(f"Exception occurred: {Ex}")
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
 def test_wifi_sdk_verify_whether_dut_able_to_teardown_with_second_twt_enablement_c113738(wifi_dut, wifi_access_point,
                                                                                          sl_collections, wifi_sniffer,
                                                                                          sniffer_filter):
