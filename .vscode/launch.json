@@ -27,14 +27,14 @@
             "module": "pytest",
             "args": [
                 "integration_test",
+                "--tmconfig",
+                "integration_test/.sequence_manager/test_execution_definitions/.test_sequence.yaml",
+                "--manifest",
+                "manifest/blank_manifest.yaml",
                 "--tb",
                 "native",
                 "--skip_parametrization",
-                "-v",
-                "--manifest",
-                "manifest/blank_manifest.yaml",
-                "--tmconfig",
-                "integration_test/.sequence_manager/test_execution_definitions/.test_sequence.yaml"
+                "-v"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
