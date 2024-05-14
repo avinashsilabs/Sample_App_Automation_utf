@@ -1365,6 +1365,7 @@ defaults:
         afe_type: 1
         features_enable: 0
         board_type: "rs9116"
+        power_save: True
 
     wiseconnect_web: 'wiseconnect_web'
 
@@ -1406,6 +1407,10 @@ defaults:
         att_channel: 1
         db_value: 2
         att_enable: true
+        domain: 'AF_INET'
+        protocol: 'IPPROTO_TCP'
+        stream_type: 'SOCK_STREAM'
+        ip_len: 4
 
     sntp_server:
         server_ip: '10.8.4.11'
