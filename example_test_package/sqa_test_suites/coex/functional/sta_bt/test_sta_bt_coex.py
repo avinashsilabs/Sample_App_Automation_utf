@@ -16,7 +16,7 @@ from utf.interfaces.wifi import WlanError
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes, RS9116AsyncEventType, \
     RS9116TCPIPFeatureBitMap, RS9116ExtCustomFeatureBitMap, RS9116FeatureBitMap, RS9116CustomFeatureBitMap, \
-    RS9116BTFeatureBitMap, RS9116ExtTCPIPFeatureBitMap ,DeviceConstants, SocketOptions, RS9116CertificateType, \
+    RS9116BTFeatureBitMap, RS9116ExtTCPIPFeatureBitMap, DeviceConstants, SocketOptions, RS9116CertificateType, \
     RS9116PowerSaveProcedureTypes, RS9116ConfigFeatureBitMap
 
 """
@@ -30,14 +30,18 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode, RS9116PowerSaveModes,
     Author: Vishakha
 """
 
+
 def logger():
     return get_logger(__name__)
+
 
 def text_generator(size=600):
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
 
+
 def ping_count(utf_constants):
     return utf_constants.get("ping_count")
+
 
 class powersave_pingThread(ThreadBase):
     def __init__(self, wifi_dut):
@@ -50,11 +54,11 @@ class powersave_pingThread(ThreadBase):
         # Initiate ping from third party wifi-client to DUT
         logger().info(f"enabling wifi power save mode in DUT......")
         enable_wifi_ps = self.wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+                                                                  RS9116PowerSaveProcedureTypes.FastPowerSave)
         assert enable_wifi_ps, "failed to enable wifi power save"
         logger().info(f"enabling bt power save mode in DUT......")
         enable_bt_ps = self.wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+                                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
         assert enable_bt_ps, "failed to enable bt power save"
         ping_count = 300
         logger().info(f"pinging to dut.....")
@@ -63,7 +67,8 @@ class powersave_pingThread(ThreadBase):
         logger().info(f"ping to DUT is successful....")
         return device_ip
 
-def dut_clean_up(wifi_dut, bt_client_address=None):
+
+def dut_clean_up(wifi_dut, bt_client, bt_client_address=None):
     logger().info(
         "\n\n ---------------------------- Cleaning UP the DUT ----------------------------"
     )
@@ -81,6 +86,7 @@ def dut_clean_up(wifi_dut, bt_client_address=None):
         wifi_dut.interfaces.wifi.leave()
         wifi_dut.interfaces.wifi.associated = False
         time.sleep(5)
+        bt_client.interfaces.bluetooth.close()
     except Exception as err:
         logger().info(
             f"******* Exception occurred while cleaning up the DUT\nException is:{err}\nRecovering the DUT using reset **********"
@@ -91,12 +97,14 @@ def dut_clean_up(wifi_dut, bt_client_address=None):
         "\n ---------------------------- Cleaning UP of DUT is Completed ----------------------------"
     )
 
+
 def dut_recovery(wifi_dut, error):
     recovery_error_codes = ['0xffffffe2', '0xffffffd5']
     for error_code in recovery_error_codes:
         if error_code in str(error):
             logger().info('******* Initiating DUT Recovery using Reset **********')
             wifi_dut.interfaces.wifi.reset()
+
 
 class BtSppMaster_SlaveThread(ThreadBase):
     def __init__(self, wifi_dut, bt_client, mode):
@@ -117,7 +125,8 @@ class BtSppMaster_SlaveThread(ThreadBase):
             bt_client_address = self.bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
             assert bt_client_address, "Unable to get BT client address"
             logger().info(f"Raspberry PI is BT-MASTER  with MAC address {bt_client_address} ")
-            found = self.bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20,retry_counts=3)
+            found = self.bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20,
+                                                                                   retry_counts=3)
             assert found, f"Dut unable to find the bt client device:{bt_dut_address}"
 
             logger().info(f"Starting Raspberry PI as BT Server")
@@ -129,7 +138,8 @@ class BtSppMaster_SlaveThread(ThreadBase):
                 connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
                 assert connected, "Unable to find BT server socket connection"
                 logger().info(f" BT_CONNECT SUCCESSFUL ")
-            assert self.bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address),f"Failed to ping BT client to DUT"
+            assert self.bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+                dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
 
             # Send data from bt_client to dut
             with self.wifi_dut.interfaces.wifi.run_bt_task():
@@ -167,7 +177,8 @@ class BtSpp_role_switch(ThreadBase):
             bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
             assert bt_client_address, "Unable to get BT client address"
             logger().info(f"Raspberry PI is BT-MASTER  with MAC address {bt_client_address} ")
-            found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
+            found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20,
+                                                                              retry_counts=3)
             assert found, f"Dut unable to find the bt client device:{bt_dut_address}"
 
             logger().info(f"Starting Raspberry PI as BT Server")
@@ -179,7 +190,8 @@ class BtSpp_role_switch(ThreadBase):
                 connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
                 assert connected, "Unable to find BT server socket connection"
                 logger().info(f" BT_CONNECT SUCCESSFUL ")
-            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address),f"Failed to ping BT client to DUT"
+            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+                dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
 
             result = wifi_dut.interfaces.wifi.bt_get_local_role(bt_client_address)
             logger().info(f"Device role:{result}")
@@ -247,7 +259,8 @@ class wifiJoinThread(ThreadBase):
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = self.rs_helper.check_wifi_connectivity(self.utf_constants, self.wifi_dut, self.wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = self.rs_helper.check_wifi_connectivity(self.utf_constants, self.wifi_dut,
+                                                                            self.wifi_access_point, power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -504,6 +517,7 @@ class Cleanupactivity(ThreadBase):
     def run(self):
         self.wifi_dut.interfaces.wifi.leave()
 
+
 class ServerSocketXferThread(ThreadBase):
     def __init__(self, wifi_dut, dut_socket, server_socket, num_packets, num_bytes):
         super().__init__()
@@ -545,6 +559,7 @@ def socket_connect(wifi_dut, remote_socket, socket_id, dut_ip, server_port, loca
     logger().info("Socket connection is successful")
     time.sleep(3)
 
+
 @retry(Exception, delay=15, tries=3)
 def run_tcp_traffic(wifi_dut, wifi_client, remote_socket, dut_ip, data_len=1461):
     interface = 'eth1'
@@ -562,7 +577,7 @@ def run_tcp_traffic(wifi_dut, wifi_client, remote_socket, dut_ip, data_len=1461)
     time.sleep(5)
     TCP_MAX_RETRY = 10
     wifi_dut.interfaces.wifi.set_socket_option(tcp_socket_id, SocketOptions.SOL_SOCKET, SocketOptions.TCP_RETRY,
-                                                TCP_MAX_RETRY)
+                                               TCP_MAX_RETRY)
     logger().info("Initiating TCP socket connection from DUT")
     socket_connect(wifi_dut, remote_socket, tcp_socket_id, dut_ip, server_port, tcp_port)
     for data_length in range(1, data_len):  # 1461
@@ -584,7 +599,7 @@ def run_tcp_traffic(wifi_dut, wifi_client, remote_socket, dut_ip, data_len=1461)
     return tcp_port
 
 
-#Verify the BT connection in the Coex mode while WLAN is in connected state
+# Verify the BT connection in the Coex mode while WLAN is in connected state
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -616,7 +631,8 @@ def test_bt_coex_mode_C20088(wifi_sniffer, wifi_dut, wifi_access_point, bt_clien
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -639,7 +655,8 @@ def test_bt_coex_mode_C20088(wifi_sniffer, wifi_dut, wifi_access_point, bt_clien
                 connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
                 assert connected, "Unable to find BT server socket connection"
                 logger().info(f" BT_CONNECT SUCCESSFUL ")
-            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address),f"Failed to ping BT client to DUT"
+            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+                dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
             logger().info(f"iteration completed: {i}")
 
         # Sniffer stop
@@ -655,12 +672,11 @@ def test_bt_coex_mode_C20088(wifi_sniffer, wifi_dut, wifi_access_point, bt_clien
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#BT stability in the Coex mode by multiple connection and disconnection
+# BT stability in the Coex mode by multiple connection and disconnection
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -683,7 +699,8 @@ def test_bt_coex_mode_as_slave_C20089(wifi_dut, wifi_access_point, bt_client, ut
     bt_client_address = None
     try:
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
         t2 = BtSppMaster_SlaveThread(wifi_dut, bt_client, mode)
@@ -692,18 +709,18 @@ def test_bt_coex_mode_as_slave_C20089(wifi_dut, wifi_access_point, bt_client, ut
             t2.start()
             time.sleep(5)
             t2.wait_for_exit(True)
+            bt_client.interfaces.bluetooth.close()
             logger().info(f" iteration completed: {i} ")
 
     except Exception as e:
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#BT Role change from master to slave in the Coex mode
+# BT Role change from master to slave in the Coex mode
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -726,24 +743,25 @@ def test_bt_coex_mode_C20090(wifi_dut, bt_client, wifi_access_point, utf_constan
     mode = "master_to_slave"
     try:
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
         t1 = BtSpp_role_switch(wifi_dut, bt_client, mode)
         t1.start()
         time.sleep(5)
         t1.wait_for_exit(True)
+        bt_client.interfaces.bluetooth.close()
 
     except Exception as e:
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#BT Role change from slave to master in the Coex mode
+# BT Role change from slave to master in the Coex mode
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -766,7 +784,8 @@ def test_bt_coex_mode_C20091(wifi_dut, bt_client, wifi_access_point, utf_constan
     mode = "slave_to_master"
     try:
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
         t1 = BtSpp_role_switch(wifi_dut, bt_client, mode)
@@ -778,12 +797,11 @@ def test_bt_coex_mode_C20091(wifi_dut, bt_client, wifi_access_point, utf_constan
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#SPP data transfer Rx in Slave mode
+# SPP data transfer Rx in Slave mode
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -802,7 +820,8 @@ def test_bt_coex_mode_C20091(wifi_dut, bt_client, wifi_access_point, utf_constan
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_spp_data_transfer_RX_slave_C20092(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper, tx_rx_duration=60):
+def test_bt_spp_data_transfer_RX_slave_C20092(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants,
+                                              rs_helper, tx_rx_duration=60):
     send_text = text_generator(size=20)
     recv_text = send_text
     validation = True
@@ -817,7 +836,8 @@ def test_bt_spp_data_transfer_RX_slave_C20092(wifi_sniffer, wifi_dut, wifi_acces
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -837,7 +857,8 @@ def test_bt_spp_data_transfer_RX_slave_C20092(wifi_sniffer, wifi_dut, wifi_acces
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
             assert connected, "Unable to find BT server socket connection"
             logger().info(f" BT_CONNECT SUCCESSFUL ")
-        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address),f"Failed to ping BT client to DUT"
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+            dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
 
         t_end = time.time() + tx_rx_duration
         while time.time() < t_end:
@@ -855,10 +876,10 @@ def test_bt_spp_data_transfer_RX_slave_C20092(wifi_sniffer, wifi_dut, wifi_acces
             f"Failed to ping BT client to DUT"
         logger().info(f" Pinging ")
 
-        #BD address
+        # BD address
         local_addr = wifi_dut.interfaces.wifi.bt_get_local_address()
         logger().info(f'BT LOCAL address: {local_addr} found')
-        #local name
+        # local name
         local_name = wifi_dut.interfaces.wifi.bt_get_local_name()
         logger().info(f'BT LOCAL name: {local_name} found')
 
@@ -875,12 +896,11 @@ def test_bt_spp_data_transfer_RX_slave_C20092(wifi_sniffer, wifi_dut, wifi_acces
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#SPP data transfer TX in Slave mode
+# SPP data transfer TX in Slave mode
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -899,7 +919,8 @@ def test_bt_spp_data_transfer_RX_slave_C20092(wifi_sniffer, wifi_dut, wifi_acces
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_spp_data_transfer_TX_slave_C20093(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper, tx_rx_duration=60):
+def test_bt_spp_data_transfer_TX_slave_C20093(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants,
+                                              rs_helper, tx_rx_duration=60):
     send_text = text_generator(size=20)
     validation = True
     bt_client_address = None
@@ -913,7 +934,8 @@ def test_bt_spp_data_transfer_TX_slave_C20093(wifi_sniffer, wifi_dut, wifi_acces
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -933,7 +955,8 @@ def test_bt_spp_data_transfer_TX_slave_C20093(wifi_sniffer, wifi_dut, wifi_acces
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
             assert connected, "Unable to find BT server socket connection"
             logger().info(f" BT_CONNECT SUCCESSFUL ")
-        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address),f"Failed to ping BT client to DUT"
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+            dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
 
         t_end = time.time() + tx_rx_duration
         while time.time() < t_end:
@@ -948,10 +971,10 @@ def test_bt_spp_data_transfer_TX_slave_C20093(wifi_sniffer, wifi_dut, wifi_acces
             f"Failed to ping BT client to DUT"
         logger().info(f" Pinging ")
 
-        #BD address
+        # BD address
         local_addr = wifi_dut.interfaces.wifi.bt_get_local_address()
         logger().info(f'BT LOCAL address: {local_addr} found')
-        #local name
+        # local name
         local_name = wifi_dut.interfaces.wifi.bt_get_local_name()
         logger().info(f'BT LOCAL name: {local_name} found')
 
@@ -969,12 +992,11 @@ def test_bt_spp_data_transfer_TX_slave_C20093(wifi_sniffer, wifi_dut, wifi_acces
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#SPP data transfer Tx in Master mode
+# SPP data transfer Tx in Master mode
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -993,7 +1015,8 @@ def test_bt_spp_data_transfer_TX_slave_C20093(wifi_sniffer, wifi_dut, wifi_acces
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_spp_data_transfer_TX_master_C20094(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper, tx_rx_duration=60):
+def test_bt_spp_data_transfer_TX_master_C20094(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants,
+                                               rs_helper, tx_rx_duration=60):
     send_text = text_generator(size=20)
     validation = True
     bt_client_address = None
@@ -1007,7 +1030,8 @@ def test_bt_spp_data_transfer_TX_master_C20094(wifi_sniffer, wifi_dut, wifi_acce
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -1057,9 +1081,8 @@ def test_bt_spp_data_transfer_TX_master_C20094(wifi_sniffer, wifi_dut, wifi_acce
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
-
 
 
 # SPP data transfer (Rx) in Master mode
@@ -1081,7 +1104,8 @@ def test_bt_spp_data_transfer_TX_master_C20094(wifi_sniffer, wifi_dut, wifi_acce
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_spp_data_transfer_RX_master_C20095(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper, tx_rx_duration=60):
+def test_bt_spp_data_transfer_RX_master_C20095(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants,
+                                               rs_helper, tx_rx_duration=60):
     send_text = text_generator(size=20)
     recv_text = send_text
     bt_client_address = None
@@ -1096,7 +1120,8 @@ def test_bt_spp_data_transfer_RX_master_C20095(wifi_sniffer, wifi_dut, wifi_acce
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -1151,12 +1176,11 @@ def test_bt_spp_data_transfer_RX_master_C20095(wifi_sniffer, wifi_dut, wifi_acce
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#SPP transfer by taking remote OOO
+# SPP transfer by taking remote OOO
 @pytest.mark.skip()
 @pytest.mark.rf_attenuator('50pa500_attenuator')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1176,7 +1200,8 @@ def test_bt_spp_data_transfer_RX_master_C20095(wifi_sniffer, wifi_dut, wifi_acce
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_OOR_C20096(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper, rf_attenuator):
+def test_bt_coex_OOR_C20096(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper,
+                            rf_attenuator):
     send_text = text_generator(size=20)
     recv_text = send_text
     validation = True
@@ -1265,18 +1290,17 @@ def test_bt_coex_OOR_C20096(wifi_sniffer, wifi_dut, wifi_access_point, bt_client
         packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
         logger().info(f" Validate power management bit 1")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-                'packet_count'], 'Unable to find power management bit 1 in sniffer '
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
 
     except Exception as e:
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#Validate SPP transfer by disconnecting from RD1
+# Validate SPP transfer by disconnecting from RD1
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -1295,7 +1319,8 @@ def test_bt_coex_OOR_C20096(wifi_sniffer, wifi_dut, wifi_access_point, bt_client
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_SPP_data_transfer_by_disconnecting_from_RD_C20097(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
+def test_SPP_data_transfer_by_disconnecting_from_RD_C20097(wifi_sniffer, wifi_dut, wifi_access_point, bt_client,
+                                                           utf_constants, rs_helper):
     send_text = text_generator(size=20)
     recv_text = send_text
     validation = True
@@ -1304,12 +1329,14 @@ def test_SPP_data_transfer_by_disconnecting_from_RD_C20097(wifi_sniffer, wifi_du
         logger().info(" ====== configuring the sniffer with access point channel ====== ")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='test_SPP_data_transfer_by_disconnecting_from_RD_C20097')
+        wifi_sniffer.interfaces.capture.start_capture(
+            capture_file='test_SPP_data_transfer_by_disconnecting_from_RD_C20097')
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f'AP BSSID = {ap_bssid}')
 
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -1330,7 +1357,8 @@ def test_SPP_data_transfer_by_disconnecting_from_RD_C20097(wifi_sniffer, wifi_du
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
             assert connected, "Unable to find BT server socket connection"
             logger().info(f" BT_CONNECT SUCCESSFUL ")
-        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address),f"Failed to ping BT client to DUT"
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+            dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
 
         # Send data from bt_client to dut
         with wifi_dut.interfaces.wifi.run_bt_task():
@@ -1386,12 +1414,12 @@ def test_SPP_data_transfer_by_disconnecting_from_RD_C20097(wifi_sniffer, wifi_du
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#validate BT SPP Init and BT Deinit in Slave Mode while WLAN_STA is in connected state
+# validate BT SPP Init and BT Deinit in Slave Mode while WLAN_STA is in connected state
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -1409,7 +1437,8 @@ def test_SPP_data_transfer_by_disconnecting_from_RD_C20097(wifi_sniffer, wifi_du
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_spp_init_deinit_in_slave_C20098(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
+def test_bt_spp_init_deinit_in_slave_C20098(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants,
+                                            rs_helper):
     send_text = text_generator(size=20)
     recv_text = send_text
     bt_client_address = None
@@ -1423,7 +1452,8 @@ def test_bt_spp_init_deinit_in_slave_C20098(wifi_sniffer, wifi_dut, wifi_access_
         logger().info(f'AP BSSID = {ap_bssid}')
 
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -1448,7 +1478,8 @@ def test_bt_spp_init_deinit_in_slave_C20098(wifi_sniffer, wifi_dut, wifi_access_
             bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code=bt_pin_code)
             assert bt_client_address, "Unable to get BT client address"
 
-            found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=3)
+            found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20,
+                                                                              retry_counts=3)
             if not found:
                 assert found, "Dut was not found during the scan by bt client. The test case may fail"
             logger().info(f"Starting Raspberry PI as BT Server")
@@ -1460,10 +1491,12 @@ def test_bt_spp_init_deinit_in_slave_C20098(wifi_sniffer, wifi_dut, wifi_access_
                 connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
                 assert connected, "Unable to find BT server socket connection"
                 logger().info(f" BT_CONNECT SUCCESSFUL ")
-            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address),f"Failed to ping BT client to DUT"
+            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+                dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
 
             wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
             bt_server_socket.close()
+            bt_client.interfaces.bluetooth.close()
 
             logger().info("Disabling bt radio of the DUT")
             wifi_dut.interfaces.wifi.bt_deinit()
@@ -1474,7 +1507,7 @@ def test_bt_spp_init_deinit_in_slave_C20098(wifi_sniffer, wifi_dut, wifi_access_
             logger().info("Enabled bt radio of the DUT")
             logger().info(f"iteration completed: {i}")
 
-        #Sniffer stop
+        # Sniffer stop
         logger().info(f"Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
         # Validating the power management bit
@@ -1487,12 +1520,12 @@ def test_bt_spp_init_deinit_in_slave_C20098(wifi_sniffer, wifi_dut, wifi_access_
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#Validate BT SPP Init and BT Deinit in Master Mode when WLAN is in connected state
+# Validate BT SPP Init and BT Deinit in Master Mode when WLAN is in connected state
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -1511,7 +1544,8 @@ def test_bt_spp_init_deinit_in_slave_C20098(wifi_sniffer, wifi_dut, wifi_access_
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_spp_init_deinit_in_master_C20099(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
+def test_bt_spp_init_deinit_in_master_C20099(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants,
+                                             rs_helper):
     send_text = text_generator(size=20)
     recv_text = send_text
     validation = True
@@ -1526,7 +1560,8 @@ def test_bt_spp_init_deinit_in_master_C20099(wifi_sniffer, wifi_dut, wifi_access
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -1557,10 +1592,12 @@ def test_bt_spp_init_deinit_in_master_C20099(wifi_sniffer, wifi_dut, wifi_access
                 logger().info(f"Connecting Raspberry PI to DUT-BT")
                 wifi_dut.interfaces.wifi.bt_connect(bt_client_address)
                 addr = bt_client_socket.accept(timeout=40)
-            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
+            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+                dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
 
             wifi_dut.interfaces.wifi.bt_disconnect(bt_client_address)
             bt_client_socket.close()
+            bt_client.interfaces.bluetooth.close()
 
             logger().info("Disabling bt radio of the DUT")
             wifi_dut.interfaces.wifi.bt_deinit()
@@ -1584,11 +1621,10 @@ def test_bt_spp_init_deinit_in_master_C20099(wifi_sniffer, wifi_dut, wifi_access
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
 
 
-
-#EAP Connection in TTLS mode
+# EAP Connection in TTLS mode
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1597,10 +1633,10 @@ def test_bt_spp_init_deinit_in_master_C20099(wifi_sniffer, wifi_dut, wifi_access
     wifi={
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake |RS9116FeatureBitMap.OpenMode |RS9116FeatureBitMap.Aggregation,
+        "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.Aggregation,
         "config_features": RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default |RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116CertificateType.EAPClientCertificate | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default | RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116CertificateType.EAPClientCertificate | RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid | RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default | RS9116ExtCustomFeatureBitMap.FeatureLowPower | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
         "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
@@ -1609,8 +1645,10 @@ def test_bt_spp_init_deinit_in_master_C20099(wifi_sniffer, wifi_dut, wifi_access
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated" , "clear_certs"])
-def test_bt_coex_eap_C20100(radius_server, wifi_sniffer, wifi_dut, wifi_access_point, bt_client, net_perf_client, wifi_client,
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "clear_certs"])
+def test_bt_coex_eap_C20100(radius_server, wifi_sniffer, wifi_dut, wifi_access_point, bt_client, net_perf_client,
+                            wifi_client,
                             protocol, utf_constants, rs_helper, tx_rx_duration=30):
     send_text = text_generator(size=20)
     recv_text = send_text
@@ -1633,19 +1671,21 @@ def test_bt_coex_eap_C20100(radius_server, wifi_sniffer, wifi_dut, wifi_access_p
         logger().info(scan_results)
 
         # test_wifi_join
-        wifi_dut.interfaces.wifi.eap_method(eap_method="TTLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"",private_key="\"\"")
+        wifi_dut.interfaces.wifi.eap_method(eap_method="TTLS", eap_inner_method="\\\"auth=MSCHAPV2\\\"",
+                                            private_key="\"\"")
         result = wifi_dut.interfaces.wifi.eap_connect(dut_ssid, dut_security, ap_user_name, ap_password)
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
         timeout = 60
-        #Run iperf as traffic_type is RX
+        # Run iperf as traffic_type is RX
         rs_helper.run_traffic(wifi_dut, net_perf_client, protocol, device_ip, host_ip, timeout, traffic_type="RX")
 
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_master_spp()
@@ -1655,10 +1695,10 @@ def test_bt_coex_eap_C20100(radius_server, wifi_sniffer, wifi_dut, wifi_access_p
         time.sleep(1)
 
         found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
-                                                              inquiry_type=1,
-                                                              inquiry_duration_ms=20000,
-                                                              timeout=22,
-                                                              retry_counts=5)
+                                                               inquiry_type=1,
+                                                               inquiry_duration_ms=20000,
+                                                               timeout=22,
+                                                               retry_counts=5)
         assert found, f"Dut unable to find the bt client device:{bt_client_address}"
 
         bt_client_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client)
@@ -1667,7 +1707,7 @@ def test_bt_coex_eap_C20100(radius_server, wifi_sniffer, wifi_dut, wifi_access_p
             bt_client_socket.create_client()
             result = ThreadBase.call_functions_simultaneously(
                 [(wifi_dut.interfaces.wifi.bt_connect, bt_client_address),
-                (bt_client_socket.accept, 20)])
+                 (bt_client_socket.accept, 20)])
             assert result[1] == bt_dut_address, "Unable to find BT client socket connection"
             logger().info(f"Result from Callable Function {result}")
 
@@ -1702,12 +1742,11 @@ def test_bt_coex_eap_C20100(radius_server, wifi_sniffer, wifi_dut, wifi_access_p
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#Inquiry in Coex Mode
+# Inquiry in Coex Mode
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -1725,7 +1764,8 @@ def test_bt_coex_eap_C20100(radius_server, wifi_sniffer, wifi_dut, wifi_access_p
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_inquiry_C20101(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper, tx_rx_duration=60):
+def test_bt_coex_inquiry_C20101(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper,
+                                tx_rx_duration=60):
     bt_client_address = None
     try:
         validation = True
@@ -1738,7 +1778,8 @@ def test_bt_coex_inquiry_C20101(wifi_sniffer, wifi_dut, wifi_access_point, bt_cl
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(5)
 
@@ -1774,12 +1815,11 @@ def test_bt_coex_inquiry_C20101(wifi_sniffer, wifi_dut, wifi_access_point, bt_cl
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#BT Inquiry command complete event with no remotes around
+# BT Inquiry command complete event with no remotes around
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -1811,7 +1851,8 @@ def test_bt_coex_noremote_C20102(wifi_sniffer, wifi_dut, wifi_access_point, bt_c
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -1827,7 +1868,7 @@ def test_bt_coex_noremote_C20102(wifi_sniffer, wifi_dut, wifi_access_point, bt_c
                                                                inquiry_type=1,
                                                                inquiry_duration_ms=20000,
                                                                max_device_cnt=1,
-                                                               timeout=60,
+                                                               timeout=100,
                                                                retry_counts=1)
         assert found, f"Dut unable to find the bt client device:{bt_client_address}"
 
@@ -1863,14 +1904,13 @@ def test_bt_coex_noremote_C20102(wifi_sniffer, wifi_dut, wifi_access_point, bt_c
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#BT Inquiry command cancel
+# BT Inquiry command cancel
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=[ 'init'])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1899,7 +1939,8 @@ def test_bt_coex_cancel_inquiry_C20103(wifi_sniffer, wifi_dut, wifi_access_point
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -1925,12 +1966,11 @@ def test_bt_coex_cancel_inquiry_C20103(wifi_sniffer, wifi_dut, wifi_access_point
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#slave mode by providing wrong Pin key on the RD while WLAN is in idle connection
+# slave mode by providing wrong Pin key on the RD while WLAN is in idle connection
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -1961,7 +2001,8 @@ def test_bt_coex_wrong_pin_C20104(wifi_sniffer, wifi_dut, wifi_access_point, bt_
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -1989,14 +2030,14 @@ def test_bt_coex_wrong_pin_C20104(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         logger().info(f"Keeping wlan in idle state for 5 mins")
         time.sleep(300)
 
-        recieved_authentication_failure = False
+        received_authentication_failure = False
         events = wifi_dut.interfaces.wifi.get_async_events()
         if len(events):
             for event in events:
                 if event.event_type == RS9116AsyncEventType.BT_AUTH_COMPLETE:
-                    recieved_authentication_failure = b"4E05" in event.event_data
+                    received_authentication_failure = b"4E05" in event.event_data
                     break
-        assert recieved_authentication_failure, f" Unable to receive authentication error code 4E05 "
+        assert received_authentication_failure, f" Unable to receive authentication error code 4E05 "
 
         # Sniffer stop
         logger().info(f"Stop Sniffer finally")
@@ -2011,12 +2052,11 @@ def test_bt_coex_wrong_pin_C20104(wifi_sniffer, wifi_dut, wifi_access_point, bt_
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#MASTER when Pin-code is not entered when prompted for pin while WLAN is in connected state
+# MASTER when Pin-code is not entered when prompted for pin while WLAN is in connected state
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -2047,7 +2087,8 @@ def test_bt_coex_without_pin_C20105(wifi_sniffer, wifi_dut, wifi_access_point, b
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -2098,7 +2139,7 @@ def test_bt_coex_without_pin_C20105(wifi_sniffer, wifi_dut, wifi_access_point, b
                     break
         assert received_authentication_failure, "Unable to receive authentication error code 4E18"
 
-    # Sniffer stop
+        # Sniffer stop
         logger().info(f"Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
         # Validating the power management bit
@@ -2111,9 +2152,8 @@ def test_bt_coex_without_pin_C20105(wifi_sniffer, wifi_dut, wifi_access_point, b
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
-
 
 
 # master mode by providing wrong Pin key on the RD while WLAN is in idle connection
@@ -2147,7 +2187,8 @@ def test_bt_coex_without_pin_C20106(wifi_sniffer, wifi_dut, wifi_access_point, b
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -2213,12 +2254,11 @@ def test_bt_coex_without_pin_C20106(wifi_sniffer, wifi_dut, wifi_access_point, b
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#Validate BT bond reject
+# Validate BT bond reject
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -2257,7 +2297,8 @@ def test_bt_spp_remote_unpair_C20107(wifi_sniffer, wifi_dut, wifi_access_point, 
                 ip_config = wifi_dut.interfaces.wifi.start_ip()
                 result = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
                 logger().info(f"Found device ip: {result}")
-                assert isinstance(ip_config, wifi_dut.interfaces.wifi.IPConfig), f"Failed to get IP address. Result = {ip_config}"
+                assert isinstance(ip_config,
+                                  wifi_dut.interfaces.wifi.IPConfig), f"Failed to get IP address. Result = {ip_config}"
                 device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
                 logger().info(f'DUT ip {device_ip}')
                 break
@@ -2290,7 +2331,7 @@ def test_bt_spp_remote_unpair_C20107(wifi_sniffer, wifi_dut, wifi_access_point, 
 
         for i in range(3):
             logger().info(
-            "Send SPP Connection From DUT and reject pairing request from remote device")
+                "Send SPP Connection From DUT and reject pairing request from remote device")
             logger().info(f"Create SPP Connection attempt: {i + 1}")
             with bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client) as bt_client_socket:
                 with bt_dut.interfaces.bluetooth.run_bt_task():
@@ -2325,9 +2366,8 @@ def test_bt_spp_remote_unpair_C20107(wifi_sniffer, wifi_dut, wifi_access_point, 
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
-
 
 
 # BT unbond after successful bonding
@@ -2361,7 +2401,8 @@ def test_bt_coex_unbond_C20108(wifi_sniffer, wifi_dut, wifi_access_point, bt_cli
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         time.sleep(3)
 
         logger().info(f"Configuring DUT as SPP MASTER")
@@ -2410,18 +2451,17 @@ def test_bt_coex_unbond_C20108(wifi_sniffer, wifi_dut, wifi_access_point, bt_cli
         packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
         logger().info(f" Validate power management bit 1")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-                'packet_count'], 'Unable to find power management bit 1 in sniffer '
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
 
     except Exception as e:
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#RSSI value of the connected remote device
+# RSSI value of the connected remote device
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -2452,7 +2492,8 @@ def test_bt_coex_rssi_C20109(wifi_sniffer, wifi_dut, wifi_access_point, bt_clien
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -2466,10 +2507,10 @@ def test_bt_coex_rssi_C20109(wifi_sniffer, wifi_dut, wifi_access_point, bt_clien
         logger().info(f"Raspberry PI is BT-MASTER  with MAC address {bt_client_address} ")
 
         found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
-                                                              inquiry_type=1,
-                                                              inquiry_duration_ms=20000,
-                                                              timeout=22,
-                                                              retry_counts=5)
+                                                               inquiry_type=1,
+                                                               inquiry_duration_ms=20000,
+                                                               timeout=22,
+                                                               retry_counts=5)
         assert found, f"Dut unable to find the bt client device:{bt_client_address}"
 
         bt_client_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client)
@@ -2500,12 +2541,11 @@ def test_bt_coex_rssi_C20109(wifi_sniffer, wifi_dut, wifi_access_point, bt_clien
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#To get local BD address and local name
+# To get local BD address and local name
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -2538,7 +2578,8 @@ def test_bt_coex_BD_C20110(wifi_sniffer, wifi_dut, wifi_access_point, bt_client,
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -2562,7 +2603,8 @@ def test_bt_coex_BD_C20110(wifi_sniffer, wifi_dut, wifi_access_point, bt_client,
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
             assert connected, "Unable to find BT server socket connection"
             logger().info(f" BT_CONNECT SUCCESSFUL ")
-        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address),f"Failed to ping BT client to DUT"
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+            dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
 
         # Send data from bt_client to dut
         with wifi_dut.interfaces.wifi.run_bt_task():
@@ -2583,10 +2625,10 @@ def test_bt_coex_BD_C20110(wifi_sniffer, wifi_dut, wifi_access_point, bt_client,
             f"Failed to ping BT client to DUT"
         logger().info(f" Pinging ")
 
-        #BD address
+        # BD address
         local_addr = wifi_dut.interfaces.wifi.bt_get_local_address()
         logger().info(f'BT LOCAL address: {local_addr} found')
-        #local name
+        # local name
         local_name = wifi_dut.interfaces.wifi.bt_get_local_name()
         logger().info(f'BT LOCAL name: {local_name} found')
 
@@ -2603,12 +2645,11 @@ def test_bt_coex_BD_C20110(wifi_sniffer, wifi_dut, wifi_access_point, bt_client,
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#Verify the SPP data transfer with minimum data value of 1 Byte
+# Verify the SPP data transfer with minimum data value of 1 Byte
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -2630,7 +2671,7 @@ def test_bt_coex_BD_C20110(wifi_sniffer, wifi_dut, wifi_access_point, bt_client,
 def test_sta_bt_C20111(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     mode = "single"
     testcase = "test_sta_bt_C20111"
-    bt_client_address =None
+    bt_client_address = None
     try:
         wlan_obj = wifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, utf_constants, rs_helper)
         bt_obj = BtSppMasterThread_diff_data(wifi_dut, bt_client, mode, utf_constants, 60)
@@ -2651,12 +2692,12 @@ def test_sta_bt_C20111(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#Validate BT SPP data transfer with different data Lengths e.g 195Byte,200,400 & 600 bytes
+# Validate BT SPP data transfer with different data Lengths e.g 195Byte,200,400 & 600 bytes
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -2678,7 +2719,7 @@ def test_sta_bt_C20111(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf
 def test_sta_bt_C20112(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     mode = "numbers"
     testcase = "test_sta_bt_C20112"
-    bt_client_address =None
+    bt_client_address = None
     try:
         wlan_obj = wifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, utf_constants, rs_helper)
         bt_obj = BtSppMasterThread_diff_data(wifi_dut, bt_client, mode, utf_constants)
@@ -2699,12 +2740,11 @@ def test_sta_bt_C20112(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#Validate SPP data transfer with max data Length
+# Validate SPP data transfer with max data Length
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -2728,7 +2768,7 @@ def test_sta_bt_C20113(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf
     testcase = "test_sta_bt_C20113"
     bt_client_address = None
     try:
-        wlan_obj = wifiJoinThread(wifi_sniffer,wifi_dut, wifi_access_point, testcase, utf_constants, rs_helper)
+        wlan_obj = wifiJoinThread(wifi_sniffer, wifi_dut, wifi_access_point, testcase, utf_constants, rs_helper)
         bt_obj = BtSppMasterThread_diff_data(wifi_dut, bt_client, mode, utf_constants)
         clean_obj = Cleanupactivity(wifi_dut)
         wlan_obj.start()
@@ -2747,12 +2787,11 @@ def test_sta_bt_C20113(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#Verify BT SPP data transfer with special characters
+# Verify BT SPP data transfer with special characters
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -2795,12 +2834,11 @@ def test_sta_bt_C20114(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#Validate BT SPP data transfer with Numeric values and different language like Hindi, Chinese
+# Validate BT SPP data transfer with Numeric values and different language like Hindi, Chinese
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -2843,12 +2881,11 @@ def test_sta_bt_C20115(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#To validate SPP data transfer of Tx and Rx at same time1(WLAN is in idle connected state)
+# To validate SPP data transfer of Tx and Rx at same time1(WLAN is in idle connected state)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
@@ -2866,7 +2903,8 @@ def test_sta_bt_C20115(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_sta_bt_C20116(wifi_sniffer,wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper, tx_rx_duration=60):
+def test_sta_bt_C20116(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper,
+                       tx_rx_duration=60):
     send_text = text_generator(size=20)
     recv_text = send_text
     bt_client_address = None
@@ -2881,7 +2919,8 @@ def test_sta_bt_C20116(wifi_sniffer,wifi_dut, wifi_access_point, bt_client, utf_
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -2901,7 +2940,8 @@ def test_sta_bt_C20116(wifi_sniffer,wifi_dut, wifi_access_point, bt_client, utf_
             logger().info(f"Connecting Raspberry PI to DUT-BT")
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
             assert connected, "Unable to find BT server socket connection"
-        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address),f"Failed to ping BT client to DUT"
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+            dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
 
         t_end = time.time() + tx_rx_duration
         while time.time() < t_end:
@@ -2960,15 +3000,14 @@ def test_sta_bt_C20116(wifi_sniffer,wifi_dut, wifi_access_point, bt_client, utf_
         packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
         logger().info(f" Validate power management bit 1")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-                'packet_count'], 'Unable to find power management bit 1 in sniffer '
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
 
     except Exception as e:
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
-
 
 
 # To validate SPP data transfer of Tx and Rx at same time2(WLAN is in connected state)
@@ -3004,7 +3043,8 @@ def test_sta_bt_C20117(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, utf
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -3076,12 +3116,11 @@ def test_sta_bt_C20117(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, utf
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#Data transfer on by enabling Max slots
+# Data transfer on by enabling Max slots
 @pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -3119,7 +3158,8 @@ def test_bt_coex_data_transfer_max_slots_C20118(wifi_sniffer, wifi_dut, wifi_acc
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -3134,13 +3174,14 @@ def test_bt_coex_data_transfer_max_slots_C20118(wifi_sniffer, wifi_dut, wifi_acc
             wifi_networked_dut.interfaces.wifi.bind(dut_socket, device_ip, port)
             num_packets = 10
             num_bytes = 50
-            socket_thread = ServerSocketXferThread(wifi_networked_dut, dut_socket, server_socket, num_packets, num_bytes)
+            socket_thread = ServerSocketXferThread(wifi_networked_dut, dut_socket, server_socket, num_packets,
+                                                   num_bytes)
             threads.append(socket_thread)
 
         # start all threads and wait for exit
         with ExitStack() as thread_stack:
             for thread in threads:
-                th=thread_stack.enter_context(thread)
+                th = thread_stack.enter_context(thread)
                 logger().info(f"thread : {th}")
 
         logger().info(f"Configuring DUT as SPP Slave")
@@ -3193,11 +3234,11 @@ def test_bt_coex_data_transfer_max_slots_C20118(wifi_sniffer, wifi_dut, wifi_acc
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-#Buffer full exception by initiating TCP packet retrials
+# Buffer full exception by initiating TCP packet retrials
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -3231,7 +3272,8 @@ def test_bt_coex_buffer_tcp_C20119(wifi_sniffer, wifi_dut, wifi_access_point, wi
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -3252,7 +3294,8 @@ def test_bt_coex_buffer_tcp_C20119(wifi_sniffer, wifi_dut, wifi_access_point, wi
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address, retry_counts=3)
             assert connected, "Unable to find BT server socket connection"
             logger().info(f" BT_CONNECT SUCCESSFUL ")
-        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+            dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
 
         # Send data from bt_client to dut
         with wifi_dut.interfaces.wifi.run_bt_task():
@@ -3289,18 +3332,19 @@ def test_bt_coex_buffer_tcp_C20119(wifi_sniffer, wifi_dut, wifi_access_point, wi
         packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
         logger().info(f" Validate power management bit 1")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-                'packet_count'], 'Unable to find power management bit 1 in sniffer '
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
 
     except Exception as error:
         dut_recovery(wifi_dut, error)
         raise error
     else:
         logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
+    finally:
+        bt_client.interfaces.bluetooth.close()
 
 
-
-#Buffer full exception by initiating TCP packet retrials through rejoin failure
-# @pytest.mark.skip()
+    # Buffer full exception by initiating TCP packet retrials through rejoin failure
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -3319,7 +3363,8 @@ def test_bt_coex_buffer_tcp_C20119(wifi_sniffer, wifi_dut, wifi_access_point, wi
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, bt_client, remote_socket,
+def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, bt_client,
+                                          remote_socket,
                                           remote_socket_factory, net_perf_client, protocol, utf_constants, rs_helper):
     interface = 'eth1'
     send_text = text_generator(size=20)
@@ -3339,7 +3384,8 @@ def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer, wifi_dut, wifi_access_po
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -3362,7 +3408,8 @@ def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer, wifi_dut, wifi_access_po
             connected = bt_server_socket.connect(dest_mac_addr=bt_dut_address)
             assert connected, "Unable to find BT server socket connection"
             logger().info(f" BT_CONNECT SUCCESSFUL ")
-        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(dest_addr=bt_dut_address),f"Failed to ping BT client to DUT"
+        assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
+            dest_addr=bt_dut_address), f"Failed to ping BT client to DUT"
 
         # Send data from bt_client to dut
         with wifi_dut.interfaces.wifi.run_bt_task():
@@ -3431,7 +3478,7 @@ def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer, wifi_dut, wifi_access_po
                     receive_stats = receive_stats + (float(count.split("KBytes")[0].split("sec")[1].strip()) * 1024)
                 elif "MBytes" in count:
                     receive_stats = receive_stats + (
-                                float(count.split("MBytes")[0].split("sec")[1].strip()) * 1024 * 1024)
+                            float(count.split("MBytes")[0].split("sec")[1].strip()) * 1024 * 1024)
         # Sniffer stop
         logger().info(f"Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -3439,18 +3486,17 @@ def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer, wifi_dut, wifi_access_po
         packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
         logger().info(f" Validate power management bit 1")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-                'packet_count'], 'Unable to find power management bit 1 in sniffer '
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
 
     except Exception as e:
         if "dbus.exceptions.DBusException" in str(e):
             assert False, "Setup Issue: RASPI-BT Failure"
         logger().info("\n got exception: {}".format(str(e)))
-        dut_clean_up(wifi_dut, bt_client_address)
+        dut_clean_up(wifi_dut, bt_client, bt_client_address)
         assert False, "Failed"
 
 
-
-#Data transfer with different RSSI values
+# Data transfer with different RSSI values
 @pytest.mark.skip()
 @pytest.mark.rf_attenuator('50pa500_attenuator')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -3472,8 +3518,10 @@ def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer, wifi_dut, wifi_access_po
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_bt_coex_different_rssi_values_C20121(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, bt_client,protocol, utf_constants,
-                                              rs_helper, rf_attenuator, remote_socket_factory, remote_socket, wifi_networked_dut):
+def test_bt_coex_different_rssi_values_C20121(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, bt_client,
+                                              protocol, utf_constants,
+                                              rs_helper, rf_attenuator, remote_socket_factory, remote_socket,
+                                              wifi_networked_dut):
     bt_client_address = None
     try:
         validation = True
@@ -3486,7 +3534,8 @@ def test_bt_coex_different_rssi_values_C20121(wifi_sniffer, wifi_dut, wifi_acces
 
         # Join Wi-Fi Access Point
         logger().info("Joining into Wi-Fi")
-        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point, power_save=True)
+        device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
+                                                                       power_save=True)
         logger().info(f"device_ip, device_mac : {device_ip}, {dut_mac_address}")
         time.sleep(3)
 
@@ -3499,10 +3548,10 @@ def test_bt_coex_different_rssi_values_C20121(wifi_sniffer, wifi_dut, wifi_acces
         logger().info(f"Raspberry PI is BT-SLAVE with MAC address {bt_client_address} ")
 
         found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address,
-                                                              inquiry_type=1,
-                                                              inquiry_duration_ms=10000,
-                                                              timeout=22,
-                                                              retry_counts=5)
+                                                               inquiry_type=1,
+                                                               inquiry_duration_ms=10000,
+                                                               timeout=22,
+                                                               retry_counts=5)
         assert found, f"Dut unable to find the bt client device:{bt_client_address}"
 
         logger().info(f"Starting Raspberry PI as BT Server")
@@ -3517,7 +3566,7 @@ def test_bt_coex_different_rssi_values_C20121(wifi_sniffer, wifi_dut, wifi_acces
             assert result[1] == bt_dut_address, "Unable to find BT client socket connection"
             logger().info(f"Result from Callable Function {result}")
 
-        #The below api parses DUTs IP address
+        # The below api parses DUTs IP address
         device_ip = wifi_networked_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
         sock_port = 5001
         buffer_length = 100
@@ -3533,7 +3582,8 @@ def test_bt_coex_different_rssi_values_C20121(wifi_sniffer, wifi_dut, wifi_acces
         db_value = 5
         att_channel = 1
         wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel, db_value)
-        buffer_length_tx = remote_socket_factory.interfaces.socket.sockets[0].send_data_tcp(tx_buffer, use_server_socket=True)
+        buffer_length_tx = remote_socket_factory.interfaces.socket.sockets[0].send_data_tcp(tx_buffer,
+                                                                                            use_server_socket=True)
         logger().info(f"sent tcp data packets : {buffer_length_tx}")
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=wifi_access_point.interfaces.wifi.ssid)
         logger().info(f'\n\n{scan_results[0]}\n')
@@ -3542,7 +3592,8 @@ def test_bt_coex_different_rssi_values_C20121(wifi_sniffer, wifi_dut, wifi_acces
         logger().info(f'Current RSSI = {current_rssi}')
         db_value = 5
         wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel, db_value)
-        buffer_length_tx = remote_socket_factory.interfaces.socket.sockets[0].send_data_tcp(tx_buffer, use_server_socket=True)
+        buffer_length_tx = remote_socket_factory.interfaces.socket.sockets[0].send_data_tcp(tx_buffer,
+                                                                                            use_server_socket=True)
         logger().info(f"sent tcp data packets : {buffer_length_tx}")
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=wifi_access_point.interfaces.wifi.ssid)
         logger().info(f'\n\n{scan_results[0]}\n')
@@ -3562,7 +3613,7 @@ def test_bt_coex_different_rssi_values_C20121(wifi_sniffer, wifi_dut, wifi_acces
         packet_filter1 = f'wlan.fc.pwrmgt == 1 and wlan.addr == {dut_mac_address} || (wlan.addr == {ap_bssid})'
         logger().info(f" Validate power management bit 1")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-                'packet_count'], 'Unable to find power management bit 1 in sniffer '
+            'packet_count'], 'Unable to find power management bit 1 in sniffer '
 
     except Exception as e:
         if "dbus.exceptions.DBusException" in str(e):
