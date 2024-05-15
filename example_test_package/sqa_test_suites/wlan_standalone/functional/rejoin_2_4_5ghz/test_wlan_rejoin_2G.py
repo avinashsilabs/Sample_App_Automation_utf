@@ -1367,7 +1367,7 @@ def test_rejoin_scan_interval_1sec_c19737(switch, wifi_sniffer, wifi_access_poin
         time.sleep(5)
 
         packet_filter1 = f'wlan_radio.channel == {wifi_access_point.interfaces.wifi.channel} and wlan.sa == {mac_address} ' \
-                         f'and wlan.ssid == {wifi_access_point.interfaces.wifi.ssid} and wlan.fc.type_subtype == 0x0004 ' \
+                         f'and wlan.ssid == "{wifi_access_point.interfaces.wifi.ssid}" and wlan.fc.type_subtype == 0x0004 ' \
                          f'and wlan.da == ff:ff:ff:ff:ff:ff'
         packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
         result = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter2)[
