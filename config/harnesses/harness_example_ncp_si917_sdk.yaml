@@ -524,6 +524,20 @@ devices:
                 socket_type: 0   #0- TCP, 1 - UDP
                 interface: 'wlan0'
 
+    raspi_multi_socket:
+        interfaces:
+            socket:
+                type: 'socket.ip_multi_sockets'
+                ip_version: 0
+                dut_local_socket: 5001
+                destination_socket: 5001
+                server_ip: '192.168.100.50'
+                time: 30
+                buffer_length: 1470
+                no_of_pkts: 500
+                socket_type: 1  #0- TCP, 1 - UDP
+                interface: 'eth0'
+
     raspi_ip_remote_socket:
         interfaces:
             socket:
@@ -678,7 +692,7 @@ devices:
                 interface: 'wlan0'
                 tls_enabled: false
                 ip_version: 6
-    
+
     # this represents an MQTT broker running on the raspberry pi on port 1883 with authentication enabled
     raspi_mosquitto_auth:
         interfaces:
@@ -896,7 +910,7 @@ devices:
 
     keysight_benchvue_power_analyzer_win_rm:
         interfaces:
-            windows_shell: 
+            windows_shell:
                 type: 'rem_mgmt.win_rm'
                 host_ip: '10.207.19.185'
                 username: 'test'
@@ -907,14 +921,14 @@ devices:
                 utf_power_meter_keysight_benchvue_cli_path: 'C:\\UTF\\utf_power_meter_keysight_benchvue_cli\\utf_power_meter_keysight_benchvue_cli.exe'
                 power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005840::0::INSTR'
                 window_state: 'Show'
-    
+
     keysight_benchvue_power_analyzer_win_wcf:
         interfaces:
-            wcf_power_meter_keysight_benchvue_service: 
+            wcf_power_meter_keysight_benchvue_service:
                 type: 'rem_mgmt.win_wcf'
                 wsdl: 'http://10.207.19.186:8733/Design_Time_Addresses/utf_wcf_service_library/PowerMeterKeysightBenchvueService/?wsdl'
                 timeout: 120000
-            wcf_file_transfer_service: 
+            wcf_file_transfer_service:
                 type: 'rem_mgmt.win_wcf'
                 wsdl: 'http://10.207.19.186:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
                 timeout: 120000
@@ -1032,7 +1046,13 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
 
-    
+    sniffer_filter:
+        interfaces:
+            ws_sniffer_filter:
+                type: sniffer_filter
+                src_dir: 'utf_wiseconnect'
+
+
     secondary_raspi_iperf:
         interfaces:
             net_perf:
@@ -1074,7 +1094,7 @@ devices:
             ftp_client:
                 type: 'ftp.client.ftplib_ftp_client'
                 tls_enabled: false
-    
+
     raspi_ftp_client_tls:
         interfaces:
             ftp_client:
@@ -1100,7 +1120,7 @@ devices:
 
     static_radius_server:
         interfaces:
-            ssh_shell: 
+            ssh_shell:
                 type: 'shell.ssh_shell'
                 remote: '192.168.50.210'  # configure Free Radius Server NUC IP
                 username: test       # NUC username
@@ -1284,6 +1304,8 @@ defaults:
 
     wifi_sniffer: 'airpcap'
 
+    sniffer_filter: 'sniffer_filter'
+
     openssl: 'openssl_socket'
 
     ble_sniffer: 'nrf_52840_sniffer'
@@ -1369,7 +1391,13 @@ defaults:
 
     wiseconnect_web: 'wiseconnect_web'
 
+    net_perf_server: 'secondary_raspi_iperf'
+
     net_perf_client: 'raspi_iperf'
+
+    net_perf_clients:
+        - 'raspi_iperf'
+        - 'secondary_raspi_iperf'
 
     secondary_net_perf_client : 'secondary_raspi_iperf'
 
@@ -1412,6 +1440,14 @@ defaults:
         stream_type: 'SOCK_STREAM'
         ip_len: 4
 
+    iot_sockets:
+        protocol: 'tcp'
+        address_family: 'ipv4'
+        port: '6666'
+        ip_len: 4
+        server_ip: '192.168.50.117'
+        stream_type: 'stream'
+
     sntp_server:
         server_ip: '10.8.4.11'
 
@@ -1445,7 +1481,7 @@ defaults:
         stop_capture_on: ["crash", "error", "exception", "oops", "Target is not responding"]
         bt_exploit_type: "au_rand_flooding"
         script: ""
-    
+
     plotter: 'power_meter_plotter'
 
     net_perf:
@@ -1476,11 +1512,11 @@ defaults:
                 # bytes, number of bytes we want device to send to server (host) in each iteration
                 data_len: 1472
         tos_value: '0xC8'
-    
+
     power_meter_keysight_benchvue:
         data_log_file_name: 'UTF_DataLog_'
         data_log_file_name_is_append_date:  true
-        data_log_file_name_is_append_time: true 
+        data_log_file_name_is_append_time: true
         data_log_folder_location: 'C:\\UTF\\data_log'
         data_log_start: 'DatalogRunButton'
         data_log_stop: 'AfterElapsedTime'
@@ -1491,7 +1527,7 @@ defaults:
         data_log_enable_min_max_logging: false
         data_log_is_avg_enabled: true
         data_log_is_min_enabled: true
-        data_log_is_max_enabled: true 
+        data_log_is_max_enabled: true
         data_log_is_peak_to_peak_enabled: true
         data_log_is_charge_c_enabled: true
         data_log_is_charge_ah_enabled: true
@@ -1513,6 +1549,8 @@ defaults:
         device_filter_addresses : ''
         stop_after_elapsed_time: false
 
+    thread_params:
+        buffer_len: 128
 # The logger section is optional and can be used to modify the logging level for different modules
 logger:
     DLink810AccessPoint: DEBUG
