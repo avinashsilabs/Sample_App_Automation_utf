@@ -158,6 +158,8 @@ class WifiJoinThread(ThreadBase):
         tcp_ip_bypass=False,
         enc="ccmp",
         timeout=60,
+        http_server=None,
+        index_path=None
     ):
 
         super().__init__()
@@ -182,6 +184,8 @@ class WifiJoinThread(ThreadBase):
         self.tcp_ip_bypass = tcp_ip_bypass
         self.enc = enc
         self.timeout = timeout
+        self.http_server = http_server
+        self.index_path = index_path
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
 
@@ -189,7 +193,8 @@ class WifiJoinThread(ThreadBase):
         for count in range(0, 5):
             logger().info("Initiating wlan scan")
             # enables the scan in dut on channel
-            scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+            scan_status, scan_results = self.sl_collections.scan(self.wifi_dut, scan_status=False, retry_count=3,
+                                                                 channel=0)
             logger().info(f"scan results : {scan_results}")
             assert len(scan_results) > 0, "scan failed"
             time.sleep(5)
@@ -208,6 +213,16 @@ class WifiJoinThread(ThreadBase):
             host_ip=host_ip,
             timeout=self.timeout,
             traffic_type=traffic_type,
+        )
+
+    def run_http_download(self):
+
+        logger().info("http download")
+        self.sl_collections.http_file_download(
+            wifi_dut=self.wifi_dut,
+            http_server=self.http_server,
+            index_path=self.index_path,
+            device_ip=self.device_ip,
         )
 
     def set_power_save(self):
@@ -328,9 +343,10 @@ class WifiJoinThread(ThreadBase):
                     )
 
         if self.test_type == "http":
-            self.join_to_ap()
+            if not self.wifi_dut.interfaces.wifi.associated:
+                self.join_to_ap()
             logger().info("http download")
-
+            self.run_http_download()
 
 class ScanTime_JoinTime(ThreadBase):
     def __init__(
@@ -375,8 +391,8 @@ class ScanTime_JoinTime(ThreadBase):
         self.ap_mac_address = None
 
     def caluculate_scan_time(self):
-
-        scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+        scan_status, scan_results = self.sl_collections.scan(self.wifi_dut, scan_status=False, retry_count=3,
+                                                             channel=0)
         assert len(scan_results) >= 1, "Scan failed"
         logger().info(f"Fetches the DUT mac address")
         dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address()
@@ -421,9 +437,19 @@ class ScanTime_JoinTime(ThreadBase):
                 if self.all_channel_2_4:
 
                     for scan_count in range(0, 3):
-                        scan_results = self.wifi_dut.interfaces.wifi.scan(
-                            channel=0, ssid=None, sleep_time=0.00001
-                        )
+
+                        scan_status = False
+
+                        for retry in range(0, 3):
+                            try:
+                                scan_results = self.wifi_dut.interfaces.wifi.scan(
+                                    channel=0, ssid=None, sleep_time=0.00001
+                                )
+                                scan_status =True
+                                break
+                            except Exception as e:
+                                logger().info(f"Exception in scan {str(e)}")
+
                         assert len(scan_results) >= 1, "Scan failed"
                         logger().info(scan_results)
                         logger().info(
@@ -634,6 +660,14 @@ class ScanTime_JoinTime(ThreadBase):
             self.caluculate_join_time()
 
 
+def cleanup_ble(ble_client, ble_dut_address):
+    status = ble_client.interfaces.bluetooth.get_connection_status(ble_dut_address)
+    if status:
+        logger().info(f"Initiating BLE disconnection from raspi")
+        ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
+    ble_client.interfaces.bluetooth.close()
+
+
 # this thread used for sta+ble as a slave
 class BleThreadFunctionality(ThreadBase):
     def __init__(
@@ -786,8 +820,8 @@ pytestmark = [
             "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
             | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048},
-                "ble": {"count": 1, "stack_len": 2048},
+                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
             },
         },
     )
@@ -827,6 +861,7 @@ def test_Coex_sdk_fun_ble_slave_wlan_conn_C133428(
         4. Enable the wlan and bt power save mode in dut after the connection
         5. Initiate ping from the dut
     """
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -862,6 +897,7 @@ def test_Coex_sdk_fun_ble_slave_wlan_conn_C133428(
         for count in range(iter_count):
             ble_obj.start()
             ble_obj.wait_for_exit()
+            ble_dut_addr = ble_obj.ble_dut_address
             wifi_obj.start()
             wifi_obj.wait_for_exit()
             logger().info("Checking connection stability for 60 seconds")
@@ -875,6 +911,8 @@ def test_Coex_sdk_fun_ble_slave_wlan_conn_C133428(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -911,6 +949,7 @@ def test_Coex_sdk_fun_ble_master_wlan_conn_C133429(
         5. Initiate ping from the dut
 
     """
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -932,6 +971,7 @@ def test_Coex_sdk_fun_ble_master_wlan_conn_C133429(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -955,6 +995,8 @@ def test_Coex_sdk_fun_ble_master_wlan_conn_C133429(
         logger().info("sniffer validation is successful")
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -992,7 +1034,7 @@ def test_Coex_sdk_WLAN_conn_while_BLE_scan_C133430(
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
     """
-
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1014,6 +1056,7 @@ def test_Coex_sdk_WLAN_conn_while_BLE_scan_C133430(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1035,6 +1078,8 @@ def test_Coex_sdk_WLAN_conn_while_BLE_scan_C133430(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -1073,7 +1118,7 @@ def test_Coex_sdk_BLE_conn_request_WLAN_conn_C133431(
         6. Enable the wlan and bt power save mode in dut after the connection
         7. Initiate ping from the dut
     """
-
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1103,6 +1148,7 @@ def test_Coex_sdk_BLE_conn_request_WLAN_conn_C133431(
             )
             ble_obj.start()
             ble_obj.wait_for_exit()
+            ble_dut_addr = ble_obj.ble_dut_address
 
         # Opening the btmon log and searching for the required strings in it
         with open(bt_mon_log_file_name, "r") as file_p:
@@ -1145,6 +1191,8 @@ def test_Coex_sdk_BLE_conn_request_WLAN_conn_C133431(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -1181,6 +1229,7 @@ def test_Coex_sdk_WLAN_conn_while_BLE_active_scan_C133432(
         5. Enable the wlan and bt power save mode in dut after the connection
         6. Initiate ping from the dut
     """
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1203,6 +1252,7 @@ def test_Coex_sdk_WLAN_conn_while_BLE_active_scan_C133432(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1224,6 +1274,8 @@ def test_Coex_sdk_WLAN_conn_while_BLE_active_scan_C133432(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -1260,6 +1312,7 @@ def test_Coex_sdk_WLAN_conn_while_BLE_passive_scan_C133433(
         5. Enable wlan and bt power save mode in dut after the connection
         6. Initiate ping from the dut
     """
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1282,6 +1335,7 @@ def test_Coex_sdk_WLAN_conn_while_BLE_passive_scan_C133433(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1303,6 +1357,8 @@ def test_Coex_sdk_WLAN_conn_while_BLE_passive_scan_C133433(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -1336,7 +1392,7 @@ def test_Coex_sdk_WLAN_scan_BLE_scan_C133445(
         2. Initiate BLE scan from DUT and check whether dut is able to find remote device
         3. Initiate WLAN scan from DUT and check whether dut is able to find remote device
     """
-
+    ble_dut_addr=""
     try:
         test_name = request.node.name
         logger().info("configuring the Sniffer with the channel")
@@ -1357,6 +1413,7 @@ def test_Coex_sdk_WLAN_scan_BLE_scan_C133445(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1376,6 +1433,8 @@ def test_Coex_sdk_WLAN_scan_BLE_scan_C133445(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -1412,6 +1471,7 @@ def test_Coex_sdk_BLE_scan_while_WLAN_conn_C133568(
         5. Advertise remote Raspi device
         6. Scan from DUT check whether dut is able to find remote device
     """
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1447,6 +1507,7 @@ def test_Coex_sdk_BLE_scan_while_WLAN_conn_C133568(
         for i in range(iter_count):
             ble_obj.start()
             ble_obj.wait_for_exit()
+            ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         wifi_obj.disconnect()
@@ -1456,6 +1517,8 @@ def test_Coex_sdk_BLE_scan_while_WLAN_conn_C133568(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -1499,7 +1562,7 @@ def test_Coex_sdk_WLAN_disconnect_BLE_slave_C133502(
         6. Enable wlan and bt power save mode in dut after the connection
         7. Disconnect from DUT to AP
     """
-
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1522,6 +1585,7 @@ def test_Coex_sdk_WLAN_disconnect_BLE_slave_C133502(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1546,6 +1610,9 @@ def test_Coex_sdk_WLAN_disconnect_BLE_slave_C133502(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -1590,7 +1657,7 @@ def test_Coex_sdk_WLAN_disconnect_BLE_peripheral_C133466(
         7. Disconnect from DUT to AP
         8. Connect from DUT to AP
     """
-
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1613,6 +1680,7 @@ def test_Coex_sdk_WLAN_disconnect_BLE_peripheral_C133466(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1641,7 +1709,8 @@ def test_Coex_sdk_WLAN_disconnect_BLE_peripheral_C133466(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
@@ -1686,7 +1755,7 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133503(
         8. Scan and reconnect from remote BLE device
         9. Repeat step 7 & 8
     """
-
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1710,6 +1779,7 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133503(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1738,6 +1808,9 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133503(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -1783,7 +1856,7 @@ def test_Coex_sdk_BLE_conn_disconn_master_WLAN_conn_C133520(
         8. Scan and reconnect from DUT
         9. Repeat step 7 & 8
     """
-
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1807,6 +1880,7 @@ def test_Coex_sdk_BLE_conn_disconn_master_WLAN_conn_C133520(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1838,6 +1912,8 @@ def test_Coex_sdk_BLE_conn_disconn_master_WLAN_conn_C133520(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
@@ -1882,7 +1958,7 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133487(
         8. Scan and reconnect from remote BLE device
         9. Repeat step 7 & 8
     """
-
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1925,6 +2001,7 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133487(
         for i in range(0, iter_count):
             ble_obj.start()
             ble_obj.wait_for_exit()
+            ble_dut_addr = ble_obj.ble_dut_address
             logger().info("Checking connection stability for 60 seconds")
             time.sleep(60)
             ble_obj.ble_disconnect()
@@ -1936,6 +2013,8 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133487(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -1979,7 +2058,7 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(
         6. Enable wlan and bt power save mode in dut after the connection
         7. Do Wi-Fi data transfer TCP-TX ,UDP-TX
     """
-
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -2002,6 +2081,7 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -2026,6 +2106,8 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -2060,7 +2142,7 @@ def test_Coex_sdk_all_channels_scan_time_BLE_adv_C133453(
         3. Scan from remote BLE device and connect to DUT
         4. Wlan Scan in all channels from DUT and calculate time taken to scan in all channels
     """
-
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -2091,10 +2173,14 @@ def test_Coex_sdk_all_channels_scan_time_BLE_adv_C133453(
         wifi_obj.wait_for_exit()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         ble_obj.stop_adv_scan()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
+
 
 
 @pytest.mark.config(
@@ -2136,7 +2222,7 @@ def test_Coex_sdk_selected_channels_scan_time_BLE_slave_C133454(
         3. Scan from remote BLE device and connect to DUT
         4. Wlan Scan in all channels from DUT and calculate time taken to scan in all channels
     """
-
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -2151,6 +2237,7 @@ def test_Coex_sdk_selected_channels_scan_time_BLE_slave_C133454(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj = ScanTime_JoinTime(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -2171,6 +2258,8 @@ def test_Coex_sdk_selected_channels_scan_time_BLE_slave_C133454(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -2213,7 +2302,7 @@ def test_Coex_sdk_join_time_BLE_slave_C133458(
         4. WLAN scan and connect to AP with PMK and enable power save
         4. Caluculate the time taken to connect to AP
     """
-
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -2227,6 +2316,7 @@ def test_Coex_sdk_join_time_BLE_slave_C133458(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj = ScanTime_JoinTime(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -2244,9 +2334,11 @@ def test_Coex_sdk_join_time_BLE_slave_C133458(
         logger().info("Checking connection stability for 60 seconds")
         time.sleep(60)
         ble_obj.ble_disconnect()
-
+        ble_client.interfaces.bluetooth.close()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -2281,6 +2373,7 @@ def test_Coex_sdk_ADV_BLE_while_WLAN_SCAN_C133551(
         2. Advertise BLE DUT
         3. Scan from remote BLE device
     """
+    ble_dut_addr = ""
 
     try:
         test_name = request.node.name
@@ -2318,14 +2411,18 @@ def test_Coex_sdk_ADV_BLE_while_WLAN_SCAN_C133551(
         wifi_obj.start()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj.wait_for_exit()
         ble_obj.stop_adv_scan()
+        ble_client.interfaces.bluetooth.close()
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_scan()
         logger().info("sniffer validation is successful")
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -2364,49 +2461,57 @@ def test_Coex_sdk_fun_ble_slave_wlan_conn_disconn_C133554(
         7. Repeat steps from 3-6 for 5 iterations
 
     """
-    test_name = request.node.name
-    ping_count = utf_constants.get("ping_count")
-    iter_count = utf_constants.get("iter_count")
-    test_type = "ping"
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-    )
-    logger().info(
-        "start capturing with Sniffer by giving the test case name as filename"
-    )
+    ble_dut_addr = ""
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        iter_count = utf_constants.get("iter_count")
+        test_type = "ping"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-    ble_obj = BleThreadFunctionality(
-        wifi_dut=wifi_dut,
-        ble_client=ble_client,
-        sl_collections=sl_collections,
-        ble_test_type="slave",
-    )
-    ble_obj.start()
-    ble_obj.wait_for_exit()
-    wifi_obj = WifiJoinThread(
-        wifi_sniffer=wifi_sniffer,
-        wifi_dut=wifi_dut,
-        wifi_access_point=wifi_access_point,
-        testcase=test_name,
-        wifi_client=wifi_client,
-        sl_collections=sl_collections,
-        ping_count=ping_count,
-        sniffer_filter=sniffer_filter,
-        test_type=test_type,
-    )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="slave",
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
 
-    for count in range(0, iter_count):
-        wifi_obj.start()
-        wifi_obj.wait_for_exit()
-        wifi_obj.disconnect()
-    logger().info("Checking connection stability for 60 seconds")
-    time.sleep(60)
-    ble_obj.ble_disconnect()
-    wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_obj.sniffer_validation_join()
-    logger().info("sniffer validation is successful")
+        for count in range(0, iter_count):
+            wifi_obj.start()
+            wifi_obj.wait_for_exit()
+            wifi_obj.disconnect()
+        logger().info("Checking connection stability for 60 seconds")
+        time.sleep(60)
+        ble_obj.ble_disconnect()
+        ble_client.interfaces.bluetooth.close()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -2450,7 +2555,7 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(
         6. Enable wlan and bt power save mode in dut after the connection
         7. Do Wi-Fi data transfer TCP-TX ,UDP-TX
     """
-
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -2473,6 +2578,7 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -2492,12 +2598,16 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(
         wifi_obj.run_traffic(protocol="UDP", traffic_type="TX")
         ble_obj.ble_disconnect()
         wifi_obj.disconnect()
+        ble_client.interfaces.bluetooth.close()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("sniffer validation is successful")
         wifi_obj.sniffer_validation_join()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -2534,7 +2644,7 @@ def test_Coex_sdk_BLE_active_scan_when_WLAN_conn_C133560(
         5. Enable the wlan and bt power save mode in dut after the connection
         6. Initiate ping from the dut
     """
-
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -2557,6 +2667,7 @@ def test_Coex_sdk_BLE_active_scan_when_WLAN_conn_C133560(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -2572,12 +2683,16 @@ def test_Coex_sdk_BLE_active_scan_when_WLAN_conn_C133560(
         wifi_obj.wait_for_exit()
         ble_obj.stop_scan_adv()
         wifi_obj.disconnect()
+        ble_client.interfaces.bluetooth.close()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("sniffer validation is successful")
         wifi_obj.sniffer_validation_join()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -2620,6 +2735,7 @@ def test_Coex_sdk_BLE_scan_while_TCP_TX_C133573(
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
     """
+    ble_dut_addr = ""
 
     try:
         test_name = request.node.name
@@ -2655,17 +2771,22 @@ def test_Coex_sdk_BLE_scan_while_TCP_TX_C133573(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_dut_addr = ble_obj.ble_dut_address
         wifi_obj.set_power_save()
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         ble_obj.stop_scan_adv()
         wifi_obj.disconnect()
+        ble_client.interfaces.bluetooth.close()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("sniffer validation is successful")
         wifi_obj.sniffer_validation_join()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 @pytest.mark.config(
@@ -2707,6 +2828,7 @@ def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_C133460(
         4. Scan from remote BLE device and connect to DUT
         5. Caluculate the time taken to connect to AP
     """
+    ble_dut_addr = ""
 
     try:
         test_name = request.node.name
@@ -2721,6 +2843,7 @@ def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_C133460(
             ble_test_type="scan_from_remote_device",
         )
         ble_obj.advertise_dut()
+        ble_dut_addr=ble_obj.ble_dut_address
 
         for i in range(0, iter_count):
 
@@ -2746,6 +2869,8 @@ def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_C133460(
             wifi_obj.disconnect()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
 
 
 
@@ -2792,7 +2917,7 @@ def test_Coex_sdk_BLE_master_WLAN_conn_disconn_C133556(
         8. Scan and reconnect from DUT
         9. Repeat step 7 & 8
     """
-
+    ble_dut_addr = ""
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -2833,10 +2958,12 @@ def test_Coex_sdk_BLE_master_WLAN_conn_disconn_C133556(
             wifi_obj.wait_for_exit()
             ble_obj.start()
             ble_obj.wait_for_exit()
+            ble_dut_addr = ble_obj.ble_dut_address
             logger().info("Checking connection stability for 60 seconds")
             time.sleep(60)
             wifi_obj.disconnect()
             ble_obj.ble_disconnect(disconnect_from="remote")
+            ble_client.interfaces.bluetooth.close()
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("sniffer validation is successful")
@@ -2844,6 +2971,10 @@ def test_Coex_sdk_BLE_master_WLAN_conn_disconn_C133556(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        cleanup_ble(ble_client, ble_dut_addr)
+
+
 
 
 
