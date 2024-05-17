@@ -748,6 +748,34 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_implicit_twt_c113742(wifi_dut
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_verify_whether_dut_able_to_send_implicit_twt_after_sending_explicit_twt_c113743(wifi_dut,
+                                                                                                  wifi_access_point,
+                                                                                                  sl_collections,
+                                                                                                  wifi_sniffer,
+                                                                                                  sniffer_filter):
+    """Verify whether DUT is  sending TWT req with implicit mode only even if we configure explicit TWT from
+    parameters"""
+    """
+    Test Steps:
+        1. Create thread for twt functionality
+        2. Enable power-save mode
+        3. Run the thread
+        4. Exit the thread
+    """
+    try:
+        wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 power_save=True, test_case='113743', implicit_twt=0)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
 def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_twt_c113744(wifi_dut, wifi_access_point,
                                                                            sl_collections, wifi_sniffer,
                                                                            sniffer_filter):
