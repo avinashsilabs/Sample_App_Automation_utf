@@ -919,3 +919,201 @@ def test_wifi_sdk_DUT_behavior_in_h2e_with_multi_aps_C113915(wifi_sniffer, wifi_
         wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {interface} up")
         time.sleep(5)
 
+
+@pytest.mark.config(
+    "wifi_access_points",
+    wifi={
+        # Here, indexing (starts with 0) applies as per order defined in harness.
+        0: {
+             'ssid': 'WPA3-TR',
+             'security': 'WPA3',
+             'passphrase': '123123123',
+             'channel': 1,
+             'protected_management_frame': "Capable"
+        },
+        1: {
+             'ssid': 'WPA2-TR',
+             'security': 'WPA2',
+             'passphrase': '123123123',
+             'channel': 1
+        }
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_points[0]', wifi={"security": 'WPA3', "protected_management_frame": "Capable"})
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+
+    }
+)
+def test_wifi_sdk_conn_when_issued_tdi_mode_C113914(wifi_sniffer, wifi_access_points, wifi_dut, utf_constants, request,
+                                                  sniffer_filter, sl_collections):
+    '''Verify DUT behavior when issued transition disable indication(TDI) mode'''
+    try:
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"DUT MAC is : {dut_mac_addr}")
+        logger().info(f"secondary AP going to stop")
+        wifi_access_points[1].interfaces.wifi.stop_ap()
+
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_points[0].interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable)
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_points[0].interfaces.wifi.ssid)
+        wifi_dut.interfaces.wifi.join(ssid=wifi_access_points[0].interfaces.wifi.ssid,
+                                      security="wpa3_transition",
+                                      passphrase=wifi_access_points[0].interfaces.wifi.passphrase,
+                                      channel=0, timeout=60)
+        time.sleep(2)
+        ip_config = wifi_dut.interfaces.wifi.start_ip(timeout=30)
+        time.sleep(2)
+        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"DUT ip: {device_ip}")
+        time.sleep(2)
+        mode = 'power_save_low_latency'
+        dtim_aligned_type = 0
+        num_of_dtim_skip = 0
+        listen_interval = 0
+        wifi_dut.interfaces.wifi.set_performance_profile(mode, dtim_aligned_type, num_of_dtim_skip, listen_interval)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        time.sleep(2)
+        status = ping(device_ip, ping_count)
+        assert status is True, "DUT is not responding to ping request from third party device"
+        time.sleep(2)
+
+        wifi_access_points[0].interfaces.wifi.stop_ap()
+        time.sleep(2)
+        wifi_access_points[1].interfaces.wifi.start_ap()
+        time.sleep(60)
+        dut_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        status = ping(dut_ip, ping_count)
+        assert status is False, "DUT is not responding to ping request from third party device"
+        logger().info("Dut going to leave the AP")
+        logger().info(f"Sniffer is going to stop")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(2)
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_addr,
+            filter_name="wpa3_h2e_mode")
+        logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find Assoc req with H2E."
+        time.sleep(3)
+
+        ap_bssid = wifi_access_points[0].interfaces.wifi.bssid
+        logger().info(f"MAC of AP2 is: {ap_bssid}")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter \
+            (sa_addr=ap_bssid, filter_name="wpa3_enh_mode")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find commit & confirm packets."
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA3', "protected_management_frame": "Capable"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+def test_wifi_sdk_conn_with_ax_enabled_C537920(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                                  sniffer_filter, sl_collections):
+    ''' Verify WPA3 with 11 AX enabled parameter in the AP'''
+    try:
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"DUT MAC is : {dut_mac_addr}")
+        time.sleep(1)
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                        wifi_sniffer=wifi_sniffer,
+                                        ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
+                                        data_transfer=False)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(1)
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2WPA3MixedMode', "protected_management_frame": "Capable"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+def test_wifi_sdk_conn_when_ap_in_wpa3_mixed_mode_C537921(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
+                                                          request, sniffer_filter, sl_collections):
+    ''' Verify WPA3 functionality when third party AP is configured in WPA3 mixed mode and
+        11W as capable only see the behavior'''
+    try:
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"DUT MAC is : {dut_mac_addr}")
+        time.sleep(1)
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                        wifi_sniffer=wifi_sniffer,
+                                        ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
+                                        data_transfer=False)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(1)
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
