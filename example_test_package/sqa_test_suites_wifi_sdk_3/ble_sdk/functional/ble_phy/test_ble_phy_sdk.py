@@ -38,11 +38,11 @@ def logger():
 
 def ble_connection(ble_dut, remote_wiseconnect3):
     logger().info("======== start ble in dut")
-    bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=1)
     assert bt_dut_address, "failed to initiate ble in dut"
     time.sleep(2)
     logger().info(" ======= start ble remote secondary DUT")
-    address = remote_wiseconnect3.interfaces.sapi.ble_start()
+    address = remote_wiseconnect3.interfaces.sapi.ble_gatt_start(set_smp=1)
     ble_client_address = re.search(r'([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})', address).group(0)
     assert ble_client_address, "failed to initiate ble in remote dut"
     logger().info(f"address_is{ble_client_address}")
