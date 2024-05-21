@@ -1091,7 +1091,6 @@ def test_GTK_Renewal_WPA2_EAP_unicast_C70609(rs_helper, utf_constants, radius_se
         wifi_dut.interfaces.wifi.leave()
 
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1145,7 +1144,7 @@ def test_GTK_Renewal_WPA2_EAP_Multicast_C70608(multicast_client, wifi_sniffer, w
         timeout = 60
 
         multicast_RX = rs_helper.run_multicast_traffic(wifi_dut, net_perf_client, protocol, device_ip, host_ip, timeout,
-                                                    multicast_client, traffic_type="RX")
+                                                       multicast_client, traffic_type="RX")
         logger().info(f"Multicast receive data :{multicast_RX}")
 
         logger().info("stopping capture")
@@ -1156,4 +1155,4 @@ def test_GTK_Renewal_WPA2_EAP_Multicast_C70608(multicast_client, wifi_sniffer, w
         dut_recovery(wifi_dut, error)
         raise error
     finally:
-        dut_clean_up(wifi_dut, multicast_ip=multicast_client.interfaces.multicast.multicast_ip)
+        dut_clean_up(wifi_dut)
