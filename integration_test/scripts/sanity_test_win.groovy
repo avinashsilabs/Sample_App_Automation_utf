@@ -19,11 +19,13 @@ pipeline {
     stages {
         stage('Run Sanity test') {
             agent {
-                label 'NB0015361'
+                label 'NB0014294'
             }
             environment {
                 UTF_HWMUX_TOKEN = credentials('utf-dev-hwmux-token')
-                PYTHON3 = "t:\\python_3_9_2_x64\\python.exe"
+                PYTHON3_TAG = 'python_3_9_12_win64_rel_02'
+                PYTHON3_HOME = "t:\\$PYTHON3_TAG"
+                PYTHON3 = "$PYTHON3_HOME\\python.exe"
                 HWMUX_GROUP_LABEL = "utf_dev_team_hyd_integration_test"
                 HWMUX_GROUP_JSON_FILE_NAME = "integration_tests_3_hwmux_group.json"
                 HARNESS_NAME= "__hwmux__integration_tests_3.yaml"
@@ -33,12 +35,15 @@ pipeline {
             stages {
                 stage('Setup Environment') {
                     steps {
-                        bat """
-                            if not EXIST venv\\pyvenv.cfg (
-                               %PYTHON3%  -m venv venv
-                            )
-                            call workspace_setup.bat skip_gui
-                        """
+                            bat """
+                                if not exist %PYTHON3_HOME% (
+                                    git clone --depth 1 -b %PYTHON3_TAG% ssh://git@stash.silabs.com/toolchain_external/python_3_9_12_win64.git %PYTHON3_HOME%
+                                )
+                                if not EXIST venv\\pyvenv.cfg (
+                                   %PYTHON3%  -m venv venv
+                                )
+                                call workspace_setup.bat skip_gui
+                            """
                     }
                 }
                 stage('Launch Tests') {
