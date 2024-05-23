@@ -105,9 +105,9 @@ class WifiConnectionThread(ThreadBase):
             assert status is True, "DUT is not responding to ping request from third party device"
             logger().info(f"ping is successful")
             time.sleep(2)
-            host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-            logger().info(f"Remote device ip :{host_ip}")
             if self.test_case_no == 113911 or self.test_case_no == 113913:
+                host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+                logger().info(f"Remote device ip :{host_ip}")
                 protocols = ["TCP", "UDP"]
                 traffic_types = ["TX", "RX"]
                 for protocol in protocols:
