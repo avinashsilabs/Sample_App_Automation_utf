@@ -1858,7 +1858,7 @@ def test_wifi_sdk_dutap_verify_5g_channel_in_2_4_ghz_C551262(wifi_sniffer, wifi_
     try:
 
         logger().info(" ********** Starting DUT as an AP with region as US and channel as 36 ********* ")
-        wifi_dut.interfaces.wifi.start_ap(channel=36)
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", channel=36)
 
     except Exception as Err:
         if "0x1000a" in str(Err):
@@ -1906,7 +1906,7 @@ def test_wifi_sdk_dutap_beacon_interval_1200_C551268(wifi_sniffer, wifi_dut, bea
                                               static_gateway="192.168.100.76")
     try:
         logger().info(" ********** Starting DUT as an AP with region as US and beacon interval 1200 ********* ")
-        wifi_dut.interfaces.wifi.start_ap(channel=11, beacon_interval=beacon)
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_C551268", channel=11, beacon_interval=beacon)
 
     except Exception as Err:
         if "0x10062" in str(Err):
@@ -1954,7 +1954,7 @@ def test_wifi_sdk_dutap_dtim_count_260_C551261(wifi_sniffer, wifi_dut, dtim_peri
                                               static_gateway="192.168.100.76")
     try:
         logger().info(" ********** Starting DUT as an AP with region as US and dtim count 260 ********* ")
-        wifi_dut.interfaces.wifi.start_ap(channel=11, dtim_beacon_count=dtim_period)
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_C551261", channel=11, dtim_beacon_count=dtim_period)
 
     except Exception as Err:
         if "0x10062" in str(Err):
