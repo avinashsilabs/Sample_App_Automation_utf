@@ -24,3 +24,8 @@ rps_path :
       customerid : "0"
       rps_prefix : "SiWG917-B"
       security_bit: "0"
+    wifi_sqa_917_soc:
+      path: "connectivity_firmware"
+      customerid: "0"
+      rps_prefix: "SiWG917-B"
+      security_bit: "1"
