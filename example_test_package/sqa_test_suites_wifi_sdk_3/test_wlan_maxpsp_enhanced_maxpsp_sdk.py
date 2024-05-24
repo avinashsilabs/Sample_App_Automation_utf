@@ -91,9 +91,6 @@ class WLanThread(ThreadBase):
         self.wifi_client = wifi_client
         self.protocol = protocol
         self.stream_type = 'stream'
-        self.protocol = 'tcp'
-        # self.socket_obj = SocketDataTransfer(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
-        #                                      time_period=self.time_period, data=self.data)
 
     def run(self):
         try:
@@ -196,12 +193,12 @@ class WLanThread(ThreadBase):
                                                                          , dtim_aligned_type=0, monitor_interval=50,
                                                                          num_of_dtim_skip=0, mode='power_save')
 
-                '''Send traffic TX for 1 min '''
+                '''Send traffic TX for 2 min '''
                 time.sleep(40)
                 self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
                                                 protocol=self.protocol, device_ip=self.dut_addr['device_ip'],
                                                 host_ip=host_ip,
-                                                timeout=60, traffic_type="RX")
+                                                timeout=120, traffic_type="RX")
                 logger().info("\n\n Time sleep for 1 min \n\n")
                 time.sleep(10)
 
@@ -438,7 +435,6 @@ class WLanThread(ThreadBase):
                                                            dut_ip=self.dut_addr['device_ip'])
                     iot_socket_obj.socket_data_transfer(stream_type=self.stream_type, protocol='tcp')
                     time.sleep(120)
-
 
             if self.test_case_no == 19706:
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -1604,10 +1600,6 @@ def test_wifi_sdk_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
-        wifi_dut.interfaces.wifi.start_ip()
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-        logger().info(f'Device IP = {device_ip}')
-
         # validate association response packet with association id
         # Assoc resp frame in sniffer
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -1615,7 +1607,6 @@ def test_wifi_sdk_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_
             da_addr=wlan_obj.dut_addr['dut_mac_address'],
             filter_name='association_response')
 
-        time.sleep(100)
         wifi_sniffer.interfaces.capture.stop_capture()
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
