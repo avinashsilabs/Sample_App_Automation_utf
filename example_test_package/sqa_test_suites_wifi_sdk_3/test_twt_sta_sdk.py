@@ -183,6 +183,12 @@ class WLanTwTThread(ThreadBase):
             if self.test_case == '113733':
                 self.switch.interfaces.pdu_switch.turn_off(delay=10)
 
+            # Check the test 540489 and call the disable TWT API
+            if self.test_case == '540489':
+                self.wifi_dut.interfaces.wifi.disable_twt(expected_status=SLStatus.SL_STATUS_SI91X_EAPOL_TIMEOUT)
+                logger().info("***** Getting 0x10073 Error, which is expected *****")
+                return
+
             if self.test_case != '113725' and self.test_case != '113733' and self.test_case != '113739':
                 # Call set_twt API
                 self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
@@ -1139,5 +1145,55 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_twt_with_bg_scan_after_join_c
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wlan_obj.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=wlan_obj.socket_id)
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_verify_whether_dut_able_to_teardown_when_first_session_is_active_c540487(wifi_dut, wifi_access_point,
+                                                                                           sl_collections, wifi_sniffer,
+                                                                                           sniffer_filter):
+    """
+    Test Steps:
+        1. Create thread for twt functionality
+        2. Enable powersave mode
+        3. Run the thread
+        4. Exit the thread
+    """
+    try:
+        wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 power_save=True, test_case='113738')
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_verify_whether_dut_able_to_send_error_when_disable_twt_without_enable_twt_c540489(wifi_dut,
+                                                                                                    wifi_access_point,
+                                                                                                    sl_collections,
+                                                                                                    wifi_sniffer,
+                                                                                                    sniffer_filter):
+    """
+    Test Steps:
+        1. Create thread for twt functionality
+        2. Enable powersave mode
+        3. Run the thread
+        4. Exit the thread
+    """
+    try:
+        wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 power_save=True, test_case='540489')
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

@@ -54,7 +54,7 @@ class WLanThread(ThreadBase):
     def run(self):
         try:
             self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
-            if self.test_name == '476944':
+            if self.test_name == '476945':
                 for i in range(0, 5):
                     logger().info('\n*** Configuring Sniffer with WAP channel ***\n')
                     self.wifi_sniffer.interfaces.capture.configure_interface(
@@ -90,13 +90,55 @@ class WLanThread(ThreadBase):
                     self.wifi_dut.interfaces.wifi.leave()
 
                     power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                        sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address, filter_name="power_mgmt_bit")
+                        sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
+                        filter_name="power_mgmt_bit")
                     assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=power_save_filter)[
                                'packet_count'] > 0, "Unable to find NULL-Data frame packets with power save bit = 1"
                 return
 
+            if self.test_name == '476944':
+                logger().info('\n*** Configuring Sniffer with WAP channel ***\n')
+                self.wifi_sniffer.interfaces.capture.configure_interface(
+                    channel=self.wifi_access_point.interfaces.wifi.channel)
+                self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+                time.sleep(3)
+
+                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                         channel=self.wifi_access_point.interfaces.wifi.channel)
+                power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address, filter_name="power_mgmt_bit")
+                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=power_save_filter)[
+                           'packet_count'] > 0, "Unable to find NULL-Data frame packets with power save bit = 1"
+                for i in range(0, 5):
+                    self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
+                    self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                    logger().info("\n\n***Fetching the data on https using get method***\n\n")
+                    status_dut, content_dut = self.wifi_dut.interfaces.http.http_put(self.http_server.interfaces.http,
+                                                                                     self.index_path,
+                                                                                     server_port=443)
+                    status_client, content_client = self.http_client.interfaces.http.http_get(
+                        self.http_server.interfaces.http, self.index_path)
+
+                    assert not status_dut, "failed to fetch the https data"
+                    assert status_client, "failed to load the https data"
+
+                    logger().info(status_dut)
+                    logger().info(content_dut)
+                    assert content_dut == content_client, "fetched data is not same as expected data"
+                    self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                logger().info("Stopping sniffer capture")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+
+                time.sleep(5)
+                self.wifi_dut.interfaces.wifi.leave()
+                return
+
             logger().info('\n*** Configuring Sniffer with WAP channel ***\n')
-            self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
+            self.wifi_sniffer.interfaces.capture.configure_interface(
+                channel=self.wifi_access_point.interfaces.wifi.channel)
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
             time.sleep(3)
 
@@ -805,10 +847,14 @@ def test_wifi_sdk_http_get_when_httpserver_does_not_ssl_handshake_c19210(wifi_sn
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
-def test_wifi_sdk_https_get_functionality_with_long_http_url_bit_disable_c476944(http_server, wifi_dut, http_client,
-                                                                                 wifi_access_point, index_path,
-                                                                                 wifi_sniffer,
-                                                                                 sl_collections, sniffer_filter):
+def test_wifi_sdk_https_get_functionality_with_long_http_url_bit_disable_without_disconnect_c476944(http_server,
+                                                                                                    wifi_dut,
+                                                                                                    http_client,
+                                                                                                    wifi_access_point,
+                                                                                                    index_path,
+                                                                                                    wifi_sniffer,
+                                                                                                    sl_collections,
+                                                                                                    sniffer_filter):
     """
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -864,7 +910,7 @@ def test_wifi_sdk_https_get_functionality_multiple_times_with_long_http_url_bit_
         5. Verify the http get response
     """
     try:
-        test_name = '476944'
+        test_name = '476945'
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               http_client=http_client,
                               test_name=test_name, sl_collections=sl_collections, http_server=http_server,
@@ -910,7 +956,7 @@ def test_wifi_sdk_https_get_functionality_multiple_times_with_long_http_url_bit_
         5. Verify the http get response
     """
     try:
-        test_name = '476944'
+        test_name = '476945'
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               http_client=http_client,
                               test_name=test_name, sl_collections=sl_collections, http_server=http_server,
