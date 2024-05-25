@@ -687,8 +687,8 @@ def test_wifi_sdk_ssl_client_tx_rx_bidirectional_c19129(wifi_sniffer, wifi_acces
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "wifi_powersave_disable", "close_sockets"])
-def test_wifi_sdk_ssl_client_rx_while_rejoining_c19135(wifi_dut, wifi_access_point, wifi_sniffer, ssl_server,
-                                                       cert1, logger, sl_collections, sniffer_filter, switch):
+def test_wifi_sdk_ssl_client_rx_while_rejoining_c19135(switch, wifi_dut, wifi_access_point, wifi_sniffer, ssl_server,
+                                                       cert1, logger, sl_collections, sniffer_filter):
     """
     To check SSL rx functionality of DUT while rejoining
     """
@@ -696,7 +696,7 @@ def test_wifi_sdk_ssl_client_rx_while_rejoining_c19135(wifi_dut, wifi_access_poi
         capture_filename = "test_wifi_sdk_ssl_client_rx_while_rejoining_c19135"
         pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
         tx_buffer_len = ssl_server.interfaces.ssl.config['buffer_length']
-        port1 = ssl_server.interfaces.ssl.config['device_port1']
+        port1 = randint(5001, 5010)
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections,
                                  rejoin_params=[20, 6, 40, 0])
         device_ip, dut_mac_address = ssl_obj.join_get_ip()
@@ -721,7 +721,7 @@ def test_wifi_sdk_ssl_client_rx_while_rejoining_c19135(wifi_dut, wifi_access_poi
             rx_buffer = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock, timeout=20)
             assert rx_buffer, "Packet loss observed at receiver side"
             thread.join()
-            time.sleep(30)
+            time.sleep(60)
 
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=0)
         logger.info("Successfully closed socket_id 0 in the DUT")
