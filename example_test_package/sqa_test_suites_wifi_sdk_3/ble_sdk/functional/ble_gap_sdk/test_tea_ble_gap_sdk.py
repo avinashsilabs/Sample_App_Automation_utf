@@ -44,7 +44,6 @@ pytestmark = [
                                    Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                    Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                    Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
-                                   Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                    Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
                                Si91xConfigFeatureBitMap.EnahanceMaxPsp,
