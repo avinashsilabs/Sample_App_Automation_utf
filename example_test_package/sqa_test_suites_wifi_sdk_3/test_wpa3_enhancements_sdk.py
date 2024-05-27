@@ -803,7 +803,7 @@ def test_wifi_sdk_DUT_rejoin_AP1_H2E_AP2_hunting_pecking_C113916(wifi_sniffer, w
 
     }
 )
-def test_wifi_sdk_DUT_behavior_in_h2e_with_multi_aps_C113915(wifi_sniffer, wifi_access_points, wifi_dut, wifi_client,
+def test_wifi_sdk_DUT_behavior_in_h2e_with_multi_aps_C113915(wifi_sniffer, wifi_access_points, wifi_dut,
                                                                utf_constants, request, sniffer_filter, sl_collections):
     '''Verify DUT behavior in H2E mode with multiple AP's'''
     try:
@@ -884,9 +884,7 @@ def test_wifi_sdk_DUT_behavior_in_h2e_with_multi_aps_C113915(wifi_sniffer, wifi_
         wifi_dut.interfaces.wifi.set_performance_profile(mode, dtim_aligned_type, num_of_dtim_skip, listen_interval)
         wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                       psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-        logger().info(f"=======>>>>>Disabling the ethernet 1....")
-        wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {interface} down")
-        time.sleep(5)
+        time.sleep(2)
         status = ping(device_ip, ping_count)
         assert status is True, "DUT is not responding to ping request from third party device"
 
@@ -894,9 +892,6 @@ def test_wifi_sdk_DUT_behavior_in_h2e_with_multi_aps_C113915(wifi_sniffer, wifi_
         time.sleep(1)
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
-        logger().info(f"=======>>>>>Enabling the ethernet 1....")
-        wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {interface} up")
-        time.sleep(10)
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter \
             (wlan_addr=dut_mac_addr, filter_name="wpa3_confirm_commit_message")
         packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter \
@@ -915,9 +910,6 @@ def test_wifi_sdk_DUT_behavior_in_h2e_with_multi_aps_C113915(wifi_sniffer, wifi_
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-    finally:
-        wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {interface} up")
-        time.sleep(5)
 
 
 @pytest.mark.config(
@@ -1065,6 +1057,8 @@ def test_wifi_sdk_conn_with_ax_enabled_C537920(wifi_sniffer, wifi_access_point, 
         dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"DUT MAC is : {dut_mac_addr}")
         time.sleep(1)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"MAC of AP2 is: {ap_bssid}")
         wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                         wifi_sniffer=wifi_sniffer,
                                         ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
@@ -1072,6 +1066,27 @@ def test_wifi_sdk_conn_with_ax_enabled_C537920(wifi_sniffer, wifi_access_point, 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         time.sleep(1)
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=ap_bssid,
+            filter_name="third_party_ap_ax")
+        logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find H2E Packets."
+        packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_addr,
+            filter_name="adv_he_info")
+        logger().info(f"\n\n\n Sniffer Filter = {packet_filter3}\n\n")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find advertising H2E Packets."
+        packet_filter4 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_addr,
+            filter_name="adv_he_in_data_pkt")
+        logger().info(f"\n\n\n Sniffer Filter = {packet_filter4}\n\n")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter4)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find advertising H2E Packets."
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -1101,7 +1116,7 @@ def test_wifi_sdk_conn_with_ax_enabled_C537920(wifi_sniffer, wifi_access_point, 
 def test_wifi_sdk_conn_when_ap_in_wpa3_mixed_mode_C537921(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                           request, sniffer_filter, sl_collections):
     ''' Verify WPA3 functionality when third party AP is configured in WPA3 mixed mode and
-        11W as capable only see the behavior'''
+        11W as capable only see the behavior '''
     try:
         ping_count = utf_constants.get("ping_count")
         test_name = request.node.name
@@ -1115,5 +1130,12 @@ def test_wifi_sdk_conn_when_ap_in_wpa3_mixed_mode_C537921(wifi_sniffer, wifi_acc
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         time.sleep(1)
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_addr,
+            filter_name="pmf_bit_enable")
+        logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find PMF bit enabled packets."
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
