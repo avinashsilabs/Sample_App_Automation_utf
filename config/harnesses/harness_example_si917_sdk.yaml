@@ -189,7 +189,9 @@ devices:
                 ip_address: '10.4.1.189'
                 admin_password: 'www.ni.com'
                 ssh_port: 1022
+                web_ui_port: 8443
                 ssid: "TESTTEST-ASUS"
+                standard: 'bgnax'
                 protected_management_frame: 'Disable'
                 #ipv6 configuration
                 connection_type: 'STATIC_IPV6'
@@ -329,7 +331,7 @@ devices:
         interfaces:
             multicast:
                 type: 'multicast.multicast_socket'
-                ip_version: 0
+                ip_version: 4
                 multicast_ip: '239.255.255.250'
                 multicast_ip2: '239.255.255.250'
                 dut_local_socket: 5001
@@ -346,7 +348,7 @@ devices:
         interfaces:
             socket:
                 type: 'socket.ip_socket'
-                ip_version: 0
+                ip_version: 4
                 dut_local_socket: 5001
                 destination_socket: 5001
                 server_ip: '192.168.100.50'
@@ -360,7 +362,7 @@ devices:
         interfaces:
             socket:
                 type: 'socket.ip_multi_sockets'
-                ip_version: 0
+                ip_version: 4
                 dut_local_socket: 5001
                 destination_socket: 5001
                 server_ip: '192.168.100.50'
@@ -374,7 +376,7 @@ devices:
         interfaces:
             socket:
                 type: 'socket.ip_remote_socket'
-                ip_version: 0
+                ip_version: 4
                 dut_local_socket: 5001
                 destination_socket: 5001
                 server_ip: '192.168.100.50'
@@ -762,7 +764,7 @@ devices:
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
                 client_limit: 1
-                ip_version: 0
+                ip_version: 4
                 buffer_length: 1300
                 no_of_pkts: 1000
                 time: 30
@@ -776,7 +778,7 @@ devices:
                 type: 'ssl.server.static'
                 hostname: '192.168.1.6'
                 port: 5001
-                ip_version: 0
+                ip_version: 4
                 buffer_length: 1300
                 no_of_pkts: 500
                 time: 30
@@ -794,7 +796,7 @@ devices:
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
                 client_limit: 1
-                ip_version: 0
+                ip_version: 4
                 buffer_length: 1470
                 no_of_pkts: 500
                 time: 30
@@ -1058,8 +1060,8 @@ defaults:
     ble_client: 'raspi_ble_client'
 
     ble_clients:
-        - 'secondary_raspi_ble_client'
         - 'raspi_ble_client'
+        - 'secondary_raspi_ble_client'
 
     bt_client: 'raspi_bt_client'
 
@@ -1090,6 +1092,8 @@ defaults:
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
         baud: 115200
+        data_chunk_read_elapsed_time: 0.9
+        data_chunk_read_dealy: 0.03
 
     ble_vulnerability_sniffer: 'ble_sweyntooth'
     bt_vulnerability_sniffer: 'bt_braktooth'
@@ -1107,7 +1111,7 @@ defaults:
         disable_sniffer_validation: false
 
         # firmware path for http/https otaf
-        http_url: '/RS9116.2.5.0.4.rps'
+        http_url: '/SiWG917-B.2.10.1.0.0.6.bin'
 
         pll_mode: 0
         rf_type: 1
@@ -1221,7 +1225,7 @@ defaults:
             time: 30
         client_options:
             # used only for UDP as there is no limit imposed while TCP
-            bandwidth: 0.1M
+            bandwidth: 60M
             interval: 1
             #time in seconds to transmit for (default 10 secs)
             time: 30

@@ -767,9 +767,6 @@ def test_Coex_sdk_WLAN_DNS_Query_BLE_slave_C133583(wifi_dut, wifi_access_point,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-
-
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1058,7 +1055,7 @@ def test_Coex_sdk_WLAN_MQTT_BLE_slave_C133574(wifi_dut, wifi_access_point,
         6. Run MQTT srever and initiate ,subscribe,publish message from dut
     """
     try:
-        test_name = "test_Coex_sdk_WLAN_http_post_non_exist_ip_BLE_slave_C133483"
+        test_name = "test_Coex_sdk_WLAN_MQTT_BLE_slave_C133574"
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
 
@@ -1115,24 +1112,24 @@ def test_Coex_sdk_WLAN_MQTT_BLE_slave_C133574(wifi_dut, wifi_access_point,
 
         time.sleep(5)
 
-        logger().info("DUT publishes message over the topic")
-        wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=Si91xMqttQos.QOS1, timeout=20)
-        time.sleep(5)
-        msgs = []
         sw = Stopwatch()
-        while sw.elapsed_sec < 10:
-            time.sleep(0.1)
-            msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
-            if len(msgs) == 1:
-                break
-        assert len(msgs) == 1, "No message is received by mqtt-client"
-        assert msgs[0].topic == topic, "No message received by mqtt-client on subscribed topic"
-        assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
-        assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
-                                                    "message received is wrong"
+        while sw.elapsed_sec <= 120:
 
-        logger().info("Checking the stability for 60 secs")
-        time.sleep(60)
+            logger().info("DUT publishes message over the topic")
+            wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=Si91xMqttQos.QOS1, timeout=20)
+            # time.sleep(10)
+            msgs = []
+            mq = Stopwatch()
+            while mq.elapsed_sec < 20:
+                time.sleep(0.1)
+                msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+                if len(msgs) >= 1:
+                    break
+            assert len(msgs) >= 1, "No message is received by mqtt-client"
+            assert msgs[0].topic == topic, "No message received by mqtt-client on subscribed topic"
+            assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
+            assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
+                                                        "message received is wrong"
 
         logger().info("....Unsubscribing from the topic....")
         wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
@@ -1384,7 +1381,7 @@ def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
 
         net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=wifi_obj.dut_addr['device_ip'],
                                                         host_role="S", protocol=protocol,
-                                                        time_out=30, bind_address=multicast_ip)
+                                                        time_out=120, bind_address=multicast_ip)
         net_perf_client.interfaces.net_perf.start()
 
         logger().info("sending data from DUT")
@@ -1393,29 +1390,37 @@ def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
                                        local_ip=wifi_obj.dut_addr['device_ip'], remote_ip=multicast_ip,
                                        remote_port=net_perf_client.interfaces.net_perf.server_port,
                                        size="1470",
-                                       ttl=30,
-                                       throughput_type=2, qos=0, async_socket=1, timeout=35)
+                                       ttl=120,
+                                       throughput_type=2, qos=0, async_socket=1, timeout=125)
 
         # # get and print throughput
         tp = net_perf_client.interfaces.net_perf.process_output()
         assert tp is not None, "Throughput not found"
         logger().info("data transfer is successful")
 
+        def start_client():
+            time.sleep(1)
+            logger().info(f"***** start listening  ******")
+            net_perf_client.interfaces.net_perf.start()
+
         logger().info("Starting multicast RX")
 
-        net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=multicast_ip, time_out=30,
+        net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=multicast_ip, time_out=120,
                                                         protocol=protocol, time_to_leave="32", bandwidth="60M",
-                                                        host_role="C")
+                                                        host_role="C", bind_address=host_ip)
         logger().info(f"Host IP: {host_ip}, Dut IP: {wifi_obj.dut_addr['device_ip']}, Protocol: {protocol}")
         logger().info(f"***** starting iperf ******")
-        net_perf_client.interfaces.net_perf.start()
+        # net_perf_client.interfaces.net_perf.start()
         logger().info(f"***** start listening  ******")
+        client_thread2 = Thread(target=start_client, args=(), )
+        client_thread2.start()
         wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=2, protocol=17,
                                        local_port=net_perf_client.interfaces.net_perf.client_port,
-                                       local_ip=wifi_obj.dut_addr['device_ip'], remote_ip=host_ip,
+                                       local_ip=multicast_ip, remote_ip=host_ip,
                                        remote_port=net_perf_client.interfaces.net_perf.client_port,
-                                       size=1470, ttl=30, throughput_type=4, qos=0, async_socket=1,
-                                       timeout=35)
+                                       size=1470, ttl=120, throughput_type=4, qos=0, async_socket=1,
+                                       timeout=130)
+        wifi_dut.interfaces.wifi.sl_net_leave_multicast_address()
 
         wifi_obj.disconnect()
         ble_obj.ble_disconnect()
