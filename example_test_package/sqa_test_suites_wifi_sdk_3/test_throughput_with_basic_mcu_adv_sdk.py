@@ -300,6 +300,9 @@ class WifiJoinThread(ThreadBase):
         time.sleep(2)
 
 
+pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
+
+
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -326,7 +329,7 @@ class WifiJoinThread(ThreadBase):
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_tcp_tx_with_352K_C146711(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+def test_wlan_standalone_tcp_tx_with_352K_C146711(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                   net_perf_client, protocol, utf_constants, request, sl_collections):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
     ping_count = utf_constants.get("ping_count")
@@ -372,7 +375,7 @@ def test_wlan_standalone_tcp_tx_with_352K_C146711(wifi_sniffer, wifi_access_poin
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_tcp_rx_with_352K_C146712(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+def test_wlan_standalone_tcp_rx_with_352K_C146712(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                   net_perf_client, protocol, utf_constants, request, sl_collections):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
     ping_count = utf_constants.get("ping_count")
@@ -417,7 +420,7 @@ def test_wlan_standalone_tcp_rx_with_352K_C146712(wifi_sniffer, wifi_access_poin
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_udp_tx_with_352K_c20738(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+def test_wlan_standalone_udp_tx_with_352K_c20738(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                  net_perf_client, protocol, utf_constants, request, sl_collections):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
     ping_count = utf_constants.get("ping_count")
@@ -462,7 +465,7 @@ def test_wlan_standalone_udp_tx_with_352K_c20738(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_udp_rx_with_352K_c20739(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+def test_wlan_standalone_udp_rx_with_352K_c20739(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                  net_perf_client, protocol, utf_constants, request, sl_collections):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
     ping_count = utf_constants.get("ping_count")
@@ -507,7 +510,7 @@ def test_wlan_standalone_udp_rx_with_352K_c20739(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_tcp_tx_with_352K_11n_C146715(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+def test_wlan_standalone_tcp_tx_with_352K_11n_C146715(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                       net_perf_client, protocol, utf_constants, request, sl_collections):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
     ping_count = utf_constants.get("ping_count")
@@ -552,7 +555,7 @@ def test_wlan_standalone_tcp_tx_with_352K_11n_C146715(wifi_sniffer, wifi_access_
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_tcp_rx_with_352K_11n_C146716(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+def test_wlan_standalone_tcp_rx_with_352K_11n_C146716(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                       net_perf_client, protocol, utf_constants, request, sl_collections):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
     ping_count = utf_constants.get("ping_count")
@@ -597,7 +600,7 @@ def test_wlan_standalone_tcp_rx_with_352K_11n_C146716(wifi_sniffer, wifi_access_
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_udp_tx_with_352k_11n_C537726(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_udp_tx_with_352k_11n_C537726(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
     ping_count = utf_constants.get("ping_count")
@@ -642,7 +645,7 @@ def test_wlan_standalone_udp_tx_with_352k_11n_C537726(wifi_sniffer, wifi_access_
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_udp_rx_with_352k_11n_C537727(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_udp_rx_with_352k_11n_C537727(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
     ping_count = utf_constants.get("ping_count")
@@ -682,7 +685,7 @@ def test_wlan_standalone_udp_rx_with_352k_11n_C537727(wifi_sniffer, wifi_access_
 
     }
 )
-def test_wlan_ble_connected_tcp_tx_with_352K_c20746(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_connected_tcp_tx_with_352K_c20746(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
     ping_count = utf_constants.get("ping_count")
@@ -722,7 +725,7 @@ def test_wlan_ble_connected_tcp_tx_with_352K_c20746(wifi_sniffer, wifi_access_po
 
     }
 )
-def test_wlan_ble_connected_tcp_rx_with_352K_c20747(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_connected_tcp_rx_with_352K_c20747(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
     ping_count = utf_constants.get("ping_count")
@@ -763,7 +766,7 @@ def test_wlan_ble_connected_tcp_rx_with_352K_c20747(wifi_sniffer, wifi_access_po
 
     }
 )
-def test_wlan_ble_connected_udp_tx_with_352K_c20744(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_connected_udp_tx_with_352K_c20744(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
     ping_count = utf_constants.get("ping_count")
@@ -803,7 +806,7 @@ def test_wlan_ble_connected_udp_tx_with_352K_c20744(wifi_sniffer, wifi_access_po
 
     }
 )
-def test_wlan_ble_connected_udp_rx_with_352K_c20745(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+def test_wlan_ble_connected_udp_rx_with_352K_c20745(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                 net_perf_client, protocol, utf_constants, request, sl_collections,
                                                     ble_client, bt_dut):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
@@ -844,7 +847,7 @@ def test_wlan_ble_connected_udp_rx_with_352K_c20745(wifi_sniffer, wifi_access_po
 
     }
 )
-def test_wlan_ble_with_ble_data_trans_352K_tcp_tx_C532958(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_with_ble_data_trans_352K_tcp_tx_C532958(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
     ping_count = utf_constants.get("ping_count")
@@ -885,7 +888,7 @@ def test_wlan_ble_with_ble_data_trans_352K_tcp_tx_C532958(wifi_sniffer, wifi_acc
 
     }
 )
-def test_wlan_ble_with_ble_data_trans_352K_tcp_rx_C532959(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_with_ble_data_trans_352K_tcp_rx_C532959(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
     ping_count = utf_constants.get("ping_count")
@@ -926,7 +929,7 @@ def test_wlan_ble_with_ble_data_trans_352K_tcp_rx_C532959(wifi_sniffer, wifi_acc
 
     }
 )
-def test_wlan_ble_with_ble_data_trans_352K_udp_tx_C532956(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_with_ble_data_trans_352K_udp_tx_C532956(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
     ping_count = utf_constants.get("ping_count")
@@ -967,7 +970,7 @@ def test_wlan_ble_with_ble_data_trans_352K_udp_tx_C532956(wifi_sniffer, wifi_acc
 
     }
 )
-def test_wlan_ble_with_ble_data_trans_352K_udp_rx_C532957(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_with_ble_data_trans_352K_udp_rx_C532957(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [352K]"""
     ping_count = utf_constants.get("ping_count")
@@ -979,6 +982,162 @@ def test_wlan_ble_with_ble_data_trans_352K_udp_rx_C532957(wifi_sniffer, wifi_acc
                               ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
                               iteration_count=iter_count, traffic_type="RX", test_case_no=532957,
                               ble_data_transfer=True
+                              )
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'n'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+
+    }
+)
+def test_wlan_ble_connected_tcp_tx_with_352K_11n_C537860(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+                                       protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    iter_count = utf_constants.get("iter_count")
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                              protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
+                              ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
+                              ble_conn=True, iteration_count=iter_count, traffic_type="TX", test_case_no=20740,
+                              )
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'n'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+
+    }
+)
+def test_wlan_ble_connected_tcp_rx_with_352K_11n_C537861(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+                                       protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    iter_count = utf_constants.get("iter_count")
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                              protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
+                              ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
+                              ble_conn=True, iteration_count=iter_count, traffic_type="RX", test_case_no=20741,
+                              )
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'n'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+
+    }
+)
+def test_wlan_ble_connected_udp_tx_with_352K_11n_C537858(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+                                       protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    iter_count = utf_constants.get("iter_count")
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                              protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
+                              ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
+                              ble_conn=True, iteration_count=iter_count, traffic_type="TX", test_case_no=20738,
+                              )
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'n'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+
+    }
+)
+def test_wlan_ble_connected_udp_rx_with_352K_11n_C537859(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+                                       protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    iter_count = utf_constants.get("iter_count")
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                              protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
+                              ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
+                              ble_conn=True, iteration_count=iter_count, traffic_type="RX", test_case_no=20739,
                               )
     try:
         wlan_obj.start()

@@ -72,3 +72,18 @@ firmware_applications:
       - device_type: 'efx32'
         device_subtype: 'efr32'
         filename: '917_ccp/generic_test_agent_without_aws.rps'
+
+    test_480K_M4SS_192K:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'SL_SI91X_RAM_LEVEL_NWP_ADV_MCU_BASIC.rps'
+
+    test_416K_M4SS_256K:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'SL_SI91X_RAM_LEVEL_NWP_MEDIUM_MCU_MEDIUM.rps'
+
+    test_352K_M4SS_320K:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'SL_SI91X_RAM_LEVEL_NWP_BASIC_MCU_ADV.rps'
