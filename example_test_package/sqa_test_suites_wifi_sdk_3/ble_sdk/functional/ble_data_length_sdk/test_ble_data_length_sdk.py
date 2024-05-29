@@ -40,15 +40,20 @@ def logger():
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
@@ -59,15 +64,15 @@ def test_ble_slave_data_length_20_bytes_C19920(wifi_dut, ble_client, sl_collecti
                      bt_log_path="./reports/test_ble_slave_data_length_20_bytes_C19920.log"):
             iter_count = utf_constants.get("iter_count")
             for count in range(iter_count):
-                service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-                char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+                service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+                char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
                 logger().info("*********************** Start BLE in DUT ***********************")
                 bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
                 assert bt_dut_address, "failed to initialize ble in dut"
-                wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
-                wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
-                wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F)
+                wifi_dut.interfaces.wifi.ble_add_service(uid=0x1AA1)
+                wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1)
+                wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1)
 
                 logger().info(f"....Applying performance profile mode and Enable_bt_power_save")
                 wifi_dut.interfaces.wifi.set_performance_profile()
@@ -107,22 +112,23 @@ def test_ble_slave_data_length_20_bytes_C19920(wifi_dut, ble_client, sl_collecti
                 wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(ble_remote_dev_address=ble_client_address,
                                                                     buffer_mode=0, buffer_count=2)
 
-                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
                 sw = Stopwatch()
+                count = 0
                 while sw.elapsed_sec < 60:
+                    data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
                     wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
-                    time.sleep(1)
+                    time.sleep(3)
+                    logger().info("******************** Validate Data ********************")
+                    notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+                    logger().info(f' *********************** Notification is {notifications} ***********************')
+                    assert len(notifications) > 0, "received data is empty"
+                    assert notifications[count] == data, "Data Mismatched"
+                    count += 1
 
                 logger().info(f' *********************** unsubscribe to notifications ***********************')
                 ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
                 ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
                 time.sleep(1)
-
-                logger().info("******************** Validate Data ********************")
-                notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-                logger().info(f' *********************** Notification is {notifications} ***********************')
-                assert len(notifications) > 0, "received data is empty"
-                assert notifications[0] == data, "failed to fetch data"
 
                 logger().info("******************** ble_remove_service ***********************")
                 wifi_dut.interfaces.wifi.ble_remove_service()
@@ -145,15 +151,20 @@ def test_ble_slave_data_length_20_bytes_C19920(wifi_dut, ble_client, sl_collecti
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
@@ -164,15 +175,15 @@ def test_ble_slave_data_length_230_bytes_tx_C19923(wifi_dut, ble_client, sl_coll
                      bt_log_path="./reports/test_ble_slave_data_length_230_bytes_tx_C19923.log"):
             iter_count = utf_constants.get("iter_count")
             for count in range(iter_count):
-                service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-                char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+                service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+                char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
                 logger().info("*********************** Start BLE in DUT ***********************")
                 bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
                 assert bt_dut_address, "failed to initialize ble in dut"
-                wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
-                wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
-                wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F)
+                wifi_dut.interfaces.wifi.ble_add_service(uid=0x1AA1)
+                wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1)
+                wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1)
 
                 logger().info(f"....Applying performance profile mode and Enable_bt_power_save")
                 wifi_dut.interfaces.wifi.set_performance_profile()
@@ -212,22 +223,24 @@ def test_ble_slave_data_length_230_bytes_tx_C19923(wifi_dut, ble_client, sl_coll
                 wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(ble_remote_dev_address=ble_client_address,
                                                                     buffer_mode=1, buffer_count=2)
 
-                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=230))
                 sw = Stopwatch()
+                count = 0
                 while sw.elapsed_sec < 60:
+                    data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=230))
                     wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
-                    time.sleep(1)
+                    time.sleep(3)
+                    logger().info("******************** Validate Data ********************")
+                    notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+                    logger().info(f' *********************** Notification is {notifications} ***********************')
+                    assert len(notifications) > 0, "received data is empty"
+                    assert notifications[count] == data, "Data Mismatched"
+                    count += 1
+
 
                 logger().info(f' *********************** unsubscribe to notifications ***********************')
                 ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
                 ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
                 time.sleep(1)
-
-                logger().info("******************** Validate Data ********************")
-                notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-                logger().info(f' *********************** Notification is {notifications} ***********************')
-                assert len(notifications) > 0, "received data is empty"
-                assert notifications[0] == data, "failed to fetch data"
 
                 logger().info("******************** ble_remove_service ***********************")
                 wifi_dut.interfaces.wifi.ble_remove_service()
@@ -250,15 +263,20 @@ def test_ble_slave_data_length_230_bytes_tx_C19923(wifi_dut, ble_client, sl_coll
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "enable_duty_cycle": True,
         "duty_cycle": 1,
     },
@@ -271,15 +289,15 @@ def test_ble_slave_data_length_20_bytes_duty_cycle_C19926(wifi_dut, ble_client, 
                      bt_log_path="./reports/test_ble_slave_data_length_20_bytes_duty_cycle_C19926.log"):
             iter_count = utf_constants.get("iter_count")
             for count in range(iter_count):
-                service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-                char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+                service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+                char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
                 logger().info("*********************** Start BLE in DUT ***********************")
                 bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
                 assert bt_dut_address, "failed to initialize ble in dut"
-                wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
-                wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
-                wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F)
+                wifi_dut.interfaces.wifi.ble_add_service(uid=0x1AA1)
+                wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1)
+                wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1)
 
                 logger().info(f"....Applying performance profile mode and Enable_bt_power_save")
                 wifi_dut.interfaces.wifi.set_performance_profile()
@@ -319,22 +337,23 @@ def test_ble_slave_data_length_20_bytes_duty_cycle_C19926(wifi_dut, ble_client, 
                 wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(ble_remote_dev_address=ble_client_address,
                                                                     buffer_mode=0, buffer_count=2)
 
-                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
                 sw = Stopwatch()
+                count = 0
                 while sw.elapsed_sec < 60:
+                    data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
                     wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
-                    time.sleep(1)
+                    time.sleep(3)
+                    logger().info("******************** Validate Data ********************")
+                    notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+                    logger().info(f' *********************** Notification is {notifications} ***********************')
+                    assert len(notifications) > 0, "received data is empty"
+                    assert notifications[count] == data, "Data Mismatched"
+                    count += 1
 
                 logger().info(f' *********************** unsubscribe to notifications ***********************')
                 ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
                 ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
                 time.sleep(1)
-
-                logger().info("******************** Validate Data ********************")
-                notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-                logger().info(f' *********************** Notification is {notifications} ***********************')
-                assert len(notifications) > 0, "received data is empty"
-                assert notifications[0] == data, "failed to fetch data"
 
                 logger().info("******************** ble_remove_service ***********************")
                 wifi_dut.interfaces.wifi.ble_remove_service()
@@ -357,15 +376,20 @@ def test_ble_slave_data_length_20_bytes_duty_cycle_C19926(wifi_dut, ble_client, 
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "enable_duty_cycle": True,
         "duty_cycle": 1,
     },
@@ -378,15 +402,15 @@ def test_ble_slave_data_length_230_bytes_duty_cycle_C19929(wifi_dut, ble_client,
                      bt_log_path="./reports/test_ble_slave_data_length_230_bytes_duty_cycle_C19929.log"):
             iter_count = utf_constants.get("iter_count")
             for count in range(iter_count):
-                service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-                char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+                service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+                char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
                 logger().info("*********************** Start BLE in DUT ***********************")
                 bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
                 assert bt_dut_address, "failed to initialize ble in dut"
-                wifi_dut.interfaces.wifi.ble_add_service(uid=0x6E)
-                wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x6F)
-                wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x6F)
+                wifi_dut.interfaces.wifi.ble_add_service(uid=0x1AA1)
+                wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1)
+                wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1)
 
                 logger().info(f"....Applying performance profile mode and Enable_bt_power_save")
                 wifi_dut.interfaces.wifi.set_performance_profile()
@@ -426,22 +450,23 @@ def test_ble_slave_data_length_230_bytes_duty_cycle_C19929(wifi_dut, ble_client,
                 wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(ble_remote_dev_address=ble_client_address,
                                                                     buffer_mode=1, buffer_count=2)
 
-                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=230))
                 sw = Stopwatch()
+                count = 0
                 while sw.elapsed_sec < 60:
+                    data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=230))
                     wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
-                    time.sleep(1)
+                    time.sleep(3)
+                    logger().info("******************** Validate Data ********************")
+                    notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+                    logger().info(f' *********************** Notification is {notifications} ***********************')
+                    assert len(notifications) > 0, "received data is empty"
+                    assert notifications[count] == data, "Data Mismatched"
+                    count += 1
 
                 logger().info(f' *********************** unsubscribe to notifications ***********************')
                 ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
                 ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
                 time.sleep(1)
-
-                logger().info("******************** Validate Data ********************")
-                notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-                logger().info(f' *********************** Notification is {notifications} ***********************')
-                assert len(notifications) > 0, "received data is empty"
-                assert notifications[0] == data, "failed to fetch data"
 
                 logger().info("******************** ble_remove_service ***********************")
                 wifi_dut.interfaces.wifi.ble_remove_service()
