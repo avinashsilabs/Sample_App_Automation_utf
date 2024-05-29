@@ -1,6 +1,7 @@
 import time
 import pytest
 from utf.utils.time_measurer import TimeMeasurer
+from utf.interfaces.wifi import SecurityMode
 from utf.interfaces.iperf.iperf_device_output_parser import Result
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xCustomFeatureBitMap, Si91xOperatingMode, Si91xExtCustomFeatureBitMap, Si91xJoinFeatureBitMap, \
@@ -1139,3 +1140,245 @@ def test_wifi_sdk_conn_when_ap_in_wpa3_mixed_mode_C537921(wifi_sniffer, wifi_acc
         assert snif_pkt_count, "Unable to find PMF bit enabled packets."
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA3',
+                                               "protected_management_frame": "Capable", 'channel': 11})
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features":  Si91xExtCustomFeatureBitMap.IEEE802_11W | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+    }
+)
+def test_wifi_sdk_conn_with_conc_mode_with_bec_C463705(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                                  sniffer_filter, sl_collections, wifi_client):
+    ''' Verify WLAN Connectivity to STAUT with WPA3 Security in Concurrent Mode when APUT is Beaconing'''
+    try:
+        ssid = "Concurent_ap"
+        security = "wpa3_transition"
+        password = "Automation@Silabs"
+        channel = "11"
+        dtim_count = "1"
+        beacon_interval = "100"
+        ht_caps = 1
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"DUT MAC is : {dut_mac_addr}")
+        time.sleep(1)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.start_ap(ssid=ssid, security=security, channel=channel, psk=password,
+                                          dtim_beacon_count=dtim_count,
+                                          beacon_interval=beacon_interval,
+                                          ht_caps=ht_caps)
+        time.sleep(2)
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        time.sleep(2)
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                        wifi_sniffer=wifi_sniffer,
+                                        ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
+                                        data_transfer=False)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(2)
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address,
+            filter_name="concurrent_wpa3")
+        logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find wpa3 packets."
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA3',
+                                               "protected_management_frame": "Capable", 'channel': 11})
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+           0: {
+                "security": "OPEN",
+                "ssid": "Concurent_ap",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features":  Si91xExtCustomFeatureBitMap.IEEE802_11W | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+    }
+)
+def test_wifi_sdk_conn_with_conc_mode_with_open_mode_C463712(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                                  sniffer_filter, sl_collections, wifi_client):
+    ''' Verify connectivity of STAUT with WPA3 security to 3rd party AP and 3rd party STA connectivity
+    with OPEN Security to APUT'''
+    try:
+        ssid = "Concurent_ap"
+        security = "Open"
+        channel = "11"
+        dtim_count = "1"
+        beacon_interval = "100"
+        ht_caps = 1
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"DUT MAC is : {dut_mac_addr}")
+        time.sleep(1)
+
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.start_ap(ssid=ssid, security=security, channel=channel,
+                                          dtim_beacon_count=dtim_count,
+                                          beacon_interval=beacon_interval,
+                                          ht_caps=ht_caps)
+        time.sleep(2)
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"*********{dut_mac_address}**********")
+        wifi_client.interfaces.wifi.join(ssid="Concurent_ap", security=SecurityMode.Open)
+        time.sleep(10)
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f"********* Dut IP **********: {dut_ip}")
+        rasp_mac_address = wifi_client.interfaces.wifi.get_mac_address()
+        logger().info(f"raspi_mac: {rasp_mac_address}")
+        client_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Client_ip: {client_ip}")
+        time.sleep(10)
+        logger().info(f"Initiating wlan ping from RASPI_STA for ping_count:10")
+        rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute(
+            f"sudo ping -c {10} {dut_ip}")
+        assert rc == 0, f"RASPI-STA failed to ping DUT"
+        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                        wifi_sniffer=wifi_sniffer,
+                                        ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
+                                        data_transfer=False)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(2)
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA3',
+                                               "protected_management_frame": "Capable", 'channel': 11})
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "Concurent_ap",
+                "passphrase": "Automation@Silabs",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features":  Si91xExtCustomFeatureBitMap.IEEE802_11W | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+    }
+)
+def test_wifi_sdk_conn_with_conc_mode_with_wpa2_mode_C463709(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                                  sniffer_filter, sl_collections, wifi_client):
+    ''' Verify connectivity of STAUT with WPA3 security to 3rd party AP and 3rd party STA connectivity
+    with WPA2 Security to APUT'''
+    try:
+        ssid = "Concurent_ap"
+        security = "WPA2"
+        password = "Automation@Silabs"
+        channel = "11"
+        dtim_count = "1"
+        beacon_interval = "100"
+        ht_caps = 1
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"DUT MAC is : {dut_mac_addr}")
+        time.sleep(1)
+
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.start_ap(ssid=ssid, security=security, channel=channel, psk=password,
+                                          dtim_beacon_count=dtim_count,
+                                          beacon_interval=beacon_interval,
+                                          ht_caps=ht_caps)
+        time.sleep(2)
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"*********{dut_mac_address}**********")
+        wifi_client.interfaces.wifi.join(ssid="Concurent_ap", security=SecurityMode.WPA2)
+        time.sleep(10)
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f"********* Dut IP **********: {dut_ip}")
+        rasp_mac_address = wifi_client.interfaces.wifi.get_mac_address()
+        logger().info(f"raspi_mac: {rasp_mac_address}")
+        client_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Client_ip: {client_ip}")
+        time.sleep(10)
+        logger().info(f"Initiating wlan ping from RASPI_STA for ping_count:10")
+        rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute(
+            f"sudo ping -c {10} {dut_ip}")
+        assert rc == 0, f"RASPI-STA failed to ping DUT"
+        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                        wifi_sniffer=wifi_sniffer,
+                                        ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
+                                        data_transfer=False)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(2)
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
