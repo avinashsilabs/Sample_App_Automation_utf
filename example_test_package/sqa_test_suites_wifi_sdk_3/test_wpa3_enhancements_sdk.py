@@ -1271,12 +1271,10 @@ def test_wifi_sdk_conn_with_conc_mode_with_bec_C463705(wifi_sniffer, wifi_access
 @pytest.mark.config(
     "wifi_client",
     wifi={
-           0: {
                 "security": "OPEN",
                 "ssid": "Concurent_ap",
                 "channel": 11,
                 "interface": "wlan0",
-               }
          }
 )
 @pytest.mark.config(
@@ -1358,13 +1356,11 @@ def test_wifi_sdk_conn_with_conc_mode_with_open_mode_C463712(wifi_sniffer, wifi_
 @pytest.mark.config(
     "wifi_client",
     wifi={
-           0: {
                 "security": "WPA2",
                 "ssid": "Concurent_ap",
                 "passphrase": "Automation@Silabs",
                 "channel": 11,
                 "interface": "wlan0",
-               }
          }
 )
 @pytest.mark.config(
