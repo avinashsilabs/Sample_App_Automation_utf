@@ -136,6 +136,62 @@ class WifiConnectionThread(ThreadBase):
             logger().info(f"\n\n **** Got exception in test case {self.test_case_no} thread: {str(e)} ****\n\n")
             raise e
 
+class Wlan_Conn_Thread(ThreadBase):
+    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, time_period=None, sniffer_filter=None,
+                 data=None, ping_count=None, data_transfer=True, test_name=None, sl_collections=None, wifi_client=None,
+                 dut_leave=True, protocol=None, test_case_no=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.wifi_client = wifi_client
+        self.time_period = time_period
+        self.data = data
+        self.ping_count = ping_count
+        self.protocol = protocol
+        self.wifi_sniffer = wifi_sniffer
+        self.sniffer_filter = sniffer_filter
+        self.test_case_no = test_case_no
+        self.data_transfer = data_transfer
+        self.sl_collections = sl_collections
+        self.dut_leave = dut_leave
+        self.test_name = test_name
+        self.dut_mac_addr = None
+
+    def run(self):
+        try:
+            self.wifi_sniffer.interfaces.capture.configure_interface(
+                channel=self.wifi_access_point.interfaces.wifi.channel)
+            self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+
+            self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                          beacon_missed_count=40,
+                                                                          first_time_retry_enable=0)
+            self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+                join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable)
+            self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=self.wifi_access_point.interfaces.wifi.ssid)
+            self.wifi_dut.interfaces.wifi.join(ssid=self.wifi_access_point.interfaces.wifi.ssid,
+                                          security="wpa3_transition",
+                                          passphrase=self.wifi_access_point.interfaces.wifi.passphrase,
+                                          channel=self.wifi_access_point.interfaces.wifi.channel, timeout=60)
+            time.sleep(5)
+            ip_config = self.wifi_dut.interfaces.wifi.start_ip(timeout=30)
+            time.sleep(2)
+            device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+            logger().info(f"DUT ip: {device_ip}")
+            time.sleep(2)
+            status = ping(device_ip, self.ping_count)
+            assert status is True, "DUT is not responding to ping request from third party device"
+            logger().info(f"ping is successful")
+            time.sleep(2)
+            self.wifi_dut.interfaces.wifi.leave()
+            time.sleep(2)
+            self.wifi_sniffer.interfaces.capture.stop_capture()
+            logger().info("Stop Sniffer finally")
+            time.sleep(2)
+        except Exception as e:
+            logger().info(f"\n\n **** Got exception in test case {self.test_case_no} thread: {str(e)} ****\n\n")
+            raise e
+
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1188,7 +1244,7 @@ def test_wifi_sdk_conn_with_conc_mode_with_bec_C463705(wifi_sniffer, wifi_access
         time.sleep(2)
         dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
         time.sleep(2)
-        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+        wlan_obj = Wlan_Conn_Thread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                         wifi_sniffer=wifi_sniffer,
                                         ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
                                         data_transfer=False)
@@ -1282,7 +1338,7 @@ def test_wifi_sdk_conn_with_conc_mode_with_open_mode_C463712(wifi_sniffer, wifi_
             f"sudo ping -c {10} {dut_ip}")
         assert rc == 0, f"RASPI-STA failed to ping DUT"
         logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
-        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+        wlan_obj = Wlan_Conn_Thread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                         wifi_sniffer=wifi_sniffer,
                                         ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
                                         data_transfer=False)
@@ -1371,7 +1427,7 @@ def test_wifi_sdk_conn_with_conc_mode_with_wpa2_mode_C463709(wifi_sniffer, wifi_
             f"sudo ping -c {10} {dut_ip}")
         assert rc == 0, f"RASPI-STA failed to ping DUT"
         logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
-        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+        wlan_obj = Wlan_Conn_Thread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                         wifi_sniffer=wifi_sniffer,
                                         ping_count=ping_count, test_name=test_name, sl_collections=sl_collections,
                                         data_transfer=False)
