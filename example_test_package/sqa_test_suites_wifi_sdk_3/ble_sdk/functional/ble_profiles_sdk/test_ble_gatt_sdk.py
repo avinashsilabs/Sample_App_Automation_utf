@@ -47,7 +47,7 @@ def logger():
 
 
 class BleFunctionality(ThreadBase):
-    def __init__(self, wifi_dut=None, ble_client=None, bt_dut_address=None, powersave=False, battery_service=False, HeartRate=False, ht=False):
+    def __init__(self, wifi_dut=None, ble_client=None, bt_dut_address=None, powersave=False, battery_service=False, HeartRate=False, ht=False, battery_heartrate=False, pair=False):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_client = ble_client
@@ -56,6 +56,8 @@ class BleFunctionality(ThreadBase):
         self.battery_service = battery_service
         self.HeartRate = HeartRate
         self.ht = ht
+        self.battery_heartrate = battery_heartrate
+        self.pair = pair
 
 
     def ble_adv(self):
@@ -73,6 +75,11 @@ class BleFunctionality(ThreadBase):
         if self.battery_service:
             logger().info("scanning for ble client.. ")
             bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.bt_dut_address, service_classes=["BatteryService"])
+        elif self.battery_heartrate:
+            logger().info(f"Adding battery and heartrate services on remote side")
+            logger().info("scanning for ble client.. ")
+            bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.bt_dut_address,
+                                                                                    service_classes=["BatteryService", "HeartRateService"])
         else:
             logger().info("scanning for ble client.. ")
             bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.bt_dut_address)
@@ -87,11 +94,15 @@ class BleFunctionality(ThreadBase):
         assert (found_devices[
                     self.wifi_dut.interfaces.wifi.ble_address] == self.wifi_dut.interfaces.wifi.ble_advertising_data), \
             "failed to find dut in scan list..."
-        try:
+        if self.pair:
             logger().info("connecting to dut....")
-            self.ble_client.interfaces.bluetooth.connect(self.bt_dut_address)
-        except Exception:
-            self.wifi_dut.interfaces.wifi.ble_stop_advertising()
+            self.ble_client.interfaces.bluetooth.pair_and_connect(self.bt_dut_address)
+        else:
+            try:
+                logger().info("connecting to dut....")
+                self.ble_client.interfaces.bluetooth.connect(self.bt_dut_address)
+            except Exception:
+                self.wifi_dut.interfaces.wifi.ble_stop_advertising()
         return bt_client_address
 
     def ble_gatt_scan(self):
@@ -916,6 +927,74 @@ def test_ble_sdk_fetch_a_particular_value_of_descriptor_from_RD1_C19866(wifi_dut
         wifi_dut.interfaces.wifi.ble_get_att_value_async(ble_remote_dev_address=bt_client_address, char_property=write_handle)
         wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
         logger().info(" Issued BLE disconnect ")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
+                                         "ble_disconnect"])
+def test_ble_sdk_fetch_desc_from_RD1_C19864(wifi_dut, ble_client, utf_constants, sl_collections):
+    try:
+        ble_obj = BleFunctionality(wifi_dut, ble_client, HeartRate=True)
+        bt_client_address = ble_obj.ble_gatt_scan()
+        ble_obj.check_device_state_on_dut()
+        logger().info(f"get all profiles")
+        uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
+        assert HeartRateService.UUID.lower() in uuids is not None, "Could not fetch the heartrate profile"
+        logger().info(" Resolving Heartrate profile from RD1")
+        start_handle, end_handle, data = wifi_dut.interfaces.wifi.ble_get_profile_async(
+            ble_remote_dev_address=bt_client_address,
+            uuid=int(HeartRateService.UUID, 16))
+        assert start_handle is not None, "failed to fetch the start handle.."
+        assert end_handle is not None, "failed to fetch end handle.."
+        logger().info(f"********fetching descriptor*************")
+        wifi_dut.interfaces.wifi.ble_get_att_descriptor(ble_devices_address=bt_client_address, start_handle=start_handle,
+                                                       end_handle=end_handle)
+        wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+        logger().info(" Issued BLE disconnect ")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_disconnect"])
+def test_ble_sdk_read_value_of_descriptor_from_RD1_C19867(wifi_dut, ble_client, sl_collections, utf_constants):
+    try:
+        logger().info(" ******* Start BLE GATT service ******* ")
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1)
+        assert bt_dut_address, "Failed to load bt address..."
+        ble_obj = BleFunctionality(wifi_dut, ble_client, bt_dut_address=bt_dut_address, powersave=True, battery_heartrate=True, pair=True)
+        bt_client_address = ble_obj.ble_adv()
+        time.sleep(60)
+        ble_obj.check_device_state_on_rasp()
+        logger().info(f"get all profiles")
+        uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
+        assert BatteryService.UUID in uuids is not None, "Could not fetch the battery service profile"
+        logger().info(" Resolving Battery profile from Dut")
+        start_handle, end_handle, data = wifi_dut.interfaces.wifi.ble_get_profile_async(
+            ble_remote_dev_address=bt_client_address,
+            uuid=int(BatteryService.UUID, 16))
+        assert start_handle is not None, "failed to fetch the start handle.."
+        assert end_handle is not None, "failed to fetch the end handle.."
+        logger().info(" Resolving heartrate profile from Dut")
+        start_handle_1, end_handle_1, data = wifi_dut.interfaces.wifi.ble_get_profile_async(
+            ble_remote_dev_address=bt_client_address,
+            uuid=int(HeartRateService.UUID, 16))
+        assert start_handle_1 is not None, "failed to fetch the start handle.."
+        assert end_handle is not None, "failed to fetch the end handle.."
+        logger().info(f"To fetch value of descriptor")
+        att_values = wifi_dut.interfaces.wifi.ble_get_multiple_att(ble_remote_dev_address=bt_client_address,no_of_handles=2, handle_1=start_handle, handle_2=start_handle_1)
+        logger().info(f"*********{att_values}*********")
+        wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+        logger().info(" Issued BLE disconnect ")
+        time.sleep(5)
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
