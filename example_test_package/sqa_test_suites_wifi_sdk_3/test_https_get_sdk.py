@@ -115,7 +115,7 @@ class WLanThread(ThreadBase):
                     self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
                     self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
                     logger().info("\n\n***Fetching the data on https using get method***\n\n")
-                    status_dut, content_dut = self.wifi_dut.interfaces.http.http_put(self.http_server.interfaces.http,
+                    status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(self.http_server.interfaces.http,
                                                                                      self.index_path,
                                                                                      server_port=443)
                     status_client, content_client = self.http_client.interfaces.http.http_get(

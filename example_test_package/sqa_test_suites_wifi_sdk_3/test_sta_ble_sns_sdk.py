@@ -215,6 +215,7 @@ class BleThreadFunctionality(ThreadBase):
                 while time.time() < t_end:
                     logger().info('*** Went in ble thread ***')
                     self.wifi_dut.interfaces.wifi.ble_start()
+                    time.sleep(2)
                     self.wifi_dut.interfaces.wifi.bt_stop()
                     time.sleep(2)
             return
