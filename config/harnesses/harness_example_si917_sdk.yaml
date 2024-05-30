@@ -201,7 +201,7 @@ devices:
                 ipv6_state: "1" #0= "stateless" 1="stateful"
                 lan_ipv6_address: "2401:3500:133c:1341:1134:ffed:13cd:1134"
                 lan_prefix_length: "64"
-                #                lan_ipv6_prefix: "2401:3500:133c:1341::"
+                lan_ipv6_prefix: "2401:3500:133c:1341::"
                 lan_ip_pool_start: "2401:3500:133c:1341::1000"
                 lan_ip_pool_end: "2401:3500:133c:1341::2000"
                 lan_lease_time: "86400"
@@ -1283,7 +1283,7 @@ defaults:
         stop_after_elapsed_time: false
 
     thread_params:
-        buffer_len: 128
+        buffer_len: 1600
 # The logger section is optional and can be used to modify the logging level for different modules
 logger:
     DLink810AccessPoint: DEBUG
