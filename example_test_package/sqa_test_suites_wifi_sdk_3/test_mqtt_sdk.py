@@ -2160,14 +2160,15 @@ def test_wifi_sdk_mqtt_keep_alive_60_and_12_hours_with_qos0_TC127797(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-    """ ********************** The Below 3 Test Cases Requires PDU Setup ************************* """
+
+""" ********************** The Below 3 Test Cases Requires PDU Setup ************************* """
 
 
 @pytest.mark.config(
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -2177,19 +2178,21 @@ def test_wifi_sdk_mqtt_keep_alive_60_and_12_hours_with_qos0_TC127797(
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
-        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c127799(
-        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, switch):
-    """QOS1: Subscribe to MQTT server with SSL connection and publish data. check rejoin functionality after
-    disconnecting from AP"""
-
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c127799(switch, wifi_sniffer, mqtt_server,
+                                                                                   mqtt_client, wifi_access_point,
+                                                                                   wifi_dut, request, sl_collections):
+    """
+    QOS1: Subscribe to MQTT server with SSL connection and publish data. check rejoin functionality after
+    disconnecting from AP
+    """
     try:
         topic = "mytesttopic"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=600))
@@ -2199,6 +2202,7 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1277
                             sl_collections=sl_collections, topic=topic, message=message)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
+        dut_ip = wifi_obj.dut_addr['device_ip']
         wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f'AP BSSID = {ap_bssid}')
@@ -2213,29 +2217,34 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1277
         mqtt_client.interfaces.mqtt.received_messages.clear()
         logger().info("MQTT Client subscribes to the topic")
         mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=1)
-
         logger().info("DUT subscribes to the topic")
-        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=1)
-
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=1, timeout=30)
         time.sleep(5)
 
-        sw = Stopwatch()
-        check_flag = False
-        while sw.elapsed_sec < 100:
+        ap_power_off = 0
+        for send_count in range(8):
+            if ap_power_off:
+                logger().info("Turning off the AP")
+                switch.interfaces.pdu_switch.turn_off(delay=20)
+                # wifi_access_point.interfaces.wifi.stop_ap()
+                # time.sleep(20)
+                logger().info("Successfully powered off AP")
+
+                logger().info("Again turning on the AP")
+                switch.interfaces.pdu_switch.turn_on(delay=100)
+                # wifi_access_point.interfaces.wifi.start_ap()
+                # time.sleep(100)
+                ap_power_off = 0
+                logger().info("Successfully powered on AP")
+                logger().info("Pinging to DUT to check rejoin process is completed or not")
+                status = sl_collections.ping(dut_ip, 30, 5)
+                assert status, "Pinging to DUT is failed, DUT not rejoined to AP"
             logger().info("DUT publishes message over the topic")
             wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=1, timeout=20)
-            time.sleep(2)
-            while sw.elapsed_sec < 30:
-                logger().info("DUT publishes message over the topic")
-                wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=1, timeout=20)
-                time.sleep(2)
-            if check_flag is not True:
-                logger().info('***** Turn off Access point *****')
-                switch.interfaces.pdu_switch.turn_off(delay=20)
+            time.sleep(5)
+            if send_count == 3:
+                ap_power_off = 1
 
-                logger().info('******* Turn on Access point **********')
-                switch.interfaces.pdu_switch.turn_on(delay=60)
-                check_flag = True
         time.sleep(2)
         logger().info("MQTT client unsubscribes to the topic")
         wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
@@ -2261,10 +2270,8 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1277
         assert (message for message in tcp_pkt if "Flags: 0x012 (SYN, ACK)" in tcp_pkt), "Unable to find SYN ACK"
         assert (message for message in tcp_pkt if "Flags: 0x010 (ACK)" in tcp_pkt), "Unable to find ACK"
         assert (message for message in tcp_pkt if "Flags: 0x011 (FIN, ACK)" in tcp_pkt), "Unable to find FIN ACK "
-
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
     finally:
         logger().info('******* Turn on Access point **********')
         switch.interfaces.pdu_switch.turn_on(delay=60)
@@ -2274,7 +2281,7 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1277
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -2284,19 +2291,21 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1277
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
-        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoinC127828(
-        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, switch):
-    """QOS1: Subscribe to MQTT server with SSL connection and publish maximum data of 1351 bytes oversubscribed topic
-    and check the DUT behavior."""
-
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c127828(switch, wifi_sniffer, mqtt_server,
+                                                                                   mqtt_client, wifi_access_point,
+                                                                                   wifi_dut, request, sl_collections):
+    """
+    QOS1: Subscribe to MQTT server with SSL connection and publish maximum data of 1351 bytes oversubscribed topic
+    and check the DUT behavior.
+    """
     try:
         topic = "mytesttopic"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1351))
@@ -2306,6 +2315,7 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoinC12782
                             sl_collections=sl_collections, topic=topic, message=message)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
+        dut_ip = wifi_obj.dut_addr['device_ip']
         wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f'AP BSSID = {ap_bssid}')
@@ -2320,29 +2330,34 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoinC12782
         mqtt_client.interfaces.mqtt.received_messages.clear()
         logger().info("MQTT Client subscribes to the topic")
         mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=1)
-
         logger().info("DUT subscribes to the topic")
-        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=1)
-
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=1, timeout=30)
         time.sleep(5)
 
-        sw = Stopwatch()
-        check_flag = False
-        while sw.elapsed_sec < 100:
+        ap_power_off = 0
+        for send_count in range(8):
+            if ap_power_off:
+                logger().info("Turning off the AP")
+                switch.interfaces.pdu_switch.turn_off(delay=20)
+                # wifi_access_point.interfaces.wifi.stop_ap()
+                # time.sleep(20)
+                logger().info("Successfully powered off AP")
+
+                logger().info("Again turning on the AP")
+                switch.interfaces.pdu_switch.turn_on(delay=100)
+                # wifi_access_point.interfaces.wifi.start_ap()
+                # time.sleep(100)
+                ap_power_off = 0
+                logger().info("Successfully powered on AP")
+                logger().info("Pinging to DUT to check rejoin process is completed or not")
+                status = sl_collections.ping(dut_ip, 30, 5)
+                assert status, "Pinging to DUT is failed, DUT not rejoined to AP"
             logger().info("DUT publishes message over the topic")
             wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=1, timeout=20)
-            time.sleep(2)
-            while sw.elapsed_sec < 30:
-                logger().info("DUT publishes message over the topic")
-                wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=1, timeout=20)
-                time.sleep(2)
-            if check_flag is not True:
-                logger().info('***** Turn off Access point *****')
-                switch.interfaces.pdu_switch.turn_off(delay=20)
+            time.sleep(5)
+            if send_count == 3:
+                ap_power_off = 1
 
-                logger().info('******* Turn on Access point **********')
-                switch.interfaces.pdu_switch.turn_on(delay=60)
-                check_flag = True
         time.sleep(2)
         logger().info("MQTT client unsubscribes to the topic")
         wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
@@ -2368,10 +2383,8 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoinC12782
         assert (message for message in tcp_pkt if "Flags: 0x012 (SYN, ACK)" in tcp_pkt), "Unable to find SYN ACK"
         assert (message for message in tcp_pkt if "Flags: 0x010 (ACK)" in tcp_pkt), "Unable to find ACK"
         assert (message for message in tcp_pkt if "Flags: 0x011 (FIN, ACK)" in tcp_pkt), "Unable to find FIN ACK "
-
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
     finally:
         logger().info('******* Turn on Access point **********')
         switch.interfaces.pdu_switch.turn_on(delay=60)
@@ -3148,8 +3161,9 @@ def test_wifi_sdk_mqtt_ssl_topic_diff_length_with_diff_bytes_C463958(
 
                         assert msgs[count].topic == topic, "No message received by mqtt-client on subscribed topic"
                         assert msgs[count].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
-                        assert msgs[count].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
-                                                                        "message received is wrong"
+                        assert msgs[
+                                   count].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
+                                                                       "message received is wrong"
                     count += 1
                 logger().info("DUT unsubscribes to the topic")
                 wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
@@ -3657,8 +3671,6 @@ def test_wifi_sdk_qos0_mqtt_ssl_with_two_topic_length_C537950(
         wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic1, qos=0)
         time.sleep(5)
 
-
-
         mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic1, payload=message, qos=0)
         logger().info("DUT publishes message over the topic")
         wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic1, message=message, qos=0, timeout=20)
@@ -3678,7 +3690,6 @@ def test_wifi_sdk_qos0_mqtt_ssl_with_two_topic_length_C537950(
                                    "message received is wrong"
         time.sleep(2)
 
-
         logger().info("....Unsubscribing from the topic1....")
         wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic1)
         time.sleep(3)
@@ -3693,8 +3704,6 @@ def test_wifi_sdk_qos0_mqtt_ssl_with_two_topic_length_C537950(
         logger().info("DUT publishes message over the topic")
         wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic2, message=message, qos=0, timeout=20)
         time.sleep(5)
-
-
 
         # msgss = []
         # sw = Stopwatch()
@@ -3720,7 +3729,7 @@ def test_wifi_sdk_qos0_mqtt_ssl_with_two_topic_length_C537950(
         assert msgss[0].topic == topic2, "No message received by mqtt-client on subscribed topic"
         assert msgss[0].qos == Si91xMqttQos.QOS0, "DUT sent message with wrong QOS. expected is QOS1"
         assert msgss[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
-                                                    "message received is wrong"
+                                                     "message received is wrong"
 
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
