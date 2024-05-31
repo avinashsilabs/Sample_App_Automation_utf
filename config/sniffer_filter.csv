@@ -175,3 +175,4 @@ adv_he_info, (wlan.ta == {{sa_addr}} && wlan.fc.type_subtype == 0x0000), and (wl
 adv_he_in_data_pkt, (((wlan.ta == {{sa_addr}} && wlan.fc.type_subtype == 0x0028)) && (radiotap.he.data_1.ppdu_format == 0x0000)), and (wlan_radio.phy == 11)
 pmf_bit_enable, (wlan.fc.type_subtype == 0 && wlan.rsn.capabilities.mfpc == 1), and (wlan.sa == {{sa_addr}})
 concurrent_wpa3, (((wlan.extended_supported_rates == 0xfb)) && (wlan.rsn.akms == 1027080)), and (wlan.sa == {{sa_addr}})
+he_cap_radio_tap, ((wlan.addr == {{sa_addr}}) && (radiotap.he.data_1.ppdu_format == 0x0000)), and (wlan.fc.type_subtype == 0x0028)

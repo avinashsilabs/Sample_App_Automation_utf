@@ -80,7 +80,8 @@ class WifiThreadFunctionality(ThreadBase):
             if self.test_case == "198667":
                 self.net_perf_client.interfaces.net_perf.init_server(host_ip=self.host_ip,
                                                                      device_ip=self.dut_addr['device_ip'],
-                                                                     protocol=self.protocol, tos_value=self.traffic)
+                                                                     protocol=self.protocol, tos_value=self.traffic,
+                                                                     time_out=120)
                 logger().info(
                     f"Host IP: {self.host_ip}, Dut IP: {self.dut_addr['device_ip']}, Protocol: {self.protocol}, "
                     f"tos_value: {self.traffic}")
@@ -91,7 +92,7 @@ class WifiThreadFunctionality(ThreadBase):
                                                     local_port=self.net_perf_client.interfaces.net_perf.server_port,
                                                     local_ip=self.dut_addr['device_ip'], remote_ip=self.host_ip,
                                                     remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                    size=1460, ttl=30, throughput_type=1, qos=self.qos)
+                                                    size=1460, ttl=120, throughput_type=1, qos=self.qos, timeout=150)
                 logger().info("data transfer is successful")
                 time.sleep(3)
 
@@ -115,10 +116,10 @@ class WifiThreadFunctionality(ThreadBase):
                 logger().info("data transfer is successful")
 
             if self.test_case == "198678":
-                self.net_perf_client.interfaces.net_perf.init_client(host_ip=self.host_ip,
+                self.net_perf_client.interfaces.net_perf.init_server(host_ip=self.host_ip,
                                                                      device_ip=self.dut_addr['device_ip'],
                                                                      protocol=self.protocol, tos_value=self.traffic,
-                                                                     time_out=30)
+                                                                     time_out=120)
                 logger().info(
                     f"Host IP: {self.host_ip}, Dut IP: {self.dut_addr['device_ip']}, Protocol: {self.protocol}, "
                     f"tos_value: {self.traffic}")
@@ -126,11 +127,11 @@ class WifiThreadFunctionality(ThreadBase):
                 self.net_perf_client.interfaces.net_perf.start()
                 logger().info(f"***** Start listening ******")
                 self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
-                                                    local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    local_port=self.net_perf_client.interfaces.net_perf.server_port,
                                                     local_ip=self.dut_addr['device_ip'], remote_ip=self.host_ip,
-                                                    remote_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                    size=1470, ttl=30, throughput_type=3, qos=self.qos,
-                                                    timeout=45)
+                                                    remote_port=self.net_perf_client.interfaces.net_perf.server_port,
+                                                    size=1470, ttl=120, throughput_type=1, qos=self.qos,
+                                                    timeout=150)
                 logger().info("data transfer is successful")
 
             if self.test_case == "198670":
@@ -346,7 +347,7 @@ class WifiThreadFunctionality(ThreadBase):
 
 class BleThreadFunctionality(ThreadBase):
     def __init__(self, wifi_dut=None, ble_client=None, ble_test_type=None, sl_collections=None, test_case=None,
-                 ble_dut=None, ble_pairing=0, switch=None):
+                 ble_dut=None, ble_pairing=0, switch=None, utf_constants=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_client = ble_client
@@ -358,6 +359,7 @@ class BleThreadFunctionality(ThreadBase):
         self.ble_dut = ble_dut
         self.ble_pairing = ble_pairing
         self.switch = switch
+        self.utf_constants = utf_constants
 
     def run(self):
         """ *************************** Set up DUT for BLE advertising ***************************** """
@@ -471,6 +473,20 @@ class BleThreadFunctionality(ThreadBase):
             state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
             state_int = int(state) if state.isdigit() else -1
             assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
+
+        if self.test_case == "198678":
+            iter_count = self.utf_constants.get("iter_count")
+            for count in range(iter_count):
+                logger().info(f"Advertising the DUT")
+                self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
+                self.sl_collections.scan_and_connect_from_remote(wifi_dut=self.wifi_dut, ble_client=self.ble_client,
+                                                                 ble_dut_address=self.ble_dut_address,
+                                                                 ble_pairing=self.ble_pairing)
+                logger().info("*********** Checking for BLE Stability ************ ")
+                time.sleep(60)
+                # state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+                # state_int = int(state) if state.isdigit() else -1
+                # assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
 
         if self.test_case == 198663:
             self.sl_collections.check_ble_advertise_functionality(
@@ -758,12 +774,12 @@ def test_wifi_sdk_wlan_ssl_tx_with_11ax_ble_connect_master_c198671(
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos", [('0xc8', 0)])
-def test_wifi_sdk_wlan_tcp_rx_with_11ax_ble_connect_and_disconnect_slave_c198678(
+def test_wifi_sdk_wlan_tcp_tx_with_11ax_ble_connect_and_disconnect_slave_c198678(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
-        ble_dut, protocol, net_perf_client, traffic, qos):
+        ble_dut, protocol, net_perf_client, traffic, qos, utf_constants):
     """ Verify the WLAN TCP Tx data transfer with 11ax AP when BLE as Slave Connection and disconnection """
 
     try:
@@ -774,7 +790,7 @@ def test_wifi_sdk_wlan_tcp_rx_with_11ax_ble_connect_and_disconnect_slave_c198678
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
 
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
-                                         ble_dut=ble_dut, ble_pairing=0, test_case="198668")
+                                         ble_dut=ble_dut, ble_pairing=0, test_case="198678", utf_constants=utf_constants)
 
         wifi_obj = WifiThreadFunctionality(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                            wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, qos=qos,
@@ -785,9 +801,7 @@ def test_wifi_sdk_wlan_tcp_rx_with_11ax_ble_connect_and_disconnect_slave_c198678
         wifi_obj.wait_for_exit()
         ble_obj.wait_for_exit()
         ble_obj.ble_disconnect()
-        ble_obj.start()
-        ble_obj.wait_for_exit()
-        ble_obj.ble_disconnect()
+
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop the Sniffer")
 
@@ -1152,6 +1166,14 @@ def test_wifi_sdk_http_download_with_11ax_ble_connect_master_notification_c19867
         logger().info("Stop the Sniffer")
         ble_obj.ble_disconnect()
 
+        packet_filter4 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wifi_obj.dut_addr['dut_mac_address'], filter_name="he_cap_radio_tap")
+
+        logger().info(f"***** Validating HE Capabilities ******")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter4)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find HE Capabilities"
+
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -1274,6 +1296,14 @@ def test_wifi_sdk_wlan_tcp_tx_with_11ax_ble_connect_master_notification_c198667(
         logger().info("Stop the Sniffer")
         ble_obj.ble_disconnect()
         wifi_obj.sniffer_validation()
+
+        packet_filter4 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wifi_obj.dut_addr['dut_mac_address'], filter_name="he_cap_radio_tap")
+
+        logger().info(f"***** Validating HE Capabilities ******")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter4)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find HE Capabilities"
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
