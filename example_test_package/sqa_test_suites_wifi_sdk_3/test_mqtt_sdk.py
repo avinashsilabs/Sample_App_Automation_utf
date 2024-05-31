@@ -2185,7 +2185,8 @@ def test_wifi_sdk_mqtt_keep_alive_60_and_12_hours_with_qos0_TC127797(
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+
 def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c127799(switch, wifi_sniffer, mqtt_server,
                                                                                    mqtt_client, wifi_access_point,
                                                                                    wifi_dut, request, sl_collections):
@@ -2222,7 +2223,8 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1277
         time.sleep(5)
 
         ap_power_off = 0
-        for send_count in range(8):
+        # Sending 4 mqtt messages before and after turning off AP
+        for send_count in range(1, 9):
             if ap_power_off:
                 logger().info("Turning off the AP")
                 switch.interfaces.pdu_switch.turn_off(delay=20)
@@ -2239,10 +2241,11 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1277
                 logger().info("Pinging to DUT to check rejoin process is completed or not")
                 status = sl_collections.ping(dut_ip, 30, 5)
                 assert status, "Pinging to DUT is failed, DUT not rejoined to AP"
-            logger().info("DUT publishes message over the topic")
+            logger().info(f"DUT publishes message over mqtt topic --> {topic}")
             wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=1, timeout=20)
             time.sleep(5)
-            if send_count == 3:
+            # turning off AP after sending 4 mqtt messages from DUT
+            if send_count == 4:
                 ap_power_off = 1
 
         time.sleep(2)
@@ -2298,7 +2301,8 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1277
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+
 def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c127828(switch, wifi_sniffer, mqtt_server,
                                                                                    mqtt_client, wifi_access_point,
                                                                                    wifi_dut, request, sl_collections):
@@ -2335,7 +2339,8 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1278
         time.sleep(5)
 
         ap_power_off = 0
-        for send_count in range(8):
+        # Sending 4 mqtt messages before and after turning off AP
+        for send_count in range(1, 9):
             if ap_power_off:
                 logger().info("Turning off the AP")
                 switch.interfaces.pdu_switch.turn_off(delay=20)
@@ -2352,10 +2357,11 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1278
                 logger().info("Pinging to DUT to check rejoin process is completed or not")
                 status = sl_collections.ping(dut_ip, 30, 5)
                 assert status, "Pinging to DUT is failed, DUT not rejoined to AP"
-            logger().info("DUT publishes message over the topic")
+            logger().info(f"DUT publishes message over mqtt topic --> {topic}")
             wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=1, timeout=20)
             time.sleep(5)
-            if send_count == 3:
+            # turning off AP after sending 4 mqtt messages from DUT
+            if send_count == 4:
                 ap_power_off = 1
 
         time.sleep(2)
@@ -2394,7 +2400,7 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1278
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -2404,16 +2410,19 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1278
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-def test_wifi_sdk_mqtt_qos0_connect_publish_rejoin_TC127758(
-        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections,
-        switch):
-    """QOS0: Subscribe to MQTT server with TCP connection and publish data. check rejoin functionality after
-    disconnecting from AP"""
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+
+def test_wifi_sdk_mqtt_qos0_connect_publish_rejoin_TC127758(switch, wifi_sniffer, sniffer_filter, mqtt_client, request,
+                                                            wifi_access_point, mqtt_server, wifi_dut, sl_collections):
+    """
+    QOS0: Subscribe to MQTT server with TCP connection and publish data. check rejoin functionality after
+    disconnecting from AP
+    """
 
     try:
         topic = "mytesttopic"
@@ -2426,6 +2435,7 @@ def test_wifi_sdk_mqtt_qos0_connect_publish_rejoin_TC127758(
                             message=message)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
+        dut_ip = wifi_obj.dut_addr['device_ip']
         wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
         wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=0)
         logger().info(".....DUT connects to MQTT server.....")
@@ -2439,24 +2449,32 @@ def test_wifi_sdk_mqtt_qos0_connect_publish_rejoin_TC127758(
         wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
         time.sleep(3)
 
-        sw = Stopwatch()
-        check_flag = False
-        while sw.elapsed_sec < 200:
-            logger().info("DUT publishes message over the topic")
-            wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=0, timeout=20)
-            time.sleep(2)
-            while sw.elapsed_sec < 30:
-                logger().info("DUT publishes message over the topic")
-                wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=0, timeout=20)
-                time.sleep(2)
-            if check_flag is not True:
-                logger().info('***** Turn off Access point *****')
+        ap_power_off = 0
+        # Sending 5 mqtt messages before and after turning off AP
+        for send_count in range(1, 11):
+            if ap_power_off:
+                logger().info("Turning off the AP")
                 switch.interfaces.pdu_switch.turn_off(delay=20)
+                # wifi_access_point.interfaces.wifi.stop_ap()
+                # time.sleep(20)
+                logger().info("Successfully powered off AP")
 
-                logger().info('******* Turn on Access point **********')
-                switch.interfaces.pdu_switch.turn_on(delay=60)
-                check_flag = True
-
+                logger().info("Again turning on the AP")
+                switch.interfaces.pdu_switch.turn_on(delay=100)
+                # wifi_access_point.interfaces.wifi.start_ap()
+                # time.sleep(100)
+                ap_power_off = 0
+                logger().info("Successfully powered on AP")
+                logger().info("Pinging to DUT to check rejoin process is completed or not")
+                status = sl_collections.ping(dut_ip, 30, 5)
+                assert status, "Pinging to DUT is failed, DUT not rejoined to AP"
+            logger().info(f"DUT publishes message over the topic --> {topic}")
+            wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=1, timeout=20)
+            time.sleep(5)
+            # turning off AP after sending 5 mqtt messages from DUT
+            if send_count == 5:
+                ap_power_off = 1
+        time.sleep(2)
         logger().info("Unsubscribe from the topic")
         wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
         time.sleep(1)
