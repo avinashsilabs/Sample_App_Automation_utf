@@ -2789,7 +2789,7 @@ def test_wifi_sdk_mqtt_subscribe_wild_char_TC498668(
 
     try:
         topic_wild = "mytesttopic/#"
-        topic1 = "mytesttopic/sensor"
+        multiple_topic = ["mytesttopic/sensor", "mytesttopic/automation", "mytesttopic/siliconlabs"]
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
         capture_filename = request.node.name
 
@@ -2814,25 +2814,25 @@ def test_wifi_sdk_mqtt_subscribe_wild_char_TC498668(
         wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic_wild, qos=1)
 
         time.sleep(3)
+        count = 0
+        logger().info("************** DUT publishes message over the multiple topics *******************")
+        for length in multiple_topic:
+            wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=length, message=message, qos=1, timeout=20)
 
-        logger().info("DUT publishes message over the topic")
-        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic1, payload=message, qos=1)
-        wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic1, message=message, qos=1, timeout=20)
+            time.sleep(2)
 
-        time.sleep(2)
+            msgs = []
+            sw = Stopwatch()
+            while sw.elapsed_sec < 10:
+                time.sleep(0.1)
+                msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
 
-        msgs = []
-        sw = Stopwatch()
-        while sw.elapsed_sec < 10:
-            time.sleep(0.1)
-            msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
-            if len(msgs) == 1:
-                break
-        assert len(msgs), "No message is received by mqtt-client"
-        assert msgs[0].topic == topic1, "No message received by mqtt-client on subscribed topic"
-        assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
-        assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
-                                                    "message received is wrong"
+            assert msgs[count].topic == multiple_topic[count], "No message received by mqtt-client on subscribed topic1"
+            assert msgs[count].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
+            assert msgs[
+                       count].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
+                                                           "message received is wrong"
+            count += 1
 
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -2869,7 +2869,9 @@ def test_wifi_sdk_mqtt_subscribe_wild_char_TC498667(
 
     try:
         topic_wild = "mytesttopic/+/mytesttopic"
-        topic1 = "mytesttopic/sensor/mytesttopic"
+        multiple_topic = ["mytesttopic/sensor/mytesttopic", "mytesttopic/automation/mytesttopic",
+                          "mytesttopic/siliconlabs/mytesttopic"]
+
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
         capture_filename = request.node.name
 
@@ -2892,27 +2894,25 @@ def test_wifi_sdk_mqtt_subscribe_wild_char_TC498667(
 
         logger().info("DUT subscribes to the topic")
         wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic_wild, qos=1)
-
         time.sleep(3)
 
-        logger().info("DUT publishes message over the topic")
-        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic1, payload=message, qos=1)
-        wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic1, message=message, qos=1, timeout=20)
+        count = 0
+        logger().info("**************** DUT publishes message over multiple topics *****************")
+        for length in multiple_topic:
+            wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=length, message=message, qos=1, timeout=20)
+            time.sleep(2)
+            msgs = []
+            sw = Stopwatch()
+            while sw.elapsed_sec < 10:
+                time.sleep(0.1)
+                msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
 
-        time.sleep(2)
-
-        msgs = []
-        sw = Stopwatch()
-        while sw.elapsed_sec < 10:
-            time.sleep(0.1)
-            msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
-            if len(msgs) == 1:
-                break
-        assert len(msgs), "No message is received by mqtt-client"
-        assert msgs[0].topic == topic1, "No message received by mqtt-client on subscribed topic"
-        assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
-        assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
-                                                    "message received is wrong"
+            assert msgs[count].topic == multiple_topic[count], "No message received by mqtt-client on subscribed topic1"
+            assert msgs[count].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
+            assert msgs[
+                       count].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
+                                                           "message received is wrong"
+            count += 1
 
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
