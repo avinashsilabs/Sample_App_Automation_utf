@@ -8,6 +8,7 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBit
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utils.iperf.iperf_utils import ping
+from utf_wiseconnect_3.tests.devices.si91x import Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes
 
 """
     Setup requirement:
@@ -40,7 +41,7 @@ class WLanTwTThread(ThreadBase):
                  implicit_twt=1, un_announced_twt=1, triggered_twt=0, twt_channel=0, twt_protection=0,
                  restrict_tx_outside_tsp=1, twt_retry_limit=6, twt_retry_interval=10, req_type=1, negotiation_type=0,
                  wifi_dut=None, sl_collections=None, wifi_sniffer=None, wifi_access_point=None,
-                 test_case=None, sniffer_filter=None, open_tcp_socket=False, power_save=True, disable_twt=False):
+                 test_case=None, sniffer_filter=None, open_tcp_socket=False, power_save=False, disable_twt=False):
         super().__init__()
         # Define all the parameters
         self.twt_enable = twt_enable
@@ -106,33 +107,33 @@ class WLanTwTThread(ThreadBase):
             # Get the mac address of the wifi_access_point
             self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
 
-            if self.test_case == '198619':
-                # Call set_twt API
-                self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
-                                                      twt_flow_id=self.twt_flow_id,
-                                                      wake_duration=self.wake_duration,
-                                                      wake_duration_unit=self.wake_duration_unit,
-                                                      wake_duration_tol=self.wake_duration_tol,
-                                                      wake_int_exp=self.wake_int_exp,
-                                                      wake_int_exp_tol=self.wake_int_exp_tol,
-                                                      wake_int_mantissa=self.wake_int_mantissa,
-                                                      wake_int_mantissa_tol=self.wake_int_mantissa_tol,
-                                                      implicit_twt=self.implicit_twt,
-                                                      un_announced_twt=self.un_announced_twt,
-                                                      triggered_twt=self.triggered_twt,
-                                                      twt_channel=self.twt_channel,
-                                                      twt_protection=self.twt_protection,
-                                                      restrict_tx_outside_tsp=self.restrict_tx_outside_tsp,
-                                                      twt_retry_limit=self.twt_retry_limit,
-                                                      twt_retry_interval=self.twt_retry_interval,
-                                                      req_type=self.req_type,
-                                                      negotiation_type=self.negotiation_type)
+            # if self.test_case == '198619':
+            #     # Call set_twt API
+            #     self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
+            #                                           twt_flow_id=self.twt_flow_id,
+            #                                           wake_duration=self.wake_duration,
+            #                                           wake_duration_unit=self.wake_duration_unit,
+            #                                           wake_duration_tol=self.wake_duration_tol,
+            #                                           wake_int_exp=self.wake_int_exp,
+            #                                           wake_int_exp_tol=self.wake_int_exp_tol,
+            #                                           wake_int_mantissa=self.wake_int_mantissa,
+            #                                           wake_int_mantissa_tol=self.wake_int_mantissa_tol,
+            #                                           implicit_twt=self.implicit_twt,
+            #                                           un_announced_twt=self.un_announced_twt,
+            #                                           triggered_twt=self.triggered_twt,
+            #                                           twt_channel=self.twt_channel,
+            #                                           twt_protection=self.twt_protection,
+            #                                           restrict_tx_outside_tsp=self.restrict_tx_outside_tsp,
+            #                                           twt_retry_limit=self.twt_retry_limit,
+            #                                           twt_retry_interval=self.twt_retry_interval,
+            #                                           req_type=self.req_type,
+            #                                           negotiation_type=self.negotiation_type)
 
             self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
                                                                      power_save=self.power_save,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated)
 
-            if self.test_case == '198620' or self.test_case == '198630' or self.test_case == '198631':
+            if self.test_case == '198620' or self.test_case == '198630' or self.test_case == '198631' or self.test_case == '198619':
                 # Call set_twt API
                 self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
                                                       twt_flow_id=self.twt_flow_id,
@@ -153,6 +154,10 @@ class WLanTwTThread(ThreadBase):
                                                       twt_retry_interval=self.twt_retry_interval,
                                                       req_type=self.req_type,
                                                       negotiation_type=self.negotiation_type)
+                logger().info(f"....Applying performance profile mode")
+                self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+                self.wifi_dut.interfaces.wifi.enable_bt_power_save(
+                    psp_mode=Si91xPowerSaveModes.PowerSaveMode2, psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
             if self.test_case == '198630' or self.test_case == '198631':
                 status = self.sl_collections.ping(device_ip=self.dut_addr['device_ip'], ping_count=10)
@@ -188,6 +193,11 @@ class WLanTwTThread(ThreadBase):
                                                       req_type=self.req_type,
                                                       negotiation_type=self.negotiation_type)
 
+                logger().info(f"....Applying performance profile mode")
+                self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+                self.wifi_dut.interfaces.wifi.enable_bt_power_save(
+                    psp_mode=Si91xPowerSaveModes.PowerSaveMode2, psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
             if self.test_case == '198630' or self.test_case == '198631':
                 status = self.sl_collections.ping(device_ip=self.dut_addr['device_ip'], ping_count=10)
                 assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
@@ -217,6 +227,11 @@ class WLanTwTThread(ThreadBase):
                                                       req_type=self.req_type,
                                                       negotiation_type=self.negotiation_type,
                                                       expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
+
+                logger().info(f"....Applying performance profile mode")
+                self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+                self.wifi_dut.interfaces.wifi.enable_bt_power_save(
+                    psp_mode=Si91xPowerSaveModes.PowerSaveMode2, psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
                 return
 
             # Sleep for 5 minutes
@@ -406,7 +421,8 @@ pytestmark = [
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "ble_stop_adv"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv", "disable_twt"])
 def test_wifi_sdk_verify_twt_ble_scan_adv_c198619(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client):
     """Verify whether DUT is able to perform BLE Scan and advertising after setting the TWT Interval before WLAN join"""
@@ -422,13 +438,14 @@ def test_wifi_sdk_verify_twt_ble_scan_adv_c198619(
         ble_obj.wait_for_exit()
 
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "ble_stop_adv"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv", "disable_twt"])
 def test_wifi_sdk_verify_twt_ble_scan_adv_c198620(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client):
     """Verify whether DUT is able to perform BLE Scan and advertising if we set the TWT Interval after WLAN Join"""
@@ -438,19 +455,20 @@ def test_wifi_sdk_verify_twt_ble_scan_adv_c198620(
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, test_case='198620')
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=0,
                                          ble_dut=ble_dut, ble_client=ble_client, test_case='198619')
-        wlan_obj.start()
-        wlan_obj.wait_for_exit()
+
         ble_obj.start()
         ble_obj.wait_for_exit()
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
 
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
 def test_wifi_sdk_verify_twt_after_ble_master_c198621(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client):
     """Verify whether DUT is able setup the Suggested TWT with AP after the BLE Master connection."""
@@ -467,13 +485,17 @@ def test_wifi_sdk_verify_twt_after_ble_master_c198621(
         ble_obj.ble_disconnect()
 
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "ble_stop_adv"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv", "disable_twt"])
 def test_wifi_sdk_verify_twt_after_ble_slave_c198622(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client):
     """Verify whether DUT is able to setup the Requested TWT with AP Before WLAN Join command with BLE As slave"""
@@ -491,7 +513,10 @@ def test_wifi_sdk_verify_twt_after_ble_slave_c198622(
         ble_obj.ble_disconnect(disconnect_from="remote")
 
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -521,7 +546,7 @@ def test_wifi_sdk_verify_twt_teardown_recreate_session_with_ble_master_c198630(
         assert snif_pkt_count, "Unable to find teardown packet"
 
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -551,7 +576,7 @@ def test_wifi_sdk_verify_twt_teardown_recreate_session_with_another_type_and_ble
         assert snif_pkt_count, "Unable to find teardown packet"
 
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -577,4 +602,4 @@ def test_wifi_sdk_verify_twt_conn_with_invalid_parameter_ble_master_c198629(
         logger().info(" ********* TWT Invalid Parameter Error 0x0021 which is expected behaviour ********* ")
 
     except Exception as Ex:
-        logger().info(f"Exception occurred: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
