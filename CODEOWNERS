@@ -1,0 +1,10 @@
+@@@sqa_team siriteja.chakravadhanula@silabs.com vinod.gaddampally@silabs.com swathi.pathuri@silabs.com vivek.verma@silabs.com
+@@@utf_team jeevan.gaddam@silabs.com hidayathulla.buramdin@silabs.com sivaprasad.machani@silabs.com ravikumar.baddireddi@silabs.com ravishankar.pendyala@silabs.com amiya.santra@silabs.com aiswarya.kumar@silabs.com pavithra.n@silabs.com teja.vunnam@silabs.com
+
+* @@sqa_team @@utf_team
+
+CODEOWNERS.destination_branch_pattern release/
+CODEOWNERS.destination_branch_pattern develop
+
+AllGroupsCheck(1)
+OverallCheck(2)
