@@ -733,6 +733,11 @@ def test_wifi_sdk_assign_existing_static_ip_DUT_stateful_dhcpv6_WPA2_C156974(wif
 
         logger().info("DUT stopped sending packets after receiving neighbour advertisement packet")
 
+        packet_filter3 = f"icmpv6.type==135 && ipv6.src==::"
+        logger().info("validating neighbour solicitation packet")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(True, packet_filter3)[
+            'packet_count'], 'Unable to find neighbour solicitation packet in sniffer '
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
