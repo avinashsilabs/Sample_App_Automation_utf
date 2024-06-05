@@ -1,0 +1,736 @@
+devices:
+    rs9116_sapi:
+        type: 'rs911x'
+        subtype: 'rs9116'
+        src_dir: 'utf_wiseconnect'
+        commander_options: '--serialno 000440257606'
+        defaults:
+            cli_transport: 'uart'
+            gpio_transport: 'uart'
+        interfaces:
+            uart:
+                type: 'serial'
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440257606'
+            firmware_uart:
+                type: 'serial'
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6001
+            wifi:
+                type: 'cli.rs_sapi_commands'
+                src_dir: 'utf_wiseconnect'
+
+    si917_sdk3:
+        type: 'rs911x'
+        subtype: 'rs9117'
+        src_dir: 'utf_wiseconnect'
+        defaults:
+            cli_transport: 'uart'
+            gpio_transport: 'uart'
+        interfaces:
+            uart:
+                type: 'serial'
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440329590'
+            firmware_uart:
+                type: 'serial'
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440329590'
+            wifi:
+                type: 'sl_wifi_test_agent_cli'
+                src_dir: 'utf_wiseconnect_3.tests'
+                thread_config:
+                    wifi:
+                        count: 2
+                        stack_len: 2048
+                    ble:
+                        count: 0
+                        stack_len: 2048
+                commander_options: "--device Si917 --serialno 000440329590"
+
+    efr32_917:
+        type: 'efx32'
+        subtype: 'efr32'
+        commander_options: "--device Si917 --serialno 000440329590"
+        interfaces:
+            vcom:
+                type: 'serial'
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440329590'
+
+    efr32_4180b:
+        type: 'efx32'
+        subtype: 'efr32'
+        commander_options: '--serialno 000440257606'
+        interfaces:
+            vcom:
+                type: 'serial'
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440257606'
+
+    dlink810_ap:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.dlink810'
+                ip_address: '10.207.16.95'
+                web_ui_port: 8080
+                admin_password: 'bhuvgycft'
+                ssid: "TESTTEST-DLIN_3"
+                channel: 1
+                cipher: 'AES'
+
+    static_ap:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                security: WPA2
+                ssid: 'TESTTEST-DLIN_3'
+                passphrase: 'thisisatestnetwork'
+                channel: 1
+
+    dlink810_ap_static:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                security: WPA2
+                ssid: 'TESTTEST-DLIN_3'
+                passphrase: 'thisisatestnetwork'
+                channel: 1
+                cipher: 'AES'
+
+    tp_link_e12ad0_static:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                security: WPA2
+                ssid: 'TP-LINK_E12AD0'
+                passphrase: 'thisisatestnetwork'
+                channel: 1
+                cipher: 'AES'
+
+    asus_static:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                security: WPA2
+                ssid: 'ABCDEFGH'
+                passphrase: 'thisisatestnetwork'
+                channel: 2
+                cipher: 'AES'
+
+    asus_rt_ax3000_ap:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.asus_rt_ax3000'
+                ip_address: '10.4.1.189'
+                admin_password: 'www.ni.com'
+                ssh_port: 1022
+                ssid: "TESTTEST-ASUS"
+
+    switched_ap:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.static'
+                ssid: "Savage-Test"
+                security: 'WPA2'
+                channel: 11
+                passphrase: 'F6E49FCE'
+
+    raspi_wifi:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.client.paho_client'
+            wifi:
+
+
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                interface: 'wlan0'
+
+    secondary_raspi_client:
+        interfaces:
+            linux_shell:
+                type: 'shell.ssh_shell'
+                remote: 192.168.14.3
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+            wifi:
+                type: 'wifi.access_points.linux'
+                shell: 'linux_shell'
+                interface: 'wlan0'
+
+    raspi_ble_client:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            bluetooth:
+                type: 'bluetooth.bluez'
+                shell: 'linux_shell'
+
+    raspi_bt_client:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            bluetooth:
+                type: 'bluetooth.pybluez'
+                shell: 'linux_shell'
+
+    secondary_raspi_bt_client:
+        interfaces:
+
+
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.14.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
+                username: pi
+                password: 'raspberry'
+
+
+
+            shell:
+                type: 'rpc.rpc_client'
+
+
+                forward_to: 'raspi_bt_client:linux_shell'
+                host: 'docker_host'
+
+            bluetooth:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_bt_client:bluetooth'
+                host: 'docker_host'
+
+            mqtt:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_bt_client:mqtt'
+                host: 'docker_host'
+
+            wifi:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_bt_client:wifi'
+                host: 'docker_host'
+
+
+
+
+        harness:
+            devices:
+                raspi_bt_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        bluetooth:
+                            type: 'bluetooth.pybluez'
+                            shell: 'linux_shell'
+                        mqtt:
+                            type: 'mqtt.server.mosquitto_linux'
+                            shell: 'linux_shell'
+                            server_listen_address: '0.0.0.0'
+                            port: 1883
+                            interface: 'wlan0'
+                            tls_enabled: false
+                        wifi:
+
+
+                            type: 'wifi.access_points.linux'
+                            shell: 'linux_shell'
+                            interface: 'wlan0'
+            defaults: { }
+
+    secondary_raspi_ble_client:
+        interfaces:
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.14.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
+                username: pi
+                password: 'raspberry'
+            shell:
+                type: 'rpc.rpc_client'
+
+
+                forward_to: 'raspi_bt_client:linux_shell'
+                host: 'docker_host'
+
+            bluetooth:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_ble_client:bluetooth'
+                host: 'docker_host'
+        harness:
+            devices:
+                raspi_ble_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        bluetooth:
+                            type: 'bluetooth.bluez'
+                            shell: 'linux_shell'
+            defaults: { }
+
+    raspi_mosquitto:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0.0.0.0'
+                port: 1883
+                interface: 'wlan0'
+                tls_enabled: false
+
+    raspi_mosquitto_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 1883
+                interface: 'wlan0'
+                tls_enabled: false
+                ip_version: 6
+
+    raspi_mosquitto_auth:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0.0.0.0'
+                port: 1883
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: false
+
+    raspi_mosquitto_auth_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 1883
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: false
+                ip_version: 6
+
+    raspi_mosquitto_tls:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0.0.0.0'
+                port: 8883
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: true
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+
+    raspi_mosquitto_tls_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 8883
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: true
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+                ip_version: 6
+
+    static_mqtt_broker:
+        interfaces:
+            mqtt:
+                type: 'mqtt.server.static'
+
+                hostname: 'mosquitto.dev.silabs.net'
+                port: 8883
+
+
+                username: 'testuser'
+                password: 'testpassword'
+
+                tls_enabled: true
+
+
+                tls_ca_chain: 'ca-chain.cert.pem'
+
+    raspi_lighttpd:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            http:
+                type: 'http.server.http_linux'
+                shell: 'linux_shell'
+                port: 80
+                interface: 'wlan0'
+
+    raspi_lighttpd_tls:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            http:
+                type: 'http.server.http_linux'
+                shell: 'linux_shell'
+                port: 443
+                interface: 'wlan0'
+                tls_enabled: true
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+
+    raspi_http_client:
+        interfaces:
+            http:
+                type: 'http.client.requests_client'
+                disable_certificate_verification: false
+
+    static_http:
+        interfaces:
+            http:
+                type: 'http.server.static'
+                hostname: 'letsencrypt.org'
+                port: 443
+                tls_enabled: true
+                tls_ca_chain: 'isrg-root.pem'
+
+    airpcap:
+        interfaces:
+            ssh_shell:
+                type: 'shell.ssh_shell'
+                remote: 192.168.14.3
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
+            capture:
+                default:
+                type: 'wifi.sniffer.tshark'
+                shell: 'ssh_shell'
+                interface: 'wlan1'
+
+    python_aws_iot_thing:
+        interfaces:
+            aws_iot:
+                type: 'aws_iot.python_thing'
+                client_id: 'Python-Thing'
+                hostname: 'a2lqafhldpb41r-ats.iot.us-east-1.amazonaws.com'
+                port: 8883
+                private_key: 'python-thing-private.pem.key'
+                root_ca: 'AWS-IoT-root-CA.crt'
+                client_cert: 'python-thing-certificate.pem.crt'
+
+    azure_iot:
+            interfaces:
+                hub:
+                    type: 'azure_iot.azure_iot_hub'
+                    connection_string_hub: 'HostName=iot-hub-utf.azure-devices.net;SharedAccessKeyName=service;SharedAccessKey=Z3JlZW5zaG90Q2FyZQ=='
+                    hostname: 'silabssample.azure-devices.net'
+                    event_hub_connection_string: "Endpoint=sb://iothub-ns-silabshyda-25118973-20f98fa458.servicebus.windows.net/;SharedAccessKeyName=iothubowner;SharedAccessKey=hN6vCGNtCvRXg7Uhre8OwR360cL8az8FBCObXSES4fI=;EntityPath=silabshydazure"
+                    event_hub_name: "silabshydazure"
+                    consumer_group: "$Default"
+
+                device:
+                    type: 'azure_iot.azure_iot_device'
+                    connection_string_device: 'HostName=SilabsHYDAzure.azure-devices.net;DeviceId=symmetric_device;SharedAccessKey=Vn0P8z6gqR5ShVvv6ouQOT0eAcQFQB9GLfG0teX+ZpI='
+                    device_type: 'SYMMETRIC_DEVICE'
+                    hostname: 'silabssample.azure-devices.net'
+                    device_id: 'x509_device'
+                    cert_file: 'newcert.pem'
+                    key_file: 'privatekey.pem'
+
+    raspi_iperf:
+        interfaces:
+            net_perf:
+                type: 'iperf'
+
+                zip_results: 'Y'
+
+    static_iperf:
+        interfaces:
+            net_perf:
+                type: 'iperf.static_iperf'
+
+                zip_results: 'Y'
+
+                host_ip: "10.207.18.2"
+                host_username: "test"
+                host_password: "test123"
+
+    raspi_ip_socket:
+        interfaces:
+            socket:
+                type: 'socket.ip_socket'
+                ip_version: 0
+                dut_local_socket: 5001
+                destination_socket: 5001
+                server_ip: '192.168.100.50'
+                time: 30
+                buffer_length: 1470
+                no_of_pkts: 500
+                socket_type: 0   #0- TCP, 1 - UDP
+                interface: 'eth0'
+
+    ip_socket_factory:
+        interfaces:
+            socket:
+                type: 'socket.ip_socket_factory'
+
+    ble_sweyntooth:
+        interfaces:
+
+
+            ble_vul_sniffer:
+                type: 'bluetooth.sniffer.sweyntooth'
+                ip_address: '10.207.16.89'
+                container_name: "utf_sweyntooth"
+                image: 'utfsilabs/utf_sweyntooth'
+                is_prune: false
+                is_execute_raspi_manager_scripts: false
+                username: pi
+                password: 'raspberry'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x239a
+                pid: 0x8029
+            linux_shell:
+                type: 'shell.shell'
+
+    openssl_socket:
+        interfaces:
+            server:
+                type: 'openssl.server'
+            client:
+                type: 'openssl.client'
+
+    50pa500_attenuator:
+        interfaces:
+            attenuator:
+                type: 'attenuator.50pa500'
+                shell: 'telnet_shell'
+            telnet_shell:
+                type: 'shell.telnet_shell'
+                remote: '192.168.50.70'
+                port: 3001
+                username: null
+                password: null
+                timeout: 2
+
+    bt_braktooth:
+        interfaces:
+
+
+            bt_vul_sniffer:
+                type: 'bluetooth.sniffer.braktooth'
+                ip_address: '10.207.18.161'
+                container_name: "utf_braktooth"
+                image: 'utfsilabs/utf_braktooth'
+                is_prune: false
+                is_execute_raspi_manager_scripts: false
+                username: 'test'
+                password: 'test123'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6010
+            linux_shell:
+                type: 'shell.shell'
+
+    nrf_ppk2_device:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            power_meter:
+                type: 'power_meter.nrf_ppk2.nrf_power_profiler_mp'
+                shell: 'linux_shell'
+                vid: 0x1915
+                pid: 0xC00A
+
+    nrf_ble_client:
+        interfaces:
+            bluetooth:
+                type: 'bluetooth.android.nrf_connect.nrf_connect_mi'
+
+                port: 4701
+
+                device_id: '9a60d4ba'
+                device_type: 'mi'
+
+                advertising_data: "HELLO"
+
+    power_meter_plotter:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            plotter:
+                type: 'power_meter_plotter'
+                src_dir: 'utf_wiseconnect'
+                shell: 'linux_shell'
+
+
+defaults:
+    # dut: rs9116_sapi
+    # efx32: efr32_4180b
+
+    dut: si917_sdk3
+    efx32: efr32_917
+
+    # wiseconnect_duts:
+        # - rs9116_sapi
+        # - efr32_4180b
+
+    wiseconnect_duts:
+        - si917_sdk3
+        - efr32_917
+
+
+    wifi_access_point: 'dlink810_ap_static'
+    wifi_client: 'raspi_wifi'
+    wifi_clients:
+        - 'raspi_wifi'
+        - 'secondary_raspi_client'
+    ble_clients:
+        - raspi_ble_client
+        - secondary_raspi_ble_client
+    ble_client: 'raspi_ble_client'
+    bt_client: 'raspi_bt_client'
+    mqtt_server: 'raspi_mosquitto'
+    mqtt_client: 'raspi_wifi'
+    wifi_sniffer: 'airpcap'
+    http_server: 'raspi_lighttpd'
+    http_client: 'raspi_http_client'
+    net_perf_client: 'raspi_iperf'
+    remote_socket: 'raspi_ip_socket'
+    remote_socket_factory: "ip_socket_factory"
+    aws_iot_client: 'python_aws_iot_thing'
+    azure_iot_client: 'azure_iot'
+    bt_vulnerability_sniffer: 'bt_braktooth'
+    ble_vulnerability_sniffer: 'ble_sweyntooth'
+    openssl: 'openssl_socket'
+    rf_attenuator: '50pa500_attenuator'
+    power_meters:
+        - 'nrf_ppk2_device'
+    plotter: 'power_meter_plotter'
+
+    serial:
+        baud: 115200 # for si917: 115200, rs916: 921600
+    wifi:
+        ssid: 'TESTTESTTEST_3'
+        security: WPA2
+        channel: 1
+        passphrase: 'thisisatestnetwork'
+        server_ip: '192.168.0.1'
+        num_ping_attempts: 10
+        ping_timeout: 4
+    bluetooth:
+        ble_advertising_data: 'HELLO'
+        bt_local_name: "rs911x_bt_spp"
+        bt_pin_code: "4321"
+    aws_iot:
+        hostname: "a2lqafhldpb41r-ats.iot.us-east-1.amazonaws.com"
+        port: 8883
+        client_id: "Python-Thing"
+        thing_name: "Python-Thing"
+        certfile: "python-thing-certificate.pem.crt"
+        keyfile: "python-thing-private.pem.key"
+        cafile: "AWS-IoT-root-CA.crt"
+    ble_vul_sniffer:
+        time_limit: 60
+        log_file: "some_log_file.log"
+        stop_capture_on: ["crash", "error", "exception", "oops"]
+        script: "some_script.py"
+    openssl_config:
+        certfile: "mosquitto-utf.silabs.com.cert.pem"
+        keyfile: "mosquitto-utf.silabs.com.key.pem"
+        port: 5001
+        host: "localhost"
+        tls_version: "-tls1_2"
+        http: false
+    bt_vul_sniffer:
+        time_limit: 60
+        log_file: "some_log_file.log"
+        stop_capture_on: ["crash", "error", "exception", "oops", "Target is not responding"]
+        bt_exploit_type: "au_rand_flooding"
+        script: ""
+
+    net_perf:
+        server_options:
+            interval: 1
+            time: 30
+        client_options:
+            bandwidth: 0.1M
+            interval: 1
+            time: 30
+        host:
+            TCP:
+                port: 5201
+            UDP:
+                port: 5202
+        device:
+            TCP:
+                port: 1234
+                data_len: 1460
+            UDP:
+                port: 1235
+
+                data_len: 1472
+        tos_value: '0xC8'
+
+logger:
+    DLink810AccessPoint: DEBUG
+
+start_state:
+    wifi_access_point:
+        wifi: 'ap_enabled'
+    wifi_dut:
+        device: 'reset'
+        wifi: 'init'
+
+end_state:
+    wifi_access_point:
+        wifi: 'ap_disabled'
+
+constants:
+    time_duration:
+        value: 5
+    ping_count:
+        value: 10
+    iter_count:
+        value: 5
+    retry_count:
+        value: 2
+    time_period:
+        value: 30
+
+recovery_error_codes: ['0xffffffe2', '0xffffffd5']
