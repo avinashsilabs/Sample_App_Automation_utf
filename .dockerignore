@@ -42,3 +42,5 @@ integration_test/base_test_case_definitions.yaml
 utf_core/src/utf/interfaces/bluetooth/sniffer/braktooth/docker/
 
 #common/www/*MB.htm
+example_test_package/pytest.ini
+integration_test/pytest.ini
