@@ -39,6 +39,7 @@ from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
+from utf.interfaces.iperf.iperf_constants import IperfConstants
 
 
 def logger():
@@ -70,7 +71,8 @@ def logger():
 """
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None,
-                 ping_count=None, data_transfer=True, test_name=None, sl_collections=None, switch=None):
+                 ping_count=None, data_transfer=True, test_name=None, sl_collections=None, switch=None, wifi_client=None, net_perf_client=None,
+                 protocol=None):
         super().__init__()
         self.socket_obj = None
         self.wifi_dut = wifi_dut
@@ -86,7 +88,11 @@ class WLanThread(ThreadBase):
         self.switch = switch
         self.rejoin_event = None
         self.dut_addr = None
+        self.host_ip=None
         self.socket_id = None
+        self.wifi_client = wifi_client
+        self.net_perf_client = net_perf_client
+        self.protocol = protocol
 
     def run(self):
         try:
@@ -302,7 +308,13 @@ class WLanThread(ThreadBase):
 
     def socket_data_transfer_recovery_in_rejoin(self, option_name=None, option_val=None, bsdSetSocketOpt=True,
                                                 option_length=None, timeout=10):
-        end_time = 300
+        logger().info(f"\n\nRunning tcp server on remote device \n\n")
+        self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Remote device ip :{self.host_ip}")
+        self.net_perf_client.interfaces.net_perf.init_server(host_ip=self.host_ip, device_ip=
+        self.dut_addr['device_ip'], protocol=self.protocol)
+        self.net_perf_client.interfaces.net_perf.start()
+        end_time = 600
 
         """ This method is responsible to validate socket data transfer recovery after rejoin event """
 
@@ -317,7 +329,7 @@ class WLanThread(ThreadBase):
             logger().error(f"\n\n Socket bind in DUT for socket-id: {self.socket_id}")
             self.wifi_dut.interfaces.wifi.bind(socket_fd=self.socket_id, device_ip=self.dut_addr['device_ip'], timeout=15)
             logger().error(f"\n\n Trying to connect with server ")
-            self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=self.socket_id, timeout=30)
+            self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=self.socket_id, server_ip=self.host_ip, server_port=5002, timeout=30)
 
             if bsdSetSocketOpt:
                 self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=self.socket_id, option_name=option_name, option_val=option_val,
@@ -332,7 +344,7 @@ class WLanThread(ThreadBase):
                                                                          timeout=120)
                 logger().info(f'SEND-Bytes = {send_bytes}')
                 time.sleep(1)
-                while sw.elapsed_sec < 30:
+                while sw.elapsed_sec < 120:
                     send_bytes = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=self.socket_id, data=self.data,
                                                                              timeout=120)
                     logger().info(f'SEND-Bytes = {send_bytes}')
@@ -1537,6 +1549,8 @@ def test_wifi_sdk_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wif
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -1557,14 +1571,14 @@ def test_wifi_sdk_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wif
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "US", "channel": 11})
 def test_wifi_sdk_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants, request,
-                                             sl_collections, sniffer_filter):
+                                             sl_collections, sniffer_filter, net_perf_client, protocol, wifi_client):
     """ Verify Rejoin Functionality with US region enabled in 2.4GHZ band"""
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
 
-    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
-                          test_case_no=19742, sl_collections=sl_collections, switch=switch, data_transfer=False)
+                          test_case_no=19742, sl_collections=sl_collections, switch=switch, data_transfer=False,protocol=protocol, net_perf_client=net_perf_client)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1661,6 +1675,8 @@ def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wi
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -1683,7 +1699,7 @@ def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wi
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 13})
 def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_access_point, wifi_sniffer, wifi_dut, switch, utf_constants,
-                                                request, sl_collections, sniffer_filter):
+                                                request, sl_collections, sniffer_filter,net_perf_client, protocol, wifi_client):
     """ Verify Rejoin Functionality with JP region enabled in 2.4GHZ band,
         # Please Note - ASUS AP doesn't have Japan region, So changed to US region"""
     test_name = request.node.name
@@ -1691,7 +1707,8 @@ def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_access_point, wifi_sniffer,
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
-                          test_case_no=19744, sl_collections=sl_collections, switch=switch, data_transfer=False)
+                          test_case_no=19744, sl_collections=sl_collections, switch=switch, data_transfer=False
+                          ,protocol=protocol, net_perf_client=net_perf_client,wifi_client=wifi_client)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()

@@ -25,6 +25,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
 from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+from utf.interfaces.iperf.iperf_constants import IperfConstants
 
 
 def logger():
@@ -55,7 +56,8 @@ def logger():
 
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None, 
-                 ping_count=None, data_transfer=True, test_name=None, sl_collections=None, switch=None):
+                 ping_count=None, data_transfer=True, test_name=None, sl_collections=None, switch=None, wifi_client=None, net_perf_client=None,
+                 protocol=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -69,6 +71,9 @@ class WLanThread(ThreadBase):
         self.test_name = test_name
         self.switch = switch
         self.dut_addr = None
+        self.wifi_client = wifi_client
+        self.net_perf_client = net_perf_client
+        self.protocol = protocol
         self.socket_obj = SocketDataTransfer(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
                                              time_period=self.time_period, data=self.data)
 
@@ -117,7 +122,13 @@ class WLanThread(ThreadBase):
             raise e
 
     def socket_data_transfer_recovery_in_rejoin(self):
-        end_time = 150
+        logger().info(f"\n\nRunning tcp server on remote device \n\n")
+        self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Remote device ip :{self.host_ip}")
+        self.net_perf_client.interfaces.net_perf.init_server(host_ip=self.host_ip, device_ip=
+        self.dut_addr['device_ip'], protocol=self.protocol)
+        self.net_perf_client.interfaces.net_perf.start()
+        end_time = 600
         """ This method is responsible to validate socket data transfer recovery after rejoin event """
 
         if isinstance(self.wifi_dut.interfaces.wifi, SLWifiCLI):
@@ -131,7 +142,7 @@ class WLanThread(ThreadBase):
             logger().error(f"\n\n Socket bind in DUT for socket-id: {socket_id}")
             self.wifi_dut.interfaces.wifi.bind(socket_fd=socket_id, device_ip=self.dut_addr['device_ip'], timeout=15)
             logger().error(f"\n\n Trying to connect with server ")
-            self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=socket_id, timeout=30)
+            self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=socket_id, server_ip=self.host_ip, server_port=5002, timeout=30)
 
             logger().error(f"\n **** Start validation of socket data transfer in rejoin scenario with AP turn off & "
                            f"Turn on again ****\n")
@@ -142,7 +153,7 @@ class WLanThread(ThreadBase):
                                                                          timeout=120)
                 logger().info(f'SEND-Bytes = {send_bytes}')
                 time.sleep(1)
-                while sw.elapsed_sec < 30:
+                while sw.elapsed_sec < 120:
                     send_bytes = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=socket_id, data=self.data,
                                                                              timeout=120)
                     logger().info(f'SEND-Bytes = {send_bytes}')
@@ -257,6 +268,8 @@ def test_wifi_sdk_instant_bgscan_c19037(wifi_sniffer, wifi_access_point, wifi_du
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -277,7 +290,7 @@ def test_wifi_sdk_instant_bgscan_c19037(wifi_sniffer, wifi_access_point, wifi_du
     },
 )
 def test_wifi_sdk_bgscan_rejoin_infinite_retry_c19038(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
-                                                      sl_collections, sniffer_filter, switch):
+                                                      sl_collections, sniffer_filter, switch, net_perf_client, protocol, wifi_client):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
 
@@ -285,7 +298,8 @@ def test_wifi_sdk_bgscan_rejoin_infinite_retry_c19038(wifi_sniffer, wifi_access_
        If it successfully rejoin to AP bgscan should happen. '''
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
-                          test_case_no=19038, sl_collections=sl_collections, switch=switch, data_transfer=False)
+                          test_case_no=19038, sl_collections=sl_collections, switch=switch, data_transfer=False,
+                          protocol=protocol, net_perf_client=net_perf_client,wifi_client=wifi_client)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
