@@ -584,6 +584,7 @@ devices:
                 image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
                 username: pi
                 password: 'raspberry'
+                skip_rabbitmq_check: True
 
             # these are the RPC-enabled interfaces that will forward all method and property access
             # calls over to the respective instance on the server
@@ -644,6 +645,7 @@ devices:
                 image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
                 username: pi
                 password: 'raspberry'
+                skip_rabbitmq_check: True
             shell:
                 type: 'rpc.rpc_client'
                 # the 'forward_to' property specifies the destination device and interface on the server
@@ -1061,6 +1063,7 @@ devices:
                 host_ip: "192.168.0.152"
                 host_username: "pi"
                 host_password: "raspberry"
+
 
     static_iperf:
         interfaces:
