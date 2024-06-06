@@ -128,7 +128,7 @@ class SnifferValidationProcess:
                                                                                  device_address_2,
                                                                                  filters_name=filters_name_12)
             logger().info(f'\n OUTPUT 2 = {output_2}\n')
-            assert all(output.values()), 'Unable to find expected filter'
+            assert (output_2[1]), 'Unable to find expected filter'
 
     def verify_sniffer_validation_peap(self):
         device_address = {'sa_addr': self.dut_mac_address, 'da_addr': self.ap_mac_address,
@@ -197,7 +197,7 @@ class WPA2Enterprise(ThreadBase):
                                                                         eap_type=self.eap_type,
                                                                         ping_after_power_save=False,
                                                                         channel=self.wifi_access_point.interfaces.wifi.channel,
-                                                                        retry_count=3
+                                                                        retry_count=3, set_eap_cred=False
                                                                         )
                 logger().info(
                     f"device_ip, device_mac : {self.dut_addr['device_ip']}, {self.dut_addr['dut_mac_address']}")
@@ -336,8 +336,8 @@ def test_wsdk_WPA2_EAP_DHE_RSA_AES256_SHA256_TLSv12_C113821(wifi_dut, wifi_acces
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=4)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=4)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -403,8 +403,8 @@ def test_wsdk_WPA2_EAP_DHE_RSA_AES128_SHA256_TLSv12_C113822(wifi_dut, wifi_acces
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=8 | 1)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=8 | 1)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -470,8 +470,8 @@ def test_wsdk_WPA2_EAP_DHE_RSA_AES256_SHA_TLSv12_C113823(wifi_dut, wifi_access_p
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=16)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=16)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -537,8 +537,8 @@ def test_wsdk_WPA2_EAP_DHE_RSA_AES128_SHA_TLSv12_C113824(wifi_dut, wifi_access_p
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=32)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=32)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -604,8 +604,8 @@ def test_wsdk_WPA2_EAP_AES256_SHA256_TLSv12_C113825(wifi_dut, wifi_access_point,
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=64)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=64)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -671,8 +671,8 @@ def test_wsdk_WPA2_EAP_AES128_SHA256_TLSv12_C113826(wifi_dut, wifi_access_point,
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=128)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=128)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -738,8 +738,8 @@ def test_wsdk_WPA2_EAP_AES256_SHA_TLSv12_C113827(wifi_dut, wifi_access_point, wi
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=256)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=256)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -807,8 +807,8 @@ def test_wsdk_WPA2_EAP_RSA_AES256_SHA256_and_RSA_AES256_SHA_TLSv12_C113832(wifi_
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=20)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=20)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -874,8 +874,8 @@ def test_wsdk_WPA2_EAP_all_ciphers_TLSv12_C113833(wifi_dut, wifi_access_point, w
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=8188)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=8188)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -941,8 +941,8 @@ def test_wsdk_WPA2_EAP_AES128_SHA_TLSv12_C113828(wifi_dut, wifi_access_point, wi
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=512)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=512)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -1009,8 +1009,8 @@ def test_wsdk_WPA2_EAP_DHE_RSA_AES256_SHA_TLSv10_C113835(wifi_dut, wifi_access_p
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=16)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=16)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -1077,8 +1077,8 @@ def test_wsdk_WPA2_EAP_DHE_RSA_AES128_SHA_TLSv10_C113836(wifi_dut, wifi_access_p
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=32)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=32)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -1144,8 +1144,8 @@ def test_wsdk_WPA2_EAP_AES256_SHA_TLSv10_C113837(wifi_dut, wifi_access_point, wi
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=256)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=256)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -1211,8 +1211,8 @@ def test_wsdk_WPA2_EAP_AES128_SHA_TLSv10_C113838(wifi_dut, wifi_access_point, wi
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=512)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=512)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -1278,8 +1278,8 @@ def test_wsdk_WPA2_EAP_all_ciphers_TLSv10_C113843(wifi_dut, wifi_access_point, w
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=8188)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=8188)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -1346,8 +1346,8 @@ def test_wsdk_WPA2_EAP_DHE_RSA_AES128_SHA256_ca_cert_1_C113845(wifi_dut, wifi_ac
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=8 | 1)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=8 | 1)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -1415,8 +1415,8 @@ def test_wsdk_WPA2_DHE_RSA_AES128_SHA256_DHE_RSA_AES128_SHA_TLSv10_C113842(wifi_
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=4 | 16)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=4 | 16)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -1486,7 +1486,7 @@ def test_wsdk_WPA2_conn_with_16k_record_size_C113846(wifi_dut, wifi_access_point
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
-        # eap_flags=4 | 16)
+        wifi_dut.interfaces.wifi.set_eap_credentials()
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -1548,8 +1548,8 @@ def test_sdk_WPA2_EAP_PEAP_ca_cert_flag_set_1_C113854(
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=2)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=2)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="peap", sl_collections=sl_collections, data_transfer=True,
@@ -1613,9 +1613,8 @@ def test_sdk_WPA2_EAP_PEAP_ca_cert_flag_set_1_cert_not_loaded_C113855(
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=2)
-
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=2)
         wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
         wifi_dut.interfaces.wifi.set_eap_credentials()
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
@@ -1685,8 +1684,8 @@ def test_sdk_WPA2_EAP_TTLS_ca_cert_flag_set_1_C113856(
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=2)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=2)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="ttls", sl_collections=sl_collections, data_transfer=True,
@@ -1751,9 +1750,8 @@ def test_sdk_WPA2_EAP_ttls_ca_cert_flag_set_1_cert_not_loaded_C113857(
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=2)
-
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=2)
         wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
         wifi_dut.interfaces.wifi.set_eap_credentials()
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
@@ -1828,8 +1826,8 @@ def test_wsdk_WPA2_eap_conn_with_peap_cert_loaded_C113858(
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0,
-                                                                 eap_flags=1)
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=1)
         wifi_dut.interfaces.wifi.load_certs(
             eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
@@ -2062,8 +2060,8 @@ def test_wsdk_WPA2_EAP_non_supported_ciphers_TLSv12_C113834(wifi_dut, wifi_acces
             wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
             wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
             wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                     beacon_missed_count=40, first_time_retry_enable=0,
-                                                                     eap_flags=1024)
+                                                                     beacon_missed_count=40, first_time_retry_enable=0)
+            wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=1024)
             wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
             wifi_dut.interfaces.wifi.set_eap_credentials()
             wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
@@ -2145,8 +2143,8 @@ def test_wsdk_WPA2_EAP_non_supported_ciphers_TLSv10_C113844(wifi_dut, wifi_acces
             wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
             wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
             wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                     beacon_missed_count=40, first_time_retry_enable=0,
-                                                                     eap_flags=1024)
+                                                                     beacon_missed_count=40, first_time_retry_enable=0)
+            wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=1024)
             wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
             wifi_dut.interfaces.wifi.set_eap_credentials()
             wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
@@ -2807,9 +2805,8 @@ def test_wsdk_WPA2_EAP_user_configured_Not_found_TLSv12_C113874(wifi_dut, wifi_a
             wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
             wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
             wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                     beacon_missed_count=40, first_time_retry_enable=0,
-                                                                     eap_flags=1)
-            wifi_dut.interfaces.wifi.set_eap_credentials()
+                                                                     beacon_missed_count=40, first_time_retry_enable=0)
+            wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=1)
             wifi_access_point.interfaces.wifi.stop_ap()
             wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid,
                                           expected_status=SLStatus.SL_STATUS_SI91X_NO_AP_FOUND)
@@ -3473,6 +3470,7 @@ def test_wsdk_WPA2_EAP_Conn_TLS_conn_with_sha384_C113878(wifi_dut, wifi_access_p
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials()
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -3966,6 +3964,7 @@ def test_wsdk_WPA2_EAP_Conn_TLS_conn_with_sha512_C113879(wifi_dut, wifi_access_p
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials()
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                                      protocol=protocol, net_perf_client=net_perf_client, test_name=test_name,
                                      eap_type="tls", sl_collections=sl_collections, data_transfer=True,
@@ -4032,7 +4031,7 @@ def test_wsdk_WPA2_EAP_fast_psp_enb_C113864(wifi_dut, wifi_access_point, wifi_sn
             wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
             wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                      beacon_missed_count=40, first_time_retry_enable=0)
-
+            wifi_dut.interfaces.wifi.set_eap_credentials()
             wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                          wifi_client=wifi_client, protocol=protocol, net_perf_client=net_perf_client,
                                          test_name=test_name, eap_type="tls", sl_collections=sl_collections,
@@ -4222,6 +4221,7 @@ def test_wsdk_WPA2_EAP_ap_disconn_during_data_transfer_C113887(wifi_dut, wifi_ac
             wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
             wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                      beacon_missed_count=40, first_time_retry_enable=0)
+            wifi_dut.interfaces.wifi.set_eap_credentials()
             dut_addr = sl_collections.join_to_eap_network(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                                           eap_type="tls", ping_after_power_save=False,
                                                           channel=wifi_access_point.interfaces.wifi.channel,
