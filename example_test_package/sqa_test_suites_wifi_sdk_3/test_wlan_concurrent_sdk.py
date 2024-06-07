@@ -243,8 +243,8 @@ class ConcurrentThread(ThreadBase):
 
 
 
-pytestmark = [
-  pytest.mark.config(
+
+@pytest.mark.config(
     "wifi_dut",
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
@@ -258,9 +258,6 @@ pytestmark = [
         "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
     },
 )
-  ]
-
-
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -300,6 +297,20 @@ def test_wifi_sdk_concurrent_mode_sta_ap_c19312(wifi_access_point, wifi_dut, wif
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
+    },
+)
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -376,7 +387,20 @@ def test_wifi_sdk_concurrent_mode_sta_ap_c19321(wifi_access_point, wifi_dut, wif
         wifi_dut.interfaces.wifi.stop_ap()
 
 
-
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
+    },
+)
 @pytest.mark.config(
     'wifi_access_point',
     wifi={
@@ -419,6 +443,20 @@ def test_wifi_sdk_device_as_ap_and_sta_c19313(sl_collections, wifi_access_point,
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
+    },
+)
 @pytest.mark.config(
     'wifi_access_point',
     wifi={
@@ -494,6 +532,20 @@ def test_wifi_sdk_device_as_ap_and_sta_c19323(sl_collections, wifi_access_point,
 
 
 @pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
+    },
+)
+@pytest.mark.config(
     'wifi_access_point',
     wifi={
         'ssid': 'Concurent_ap',
@@ -539,6 +591,20 @@ def test_wifi_sdk_device_as_ap_and_sta_c19314(sl_collections, wifi_access_point,
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
+    },
+)
 @pytest.mark.config(
     'wifi_access_point',
     wifi={
@@ -590,7 +656,20 @@ def test_wifi_sdk_device_as_ap_and_sta_c19315(sl_collections, wifi_access_point,
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
-
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
+    },
+)
 @pytest.mark.config(
     'wifi_access_point',
     wifi={
@@ -631,7 +710,20 @@ def test_wifi_sdk_device_as_ap_and_sta_c19319(sl_collections, wifi_access_point,
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
-
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
+    },
+)
 @pytest.mark.config(
     'wifi_access_point',
     wifi={
@@ -683,7 +775,20 @@ def test_wifi_sdk_device_as_ap_and_sta_c19320(sl_collections, wifi_access_point,
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
-
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
+    },
+)
 @pytest.mark.config(
     'wifi_access_point',
     wifi={
@@ -877,7 +982,7 @@ def test_wifi_sdk_device_as_ap_and_sta_c19318(sl_collections, wifi_access_point,
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.WPSSupportDisabled,
@@ -885,8 +990,7 @@ def test_wifi_sdk_device_as_ap_and_sta_c19318(sl_collections, wifi_access_point,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "custom_features": Si91xCustomFeatureBitMap.HiddenSSID | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
-        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
-    },
+    }
 )
 @pytest.mark.config(
     "wifi_clients",
@@ -933,7 +1037,7 @@ def test_wifi_sdk_concurrent_mode_sta_ap_C535823(wifi_access_point, wifi_dut, wi
                                           dtim_beacon_count=1,
                                           beacon_interval=100)
         logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
-        wifi_client.interfaces.wifi.join(ssid="SILABS_AP_MODE", security="WPA2", passphrase="Automation@123", country="US",
+        wifi_client.interfaces.wifi.join(ssid="SILABS_AP_MODE", security="WPA2", passphrase="Automation@123",
                                          scan_ssid=1)
         time.sleep(10)
         dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
@@ -948,13 +1052,10 @@ def test_wifi_sdk_concurrent_mode_sta_ap_C535823(wifi_access_point, wifi_dut, wi
             f"sudo ping -c {10} {dut_ip}")
         assert rc == 0, f"RASPI-STA failed to ping DUT"
         logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
-        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
         logger().info(
             f"DUT MAC ADDRESS :  {dut_mac_address}")
-        ap_addr = dut_mac_address.split(":")
-        ap_mac = int(ap_addr[5][1]) + 1
-        ap_mac_addr = dut_mac_address[:-1] + str(ap_mac)
-        packet_filter1 = f'(wlan.addr == {ap_mac_addr}) && (wlan.fc.type_subtype==8)'
+        packet_filter1 = f'(wlan.addr == {dut_mac_address}) && (wlan.fc.type_subtype==8)'
         logger().info(f'RASPI-STA Disconnecting from DUT-AP')
         wifi_client.interfaces.wifi.leave()
         logger().info("Stop sniffer finally")

@@ -2017,3 +2017,54 @@ def test_wifi_sdk_dutap_eu_region_C551265(wifi_sniffer, wifi_dut,
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features":  Si91xExtCustomFeatureBitMap.IEEE802_11W | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11,
+        "region": 1,
+        "region_code": "us",
+    },
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+               "security": "WPA2",
+               "ssid": "SILABS_AP_MODE",
+               "passphrase": "Automation@123",
+               "country": "US",
+               "channel": "11",
+               "interface": "wlan0",
+               }
+         }
+)
+def test_wifi_sdk_dutap_us_region_enable_11w_C551267(wifi_sniffer, wifi_dut,
+                                                     wifi_clients, sl_collections, utf_constants, sniffer_filter):
+    """Verify APUT beacon with region US, WPA2 security, Channel 11, DTIM 1 , Beacon interval 100ms configurations,11w enable"""
+    try:
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+                                             utf_constants, capture_filename="test_C551267",
+                                             testcase_no=551267)
+        ap_dut_obj.start()
+        ap_dut_obj.wait_for_exit()
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            wlan_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'], radio_ch=ap_dut_obj.channel,
+            filter_name="beacon_ap_mode_us_region")
+        logger().info(f"packet_filter1: {packet_filter1}")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find beacon frame with Region US in Sniffer'
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
