@@ -268,7 +268,7 @@ devices:
         interfaces:
             multicast:
                 type: 'multicast.multicast_socket'
-                ip_version: 0
+                ip_version: 4
                 multicast_ip: '239.255.255.250'
                 multicast_ip2: '239.255.255.250'
                 dut_local_socket: 5001
@@ -285,7 +285,7 @@ devices:
         interfaces:
             socket:
                 type: 'socket.ip_socket'
-                ip_version: 0
+                ip_version: 4
                 dut_local_socket: 5001
                 destination_socket: 5001
                 server_ip: '192.168.100.50'
@@ -617,7 +617,7 @@ devices:
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
                 client_limit: 1
-                ip_version: 0
+                ip_version: 4
                 buffer_length: 1300
                 no_of_pkts: 1000
                 time: 30
@@ -631,7 +631,7 @@ devices:
                 type: 'ssl.server.static'
                 hostname: '192.168.1.6'
                 port: 5001
-                ip_version: 0
+                ip_version: 4
                 buffer_length: 1300
                 no_of_pkts: 500
                 time: 30
@@ -649,7 +649,7 @@ devices:
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
                 client_limit: 1
-                ip_version: 0
+                ip_version: 4
                 buffer_length: 1470
                 no_of_pkts: 500
                 time: 30
