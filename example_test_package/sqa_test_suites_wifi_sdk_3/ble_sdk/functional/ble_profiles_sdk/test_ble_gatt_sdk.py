@@ -1001,3 +1001,93 @@ def test_ble_sdk_read_value_of_descriptor_from_RD1_C19867(wifi_dut, ble_client, 
 
     finally:
         ble_client.interfaces.bluetooth.close()
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
+                                         "ble_disconnect"])
+def test_ble_sdk_fetch_desc_that_are_not_supported_C19865(wifi_dut, ble_client, utf_constants, sl_collections):
+    try:
+        logger().info(" ******* Start BLE GATT Service ******* ")
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
+        assert bt_dut_address, "Failed to load bt address..."
+        index = 1
+        logger().info("********Adding Heartrate Service to the dut..UUID VALUE : 0x180D************")
+        wifi_dut.interfaces.wifi.ble_add_service(uid=0x180D)
+        # ble_add_char_serv_att 10807 26 1 2 -> Heart rate measurement(0x2A37)
+        wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x2A37, service_handler_num=index, permissions=0x2,
+                                                           value_handler_num=index + 1)
+        wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x2A37, value_handler_num=index + 1, permissions=0x2)
+
+        # ble_add_char_serv_att 10808 26 1 2 -> Body sensor location(0x2A38)
+        wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x2A38, service_handler_num=index + 2,
+                                                           value_handler_num=index + 3, permissions=0x2)
+        wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x2A38, value_handler_num=index + 3, permissions=0x2)
+
+        # ble_add_char_serv_att 10809 26 1 2 -> Heart rate control point(0x2A39)
+        wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x2A39, service_handler_num=index + 4,
+                                                           value_handler_num=index + 5, permissions=0x2)
+        wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x2A39, value_handler_num=index + 5, permissions=0x2)
+        logger().info("start ble advertising....")
+        wifi_dut.interfaces.wifi.ble_start_advertising()
+
+        enable_wifi_ps = wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        assert enable_wifi_ps == 0, 'failed to enable wlan power save'
+        enable_bt_ps = wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps == 0, 'failed to enable bt power save'
+
+        logger().info("scanning for ble client.. ")
+        bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
+                                                                           service_classes=[HeartRateService])
+        assert bt_client_address, "The client address is not found"
+        device_found = False
+        sw = Stopwatch()
+        while sw.elapsed_sec < 30:
+            found_devices = ble_client.interfaces.bluetooth.get_devices()
+            if (
+                    bt_dut_address in found_devices
+                    and found_devices[bt_dut_address]
+                    == wifi_dut.interfaces.wifi.ble_advertising_data
+            ):
+                device_found = True
+                break
+
+        ble_client.interfaces.bluetooth.stop_scanning()
+        assert device_found
+        logger().info("connecting to dut....")
+        ble_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+        time.sleep(60)
+        logger().info("verifying dut state after the conn......")
+        state = wifi_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected, "Device isn't in connected state"
+        logger().info(f"get all profiles")
+        uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
+        assert HeartRateService.UUID.lower() in uuids is not None, "Could not fetch the heartrate profile"
+        logger().info(" Resolving Heartrate profile from RD1")
+        start_handle, end_handle, data = wifi_dut.interfaces.wifi.ble_get_profile_async(
+            ble_remote_dev_address=bt_client_address,
+            uuid=int(HeartRateService.UUID, 16))
+        assert start_handle is not None, "failed to fetch the start handle.."
+        assert end_handle is not None, "failed to fetch end handle.."
+        logger().info(f"********fetching descriptor*************")
+        try:
+            wifi_dut.interfaces.wifi.ble_get_att_descriptor(ble_devices_address=bt_client_address, start_handle=0x20,
+                                                           end_handle=0x21)
+        except Exception as Err:
+            if "0x4a0a" in str(Err):
+                logger().info(f"stop ap failed with : {Err} after giving it for 2nd time")
+            else:
+                raise Err
+        logger().info(f"Ble disconnect from remote")
+        ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+        time.sleep(1)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        logger().info(f"Removing services on dut")
+        wifi_dut.interfaces.wifi.ble_remove_service()
+        ble_client.interfaces.bluetooth.close()
