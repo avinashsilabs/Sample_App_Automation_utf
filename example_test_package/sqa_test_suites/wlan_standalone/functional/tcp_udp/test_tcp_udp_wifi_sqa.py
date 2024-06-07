@@ -1055,7 +1055,6 @@ def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point,
 
         time.sleep(5)
         logger().info("Stop sniffer capture")
-        wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count'], \
