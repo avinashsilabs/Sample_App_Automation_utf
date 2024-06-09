@@ -1256,3 +1256,5 @@ def test_wlan_ble_connected_udp_rx_with_11n_C537849(firmware_loader, wifi_sniffe
         wlan_obj.wait_for_exit()
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
