@@ -1349,11 +1349,13 @@ def test_DUTAP_open_10_client_sockets_send_tx_C19473(wifi_access_point, wifi_sni
 @pytest.mark.config(
     "wifi_client",
     wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "interface": "wlan0",
-          "channel": 11, }
+          "channel": 11}
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
-def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_access_point, wifi_sniffer, wifi_dut, wifi_client, channel, utf_constants, remote_socket_factory):
+def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_access_point, wifi_sniffer, wifi_dut,
+                                                                          wifi_client, channel, utf_constants,
+                                                                          remote_socket_factory):
     try:
         socket_limit = 11
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1363,24 +1365,27 @@ def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_a
         dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
         server_base_port = 5001
         dut_sockets = []
-        for index in range(socket_limit):
-            server_port = server_base_port + index
-            logger().info(f"opening socket_id_{index}")
-            sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
-            dut_sockets.append(sock)
-            wifi_dut.interfaces.wifi.bind(sock, dut_ip, server_port)
-            time.sleep(2)
-        wifi_dut.interfaces.wifi.close_sockets()
-        logger().info("******* Initiating disconnection on STA(Raspberry pi)*******")
-        wifi_client.interfaces.wifi.leave()
+        try:
+            for index in range(socket_limit):
+                server_port = server_base_port + index
+                logger().info(f"opening socket_id_{index}")
+                sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(socket_flag=SocketType.ASYNCHRONOUS)
+                dut_sockets.append(sock)
+                wifi_dut.interfaces.wifi.bind(sock, dut_ip, server_port)
+                time.sleep(2)
+        except Exception as err:
+            if "0xffffffff" not in str(err).lower():
+                raise err
+        logger().info("\n\n****************** Getting Expected Error Code Value ******************")
+        with pytest.raises(WlanError) as exc_info:
+            wifi_dut.interfaces.wifi.wlan_get_status()
+        logger().info(f">>>>>>>>>> Received Error Code: {hex(exc_info.value.error_code)}")
+        assert exc_info.value.error_code == 0x17, "DUT sent wrong error code, expected is 0x17"
+
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as err:
-        error_code = "0xffffffff"
-        if error_code in str(err):
-            logger().info(f"expected error code : {error_code}")
-        else:
-            raise err
+        raise err
     finally:
         cleanup_obj = Cleanup(wifi_dut)
         cleanup_obj.dut_clean_up()
