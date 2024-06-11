@@ -2973,8 +2973,7 @@ def test_ble_and_Wlan_data_transfer_for_5min_C133549(wifi_dut, ble_client, wifi_
 
             logger().info("Start ble advertising on DUT")
             # 256(0x100), 512(0x200), 7(0x07)
-            wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_int_min=256, ble_adv_int_max=512,
-                                                           ble_adv_channel_map=7)
+            wifi_dut.interfaces.wifi.ble_start_advertising()
             time.sleep(3)
 
             logger().info(f"Begin Scanning for BLE devices")
