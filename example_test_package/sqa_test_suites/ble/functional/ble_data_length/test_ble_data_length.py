@@ -11,7 +11,8 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode
 from utf.utils.logger import get_logger
 from utf.interfaces.bluetooth.bluez.gatt_application.heart_rate_service import HeartRateService, \
     HeartRateControlPointCharacteristic
-
+import string
+import random
 
 def logger():
     return get_logger(__name__)
@@ -34,7 +35,6 @@ def logger():
     Author: RaviNemali
 """
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -50,112 +50,122 @@ def logger():
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
-def test_ble_slave_data_length_100_bytes_tx_rx_C19922(ble_dut, ble_client):
-    with BleLogs(start_collecting_logs=True,
-                 bt_log_path="./reports/test_ble_slave_data_length_100_bytes_tx_rx_C19922.log"):
-        service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-        char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+def test_ble_slave_data_length_100_bytes_tx_rx_C19922(ble_dut, ble_client, utf_constants):
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path="./reports/test_ble_slave_data_length_100_bytes_tx_rx_C19922.log"):
+            service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+            char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
-        logger().info("======= start ble in dut")
-        bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert bt_dut_address, "failed to initialize ble in dut"
-        ble_dut.interfaces.bluetooth.ble_add_service(uid=0x6E)
-        ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x6F)
-        ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x6F)
+            logger().info("======= start ble in dut")
+            bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+            assert bt_dut_address, "failed to initialize ble in dut"
+            ble_dut.interfaces.bluetooth.ble_add_service(uid=0x1AA1)
+            ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x1BB1)
+            ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x1BB1)
 
-        logger().info("======= start ble adv in dut")
-        ble_dut.interfaces.bluetooth.ble_start_advertising()
+            logger().info("======= start ble adv in dut")
+            ble_dut.interfaces.bluetooth.ble_start_advertising()
 
-        logger().info("======= enable power save")
-        ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
-        ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
-        number_of_iterations = 11
-        for i in range(1, number_of_iterations):
-            logger().info(f"======= spinning the case for count of {i}")
-            time.sleep(0.2)
-            logger().info("======= start scanning in remote ble device")
-            bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-            assert bt_client_address, "failed to start scan in remote device"
+            logger().info("======= enable power save")
+            ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
+            ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                       RS9116PowerSaveProcedureTypes.FastPowerSave)
+            iter_count = utf_constants.get("iter_count")
+            for i in range(1, iter_count):
+                logger().info(f"======= spinning the case for count of {i}")
+                time.sleep(0.2)
+                logger().info("======= start scanning in remote ble device")
+                bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+                assert bt_client_address, "failed to start scan in remote device"
 
-            device_found = False
-            sw = Stopwatch()
-            while sw.elapsed_sec < 30:
-                found_devices = ble_client.interfaces.bluetooth.get_devices()
-                if bt_dut_address in found_devices and \
-                        found_devices[bt_dut_address] == ble_dut.interfaces.bluetooth.ble_advertising_data:
-                    device_found = True
-                    break
+                device_found = False
+                sw = Stopwatch()
+                while sw.elapsed_sec < 30:
+                    found_devices = ble_client.interfaces.bluetooth.get_devices()
+                    if bt_dut_address in found_devices and \
+                            found_devices[bt_dut_address] == ble_dut.interfaces.bluetooth.ble_advertising_data:
+                        device_found = True
+                        break
 
-            ble_client.interfaces.bluetooth.stop_scanning()
-            assert device_found, "no device found"
+                ble_client.interfaces.bluetooth.stop_scanning()
+                assert device_found, "no device found"
 
-            logger().info("======= connect to ble dut")
-            ble_client.interfaces.bluetooth.connect(bt_dut_address)
-            time.sleep(1)
+                logger().info("======= connect to ble dut")
+                ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
+                                                        min_conn_interval=int(int(80) / 1.25),
+                                                        max_conn_interval=int(int(80) / 1.25),
+                                                        conn_latency=0,
+                                                        supervision_timeout=800)
+                time.sleep(1)
 
-            logger().info("======= get connection state")
-            state = ble_dut.interfaces.wifi.ble_get_device_state()
-            state_int = int(state) if state.isdigit() else -1
-            assert state_int == BLEDeviceState.Connected, "======= device is in disconnection state"
+                logger().info("======= get connection state")
+                state = ble_dut.interfaces.wifi.ble_get_device_state()
+                state_int = int(state) if state.isdigit() else -1
+                assert state_int == BLEDeviceState.Connected, "======= device is in disconnection state"
 
-            servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
-            assert len(servs) > 0, "no services fetched"
-            assert len(chars) > 0, "fetched characters are empty"
+                servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+                assert len(servs) > 0, "no services fetched"
+                assert len(chars) > 0, "fetched characters are empty"
 
-            char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
-                                                                                                        service_uid=service_uid,
-                                                                                                        char_uid=char_uid)
-            assert char_path, "characters are empty"
-            assert len(char_props) > 0, "length of characters is 0"
-            try:
-                read_charac_value = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
-                logger().info(f"read_charac_value = {read_charac_value}")
-            except Exception as e:
-                if read_charac_value != "data":
-                    logger().warning(f"read_charac_value command failed:{e},\nTrying for 2nd time")
-                    ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
-
-            # subscribe to notifications
-            ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
-            ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
-                                                                                    char_uid=char_uid)
-
-            data = "testwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdata"
-            sw = Stopwatch()
-            while sw.elapsed_sec < 60:
-                ble_dut.interfaces.bluetooth.ble_notify_custom_value(data=data)
-                time.sleep(5)
-
-            sw = Stopwatch()
-            while sw.elapsed_sec < 60:
-                data1 = "rxsidedatarxsidedatarxsidedatarxsidedatarxsidedatarxsidedatarxsidedatarxsidedatarxsidedatarxsidedata"
+                char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
+                                                                                                            service_uid=service_uid,
+                                                                                                            char_uid=char_uid)
+                assert char_path, "characters are empty"
+                assert len(char_props) > 0, "length of characters is 0"
                 try:
-                    ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(char_path=char_path, data=data1)
-                    time.sleep(1)
+                    read_charac_value = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+                    logger().info(f"read_charac_value = {read_charac_value}")
                 except Exception as e:
-                    logger().warning(f"Exception: {e}")
-            result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
-            assert result == data1, "failed to read value"
-            # unsubscribe to notifications
-            ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-            ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-            time.sleep(1)
+                    if read_charac_value != "data":
+                        logger().warning(f"read_charac_value command failed:{e},\nTrying for 2nd time")
+                        ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
 
-            logger().info("======= validate data")
-            notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-            logger().info(notifications)
-            assert len(notifications) > 0, "received data is empty"
-            assert notifications[0] == data, "failed to fetch data"
+                # subscribe to notifications
+                ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+                ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
+                                                                                        char_uid=char_uid)
+                sw = Stopwatch()
+                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+                while sw.elapsed_sec < 60:
+                    ble_dut.interfaces.bluetooth.ble_notify_custom_value(data=data)
+                    time.sleep(5)
 
-            logger().info("======= disconnecting from dut")
-            ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
-            ble_client.interfaces.bluetooth.close()
-            time.sleep(0.2)
-            logger().info("======= start ble adv in dut")
-            ble_dut.interfaces.bluetooth.ble_start_advertising()
-        ble_dut.interfaces.wifi.ble_stop_advertising()
+                sw = Stopwatch()
+                data1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+                while sw.elapsed_sec < 60:
+                    try:
+                        ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(char_path=char_path, data=data1)
+                        time.sleep(1)
+                    except Exception as e:
+                        logger().warning(f"Exception: {e}")
+                        raise e
+                result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+                assert result == data1, "failed to read value"
+
+                # unsubscribe to notifications
+                ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+                ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+                time.sleep(1)
+
+                logger().info("======= validate data")
+                notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+                logger().info(notifications)
+                assert len(notifications) > 0, "received data is empty"
+                assert notifications[0] == data, "failed to fetch data"
+
+                logger().info("======= disconnecting from dut")
+                ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+                ble_client.interfaces.bluetooth.close()
+                time.sleep(0.2)
+                logger().info("======= start ble adv in dut")
+                ble_dut.interfaces.bluetooth.ble_start_advertising()
+    finally:
+        logger().info("ble_remove_service")
+        ble_dut.interfaces.wifi.ble_remove_service()
+        logger().info("======= stop ble adv in dut")
+        ble_dut.interfaces.bluetooth.ble_stop_advertising()
 
 
 @pytest.mark.config(
@@ -173,94 +183,105 @@ def test_ble_slave_data_length_100_bytes_tx_rx_C19922(ble_dut, ble_client):
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
-def test_ble_slave_data_length_20_bytes_C19920(ble_dut, ble_client):
-    with BleLogs(start_collecting_logs=True, bt_log_path="./reports/test_ble_slave_data_length_20_bytes_C19920.log"):
-        service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-        char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+def test_ble_slave_data_length_20_bytes_C19920(ble_dut, ble_client, utf_constants):
+    try:
+        with BleLogs(start_collecting_logs=True, bt_log_path="./reports/test_ble_slave_data_length_20_bytes_C19920.log"):
+            service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+            char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
-        logger().info("======= start ble in dut")
-        bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert bt_dut_address, "failed to initialize ble in dut"
-        ble_dut.interfaces.bluetooth.ble_add_service(uid=0x6E)
-        ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x6F)
-        ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x6F)
+            logger().info("======= start ble in dut")
+            bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+            assert bt_dut_address, "failed to initialize ble in dut"
+            ble_dut.interfaces.bluetooth.ble_add_service(uid=0x1AA1)
+            ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x1BB1)
+            ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x1BB1)
 
-        logger().info("======= start ble adv in dut")
-        ble_dut.interfaces.bluetooth.ble_start_advertising()
-
-        logger().info("======= enable power save")
-        ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
-        ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
-
-        for i in range(1, 11):
-            logger().info(f"======= spinning the case for count of {i}")
-
-            logger().info("======= start scanning in remote ble device")
-            bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-            assert bt_client_address, "failed to start scan in remote device"
-
-            device_found = False
-            sw = Stopwatch()
-            while sw.elapsed_sec < 30:
-                found_devices = ble_client.interfaces.bluetooth.get_devices()
-                if bt_dut_address in found_devices and \
-                        found_devices[bt_dut_address] == ble_dut.interfaces.bluetooth.ble_advertising_data:
-                    device_found = True
-                    break
-
-            ble_client.interfaces.bluetooth.stop_scanning()
-            assert device_found, "no device found"
-
-            logger().info("======= connect to ble dut")
-            ble_client.interfaces.bluetooth.connect(bt_dut_address)
-            time.sleep(1)
-
-            logger().info("======= get connection state")
-            state = ble_dut.interfaces.wifi.ble_get_device_state()
-            state_int = int(state) if state.isdigit() else -1
-            assert state_int == BLEDeviceState.Connected, "======= device is in disconnection state"
-
-            servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
-            assert len(servs) > 0, "no services fetched"
-            assert len(chars) > 0, "fetched characters are empty"
-
-            char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
-                                                                                                        service_uid=service_uid,
-                                                                                                        char_uid=char_uid)
-            assert char_path, "characters are empty"
-            assert len(char_props) > 0, "length of characters is 0"
-
-            ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
-
-            # subscribe to notifications
-            ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
-            ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
-                                                                                    char_uid=char_uid)
-
-            data = "testwentybytesofdata"
-            sw = Stopwatch()
-            while sw.elapsed_sec < 60:
-                ble_dut.interfaces.bluetooth.ble_notify_custom_value(data=data)
-                time.sleep(5)
-            # unsubscribe to notifications
-            ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-            ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-            time.sleep(1)
-
-            logger().info("======= validate data")
-            notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-            logger().info(notifications)
-            assert len(notifications) > 0, "received data is empty"
-            assert notifications[0] == data, "failed to fetch data"
-
-            logger().info("======= disconnecting from dut")
-            ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
-            ble_client.interfaces.bluetooth.close()
-            time.sleep(0.2)
             logger().info("======= start ble adv in dut")
             ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+            logger().info("======= enable power save")
+            ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
+            ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                       RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+            iter_count = utf_constants.get("iter_count")
+            for i in range(1, iter_count):
+                logger().info(f"======= spinning the case for count of {i}")
+
+                logger().info("======= start scanning in remote ble device")
+                bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+                assert bt_client_address, "failed to start scan in remote device"
+
+                device_found = False
+                sw = Stopwatch()
+                while sw.elapsed_sec < 30:
+                    found_devices = ble_client.interfaces.bluetooth.get_devices()
+                    if bt_dut_address in found_devices and \
+                            found_devices[bt_dut_address] == ble_dut.interfaces.bluetooth.ble_advertising_data:
+                        device_found = True
+                        break
+
+                ble_client.interfaces.bluetooth.stop_scanning()
+                assert device_found, "no device found"
+
+                logger().info("======= connect to ble dut")
+                ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
+                                                        min_conn_interval=int(int(80) / 1.25),
+                                                        max_conn_interval=int(int(80) / 1.25),
+                                                        conn_latency=0,
+                                                        supervision_timeout=800)
+                time.sleep(1)
+
+                logger().info("======= get connection state")
+                state = ble_dut.interfaces.wifi.ble_get_device_state()
+                state_int = int(state) if state.isdigit() else -1
+                assert state_int == BLEDeviceState.Connected, "======= device is in disconnection state"
+
+                servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+                assert len(servs) > 0, "no services fetched"
+                assert len(chars) > 0, "fetched characters are empty"
+
+                char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
+                                                                                                            service_uid=service_uid,
+                                                                                                            char_uid=char_uid)
+                assert char_path, "characters are empty"
+                assert len(char_props) > 0, "length of characters is 0"
+
+                ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+
+                # subscribe to notifications
+                ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+                ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
+                                                                                        char_uid=char_uid)
+                sw = Stopwatch()
+                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+                while sw.elapsed_sec < 60:
+                    ble_dut.interfaces.bluetooth.ble_notify_custom_value(data=data)
+                    time.sleep(5)
+
+                # unsubscribe to notifications
+                ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+                ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+                time.sleep(1)
+
+                logger().info("======= validate data")
+                notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+                logger().info(notifications)
+                assert len(notifications) > 0, "received data is empty"
+                assert notifications[0] == data, "failed to fetch data"
+
+                logger().info("======= disconnecting from dut")
+                ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+                ble_client.interfaces.bluetooth.close()
+                time.sleep(0.2)
+                logger().info("======= start ble adv in dut")
+                ble_dut.interfaces.bluetooth.ble_start_advertising()
+    finally:
+        logger().info("ble_remove_service")
+        ble_dut.interfaces.wifi.ble_remove_service()
+        logger().info("======= stop ble adv in dut")
+        ble_dut.interfaces.bluetooth.ble_stop_advertising()
 
 
 @pytest.mark.config(
@@ -279,96 +300,103 @@ def test_ble_slave_data_length_20_bytes_C19920(ble_dut, ble_client):
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
 def test_ble_slave_data_length_230_bytes_tx_C19923(ble_dut, ble_client, utf_constants):
-    with BleLogs(start_collecting_logs=True,
-                 bt_log_path="./reports/test_ble_slave_data_length_230_bytes_tx_C19923.log"):
-        service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-        char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path="./reports/test_ble_slave_data_length_230_bytes_tx_C19923.log"):
+            service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+            char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
-        logger().info("======= start ble in dut")
-        bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert bt_dut_address, "failed to initialize ble in dut"
-        ble_dut.interfaces.bluetooth.ble_add_service(uid=0x6E)
-        ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x6F)
-        ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x6F)
+            logger().info("======= start ble in dut")
+            bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+            assert bt_dut_address, "failed to initialize ble in dut"
+            ble_dut.interfaces.bluetooth.ble_add_service(uid=0x1AA1)
+            ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x1BB1)
+            ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x1BB1)
 
-        logger().info("======= start ble adv in dut")
-        ble_dut.interfaces.bluetooth.ble_start_advertising()
-
-        logger().info("======= enable power save")
-        ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
-        ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
-        for i in range(1, 11):
-            logger().info(f"======= spinning the case for count of {i}")
-            logger().info("======= start scanning in remote ble device")
-            bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-            assert bt_client_address, "failed to start scan in remote device"
-
-            device_found = False
-            sw = Stopwatch()
-            while sw.elapsed_sec < 30:
-                found_devices = ble_client.interfaces.bluetooth.get_devices()
-                if bt_dut_address in found_devices and \
-                        found_devices[bt_dut_address] == ble_dut.interfaces.bluetooth.ble_advertising_data:
-                    device_found = True
-                    break
-
-            ble_client.interfaces.bluetooth.stop_scanning()
-            assert device_found, "no device found"
-
-            logger().info("======= connect to ble dut")
-            ble_client.interfaces.bluetooth.connect(bt_dut_address)
-            time.sleep(5)
-
-            logger().info("======= get connection state")
-            state = ble_dut.interfaces.bluetooth.ble_get_device_state()
-            state_int = int(state) if state.isdigit() else -1
-            assert state_int == BLEDeviceState.Connected, "======= device is in disconnection state"
-
-            servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
-            assert len(servs) > 0, "no services fetched"
-            assert len(chars) > 0, "fetched characters are empty"
-
-            char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
-                                                                                                        service_uid=service_uid,
-                                                                                                        char_uid=char_uid)
-            assert char_path, "characters are empty"
-            assert len(char_props) > 0, "length of characters is 0"
-
-            ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
-
-            # subscribe to notifications
-            ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
-            ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
-                                                                                    char_uid=char_uid)
-
-            data = "testwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybyuhujhsjsgshsjasgshsjsgshsvxhsbxjhsbjnj"
-            while sw.elapsed_sec < 60:
-                ble_dut.interfaces.bluetooth.ble_notify_custom_value(data=data)
-                time.sleep(5)
-            # unsubscribe to notifications
-            ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-            ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-            time.sleep(1)
-
-            logger().info("======= validate data")
-            notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-            logger().info(notifications)
-            assert len(notifications) > 0, "received data is empty"
-            assert notifications[0] == data, "failed to fetch data"
-
-            iter_count = utf_constants.get("iter_count")
-            if i == iter_count:
-                logger().info("ble_remove_service")
-                ble_dut.interfaces.wifi.ble_remove_service()
-
-            logger().info("======= disconnecting from dut")
-            ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
-            ble_client.interfaces.bluetooth.close()
-            time.sleep(0.2)
             logger().info("======= start ble adv in dut")
             ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+            logger().info("======= enable power save")
+            ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
+            ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                       RS9116PowerSaveProcedureTypes.FastPowerSave)
+            iter_count = utf_constants.get("iter_count")
+            for i in range(1, iter_count):
+                logger().info(f"======= spinning the case for count of {i}")
+                logger().info("======= start scanning in remote ble device")
+                bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+                assert bt_client_address, "failed to start scan in remote device"
+
+                device_found = False
+                sw = Stopwatch()
+                while sw.elapsed_sec < 30:
+                    found_devices = ble_client.interfaces.bluetooth.get_devices()
+                    if bt_dut_address in found_devices and \
+                            found_devices[bt_dut_address] == ble_dut.interfaces.bluetooth.ble_advertising_data:
+                        device_found = True
+                        break
+
+                ble_client.interfaces.bluetooth.stop_scanning()
+                assert device_found, "no device found"
+
+                logger().info("======= connect to ble dut")
+                ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
+                                                        min_conn_interval=int(int(80) / 1.25),
+                                                        max_conn_interval=int(int(80) / 1.25),
+                                                        conn_latency=0,
+                                                        supervision_timeout=800)
+                time.sleep(5)
+
+                logger().info("======= get connection state")
+                state = ble_dut.interfaces.bluetooth.ble_get_device_state()
+                state_int = int(state) if state.isdigit() else -1
+                assert state_int == BLEDeviceState.Connected, "======= device is in disconnection state"
+
+                servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+                assert len(servs) > 0, "no services fetched"
+                assert len(chars) > 0, "fetched characters are empty"
+
+                char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
+                                                                                                            service_uid=service_uid,
+                                                                                                            char_uid=char_uid)
+                assert char_path, "characters are empty"
+                assert len(char_props) > 0, "length of characters is 0"
+
+                ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+
+                # subscribe to notifications
+                ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+                ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
+                                                                                        char_uid=char_uid)
+                sw = Stopwatch()
+                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=230))
+                while sw.elapsed_sec < 60:
+                    ble_dut.interfaces.bluetooth.ble_notify_custom_value(data=data)
+                    time.sleep(5)
+
+                # unsubscribe to notifications
+                ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+                ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+                time.sleep(1)
+
+                logger().info("======= validate data")
+                notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+                logger().info(notifications)
+                assert len(notifications) > 0, "received data is empty"
+                assert notifications[0] == data, "failed to fetch data"
+
+                logger().info("======= disconnecting from dut")
+                ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+                ble_client.interfaces.bluetooth.close()
+                time.sleep(0.2)
+                logger().info("======= start ble adv in dut")
+                ble_dut.interfaces.bluetooth.ble_start_advertising()
+    finally:
+        logger().info("ble_remove_service")
+        ble_dut.interfaces.wifi.ble_remove_service()
+        logger().info("======= stop ble adv in dut")
+        ble_dut.interfaces.bluetooth.ble_stop_advertising()
 
 
 @pytest.mark.config(
@@ -389,104 +417,109 @@ def test_ble_slave_data_length_230_bytes_tx_C19923(ble_dut, ble_client, utf_cons
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
 def test_ble_slave_data_length_20_bytes_duty_cycle_C19926(ble_dut, ble_client, utf_constants):
-    with BleLogs(start_collecting_logs=True,
-                 bt_log_path="./reports/test_ble_slave_data_length_20_bytes_duty_cycle_C19926.log"):
-        service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-        char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path="./reports/test_ble_slave_data_length_20_bytes_duty_cycle_C19926.log"):
+            service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+            char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
-        logger().info("======= start ble in dut")
-        bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert bt_dut_address, "failed to initialize ble in dut"
-        ble_dut.interfaces.bluetooth.ble_add_service(uid=0x6E)
-        ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x6F)
-        ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x6F)
+            logger().info("======= start ble in dut")
+            bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+            assert bt_dut_address, "failed to initialize ble in dut"
+            ble_dut.interfaces.bluetooth.ble_add_service(uid=0x1AA1)
+            ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x1BB1)
+            ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x1BB1)
 
-        logger().info("======= start ble adv in dut")
-        ble_dut.interfaces.bluetooth.ble_start_advertising()
-
-        logger().info("======= enable power save")
-        ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
-        ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
-
-        for i in range(1, 11):
-            logger().info(f"======= spinning the case for count of {i}")
-            logger().info("======= start scanning in remote ble device")
-            bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-            assert bt_client_address, "failed to start scan in remote device"
-
-            device_found = False
-            sw = Stopwatch()
-            while sw.elapsed_sec < 30:
-                found_devices = ble_client.interfaces.bluetooth.get_devices()
-                if bt_dut_address in found_devices and \
-                        found_devices[bt_dut_address] == ble_dut.interfaces.bluetooth.ble_advertising_data:
-                    device_found = True
-                    break
-
-            ble_client.interfaces.bluetooth.stop_scanning()
-            assert device_found, "no device found"
-
-            logger().info("======= connect to ble dut")
-            ble_client.interfaces.bluetooth.connect(bt_dut_address)
-            time.sleep(1)
-
-            logger().info("======= get connection state")
-            state = ble_dut.interfaces.wifi.ble_get_device_state()
-            state_int = int(state) if state.isdigit() else -1
-            assert state_int == BLEDeviceState.Connected, "======= device is in disconnection state"
-
-            servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
-            assert len(servs) > 0, "no services fetched"
-            assert len(chars) > 0, "fetched characters are empty"
-
-            char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(
-                services=servs, service_uid=service_uid, char_uid=char_uid)
-            assert char_path, "characters are empty"
-            assert len(char_props) > 0, "length of characters is 0"
-
-            try:
-                read_charac_value = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
-                logger().info(f"read_charac_value = {read_charac_value}")
-            except Exception as e:
-                if read_charac_value != "data":
-                    logger().warning(f"read_charac_value command failed:{e},\nTrying for 2nd time")
-                    ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
-
-            # subscribe to notifications
-            ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
-            ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
-                                                                                    char_uid=char_uid)
-
-            data = "testwentybytesofdata"
-            while sw.elapsed_sec < 60:
-                ble_dut.interfaces.bluetooth.ble_notify_custom_value(data=data)
-                time.sleep(5)
-
-            # unsubscribe to notifications
-            ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-            ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-            time.sleep(1)
-
-            logger().info("======= validate data")
-            notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-            logger().info(notifications)
-            assert len(notifications) > 0, "received data is empty"
-            assert notifications[0] == data, "failed to fetch data"
-
-            iter_count = utf_constants.get("iter_count")
-            if i == iter_count:
-                logger().info("ble_remove_service")
-                ble_dut.interfaces.wifi.ble_remove_service()
-
-            logger().info("======= disconnecting from dut")
-            ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
-            ble_client.interfaces.bluetooth.close()
-            time.sleep(0.2)
             logger().info("======= start ble adv in dut")
             ble_dut.interfaces.bluetooth.ble_start_advertising()
-        ble_dut.interfaces.wifi.ble_stop_advertising()
+
+            logger().info("======= enable power save")
+            ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
+            ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                       RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+            iter_count = utf_constants.get("iter_count")
+            for i in range(1, iter_count):
+                logger().info(f"======= spinning the case for count of {i}")
+                logger().info("======= start scanning in remote ble device")
+                bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+                assert bt_client_address, "failed to start scan in remote device"
+
+                device_found = False
+                sw = Stopwatch()
+                while sw.elapsed_sec < 30:
+                    found_devices = ble_client.interfaces.bluetooth.get_devices()
+                    if bt_dut_address in found_devices and \
+                            found_devices[bt_dut_address] == ble_dut.interfaces.bluetooth.ble_advertising_data:
+                        device_found = True
+                        break
+
+                ble_client.interfaces.bluetooth.stop_scanning()
+                assert device_found, "no device found"
+
+                logger().info("======= connect to ble dut")
+                ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
+                                                        min_conn_interval=int(int(80) / 1.25),
+                                                        max_conn_interval=int(int(80) / 1.25),
+                                                        conn_latency=0,
+                                                        supervision_timeout=800)
+                time.sleep(1)
+
+                logger().info("======= get connection state")
+                state = ble_dut.interfaces.wifi.ble_get_device_state()
+                state_int = int(state) if state.isdigit() else -1
+                assert state_int == BLEDeviceState.Connected, "======= device is in disconnection state"
+
+                servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+                assert len(servs) > 0, "no services fetched"
+                assert len(chars) > 0, "fetched characters are empty"
+
+                char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(
+                    services=servs, service_uid=service_uid, char_uid=char_uid)
+                assert char_path, "characters are empty"
+                assert len(char_props) > 0, "length of characters is 0"
+
+                try:
+                    read_charac_value = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+                    logger().info(f"read_charac_value = {read_charac_value}")
+                except Exception as e:
+                    if read_charac_value != "data":
+                        logger().warning(f"read_charac_value command failed:{e},\nTrying for 2nd time")
+                        ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+
+                # subscribe to notifications
+                ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+                ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
+                                                                                        char_uid=char_uid)
+                sw = Stopwatch()
+                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+                while sw.elapsed_sec < 60:
+                    ble_dut.interfaces.bluetooth.ble_notify_custom_value(data=data)
+                    time.sleep(5)
+
+                # unsubscribe to notifications
+                ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+                ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+                time.sleep(1)
+
+                logger().info("======= validate data")
+                notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+                logger().info(notifications)
+                assert len(notifications) > 0, "received data is empty"
+                assert notifications[0] == data, "failed to fetch data"
+
+                logger().info("======= disconnecting from dut")
+                ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+                ble_client.interfaces.bluetooth.close()
+                time.sleep(0.2)
+                logger().info("======= start ble adv in dut")
+                ble_dut.interfaces.bluetooth.ble_start_advertising()
+    finally:
+        logger().info("ble_remove_service")
+        ble_dut.interfaces.wifi.ble_remove_service()
+        logger().info("======= stop ble adv in dut")
+        ble_dut.interfaces.bluetooth.ble_stop_advertising()
 
 
 @pytest.mark.config(
@@ -507,99 +540,105 @@ def test_ble_slave_data_length_20_bytes_duty_cycle_C19926(ble_dut, ble_client, u
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
 def test_ble_slave_data_length_230_bytes_duty_cycle_C19929(ble_dut, ble_client, utf_constants):
-    with BleLogs(start_collecting_logs=True,
-                 bt_log_path="./reports/test_ble_slave_data_length_230_bytes_duty_cycle_C19929.log"):
-        service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-        char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path="./reports/test_ble_slave_data_length_230_bytes_duty_cycle_C19929.log"):
+            service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+            char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
-        logger().info("======= start ble in dut")
-        bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert bt_dut_address, "failed to initialize ble in dut"
-        ble_dut.interfaces.bluetooth.ble_add_service(uid=0x6E)
-        ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x6F)
-        ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x6F)
+            logger().info("======= start ble in dut")
+            bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+            assert bt_dut_address, "failed to initialize ble in dut"
+            ble_dut.interfaces.bluetooth.ble_add_service(uid=0x1AA1)
+            ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x1BB1)
+            ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x1BB1)
 
-        logger().info("======= start ble adv in dut")
-        ble_dut.interfaces.bluetooth.ble_start_advertising()
-
-        logger().info("======= enable power save")
-        ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
-        ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
-
-        for i in range(1, 11):
-            logger().info(f"======= spinning the case for count of {i}")
-
-            logger().info("======= start scanning in remote ble device")
-            bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-            assert bt_client_address, "failed to start scan in remote device"
-
-            device_found = False
-            sw = Stopwatch()
-            while sw.elapsed_sec < 30:
-                found_devices = ble_client.interfaces.bluetooth.get_devices()
-                if bt_dut_address in found_devices and \
-                        found_devices[bt_dut_address] == ble_dut.interfaces.bluetooth.ble_advertising_data:
-                    device_found = True
-                    break
-
-            ble_client.interfaces.bluetooth.stop_scanning()
-            assert device_found, "no device found"
-
-            logger().info("======= connect to ble dut")
-            ble_client.interfaces.bluetooth.connect(bt_dut_address)
-            time.sleep(1)
-
-            logger().info("======= get connection state")
-            state = ble_dut.interfaces.bluetooth.ble_get_device_state()
-            state_int = int(state) if state.isdigit() else -1
-            assert state_int == BLEDeviceState.Connected, "======= device is in disconnection state"
-
-            servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
-            assert len(servs) > 0, "no services fetched"
-            assert len(chars) > 0, "fetched characters are empty"
-
-            char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
-                                                                                                        service_uid=service_uid,
-                                                                                                        char_uid=char_uid)
-            assert char_path, "characters are empty"
-            assert len(char_props) > 0, "length of characters is 0"
-
-            ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
-
-            # subscribe to notifications
-            ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
-            ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
-                                                                                    char_uid=char_uid)
-
-            data = "testwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybyuhujhsjsgshsjasgshsjsgshsvxhsbxjhsbjnj"
-            while sw.elapsed_sec < 60:
-                ble_dut.interfaces.bluetooth.ble_notify_custom_value(data=data)
-                time.sleep(5)
-
-            # unsubscribe to notifications
-            ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-            ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-            time.sleep(1)
-
-            logger().info("======= validate data")
-            notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-            logger().info(notifications)
-            assert len(notifications) > 0, "received data is empty"
-            assert notifications[0] == data, "failed to fetch data"
-
-            iter_count = utf_constants.get("iter_count")
-            if i == iter_count:
-                logger().info("ble_remove_service")
-                ble_dut.interfaces.wifi.ble_remove_service()
-
-            logger().info("======= disconnecting from dut")
-            ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
-            ble_client.interfaces.bluetooth.close()
-            time.sleep(0.2)
             logger().info("======= start ble adv in dut")
             ble_dut.interfaces.bluetooth.ble_start_advertising()
+
+            logger().info("======= enable power save")
+            ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
+            ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                       RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+            iter_count = utf_constants.get("iter_count")
+            for i in range(1, iter_count):
+                logger().info(f"======= spinning the case for count of {i}")
+
+                logger().info("======= start scanning in remote ble device")
+                bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+                assert bt_client_address, "failed to start scan in remote device"
+
+                device_found = False
+                sw = Stopwatch()
+                while sw.elapsed_sec < 30:
+                    found_devices = ble_client.interfaces.bluetooth.get_devices()
+                    if bt_dut_address in found_devices and \
+                            found_devices[bt_dut_address] == ble_dut.interfaces.bluetooth.ble_advertising_data:
+                        device_found = True
+                        break
+
+                ble_client.interfaces.bluetooth.stop_scanning()
+                assert device_found, "no device found"
+
+                logger().info("======= connect to ble dut")
+                ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
+                                                        min_conn_interval=int(int(80) / 1.25),
+                                                        max_conn_interval=int(int(80) / 1.25),
+                                                        conn_latency=0,
+                                                        supervision_timeout=800)
+                time.sleep(1)
+
+                logger().info("======= get connection state")
+                state = ble_dut.interfaces.bluetooth.ble_get_device_state()
+                state_int = int(state) if state.isdigit() else -1
+                assert state_int == BLEDeviceState.Connected, "======= device is in disconnection state"
+
+                servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+                assert len(servs) > 0, "no services fetched"
+                assert len(chars) > 0, "fetched characters are empty"
+
+                char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
+                                                                                                            service_uid=service_uid,
+                                                                                                            char_uid=char_uid)
+                assert char_path, "characters are empty"
+                assert len(char_props) > 0, "length of characters is 0"
+
+                ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+
+                # subscribe to notifications
+                ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+                ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
+                                                                                        char_uid=char_uid)
+                sw = Stopwatch()
+                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=230))
+                while sw.elapsed_sec < 60:
+                    ble_dut.interfaces.bluetooth.ble_notify_custom_value(data=data)
+                    time.sleep(5)
+
+                # unsubscribe to notifications
+                ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+                ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+                time.sleep(1)
+
+                logger().info("======= validate data")
+                notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+                logger().info(notifications)
+                assert len(notifications) > 0, "received data is empty"
+                assert notifications[0] == data, "failed to fetch data"
+
+                logger().info("======= disconnecting from dut")
+                ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+                ble_client.interfaces.bluetooth.close()
+                time.sleep(0.2)
+                logger().info("======= start ble adv in dut")
+                ble_dut.interfaces.bluetooth.ble_start_advertising()
+    finally:
+        logger().info("ble_remove_service")
+        ble_dut.interfaces.wifi.ble_remove_service()
+        logger().info("======= stop ble adv in dut")
+        ble_dut.interfaces.bluetooth.ble_stop_advertising()
 
 
 @pytest.mark.config(
@@ -620,112 +659,117 @@ def test_ble_slave_data_length_230_bytes_duty_cycle_C19929(ble_dut, ble_client, 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
 def test_ble_slave_data_length_100_bytes_tx_rx_C19928(ble_dut, ble_client, utf_constants):
-    with BleLogs(start_collecting_logs=True,
-                 bt_log_path="./reports/test_ble_slave_data_length_100_bytes_tx_rx_C19928.log"):
-        service_uid = "0000006e-0000-1000-8000-00805f9b34fb"
-        char_uid = "0000006f-0000-1000-8000-00805f9b34fb"
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path="./reports/test_ble_slave_data_length_100_bytes_tx_rx_C19928.log"):
+            service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+            char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
-        logger().info("======= start ble in dut")
-        bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert bt_dut_address, "failed to initialize ble in dut"
-        ble_dut.interfaces.bluetooth.ble_add_service(uid=0x6E)
-        ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x6F)
-        ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x6F)
+            logger().info("======= start ble in dut")
+            bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+            assert bt_dut_address, "failed to initialize ble in dut"
+            ble_dut.interfaces.bluetooth.ble_add_service(uid=0x1AA1)
+            ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x1BB1)
+            ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x1BB1)
 
-        logger().info("======= start ble adv in dut")
-        ble_dut.interfaces.bluetooth.ble_start_advertising()
-
-        logger().info("======= enable power save")
-        ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
-        ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                   RS9116PowerSaveProcedureTypes.FastPowerSave)
-
-        for i in range(1, 11):
-            logger().info(f"======= spinning the case for count of {i}")
-
-            logger().info("======= start scanning in remote ble device")
-            bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-            assert bt_client_address, "failed to start scan in remote device"
-
-            device_found = False
-            sw = Stopwatch()
-            while sw.elapsed_sec < 30:
-                found_devices = ble_client.interfaces.bluetooth.get_devices()
-                if bt_dut_address in found_devices and \
-                        found_devices[bt_dut_address] == ble_dut.interfaces.bluetooth.ble_advertising_data:
-                    device_found = True
-                    break
-
-            ble_client.interfaces.bluetooth.stop_scanning()
-            assert device_found, "no device found"
-
-            logger().info("======= connect to ble dut")
-            ble_client.interfaces.bluetooth.connect(bt_dut_address)
-            time.sleep(1)
-
-            logger().info("======= get connection state")
-            state = ble_dut.interfaces.wifi.ble_get_device_state()
-            state_int = int(state) if state.isdigit() else -1
-            assert state_int == BLEDeviceState.Connected, "======= device is in disconnection state"
-
-            servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
-            assert len(servs) > 0, "no services fetched"
-            assert len(chars) > 0, "fetched characters are empty"
-
-            char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
-                                                                                                        service_uid=service_uid,
-                                                                                                        char_uid=char_uid)
-            assert char_path, "characters are empty"
-            assert len(char_props) > 0, "length of characters is 0"
-
-            ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
-
-            # subscribe to notifications
-            ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
-            ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
-                                                                                    char_uid=char_uid)
-
-            sw = Stopwatch()
-            data = "testwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdata"
-            while sw.elapsed_sec < 60:
-                ble_dut.interfaces.bluetooth.ble_notify_custom_value(data=data)
-                time.sleep(5)
-
-            sw = Stopwatch()
-            data1 = "rxsidedatarxsidedatarxsidedatarxsidedatarxsidedatarxsidedatarxsidedatarxsidedatarxsidedatarxsidedata"
-            while sw.elapsed_sec < 60:
-                ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(char_path=char_path, data=data1)
-                time.sleep(2)
-
-            result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
-            assert result == data1, "failed to read data"
-            # unsubscribe to notifications
-            ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-            ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-            time.sleep(1)
-
-            logger().info("======= validate data")
-            notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-            logger().info(notifications)
-            assert len(notifications) > 0, "received data is empty"
-            assert notifications[0] == data, "failed to fetch data"
-
-            iter_count = utf_constants.get("iter_count")
-            if i == iter_count:
-                logger().info("ble_remove_service")
-                ble_dut.interfaces.wifi.ble_remove_service()
-
-            logger().info("======= disconnecting from dut")
-            ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
-            ble_client.interfaces.bluetooth.close()
-            time.sleep(0.2)
             logger().info("======= start ble adv in dut")
             ble_dut.interfaces.bluetooth.ble_start_advertising()
 
+            logger().info("======= enable power save")
+            ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
+            ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                       RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+            iter_count = utf_constants.get("iter_count")
+            for i in range(1, iter_count):
+                logger().info(f"======= spinning the case for count of {i}")
+
+                logger().info("======= start scanning in remote ble device")
+                bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+                assert bt_client_address, "failed to start scan in remote device"
+
+                device_found = False
+                sw = Stopwatch()
+                while sw.elapsed_sec < 30:
+                    found_devices = ble_client.interfaces.bluetooth.get_devices()
+                    if bt_dut_address in found_devices and \
+                            found_devices[bt_dut_address] == ble_dut.interfaces.bluetooth.ble_advertising_data:
+                        device_found = True
+                        break
+
+                ble_client.interfaces.bluetooth.stop_scanning()
+                assert device_found, "no device found"
+
+                logger().info("======= connect to ble dut")
+                ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
+                                                        min_conn_interval=int(int(80) / 1.25),
+                                                        max_conn_interval=int(int(80) / 1.25),
+                                                        conn_latency=0,
+                                                        supervision_timeout=800)
+                time.sleep(1)
+
+                logger().info("======= get connection state")
+                state = ble_dut.interfaces.wifi.ble_get_device_state()
+                state_int = int(state) if state.isdigit() else -1
+                assert state_int == BLEDeviceState.Connected, "======= device is in disconnection state"
+
+                servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+                assert len(servs) > 0, "no services fetched"
+                assert len(chars) > 0, "fetched characters are empty"
+
+                char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(services=servs,
+                                                                                                            service_uid=service_uid,
+                                                                                                            char_uid=char_uid)
+                assert char_path, "characters are empty"
+                assert len(char_props) > 0, "length of characters is 0"
+
+                ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+
+                # subscribe to notifications
+                ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+                ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
+                                                                                        char_uid=char_uid)
+
+                sw = Stopwatch()
+                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+                while sw.elapsed_sec < 60:
+                    ble_dut.interfaces.bluetooth.ble_notify_custom_value(data=data)
+                    time.sleep(5)
+
+                sw = Stopwatch()
+                data1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+                while sw.elapsed_sec < 60:
+                    ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(char_path=char_path, data=data1)
+                    time.sleep(2)
+
+                result = ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
+                assert result == data1, "failed to read data"
+                # unsubscribe to notifications
+                ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+                ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+                time.sleep(1)
+
+                logger().info("======= validate data")
+                notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+                logger().info(notifications)
+                assert len(notifications) > 0, "received data is empty"
+                assert notifications[0] == data, "failed to fetch data"
+
+                logger().info("======= disconnecting from dut")
+                ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+                ble_client.interfaces.bluetooth.close()
+                time.sleep(0.2)
+                logger().info("======= start ble adv in dut")
+                ble_dut.interfaces.bluetooth.ble_start_advertising()
+    finally:
+        logger().info("ble_remove_service")
+        ble_dut.interfaces.wifi.ble_remove_service()
+        logger().info("======= stop ble adv in dut")
+        ble_dut.interfaces.bluetooth.ble_stop_advertising()
+
 
 # ======= Data length Master Test cases
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
