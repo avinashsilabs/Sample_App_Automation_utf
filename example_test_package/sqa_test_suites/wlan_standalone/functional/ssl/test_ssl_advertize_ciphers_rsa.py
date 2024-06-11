@@ -1151,22 +1151,24 @@ def test_advertise_ciphers_ssl_tx_TC19614(wifi_sniffer, wifi_dut, wifi_access_po
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256']])
-def test_advertise_ciphers_ssl_rx_TC19615(wifi_sniffer, wifi_access_point, wifi_dut, openssl, wifi_client, cipher_list,
-                                          logger):
+def test_advertise_ciphers_ssl_rx_c19615(wifi_sniffer, wifi_access_point, wifi_dut, openssl, wifi_client, cipher_list,
+                                          logger, ssl_server):
     try:
         capture_filename = "test_advertise_ciphers_ssl_rx_TC19615"
         expected_cipher = cipher_list
-        port_connect = randint(5001, 5010)
         rejoin_set_values = [0, 4, 40, 0]
         device_ip = dut_join_ap(capture_filename, rejoin_set_values, wifi_dut, wifi_access_point, wifi_sniffer, logger)
+        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
+        logger.info(f"DUT MAC_Address: {dut_mac_address}")
 
         if len(cipher_list):
             cipher = select_cipher_list(cipher_list)
             wifi_dut.interfaces.wifi.select_ssl_cipher(cipher_list=cipher)
 
-        dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
-        logger.info(f"DUT MAC_Address: {dut_mac_address}")
+        port_connect = ssl_server.interfaces.ssl.config['device_port1']
+        local_port = randint(5001, 60000)
         openssl.interfaces.server.start(port=port_connect, tls_version="-tls1_2")
+        server_ip = wifi_client.interfaces.wifi.get_ip_address()
         sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
         assert sock == 0, "Socket id received is wrong. expected is 0"
         logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
@@ -1178,17 +1180,16 @@ def test_advertise_ciphers_ssl_rx_TC19615(wifi_sniffer, wifi_access_point, wifi_
                     f"rsi_setsockopt API")
         wifi_dut.interfaces.wifi.set_socket_option(sock, SocketOptions.SOL_SOCKET, SocketOptions.SO_SSL_V_1_2_ENABLE,
                                                    SocketOptions.SSL_ENABLE)
-        local_port = randint(5001, 60000)
         wifi_dut.interfaces.wifi.bind(sock, device_ip, local_port)
-        host_ip = wifi_client.interfaces.wifi.get_ip_address()
-        wifi_dut.interfaces.wifi.connect_to_server(sock, host_ip, server_port=port_connect)
+        wifi_dut.interfaces.wifi.connect_to_server(sock, server_ip, server_port=port_connect)
+
         buffer_length = 100
         data = "".join(random.choices(string.ascii_uppercase + string.digits, k=buffer_length))
         logger.info(f"DATA sent from remote PC to dut {data}")
 
         openssl.interfaces.server.subprocess.send_input(data, line_feed=False)
         time.sleep(5)
-        buffer_length, buffer = wifi_dut.interfaces.wifi.receive_from(sock, data_len=buffer_length, timeout=40)
+        buffer_length, buffer = wifi_dut.interfaces.wifi.receive_from(sock, data_len=buffer_length, timeout=60)
         logger.info(f"Data received on dut {buffer}")
         assert data == buffer.decode(), "Date received on dut does not match the data sent from host"
 
