@@ -293,9 +293,9 @@ def test_wifi_sdk_dut_able_restart_to_with_different_beacon_intervals_C191345(wi
             'Unable to find  deauthentication in Sniffer'
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             wlan_addr=ap_dut_obj.dut_mac_address, radio_ch=channel, beacon=300,
-            filter_name='beacon_ap_mode_dtim_interval')
+            filter_name='beacon_ap_mode_beacon_interval')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  beacon_ap_mode_dtim_interval in Sniffer'
+            'Unable to find  beacon_ap_mode_beacon_interval in Sniffer'
         for i in range(0, 2):
             logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
             wifi_clients[i].interfaces.wifi.leave()
@@ -307,6 +307,7 @@ def test_wifi_sdk_dut_able_restart_to_with_different_beacon_intervals_C191345(wi
         logger().info(f"Clean up activity")
         logger().info(f"stop the AP as ap start initiated")
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+
 
 
 @pytest.mark.config(
