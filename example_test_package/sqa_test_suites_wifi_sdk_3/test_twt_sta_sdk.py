@@ -527,7 +527,6 @@ def test_wifi_sdk_verify_twt_suggest_when_enabled_before_join_c113728(wifi_dut, 
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip('Facing Some issues')
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
