@@ -34,7 +34,7 @@ class AppUtfLauncher(UtfLauncher):
             UtfLauncherCmdOption.docker_image_tag: "wifitest:latest",
             UtfLauncherCmdOption.docker_file_path: DOCKERFILE_PATH,
             UtfLauncherCmdOption.docker_flags: f"-e MILESTONE={milestone_branch}",
-            UtfLauncherCmdOption.docker_base_image: "utfsilabs/rpi_ubuntu_android:2024_04_10",
+            UtfLauncherCmdOption.docker_base_image: "utfsilabs/rpi_ubuntu_android:2024_06_06",
             UtfLauncherCmdOption.username: "pi",
             UtfLauncherCmdOption.password: "raspberry",
         }
