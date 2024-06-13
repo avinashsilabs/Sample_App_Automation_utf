@@ -684,7 +684,7 @@ def test_wifi_sdk_socket_tcp_data_transfer_mss_c19356(wifi_access_point, wifi_du
         for count in range(30):
             tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1460))
             logger().info(f"*********** Sending packet_{count + 1} with size --> {len(tx_buffer)} bytes ***********")
-            wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, send_data=tx_buffer, timeout=60)
+            wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=tx_buffer, timeout=60)
         tp = net_perf_client.interfaces.net_perf.process_output()
         assert tp is not None, "Throughput not found"
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
