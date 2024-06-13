@@ -271,7 +271,7 @@ def test_wifi_sdk_udp_open_send_data_close_socket_c19348(sniffer_filter, wifi_ac
                                                          sl_collections, wifi_sniffer, request):
     """This test case Verfies the udp client socket is open, send data,close functionality"""
     try:
-        no_of_pkts = 10000
+        no_of_pkts = 50000
         pkt_length = 1460
         local_port = randint(5001, 6000)
         test_name = request.node.name
@@ -301,7 +301,7 @@ def test_wifi_sdk_udp_open_send_data_close_socket_c19348(sniffer_filter, wifi_ac
                           args=(remote_socket, no_of_pkts, pkt_length, 1), daemon=True)
         th_start.start()
         bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(
-            udp_socket_id, pkt_length, no_of_pkts, server_ip=server_ip, server_port=local_port, time_interval=120)
+            udp_socket_id, pkt_length, no_of_pkts, server_ip=server_ip, server_port=local_port, time_interval=180)
         logger().info(f"Number of bytes sent by dut {bytes_sent}")
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=udp_socket_id)
         remote_socket.interfaces.socket.socket_close_indication(1)
