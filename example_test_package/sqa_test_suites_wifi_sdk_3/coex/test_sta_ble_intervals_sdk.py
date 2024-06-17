@@ -15,6 +15,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xRegion,
     Si91xRegionCode,
     Si91xModuleType,
+    Si91xJoinFeatureBitMap
 )
 from utf.utf_config import UtfConfig
 from utf.interfaces.iperf.iperf_constants import IperfConstants
@@ -141,6 +142,9 @@ class WifiJoinThread(ThreadBase):
                 beacon_missed_count=40,
                 first_time_retry_enable=0,
             )
+            if self.power_save:
+                self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
+                                                                  Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
             self.dut_addr = self.sl_collections.join_to_wifi_network(
                 wifi_dut=self.wifi_dut,
                 wifi_access_point=self.wifi_access_point,
