@@ -687,6 +687,8 @@ def test_wifi_sdk_socket_tcp_data_transfer_mss_c19356(wifi_access_point, wifi_du
             wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=tx_buffer, timeout=60)
         tp = net_perf_client.interfaces.net_perf.process_output()
         assert tp is not None, "Throughput not found"
+        net_perf_client.interfaces.net_perf.close_files()
+        net_perf_client.interfaces.net_perf.iperf_process.stop(10)
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
         logger().info(f"Successfully closed socket_id '{sock}' in the DUT")
 
