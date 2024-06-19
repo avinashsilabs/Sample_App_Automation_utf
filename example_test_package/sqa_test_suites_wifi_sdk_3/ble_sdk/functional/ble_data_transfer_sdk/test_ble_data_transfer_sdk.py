@@ -312,7 +312,7 @@ class Ble_Data_Transfer:
                                                                 buffer_count=count)
         logger().info(f"*******Configure Buffer Mode:{mode} and Buffer count:{count} Success ****************")
 
-    def gatt_write_without_resp(self, write_handle, data=None, write_time=None, write_count=None,
+    def gatt_write_without_resp(self, write_handle, data_length=None, data=None, write_time=None, write_count=None,
                                 bt_mon_log_file_name=None):
         logger().info(f"*******Write Without Response Start****************")
 
@@ -322,7 +322,7 @@ class Ble_Data_Transfer:
             with BleLogs(start_collecting_logs=True,
                          bt_log_path=bt_mon_log_file):
                 self.ble_dut.interfaces.wifi.ble_set_att_cmd(ble_remote_dev_address=self.ble_client_address,
-                                                             handle=write_handle, data=data)
+                                                             handle=write_handle, data_length=data_length, data=data)
             time.sleep(2)
             flag = False
             logger().info(" ***** Validating Write Without Response Start *****")
@@ -358,8 +358,8 @@ class Ble_Data_Transfer:
             for i in range(write_count):
                 write()
         else:
-            t_end = time.time() + 60 * write_time
-            while time.time() < t_end:
+            sw = Stopwatch()
+            while sw.elapsed_sec <= write_time:
                 write()
 
         logger().info(f"*******Write Without Response End****************")
@@ -608,7 +608,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_without_respons_buffer_0_
             ble_obj.configure_buffer_mode(mode=0, count=2)
             data = "hundredbytesofdatarx"
             # Write and send BLE 20 bytes of write with response data
-            ble_obj.gatt_write_without_resp(write_handle=write_handle, data=data, write_time=10,
+            ble_obj.gatt_write_without_resp(write_handle=write_handle, data_length=20, data=data, write_time=600,
                                             bt_mon_log_file_name=bt_mon_log_file_name)
             # Disconnect From Remote Device
             ble_obj.check_device_state_on_dut()
@@ -626,7 +626,7 @@ def test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_without_respons_buffer_0
                                                                                          ble_client,
                                                                                          sl_collections):
     bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_without_respons_"
-                            f"buffer_0_C193311.logs_{int(time.time())}")
+                            f"buffer_0_C193311_{int(time.time())}.log")
     try:
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=bt_mon_log_file_name):
@@ -645,8 +645,7 @@ def test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_without_respons_buffer_0
             ble_obj.configure_buffer_mode(mode=0, count=2)
             data = "hundredbytesofdatarx"
             # Write and send BLE 20 bytes of write with response data using the below API
-
-            ble_obj.gatt_write_without_resp(write_handle=write_handle, data=data, write_time=10,
+            ble_obj.gatt_write_without_resp(write_handle=write_handle, data_length=20, data=data, write_time=600,
                                             bt_mon_log_file_name=bt_mon_log_file_name)
             ble_obj.check_device_state_on_dut()
             # Disconnect from dut
