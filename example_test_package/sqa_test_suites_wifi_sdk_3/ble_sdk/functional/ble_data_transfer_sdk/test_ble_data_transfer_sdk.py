@@ -437,18 +437,48 @@ class Ble_Data_Transfer:
         logger().info(f"*******Write With Response End****************")
         return write_data_count
 
+    @staticmethod
+    def validate_rx_notification(bt_mon_log_file_name=None, write_handle=None,
+                                 rx_notification_receiving_count=None,data_length=None):
+        logger().info(" ***** Validating Rx Notification Start *****")
+        rx_notification_validate_count = 0
+        with open(bt_mon_log_file_name, "r") as file_p:
+            lines = file_p.readlines()
+
+        acl_data_flag = att_flag = handle_flag = False
+        for line in lines:
+            if "< ACL Data TX: Handle " in line:
+                acl_data_flag = True
+                continue
+            if "ATT: Handle Value Notification" in line and acl_data_flag is True:
+                att_flag = True
+                continue
+            if "Handle:" in line:
+                if f"0x{write_handle:04x}" in line and att_flag is True:
+                    handle_flag = True
+                continue
+            if "Data:" in line and acl_data_flag and att_flag and handle_flag:
+                data_match = re.search(r'Data:(.*)', line)
+                hex_string = data_match.group(1) if data_match else ""
+                byte_array = bytes.fromhex(hex_string)
+                logger().info(f"Expected data:{byte_array} :length {len(byte_array)}")
+                assert len(byte_array) == data_length, "Actual data length  is not found"
+                acl_data_flag = att_flag = handle_flag = False
+                rx_notification_validate_count = rx_notification_validate_count + 1
+                continue
+
+        logger().info(f"rx_notification_count:{rx_notification_receiving_count} and rx_notification_validate_count:"
+                      f" {rx_notification_validate_count}")
+        assert rx_notification_receiving_count == rx_notification_validate_count, ("Rx notification and Rx notification"
+                                                                                   " validation data not matching")
+        logger().info(" ***** Validating Rx Notification End *****")
+
     def gatt_notify_rx(self, write_handle, data=None, notify_time=100):
         # enable notifications
         self.ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=self.ble_client_address,
                                                             handle=(write_handle + 1), enable_notify=data)
 
-        time.sleep(2)
-        sw = Stopwatch()
-        count = 0
-        while sw.elapsed_sec <= notify_time:
-            time.sleep(3)
-            count = count + 1
-            logger().info(f"count {count}")
+        time.sleep(notify_time)
 
         # disable notifications
         self.ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=self.ble_client_address,
@@ -457,13 +487,20 @@ class Ble_Data_Transfer:
 
         logger().info(f"******* Events Start****************")
         events = self.ble_dut.interfaces.bluetooth.get_async_events()
+        rx_notification_receiving_count = 0
+
         for event in events:
-            logger().info(event.event_data)
-            logger().info(event.event_type)
+            if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
+                if "rsi_ble_on_gatt_write_event_gatt - att_length:" in event.event_data:
+                    logger().info(f"event data : {event.event_data}")
+                    variable = event.event_data
+                    search_string = "rsi_ble_on_gatt_write_event_gatt - att_length:"
+                    rx_notification_receiving_count = rx_notification_receiving_count + variable.count(search_string)
+
         time.sleep(2)
-        logger().info(f"count {count}")
+        logger().info(f"count {rx_notification_receiving_count}")
         logger().info(f"*******Notification End****************")
-        return count
+        return rx_notification_receiving_count
 
     def gatt_indication(self, char_path, char_uuid, indication_time=100, data=None, data_length=None):
         logger().info(f"****** Indication Start****************")
@@ -662,6 +699,50 @@ def test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_without_respons_buffer_0
 # ######################################################################################################################
 #                                   Write With Respons
 ########################################################################################################################
+
+def test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_respons_buffer_1_c193313(ble_dut,
+                                                                                 ble_client,
+                                                                                 sl_collections):
+    # Initializing DUT BLE Device
+    bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_respons_buffer_1_"
+                            f"c193313_{int(time.time())}.logs")
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=bt_mon_log_file_name):
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            ble_obj.ble_gatt_init()
+            # Adv Remote device
+            ble_obj.advertising_remote("HeartRateService")
+            # Start scan and connect from dut
+            ble_obj.scan_conn_from_dut_device()
+            # get remote device profile
+            write_handle = ble_obj.service_discovery_on_remote(HeartRateService.UUID,
+                                                               HeartRateControlPointCharacteristic.UUID,
+                                                               HeartRateControlPointCharacteristic)
+            # Configure buffer mode
+            ble_obj.configure_buffer_mode(mode=0, count=2)
+            data = "hundredbytesofdatarx"
+
+            # Write and send BLE 20 bytes of write with response data using the below API
+            write_data_count = ble_obj.gatt_write_with_resp(write_handle=write_handle, data=data, write_time=600,
+                                                            data_length=20)
+
+        # Validating Write With Response
+        ble_obj.validate_write_with_response(bt_mon_log_file=bt_mon_log_file_name, write_handle=write_handle,
+                                             data=data, write_data_count=write_data_count)
+        # time.sleep(120)
+        ble_obj.check_device_state_on_dut()
+        # Disconnect from dut
+        ble_obj.disconnect_form_dut()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+
+    finally:
+        ble_obj.clear_dut(role="master")
+
+
 def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_with_respons_buffer_0_c193315(ble_dut,
                                                                                      ble_client,
                                                                                      sl_collections):
