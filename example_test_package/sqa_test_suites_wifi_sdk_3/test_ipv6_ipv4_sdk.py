@@ -47,6 +47,7 @@ def logger():
 import ipaddress
 import random
 
+
 def random_ipv6_addr(subnet):
     network = ipaddress.ip_network(subnet)
     max_value = int(network.network_address) + network.num_addresses - 1
@@ -110,12 +111,14 @@ class WLanThread(ThreadBase):
         Runs the thread.
         """
         self.dut_add_dict = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
-                                                                wifi_access_point=self.wifi_access_point,
-                                                                associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                power_save=False, retry_count=3,
-                                                                ping_before_power_save=False,
-                                                                ping_after_power_save=False,
-                                                                )
+                                                                     wifi_access_point=self.wifi_access_point,
+                                                                     associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                     power_save=False, retry_count=3,
+                                                                     ping_before_power_save=False,
+                                                                     ping_after_power_save=False,
+                                                                     )
+        self.dut_add_dict['ap_mac_address'] = self.wifi_access_point.interfaces.wifi.bssid
+
         if self.test_id in [156971, 206918]:
 
             self.static_ipv6 = random_ipv6_addr("2401:3500:133c:1341::/64")
@@ -218,7 +221,6 @@ class WLanThread(ThreadBase):
             logger().info("IPV6 ping successful")
 
 
-
 def wifi_dut_config(extra_features):
     return {
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
@@ -235,6 +237,7 @@ def wifi_dut_config(extra_features):
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
     }
 
+
 @pytest.mark.config("wifi_dut", wifi=wifi_dut_config(0))
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
@@ -243,7 +246,6 @@ def wifi_dut_config(extra_features):
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-
 def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156954(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
                                                           request,
                                                           sniffer_filter, utf_constants,
@@ -272,7 +274,12 @@ def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156954(wifi_dut, wifi_access_
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key, ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
 
+        assert result['ipv6_state'] == 0, "IPV6 stateless configuration is not set in AP"
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -356,6 +363,13 @@ def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156957(wifi_dut, wifi_access_
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key,
+                                                  ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
+
+        assert result['ipv6_state'] == 0, "IPV6 stateless configuration is not set in AP"
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -463,6 +477,13 @@ def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156960(wifi_dut, wifi_access_
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key,
+                                                  ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
+
+        assert result['ipv6_state'] == 0, "IPV6 stateless configuration is not set in AP"
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -532,6 +553,13 @@ def test_wifi_sdk_sim_ping_ipv4_ipv6_stateless_dhcpv6_WPA2_C156962(wifi_dut, wif
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key,
+                                                  ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
+
+        assert result['ipv6_state'] == 0, "IPV6 stateless configuration is not set in AP"
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -540,16 +568,16 @@ def test_wifi_sdk_sim_ping_ipv4_ipv6_stateless_dhcpv6_WPA2_C156962(wifi_dut, wif
 @pytest.mark.config("wifi_dut", wifi=wifi_dut_config(0))
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
-                               "ipv6_state": "0",
+                               "ipv6_state": "1",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3:3444::/64")}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ipv6_assign_dut_while_conn_disc_C156975(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
-                                                        request,
-                                                        sniffer_filter, utf_constants,
-                                                        wifi_client):
+                                                          request,
+                                                          sniffer_filter, utf_constants,
+                                                          wifi_client):
     """
 
                 Test Steps:
@@ -579,6 +607,13 @@ def test_wifi_sdk_ipv6_assign_dut_while_conn_disc_C156975(wifi_dut, wifi_access_
             wlan_obj.wait_for_exit()
             wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key,
+                                                  ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
+
+        assert result['ipv6_state'] == 1, "IPV6 stateful configuration is not set in AP"
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -624,25 +659,31 @@ def test_wifi_sdk_static_ip_DUT_stateful_dhcpv6_WPA2_C156971(wifi_dut, wifi_acce
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key,
+                                                  ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
+
+        assert result['ipv6_state'] == 1, "IPV6 stateful configuration is not set in AP"
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-
 @pytest.mark.config("wifi_dut", wifi=wifi_dut_config(0))
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
-                               "ipv6_state": "1",
+                               "ipv6_state": "0",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3:3444::/64")}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_config_static_IPV6_DUT_C206918(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
-                                                             request,
-                                                             sniffer_filter, utf_constants,
-                                                             wifi_client):
+                                                 request,
+                                                 sniffer_filter, utf_constants,
+                                                 wifi_client):
     test_name = request.node.name
     try:
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -665,7 +706,6 @@ def test_wifi_sdk_config_static_IPV6_DUT_C206918(wifi_dut, wifi_access_point, wi
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
 
 
 @pytest.mark.config("wifi_dut", wifi=wifi_dut_config(0))
@@ -707,36 +747,37 @@ def test_wifi_sdk_assign_existing_static_ip_DUT_stateful_dhcpv6_WPA2_C156974(wif
                               )
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+        time.sleep(5)
 
         wifi_sniffer.interfaces.capture.stop_capture()
 
+        logger().info("checking for router advertisement packet to check the stateful dhcpv6 configuration")
+        packet_filter4 = f"icmpv6.nd.ra.flag.m == 1 && wlan.addr== {wlan_obj.dut_add_dict['ap_mac_address']}"
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter4)[
+            'packet_count'], 'AP is not configured with stateful dhcpv6'
+
+        packet_filter3 = f"icmpv6.type==135 && ipv6.src==::"
+        logger().info("validating neighbour solicitation packet")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)[
+            'packet_count'], 'Unable to find neighbour solicitation packet in sniffer '
+
         ipv6_obj = FilterPacket()
-
         packet_filter1 = f"wlan.sa == {wlan_obj.dut_add_dict['dut_mac_address']}"
-
         packet_filter2 = f"icmpv6.nd.na.target_address == {wlan_obj.remote_ipv6}"
-
         result = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
                                                                     packet_filter2=packet_filter1)['packet_count']
         dut_packets_sequence_list = ipv6_obj.sequence_list()
         dut_packets_sequence_list = sorted(map(int, dut_packets_sequence_list), reverse=False)
         logger().info(f"list of sequence numbers of packets sent from DUT :{dut_packets_sequence_list}")
-
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2,
-                                                                  packet_filter2=packet_filter2)['packet_count'],\
+                                                                  packet_filter2=packet_filter2)['packet_count'], \
             "neighbour advertisement packet not found"
         neighbour_adv_sequence_list = ipv6_obj.sequence_list()
         logger().info(f"sequence_number of neighbour advertisement packet :{neighbour_adv_sequence_list}")
-
-        assert int(dut_packets_sequence_list[-1]) < int(neighbour_adv_sequence_list[-1]),\
+        assert int(dut_packets_sequence_list[-1]) < int(neighbour_adv_sequence_list[-1]), \
             "DUT should stop sending packets after receiving neighbour advertisement packet"
-
         logger().info("DUT stopped sending packets after receiving neighbour advertisement packet")
 
-        packet_filter3 = f"icmpv6.type==135 && ipv6.src==::"
-        logger().info("validating neighbour solicitation packet")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(True, packet_filter3)[
-            'packet_count'], 'Unable to find neighbour solicitation packet in sniffer '
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -787,11 +828,11 @@ def test_wifi_sdk_IPV6_assign_after_rejoin_DUT_stateful_dhcpv6_WPA3_C156970(wifi
                               )
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
 
 @pytest.mark.skip(reason="Needs work")
 @pytest.mark.config("wifi_dut", wifi=wifi_dut_config(0))
@@ -843,6 +884,13 @@ def test_wifi_sdk_ipv4_change_notify_IPV6_C156972(wifi_dut, wifi_access_point, w
         wifi_dut.interfaces.wifi.get_async_events()
         logger().info(f"enabling async_events")
         wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key,
+                                                  ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
+
+        assert result['ipv6_state'] == 1, "IPV6 stateful configuration is not set in AP"
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
