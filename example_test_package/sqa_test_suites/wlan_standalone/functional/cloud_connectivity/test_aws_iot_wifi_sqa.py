@@ -242,7 +242,7 @@ def connect_aws_server_from_dut(wifi_dut):
         status = True
     except Exception as err:
         logger().error(str(err))
-        if "0x2" in str(err):
+        if "0x2" or "0x9" in str(err):
             logger().warning("AWS server is not reachable from DUT, Please check your internet connection")
             wifi_dut.interfaces.wifi.aws_iot_disconnect()
         time.sleep(10)
@@ -730,7 +730,8 @@ def test_aws_publish_data_with_different_length_c19553(firmware_loader, wifi_sni
         message5 = text_generator(size=1000)
         # message6 = text_generator(size=1390)
 
-        message = {"message1": message1, "message2": message2, "message3": message3, "message4":message4, "message5":message5}
+        message = {"message1": message1, "message2": message2, "message3": message3, "message4": message4,
+                   "message5": message5}
         # message = {"message1": message1, "message2": message2, "message3": message3, "message4": message4, "message5": message5, "message6": message6}
         logger.info(f"Messages are:{message}")
 
@@ -1022,7 +1023,7 @@ def test_aws_tcp_shutdown_c19546(firmware_loader, wifi_sniffer, wifi_access_poin
                         f"\nMessage with length:'{len(message_value)} bytes'\nMessage is:'{message_value}'")
             aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic_1, message_value, qos=RS9116AwsQos.QOS0)
 
-            time.sleep(5)
+            time.sleep(10)
             events = wifi_dut.interfaces.wifi.get_async_events()
             logger.info("\nValidating received aws messages")
             iot_event = 0
@@ -1324,30 +1325,31 @@ def test_aws_receive_functionality_while_receiving_100_mqtt_messages_continuousl
             iot_event = 0
             count = 0
             for msg in messages:
+                i += 1
                 for retry_count in range(20):
                     event_received = False
                     try:
-                        i += 1
+
                         logger.info(
                             f"\naws_iot_client publishing message{i} on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS1}'"
                             f"\nMessage{i} with length:'{len(msg)} bytes'\nMessage{i} is:'{msg}'")
+                        since_time = time.perf_counter_ns()
                         aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic_1, msg, qos=RS9116AwsQos.QOS1)
                         time.sleep(10)
-                        events = wifi_dut.interfaces.wifi.get_async_events()
+                        events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
                         logger.info("\nValidating received aws message")
                         for event in events:
                             if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
-                                iot_event += 1
                                 aws_event_qos = event.event_data.qos
                                 aws_event_topic = event.event_data.topic
                                 aws_event_payload = event.event_data.payload
                                 logger.info(
-                                    f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
+                                    f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', "
+                                    f"aws message received:'{aws_event_payload}'")
                                 assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
                                 assert RS9116AwsQos.QOS1 == aws_event_qos, "Received wrong QOS. expected is QOS0"
                                 assert messages[
                                            count] == aws_event_payload, "sent and received messages are not matching"
-                                count += 1
                                 event_received = True
                             if event.event_type == RS9116AsyncEventType.TCP_REMOTE_TERMINATE:
                                 logger.info("tcp socket got terminated...Waiting for reconnection from DUT")
@@ -1356,7 +1358,10 @@ def test_aws_receive_functionality_while_receiving_100_mqtt_messages_continuousl
                     except:
                         logger.info(f"Published message not received in DUT--->retry_count:{retry_count}")
                     if event_received:
+                        iot_event += 1
                         break
+                count += 1
+
             assert iot_event == 100, f"published message '{messages[count]}' not received on DUT"
             logger.info("aws messages validated successfully")
             logger.info(f"Iteration '{iter_count + 1}' completed")
