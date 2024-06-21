@@ -168,10 +168,11 @@ pytestmark = [
 ]
 
 
+@pytest.mark.firmware_app("test_480K_M4SS_192K")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
-def test_wifi_sdk_ssl_standalone_tx_c20742(wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
+def test_wifi_sdk_ssl_standalone_tx_c20742(firmware_loader, wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
                                            logger, wifi_sniffer, request):
     testcase = request.node.name
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
@@ -184,11 +185,12 @@ def test_wifi_sdk_ssl_standalone_tx_c20742(wifi_access_point, sniffer_filter, sl
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_480K_M4SS_192K")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_wifi_sdk_ssl_standalone_rx_C20743(wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
+def test_wifi_sdk_ssl_standalone_rx_C20743(firmware_loader, wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
                                            ssl_server, logger, utf_constants, wifi_sniffer):
     testcase = request.node.name
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
@@ -201,10 +203,11 @@ def test_wifi_sdk_ssl_standalone_rx_C20743(wifi_access_point, sniffer_filter, re
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_480K_M4SS_192K")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'n'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
-def test_wifi_sdk_ssl_11N_standalone_tx_C537718(wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
+def test_wifi_sdk_ssl_11N_standalone_tx_C537718(firmware_loader, wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
                                            logger, wifi_sniffer, request):
     testcase = request.node.name
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
@@ -217,11 +220,152 @@ def test_wifi_sdk_ssl_11N_standalone_tx_C537718(wifi_access_point, sniffer_filte
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_480K_M4SS_192K")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'n'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_wifi_sdk_ssl_11N_standalone_rx_C537719(wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
+def test_wifi_sdk_ssl_11N_standalone_rx_C537719(firmware_loader, wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
+                                           ssl_server, logger, utf_constants, wifi_sniffer):
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, sl_collections=sl_collections, ssl_server=ssl_server,
+                              data_transfer=True, traffic_type="RX")
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.firmware_app("test_416K_M4SS_256K")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+def test_wifi_sdk_ssl_standalone_tx_C532894(firmware_loader, wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
+                                           logger, wifi_sniffer, request):
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, sl_collections=sl_collections, ssl_server=ssl_server,
+                              data_transfer=True, traffic_type="TX")
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.firmware_app("test_416K_M4SS_256K")
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_ssl_standalone_rx_C532895(firmware_loader, wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
+                                           ssl_server, logger, utf_constants, wifi_sniffer):
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, sl_collections=sl_collections, ssl_server=ssl_server,
+                              data_transfer=True, traffic_type="RX")
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.firmware_app("test_416K_M4SS_256K")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'n'})
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+def test_wifi_sdk_ssl_11n_standalone_tx_C537724(firmware_loader, wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
+                                           logger, wifi_sniffer, request):
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, sl_collections=sl_collections, ssl_server=ssl_server,
+                              data_transfer=True, traffic_type="TX")
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.firmware_app("test_416K_M4SS_256K")
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'n'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_ssl_11n_standalone_rx_C537725(firmware_loader, wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
+                                           ssl_server, logger, utf_constants, wifi_sniffer):
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, sl_collections=sl_collections, ssl_server=ssl_server,
+                              data_transfer=True, traffic_type="RX")
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.firmware_app("test_352K_M4SS_320K")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+def test_wifi_sdk_ssl_standalone_tx_C532928(firmware_loader, wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
+                                           logger, wifi_sniffer, request):
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, sl_collections=sl_collections, ssl_server=ssl_server,
+                              data_transfer=True, traffic_type="TX")
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.firmware_app("test_352K_M4SS_320K")
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_ssl_standalone_rx_C532929(firmware_loader, wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
+                                           ssl_server, logger, utf_constants, wifi_sniffer):
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, sl_collections=sl_collections, ssl_server=ssl_server,
+                              data_transfer=True, traffic_type="RX")
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.firmware_app("test_352K_M4SS_320K")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'n'})
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+def test_wifi_sdk_ssl_11n_standalone_tx_C537730(firmware_loader, wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
+                                           logger, wifi_sniffer, request):
+    testcase = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, sl_collections=sl_collections, ssl_server=ssl_server,
+                              data_transfer=True, traffic_type="TX")
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.firmware_app("test_352K_M4SS_320K")
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'n'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_ssl_11n_standalone_rx_C537731(firmware_loader, wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
                                            ssl_server, logger, utf_constants, wifi_sniffer):
     testcase = request.node.name
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
