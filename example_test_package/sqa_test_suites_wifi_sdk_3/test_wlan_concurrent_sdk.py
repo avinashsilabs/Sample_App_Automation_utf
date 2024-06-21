@@ -950,11 +950,9 @@ def test_wifi_sdk_device_as_ap_and_sta_c19317(sl_collections, wifi_access_point,
 @pytest.mark.config(
     "wifi_client",
     wifi={
-           0: {
                 "ssid": "SILABS_AP_MODE",
                 "channel": 11,
                 "interface": "wlan0",
-               }
          }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -1027,15 +1025,13 @@ def test_wifi_sdk_device_as_ap_and_sta_c19318(sl_collections, wifi_access_point,
     }
 )
 @pytest.mark.config(
-    "wifi_clients",
+    "wifi_client",
     wifi={
-           0: {
-                "security": "WPA2",
-                "ssid": "SILABS_AP_MODE",
-                "passphrase": "Automation@123",
-                "channel": 11,
-                "interface": "wlan0",
-               }
+            "security": "WPA2",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0",
          }
 )
 @pytest.mark.config(
@@ -1128,13 +1124,11 @@ def test_wifi_sdk_concurrent_mode_sta_ap_C535823(wifi_access_point, wifi_dut, wi
 @pytest.mark.config(
     "wifi_client",
     wifi={
-           0: {
                 "security": "WPA2",
                 "ssid": "SILABS_AP_MODE",
                 "passphrase": "Automation@123",
                 "channel": 11,
                 "interface": "wlan0",
-               }
          }
 )
 @pytest.mark.config(
@@ -1193,8 +1187,7 @@ def test_wifi_sdk_concurrent_mode_sta_ap_C535104(wifi_access_point, wifi_dut, wi
                                           dtim_beacon_count=1,
                                           beacon_interval=100)
         logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
-        wifi_client.interfaces.wifi.join(ssid="SILABS_AP_MODE", security="WPA2", passphrase="Automation@123",
-                                         scan_ssid=1)
+        wifi_client.interfaces.wifi.join(ssid="SILABS_AP_MODE", security="WPA2", passphrase="Automation@123")
         time.sleep(10)
         dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
         logger().info(f"********* Dut IP **********: {dut_ip}")
