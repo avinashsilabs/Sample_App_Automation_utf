@@ -1,9 +1,9 @@
 firmware:
   efx32:
     load_binary:
-      file_name: &firmware_file_anchor 'SiWG917-A.1.0.0.0.23.bin'
+      file_name: &firmware_file_anchor 'SiWG917-B.2.12.1.0.0.10.rps'
     write_firmware:
-      file_name: '917_ccp/generic_test_agent_without_aws.rps'
+      file_name: 'test_agent_soc_generic_rcf3_commit_a146ffad27.rps'
 
 firmware_version_file: *firmware_file_anchor
 # List of devices to be reset when needed
@@ -76,14 +76,14 @@ firmware_applications:
     test_480K_M4SS_192K:
       - device_type: 'efx32'
         device_subtype: 'efr32'
-        filename: 'SL_SI91X_RAM_LEVEL_NWP_ADV_MCU_BASIC.rps'
+        filename: 'test_agent_soc_cf_480k.rps'
 
     test_416K_M4SS_256K:
       - device_type: 'efx32'
         device_subtype: 'efr32'
-        filename: 'SL_SI91X_RAM_LEVEL_NWP_MEDIUM_MCU_MEDIUM.rps'
+        filename: 'test_agent_soc_cf_416K.rps'
 
     test_352K_M4SS_320K:
       - device_type: 'efx32'
         device_subtype: 'efr32'
-        filename: 'SL_SI91X_RAM_LEVEL_NWP_BASIC_MCU_ADV.rps'
+        filename: 'test_agent_soc_cf_352K.rps'
