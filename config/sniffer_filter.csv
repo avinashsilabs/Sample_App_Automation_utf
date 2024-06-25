@@ -170,6 +170,7 @@ twt_assoc_request_frame, (wlan.ext_tag.he_mac_cap.twt_req_support == 1), and ((w
 twt_teardown_check, wlan.addr == {{sa_addr}}, and wlan.s1g.action == 7
 twt_request_packets, (wlan.sa == {{ sa_addr }}, and wlan.da == {{ da_addr }}) and wlan.fc.retry == 0 and wlan.twt.requester == 1
 twt_arp_announcements, wlan.sa == {{ sa_addr }}, and (frame.number >= {{ packet_count }}) and arp and wlan.da == ff:ff:ff:ff:ff:ff
+twt_data_transfer_packets, ((wlan.ta == {{ dut_addr }}), or (wlan.ra == {{ dut_addr }}) or (frame.number == {{ frame_number }})) and (frame.number >= {{ frame_number }})
 third_party_ap_ax, (wlan.ext_tag.number == 35 && wlan.ext_tag.number == 36), and (wlan.ta == {{da_addr}})
 adv_he_info, (wlan.ta == {{sa_addr}} && wlan.fc.type_subtype == 0x0000), and (wlan.ext_tag.number == 35)
 adv_he_in_data_pkt, (((wlan.ta == {{sa_addr}} && wlan.fc.type_subtype == 0x0028)) && (radiotap.he.data_1.ppdu_format == 0x0000)), and (wlan_radio.phy == 11)
