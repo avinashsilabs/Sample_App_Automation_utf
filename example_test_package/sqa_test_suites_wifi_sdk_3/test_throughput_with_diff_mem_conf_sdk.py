@@ -412,7 +412,7 @@ def test_wlan_standalone_tcp_rx_416_256K_C146712(firmware_loader, wifi_sniffer, 
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_udp_tx_416_256K_c20738(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_udp_tx_416_256K_C532890(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -454,7 +454,7 @@ def test_wlan_standalone_udp_tx_416_256K_c20738(firmware_loader, wifi_sniffer, w
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_udp_rx_416_256K_c20739(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_udp_rx_416_256K_C532891(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -666,7 +666,7 @@ def test_wlan_standalone_udp_rx_with_416k_11n_C537721(firmware_loader, wifi_snif
 
     }
 )
-def test_wlan_ble_connected_tcp_tx_416_256K_c20746(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_connected_tcp_tx_416_256K_C532944(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -704,7 +704,7 @@ def test_wlan_ble_connected_tcp_tx_416_256K_c20746(firmware_loader, wifi_sniffer
 
     }
 )
-def test_wlan_ble_connected_tcp_rx_416_256K_c20747(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_connected_tcp_rx_416_256K_C532945(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -743,7 +743,7 @@ def test_wlan_ble_connected_tcp_rx_416_256K_c20747(firmware_loader, wifi_sniffer
 
     }
 )
-def test_wlan_ble_connected_udp_tx_416_256K_c20744(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_connected_udp_tx_416_256K_C532942(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -781,7 +781,7 @@ def test_wlan_ble_connected_udp_tx_416_256K_c20744(firmware_loader, wifi_sniffer
 
     }
 )
-def test_wlan_ble_connected_udp_rx_416_256K_c20745(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_connected_udp_rx_416_256K_C532943(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -816,7 +816,7 @@ def test_wlan_ble_connected_udp_rx_416_256K_c20745(firmware_loader, wifi_sniffer
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 3, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
 
     }
 )
@@ -857,7 +857,7 @@ def test_wlan_ble_with_ble_data_trans_416_256K_tcp_tx_C532948(firmware_loader, w
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 3, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
 
     }
 )
@@ -898,7 +898,7 @@ def test_wlan_ble_with_ble_data_trans_416_256K_tcp_rx_C532949(firmware_loader, w
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 3, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
 
     }
 )
@@ -939,7 +939,7 @@ def test_wlan_ble_with_ble_data_trans_416_256K_udp_tx_C532946(firmware_loader, w
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 3, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
 
     }
 )
