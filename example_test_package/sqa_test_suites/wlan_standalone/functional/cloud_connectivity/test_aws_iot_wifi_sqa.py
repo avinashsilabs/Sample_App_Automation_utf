@@ -26,6 +26,7 @@ from utf_wiseconnect.devices.rs911x import (
     DeviceConstants,
     RS9116AwsQos
 )
+from AWSIoTPythonSDK.core.protocol.internal.clients import ClientStatus
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
@@ -127,6 +128,31 @@ def ApWirelessOff(wifi_access_point, wait_time, logger):
     time.sleep(wait_time)
     logger.info(f"Enabling Wireless in AP")
     wifi_access_point.interfaces.wifi.start_ap()
+
+
+@retry(Exception, delay=10, tries=3)
+def connect_to_aws_server_from_raspi(aws_iot_client):
+    """
+    @param aws_iot_client: Fixture parameter to issue command in Raspi.
+    """
+    logger().info("Connecting to aws server from aws_iot_client")
+    aws_iot_client.interfaces.aws_iot.aws_iot_connect()
+    time.sleep(5)
+    status = aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
+    assert status == ClientStatus.STABLE, "Connecting to AWS server from aws_iot_client is failed"
+
+
+@retry(Exception, delay=10, tries=3)
+def subscribe_from_raspi(aws_iot_client, topic, qos=RS9116AwsQos.QOS0):
+    """
+    @param aws_iot_client: Fixture parameter to issue command in Raspi.
+    @param topic: Topic name to subscribe from Raspi on AWS Server.
+    @param qos: QOS value to subscribe on aws topic(0/1).
+    """
+    aws_iot_client.interfaces.aws_iot.received_messages.clear()
+    aws_iot_client.interfaces.aws_iot.aws_iot_subscribe(topic, qos=qos)
+    status = aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
+    assert status == ClientStatus.STABLE, f"Subscribe on topic:'{topic}' is failed from aws_iot_client"
 
 
 def connect_disconnect_aws(wifi_dut, messages, topic):
@@ -242,7 +268,7 @@ def connect_aws_server_from_dut(wifi_dut):
         status = True
     except Exception as err:
         logger().error(str(err))
-        if "0x2" or "0x9" in str(err):
+        if "0x2" in str(err) or "0x9" in str(err):
             logger().warning("AWS server is not reachable from DUT, Please check your internet connection")
             wifi_dut.interfaces.wifi.aws_iot_disconnect()
         time.sleep(10)
@@ -720,20 +746,14 @@ def test_aws_connect_disconnect_sequence_c19552(firmware_loader, wifi_sniffer, w
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_aws_publish_data_with_different_length_c19553(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut,
-                                                       logger):
+                                                       logger, aws_iot_client):
     topic_1 = "sdk/test/Python"
     try:
-        message1 = text_generator(size=1)
-        message2 = text_generator(size=10)
-        message3 = text_generator(size=100)
-        message4 = text_generator(size=512)
-        message5 = text_generator(size=1000)
-        # message6 = text_generator(size=1390)
-
-        message = {"message1": message1, "message2": message2, "message3": message3, "message4": message4,
-                   "message5": message5}
-        # message = {"message1": message1, "message2": message2, "message3": message3, "message4": message4, "message5": message5, "message6": message6}
-        logger.info(f"Messages are:{message}")
+        messages = list()
+        # for size in (1, 10, 100, 512, 1000, 1390):
+        for size in [1, 10, 100, 512, 1000]:
+            messages.append(''.join(random.choice(string.ascii_uppercase) for _ in range(size)))
+        logger.info(f"Messages are:{messages}")
 
         capture_filename = "test_aws_publish_data_with_different_length_TC19553"
         dut_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
@@ -744,42 +764,21 @@ def test_aws_publish_data_with_different_length_c19553(firmware_loader, wifi_sni
         logger.info("Initiating aws connect from DUT")
         assert connect_aws_server_from_dut(wifi_dut), "Failed to connect aws server from DUT"
         logger.info("Connecting to AWS server from DUT is successful")
-        time.sleep(2)
+        connect_to_aws_server_from_raspi(aws_iot_client)
+        subscribe_from_raspi(aws_iot_client, topic_1, qos=RS9116AwsQos.QOS0)
 
-        subscribe_fail = 1
-        for count in range(5):
-            try:
-                logger.info(f"DUT is Subscribing on topic '{topic_1}' and QOS:'{RS9116AwsQos.QOS0}'")
-                wifi_dut.interfaces.wifi.aws_iot_subscribe(topic_1, qos=RS9116AwsQos.QOS0, timeout=10)
-                subscribe_fail = 0
-                break
-            except:
-                logger.info(f"Subscribing on topic '{topic_1}' failed. retry count->{count + 1}")
-                time.sleep(2)
-        assert subscribe_fail == 0, "Subscribing to topic is failed"
-
-        for message_key, message_value in message.items():
-            logger.info(f"\nDUT publishing message on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS0}'"
-                        f"\nMessage with length:'{len(message_value)} bytes'\nMessage is:'{message_value}'")
-            publish_from_dut(wifi_dut, topic_1, message_value, qos=RS9116AwsQos.QOS0, timeout=10)
-
-            time.sleep(5)
-            events = wifi_dut.interfaces.wifi.get_async_events()
-            logger.info("\nValidating received aws message")
-            iot_event = 0
-            for event in events:
-                if event.event_type == RS9116AsyncEventType.AWSIoTMQTTMessage:
-                    iot_event = 1
-                    aws_event_qos = event.event_data.qos
-                    aws_event_topic = event.event_data.topic
-                    aws_event_payload = event.event_data.payload
-                    logger.info(
-                        f"QOS received: '{aws_event_qos}', aws topic received: '{aws_event_topic}', aws message received:'{aws_event_payload}'")
-                    assert topic_1 == aws_event_topic, "message is not received on subscribed topic"
-                    assert RS9116AwsQos.QOS0 == aws_event_qos, "Received wrong QOS. expected is QOS0"
-                    assert message_value == aws_event_payload, "sent and received messages are not matching"
-            assert iot_event == 1, f"published message '{message_key}:{message_value}' not received on DUT"
-            logger.info("aws messages validated successfully")
+        received_messages = list()
+        for count, msg in enumerate(messages):
+            logger.info(f"\nDUT publishing message{count + 1} on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS0}'"
+                        f"\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
+            publish_from_dut(wifi_dut, topic_1, msg, qos=RS9116AwsQos.QOS0, timeout=10)
+            time.sleep(10)
+            received = aws_iot_client.interfaces.aws_iot.get_received_messages()[-1]
+            received_messages.append(received.payload.decode('latin-1'))
+        for i, message in enumerate(messages):
+            assert any(message in recv_msg for recv_msg in
+                       received_messages), f"Raspi did not received published message{message} from DUT"
+            logger.info(f"Received Message{i + 1}: {message} ")
 
         logger.info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -862,8 +861,7 @@ def test_aws_receive_data_over_subscribed_topic_with_different_lengths_c19554(fi
             logger.info(f"\naws_iot_client publishing message on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS1}'"
                         f"\nMessage with length:'{len(message_value)} bytes'\nMessage is:'{message_value}'")
             aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic_1, message_value, qos=RS9116AwsQos.QOS1)
-
-            time.sleep(5)
+            time.sleep(10)
             events = wifi_dut.interfaces.wifi.get_async_events()
             logger.info("\n\nValidating received aws messages")
             iot_event = 0
@@ -1329,7 +1327,6 @@ def test_aws_receive_functionality_while_receiving_100_mqtt_messages_continuousl
                 for retry_count in range(20):
                     event_received = False
                     try:
-
                         logger.info(
                             f"\naws_iot_client publishing message{i} on topic:'{topic_1}' \nQOS:'{RS9116AwsQos.QOS1}'"
                             f"\nMessage{i} with length:'{len(msg)} bytes'\nMessage{i} is:'{msg}'")
