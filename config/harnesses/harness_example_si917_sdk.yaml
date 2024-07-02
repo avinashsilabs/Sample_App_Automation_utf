@@ -210,6 +210,23 @@ devices:
                 # radius server configuration
                 radius_ip: "192.168.50.176"
                 radius_port: "1812"
+#                guest_networks:
+#                    - band: "2g"
+#                      index: "1"
+#                      ssid: "ASUS_B0_2G_Guest"
+#                      passphrase: '123456789'
+#                      security: WPA2
+#                    - band: "2g"
+#                      index: "2"
+#                      ssid: "ASUS_B0_2G_Guest2"
+#                      passphrase: '123456789'
+#                      security: WPA2
+#                    - band: "2g"
+#                      index: "3"
+#                      ssid: "ASUS_B0_2G_Guest3"
+#                      passphrase: '123456789'
+#                      security: WPA2
+
     switched_ap:
         interfaces:
             wifi:
