@@ -8,6 +8,7 @@ from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping, ping_qos
 from utf.utils.thread_base import ThreadBase
 import re
+from threading import Thread
 
 """This function runs below test steps for DUT-Si91x
         1. Configuration of DUT in 2G : BGN
@@ -17,7 +18,7 @@ import re
         6. Enable the power save mode in DUT
         7. Stop the sniffer
         8. Analyzing all sniffer capture packets and find the different Qos access category packets 
-        
+
     traffic category for Iperf category
         1. wlan.qos.priority == 0  Best Effort
         2. wlan.qos.priority == 1  Background
@@ -162,7 +163,7 @@ class WifiJoin(ThreadBase):
         logger().info(f' ********* Calculating length of {len(content_tid)} and {len(sequence_number)}***********')
 
         """The below code lines is used to print TID and sequence number from DUT Tx Packet"""
-        if self.test_case_no == 148326:
+        if self.test_case_no in [148323, 148326]:
             for i in range(len(sequence_number)):
                 logger().info(f' ********* {sequence_number[i]} and {content_tid[i]}***********')
 
@@ -193,7 +194,6 @@ pytestmark = [
     pytest.mark.config(
         "wifi_dut",
         wifi={
-            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
             "features": Si91xFeatureBitMap.Default,
@@ -202,6 +202,7 @@ pytestmark = [
             "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
             "custom_features": Si91xCustomFeatureBitMap.Default,
+            "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
         }
     )
 ]
@@ -529,52 +530,34 @@ def test_udp_rx_check_block_ack_for_aggregated_frame_c148320(wifi_sniffer, net_p
 @pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2'})
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_dut_sending_mpdu_same_qos_cateqory_c148323(
-        wifi_sniffer, wifi_access_point, wifi_dut, request, wifi_client, sl_collections, sniffer_filter, protocol,
-        net_perf_client):
+def test_dut_sending_mpdu_same_qos_cateqory_c148323(wifi_sniffer, wifi_access_point, wifi_dut, request, wifi_client,
+                                                    sl_collections, sniffer_filter):
     """ To check whether DUT sending individual MPDU are of the same QoS access category """
 
     capture_filename = request.node.name
     traffic = ['0x80', '0xc8']
     filter_list = [4, 6]
-    filter_number = ''
 
     try:
         packet_filter4 = '    Type/Subtype: QoS Data (0x0028)'
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             wifi_client=wifi_client, capture_filename=capture_filename, sl_collections=sl_collections,
-                            test_case_no=148323, sniffer_filter=sniffer_filter, protocol=protocol, traffic=traffic,
-                            net_perf_client=net_perf_client)
+                            test_case_no=148323, sniffer_filter=sniffer_filter)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
+
+        tos6_thread = Thread(target=ping_qos, args=(wifi_obj.dut_addr['device_ip'], 60, "0xC8"))
+        tos6_thread.start()
+        status = ping_qos(wifi_obj.dut_addr['device_ip'], 60, qos_category='0x80')
+        assert status == 1, "Ping failed for qos_category 0x80"
+        tos6_thread.join()
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
         for qos_category in range(len(traffic)):
-            net_perf_client.interfaces.net_perf.init_server(host_ip=wifi_obj.host_ip,
-                                                            device_ip=wifi_obj.dut_addr['device_ip'],
-                                                            protocol=protocol, tos_value=traffic[qos_category])
-            logger().info(
-                f"Host IP: {wifi_obj.host_ip}, Dut IP: {wifi_obj.dut_addr['device_ip']}, Protocol: {protocol}, "
-                f"tos_value: {traffic[qos_category]}")
-            logger().info(f"***** starting iperf ******")
-            net_perf_client.interfaces.net_perf.start()
-            logger().info(f"***** send traffic  ******")
-            wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
-                                           local_port=net_perf_client.interfaces.net_perf.server_port,
-                                           local_ip=wifi_obj.dut_addr['device_ip'], remote_ip=wifi_obj.host_ip,
-                                           remote_port=net_perf_client.interfaces.net_perf.server_port,
-                                           size=1460, ttl=30, throughput_type=1, qos=filter_list[qos_category])
-            logger().info(f"***** get and print throughput ******")
-            iperf_throughput = net_perf_client.interfaces.net_perf.process_output()
-            assert iperf_throughput, "failed to get throughput..."
-            wifi_obj.print_throughput()
-            logger().info("data transfer is successful")
-            time.sleep(5)
             filter_number = filter_list[qos_category]
-
-            # packet_filter3 = f'((wlan.sa == {wifi_obj.dut_addr["dut_mac_address"]}) || (wlan.ra == {wifi_obj.ap_mac_address})) and tcp and (wlan.qos.priority == {filter_number})'
             packet_filter3 = f'((wlan.sa == {wifi_obj.dut_addr["dut_mac_address"]}) || (wlan.ra == {wifi_obj.ap_mac_address})) and wlan.fc.type_subtype == 0x28 and (wlan.qos.priority == {filter_number})'
-
             snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3,
                                                                                 packet_filter2=packet_filter4)[
                 'packet_count']
@@ -600,10 +583,6 @@ def test_dut_sending_mpdu_same_qos_cateqory_c148323(
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)[
             'packet_count']
         assert snif_pkt_count, "Unable to find Block ACK packets"
-
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info("Stop Sniffer finally")
-
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -618,7 +597,6 @@ def test_dut_receiving_mpdu_same_qos_cateqory_c148326(wifi_sniffer, wifi_access_
     capture_filename = request.node.name
     traffic_category_list = ['0xC8', '0x80']
     filter_list = [6, 4]
-    filter_number = ''
     try:
         packet_filter4 = '    Type/Subtype: QoS Data (0x0028)'
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
@@ -626,21 +604,27 @@ def test_dut_receiving_mpdu_same_qos_cateqory_c148326(wifi_sniffer, wifi_access_
                             test_case_no=148326, sniffer_filter=sniffer_filter)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
+
+        tos6_thread = Thread(target=ping_qos, args=(wifi_obj.dut_addr['device_ip'], 60, "0xC8"))
+        tos6_thread.start()
+        status = ping_qos(wifi_obj.dut_addr['device_ip'], 60, qos_category='0x80')
+        assert status == 1, "Ping failed for qos_category 0x80"
+        tos6_thread.join()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
         for qos_category in range(len(traffic_category_list)):
-            status = ping_qos(wifi_obj.dut_addr['device_ip'], 30, qos_category=traffic_category_list[qos_category])
-            assert status == 1, "Ping failed"
             filter_number = filter_list[qos_category]
             time.sleep(5)
-
             packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                 sa_addr=wifi_obj.dut_addr['dut_mac_address'], da_addr=wifi_obj.ap_mac_address,
                 filter_name="association_request_HE")
-
             packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                 sa_addr=wifi_obj.dut_addr['dut_mac_address'], ra_addr=wifi_obj.ap_mac_address,
                 filter_name="11ax_aggre_block_ack")
-
-            packet_filter3 = f'((wlan.sa == {wifi_obj.dut_addr["dut_mac_address"]}) || (wlan.ra == {wifi_obj.ap_mac_address})) and (wlan.fc.type_subtype == 0x28) and (wlan.qos.priority == {filter_number})'
+            packet_filter3 = (f'((wlan.da == {wifi_obj.dut_addr["dut_mac_address"]}) || '
+                              f'(wlan.sa == {wifi_obj.ap_mac_address})) and (wlan.fc.type_subtype == 0x28) and '
+                              f'(wlan.qos.priority == {filter_number})')
 
             logger().info(f"***** Validating Association Request with HE Element ******")
             snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
@@ -659,10 +643,6 @@ def test_dut_receiving_mpdu_same_qos_cateqory_c148326(wifi_sniffer, wifi_access_
 
             """This below method is used to validate TID and sequence numbers from DUT Tx Packet"""
             wifi_obj.sequence_number_tid_validation()
-
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info("Stop Sniffer finally")
-
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -833,4 +813,3 @@ def test_dut_send_mpdu_with_same_receiver_addr_c148322(
         wifi_obj.receiver_address_sequence_number_validation()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
