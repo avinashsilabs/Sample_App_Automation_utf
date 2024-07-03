@@ -302,7 +302,7 @@ def test_ble_sdk_fetch_a_particular_profiles_from_RD1_C19861(wifi_dut, ble_clien
         uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
         assert BatteryService.UUID in uuids is not None, "Could not fetch the battery profile"
         logger().info(" Resolving Battery profile from RD1")
-        start_handle, end_handle = wifi_dut.interfaces.wifi.ble_get_profile_async(
+        start_handle, end_handle, data = wifi_dut.interfaces.wifi.ble_get_profile_async(
             ble_remote_dev_address=bt_client_address,
             uuid=int(BatteryService.UUID, 16))
         assert start_handle is not None, "failed to fetch the RD1 address.."
