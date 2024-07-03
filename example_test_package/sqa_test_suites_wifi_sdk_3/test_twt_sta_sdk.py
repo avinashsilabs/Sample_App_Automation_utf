@@ -408,6 +408,8 @@ class WLanTwTThread(ThreadBase):
         filter_file = open(f'./reports/filter2_file.txt', 'r')
         lines = filter_file.read()
         time_delta = re.findall(r'((?<=Epoch Time:\s)\d+\.\d+)', lines)
+        if not time_delta:
+            time_delta = re.findall(r'((?<=Epoch Arrival Time:\s)\d+\.\d+)', lines)
         time_ref = float(time_delta[0])
         actual_validation = True
         lower_threshold = 9 * self.wake_interval_resp / 10000000
