@@ -1393,7 +1393,7 @@ def test_wifi_sdk_max_psp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wifi_sdk_max_psp_listen_interval_11ms_c40154')
 
-    wifi_dut.interfaces.wifi.set_join_feature_bitmap(Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+    wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
     wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
     result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False, retry_count=3,
                                                  associated=False)
@@ -1490,7 +1490,7 @@ def test_wifi_sdk_max_psp_dtim_3_c40155(wifi_sniffer, wifi_access_point, wifi_du
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wifi_sdk_max_psp_dtim_3_c40155')
 
-    wifi_dut.interfaces.wifi.set_join_feature_bitmap()
+    wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=Si91xJoinFeatureBitMap.Default)
     result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False, retry_count=3,
                                                  associated=False)
     device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
@@ -1585,7 +1585,7 @@ def test_wifi_sdk_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_du
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wifi_sdk_max_psp_dtim_3_c40156')
 
-    wifi_dut.interfaces.wifi.set_join_feature_bitmap(Si91xJoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=Si91xJoinFeatureBitMap.Default)
     result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False, retry_count=3,
                                                  associated=False)
     device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
@@ -1671,7 +1671,7 @@ def test_wifi_sdk_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point,
     """
     validation = True
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-    wifi_dut.interfaces.wifi.set_join_feature_bitmap(Si91xJoinFeatureBitMap.Default)
+    wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=Si91xJoinFeatureBitMap.Default)
     result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False, retry_count=3,
                                                  associated=False)
     device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
