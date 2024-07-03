@@ -1,6 +1,6 @@
 firmware:
-  rs911x: &firmware_file_anchor RS9116W.2.10.0.6.rps
-  rt595: sqa_test_agent-rt595-gcc_arm.bin
+  rs911x: &firmware_file_anchor RS9116W_rt595.rps
+  rt595: sqa_test_agent-rt595-gcc_arm3.elf
 
 #firmware_version_file: *firmware_file_anchor
 # List of devices to be reset when needed

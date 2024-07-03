@@ -6,7 +6,7 @@ from utf.utils.time_measurer import TimeMeasurer
 import pytest
 from utf.utils.logger import get_logger
 from utf import UtfDatabaseProperties
-
+import time
 
 def logger():
     return get_logger(__name__)
@@ -37,9 +37,13 @@ pytestmark = [
                                                        test_case_name='test_version1',
                                                        test_case_id='test_version1::1',
                                                        notes='test notes'))
-def test_btc(wifi_dut):
-    result = wifi_dut.interfaces.wifi.btc()
-    logger().info(f"Result : {result}")
+def test_scan(wifi_dut):
+    time.sleep(6)
+    with TimeMeasurer() as t:
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
+    logger().info(scan_results)
+    assert len(scan_results) > 0
+    logger().info(f"Scan in {t.duration} seconds")
    
 
 

@@ -167,8 +167,8 @@ devices:
                 # by specifying the vid and pid of the device.
                 # In the below example, the vid and pid represent the USB connection to the WSTK
                 port: 'auto'
-                vid: 0x1366
-                pid: 0x0105
+                vid: 0x1fc9
+                pid: 0x0090
 
             # 'firmware_uart' is a special interface that indicates which UART is used
             # when loading firmware on the device
@@ -208,8 +208,8 @@ devices:
             vcom:
                 type: 'serial'
                 port: 'auto'
-                vid: 0x1366
-                pid: 0x0105
+                vid: 0x1fc9
+                pid: 0x0090
 
     dlink810_ap:
         interfaces:
@@ -899,7 +899,7 @@ start_state:
         wifi: 'ap_enabled'
     wifi_dut:
         device: 'reset'
-        #wifi: 'init'
+        wifi: 'init'
 
 end_state:
     wifi_access_point:
