@@ -13,6 +13,7 @@ from utf.utils import print_dict
 from utf.interfaces.wifi import WlanError
 from utf.utils import mac_address_to_string
 from retry import retry
+from utf_wiseconnect.interfaces.cli.rs_sapi_commands import RSSAPICommands
 
 """
     setup requirement:
@@ -187,8 +188,11 @@ class wifi_eap_join:
 @retry(Exception, delay=15, tries=3)
 def get_ip(wifi_dut):
     logger().info("DUT gets ip address through DHCP")
-    wifi_dut.interfaces.wifi.start_ip(timeout=120, retries=6)
-    device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+    if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
+        ip_config = wifi_dut.interfaces.wifi.start_ip(timeout=120, retries=6)
+    else:
+        ip_config = wifi_dut.interfaces.wifi.start_ip(timeout=120)
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     return device_ip
 
 
@@ -2206,13 +2210,13 @@ def test_store_config_custom_feat_bit_20_C19091(wifi_sniffer, wifi_access_point,
         logger().info("Enable Auto Configuration")
         # Save the wireless configuration in the flash
         wifi_dut.interfaces.wifi.config_save()
+        time.sleep(3)
         # Enable the wireless configuration in the flash
         wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgEnable)
 
-        for i in range(0, iter_count):
-
-            for retry in range(0, 3):
-
+        for i in range(1, iter_count+1):
+            logger().info(f"\n\n>>>>>>>>>>>>>>> Iteration:{i} <<<<<<<<<<<<<<<")
+            for retry_count in range(3):
                 logger().info(f"Configuring the sniffer with channel {wifi_access_point.interfaces.wifi.channel}")
                 wifi_sniffer.interfaces.capture.configure_interface(wifi_access_point.interfaces.wifi.channel)
 
@@ -2222,13 +2226,12 @@ def test_store_config_custom_feat_bit_20_C19091(wifi_sniffer, wifi_access_point,
                 logger().info("Initiating reset")
                 wifi_dut.interfaces.wifi.reset_mode = "soft"
                 wifi_dut.interfaces.wifi.reset_soft()
-                time.sleep(2)
-
+                time.sleep(3)
                 wifi_dut.interfaces.wifi.chip_init()
                 time.sleep(10)
 
-                logger().info("stopping the capture")
                 # Stop Sniffer
+                logger().info("stopping the capture")
                 wifi_sniffer.interfaces.capture.stop_capture()
 
                 # Validate Probe req(Broadcast/Unicast), authentication ,association, eapol
@@ -2238,11 +2241,9 @@ def test_store_config_custom_feat_bit_20_C19091(wifi_sniffer, wifi_access_point,
                 logger().info(
                     f"join packets : {wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)['packet_count']}")
                 assert not wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
-                    'packet_count'], \
-                    'Join procedure should not start until auto trigger enabled'
+                    'packet_count'], 'Join procedure should not start until auto trigger enabled'
 
                 wifi_dut.interfaces.wifi.config_auto_tigger()
-
                 time.sleep(30)
                 wifi_dut.interfaces.wifi.associated = True
 
@@ -2263,7 +2264,6 @@ def test_store_config_custom_feat_bit_20_C19091(wifi_sniffer, wifi_access_point,
         logger().info("Disable store configuration")
         # Enable the wireless configuration in the flash
         wifi_dut.interfaces.wifi.config_enable(config=RS9116StoreConfiguration.CfgDisable)
-
     except Exception as e:
         logger().info(f"Exception: {str(e)}")
         clean_up = cleanup_store_config(wifi_dut)

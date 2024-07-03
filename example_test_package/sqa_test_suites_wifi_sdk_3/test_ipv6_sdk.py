@@ -112,6 +112,8 @@ class WLanThread(ThreadBase):
                                                              retry_count=3,
                                                              power_save=self.power_save)
 
+        self.dut_info['ap_mac_address'] = self.wifi_access_point.interfaces.wifi.bssid
+
         remote_ip = self.wifi_client.interfaces.wifi.get_ip_address(version=6, addr_type=self.ipv6_addr_type)
         logger().info(f"remote_ip: {remote_ip}")
         ip_addr = ipaddress.ip_address(remote_ip)
@@ -141,23 +143,31 @@ class WLanThread(ThreadBase):
         self.dut_info['ip_address'] = info_attr['device_ip']
 
 
-@pytest.mark.config(
+pytestmark = [
+    pytest.mark.config(
     "wifi_dut",
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.DHCPv6Server,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client
+                          | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode
+                          | Si91xTCPIPFeatureBitMap.DHCPv6Server,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-    }
-)
+     }
+    )
+]
+
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
+                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
 )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ipv6_packet_from_dut_c119345(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections, request,
                                                sniffer_filter,
@@ -173,28 +183,19 @@ def test_wifi_sdk_ipv6_packet_from_dut_c119345(wifi_dut, wifi_access_point, wifi
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(type=129,
                                                                                         filter_name='icmpv6_msg_type')
 
-        wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1)
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Sniffer: ICMPV6 message not received'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.DHCPv6Server,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-    }
-)
-@pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
+                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"),
+                               "security": "Open"}
 )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_verify_stateless_dhcpv6_configuration_c119348(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                 sl_collections, request, sniffer_filter,
@@ -209,37 +210,33 @@ def test_wifi_sdk_verify_stateless_dhcpv6_configuration_c119348(wifi_dut, wifi_a
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wlan_obj.sniffer_capture(mode='stop')
-        # Router solicitation message
+        logger().info("checking for router advertisement packet to check the stateless dhcpv6 configuration")
+        packet_filter = f"icmpv6.nd.ra.flag.o == 1 && icmpv6.nd.ra.flag.m == 0 && wlan.addr== {wlan_obj.dut_info['ap_mac_address']}"
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+            'Sniffer: AP is not configured with stateless dhcpv6'
+
+        #Router solicitation message
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            da_addr=WLanThread.dut_info.get("mac_address"),
+            sa_addr=wlan_obj.dut_info['mac_address'],
             filter_name='router_solicitation')
-        wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1)
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Sniffer: router_solicitation message not received'
         # Router advertisement message
         packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            da_addr=WLanThread.dut_info.get("mac_address"),
+            da_addr=wlan_obj.dut_info['mac_address'],
             filter_name='router_advertisement')
-        wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter2)
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count'], \
+            'Sniffer: advertisement message not received'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.DHCPv6Server,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.FeatureLowPower,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-    }
-)
-@pytest.mark.config(
-    "wifi_access_point", wifi={"ipv6_state": "1",
+    "wifi_access_point", wifi={"security": "Open", "ipv6_state": "1",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
 )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_verify_stateful_dhcpv6_procedure_c119349(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
                                                            sniffer_filter, request,
@@ -254,42 +251,41 @@ def test_wifi_sdk_verify_stateful_dhcpv6_procedure_c119349(wifi_dut, wifi_access
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wlan_obj.sniffer_capture(mode='stop')
-        # Router solicitation message
+
+        logger().info("checking for router advertisement packet to check the stateful dhcpv6 configuration")
+        packet_filter1 = f"icmpv6.nd.ra.flag.m == 1 && wlan.addr== {wlan_obj.dut_info['ap_mac_address']}"
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Sniffer: AP is not configured with stateful dhcpv6'
+        #Router solicitation message
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            da_addr=WLanThread.dut_info.get("mac_address"),
+            sa_addr=wlan_obj.dut_info['mac_address'],
             filter_name='router_solicitation')
-        wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1)
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Sniffer: router_solicitation message not received'
         # Router advertisement message
         packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            da_addr=WLanThread.dut_info.get("mac_address"),
+            da_addr=wlan_obj.dut_info['mac_address'],
             filter_name='router_advertisement')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count'], \
+            'Sniffer: advertisement message not received'
         # Stateful IPv6 address
         packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=WLanThread.dut_info.get("mac_address"),
+            sa_addr=wlan_obj.dut_info['mac_address'],
             filter_name='stateful_ipv6_address')
         logger().info(f"The filter is {packet_filter3}")
-        wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter2)
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
+            'Sniffer: stateful ipv6 address not received'
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.DHCPv6Server,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-    }
-)
-@pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
+                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
 )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_check_dut_ping_with_128_bit_ipv6_address_c119358(wifi_dut, wifi_sniffer, wifi_access_point,
                                                                    sl_collections,
@@ -303,31 +299,21 @@ def test_wifi_sdk_check_dut_ping_with_128_bit_ipv6_address_c119358(wifi_dut, wif
         wlan_obj.wait_for_exit()
         wlan_obj.sniffer_capture(mode='stop')
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=WLanThread.dut_info.get("ip_address"),
-            da_addr=WLanThread.client_info.get("ip_address"),
+            sa_addr=wlan_obj.dut_info['ip_address'],
+            da_addr=wlan_obj.client_info["ip_address"],
             filter_name='echo_req_reply')
-        wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1)
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Sniffer: ipv6 echo req & reply packets not found'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.DHCPv6Server,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-    }
+    "wifi_access_point", wifi={"ipv6_state": "1",
+                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
 )
-@pytest.mark.config(
-    "wifi_access_point", wifi={"ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
-)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_check_ping_with_128_bit_ipv6_address_c119359(wifi_dut, wifi_sniffer, wifi_access_point,
                                                                sl_collections,
@@ -340,32 +326,28 @@ def test_wifi_sdk_check_ping_with_128_bit_ipv6_address_c119359(wifi_dut, wifi_sn
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wlan_obj.sniffer_capture(mode='stop')
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=WLanThread.dut_info.get("ip_address"),
-            da_addr=WLanThread.client_info.get("ip_address"),
+
+        logger().info("checking for router advertisement packet to check the stateful dhcpv6 configuration")
+        packet_filter1 = f"icmpv6.nd.ra.flag.m == 1 && wlan.addr== {wlan_obj.dut_info['ap_mac_address']}"
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Sniffer: AP is not configured with stateful dhcpv6'
+
+        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_info["ip_address"],
+            da_addr=wlan_obj.client_info['ip_address'],
             filter_name='echo_req_reply')
-        wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1)
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count'], \
+            'Sniffer: IPV6 echo reply and request packets not found'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.DHCPv6Server,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-    }
-)
-@pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
+                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
 )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_check_dut_ping_with_possible_shortest_ipv6_address_c119362(wifi_dut, wifi_sniffer, wifi_access_point,
                                                                              sl_collections, request, sniffer_filter,
@@ -379,31 +361,21 @@ def test_wifi_sdk_check_dut_ping_with_possible_shortest_ipv6_address_c119362(wif
         wlan_obj.wait_for_exit()
         wlan_obj.sniffer_capture(mode='stop')
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=WLanThread.dut_info.get("ip_address"),
-            da_addr=WLanThread.client_info.get("ip_address"),
+            sa_addr=wlan_obj.dut_info["ip_address"],
+            da_addr=wlan_obj.client_info["ip_address"],
             filter_name='echo_req_reply')
-        wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1)
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Sniffer: IPV6 echo reply and request packets not found'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.DHCPv6Server,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-    }
-)
-@pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
+                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
 )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ping_to_dut_stateless_dhcpv6_configuration_c119396(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                      sl_collections, request, sniffer_filter,
@@ -417,31 +389,21 @@ def test_wifi_sdk_ping_to_dut_stateless_dhcpv6_configuration_c119396(wifi_dut, w
         wlan_obj.wait_for_exit()
         wlan_obj.sniffer_capture(mode='stop')
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=WLanThread.dut_info.get("ip_address"),
-            da_addr=WLanThread.client_info.get("ip_address"),
+            sa_addr=wlan_obj.dut_info["ip_address"],
+            da_addr=wlan_obj.client_info["ip_address"],
             filter_name='echo_req_reply')
-        wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1)
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Sniffer: ipv6 echo req & reply packets not found'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.DHCPv6Server,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-    }
-)
-@pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
+                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
 )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ping_to_dut_stateful_dhcpv6_configuration_c119397(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                     sl_collections, request, sniffer_filter,
@@ -454,32 +416,28 @@ def test_wifi_sdk_ping_to_dut_stateful_dhcpv6_configuration_c119397(wifi_dut, wi
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wlan_obj.sniffer_capture(mode='stop')
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=WLanThread.dut_info.get("ip_address"),
-            da_addr=WLanThread.client_info.get("ip_address"),
+
+        logger().info("checking for router advertisement packet to check the stateful dhcpv6 configuration")
+        packet_filter1 = f"icmpv6.nd.ra.flag.m == 1 && wlan.addr== {wlan_obj.dut_info['ap_mac_address']}"
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count'], 'AP is not configured with stateful dhcpv6'
+
+        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_info["ip_address"],
+            da_addr=wlan_obj.client_info["ip_address"],
             filter_name='echo_req_reply')
-        wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1)
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count'], \
+            'Sniffer: IPV6 echo reply and request packets not found'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.DHCPv6Server,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-    }
-)
-@pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0", "security": "Open",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
 )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ping_to_AP_global_stateless_dhcpv6_configuration_C119393(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                            sl_collections, request, sniffer_filter,
@@ -494,9 +452,15 @@ def test_wifi_sdk_ping_to_AP_global_stateless_dhcpv6_configuration_C119393(wifi_
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wlan_obj.sniffer_capture(mode='stop')
+
+        logger().info("checking for router advertisement packet to check the stateful dhcpv6 configuration")
+        packet_filter4 = f"icmpv6.nd.ra.flag.m == 0 && wlan.addr== {wlan_obj.dut_info['ap_mac_address']}"
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter4)[
+            'packet_count'], 'AP is not configured with stateful dhcpv6'
+
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=WLanThread.dut_info.get("ip_address"),
-            da_addr=WLanThread.client_info.get("ip_address"),
+            sa_addr=wlan_obj.dut_info["ip_address"],
+            da_addr=wlan_obj.client_info["ip_address"],
             filter_name='echo_req_reply')
         logger().info(f"Validating icmpv6 packets with filter :{packet_filter1}")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(
@@ -507,22 +471,11 @@ def test_wifi_sdk_ping_to_AP_global_stateless_dhcpv6_configuration_C119393(wifi_
 
 
 @pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.DHCPv6Server,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-    }
-)
-@pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1", "security": "Open",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
 )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ping_to_AP_global_stateful_dhcpv6_configuration_C119394(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                           sl_collections, request, sniffer_filter,
@@ -538,8 +491,8 @@ def test_wifi_sdk_ping_to_AP_global_stateful_dhcpv6_configuration_C119394(wifi_d
         wlan_obj.wait_for_exit()
         wlan_obj.sniffer_capture(mode='stop')
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=WLanThread.dut_info.get("ip_address"),
-            da_addr=WLanThread.client_info.get("ip_address"),
+            sa_addr=wlan_obj.dut_info["ip_address"],
+            da_addr=wlan_obj.client_info["ip_address"],
             filter_name='echo_req_reply')
         logger().info(f"Validating icmpv6 packets with filter :{packet_filter1}")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(
@@ -550,22 +503,11 @@ def test_wifi_sdk_ping_to_AP_global_stateful_dhcpv6_configuration_C119394(wifi_d
 
 
 @pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.DHCPv6Server,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-    }
-)
-@pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0", "security": "Open",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
 )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ping_to_AP_linklocal_stateless_dhcpv6_configuration_C119399(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                               sl_collections, request, sniffer_filter,
@@ -581,34 +523,22 @@ def test_wifi_sdk_ping_to_AP_linklocal_stateless_dhcpv6_configuration_C119399(wi
         wlan_obj.wait_for_exit()
         wlan_obj.sniffer_capture(mode='stop')
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=WLanThread.dut_info.get("ip_address"),
-            da_addr=WLanThread.client_info.get("ip_address"),
+            sa_addr=wlan_obj.dut_info["ip_address"],
+            da_addr=wlan_obj.client_info["ip_address"],
             filter_name='echo_req_reply')
         logger().info(f"Validating icmpv6 packets with filter :{packet_filter1}")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(
-            packet_filter1=packet_filter1
-        )["packet_count"], "Sniffer: Unable to find icmpv6 packets in sniffer"
+            packet_filter1=packet_filter1)["packet_count"], "Sniffer: Unable to find icmpv6 packets in sniffer"
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.DHCPv6Server,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-    }
-)
-@pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1", "security": "Open",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
 )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ping_to_AP_linklocal_stateful_dhcpv6_configuration_C119400(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                              sl_collections, request, sniffer_filter,
@@ -623,9 +553,15 @@ def test_wifi_sdk_ping_to_AP_linklocal_stateful_dhcpv6_configuration_C119400(wif
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wlan_obj.sniffer_capture(mode='stop')
+
+        logger().info("checking for router advertisement packet to check the stateful dhcpv6 configuration")
+        packet_filter4 = f"icmpv6.nd.ra.flag.m == 1 && wlan.addr== {wlan_obj.dut_info['ap_mac_address']}"
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter4)[
+            'packet_count'], 'AP is not configured with stateful dhcpv6'
+
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=WLanThread.dut_info.get("ip_address"),
-            da_addr=WLanThread.client_info.get("ip_address"),
+            sa_addr=wlan_obj.dut_info["ip_address"],
+            da_addr=wlan_obj.client_info["ip_address"],
             filter_name='echo_req_reply')
         logger().info(f"Validating icmpv6 packets with filter :{packet_filter1}")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(
@@ -636,22 +572,11 @@ def test_wifi_sdk_ping_to_AP_linklocal_stateful_dhcpv6_configuration_C119400(wif
 
 
 @pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.DHCPv6Server,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-    }
-)
-@pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0", "security": "Open",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
 )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ping_to_DUT_linklocal_stateless_dhcpv6_configuration_C119402(wifi_dut, wifi_access_point,
                                                                                wifi_sniffer,
@@ -668,8 +593,8 @@ def test_wifi_sdk_ping_to_DUT_linklocal_stateless_dhcpv6_configuration_C119402(w
         wlan_obj.wait_for_exit()
         wlan_obj.sniffer_capture(mode='stop')
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=WLanThread.dut_info.get("ip_address"),
-            da_addr=WLanThread.client_info.get("ip_address"),
+            sa_addr=wlan_obj.dut_info["ip_address"],
+            da_addr=wlan_obj.client_info["ip_address"],
             filter_name='echo_req_reply')
         logger().info(f"Validating icmpv6 packets with filter :{packet_filter1}")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(
@@ -680,22 +605,11 @@ def test_wifi_sdk_ping_to_DUT_linklocal_stateless_dhcpv6_configuration_C119402(w
 
 
 @pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.DHCPv6Server,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-    }
-)
-@pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1", "security": "Open",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
 )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ping_to_DUT_linklocal_stateful_dhcpv6_configuration_C119403(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                               sl_collections, request, sniffer_filter,
@@ -711,8 +625,8 @@ def test_wifi_sdk_ping_to_DUT_linklocal_stateful_dhcpv6_configuration_C119403(wi
         wlan_obj.wait_for_exit()
         wlan_obj.sniffer_capture(mode='stop')
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=WLanThread.dut_info.get("ip_address"),
-            da_addr=WLanThread.client_info.get("ip_address"),
+            sa_addr=wlan_obj.dut_info["ip_address"],
+            da_addr=wlan_obj.client_info["ip_address"],
             filter_name='echo_req_reply')
         logger().info(f"Validating icmpv6 packets with filter :{packet_filter1}")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(
@@ -721,4 +635,4 @@ def test_wifi_sdk_ping_to_DUT_linklocal_stateful_dhcpv6_configuration_C119403(wi
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-#
+

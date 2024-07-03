@@ -172,23 +172,23 @@ class BleFunctionality(ThreadBase):
         assert len(char_props) > 0, "length of characters is 0"
         return char_path
     def tx_on_dut(self, char_path=None, char_uuid=None, data=None):
-        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
-        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
-                                                                                char_uid=char_uuid)
-        self.wifi_dut.interfaces.wifi.ble_set_local_att_value(notify_data=data, val_handle=12)
-        time.sleep(3)
-        # unsubscribe to notifications
-        self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-        self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uuid)
-        time.sleep(1)
-        logger().info("\n\n\n ***** validating Received notifications on Remote *****\n\n")
-        notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uuid]
-        # logger().info("\n * NOtifications: \n {} \n\n".format(notifications))
-        assert len(notifications) > 0, "received data is empty"
-        assert data in notifications[0], "failed to fetch data"
-        return notifications
-
-
+        sw = Stopwatch()
+        while sw.elapsed_sec <= 60:
+            self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+            self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
+                                                                                    char_uid=char_uuid)
+            self.wifi_dut.interfaces.wifi.ble_set_local_att_value(notify_data=data, val_handle=12)
+            time.sleep(3)
+            # unsubscribe to notifications
+            self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uuid)
+            time.sleep(1)
+            logger().info("\n\n\n ***** validating Received notifications on Remote *****\n\n")
+            notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uuid]
+            logger().info(f"Notifications received on remote: {notifications}")
+            # logger().info("\n * NOtifications: \n {} \n\n".format(notifications))
+            assert len(notifications) > 0, "received data is empty"
+            assert data in notifications[0], "failed to fetch data"
 
 
     def check_device_state_on_dut(self):
@@ -302,7 +302,7 @@ def test_ble_sdk_fetch_a_particular_profiles_from_RD1_C19861(wifi_dut, ble_clien
         uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
         assert BatteryService.UUID in uuids is not None, "Could not fetch the battery profile"
         logger().info(" Resolving Battery profile from RD1")
-        start_handle, end_handle = wifi_dut.interfaces.wifi.ble_get_profile_async(
+        start_handle, end_handle, data = wifi_dut.interfaces.wifi.ble_get_profile_async(
             ble_remote_dev_address=bt_client_address,
             uuid=int(BatteryService.UUID, 16))
         assert start_handle is not None, "failed to fetch the RD1 address.."
@@ -797,11 +797,9 @@ def test_ble_sdk_enable_heartrate_service_in_server_role_C19879(wifi_dut, ble_cl
             service_uuid = "0000180d-0000-1000-8000-00805f9b34fb"
             char_uuid = "00002a37-0000-1000-8000-00805f9b34fb"
             data = "74bpm"
-            # service_added = True
             logger().info(" ******* Start BLE Service ******* ")
             bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
             assert bt_dut_address, "Failed to load bt address..."
-            # start BLE in DUT
             ble_obj = BleFunctionality(wifi_dut, ble_client, bt_dut_address=bt_dut_address, powersave=True)
             logger().info(f"Adding heartrate service on dut")
             ble_obj.add_services_on_dut(uuid=0x180D, Charc_serv=0x2A37)
@@ -809,8 +807,7 @@ def test_ble_sdk_enable_heartrate_service_in_server_role_C19879(wifi_dut, ble_cl
             time.sleep(60)
             ble_obj.check_device_state_on_rasp()
             char_path =ble_obj.resolving_services_on_remote(service_uuid=service_uuid, char_uuid=char_uuid)
-            notifications = ble_obj.tx_on_dut(char_path=char_path, char_uuid=char_uuid, data=data)
-            logger().info(f"*********Heartrate Measurement received on remote : {notifications}***********")
+            ble_obj.tx_on_dut(char_path=char_path, char_uuid=char_uuid, data=data)
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
@@ -831,11 +828,9 @@ def test_ble_sdk_enable_blood_pressure_in_server_role_C19883(wifi_dut, ble_clien
             service_uuid = "00001810-0000-1000-8000-00805f9b34fb"  # BloodPressureService
             char_uuid = "00002a35-0000-1000-8000-00805f9b34fb"  # BatteryLevelCharacteristic
             data = "83.0"
-            # service_added = True
             logger().info(" ******* Start BLE Service ******* ")
             bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
             assert bt_dut_address, "Failed to load bt address..."
-            # start BLE in DUT
             ble_obj = BleFunctionality(wifi_dut, ble_client, bt_dut_address=bt_dut_address, powersave=True)
             logger().info(f"Adding blood pressure on dut")
             ble_obj.add_services_on_dut(uuid=0x1810, Charc_serv=0x2A35)
@@ -843,9 +838,7 @@ def test_ble_sdk_enable_blood_pressure_in_server_role_C19883(wifi_dut, ble_clien
             time.sleep(60)
             ble_obj.check_device_state_on_rasp()
             char_path =ble_obj.resolving_services_on_remote(service_uuid=service_uuid, char_uuid=char_uuid)
-            notifications = ble_obj.tx_on_dut(char_path=char_path, char_uuid=char_uuid, data=data)
-            logger().info(f"*********Blood pressure measurement received on remote : Systolic:{notifications}***********")
-
+            ble_obj.tx_on_dut(char_path=char_path, char_uuid=char_uuid, data=data)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -866,11 +859,9 @@ def test_ble_sdk_enable_health_thermometer_in_server_role_C19885(wifi_dut, ble_c
             service_uuid = "00001809-0000-1000-8000-00805f9b34fb"  # health_thermometer_service
             char_uuid = "00002a1c-0000-1000-8000-00805f9b34fb"
             data = "38.0'c"
-            # service_added = True
             logger().info(" ******* Start BLE Service ******* ")
             bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
             assert bt_dut_address, "Failed to load bt address..."
-            # start BLE in DUT
             ble_obj = BleFunctionality(wifi_dut, ble_client, bt_dut_address=bt_dut_address, powersave=True)
             logger().info(f"Adding health thermometer on dut")
             ble_obj.add_services_on_dut(uuid=0x1809, Charc_serv=0x2A1C)
@@ -878,8 +869,7 @@ def test_ble_sdk_enable_health_thermometer_in_server_role_C19885(wifi_dut, ble_c
             time.sleep(60)
             ble_obj.check_device_state_on_rasp()
             char_path =ble_obj.resolving_services_on_remote(service_uuid=service_uuid, char_uuid=char_uuid)
-            notifications = ble_obj.tx_on_dut(char_path=char_path, char_uuid=char_uuid, data=data)
-            logger().info(f"*********Health thermometer measurement received on remote : {notifications}******")
+            ble_obj.tx_on_dut(char_path=char_path, char_uuid=char_uuid, data=data)
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
@@ -1088,6 +1078,39 @@ def test_ble_sdk_fetch_desc_that_are_not_supported_C19865(wifi_dut, ble_client, 
         sl_collections.exception_handling(wifi_dut, error)
 
     finally:
+        logger().info(f"Removing services on dut")
+        wifi_dut.interfaces.wifi.ble_remove_service()
+        ble_client.interfaces.bluetooth.close()
+
+
+
+pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_enable_battery_service_in_server_role_C19881(wifi_dut, ble_client, utf_constants, sl_collections):
+    """ENABLE BATTERY SERVICE IN SERVER ROLE"""
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=f"reports/test_wifi_sdk_C19879_{int(time.time())}") as bt_logs:
+            service_uuid = "0000180f-0000-1000-8000-00805f9b34fb"
+            char_uuid = "00002a19-0000-1000-8000-00805f9b34fb"
+            data = "20%"
+            logger().info(" ******* Start BLE Service ******* ")
+            bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
+            assert bt_dut_address, "Failed to load bt address..."
+            ble_obj = BleFunctionality(wifi_dut, ble_client, bt_dut_address=bt_dut_address, powersave=True)
+            logger().info(f"Adding battery service on dut")
+            ble_obj.add_services_on_dut(uuid=0x180f, Charc_serv=0x2A19)
+            ble_obj.ble_adv()
+            time.sleep(60)
+            ble_obj.check_device_state_on_rasp()
+            char_path =ble_obj.resolving_services_on_remote(service_uuid=service_uuid, char_uuid=char_uuid)
+            ble_obj.tx_on_dut(char_path=char_path, char_uuid=char_uuid, data=data)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+        time.sleep(2)
         logger().info(f"Removing services on dut")
         wifi_dut.interfaces.wifi.ble_remove_service()
         ble_client.interfaces.bluetooth.close()

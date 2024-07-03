@@ -32,7 +32,7 @@ def logger():
 
 
 class BleFunctionality(ThreadBase):
-    def __init__(self, wifi_dut=None, ble_client=None, ble_adv=None, adv_int_min=None, adv_int_max=None,
+    def __init__(self, wifi_dut=None, ble_client=None, ble_adv=True, adv_int_min=None, adv_int_max=None, scan_interval = None, scan_window=None,
                  ble_start=True, bt_dut_address=None):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -40,15 +40,17 @@ class BleFunctionality(ThreadBase):
         self.ble_adv = ble_adv
         self.adv_int_min = adv_int_min
         self.adv_int_max = adv_int_max
+        self.scan_interval = scan_interval
+        self.scan_window = scan_window
         self.ble_start = ble_start
         self.bt_dut_address = bt_dut_address
         if self.ble_start:
             logger().info("start ble in dut")
-            self.bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
+            self.bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start(capability=0)
             assert self.bt_dut_address, "ble initialization failed in dut"
 
     def run(self):
-        if self.ble_adv == "ble_adv_powersave":
+        if self.ble_adv:
             logger().info(" ======= start adv in dut")
             self.wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_int_min=int(self.adv_int_min/0.625),
                                                                 ble_adv_int_max=int(self.adv_int_max/0.625))
@@ -67,10 +69,34 @@ class BleFunctionality(ThreadBase):
             logger().info("stop scanning ....")
             self.ble_client.interfaces.bluetooth.stop_scanning()
             found_devices = self.ble_client.interfaces.bluetooth.get_devices()
+            logger().info(f"*****************found devices on remote**********************")
             logger().info(f"Check the dut is listed...{found_devices}")
             assert self.wifi_dut.interfaces.wifi.ble_address in found_devices
             self.ble_client.interfaces.bluetooth.close()
-
+        else:
+            logger().info(f"Advertising the Remote BLE device")
+            ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+                bt_dut_address=self.bt_dut_address,
+                hci_adv_params="0x20 0x00 "  # Advertising_Interval_Min
+                               "0x20 0x00 "  # Advertising_Interval_Max
+                               "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                               "0x00 "  # Own_Address_Type
+                               "0x00 "  # Peer_Address_Type
+                               "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                               "0x07 "  # Advertising_Channel_Map
+                               "0x00"  # Advertising_Filter_Policy
+            )
+            assert ble_client_address is not None, "Unable to fetch bluetooth address from Remote device"
+            logger().info(f"advertised remote BLE device")
+            # Start scanning
+            self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_address=ble_client_address,
+                                                        ble_scan_interval=self.scan_interval / 0.625,
+                                                        ble_scan_window=self.scan_window / 0.625,
+                                                        ble_address_type=0,
+                                                        ble_client_address=ble_client_address,
+                                                        timeout=10)
+            self.ble_client.interfaces.bluetooth.close()
+            logger().info(f"Remote device found in scan results ,BLE scanning is successful")
 
 
 pytestmark = [
@@ -99,7 +125,7 @@ def test_ble_sdk_dual_role_SI160ms_SW50ms_AImin160ms_AImax320ms_c19911(wifi_dut,
     """1.verify ble slave connection with Advertising minimum interval 160ms and Advertising maximum interval 320ms
        2.verify ble master connection with scan interval 160ms and scan window 50ms"""
     try:
-        ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv="ble_adv_powersave",
+        ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv=True,
                                    adv_int_min=160, adv_int_max=320, ble_start=True)
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -122,7 +148,7 @@ def test_ble_sdk_dual_role_SI500ms_SW400ms_AImin200ms_AImax200ms_c19912(wifi_dut
     """1.verify ble slave connection with Advertising minimum interval 200ms and Advertising maximum interval 200ms
           2.verify ble master connection with scan interval 500ms and scan window 400ms"""
     try:
-        ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv="ble_adv_powersave",
+        ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv=True,
                                    adv_int_min=200, adv_int_max=200, ble_start=True)
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -150,7 +176,7 @@ def test_ble_sdk_dual_role_SI1000ms_SW500ms_AImin500ms_AImax500ms_c19913(wifi_du
     """1.verify ble slave connection with Advertising minimum interval 500ms and Advertising maximum interval 500ms
           2.verify ble master connection with scan interval 1000ms and scan window 500ms"""
     try:
-        ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv="ble_adv_powersave",
+        ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv=True,
                                    adv_int_min=500, adv_int_max=500, ble_start=True)
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -177,7 +203,7 @@ def test_ble_dual_role_SI5000ms_SW3000ms_AImin1000ms_AImax1000ms_c19914(wifi_dut
     """1.verify ble slave connection with Advertising minimum interval 1000ms and Advertising maximum interval 1000ms
           2.verify ble master connection with scan interval 5000ms and scan window 3000ms"""
     try:
-        ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv="ble_adv_powersave",
+        ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv=True,
                                    adv_int_min=1000, adv_int_max=1000, ble_start=True)
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -204,7 +230,7 @@ def test_ble_sdk_dual_role_SI10240ms_SW5s_AImin10240ms_AImax10240ms_c19915(wifi_
     """1.verify ble slave connection with Advertising minimum interval 10240ms and Advertising maximum interval 10240ms
           2.verify ble master connection with scan interval 240ms and scan window 5000ms"""
     try:
-        ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv="ble_adv_powersave",
+        ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv=True,
                                    adv_int_min=10240, adv_int_max=10240, ble_start=True)
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -221,3 +247,61 @@ def test_ble_sdk_dual_role_SI10240ms_SW5s_AImin10240ms_AImax10240ms_c19915(wifi_
         time.sleep(5)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_dual_role_SI1000ms_SW500ms_AImin20ms_AImax20ms_C537605(wifi_dut, ble_client, sl_collections):
+    try:
+        ble_obj_adv = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv=True,
+                                   adv_int_min=20, adv_int_max=20, ble_start=False)
+        ble_obj_scan = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv=False,
+                                   scan_interval=1000, scan_window=500, ble_start=True)
+        ble_obj_scan.start()
+        ble_obj_adv.start()
+        ble_obj_scan.wait_for_exit()
+        ble_obj_adv.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        time.sleep(5)
+        wifi_dut.interfaces.wifi.ble_stop_advertising()
+        time.sleep(5)
+        ble_client.interfaces.bluetooth.stop_advertising()
+        time.sleep(5)
+
+
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_dual_role_SI7_5ms_SW2_5ms_AImin20ms_AImax1000ms_C537606(wifi_dut, ble_client, sl_collections):
+    try:
+        ble_obj_adv = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv=True,
+                                   adv_int_min=1000, adv_int_max=1000, ble_start=False)
+        ble_obj_scan = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv=False,
+                                   scan_interval=7.5, scan_window=2.5, ble_start=True)
+        ble_obj_scan.start()
+        ble_obj_adv.start()
+        ble_obj_scan.wait_for_exit()
+        ble_obj_adv.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        time.sleep(5)
+        wifi_dut.interfaces.wifi.ble_stop_advertising()
+        time.sleep(5)
+        ble_client.interfaces.bluetooth.stop_advertising()
+        time.sleep(5)
+
+
+
+
+
+

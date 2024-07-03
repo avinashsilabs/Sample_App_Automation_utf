@@ -156,7 +156,7 @@ pipeline {
                                                                 elif wget --spider "https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${FIRMWARE_NAME}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps" 2>/dev/null; then
                                                                     mkdir ${FIRMWARE_NAME}
                                                                     cd  ${FIRMWARE_NAME}
-                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${FIRMWARE_NAME}/${rps_file_prefix}.${major}.${minor}.${patch}.${customer_id}.${build_num}.rps   
+                                                                    wget https://artifactory-local.silabs.net/artifactory/iotwifi-generic-development/wifi_build_artifacts/build_artifacts/${PACKAGE_TYPE}/${FIRMWARE_NAME}/${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps   
                                                                     mv ${rps_file_prefix}.${major}.${minor}.${security_bit}.${patch}.${customer_id}.${build_num}.rps  ${rps_file_prefix}.${major}.${minor}.${patch}.${build_num}.rps  
                                                                     cp -r * ../../utf_core/src/utf/interfaces/http/www
                                                                     cp -r * ../../manifest/

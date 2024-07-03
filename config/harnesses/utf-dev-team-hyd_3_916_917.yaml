@@ -600,19 +600,18 @@ devices:
 
 
 defaults:
-    # dut: rs9116_sapi
-    # efx32: efr32_4180b
-
-    dut: si917_sdk3
-    efx32: efr32_917
-
-    # wiseconnect_duts:
-        # - rs9116_sapi
-        # - efr32_4180b
+    dut: rs9116_sapi
+    efx32: efr32_4180b
 
     wiseconnect_duts:
-        - si917_sdk3
-        - efr32_917
+        - rs9116_sapi
+        - efr32_4180b
+
+#    dut: si917_sdk3
+#    efx32: efr32_917
+#    wiseconnect_duts:
+#        - si917_sdk3
+#        - efr32_917
 
 
     wifi_access_point: 'dlink810_ap_static'

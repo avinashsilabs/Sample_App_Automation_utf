@@ -237,3 +237,37 @@ def test_ble_rejects_smp_pair_c147312(ble_dut, ble_client, sl_collections):
     state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     assert state_int == 0, "DUT BLE device is in connected state"
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.parametrize("Advertise_data", {"BLE_AUTOMATION", "BLE_ADVERTISE_DATA_C537625", "BLE_GAP", "BLE_ADVERTISE_WITHOUT_SMP_SDK"})
+def test_ble_sdk_different_adv_data_C537625(ble_dut, ble_client, sl_collections, Advertise_data):
+    try:
+        set_local_name = "BLE_GAP_TESTPLAN"
+        logger().info(f"Setting BLE local name {set_local_name}")
+        ble_dut.interfaces.wifi.bt_set_local_name(set_local_name)
+        status = ble_dut.interfaces.wifi.bt_get_local_name()
+        logger().info(f"getting the local name : {status}")
+        logger().info("Initiate ble service in DUT")
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0)
+        assert ble_dut_address, "failed to initiate ble in dut"
+        logger().info(f"Set advertise data : {Advertise_data}")
+        logger().info("Set DUT in advertise mode")
+        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_advertising_data=Advertise_data)
+        logger().info("Start smp scan from the remote device")
+        ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
+        assert ble_client_address, "failed to initiate ble in remote device"
+        time.sleep(5)
+        logger().info("stop scanning ....")
+        ble_client.interfaces.bluetooth.stop_scanning()
+        found_devices = ble_client.interfaces.bluetooth.get_devices()
+        logger().info(f"*****************found devices on remote**********************")
+        logger().info(f"Check the dut is listed...{found_devices}")
+        assert ble_dut.interfaces.bluetooth.ble_address in found_devices
+        ble_client.interfaces.bluetooth.close()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
+
+

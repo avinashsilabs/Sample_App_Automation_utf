@@ -77,7 +77,7 @@ class WifiThreadFunctionality(ThreadBase):
             self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated)
 
-            if self.test_case == "198667":
+            if self.test_case == "198667" or self.test_case == "198678":
                 self.net_perf_client.interfaces.net_perf.init_server(host_ip=self.host_ip,
                                                                      device_ip=self.dut_addr['device_ip'],
                                                                      protocol=self.protocol, tos_value=self.traffic,
@@ -112,25 +112,6 @@ class WifiThreadFunctionality(ThreadBase):
                                                     local_ip=self.dut_addr['device_ip'], remote_ip=self.host_ip,
                                                     remote_port=self.net_perf_client.interfaces.net_perf.client_port,
                                                     size=1470, ttl=120, throughput_type=3, qos=self.qos,
-                                                    timeout=150)
-                logger().info("data transfer is successful")
-
-            if self.test_case == "198678":
-                self.net_perf_client.interfaces.net_perf.init_server(host_ip=self.host_ip,
-                                                                     device_ip=self.dut_addr['device_ip'],
-                                                                     protocol=self.protocol, tos_value=self.traffic,
-                                                                     time_out=120)
-                logger().info(
-                    f"Host IP: {self.host_ip}, Dut IP: {self.dut_addr['device_ip']}, Protocol: {self.protocol}, "
-                    f"tos_value: {self.traffic}")
-                logger().info(f"***** start iperf  ******")
-                self.net_perf_client.interfaces.net_perf.start()
-                logger().info(f"***** Start listening ******")
-                self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
-                                                    local_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                    local_ip=self.dut_addr['device_ip'], remote_ip=self.host_ip,
-                                                    remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                    size=1470, ttl=120, throughput_type=1, qos=self.qos,
                                                     timeout=150)
                 logger().info("data transfer is successful")
 
@@ -477,6 +458,7 @@ class BleThreadFunctionality(ThreadBase):
         if self.test_case == "198678":
             iter_count = self.utf_constants.get("iter_count")
             for count in range(iter_count):
+                logger().info(f'************* BLE connection for iteration count : {count} *************')
                 logger().info(f"Advertising the DUT")
                 self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
                 self.sl_collections.scan_and_connect_from_remote(wifi_dut=self.wifi_dut, ble_client=self.ble_client,
@@ -484,24 +466,30 @@ class BleThreadFunctionality(ThreadBase):
                                                                  ble_pairing=self.ble_pairing)
                 logger().info("*********** Checking for BLE Stability ************ ")
                 time.sleep(60)
-                # state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
-                # state_int = int(state) if state.isdigit() else -1
-                # assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
+
+                self.sl_collections.ble_disconnect(wifi_dut=self.wifi_dut, ble_client=self.ble_client,
+                                                   ble_dut_address=self.ble_dut_address,
+                                                   disconnect_from="remote",
+                                                   ble_client_address=self.ble_client_address)
+                self.ble_client.interfaces.bluetooth.close()
 
         if self.test_case == 198663:
-            self.sl_collections.check_ble_advertise_functionality(
-                wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_dut_address=self.ble_dut_address, timeout=20)
-            self.ble_client.interfaces.bluetooth.close()
+            self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
             time.sleep(3)
             self.sl_collections.check_ble_scan_functionality(
                 wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_address=self.ble_dut_address, timeout=20)
-            self.wifi_dut.interfaces.wifi.ble_stop_scanning()
             time.sleep(2)
 
     def ble_disconnect(self, disconnect_from="remote"):
         self.sl_collections.ble_disconnect(wifi_dut=self.wifi_dut, ble_client=self.ble_client,
                                            ble_dut_address=self.ble_dut_address,
                                            disconnect_from=disconnect_from, ble_client_address=self.ble_client_address)
+
+    def scan_from_remote_device(self):
+        bt_client_address = self.sl_collections.scan_from_remote_device(wifi_dut=self.wifi_dut,
+                                                                        ble_client=self.ble_client,
+                                                                        ble_dut_address=self.ble_dut_address)
+        logger().info(f'bt_client_address is : {bt_client_address}')
 
 
 @pytest.mark.config(
@@ -754,7 +742,8 @@ def test_wifi_sdk_wlan_ssl_tx_with_11ax_ble_connect_master_c198671(
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}, "ble": {"count": 1, "stack_len": 3584}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
+                          "ble": {"count": 1, "stack_len": 3584}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
@@ -790,7 +779,8 @@ def test_wifi_sdk_wlan_tcp_tx_with_11ax_ble_connect_and_disconnect_slave_c198678
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
 
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
-                                         ble_dut=ble_dut, ble_pairing=0, test_case="198678", utf_constants=utf_constants)
+                                         ble_dut=ble_dut, ble_pairing=0, test_case="198678",
+                                         utf_constants=utf_constants)
 
         wifi_obj = WifiThreadFunctionality(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                            wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, qos=qos,
@@ -800,7 +790,6 @@ def test_wifi_sdk_wlan_tcp_tx_with_11ax_ble_connect_and_disconnect_slave_c198678
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         ble_obj.wait_for_exit()
-        ble_obj.ble_disconnect()
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop the Sniffer")
@@ -977,6 +966,9 @@ def test_wifi_sdk_wlan_connection_with_11ax_ping_traffic_ble_master_c198663(
         ble_obj.wait_for_exit()
         wifi_obj.start()
         wifi_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        ble_client.interfaces.bluetooth.close()
+        ble_obj.scan_from_remote_device()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop the Sniffer")
         wifi_obj.sniffer_validation()
