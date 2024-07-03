@@ -1069,6 +1069,7 @@ def test_bt_hid_functionality_in_sniff_mode_c20037(bt_dut, bt_client):
     time.sleep(5)
     bt_client.interfaces.bluetooth.close()
 
+
 @pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
 @pytest.mark.dut("rs9116")
@@ -1087,83 +1088,71 @@ def test_bt_hid_functionality_in_sniff_mode_c20037(bt_dut, bt_client):
     }
 )
 def test_bt_hid_send_continuous_hid_interrupt_data_c20038(bt_dut, bt_client):
-    logger().info("get cod")
-    bt_dut.interfaces.bluetooth.bt_get_class()
+    try:
+        bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
+            enable_ssp=True, bt_local_name='REDPINE_HID_KEYBOARD',  pair_mode=1, capability=1)
+        assert bt_dut_address, "failed to initialize bt dut"
+        logger().info(f'bt dut address {bt_dut_address}')
 
-    logger().info("configure bt local name....")
-    bt_dut.interfaces.bluetooth.bt_set_local_name(bt_local_name='REDPINE_HID_KEYBOARD')
+        # Begin Scanning for BLE devices
+        logger().info("initiating scan form remote bt device...")
+        bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
+                                                                          pin_code=pin_code)
+        assert bt_client_address, "failed to initiate scan in remote device"
+        logger().info(f'bt client address {bt_client_address}')
 
-    logger().info("configuring dut with capability....")
-    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=3)
+        device_found = False
+        sw = Stopwatch()
+        while sw.elapsed_sec < 30:
+            if bt_dut_address in bt_client.interfaces.bluetooth.get_devices():
+                device_found = True
+                break
+        logger().info("stop scanning.....")
+        bt_client.interfaces.bluetooth.stop_scanning()
+        assert device_found, "unable to scan device"
 
-    logger().info("initializing bt.....")
-    bt_dut.interfaces.bluetooth.bt_set_slave_role()
+        with bt_dut.interfaces.bluetooth.run_bt_task():
+            logger().info("connecting to remote bt device....")
+            connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+            assert connected, "unable to connect bt device"
+            logger().info(f'device connection state is {connected}')
 
-    logger().info("configuring dut pin code....")
-    pin_code = bt_dut.interfaces.bluetooth.bt_set_pin_code()
+        logger().info("enabling sniff mode")
+        bt_dut.interfaces.bluetooth.set_sniff_mode(bt_remote_dev_address=bt_client_address, SniffMaxIntr=SniffMaxIntr,
+                                                   SniffMinIntr=SniffMinIntr, SniffAttempt=SniffAttempt,
+                                                   sniffTimeout=sniffTimeout)
+        time.sleep(5)
+        logger().info("set dut in power save.....")
+        bt_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode3,
+                                               RS9116PowerSaveProcedureTypes.FastPowerSave)
+        logger().info("bt power save configuration success")
+        time.sleep(10)
+        # Data will transfer 60 seconds
+        end_time = datetime.now() + timedelta(seconds=60)
+        while datetime.now() < end_time:
+            with HidRecorder() as hid_recorder:
+                for item in test_data:
+                    bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
+                hid_logs = hid_recorder.logs()
 
-    logger().info("fetching dut local address....")
-    bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
-    logger().info(f'bt dut address {bt_dut_address}')
+            assert len(hid_logs) == len(test_data), "hid data and test data length is not matched"
+            for i in range(len(test_data)):
+                assert hid_logs[i] == test_data[i], "hid data and test data is not same"
 
-    # Begin Scanning for BLE devices
-    logger().info("initiating scan form remote bt device...")
-    bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
-                                                                      pin_code=pin_code)
-    assert bt_client_address, "failed to initiate scan in remote device"
-    logger().info(f'bt client address {bt_client_address}')
+        time.sleep(60)
+        logger().info("fetching the connection status after 60 secs of sleep")
+        connected = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
+        assert connected == 1, "dut is disconnected"
+        logger().info(f"connection status :{connected}")
 
-    device_found = False
-    sw = Stopwatch()
-    while sw.elapsed_sec < 30:
-        if bt_dut_address in bt_client.interfaces.bluetooth.get_devices():
-            device_found = True
-            break
-    logger().info("stop scanning.....")
-    bt_client.interfaces.bluetooth.stop_scanning()
-    assert device_found, "unable to scan device"
+    except Exception as e:
+        raise e
+    finally:
+        logger().info("disconnecting from bt device")
+        bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
+        time.sleep(5)
+        bt_client.interfaces.bluetooth.close()
 
-    with bt_dut.interfaces.bluetooth.run_bt_task():
-        logger().info("connecting to remote bt device....")
-        connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
-        assert connected, "unable to connect bt device"
-        logger().info(f'device connection state is {connected}')
-
-    logger().info("enabling sniff mode")
-    bt_dut.interfaces.bluetooth.set_sniff_mode(bt_remote_dev_address=bt_client_address, SniffMaxIntr=SniffMaxIntr,
-                                               SniffMinIntr=SniffMinIntr, SniffAttempt=SniffAttempt,
-                                               sniffTimeout=sniffTimeout)
-
-    time.sleep(5)
-    logger().info("set dut in power save.....")
-    bt_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode3,
-                                           RS9116PowerSaveProcedureTypes.FastPowerSave)
-    logger().info("bt power save configuration success")
-    time.sleep(15)
-    # Data will transfer 60 seconds
-    end_time = datetime.now() + timedelta(seconds=60)
-    while datetime.now() < end_time:
-
-        with HidRecorder() as hid_recorder:
-            for item in test_data:
-                bt_dut.interfaces.bluetooth.bt_hid_send_interrupt(bt_client_address, data=item)
-            hid_logs = hid_recorder.logs()
-
-        assert len(hid_logs) == len(test_data), "hid data and test data length is not matched"
-        for i in range(len(test_data)):
-            assert hid_logs[i] == test_data[i], "hid data and test data is not same"
-
-    time.sleep(60)
-
-    logger().info("fetching the connection status after 60 secs of sleep")
-    connected = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
-    assert connected == 1, "dut is disconnected"
-    logger().info(f"connection status :{connected}")
-
-    logger().info("disconnecting from bt device")
-    bt_client.interfaces.bluetooth.disconnect(bt_dut_address)
-    time.sleep(5)
-    bt_client.interfaces.bluetooth.close()
 
 @pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
@@ -1230,7 +1219,6 @@ def test_hid_conn_send_interrupt_data_in_ps_3_lp_mode_c20030(bt_dut, bt_client):
         assert hid_logs[i] == test_data[i], "hid data and test data is not same"
 
     time.sleep(60)
-
     logger().info("fetching the connection status after 60 secs of sleep")
     connected = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
     assert connected == 1, "dut is disconnected"
@@ -1241,6 +1229,7 @@ def test_hid_conn_send_interrupt_data_in_ps_3_lp_mode_c20030(bt_dut, bt_client):
     time.sleep(5)
     bt_client.interfaces.bluetooth.close()
     time.sleep(5)
+
 
 @pytest.mark.AT
 @pytest.mark.bt_client("raspi_ble_client")
