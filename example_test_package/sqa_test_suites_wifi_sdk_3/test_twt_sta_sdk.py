@@ -1,3 +1,4 @@
+import paramiko.ssh_gss
 import pytest
 import time
 import re
@@ -6,6 +7,7 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBit
     Si91xOperatingMode, Si91xTCPIPFeatureBitMap
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+import paramiko
 
 """
     Setup requirement:
@@ -265,16 +267,6 @@ class WLanTwTThread(ThreadBase):
                 logger().info("**** Getting 0x10071 error code which is expected ****")
                 return
 
-            # Sleep for 10 minutes
-            logger().info('**** Pinging for 10 minutes ****')
-
-            start_time = time.time()
-            while (time.time() - start_time) < self.time_duration:
-                self.sl_collections.ping(device_ip=self.dut_addr['device_ip'], ping_count=10)
-
-            # Stop the sniffer
-            self.wifi_sniffer.interfaces.capture.stop_capture()
-
             # Set wake_duration_time
             if self.wake_duration_unit == 0:
                 self.wake_duration_time = 256
@@ -321,6 +313,17 @@ class WLanTwTThread(ThreadBase):
 
             # Call wake_interval_and_wake_period for request frames
             self.wake_interval_and_wake_period(filter=0)
+
+            # Sleep for 10 minutes
+            logger().info(f'**** Pinging for {self.time_duration} seconds ****')
+
+            start_time = time.time()
+            while (time.time() - start_time) < self.time_duration:
+                self.sl_collections.ping_with_custom_interval(device_ip=self.dut_addr['device_ip'],
+                                                              interval=int(self.wake_interval_resp) // 10000000)
+
+            # Stop the sniffer
+            self.wifi_sniffer.interfaces.capture.stop_capture()
 
             # Do power save validation after checking power_save variable
             if self.power_save:
@@ -654,7 +657,7 @@ def test_wifi_sdk_verify_twt_demand_when_enabled_after_join_c113732(wifi_dut, wi
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, req_type=2,
-                                 power_save=True, test_case='113732',utf_constants=utf_constants)
+                                 power_save=True, test_case='113732', utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
@@ -666,7 +669,7 @@ def test_wifi_sdk_verify_twt_demand_when_enabled_after_join_c113732(wifi_dut, wi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
 def test_wifi_sdk_verify_default_retry_attempts_for_twt_c113733(wifi_dut, wifi_access_point, sl_collections,
-                                                                wifi_sniffer, sniffer_filter, switch,utf_constants):
+                                                                wifi_sniffer, sniffer_filter, switch, utf_constants):
     """Verify DUT is able to retry the TWT req frame for default number of TWT setup retry limit if AP doesn't give TWT
     response"""
     """
