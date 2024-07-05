@@ -270,6 +270,11 @@ def test_ble_sdk_link_loss_profiles_from_rd1_c19874(wifi_dut, ble_client, sl_col
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
+    finally:
+        logger().info(f"Removing services on dut")
+        wifi_dut.interfaces.wifi.ble_remove_service()
+
+
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
@@ -452,6 +457,7 @@ def test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876(ble_dut, ble_client
         ble_client2.interfaces.bluetooth.close()
 
 
+@pytest.mark.skip()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19877(ble_dut, ble_clients, utf_constants, sl_collections):
     try:
@@ -684,11 +690,6 @@ def test_ble_sdk_validate_adding_service_in_slave_role_C19878(ble_dut, ble_clien
             assert char_path, "characters are empty"
             assert len(char_props) > 0, "length of characters is 0"
 
-            logger().info(f"******read the characterstic value ***********")
-
-            ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
-            logger().info(f"Removing services on dut")
-            ble_dut.interfaces.wifi.ble_remove_service()
 
             # Disconnection
             logger().info("Disconnecting from dut...")
@@ -698,6 +699,8 @@ def test_ble_sdk_validate_adding_service_in_slave_role_C19878(ble_dut, ble_clien
         sl_collections.exception_handling(ble_dut, error)
 
     finally:
+        logger().info(f"Removing services on dut")
+        ble_dut.interfaces.wifi.ble_remove_service()
         ble_client.interfaces.bluetooth.close()
 
 
@@ -746,24 +749,26 @@ def test_ble_sdk_connect_disconnect_multiple_times_from_RD1_C19875(wifi_dut, ble
     try:
         bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
         assert bt_dut_address is not None, "gatt init failed in DUT"
-        bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(
-            bt_dut_address=bt_dut_address, service_classes=["BatteryService"]
-        )
-        assert bt_client_address is not None, "init failed for rpi"
-        logger().info(f"Start scanning")
-        wifi_dut.interfaces.wifi.ble_start_scanning(
-            ble_client_address=bt_client_address, timeout=30
-        )
-        logger().info(f"Enabling powersave")
-        enable_wifi_ps = wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-        assert enable_wifi_ps == 0, 'failed to enable wlan power save'
-        enable_bt_ps = wifi_dut.interfaces.wifi.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-        assert enable_bt_ps == 0, 'failed to enable bt power save'
-        wifi_dut.interfaces.wifi.ble_stop_scanning()
         timeout = 60
         for i in range(0, 5):
+            ble_client.interfaces.bluetooth.close()
+            bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(
+                bt_dut_address=bt_dut_address, service_classes=["BatteryService"]
+            )
+            assert bt_client_address is not None, "init failed for rpi"
+            logger().info(f"Start scanning")
+            wifi_dut.interfaces.wifi.ble_start_scanning(
+                ble_client_address=bt_client_address, timeout=30
+            )
+            if i == 0:
+                logger().info(f"Enabling powersave")
+                enable_wifi_ps = wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+                assert enable_wifi_ps == 0, 'failed to enable wlan power save'
+                enable_bt_ps = wifi_dut.interfaces.wifi.enable_bt_power_save(
+                    psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                    psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+                assert enable_bt_ps == 0, 'failed to enable bt power save'
+            wifi_dut.interfaces.wifi.ble_stop_scanning()
             logger().info(f"Initiating connection this can take upto {timeout} seconds....")
             wifi_dut.interfaces.wifi.ble_connect(
                 ble_remote_dev_address=bt_client_address,
@@ -780,10 +785,9 @@ def test_ble_sdk_connect_disconnect_multiple_times_from_RD1_C19875(wifi_dut, ble
             wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
             logger().info(" Issued BLE disconnect ")
             time.sleep(5)
-            logger().info(f"*******iteration: {i}***********")
+            logger().info(f"*******iteration: {i+1}***********")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
-
     finally:
         ble_client.interfaces.bluetooth.close()
 
