@@ -3683,7 +3683,7 @@ def test_wifi_sdk_mqtt_with_qos_last_will_and_retained_will_to_zero_C537960(
         wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
         logger().info(".....MQTT Client connects to MQTT server.....")
         mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
-        time.sleep(5)
+        time.sleep(25)
 
         logger().info("*************** MQTT Client subscribes to the topic *****************")
         mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
