@@ -51,9 +51,10 @@ def logger():
 
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, sniffer_filter=None
-                 , ping_count=None, test_name=None, sl_collections=None, t_profile_bssid=None, net_perf_client=None,
+                 , ping_count=None, test_name=None, sl_collections=None, net_perf_client=None,
                  wifi_client=None, switch=None, wifi_clients=None, protocol=None):
         super().__init__()
+        self.scan_list = None
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
         self.ping_count = ping_count
@@ -63,7 +64,6 @@ class WLanThread(ThreadBase):
         self.test_case_no = test_case_no
         self.sl_collections = sl_collections
         self.test_name = test_name
-        self.t_profile_bssid = t_profile_bssid
         self.net_perf_client = net_perf_client
         self.wifi_client = wifi_client
         self.wifi_clients = wifi_clients
@@ -100,16 +100,11 @@ class WLanThread(ThreadBase):
 
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
-
-                self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
-                                                                     device_ip=self.dut_addr['device_ip'],
-                                                                     protocol=self.protocol)
-                self.net_perf_client.interfaces.net_perf.start()
-                time.sleep(2)
-                self.socket_obj = SocketDataTransfer(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
-                                                     time_period=self.time_period, data=self.data,
-                                                     dut_ip=self.dut_addr['device_ip'])
-                self.socket_obj.socket_data_transfer()
+                time.sleep(5)
+                self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
+                                                protocol=self.protocol, device_ip=self.dut_addr['device_ip'],
+                                                host_ip=host_ip,
+                                                timeout=60, traffic_type="TX")
 
             elif self.test_case_no == 219288:
                 vap_list = self.verfiy_T_and_NT_based_mbssid_in_dut_list()
@@ -130,6 +125,7 @@ class WLanThread(ThreadBase):
 
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
+                time.sleep(5)
 
                 self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
                                                 protocol=self.protocol, device_ip=self.dut_addr['device_ip'],
@@ -180,25 +176,27 @@ class WLanThread(ThreadBase):
                                                 timeout=60, traffic_type="TX")
 
             elif self.test_case_no == 219291:
-                vap_list = self.verfiy_T_and_NT_based_mbssid_in_dut_list()
-                self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
-                                                                        wifi_access_point=self.wifi_access_point,
-                                                                        eap_type='tls',
-                                                                        ping_after_power_save=True, retry_count=3)
+                for i in range(0, 6):
+                    self.verfiy_T_and_NT_based_mbssid_in_dut_list()
+                    time.sleep(5)
+                    self.wifi_sniffer.interfaces.capture.configure_interface(
+                        channel=self.wifi_access_point.interfaces.wifi.channel)
+                    self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+                    self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
+                                                                            wifi_access_point=self.wifi_access_point,
+                                                                            eap_type='tls',
+                                                                            ping_after_power_save=True)
 
-                logger().info("DUT successfully connected with AP")
-                time.sleep(2)
-                host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-                logger().info(f"Remote device ip :{host_ip}")
-                self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
-                                                                     device_ip=self.dut_addr['device_ip'],
-                                                                     protocol=self.protocol)
-                self.net_perf_client.interfaces.net_perf.start()
-
-                self.socket_obj = SocketDataTransfer(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
-                                                     time_period=self.time_period, data=self.data,
-                                                     dut_ip=self.dut_addr['device_ip'])
-                self.socket_obj.socket_data_transfer()
+                    self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+                    logger().info(f"Remote device ip :{self.host_ip}")
+                    time.sleep(5)
+                    self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
+                                                    protocol=self.protocol, device_ip=self.dut_addr['device_ip'],
+                                                    host_ip=self.host_ip,
+                                                    timeout=60, traffic_type="TX")
+                    self.wifi_dut.interfaces.wifi.leave()
+                    self.wifi_sniffer.interfaces.capture.stop_capture()
+                    time.sleep(5)
 
             elif self.test_case_no == 219292:
                 vap_list = self.verfiy_T_and_NT_based_mbssid_in_dut_list()
@@ -236,18 +234,10 @@ class WLanThread(ThreadBase):
                                                                          associated=self.wifi_dut.interfaces.wifi.
                                                                          associated, skip_scan=True,
                                                                          power_save=True, ping_after_power_save=True)
-                logger().info("DUT successfully connected with AP")
-                time.sleep(5)
-                self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
-                                                                     device_ip=self.dut_addr['device_ip'],
-                                                                     protocol=self.protocol)
-                self.net_perf_client.interfaces.net_perf.start()
-                time.sleep(5)
-
-                self.socket_obj = SocketDataTransfer(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
-                                                     time_period=self.time_period, data=self.data,
-                                                     dut_ip=self.dut_addr['device_ip'])
-                self.socket_obj.socket_data_transfer()
+                self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
+                                                protocol=self.protocol, device_ip=self.dut_addr['device_ip'],
+                                                host_ip=host_ip,
+                                                timeout=60, traffic_type="TX")
 
             elif self.test_case_no == 219295:
                 """ Enabling Rejoin """
@@ -269,16 +259,11 @@ class WLanThread(ThreadBase):
                 time.sleep(2)
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
-                self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
-                                                                     device_ip=self.dut_addr['device_ip'],
-                                                                     protocol=self.protocol)
-                self.net_perf_client.interfaces.net_perf.start()
 
-                socket_obj = SocketDataTransfer(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
-                                                time_period=self.time_period, data=self.data,
-                                                dut_ip=self.dut_addr['device_ip'])
-
-                socket_obj.socket_data_transfer()
+                self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
+                                                protocol=self.protocol, device_ip=self.dut_addr['device_ip'],
+                                                host_ip=host_ip,
+                                                timeout=60, traffic_type="TX")
 
             elif self.test_case_no == 219298:
                 vap_list = self.verfiy_T_and_NT_based_mbssid_in_dut_list()
@@ -505,6 +490,70 @@ class WLanThread(ThreadBase):
                 time.sleep(10)
                 self.wifi_client.interfaces.wifi.leave()
 
+            elif self.test_case_no == 219315:
+                self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
+
+                # Initiate scan to find all available SSID in DUT scan list T & NT based BSSID
+                vap_list = self.verfiy_T_and_NT_based_mbssid_in_dut_list()
+                time.sleep(10)
+
+                for i in range(0, 6):
+                    # Initiate the connection again for T based BSSID
+                    self.wifi_sniffer.interfaces.capture.configure_interface(
+                        channel=self.wifi_access_point.interfaces.wifi.channel)
+                    self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+
+                    self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                             wifi_access_point=self.wifi_access_point,
+                                                                             associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                             ping_after_power_save=False)
+                    packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                        sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address, filter_name="power_mgmt_bit")
+
+                    self.sl_collections.ping(self.dut_addr['device_ip'], ping_count=60)
+                    self.wifi_dut.interfaces.wifi.leave()
+                    self.wifi_sniffer.interfaces.capture.stop_capture()
+                    time.sleep(2)
+                    assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+                        'packet_count'], \
+                        'Unable to find NULL-Data frame packets with power save bit 1'
+
+                    # Initiate the connection again for NT based BSSID
+                    vap0_mbssid = self.find_vaps_mbssid()
+                    logger().info(f"VAP0 MBSSID = {vap0_mbssid}")
+                    self.wifi_sniffer.interfaces.capture.configure_interface(
+                        channel=self.wifi_access_point.interfaces.wifi.channel)
+                    self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+
+                    self.wifi_dut.interfaces.wifi.scan()
+                    self.wifi_dut.interfaces.wifi.join(ssid=vap_list[0],
+                                                       security=self.wifi_access_point.interfaces.wifi.security.name.lower(),
+                                                       passphrase=self.wifi_access_point.interfaces.wifi.passphrase)
+
+                    self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                             wifi_access_point=self.wifi_access_point,
+                                                                             associated=False
+                                                                             , ping_after_power_save=False, skip_scan=True,
+                                                                             skip_connect=True, retry_count=3)
+                    time.sleep(10)
+                    packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                        sa_addr=self.dut_addr['dut_mac_address'], da_addr=vap0_mbssid, filter_name="power_mgmt_bit")
+
+                    self.sl_collections.ping(self.dut_addr['device_ip'], ping_count=60)
+                    self.wifi_dut.interfaces.wifi.leave()
+                    self.wifi_sniffer.interfaces.capture.stop_capture()
+                    time.sleep(2)
+                    assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+                        'packet_count'], \
+                        'Unable to find NULL-Data frame packets with power save bit 1'
+
+            elif self.test_case_no == 219300:
+                self.verfiy_T_and_NT_based_mbssid_in_dut_list()
+
+                self.wifi_dut.interfaces.wifi.join(ssid='""',
+                                                   security=self.wifi_access_point.interfaces.wifi.security.name.lower(),
+                                                   passphrase=self.wifi_access_point.interfaces.wifi.passphrase,
+                                                   expected_negative_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
             else:
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
@@ -514,6 +563,23 @@ class WLanThread(ThreadBase):
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case {self.test_case_no} thread: {str(e)} ****\n\n")
             raise e
+
+    def find_vaps_mbssid(self):
+        vap0_bssid = ''
+        # Regular expression pattern to match ssid and bssid
+        pattern = r'ssid: (\S+) bssid: (\S+)'
+
+        # Find all matches of the pattern in the scan_list string
+        logger().info(f"\n\n Scan List = {self.scan_list}\n\n")
+        matches = re.findall(pattern, str(self.scan_list))
+
+        # Convert the list of tuples to a list of dictionaries
+        ssid_bssid_list = [{'ssid': ssid, 'bssid': bssid} for ssid, bssid in matches]
+        for i in range(len(ssid_bssid_list)):
+            if ssid_bssid_list[i]['ssid'] == 'FROM_TEST_1':
+                vap0_bssid = ssid_bssid_list[i]['bssid'].replace('),', '')
+                break
+        return vap0_bssid
 
     def find_mbssid_vaps(self):
         packet_filter = '                    SSID:'
@@ -536,10 +602,10 @@ class WLanThread(ThreadBase):
 
     def find_ssid_list_from_dut_scan(self):
         ssid_list = []
-        scan_list = self.wifi_dut.interfaces.wifi.scan()
+        self.scan_list = self.wifi_dut.interfaces.wifi.scan()
         logger().info(f'\n\n *** Start to collect all available ssid in DUT scan list ***\n\n')
-        for i in range(0, len(scan_list)):
-            ssid_list.append(scan_list[i].ssid)
+        for i in range(0, len(self.scan_list)):
+            ssid_list.append(self.scan_list[i].ssid)
         logger().info(f'\n\n SSID LIST ={ssid_list}\n\n')
         return ssid_list
 
@@ -701,15 +767,15 @@ def test_wifi_sdk_mbssid_scan_all_vap_c219285(wifi_sniffer, wifi_access_point, w
 )
 def test_wifi_sdk_mbssid_T_open_sec_c219286(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                             sniffer_filter, sl_collections, net_perf_client, wifi_client, protocol):
-    t_profile_bssid = utf_constants.get("t_profile_bssid")
+    
     test_name = request.node.name
 
     '''Verify whether DUT is able to connect to T profile BSSID with open security enabled in AP'''
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           sl_collections=sl_collections, test_case_no=219286, test_name=test_name,
-                          sniffer_filter=sniffer_filter, protocol=protocol,
-                          t_profile_bssid=t_profile_bssid, net_perf_client=net_perf_client, wifi_client=wifi_client)
+                          sniffer_filter=sniffer_filter, protocol=protocol,net_perf_client=net_perf_client,
+                          wifi_client=wifi_client)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -746,15 +812,15 @@ def test_wifi_sdk_mbssid_T_open_sec_c219286(wifi_sniffer, wifi_access_point, wif
 )
 def test_wifi_sdk_mbssid_T_wpa2_psk_c219287(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                             sniffer_filter, sl_collections, net_perf_client, wifi_client, protocol):
-    t_profile_bssid = utf_constants.get("t_profile_bssid")
+    
     test_name = request.node.name
 
     '''Verify whether DUT is able to connect to T profile BSSID with WPA2 PSK security enabled in AP'''
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           sl_collections=sl_collections, test_case_no=219286, test_name=test_name,
-                          sniffer_filter=sniffer_filter, protocol=protocol,
-                          t_profile_bssid=t_profile_bssid, net_perf_client=net_perf_client, wifi_client=wifi_client)
+                          sniffer_filter=sniffer_filter, protocol=protocol, net_perf_client=net_perf_client,
+                          wifi_client=wifi_client)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -798,15 +864,14 @@ def test_wifi_sdk_mbssid_T_wpa2_psk_c219287(wifi_sniffer, wifi_access_point, wif
 )
 def test_wifi_sdk_mbssid_NT_wpa2_psk_c219288(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                              sniffer_filter, sl_collections, net_perf_client, wifi_client, protocol):
-    t_profile_bssid = utf_constants.get("t_profile_bssid")
+    
     test_name = request.node.name
-
     '''Verify whether DUT is able to connect to NT based profile BSSID with WPA2 PSK security enabled in AP'''
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           sl_collections=sl_collections, test_case_no=219288, test_name=test_name,
                           sniffer_filter=sniffer_filter, protocol=protocol,
-                          t_profile_bssid=t_profile_bssid, net_perf_client=net_perf_client, wifi_client=wifi_client)
+                          net_perf_client=net_perf_client, wifi_client=wifi_client)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -879,9 +944,6 @@ def test_wifi_sdk_mbssid_T_wpa3_c219289(wifi_sniffer, wifi_access_point, wifi_du
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config("wifi_access_point", wifi={
     "standard": 'gnbax',
     "security": 'WPA3',
@@ -893,6 +955,8 @@ def test_wifi_sdk_mbssid_T_wpa3_c219289(wifi_sniffer, wifi_access_point, wifi_du
         {"index": "2", "ssid": "FROM_TEST_2", "passphrase": '123456789', "band": "2g", "security": "WPA3"},
         {"index": "3", "ssid": "FROM_TEST_3", "passphrase": '123456789', "band": "2g", "security": "WPA3"}]
 })
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -936,7 +1000,8 @@ def test_wifi_sdk_mbssid_NT_wpa3_c219290(wifi_sniffer, wifi_access_point, wifi_d
         raise e
 
 
-@pytest.mark.skip("Test case is failing due to certificate loading issue")
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -948,8 +1013,7 @@ def test_wifi_sdk_mbssid_NT_wpa3_c219290(wifi_sniffer, wifi_access_point, wifi_d
                     Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
                           Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid |
-                           Si91xCustomFeatureBitMap.RealTimeClockFromHost,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
@@ -963,31 +1027,27 @@ def test_wifi_sdk_mbssid_NT_wpa3_c219290(wifi_sniffer, wifi_access_point, wifi_d
         "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '123456789'})
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
-def test_wifi_sdk_mbssid_T_wpa2_enterprise_c219291(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
-                                                   sniffer_filter, sl_collections, net_perf_client, wifi_client,
-                                                   protocol):
-    test_name = request.node.name
-    '''Verify whether DUT is able to connect to T profile BSSID with WPA2 enterprise security enabled in AP'''
-
-    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          sl_collections=sl_collections, test_case_no=219291, test_name=test_name,
-                          protocol=protocol, sniffer_filter=sniffer_filter, net_perf_client=net_perf_client,
-                          wifi_client=wifi_client)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+def test_wifi_sdk_mbssid_T_wpa2_enterprise_c219291(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
+                                                   radius_server, sl_collections, request, net_perf_client, wifi_client
+                                                   , protocol):
+    """ This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
     try:
+        test_name = request.node.name
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              sl_collections=sl_collections, test_case_no=219291, test_name=test_name, wifi_client=wifi_client,
+                              sniffer_filter=sniffer_filter, net_perf_client=net_perf_client, protocol=protocol)
+
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info("Stop Sniffer finally")
-        wifi_dut.interfaces.wifi.leave()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.skip(reason="Need to check the test case- AP does not support WPA2 Enterprise in NT BSSID")
+@pytest.mark.skip(reason="AP does not support WPA2 Enterprise in NT BSSID")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1071,15 +1131,15 @@ def test_wifi_sdk_mbssid_NT_wpa2_enterprise_c219292(wifi_sniffer, wifi_access_po
 def test_wifi_sdk_mbssid_rejoin_T_open_sec_c219293(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                    sniffer_filter, sl_collections, net_perf_client, wifi_client, switch,
                                                    protocol):
-    t_profile_bssid = utf_constants.get("t_profile_bssid")
+    
     test_name = request.node.name
 
     '''Verify whether DUT is able to rejoin to T profile BSSID with open security enabled in AP'''
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           sl_collections=sl_collections, test_case_no=219293, test_name=test_name,
-                          sniffer_filter=sniffer_filter, protocol=protocol, switch=switch,
-                          t_profile_bssid=t_profile_bssid, net_perf_client=net_perf_client, wifi_client=wifi_client)
+                          sniffer_filter=sniffer_filter, protocol=protocol, switch=switch,net_perf_client=
+                          net_perf_client, wifi_client=wifi_client)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1126,7 +1186,7 @@ def test_wifi_sdk_mbssid_rejoin_T_open_sec_c219293(wifi_sniffer, wifi_access_poi
 def test_wifi_sdk_mbssid_rejoin_T_wpa2_c219294(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                sniffer_filter, sl_collections, net_perf_client, wifi_client, switch,
                                                protocol):
-    t_profile_bssid = utf_constants.get("t_profile_bssid")
+    
     test_name = request.node.name
 
     '''Verify whether DUT is able to rejoin to T profile BSSID with WPA2 PSK security enabled in AP'''
@@ -1189,7 +1249,7 @@ def test_wifi_sdk_mbssid_rejoin_T_wpa2_c219294(wifi_sniffer, wifi_access_point, 
 def test_wifi_sdk_mbssid_rejoin_NT_wpa2_c219295(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                 sniffer_filter, sl_collections, net_perf_client, wifi_client, protocol,
                                                 switch):
-    t_profile_bssid = utf_constants.get("t_profile_bssid")
+    
     test_name = request.node.name
 
     '''Verify whether DUT is able to rejoin to NT profile BSSID with WPA2 PSK security enabled in AP'''
@@ -1253,7 +1313,7 @@ def test_wifi_sdk_mbssid_rejoin_NT_wpa2_c219295(wifi_sniffer, wifi_access_point,
 def test_wifi_sdk_mbssid_rejoin_T_wpa3_c219296(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                sniffer_filter, sl_collections, net_perf_client, wifi_client, switch,
                                                protocol):
-    t_profile_bssid = utf_constants.get("t_profile_bssid")
+    
     test_name = request.node.name
 
     '''Verify whether DUT is able to rejoin to T profile BSSID with WPA3 Personal security enabled in AP'''
@@ -1327,7 +1387,7 @@ def test_wifi_sdk_mbssid_rejoin_T_wpa3_c219296(wifi_sniffer, wifi_access_point, 
 def test_wifi_sdk_mbssid_rejoin_NT_wpa3_c219297(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                 sniffer_filter, sl_collections, net_perf_client, wifi_client, switch,
                                                 protocol):
-    t_profile_bssid = utf_constants.get("t_profile_bssid")
+    
     test_name = request.node.name
 
     '''Verify whether DUT is able to rejoin to NT profile BSSID with WPA3 Personal security enabled in AP'''
@@ -1349,7 +1409,6 @@ def test_wifi_sdk_mbssid_rejoin_NT_wpa3_c219297(wifi_sniffer, wifi_access_point,
 
         logger().info("***** Turn on Access Point *****")
         switch.interfaces.pdu_switch.turn_on(delay=60)
-        
         time.sleep(20)
         sl_collections.ping(wlan_obj.dut_addr['device_ip'], ping_count=60)
         wifi_dut.interfaces.wifi.leave()
@@ -1450,6 +1509,51 @@ def test_wifi_sdk_mbssid_c219299(wifi_sniffer, wifi_access_point, wifi_dut, utf_
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config("wifi_access_point", wifi={
+    "standard": 'gnbax',
+    "security": 'WPA2',
+    "guest_networks": [
+        {"index": "1", "ssid": "FROM_TEST_1", "passphrase": '123456789', "band": "2g", "security": "WPA2"},
+        {"index": "2", "ssid": "FROM_TEST_2", "passphrase": '123456789', "band": "2g", "security": "WPA2"},
+        {"index": "3", "ssid": "FROM_TEST_3", "passphrase": '123456789', "band": "2g", "security": "WPA2"}]
+})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid |
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    },
+)
+def test_wifi_sdk_mbssid_connection_failure_c219300(wifi_sniffer, wifi_access_point, wifi_dut, request,
+                                             sniffer_filter, sl_collections):
+    test_name = request.node.name
+
+    '''continuous connect disconnect b/w T and NT profile based SSID's'''
+
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                          sl_collections=sl_collections, test_case_no=219300, test_name=test_name,
+                          sniffer_filter=sniffer_filter)
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+        raise e
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
@@ -1525,8 +1629,7 @@ def test_wifi_sdk_mbssid_c219302(wifi_sniffer, wifi_access_point, wifi_dut, utf_
     '''	Connect & disconnect(10 times) when STA connected to NT BSSID '''
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           ping_count=ping_count, test_name=test_name, test_case_no=219302,
-                          sniffer_filter=sniffer_filter,
-                          sl_collections=sl_collections)
+                          sniffer_filter=sniffer_filter, sl_collections=sl_collections)
 
     try:
         wlan_obj.start()
@@ -1684,6 +1787,7 @@ def test_wifi_sdk_mbssid_c219321(wifi_sniffer, wifi_access_point, wifi_dut, utf_
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+
 @pytest.mark.config(
     "wifi_client",
     wifi={
@@ -1722,15 +1826,14 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_open_sec_c219307(wifi_sniffer, wifi_
                                                              request,
                                                              sniffer_filter, sl_collections, net_perf_client,
                                                              wifi_client):
-    t_profile_bssid = utf_constants.get("t_profile_bssid")
+    
     test_name = request.node.name
 
     '''Verify whether DUT is able to connect to T profile BSSID with open security enabled in AP'''
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, sl_collections=sl_collections, test_case_no=219307,
-                          sniffer_filter=sniffer_filter
-                          , t_profile_bssid=t_profile_bssid, net_perf_client=net_perf_client, wifi_client=wifi_client)
+                          sniffer_filter=sniffer_filter, net_perf_client=net_perf_client, wifi_client=wifi_client)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1783,15 +1886,14 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_open_sec_c219308(wifi_sniffer, wifi
                                                               request,
                                                               sniffer_filter, sl_collections, net_perf_client,
                                                               wifi_client):
-    t_profile_bssid = utf_constants.get("t_profile_bssid")
+    
     test_name = request.node.name
 
     '''Verify whether DUT is able to connect to NT profile BSSID with open security enabled in AP'''
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, sl_collections=sl_collections, test_case_no=219308,
-                          sniffer_filter=sniffer_filter
-                          , t_profile_bssid=t_profile_bssid, net_perf_client=net_perf_client, wifi_client=wifi_client)
+                          sniffer_filter=sniffer_filter, net_perf_client=net_perf_client, wifi_client=wifi_client)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1847,15 +1949,14 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_open_sec_c219308(wifi_sniffer, wifi
 def test_wifi_sdk_mbssid_T_profile_based_ap_wpa2_sec_c219309(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                              request, sniffer_filter, sl_collections, net_perf_client,
                                                              wifi_clients):
-    t_profile_bssid = utf_constants.get("t_profile_bssid")
+    
     test_name = request.node.name
 
     '''Verify whether DUT is able to connect to T profile BSSID with WPA2 security enabled in AP'''
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, sl_collections=sl_collections, test_case_no=219309,
-                          sniffer_filter=sniffer_filter
-                          , t_profile_bssid=t_profile_bssid, net_perf_client=net_perf_client, wifi_clients=wifi_clients)
+                          sniffer_filter=sniffer_filter, net_perf_client=net_perf_client, wifi_clients=wifi_clients)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1918,15 +2019,14 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_wpa2_sec_c219309(wifi_sniffer, wifi_
 def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa2_sec_c219310(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                               request, sniffer_filter, sl_collections, net_perf_client,
                                                               wifi_clients):
-    t_profile_bssid = utf_constants.get("t_profile_bssid")
+    
     test_name = request.node.name
 
     '''Verify whether DUT is able to connect to NT profile BSSID with WPA2 security enabled in AP'''
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, sl_collections=sl_collections, test_case_no=219310,
-                          sniffer_filter=sniffer_filter
-                          , t_profile_bssid=t_profile_bssid, net_perf_client=net_perf_client, wifi_clients=wifi_clients)
+                          sniffer_filter=sniffer_filter, net_perf_client=net_perf_client, wifi_clients=wifi_clients)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1988,15 +2088,14 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_wpa3_sec_c219311(wifi_sniffer, wifi_
                                                              request,
                                                              sniffer_filter, sl_collections, net_perf_client,
                                                              wifi_clients):
-    t_profile_bssid = utf_constants.get("t_profile_bssid")
+    
     test_name = request.node.name
 
     '''Verify whether DUT is able to connect to T profile BSSID with WPA3 security enabled in AP'''
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, sl_collections=sl_collections, test_case_no=219311,
-                          sniffer_filter=sniffer_filter
-                          , t_profile_bssid=t_profile_bssid, net_perf_client=net_perf_client, wifi_clients=wifi_clients)
+                          sniffer_filter=sniffer_filter, net_perf_client=net_perf_client, wifi_clients=wifi_clients)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -2058,15 +2157,14 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa3_sec_c219312(wifi_sniffer, wifi
                                                               request,
                                                               sniffer_filter, sl_collections, net_perf_client,
                                                               wifi_client):
-    t_profile_bssid = utf_constants.get("t_profile_bssid")
+    
     test_name = request.node.name
 
     '''Verify whether DUT is able to connect to NT profile BSSID with WPA3 security enabled in AP'''
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, sl_collections=sl_collections, test_case_no=219312,
-                          sniffer_filter=sniffer_filter
-                          , t_profile_bssid=t_profile_bssid, net_perf_client=net_perf_client, wifi_client=wifi_client)
+                          sniffer_filter=sniffer_filter, net_perf_client=net_perf_client, wifi_client=wifi_client)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -2077,3 +2175,57 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa3_sec_c219312(wifi_sniffer, wifi
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config("wifi_access_point", wifi={
+    "standard": 'gnbax',
+    "security": 'WPA2',
+    "guest_networks": [
+        {"index": "1", "ssid": "FROM_TEST_1", "passphrase": '123456789', "band": "2g", "security": "WPA2"},
+        {"index": "2", "ssid": "FROM_TEST_2", "passphrase": '123456789', "band": "2g", "security": "WPA2"},
+        {"index": "3", "ssid": "FROM_TEST_3", "passphrase": '123456789', "band": "2g", "security": "WPA2"}]
+})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid |
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    },
+)
+def test_wifi_sdk_mbssid_T_NT_connect_disconnect_c219315(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                             sniffer_filter, sl_collections, net_perf_client, wifi_client, protocol):
+    
+    test_name = request.node.name
+
+    '''continuous connect disconnect b/w T and NT profile based SSID's'''
+
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                          sl_collections=sl_collections, test_case_no=219315, test_name=test_name,
+                          sniffer_filter=sniffer_filter, protocol=protocol, net_perf_client=net_perf_client,
+                          wifi_client=wifi_client)
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+        raise e
+
+
+
+
+
