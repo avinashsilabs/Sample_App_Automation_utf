@@ -112,6 +112,8 @@ def ble_connection(ble_dut, remote_wiseconnect3):
 )
 def test_ble_phy_change_tx_1_rx_1_lr_125_C19932(ble_dut, remote_wiseconnect3):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
+    ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+    time.sleep(0.5)
     ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=1, rx_phy=1,coded_phy=2)
     time.sleep(60)
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
@@ -164,6 +166,8 @@ def test_ble_phy_change_tx_1_rx_1_lr_125_C19932(ble_dut, remote_wiseconnect3):
 )
 def test_ble_phy_change_tx_1_rx_2_lr_125_C19933(ble_dut, remote_wiseconnect3):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
+    ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+    time.sleep(0.5)
     ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=1, rx_phy=2, coded_phy=2)
     time.sleep(60)
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
@@ -216,6 +220,8 @@ def test_ble_phy_change_tx_1_rx_2_lr_125_C19933(ble_dut, remote_wiseconnect3):
 )
 def test_ble_phy_change_tx_1_rx_lr_125_C19934(ble_dut, remote_wiseconnect3):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
+    ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+    time.sleep(0.5)
     ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=1, rx_phy=4, coded_phy=2)
     time.sleep(60)
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
@@ -268,6 +274,8 @@ def test_ble_phy_change_tx_1_rx_lr_125_C19934(ble_dut, remote_wiseconnect3):
 )
 def test_ble_phy_change_tx_2_rx_1_lr_125_C19935(ble_dut, remote_wiseconnect3):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
+    ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+    time.sleep(0.5)
     ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=2, rx_phy=1, coded_phy=2)
     time.sleep(60)
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
@@ -320,6 +328,8 @@ def test_ble_phy_change_tx_2_rx_1_lr_125_C19935(ble_dut, remote_wiseconnect3):
 )
 def test_ble_phy_change_tx_2_rx_2_lr_125_C19936(ble_dut, remote_wiseconnect3):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
+    ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+    time.sleep(0.5)
     ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=2, rx_phy=2, coded_phy=2)
     time.sleep(60)
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
@@ -373,6 +383,8 @@ def test_ble_phy_change_tx_2_rx_2_lr_125_C19936(ble_dut, remote_wiseconnect3):
 def test_ble_phy_change_tx_2_rx_1_lr_125_C19937(ble_dut, remote_wiseconnect3):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
     time.sleep(2)
+    ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+    time.sleep(0.5)
     ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=2, rx_phy=4, coded_phy=2)
     time.sleep(60)
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
@@ -426,6 +438,8 @@ def test_ble_phy_change_tx_2_rx_1_lr_125_C19937(ble_dut, remote_wiseconnect3):
 def test_ble_phy_change_tx_rx_1_lr_125_C19938(ble_dut, remote_wiseconnect3):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
     time.sleep(2)
+    ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+    time.sleep(0.5)
     ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=4, rx_phy=1, coded_phy=2)
     time.sleep(60)
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
@@ -480,6 +494,8 @@ def test_ble_phy_change_tx_rx_1_lr_125_C19938(ble_dut, remote_wiseconnect3):
 def test_ble_phy_change_tx_rx_2_lr_125_C19939(ble_dut, remote_wiseconnect3):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
     time.sleep(2)
+    ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+    time.sleep(0.5)
     ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=4, rx_phy=2, coded_phy=2)
     time.sleep(60)
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
@@ -533,6 +549,8 @@ def test_ble_phy_change_tx_rx_2_lr_125_C19939(ble_dut, remote_wiseconnect3):
 def test_ble_phy_change_tx_rx_lr_125_C19940(ble_dut, remote_wiseconnect3):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
     time.sleep(2)
+    ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+    time.sleep(0.5)
     ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=4, rx_phy=4, coded_phy=2)
     time.sleep(60)
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
@@ -586,6 +604,8 @@ def test_ble_phy_change_tx_rx_lr_125_C19940(ble_dut, remote_wiseconnect3):
 def test_ble_phy_change_tx_1_rx_lr_500_C19941(ble_dut, remote_wiseconnect3):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
     time.sleep(2)
+    ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+    time.sleep(0.5)
     ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=1, rx_phy=4, coded_phy=1)
     time.sleep(60)
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
@@ -639,6 +659,8 @@ def test_ble_phy_change_tx_1_rx_lr_500_C19941(ble_dut, remote_wiseconnect3):
 def test_ble_phy_change_tx_2_rx_lr_500_C19942(ble_dut, remote_wiseconnect3):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
     time.sleep(2)
+    ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+    time.sleep(0.5)
     ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=2, rx_phy=4, coded_phy=1)
     time.sleep(60)
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
@@ -693,6 +715,8 @@ def test_ble_phy_change_tx_rx_1_lr_500_C19943(ble_dut, remote_wiseconnect3):
 
     ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
     time.sleep(2)
+    ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+    time.sleep(0.5)
     ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=4, rx_phy=1, coded_phy=1)
     time.sleep(60)
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
@@ -747,6 +771,8 @@ def test_ble_phy_change_tx_rx_2_lr_500_C19944(ble_dut, remote_wiseconnect3):
 
     ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
     time.sleep(2)
+    ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+    time.sleep(0.5)
     ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=4, rx_phy=2, coded_phy=1)
     time.sleep(60)
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
@@ -801,6 +827,8 @@ def test_ble_phy_change_tx_rx_lr_500_C19945(ble_dut, remote_wiseconnect3):
 
     ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
     time.sleep(2)
+    ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+    time.sleep(0.5)
     ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=4, rx_phy=4, coded_phy=1)
     time.sleep(60)
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
