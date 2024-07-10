@@ -489,7 +489,7 @@ def test_ble_slave_data_length_230_bytes_duty_cycle_C19929(wifi_dut, ble_client,
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"ble": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
@@ -508,6 +508,7 @@ def test_ble_slave_data_length_230_bytes_duty_cycle_C19929(wifi_dut, ble_client,
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wifi_dut, utf_constants):
     bt_mon_log_file_name = (f"reports/test_ble_master_rx_230_bytes_C19921"
                             f"{int(time.time())}.log")
@@ -520,17 +521,21 @@ def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wif
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=bt_mon_log_file_name):
 
+            logger().info("******************** initializing ble in dut ********************")
+            bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
+            assert bt_dut_address, "failed to initialize ble in dut"
+
             iter_count = utf_constants.get("iter_count")
             for count in range(iter_count):
-
-                logger().info("******************** initializing ble in dut ********************")
-                bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
-                assert bt_dut_address, "failed to initialize ble in dut"
 
                 logger().info("******************** initializing ble in remote device ********************")
                 bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
                                                                                   service_classes=[svc])
                 assert bt_client_address, "failed to initialize ble in remote device"
+
+                logger().info(f"....Applying performance profile mode and Enable_bt_power_save")
+                ble_dut.interfaces.bluetooth.set_performance_profile()
+                ble_dut.interfaces.bluetooth.enable_bt_power_save()
 
                 logger().info("******************** start scanning in dut ********************")
                 ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=100)
@@ -546,7 +551,7 @@ def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wif
 
                 logger().info(f"******************** get all profiles ********************")
                 uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
-                assert HealthThermometerService.UUID.lower() in uuids is not None, "Could not fetch the heart rate profile"
+                assert HealthThermometerService.UUID.lower() in uuids is not None, "Could not fetch health thermometer profile"
 
                 logger().info(" ******************** Resolving Profile ********************")
                 start_handle, end_handle, data = wifi_dut.interfaces.wifi.ble_get_profile_async(
@@ -611,6 +616,8 @@ def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wif
                                                                handle=(write_handle + 1), enable_notify=0)
                 ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
+                ble_client.interfaces.bluetooth.close()
+
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -622,7 +629,7 @@ def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wif
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"ble": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
@@ -643,6 +650,7 @@ def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wif
         "duty_cycle": 1,
     },
 )
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_master_rx_100_bytes_C19930(ble_dut, ble_client, sl_collections, wifi_dut, utf_constants):
     bt_mon_log_file_name = (f"reports/test_ble_master_rx_230_bytes_C19921"
                             f"{int(time.time())}.log")
@@ -655,17 +663,21 @@ def test_ble_master_rx_100_bytes_C19930(ble_dut, ble_client, sl_collections, wif
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=bt_mon_log_file_name):
 
+            logger().info("******************** initializing ble in dut ********************")
+            bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
+            assert bt_dut_address, "failed to initialize ble in dut"
+
             iter_count = utf_constants.get("iter_count")
             for count in range(iter_count):
-
-                logger().info("******************** initializing ble in dut ********************")
-                bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
-                assert bt_dut_address, "failed to initialize ble in dut"
 
                 logger().info("******************** initializing ble in remote device ********************")
                 bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
                                                                                   service_classes=[svc])
                 assert bt_client_address, "failed to initialize ble in remote device"
+
+                logger().info(f"....Applying performance profile mode and Enable_bt_power_save")
+                wifi_dut.interfaces.wifi.set_performance_profile()
+                wifi_dut.interfaces.wifi.enable_bt_power_save()
 
                 logger().info("******************** start scanning in dut ********************")
                 ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=100)
@@ -681,7 +693,7 @@ def test_ble_master_rx_100_bytes_C19930(ble_dut, ble_client, sl_collections, wif
 
                 logger().info(f"******************** get all profiles ********************")
                 uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
-                assert HealthThermometerService.UUID.lower() in uuids is not None, "Could not fetch the heart rate profile"
+                assert HealthThermometerService.UUID.lower() in uuids is not None, "Could not fetch health thermometer profile"
 
                 logger().info(" ******************** Resolving Profile ********************")
                 start_handle, end_handle, data = wifi_dut.interfaces.wifi.ble_get_profile_async(
@@ -745,6 +757,8 @@ def test_ble_master_rx_100_bytes_C19930(ble_dut, ble_client, sl_collections, wif
                 ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=bt_client_address,
                                                                handle=(write_handle + 1), enable_notify=0)
                 ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+                ble_client.interfaces.bluetooth.close()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
