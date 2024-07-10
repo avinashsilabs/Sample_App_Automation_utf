@@ -6,6 +6,10 @@ from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEvent
 from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import BatteryService
 from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import BatteryLevelCharacteristic
 from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import BatteryService
+from utf.interfaces.bluetooth.bluez.gatt_application.link_loss_service import (
+    LinkLossService,
+    LinkLossAlertLevelCharacteristic,
+)
 from utf.interfaces.bluetooth.bluez.gatt_application.heart_rate_service import HeartRateService,  HeartRateMeasurementCharacterstic
 from utf.interfaces.bluetooth.bluez.gatt_application.blood_pressure_service import \
     BloodPressureMeasurementCharacteristic, BloodPressureService
@@ -47,7 +51,7 @@ def logger():
 
 
 class BleFunctionality(ThreadBase):
-    def __init__(self, wifi_dut=None, ble_client=None, bt_dut_address=None, powersave=False, battery_service=False, HeartRate=False, ht=False, battery_heartrate=False, pair=False):
+    def __init__(self, wifi_dut=None, ble_client=None, bt_dut_address=None, powersave=False, battery_service=False, HeartRate=False, ht=False, battery_heartrate=False, pair=False, link_loss=True):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_client = ble_client
@@ -57,6 +61,7 @@ class BleFunctionality(ThreadBase):
         self.HeartRate = HeartRate
         self.ht = ht
         self.battery_heartrate = battery_heartrate
+        self.link_loss= link_loss
         self.pair = pair
 
 
@@ -80,6 +85,10 @@ class BleFunctionality(ThreadBase):
             logger().info("scanning for ble client.. ")
             bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.bt_dut_address,
                                                                                     service_classes=["BatteryService", "HeartRateService"])
+        elif self.link_loss:
+            logger().info("scanning for ble client.. ")
+            bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.bt_dut_address,
+                                                                                    service_classes=["LinkLossService"])
         else:
             logger().info("scanning for ble client.. ")
             bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.bt_dut_address)
@@ -1117,4 +1126,51 @@ def test_ble_sdk_enable_battery_service_in_server_role_C19881(wifi_dut, ble_clie
         time.sleep(2)
         logger().info(f"Removing services on dut")
         wifi_dut.interfaces.wifi.ble_remove_service()
+        ble_client.interfaces.bluetooth.close()
+
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_validate_prepare_and_execute_att_values_C19871(ble_dut, ble_client, utf_constants, sl_collections):
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=f"reports/test_wifi_sdk_C19871_{int(time.time())}.log") as bt_logs:
+            logger().info(" ******* Start BLE GATT Service ******* ")
+            bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
+            assert bt_dut_address, "Failed to load bt address..."
+            ble_obj = BleFunctionality(ble_dut, ble_client, bt_dut_address=bt_dut_address, powersave=True, link_loss=True)
+            bt_client_address = ble_obj.ble_adv()
+            time.sleep(60)
+            ble_obj.check_device_state_on_rasp()
+            logger().info(f"get all profiles")
+            uuids = ble_dut.interfaces.bluetooth.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
+            assert LinkLossService.UUID.lower() in uuids is not None, "Could not fetch the Link loss profile"
+            logger().info(" Resolving Linkloss profile from RD1")
+            start_handle, end_handle, data = ble_dut.interfaces.wifi.ble_get_profile_async(
+                ble_remote_dev_address=bt_client_address,
+                uuid=int(LinkLossService.UUID, 16))
+            assert start_handle is not None, "failed to fetch the start handle.."
+            assert end_handle is not None, "failed to fetch end handle.."
+            char_uuid = LinkLossAlertLevelCharacteristic.LLA_UUID
+            characteristic = LinkLossAlertLevelCharacteristic
+            char_uuids, write_handles, char_properties = ble_dut.interfaces.bluetooth.ble_get_char_services_async(
+                ble_remote_dev_address=bt_client_address,
+                start_handle=int(start_handle, 16), end_handle=int(end_handle, 16))
+            assert char_uuid in char_uuids, "Unable to find {} uuid".format(char_uuid)
+            index = char_uuids.index(char_uuid)
+            logger().info(f"UUID's are:{char_uuids}")
+            logger().info(f"write_handles:{write_handles}")
+            logger().info(f"index:{index}")
+            assert char_properties[index].isdigit(), "Character property found is not an integer"
+            assert characteristic.prop_int == int(char_properties[index]), "Invalid character property found"
+            write_handle = int(write_handles[index], 16)
+            assert write_handle > 0
+            ble_dut.interfaces.bluetooth.ble_prepare_write_async(ble_remote_dev_address=bt_client_address, handle=write_handles[0], offset=1, data_len=10, data="hjdhwjdjjd")
+            ble_dut.interfaces.bluetooth.ble_execute_write_async(ble_remote_dev_address=bt_client_address, exe_flag=1)
+            time.sleep(30)
+            logger().info("Disconnecting from dut...")
+            ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+
+    except Exception as error:
+        sl_collections.exception_handling(ble_dut, error)
+
+    finally:
         ble_client.interfaces.bluetooth.close()
