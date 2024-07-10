@@ -221,10 +221,11 @@ class load_certificates_thread(ThreadBase):
                                 Si91xCertIdentifier.SL_NET_TLS_SERVER_CREDENTIAL_START,
                                 cert_index=index)
                         break
-                local_port = randint(5001, 20000)
+                local_port = randint(5005, 20000)
                 logger().info(f"SSL start server on port {port}")
                 self.ssl_server.interfaces.ssl.start_server(port=port, server_cert=element[3][1],
                                                             server_key=element[3][2])
+                time.sleep(2)
                 server_ip = self.ssl_server.interfaces.ssl.server_ip
                 self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
                 sock = self.wifi_dut.interfaces.wifi.socket()
@@ -233,7 +234,8 @@ class load_certificates_thread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.device_ip, server_port=local_port,
                                                    timeout=15)
                 logger().info(f"DUT with sock id {sock} connecting to server with port number:{port}")
-                self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=port)
+                self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=port,
+                                                               timeout=60)
                 list_sock.append(sock)
         return list_sock
 
@@ -254,7 +256,7 @@ class data_tx_rx_thread(ThreadBase):
                     with lock:
                         data_sent = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
                         logger().info(f"Data Sent :{data_sent}  on socket_id {element}")
-                        self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=element, data=data_sent)
+                        self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=element, data=data_sent, timeout=30)
                     data_receive = self.ssl_server.interfaces.ssl.data_recv_content(element + 1, len(data_sent))
                     logger().info(f"Data received on remote socket opened is {data_receive}")
                     assert data_sent == data_receive.decode(), "Data sent by DUT and received on server is matching"
@@ -630,7 +632,7 @@ def test_wifi_sdk_dynamic_load_powersave_not_enabled_TC19646(
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
-        "thread_config": {"wifi": {"count": 4, "stack_len": 3584}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -647,13 +649,10 @@ def test_wifi_sdk_dynamic_load_powersave_not_enabled_TC19646(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_sdk_connection_and_transfer_of_index0_index1_when_trying_loadcert_index2_TC19642(wifi_sniffer,
-                                                                                               wifi_access_point,
+def test_wifi_sdk_connection_and_transfer_of_index0_index1_when_trying_loadcert_index2_TC19642(wifi_access_point,
                                                                                                wifi_dut, ssl_server,
-                                                                                               logger,
-                                                                                               cert1,
-                                                                                               cert2, cert3,
-                                                                                               sl_collections):
+                                                                                               logger, cert1, cert2,
+                                                                                               cert3, sl_collections):
     """
     Verify the connection and data transfer of index0 and index1 when trying load certificate in index2
     """
@@ -709,7 +708,7 @@ def test_wifi_sdk_connection_and_transfer_of_index0_index1_when_trying_loadcert_
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
-        "thread_config": {"wifi": {"count": 4, "stack_len": 3584}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -726,12 +725,9 @@ def test_wifi_sdk_connection_and_transfer_of_index0_index1_when_trying_loadcert_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_sdk_connection_and_transfer_of_index0_index2_when_trying_loadcert_index1_TC19648(wifi_sniffer,
-                                                                                               wifi_access_point,
+def test_wifi_sdk_connection_and_transfer_of_index0_index2_when_trying_loadcert_index1_TC19648(wifi_access_point, cert1,
                                                                                                wifi_dut, ssl_server,
-                                                                                               logger,
-                                                                                               cert1,
-                                                                                               cert2, cert3,
+                                                                                               logger, cert2, cert3,
                                                                                                sl_collections):
     """
     Verify the connection and data transfer of index0 and index2 when trying load certificate in index1
@@ -784,13 +780,14 @@ def test_wifi_sdk_connection_and_transfer_of_index0_index2_when_trying_loadcert_
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
-        "thread_config": {"wifi": {"count": 4, "stack_len": 3584}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -808,12 +805,12 @@ def test_wifi_sdk_connection_and_transfer_of_index0_index2_when_trying_loadcert_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_socket", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_sdk_ssl_socket_connection_dataTX_enable_deep_sleep_base_powersave_C19650(wifi_sniffer, wifi_dut,
-                                                                                       wifi_access_point,
-                                                                                       ssl_server, logger, cert1, cert2,
+def test_wifi_sdk_ssl_socket_connection_dataTX_enable_deep_sleep_base_powersave_C19650(wifi_dut, ssl_server, logger,
+                                                                                       wifi_access_point, cert1, cert2,
                                                                                        cert3, sl_collections):
     """
-    Verify the connection and data transfer of index0, index1 & index2 after loading certificate when we enable both deep sleep command and connected based power save
+    Verify the connection and data transfer of index0, index1 & index2 after loading certificate
+    when we enable both deep sleep command and connected based power save.
     """
     try:
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
@@ -845,7 +842,8 @@ def test_wifi_sdk_ssl_socket_connection_dataTX_enable_deep_sleep_base_powersave_
 
         logger.info(f"....Applying performance profile mode ")
         wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
-        #
+        time.sleep(5)
+
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         port2 = ssl_server.interfaces.ssl.config['device_port2']
         port3 = ssl_server.interfaces.ssl.config['device_port3']
@@ -860,6 +858,7 @@ def test_wifi_sdk_ssl_socket_connection_dataTX_enable_deep_sleep_base_powersave_
         result_load_certificate.wait_for_exit(True)
         list_of_soc_id = result_load_certificate.return_value
         logger.info(f"Socket_id received{list_of_soc_id}")
+        time.sleep(2)
 
         data = data_tx_rx_thread(wifi_dut, ssl_server, list_of_soc_id, send_count=5)
         data.start()
@@ -1271,7 +1270,7 @@ def test_wifi_sdk_load_certs_without_erasing_multiple_times_TC19644(
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
-        "thread_config": {"wifi": {"count": 4, "stack_len": 3584}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -1288,12 +1287,9 @@ def test_wifi_sdk_load_certs_without_erasing_multiple_times_TC19644(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_thread_wifi_sdk_connection_and_transfer_of_index1_index2_when_trying_loadcert_index0_TC19649(wifi_sniffer,
-                                                                                                      wifi_access_point,
-                                                                                                      wifi_dut,
-                                                                                                      ssl_server,
-                                                                                                      logger,
-                                                                                                      cert1,
+def test_thread_wifi_sdk_connection_and_transfer_of_index1_index2_when_trying_loadcert_index0_TC19649(wifi_access_point,
+                                                                                                      wifi_dut, logger,
+                                                                                                      ssl_server, cert1,
                                                                                                       cert2, cert3,
                                                                                                       sl_collections):
     """
