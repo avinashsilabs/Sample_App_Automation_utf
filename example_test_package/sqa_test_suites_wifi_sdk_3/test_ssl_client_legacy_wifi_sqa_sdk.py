@@ -694,11 +694,12 @@ def test_wifi_sdk_ssl_client_rx_while_rejoining_c19135(switch, wifi_dut, wifi_ac
     """
     try:
         capture_filename = "test_wifi_sdk_ssl_client_rx_while_rejoining_c19135"
-        pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+
         tx_buffer_len = ssl_server.interfaces.ssl.config['buffer_length']
-        port1 = randint(5001, 5010)
+        port1 = ssl_server.interfaces.ssl.config['device_port1']
+        local_port = randint(5000, 20000)
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections,
-                                 rejoin_params=[20, 6, 40, 0])
+                                 rejoin_params=[0, 6, 40, 0])
         device_ip, dut_mac_address = ssl_obj.join_get_ip()
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
@@ -708,21 +709,24 @@ def test_wifi_sdk_ssl_client_rx_while_rejoining_c19135(switch, wifi_dut, wifi_ac
         sock = wifi_dut.interfaces.wifi.socket()
         assert sock == 0, f"socket id received is wrong, expected is 0"
         logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
-        wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
         wifi_dut.interfaces.wifi.bsdSsetCustomSyncSockopt(socket_fd=sock, cert_index=0)
-        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=port1, timeout=15)
-        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=port1)
+        wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=port1, timeout=80)
 
-        thread = Thread(target=ssl_obj.pdu_switch, args=(5, switch))
         for tx_buffer in [tx_buffer_len, 20]:
-            ssl_server.interfaces.ssl.send_data(1, pkt_count, msg_length=tx_buffer)
-            if tx_buffer != 20:
-                thread.start()
-            rx_buffer = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock, timeout=20)
-            assert rx_buffer, "Packet loss observed at receiver side"
-            thread.join()
-            time.sleep(60)
-
+            logger.info(f"\n************** Sending data from DUT with data size {tx_buffer} bytes **************")
+            for pkt_count in range(8):
+                if pkt_count == 4:
+                    ssl_obj.pdu_switch(10, switch)
+                    time.sleep(60)
+                ssl_server.interfaces.ssl.send_data(1, 1, msg_length=tx_buffer)
+                wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+                rx_buffer = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock, async_timeout=120,
+                                                                          timeout=120)
+                assert rx_buffer, "Packet loss observed at receiver side"
+            time.sleep(5)
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=0)
         logger.info("Successfully closed socket_id 0 in the DUT")
         ssl_server.interfaces.ssl.stop_server()
