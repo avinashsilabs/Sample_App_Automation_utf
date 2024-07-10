@@ -52,7 +52,7 @@ def logger():
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, sniffer_filter=None
                  , ping_count=None, test_name=None, sl_collections=None, net_perf_client=None,
-                 wifi_client=None, switch=None, wifi_clients=None, protocol=None):
+                 wifi_client=None, switch=None, wifi_clients=None, protocol=None, multicast_client=None):
         super().__init__()
         self.scan_list = None
         self.wifi_dut = wifi_dut
@@ -80,6 +80,7 @@ class WLanThread(ThreadBase):
         self.beacon_interval = "100"
         self.no_of_clients = 1
         self.protocol = protocol
+        self.multicast_client = multicast_client
 
     def run(self):
         try:
@@ -190,12 +191,29 @@ class WLanThread(ThreadBase):
                     self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                     logger().info(f"Remote device ip :{self.host_ip}")
                     time.sleep(5)
-                    self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
-                                                    protocol=self.protocol, device_ip=self.dut_addr['device_ip'],
-                                                    host_ip=self.host_ip,
-                                                    timeout=60, traffic_type="TX")
-                    self.wifi_dut.interfaces.wifi.leave()
+                    ip_version, ttl, multicast_mac, multicast_ip, device_port, server_port, buffer_length, no_of_pkts = (
+                        self.multicast_client.interfaces.multicast.multicast_params())
+
+                    logger().info(f"DUT joining to the multicast group {multicast_ip}")
+                    self.wifi_dut.interfaces.wifi.sl_net_join_multicast_address()
+
+                    self.net_perf_client.interfaces.net_perf.init_client(host_ip=self.host_ip, device_ip=multicast_ip, time_out=70,
+                                                                    protocol=self.protocol, time_to_leave="32", bandwidth="60M",
+                                                                    host_role="C", bind_address=self.host_ip)
+                    logger().info(f"Host IP: {self.host_ip}, Dut IP: {self.dut_addr['device_ip']}, Protocol: {self.protocol}")
+                    logger().info(f"***** starting iperf ******")
+                    self.net_perf_client.interfaces.net_perf.start()
+                    logger().info(f"***** start listening  ******")
+                    self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=2, protocol=17,
+                                                   local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                   local_ip=multicast_ip, remote_ip=self.host_ip,
+                                                   remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                   size=1470, ttl=60, throughput_type=4, qos=0, async_socket=1, timeout=70)
+
+                    self.wifi_dut.interfaces.wifi.sl_net_leave_multicast_address()
+                    logger().info("Stop Sniffer finally")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
+                    self.wifi_dut.interfaces.wifi.leave()
                     time.sleep(5)
 
             elif self.test_case_no == 219292:
@@ -1000,8 +1018,8 @@ def test_wifi_sdk_mbssid_NT_wpa3_c219290(wifi_sniffer, wifi_access_point, wifi_d
         raise e
 
 
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1030,15 +1048,15 @@ def test_wifi_sdk_mbssid_NT_wpa3_c219290(wifi_sniffer, wifi_access_point, wifi_d
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
-def test_wifi_sdk_mbssid_T_wpa2_enterprise_c219291(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
+def test_wifi_sdk_mbssid_T_wpa2_enterprise_c219291(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, multicast_client,
                                                    radius_server, sl_collections, request, net_perf_client, wifi_client
                                                    , protocol):
-    """ This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    """ This test case Verifies the wpa2 enterprise connectivity while using eap tls method with multicast traffic"""
     try:
         test_name = request.node.name
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               sl_collections=sl_collections, test_case_no=219291, test_name=test_name, wifi_client=wifi_client,
-                              sniffer_filter=sniffer_filter, net_perf_client=net_perf_client, protocol=protocol)
+                              sniffer_filter=sniffer_filter, net_perf_client=net_perf_client, protocol=protocol, multicast_client=multicast_client)
 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
