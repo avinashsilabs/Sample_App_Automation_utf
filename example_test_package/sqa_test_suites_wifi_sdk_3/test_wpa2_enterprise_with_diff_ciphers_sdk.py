@@ -3889,9 +3889,9 @@ def test_wsdk_WPA2_eap_conn_with_peap_cert_not_loaded_C113851(
         wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
                                                    cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
-            max_retry_attempts=0, scan_interval=4, beacon_missed_count=40, first_time_retry_enable=0, eap_flags=2)
+            max_retry_attempts=0, scan_interval=4, beacon_missed_count=40, first_time_retry_enable=0)
         wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
-        wifi_dut.interfaces.wifi.set_eap_credentials()
+        wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=2)
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                       passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                       security="wpa2_enterprise", uid="user1", enc="peap", timeout_ms=1,
