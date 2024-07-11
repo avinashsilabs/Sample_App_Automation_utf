@@ -183,11 +183,12 @@ class WifiJoin(ThreadBase):
         content = filter_file.read()
         receiver_address = re.findall(r"(\s\s\s\sReceiver\saddress:\s[\w:]+)", content)
         sequence_number = re.findall(r"(....\s=\sSequence\snumber:\s\d+)", content)
-        logger().info(f' ********* Calculating length of {len(receiver_address)} and {len(sequence_number)}***********')
+        tid = re.findall(r"(TID:\s\d+)", content)
+        logger().info(f' ********* Calculating length of AP mac address : {len(receiver_address)} and length of Qos Packet Sequence Number : {len(sequence_number)} and length of TID : {len(tid)} ***********')
 
-        """The below code lines is used to print receiver_address and sequence number from DUT Tx Packet"""
+        """The below code lines is used to print receiver_address and sequence number and TID from DUT Tx Packet"""
         for i in range(len(sequence_number)):
-            logger().info(f' ********* {receiver_address[i]} and {sequence_number[i]} ***********')
+            logger().info(f' ********* {receiver_address[i]} and {sequence_number[i]} and {tid[i]} ***********')
 
 
 pytestmark = [
@@ -809,7 +810,7 @@ def test_dut_send_mpdu_with_same_receiver_addr_c148322(
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
 
-        """This below method is used to validate duration ID and sequence numbers from DUT Tx Packet"""
+        """This below method is used to validate Receiver Address and Sequence Numbers and TID from DUT Tx Packet"""
         wifi_obj.receiver_address_sequence_number_validation()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
