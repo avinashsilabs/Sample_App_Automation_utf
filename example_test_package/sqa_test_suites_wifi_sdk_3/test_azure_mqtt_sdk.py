@@ -76,6 +76,7 @@ class Azure_Thread():
         self.disconnect = disconnect
         self.device_id = device_id
         self.sock_id = None
+        self.host_ip = None
         self.socket, self.init, self.subscribe = False, False, False
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
@@ -147,34 +148,43 @@ class Azure_Thread():
 
         self.azure_iot_client.interfaces.hub.received_messages.clear()
 
-        with self.azure_iot_client.interfaces.hub.start_receiving_events():
+        with self.azure_iot_client.interfaces.hub.start_receiving_events(duration=10):
             self.publish_from_dut(count=count, message=message, timeout=duration)
             time.sleep(5)
         assert message in self.azure_iot_client.interfaces.hub.received_messages,\
             "message sent from device not received on cloud"
         logger().info(f"message sent from device received on cloud {message}")
-        assert len(self.azure_iot_client.interfaces.hub.received_messages) == count,\
+        received_msgs = self.azure_iot_client.interfaces.hub.received_messages
+
+        assert received_msgs.count(message) == count,\
             "Number of times message sent from device not received on cloud"
         logger().info(f"Number of times message sent from device {count} received on cloud"
-                      f" {len(self.azure_iot_client.interfaces.hub.received_messages)}")
+                      f" {received_msgs.count(message)}")
+
 
     def connect_socket(self):
 
-        host_ip = self.wifi_dut.interfaces.wifi.dns_get(domain_name=self.host_name,
-                                                        query_timeout=20000,
-                                                        ip_version="SL_NET_DNS_TYPE_IPV4", timeout=100)
         self.sock_id = self.wifi_dut.interfaces.wifi.socket("AF_INET", "SOCK_STREAM", "IPPROTO_TCP")
         self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(self.sock_id, "SOL_TCP", "TCP_ULP", "tls")
         self.wifi_dut.interfaces.wifi.bsdSetSocketOption(socket_fd=self.sock_id, option_level='SOL_SOCKET',
                                                          option_name='SO_RCVTIMEO')
-        self.wifi_dut.interfaces.wifi.bsdSocketConnect(self.sock_id, host_ip, 4, 8883)  # "40.78.196.98")
+        self.wifi_dut.interfaces.wifi.bsdSocketConnect(self.sock_id, self.host_ip, 4, 8883)  # "40.78.196.98")
         self.socket = True
         time.sleep(5)
 
-    def azure_iot_connect(self):
-        self.connect_socket()
-        self.azure_iot_init()
-        self.subscribe_from_dut()
+    def azure_iot_connect(self, retries=3):
+        status = False
+        for retry_count in range(retries):
+            try:
+                self.connect_socket()
+                self.azure_iot_init()
+                status=True
+                break
+            except:
+                logger().info("retrying to connect to azure iot")
+                self.azure_iot_disconnect()
+        assert status, "Failed to connect to azure iot"
+
 
 
     def azure_iot_disconnect(self):
@@ -213,6 +223,11 @@ class Azure_Thread():
         )
         self.dut_addr['ap_mac_address'] = self.wifi_access_point.interfaces.wifi.bssid
 
+        result = self.wifi_dut.interfaces.wifi.dns_get(domain_name=self.host_name,
+                                                       query_timeout=20000,
+                                                       timeout=100)
+        self.host_ip = (result.decode()).strip()
+
     def azure_iot_test(self, socket=True, init=True, subscribe=True, publish=True, receive=True, disconnect=True):
 
         if socket:
@@ -227,10 +242,6 @@ class Azure_Thread():
             self.send_msg_from_cloud()
         if disconnect:
             self.azure_iot_disconnect()
-
-
-
-
 
 
 def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None):
@@ -262,7 +273,7 @@ def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None):
             "ble_features": 0,
             "ble_custom_ext_features": 0,
             "set_send_feature_frame": True,
-            "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
+            "thread_config": {"wifi": {"count": 2, "stack_len": 4096}},
 
     }
     if ca_cert:
@@ -1046,9 +1057,11 @@ def test_azure_mqtt_send_20_telemetry_messages_C19539(wifi_access_point, wifi_du
         "SL_NET_TLS_CLIENT_CREDENTIAL_START",
     ],
 )
-@pytest.mark.skip(reason="X.509 related testcases are not working")
 @pytest.mark.config(
     "azure_iot", wifi={"device": "x509_device", "device_id": "x.509_self_signed_sha1"}
+)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "password": "12345678"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1056,6 +1069,83 @@ def test_azure_mqtt_send_20_telemetry_messages_C19539(wifi_access_point, wifi_du
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 def test_azure_mqtt_ssl_auth_C19514(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+                                    sl_collections, wifi_client, request, utf_constants, sniffer_filter):
+    """
+    Test Description:
+    This test case verifies the Azure MQTT functionality using x.509 authentication.
+    """
+
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        iter_count = utf_constants.get("iter_count")
+        message = text_generator(size=10)
+        logger().info(f"Message is:{message}")
+        azure_obj = Azure_Thread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            test_case=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            azure_iot_client=azure_iot_client,
+            device_id="x509_device",
+        )
+
+        azure_obj.join_to_ap()
+        azure_obj.azure_iot_connect()
+        azure_obj.subscribe_from_dut()
+        azure_obj.send_msg_from_device(message=message)
+        azure_obj.send_msg_from_cloud(message=message)
+        azure_obj.azure_iot_disconnect()
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                               azure_obj.dut_addr['dut_mac_address'],
+                                               azure_obj.dut_addr['ap_mac_address'],
+                                               sniffer_filter)
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        azure_iot_client.interfaces.device.disconnect()
+
+
+
+@wifi_dut_marker(
+    ca_cert=[
+            "silabs_dgcert_ca.pem",
+            "SL_NET_SIGNING_CERTIFICATE",
+            "SL_NET_TLS_SERVER_CREDENTIAL_START",
+    ],
+    client_cert=[
+        "mydevkitcertificate.pem",
+        "SL_NET_CERTIFICATE",
+        "SL_NET_TLS_CLIENT_CREDENTIAL_START",
+    ],
+    client_key=[
+        "mydevkitkey.pem",
+        "SL_NET_PRIVATE_KEY",
+        "SL_NET_TLS_CLIENT_CREDENTIAL_START",
+    ],
+)
+@pytest.mark.config(
+    "azure_iot", wifi={"device": "x509_device", "device_id": "x.509_self_signed_sha1"}
+)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "password": "12345678"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
+                             "disassociated"])
+def test_azure_iot_x_509_self_signed_C19536(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                     sl_collections, wifi_client, request, utf_constants, sniffer_filter):
     """
     Test Description:
@@ -1081,11 +1171,100 @@ def test_azure_mqtt_ssl_auth_C19514(wifi_access_point, wifi_dut, wifi_sniffer, a
             azure_iot_client=azure_iot_client,
             device_id="x509_device",
         )
-
+        message = text_generator(size=10)
+        logger().info(f"Message is:{message}")
         azure_obj.join_to_ap()
         azure_obj.azure_iot_connect()
-        azure_obj.send_msg_from_device()
-        azure_obj.send_msg_from_cloud()
+        azure_obj.subscribe_from_dut()
+        azure_obj.send_msg_from_device(message=message)
+        azure_obj.send_msg_from_cloud(message=message)
+        azure_obj.azure_iot_disconnect()
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                               azure_obj.dut_addr['dut_mac_address'],
+                                               azure_obj.dut_addr['ap_mac_address'],
+                                               sniffer_filter)
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        azure_iot_client.interfaces.device.disconnect()
+
+
+
+
+
+
+@wifi_dut_marker(
+    ca_cert=[
+            "silabs_dgcert_ca.pem",
+            "SL_NET_SIGNING_CERTIFICATE",
+            "SL_NET_TLS_SERVER_CREDENTIAL_START",
+    ],
+    client_cert=[
+        "mydevkitcertificate.pem",
+        "SL_NET_CERTIFICATE",
+        "SL_NET_TLS_CLIENT_CREDENTIAL_START",
+    ],
+    client_key=[
+        "mydevkitkey.pem",
+        "SL_NET_PRIVATE_KEY",
+        "SL_NET_TLS_CLIENT_CREDENTIAL_START",
+    ],
+)
+@pytest.mark.skip(reason="send and receive message is not working")
+@pytest.mark.config(
+    "azure_iot", wifi={"device": "x509_device", "device_id": "x.509_self_signed_sha1"}
+)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "password": "12345678"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
+                             "disassociated"])
+def test_azure_iot_ssl_auth_send_recv_C19543(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+                                    sl_collections, wifi_client, request, utf_constants, sniffer_filter):
+    """
+    Test Description:
+    This test case verifies the Azure MQTT functionality using x.509 authentication and send and receive messages
+     on subscribed topic parallelly.
+    """
+
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        iter_count = utf_constants.get("iter_count")
+        azure_obj = Azure_Thread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            test_case=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            azure_iot_client=azure_iot_client,
+            device_id="x509_device",
+        )
+        message = text_generator(size=10)
+        logger().info(f"Message is:{message}")
+        azure_obj.join_to_ap()
+        azure_obj.azure_iot_connect()
+        azure_obj.subscribe_from_dut()
+
+        send_thread = Thread(target=azure_obj.send_msg_from_device, args=(message, 5, 60), )
+        recv_thread = Thread(target=azure_obj.send_msg_from_cloud, args=(message, 5, 3, 120), )
+        send_thread.start()
+        recv_thread.start()
+        send_thread.join()
+        recv_thread.join()
+
         azure_obj.azure_iot_disconnect()
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1174,6 +1353,68 @@ def test_azure_mqtt_recv_timeout_C19540(wifi_access_point, wifi_dut, wifi_sniffe
 
 
 
+@pytest.mark.skip(reason="AZURE pusblish is not working for long run testcases")
+@wifi_dut_marker(ca_cert=["silabs_dgcert_ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "password": "12345678"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
+                             "disassociated"])
+def test_azure_mqtt_subscribe_publish_30m_C19522(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+                                             sl_collections, wifi_client, request, utf_constants, sniffer_filter):
+
+    """
+    Test Description:
+    This test case verifies the Azure MQTT subscribe and publish functionality for every 10mins upto 24 hours.
+    """
+    try:
+
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        iter_count = utf_constants.get("iter_count")
+        azure_obj = Azure_Thread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            test_case=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            azure_iot_client=azure_iot_client,
+            device_id="symmetric_device",
+        )
+        azure_obj.join_to_ap()
+        sw = Stopwatch()
+        while sw.elapsed_sec < 30 * 60:
+            message = text_generator(size=10)
+            logger().info(f"Message is:{message}")
+            azure_obj.azure_iot_connect()
+            azure_obj.subscribe_from_dut()
+            azure_obj.send_msg_from_device(message=message)
+            azure_obj.azure_iot_disconnect()
+            time.sleep(2)
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                               azure_obj.dut_addr['dut_mac_address'],
+                                               azure_obj.dut_addr['ap_mac_address'],
+                                               sniffer_filter)
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        azure_iot_client.interfaces.device.disconnect()
+
+
 @pytest.mark.skip(reason="Test case is not ready")
 @wifi_dut_marker(ca_cert=["silabs_dgcert_ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.config(
@@ -1212,17 +1453,31 @@ def test_azure_mqtt_subscribe_publish_24hrs_C19531(wifi_access_point, wifi_dut, 
             azure_iot_client=azure_iot_client,
             device_id="symmetric_device",
         )
-
-        message = text_generator(size=10)
-        logger().info(f"Message is:{message}")
         azure_obj.join_to_ap()
-        azure_obj.connect_socket()
-        azure_obj.azure_iot_init()
+        azure_obj.azure_iot_connect()
         azure_obj.subscribe_from_dut()
         sw = Stopwatch()
-        while sw.elapsed_sec < 86400:
-            azure_obj.send_msg_from_device(message=message, count=1)
-            time.sleep(600)
+        send_count = 0
+        message = text_generator(size=10)
+        logger().info(f"Message is:{message}")
+        azure_iot_client.interfaces.hub.received_messages.clear()
+        with azure_iot_client.interfaces.hub.start_receiving_events(duration=10):
+            while sw.elapsed_sec < 86400:
+                azure_obj.publish_from_dut(count=3, message=message, timeout=60)
+                send_count += 3
+                time.sleep(600)
+
+        assert message in azure_iot_client.interfaces.hub.received_messages, \
+            "message sent from device not received on cloud"
+        logger().info(f"message sent from device received on cloud {message}")
+        received_msgs = azure_iot_client.interfaces.hub.received_messages
+
+        assert received_msgs.count(message) == send_count, \
+            "Number of times message sent from device not received on cloud"
+        logger().info(f"Number of times message sent from device {send_count} received on cloud"
+                      f" {received_msgs.count(message)}")
+        # azure_obj.send_msg_from_device(message=message, count=1)
+        #time.sleep(60)
         azure_obj.azure_iot_disconnect()
         wifi_dut.interfaces.wifi.leave()
         time.sleep(2)
