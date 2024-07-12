@@ -51,7 +51,7 @@ def logger():
 
 
 class BleFunctionality(ThreadBase):
-    def __init__(self, wifi_dut=None, ble_client=None, bt_dut_address=None, powersave=False, battery_service=False, HeartRate=False, ht=False, battery_heartrate=False, pair=False, link_loss=True):
+    def __init__(self, wifi_dut=None, ble_client=None, ble_start=True, bt_dut_address=None, thermometer=None, powersave=False, battery_service=False, HeartRate=False, ht=False, battery_heartrate=False, pair=False, link_loss=True):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_client = ble_client
@@ -63,6 +63,8 @@ class BleFunctionality(ThreadBase):
         self.battery_heartrate = battery_heartrate
         self.link_loss= link_loss
         self.pair = pair
+        self.ble_start = ble_start
+        self.thermometer = thermometer
 
 
     def ble_adv(self):
@@ -116,8 +118,10 @@ class BleFunctionality(ThreadBase):
 
     def ble_gatt_scan(self):
         # Start DUT
-        bt_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start()
-        assert bt_dut_address is not None, "gatt init failed in DUT"
+        bt_dut_address = ""
+        if self.ble_start:
+            bt_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start()
+            assert bt_dut_address is not None, "gatt init failed in DUT"
         if self.HeartRate:
             self.bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
                 bt_dut_address=bt_dut_address, service_classes=["HeartRateService"]
@@ -126,6 +130,11 @@ class BleFunctionality(ThreadBase):
         elif self.battery_service:
             self.bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
                 bt_dut_address=bt_dut_address, service_classes=["BatteryService"]
+            )
+            assert self.bt_client_address is not None, "init failed for rpi"
+        elif self.thermometer:
+            self.bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
+                bt_dut_address=bt_dut_address, service_classes=["HealthThermometerService"]
             )
             assert self.bt_client_address is not None, "init failed for rpi"
         elif self.ht:
@@ -210,6 +219,93 @@ class BleFunctionality(ThreadBase):
         status = self.ble_client.interfaces.bluetooth.get_connection_status(self.bt_dut_address)
         logger().info(f"Connection status in remote device '{self.ble_client.name}' is:{status}")
         assert status, f"Remote device '{self.ble_client.name}' is not connected to DUT"
+
+    def fetch_profiles(self, service=None, characterstic=None):
+        logger().info(f"******************** get all profiles ********************")
+        uuids = self.wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=self.bt_client_address)
+        assert service.UUID.lower() in uuids is not None, "Could not fetch the profile"
+
+        logger().info(" ******************** Resolving Profile ********************")
+        start_handle, end_handle, data = self.wifi_dut.interfaces.wifi.ble_get_profile_async(
+            ble_remote_dev_address=self.bt_client_address, uuid=int(service.UUID, 16))
+        assert start_handle is not None, "failed to fetch the start handle.."
+        assert end_handle is not None, "failed to fetch end handle.."
+
+        char_uuids, write_handles, char_properties = self.wifi_dut.interfaces.wifi.ble_get_char_services_async(
+            ble_remote_dev_address=self.bt_client_address,
+            start_handle=int(start_handle, 16),
+            end_handle=int(end_handle, 16),
+            async_timeout=60)
+        logger().info(
+            f"characteristics uuids :{char_uuids}  write_handles{write_handles} : Characteristics_properties"
+            f"{char_properties}")
+
+        assert characterstic in char_uuids, "Unable to find {} uuid"
+        index = char_uuids.index(characterstic)
+        logger().info(f"UUID's are:{char_uuids}")
+        logger().info(f"write_handles:{write_handles}")
+        logger().info(f"index:{index}")
+        assert char_properties[index].isdigit(), "Character property found is not an integer"
+        write_handle = int(write_handles[index], 16)
+        logger().info(f"write_handle:{write_handle}")
+        assert write_handle > 0, "Unable to get write handle for configured service"
+        return write_handle
+
+    def events_on_dut(self):
+        tw = Stopwatch()
+        Data_received_on_dut = []
+        while tw.elapsed_sec < 10:
+            events = self.wifi_dut.interfaces.wifi.get_async_events()
+            for event in events:
+                if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
+                    received_data = re.findall(r"att_length: 1, att_value: (.*)", event.event_data)
+                    Data_received_on_dut = received_data + Data_received_on_dut
+                    if len(Data_received_on_dut) >= 5:
+                        break
+        return Data_received_on_dut
+
+    def btmon_validation_for_remote_tx(self, bt_mon_log_file=None, Data_received_on_dut=None):
+        service_notifcations = []
+        for data in Data_received_on_dut:
+            service_data = ord(data)
+            service_notifcations.append(service_data)
+        with open(bt_mon_log_file, "r") as file_p:
+            lines = file_p.readlines()
+        acl_data_flag = att_flag = handle_flag = False
+        data_on_remote = []
+        flag = 0
+        for line in lines:
+            if "< ACL Data TX: Handle" in line:
+                acl_data_flag = True
+                continue
+            elif "ATT: Handle Value" in line and acl_data_flag is True:
+                att_flag = True
+                continue
+            elif "Handle:" in line:
+                if "0x0010" in line and att_flag is True:
+                    handle_flag = True
+                continue
+
+            elif "Data:" in line and "Data: 0000" not in line and acl_data_flag is True and att_flag is True and handle_flag is True:
+                data_match = re.findall(r'Data:(.*)', line)
+                data_on_remote = data_on_remote + data_match
+                if len(data_on_remote) == len(service_notifcations):
+                    for data in data_on_remote:
+                        flag = 0
+                        data_to_compare = int(data, 16)
+                        if data_to_compare in service_notifcations:
+                            flag = True
+            else:
+                pass
+        assert flag, f"sent data is not matching with receiving data"
+        return service_notifcations
+
+    def disconnection_on_dut(self):
+        logger().info(f"**********Disconnecting from dut**************")
+        self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.bt_client_address)
+
+
+
 
 
 pytestmark = [
@@ -1174,3 +1270,106 @@ def test_ble_sdk_validate_prepare_and_execute_att_values_C19871(ble_dut, ble_cli
 
     finally:
         ble_client.interfaces.bluetooth.close()
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan"])
+def test_ble_sdk_enable_heartrate_service_in_client_role_C19880(wifi_dut, ble_client, utf_constants, sl_collections):
+    """ENABLE HEART RATE SERVICE IN CLIENT ROLE"""
+    bt_mon_log_file = "reports/test_ble_sdk_C19880"
+    try:
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
+        assert bt_dut_address is not None, "gatt init failed in DUT"
+        ble_obj = BleFunctionality(wifi_dut, ble_client, bt_dut_address=bt_dut_address, ble_start=False, HeartRate=True)
+        bt_client_address = ble_obj.ble_gatt_scan()
+        ble_obj.check_device_state_on_dut()
+        write_handle = ble_obj.fetch_profiles(service=HeartRateService, characterstic=HeartRateMeasurementCharacterstic.HR_Measure_UUID)
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=bt_mon_log_file):
+            logger().info(f"Enabling notification on dut")
+            wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=bt_client_address,
+                                                            handle=(write_handle + 1), enable_notify=1)
+            time.sleep(10)
+            wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=bt_client_address,
+                                                            handle=(write_handle + 1), enable_notify=0)
+        Data_received_on_dut = ble_obj.events_on_dut()
+        heartrate_notifcations = ble_obj.btmon_validation_for_remote_tx(bt_mon_log_file=bt_mon_log_file, Data_received_on_dut=Data_received_on_dut)
+        for data in heartrate_notifcations:
+            notification = "bpm:" + str(data)
+            logger().info(f"Notifications received on dut: {notification}")
+        ble_obj.disconnection_on_dut()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan"])
+def test_ble_sdk_enable_battery_service_in_client_role_C19882(wifi_dut, ble_client, utf_constants, sl_collections):
+    """ENABLE Battery SERVICE IN CLIENT ROLE"""
+    bt_mon_log_file = "reports/test_ble_sdk_C19882"
+    try:
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
+        assert bt_dut_address is not None, "gatt init failed in DUT"
+        ble_obj = BleFunctionality(wifi_dut, ble_client, bt_dut_address=bt_dut_address, ble_start=False, battery_service=True)
+        bt_client_address = ble_obj.ble_gatt_scan()
+        ble_obj.check_device_state_on_dut()
+        write_handle = ble_obj.fetch_profiles(service=BatteryService, characterstic=BatteryLevelCharacteristic.BLEVEL_UUID)
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=bt_mon_log_file):
+            wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=bt_client_address,
+                                                            handle=(write_handle + 1), enable_notify=1)
+            time.sleep(10)
+            wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=bt_client_address,
+                                                            handle=(write_handle + 1), enable_notify=0)
+        data = ble_obj.events_on_dut()
+        battery_notifcations = ble_obj.btmon_validation_for_remote_tx(bt_mon_log_file=bt_mon_log_file, Data_received_on_dut=data)
+        for data in battery_notifcations:
+            Notification = str(data) + "%"
+            logger().info(f"Notifications received on dut: {Notification}")
+        ble_obj.disconnection_on_dut()
+
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan"])
+def test_ble_sdk_enable_health_thermomter_service_in_client_role_C19886(wifi_dut, ble_client, utf_constants, sl_collections):
+    """ENABLE Blood pressure SERVICE IN CLIENT ROLE"""
+    bt_mon_log_file = "reports/test_wifi_sdk_C19886"
+    try:
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
+        assert bt_dut_address is not None, "gatt init failed in DUT"
+        ble_obj = BleFunctionality(wifi_dut, ble_client, bt_dut_address=bt_dut_address, ble_start=False, thermometer=True)
+        bt_client_address = ble_obj.ble_gatt_scan()
+        ble_obj.check_device_state_on_dut()
+        write_handle = ble_obj.fetch_profiles(service=HealthThermometerService, characterstic=HealthThermometerMeasurementCharacteristic.Thermo_Level_UUID)
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=bt_mon_log_file):
+            wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=bt_client_address,
+                                                            handle=(write_handle + 1), enable_notify=1)
+            time.sleep(10)
+            wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=bt_client_address,
+                                                            handle=(write_handle + 1), enable_notify=0)
+
+        Data= ble_obj.events_on_dut()
+        health_thermomter_notifcations = ble_obj.btmon_validation_for_remote_tx(bt_mon_log_file=bt_mon_log_file, Data_received_on_dut=Data)
+        for data in health_thermomter_notifcations:
+            notification = str(data) + "'C"
+            logger().info(f"Notifications received on dut: {notification}")
+        ble_obj.disconnection_on_dut()
+
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+

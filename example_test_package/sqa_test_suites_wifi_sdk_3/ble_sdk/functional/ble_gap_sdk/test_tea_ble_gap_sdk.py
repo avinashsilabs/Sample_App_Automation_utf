@@ -274,6 +274,7 @@ def test_ble_sdk_different_adv_data_C537625(ble_dut, ble_client, sl_collections,
         assert ble_dut.interfaces.bluetooth.ble_address in found_devices
         logger().info(f"*********Checking adv data in ble scan results*******")
         assert Advertise_data in found_devices.values(), f"unable to find set advertise data"
+        logger().info(f"Found advertise data in scan results")
         ble_client.interfaces.bluetooth.close()
 
     except Exception as error:
