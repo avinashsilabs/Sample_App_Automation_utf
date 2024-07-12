@@ -1474,7 +1474,7 @@ def test_wlan_connection_while_ble_passive_scan_C133433(wifi_dut, wifi_access_po
         "first_time_retry": 0
     },
 )
-@pytest.mark.config("wifi_access_point", wifi={"beacon_interval": 500})
+@pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890", "beacon_interval": 500})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
@@ -1487,8 +1487,16 @@ def test_ble_conn_req_wlan_connection_C133431(wifi_dut, wifi_access_point, wifi_
     con_flag = 0
     role_flag = 0
     validation = True
-    bt_mon_log_file_name = f"reports/ble_conn_req_wlan_connection_C20185_{int(time.time())}.log"
+    bt_mon_log_file_name = f"reports/ble_conn_req_wlan_connection_C133431{int(time.time())}.log"
     try:
+        # Get the Wi-Fi channel number
+        channel = wifi_access_point.interfaces.wifi.channel
+        logger().info(f"\n******Configuring Sniffer in channel {channel}******")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+
+        # Wi-Fi Sniffer capture started
+        wifi_sniffer.interfaces.capture.start_capture(capture_filename)
+
         logger().info("\n******* BLE initialization and get DUT BT address *******")
         ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
         assert ble_dut_address, "\n******Failed to get bt address...******"
@@ -1518,14 +1526,6 @@ def test_ble_conn_req_wlan_connection_C133431(wifi_dut, wifi_access_point, wifi_
                 assert con_flag, "******LE Connection Complete (0x01) string not found******"
                 assert role_flag, "******Slave (0x01) string not found******"
 
-        # Get the Wi-Fi channel number
-        channel = wifi_access_point.interfaces.wifi.channel
-        logger().info(f"\n******Configuring Sniffer in channel {channel}******")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-
-        # Wi-Fi Sniffer capture started
-        wifi_sniffer.interfaces.capture.start_capture(capture_filename)
-
         # WLAN thread is initiated
         wifi_obj = WifiThread(wifi_dut, wifi_access_point, utf_constants, wifi_sniffer)
         logger().info("\n******Initiating wlan scan and connection from DUT******")
@@ -1549,17 +1549,13 @@ def test_ble_conn_req_wlan_connection_C133431(wifi_dut, wifi_access_point, wifi_
         wifi_sniffer.interfaces.capture.stop_capture()
 
         logger().info("\n******Sniffer validation******")
-
         packet_filter1 = f'wlan.addr == {dut_mac_address} and wlan.fc.type_subtype == 0x001a and wlan.fc.pwrmgt == 1'
         logger().info(f"Validating PS Poll frames are sent from the device with power management bit")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], 'Unable to find ps polls in sniffer capture'
 
     except Exception as e:
-        logger().info(f"\n******Found Assertion --> {e}******\n")
-        logger().info("\n******Stop Sniffer finally******")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        raise
+        raise e
 
     finally:
         logger().info("\n******Disabling power save******")
@@ -1596,18 +1592,20 @@ def test_wlan_connection_while_ble_active_scan_C133432(wifi_dut, wifi_access_poi
     ble_mode = "ble_master"
     validation = True
     try:
-        # BLE scan thread is initiated
-        ble_obj = ble_continuous_scan_thread(wifi_dut, ble_client, ble_mode, ble_scan_interval=100, ble_scan_window=10,
-                                             ble_scan_type=1)
-        # BLE scan thread started
-        ble_obj.start()
-        ble_obj.wait_for_exit(True)
         # Get the Wi-Fi channel number
         channel = wifi_access_point.interfaces.wifi.channel
         logger().info(f"\n******Configuring Sniffer in channel {channel}******")
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
         # Wi-Fi Sniffer capture started
         wifi_sniffer.interfaces.capture.start_capture(capture_filename)
+
+        # BLE scan thread is initiated
+        ble_obj = ble_continuous_scan_thread(wifi_dut, ble_client, ble_mode, ble_scan_interval=100,
+                                             ble_scan_window=10, ble_scan_type=1)
+        # BLE scan thread started
+        ble_obj.start()
+        ble_obj.wait_for_exit(True)
+
         # WLAN thread is initiated
         wifi_obj = WifiThread(wifi_dut, wifi_access_point, utf_constants, wifi_sniffer)
         logger().info("\n******Initiating wlan scan and connection from DUT******")
@@ -1621,9 +1619,6 @@ def test_wlan_connection_while_ble_active_scan_C133432(wifi_dut, wifi_access_poi
         logger().info("\n******Disassociating with the AP******")
         wifi_leave(wifi_dut)
 
-        logger().info("******Initiating stop scan from DUT******")
-        wifi_dut.interfaces.wifi.ble_stop_scanning()
-
         logger().info("\n******Stop Sniffer capture******")
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -1634,10 +1629,8 @@ def test_wlan_connection_while_ble_active_scan_C133432(wifi_dut, wifi_access_poi
             'packet_count'], 'Unable to find ps polls in sniffer capture'
 
     except Exception as e:
-        logger().info(f"\n******Found Assertion --> {e}******\n")
-        logger().info("\n******Stop Sniffer finally******")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        raise
+        raise e
+
     finally:
         ble_client.interfaces.bluetooth.close()
         logger().info("\n******Disabling powersave******")
@@ -1740,8 +1733,6 @@ def test_sta_ble_deep_sleep_msg_power_save_C133516(firmware_loader, wifi_dut, wi
     finally:
         logger().info("\n******Stop Sniffer finally******")
         wifi_sniffer.interfaces.capture.stop_capture()
-
-
 
 
 @pytest.mark.config(
