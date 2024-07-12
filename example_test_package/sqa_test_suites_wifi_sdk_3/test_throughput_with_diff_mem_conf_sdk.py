@@ -327,7 +327,7 @@ pytestmark = [pytest.mark.firmware_app("test_416K_M4SS_256K")]
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_tcp_tx_416_256K_C146711(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_tcp_tx_416_256K_C532892(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -370,7 +370,7 @@ def test_wlan_standalone_tcp_tx_416_256K_C146711(firmware_loader, wifi_sniffer, 
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_tcp_rx_416_256K_C146712(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_tcp_rx_416_256K_C532893(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -497,7 +497,7 @@ def test_wlan_standalone_udp_rx_416_256K_C532891(firmware_loader, wifi_sniffer, 
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_tcp_tx_with_416_256K_11n_C146715(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_tcp_tx_with_416_256K_11n_C537722(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -540,7 +540,7 @@ def test_wlan_standalone_tcp_tx_with_416_256K_11n_C146715(firmware_loader, wifi_
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_tcp_rx_416_256K_11n_C146716(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_tcp_rx_416_256K_11n_C537723(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")

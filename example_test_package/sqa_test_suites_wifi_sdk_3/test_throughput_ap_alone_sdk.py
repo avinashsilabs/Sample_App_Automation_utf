@@ -201,7 +201,7 @@ class WifiJoinThread(ThreadBase):
         "interface": "wlan0",
     },
 )
-def test_wlan_sdk_ap_alone_device_as_server_tcp_rx_c20790(wifi_sniffer, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_sdk_ap_alone_device_as_server_tcp_rx_c20754(wifi_sniffer, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, dtim_period, channel):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -250,7 +250,7 @@ def test_wlan_sdk_ap_alone_device_as_server_tcp_rx_c20790(wifi_sniffer, wifi_cli
         "interface": "wlan0",
     },
 )
-def test_wlan_sdk_ap_alone_device_as_server_udp_rx_c20789(wifi_sniffer, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_sdk_ap_alone_device_as_server_udp_rx_c20755(wifi_sniffer, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, dtim_period, channel):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -299,7 +299,7 @@ def test_wlan_sdk_ap_alone_device_as_server_udp_rx_c20789(wifi_sniffer, wifi_cli
         "interface": "wlan0",
     },
 )
-def test_wlan_sdk_ap_alone_device_as_client_tcp_tx_c20788(wifi_sniffer, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_sdk_ap_alone_device_as_client_tcp_tx_c20752(wifi_sniffer, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, channel, dtim_period):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -348,7 +348,7 @@ def test_wlan_sdk_ap_alone_device_as_client_tcp_tx_c20788(wifi_sniffer, wifi_cli
         "interface": "wlan0",
     },
 )
-def test_wlan_sdk_ap_alone_device_as_client_udp_tx_c20787(wifi_sniffer, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_sdk_ap_alone_device_as_client_udp_tx_c20753(wifi_sniffer, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, channel, dtim_period):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")

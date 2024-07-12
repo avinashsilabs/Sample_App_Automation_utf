@@ -713,7 +713,7 @@ def test_wlan_ble_connected_udp_rx_c20745(firmware_loader, wifi_sniffer, wifi_ac
 
     }
 )
-def test_wlan_ble_conn_with_data_trans_tcp_tx_c20750(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_conn_with_data_trans_tcp_tx_c20764(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -753,7 +753,7 @@ def test_wlan_ble_conn_with_data_trans_tcp_tx_c20750(firmware_loader, wifi_sniff
 
     }
 )
-def test_wlan_ble_conn_with_data_trans_tcp_rx_c20751(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_conn_with_data_trans_tcp_rx_c20765(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -793,7 +793,7 @@ def test_wlan_ble_conn_with_data_trans_tcp_rx_c20751(firmware_loader, wifi_sniff
 
     }
 )
-def test_wlan_ble_conn_with_data_trans_udp_tx_c20748(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_conn_with_data_trans_udp_tx_c20762(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -833,7 +833,7 @@ def test_wlan_ble_conn_with_data_trans_udp_tx_c20748(firmware_loader, wifi_sniff
 
     }
 )
-def test_wlan_ble_conn_with_data_trans_udp_rx_c20749(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_ble_conn_with_data_trans_udp_rx_c20763(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -877,7 +877,7 @@ def test_wlan_ble_conn_with_data_trans_udp_rx_c20749(firmware_loader, wifi_sniff
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_tcp_tx_with_11n_C146719(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_tcp_tx_with_11n_C537716(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -920,7 +920,7 @@ def test_wlan_standalone_tcp_tx_with_11n_C146719(firmware_loader, wifi_sniffer, 
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_tcp_rx_11n_C146720(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_tcp_rx_11n_C537717(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -963,7 +963,7 @@ def test_wlan_standalone_tcp_rx_11n_C146720(firmware_loader, wifi_sniffer, wifi_
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_udp_tx_with_11n_C146709(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_udp_tx_with_11n_C537714(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -1006,7 +1006,7 @@ def test_wlan_standalone_udp_tx_with_11n_C146709(firmware_loader, wifi_sniffer, 
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_udp_rx_with_11n_C146710(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_udp_rx_with_11n_C537715(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -1049,7 +1049,7 @@ def test_wlan_standalone_udp_rx_with_11n_C146710(firmware_loader, wifi_sniffer, 
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_without_async_tcp_rx_C146663(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_without_async_tcp_rx_C537880(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -1090,7 +1090,7 @@ def test_wlan_standalone_without_async_tcp_rx_C146663(firmware_loader, wifi_snif
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_without_async_udp_rx_C146664(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_without_async_udp_rx_C537881(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")

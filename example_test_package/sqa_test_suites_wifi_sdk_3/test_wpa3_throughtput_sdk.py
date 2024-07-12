@@ -230,7 +230,7 @@ class WifiConnectionThread(ThreadBase):
 
     }
 )
-def test_wifi_sdk_2_4_tcp_rx_wpa3_C122121(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request, wifi_client,
+def test_wifi_sdk_2_4_tcp_rx_wpa3_C34513(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request, wifi_client,
                                          sniffer_filter, sl_collections, net_perf_client, protocol):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -274,7 +274,7 @@ def test_wifi_sdk_2_4_tcp_rx_wpa3_C122121(wifi_sniffer, wifi_access_point, wifi_
 
     }
 )
-def test_wifi_sdk_2_4_udp_rx_wpa3_C122123(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request, wifi_client,
+def test_wifi_sdk_2_4_udp_rx_wpa3_C34515(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request, wifi_client,
                                          sniffer_filter, sl_collections, net_perf_client, protocol):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -318,7 +318,7 @@ def test_wifi_sdk_2_4_udp_rx_wpa3_C122123(wifi_sniffer, wifi_access_point, wifi_
 
     }
 )
-def test_wifi_sdk_2_4_tcp_tx_wpa3_C122120(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request, wifi_client,
+def test_wifi_sdk_2_4_tcp_tx_wpa3_C34512(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request, wifi_client,
                                          sniffer_filter, sl_collections, net_perf_client, protocol):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
@@ -362,7 +362,7 @@ def test_wifi_sdk_2_4_tcp_tx_wpa3_C122120(wifi_sniffer, wifi_access_point, wifi_
 
     }
 )
-def test_wifi_sdk_2_4_udp_tx_wpa3_C122122(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request, wifi_client,
+def test_wifi_sdk_2_4_udp_tx_wpa3_C34514(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request, wifi_client,
                                          sniffer_filter, sl_collections, net_perf_client, protocol):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
