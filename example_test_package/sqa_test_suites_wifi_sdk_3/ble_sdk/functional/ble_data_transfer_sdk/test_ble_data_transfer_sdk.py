@@ -6,6 +6,9 @@ from utf.interfaces.bluetooth.bluez.gatt_application.heart_rate_service import H
 from utf.interfaces.bluetooth.bluez.gatt_application.heart_rate_service import (BodySensorLocationCharacteristic,
                                                                                 HeartRateControlPointCharacteristic,
                                                                                 HeartRateMeasurementCharacterstic)
+from utf.interfaces.bluetooth.bluez.gatt_application.health_thermometer_service import \
+    CustomNotifyCharacteristic, HealthThermometerService
+
 from utf.interfaces.bluetooth.bluez.gatt_application.immediate_alert_service import ImmediateAlertService
 from utf.interfaces.bluetooth.bluez.gatt_application.immediate_alert_service import ImmediateAlertLevelCharacteristic
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
@@ -211,6 +214,9 @@ class Ble_Data_Transfer:
         # Verify Device in Scan List
         logger().info("Verifying device in scan list...")
         found_devices = self.ble_client.interfaces.bluetooth.get_devices()
+        for device in found_devices:
+            if device == self.ble_dut.interfaces.wifi.ble_address:
+                logger().info(f"Device found in scan list:{device}")
 
         assert self.ble_dut.interfaces.wifi.ble_address in found_devices, "Failed to find DUT address in scan list"
         assert (found_devices[self.ble_dut.interfaces.wifi.ble_address] ==
@@ -439,7 +445,7 @@ class Ble_Data_Transfer:
 
     @staticmethod
     def validate_rx_notification(bt_mon_log_file_name=None, write_handle=None,
-                                 rx_notification_receiving_count=None,data_length=None):
+                                 rx_notification_receiving_count=None, data_length=None):
         logger().info(" ***** Validating Rx Notification Start *****")
         rx_notification_validate_count = 0
         with open(bt_mon_log_file_name, "r") as file_p:
@@ -473,34 +479,40 @@ class Ble_Data_Transfer:
                                                                                    " validation data not matching")
         logger().info(" ***** Validating Rx Notification End *****")
 
-    def gatt_notify_rx(self, write_handle, data=None, notify_time=100):
+    def gatt_notify_rx(self, write_handle, enable_notify=None, data=None, notify_time=100, svc=None,
+                       charc=None):
         # enable notifications
         self.ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=self.ble_client_address,
-                                                            handle=(write_handle + 1), enable_notify=data)
+                                                            handle=(write_handle + 1), enable_notify=enable_notify)
 
-        time.sleep(notify_time)
+        sw = Stopwatch()
+        while sw.elapsed_sec < notify_time:
+            since_time = time.perf_counter_ns()
+            self.ble_client.interfaces.bluetooth.send_gatt_charc_notification(svc, charc, data)
+            time.sleep(0.3)
+            found = False
+            tw = Stopwatch()
+            while tw.elapsed_sec < 10:
+                events = self.ble_dut.interfaces.wifi.get_async_events(since_time=since_time)
+                for event in events:
+                    if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
+                        logger().info(f"************** BLE EVENT DATA IS : {event.event_data} **************")
+                        received_data = re.findall(r"att_value:\s*([^\s]+)", event.event_data)
+                        logger().info(f"******* Received Data on DUT : {received_data} ********")
+                        assert received_data[0] == data, "data mismatched"
+                        if data in event.event_data:
+                            found = True
+                            break
+                assert found, "No data received on DUT"
+                if found:
+                    break
+
+        time.sleep(1)
 
         # disable notifications
         self.ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=self.ble_client_address,
                                                             handle=(write_handle + 1), enable_notify=0)
-        time.sleep(60)
-
-        logger().info(f"******* Events Start****************")
-        events = self.ble_dut.interfaces.bluetooth.get_async_events()
-        rx_notification_receiving_count = 0
-
-        for event in events:
-            if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
-                if "rsi_ble_on_gatt_write_event_gatt - att_length:" in event.event_data:
-                    logger().info(f"event data : {event.event_data}")
-                    variable = event.event_data
-                    search_string = "rsi_ble_on_gatt_write_event_gatt - att_length:"
-                    rx_notification_receiving_count = rx_notification_receiving_count + variable.count(search_string)
-
-        time.sleep(2)
-        logger().info(f"count {rx_notification_receiving_count}")
-        logger().info(f"*******Notification End****************")
-        return rx_notification_receiving_count
+   
 
     def gatt_indication(self, char_path, char_uuid, indication_time=100, data=None, data_length=None):
         logger().info(f"****** Indication Start****************")
@@ -626,7 +638,6 @@ def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_without_respons_buffer_0_
                      bt_log_path=bt_mon_log_file_name):
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
-            # ble_obj.ble_start_init()
             ble_obj.ble_gatt_init()
             # Set DUT Local name
             ble_obj.set_local_get_local_name_validation()
@@ -649,6 +660,52 @@ def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_without_respons_buffer_0_
                                             bt_mon_log_file_name=bt_mon_log_file_name)
             # Disconnect From Remote Device
             ble_obj.check_device_state_on_dut()
+            ble_obj.disconnect_from_remote()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+
+    finally:
+        ble_obj.clear_dut()
+
+
+def test_wifi_sdk_ble_dut_as_slave_with_232_bytes_write_without_respons_buffer_1_c193310(ble_dut, ble_client,
+                                                                                         sl_collections):
+    bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_slave_with_232_bytes_write_without_respons_"
+                            f"buffer_1_C193310_{int(time.time())}.log")
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=bt_mon_log_file_name):
+            # Initializing DUT BLE Device
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            ble_obj.ble_gatt_init()
+            # Set DUT Local name
+            ble_obj.set_local_get_local_name_validation()
+            # Set DUT To Advertising
+            ble_obj.advertising_dut()
+            # Power Save Mode WLAN And BLE
+            ble_obj.power_save()
+            # Scan and Connect From Remote Device
+            ble_obj.scan_conn_from_remote_device("ImmediateAlertService")
+            # get remote device profile
+            write_handle = ble_obj.service_discovery_on_remote(service_uuid=ImmediateAlertService.UUID,
+                                                               char_uuid=ImmediateAlertLevelCharacteristic.LLA_UUID,
+                                                               characteristic=ImmediateAlertLevelCharacteristic)
+
+            # Configure Buffer Mode
+            ble_obj.configure_buffer_mode(mode=1, count=2)
+
+            # Write and send BLE 232 bytes of write with response data
+            data = ("hundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdat"
+                    "arxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesof"
+                    "datarx")
+            ble_obj.gatt_write_without_resp(write_handle=write_handle, data_length=232, data=data, write_time=600,
+                                            bt_mon_log_file_name=bt_mon_log_file_name)
+
+            ble_obj.check_device_state_on_dut()
+
+            # Disconnect From Remote Device
             ble_obj.disconnect_from_remote()
 
     except Exception as error:
@@ -696,6 +753,45 @@ def test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_without_respons_buffer_0
         ble_obj.clear_dut(role="master")
 
 
+def test_wifi_sdk_ble_dut_as_master_with_232_bytes_write_without_respons_buffer_1_c193312(ble_dut,
+                                                                                          ble_client,
+                                                                                          sl_collections):
+    bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_master_with_232_bytes_write_without_respons_buffer_1"
+                            f"_C193312_{int(time.time())}.log")
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=bt_mon_log_file_name):
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            # Initializing DUT BLE Device
+            ble_obj.ble_gatt_init()
+            # Adv Remote device
+            ble_obj.advertising_remote("ImmediateAlertService")
+            # Start scan and connect from dut
+            ble_obj.scan_conn_from_dut_device()
+            # get remote device profile
+            write_handle = ble_obj.service_discovery_on_remote(service_uuid=ImmediateAlertService.UUID,
+                                                               char_uuid=ImmediateAlertLevelCharacteristic.LLA_UUID,
+                                                               characteristic=ImmediateAlertLevelCharacteristic)
+            # Configure buffer mode
+            ble_obj.configure_buffer_mode(mode=1, count=2)
+            data = ("hundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdat"
+                    "arxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesof"
+                    "datarx")
+            # Write and send BLE 232 bytes of write with response data using the below API
+            ble_obj.gatt_write_without_resp(write_handle=write_handle, data_length=232, data=data, write_time=600,
+                                            bt_mon_log_file_name=bt_mon_log_file_name)
+            ble_obj.check_device_state_on_dut()
+            # Disconnect from dut
+            ble_obj.disconnect_form_dut()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+
+    finally:
+        ble_obj.clear_dut(role="master")
+
+
 # ######################################################################################################################
 #                                   Write With Respons
 ########################################################################################################################
@@ -705,7 +801,7 @@ def test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_respons_buffer_1_c193313
                                                                                  sl_collections):
     # Initializing DUT BLE Device
     bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_respons_buffer_1_"
-                            f"c193313_{int(time.time())}.logs")
+                            f"c193313_{int(time.time())}.log")
     try:
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=bt_mon_log_file_name):
@@ -731,6 +827,50 @@ def test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_respons_buffer_1_c193313
         ble_obj.validate_write_with_response(bt_mon_log_file=bt_mon_log_file_name, write_handle=write_handle,
                                              data=data, write_data_count=write_data_count)
         # time.sleep(120)
+        ble_obj.check_device_state_on_dut()
+        # Disconnect from dut
+        ble_obj.disconnect_form_dut()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+
+    finally:
+        ble_obj.clear_dut(role="master")
+
+
+def test_wifi_sdk_ble_dut_as_master_with_232_bytes_write_with_respons_buffer_1_c193314(ble_dut,
+                                                                                       ble_client,
+                                                                                       sl_collections):
+    bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_master_with_232_bytes_write_with_respons_"
+                            f"buffer_1_c193314_{int(time.time())}.log")
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=bt_mon_log_file_name):
+
+            # Initializing DUT BLE Device
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            ble_obj.ble_gatt_init()
+            # Adv Remote device
+            ble_obj.advertising_remote("HeartRateService")
+            # Start scan and connect from dut
+            ble_obj.scan_conn_from_dut_device()
+            # # get remote device profile
+            write_handle = ble_obj.service_discovery_on_remote(HeartRateService.UUID,
+                                                               HeartRateControlPointCharacteristic.UUID,
+                                                               HeartRateControlPointCharacteristic)
+            # # Configure buffer mode
+            ble_obj.configure_buffer_mode(mode=1, count=2)
+            data = ("hundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdat"
+                    "arxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesof"
+                    "datarx")
+            # Write and send BLE 232 bytes of write with response data using the below API
+            write_data_count = ble_obj.gatt_write_with_resp(write_handle=write_handle, data=data, write_time=600,
+                                                            data_length=232)
+
+        # Validating Write With Response
+        ble_obj.validate_write_with_response(bt_mon_log_file=bt_mon_log_file_name, write_handle=write_handle,
+                                             data=data, write_data_count=write_data_count)
         ble_obj.check_device_state_on_dut()
         # Disconnect from dut
         ble_obj.disconnect_form_dut()
@@ -786,4 +926,370 @@ def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_with_respons_buffer_0_c19
         raise
 
     finally:
+        ble_obj.clear_dut()
+
+
+def test_wifi_sdk_ble_dut_as_slave_with_232_bytes_write_with_respons_buffer_1_c193316(ble_dut,
+                                                                                      ble_client,
+                                                                                      sl_collections):
+    bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_slave_with_232_bytes_write_with_respons_buffer_1"
+                            f"_c193316_{int(time.time())}.log")
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=bt_mon_log_file_name):
+            # Initializing DUT BLE Device
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            ble_obj.ble_gatt_init()
+            # Set DUT Local name
+            ble_obj.set_local_get_local_name_validation()
+            # Set DUT To Advertising
+            ble_obj.advertising_dut()
+            # Power Save Mode WLAN And BLE
+            ble_obj.power_save()
+            # Scan and Connect From Remote Device
+            ble_obj.scan_conn_from_remote_device("HeartRateService")
+            # get remote device profile
+            write_handle = ble_obj.service_discovery_on_remote(HeartRateService.UUID,
+                                                               HeartRateControlPointCharacteristic.UUID,
+                                                               HeartRateControlPointCharacteristic)
+            # Configure Buffer Mode
+            ble_obj.configure_buffer_mode(mode=1, count=2)
+            data = ("hundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdat"
+                    "arxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesof"
+                    "datarx")
+
+            # Write and send BLE 232 bytes of write with response data using the below API
+            write_data_count = ble_obj.gatt_write_with_resp(write_handle=write_handle, data=data, write_time=600,
+                                                            data_length=232)
+
+        # Validating Write With Response Data
+        ble_obj.validate_write_with_response(bt_mon_log_file=bt_mon_log_file_name, write_handle=write_handle,
+                                             data=data, write_data_count=write_data_count)
+        ble_obj.check_device_state_on_dut()
+        # Disconnect from dut
+        ble_obj.disconnect_form_dut()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+
+    finally:
+        ble_obj.clear_dut()
+
+
+# ####################################################################################################################
+#                                   TX Indication
+# ####################################################################################################################
+def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_tx_indication_buffer_0_c193317(ble_dut, ble_client,
+                                                                                sl_collections):
+    try:
+        bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_slave_with_20_bytes_tx_indication_buffer_0_"
+                                f"C193317_{int(time.time())}.log")
+        with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
+            # Initializing DUT BLE Device
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            # Initializing DUT BLE Device
+            ble_obj.ble_gatt_init()
+            service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+            char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
+            data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
+
+            # Create Custom services on DUT
+            # Create Custom services, attributes, values
+            logger().info("Creating new custom gatt service in DUT")
+            ble_obj.add_service(service_uuid=0x1AA1)
+            logger().info("Adding custom characteristic declaration to the custom service")
+            ble_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1,
+                                                          permissions=34)
+            logger().info("Adding characteristic value attribute to the service")
+            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data=data)
+
+            # Set Local name
+            ble_obj.set_local_get_local_name_validation()
+
+            # Start advertising from dut
+            ble_obj.advertising_dut()
+            time.sleep(2)
+
+            # Power save mode
+            ble_obj.power_save()
+
+            # Scan connect from remote device
+            ble_obj.scan_conn_from_remote_device()
+
+            # Get All Profiles
+            char_path, char_props = ble_obj.service_discovery_on_dut(service_uid=service_uid, char_uid=char_uid)
+
+            # Configure Buffer Mode
+            ble_obj.configure_buffer_mode(mode=0, count=2)
+
+            # Enable indication property in 1BB1 characteristic service in custom
+            # DUT will start sending indication data once the indication property is enabled.
+            ble_obj.gatt_indication(char_path=char_path, char_uuid=char_uid, indication_time=600, data=data,
+                                    data_length=20)
+
+            # disconnect from remote.
+            ble_obj.disconnect_from_remote()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+
+    finally:
+        ble_dut.interfaces.wifi.ble_remove_service()
+        ble_obj.clear_dut()
+
+
+def test_wifi_sdk_ble_dut_as_slave_with_230_bytes_tx_indication_buffer_1_c193318(ble_dut, ble_client, sl_collections):
+    try:
+        bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_slave_with_230_bytes_tx_indication_buffer_1"
+                                f"_c193318_{int(time.time())}.log")
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=bt_mon_log_file_name):
+            # Initializing DUT BLE Device
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            # Initializing DUT BLE Device
+            ble_obj.ble_gatt_init()
+            service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+            char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
+            # 230 Bytes of data
+            data = ("hundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdat"
+                    "arxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesof"
+                    "datarx")
+
+            # Create Custom services on DUT
+            logger().info("Creating new custom gatt service in DUT")
+            ble_obj.add_service(service_uuid=0x1AA1)
+            logger().info("Adding custom characteristic declaration to the custom service")
+            ble_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1,
+                                                          permissions=34)
+            logger().info("Adding characteristic value attribute to the service")
+            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data=data)
+
+            # Set Local name
+            ble_obj.set_local_get_local_name_validation()
+
+            # Start advertising from dut
+            ble_obj.advertising_dut()
+
+            # Power save mode
+            ble_obj.power_save()
+
+            # Scan connect from remote device
+            ble_obj.scan_conn_from_remote_device()
+
+            # Get All Profiles
+            char_path, char_props = ble_obj.service_discovery_on_dut(service_uid=service_uid, char_uid=char_uid)
+
+            # # Configure Buffer Mode
+            ble_obj.configure_buffer_mode(mode=1, count=2)
+
+            # Enable indication property in 1BB1 characteristic service in custom
+            # DUT will start sending indication data once the indication property is enabled.
+            ble_obj.gatt_indication(char_path=char_path, char_uuid=char_uid, indication_time=600, data=data,
+                                    data_length=230)
+
+            # disconnect from remote.
+            ble_obj.disconnect_from_remote()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+
+    finally:
+        ble_dut.interfaces.wifi.ble_remove_service()
+        ble_obj.clear_dut()
+
+
+def test_wifi_sdk_ble_dut_as_master_with_20_bytes_tx_indication_buffer_0_c193320(ble_dut, ble_client,
+                                                                                 sl_collections):
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=f"reports/test_wifi_sdk_ble_dut_as_master_with_20_bytes_tx_indication_buffer_0_"
+                                 f"c193320_{int(time.time())}.log"):
+            # Initializing DUT BLE Device
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            # Initializing DUT BLE Device
+            ble_obj.ble_gatt_init()
+            # Adv Remote device
+            ble_obj.advertising_remote()
+            # create custom services
+            service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+            char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
+            data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
+
+            # Create Custom services on DUT
+            logger().info("Creating new custom gatt service in DUT")
+            ble_obj.add_service(service_uuid=0x1AA1)
+            logger().info("Adding custom characteristic declaration to the custom service")
+            ble_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1,
+                                                          permissions=34)
+            logger().info("Adding characteristic value attribute to the service")
+            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data=data)
+
+            # Start scan and connect from dut
+            ble_obj.scan_conn_from_dut_device()
+
+            # Get All Profiles
+            char_path, char_props = ble_obj.service_discovery_on_dut(service_uid=service_uid, char_uid=char_uid)
+
+            # Configure Buffer Mode
+            ble_obj.configure_buffer_mode(mode=0, count=2)
+
+            # Enable indication property in 1BB1 characteristic service in custom
+            # DUT will start sending indication data once the indication property is enabled.
+            ble_obj.gatt_indication(char_path=char_path, char_uuid=char_uid, indication_time=600, data=data,
+                                    data_length=20)
+
+            # disconnect from remote.
+            ble_obj.disconnect_from_remote()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+
+    finally:
+        ble_dut.interfaces.wifi.ble_remove_service()
+        ble_obj.clear_dut("master")
+
+
+def test_wifi_sdk_ble_dut_as_master_with_230_bytes_tx_indication_buffer_1_c193321(ble_dut, ble_client, sl_collections):
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=f"reports/test_wifi_sdk_ble_dut_as_master_with_230_bytes_tx_indication_buffer_1"
+                                 f"_c193321_{int(time.time())}.log"):
+            # Initializing DUT BLE Device
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            # Initializing DUT BLE Device
+            ble_obj.ble_gatt_init()
+            # create custom services
+            service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+            char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
+            data = ("hundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdat"
+                    "arxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesof"
+                    "datarx")
+            logger().info("Creating new custom gatt service in DUT")
+            ble_obj.add_service(service_uuid=0x1AA1)
+            logger().info("Adding custom characteristic declaration to the custom service")
+            ble_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1, permissions=34)
+            logger().info("Adding characteristic value attribute to the service")
+            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data=data)
+            # Set Local Name
+            ble_obj.set_local_get_local_name_validation()
+            # Adv dut device
+            ble_obj.advertising_dut()
+            # Start scan and connect from remote
+            ble_obj.scan_conn_from_remote_device()
+            # Get All Profiles
+            char_path, char_props = ble_obj.service_discovery_on_dut(service_uid=service_uid, char_uid=char_uid)
+            # Configure Buffer Mode
+            ble_obj.configure_buffer_mode(mode=1, count=2)
+
+            # Enable indication property in 1BB1 characteristic service in custom
+            # DUT will start sending indication data once the indication property is enabled.
+            ble_obj.gatt_indication(char_path=char_path, char_uuid=char_uid, indication_time=600, data=data,
+                                    data_length=232)
+
+            # disconnect from remote.
+            ble_obj.disconnect_from_remote()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+
+    finally:
+        ble_dut.interfaces.wifi.ble_remove_service()
+        ble_obj.clear_dut("master")
+
+
+# ######################################################################################################################
+#                                   RX Notification
+########################################################################################################################
+def test_wifi_sdk_ble_dut_as_master_with_20_bytes_rx_notifications_buffer_0_c193319(ble_dut, ble_client,
+                                                                                    sl_collections):
+    try:
+        svc = 'HealthThermometerService'
+        charc = 'CustomNotifyCharacteristic'
+        data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
+        bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_master_with_20_bytes_rx_notifications_buffer_0_"
+                                f"c193319_{int(time.time())}.log")
+        with (BleLogs(start_collecting_logs=True,
+                      bt_log_path=bt_mon_log_file_name)):
+            # Initializing DUT BLE Device
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            # Initializing DUT BLE Device
+            ble_obj.ble_gatt_init()
+            # Create Service on DUT
+            ble_obj.add_service(service_uuid=0xAABB)  # adding Service
+            ble_obj.add_characteristic(characteristic_uuid=0x1AA1)
+            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1, data=data)
+
+            ble_obj.advertising_remote(svc)
+            # Scan and connect from dut
+            ble_obj.scan_conn_from_dut_device()
+            # # resolving characteristic
+            write_handle = ble_obj.service_discovery_on_remote(HealthThermometerService.UUID,
+                                                               CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID,
+                                                               CustomNotifyCharacteristic)
+            # # Configure Buffer Mode
+            ble_obj.configure_buffer_mode(mode=0, count=2)
+
+            # subscribe to notifications
+            ble_obj.gatt_notify_rx(write_handle=write_handle, enable_notify=1, data=data, notify_time=600, svc=svc,
+                                   charc=charc)
+            # disconnect from remote
+            ble_obj.disconnect_from_remote()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+
+    finally:
+        ble_dut.interfaces.wifi.ble_remove_service()
+        ble_obj.clear_dut("master")
+
+
+def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_rx_notification_buffer_0_c193322(ble_dut, ble_client, sl_collections):
+    svc = 'HealthThermometerService'
+    charc = 'CustomNotifyCharacteristic'
+    data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
+    try:
+        bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_slave_with_20_bytes_rx_notification_buffer_0_"
+                                f"c193322_{int(time.time())}.log")
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=bt_mon_log_file_name):
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            # Initializing DUT BLE Device
+            ble_obj.ble_gatt_init()
+            # Create Service on DUT
+            ble_obj.add_service(service_uuid=0xAABB)  # adding Service
+            ble_obj.add_characteristic(characteristic_uuid=0x1AA1)
+            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1, data=data)
+
+            # Advertising dut
+            ble_obj.advertising_dut()
+            # power save
+            ble_obj.power_save()
+            # Scan and connect from remote
+            ble_obj.scan_conn_from_remote_device(svc)
+            # resolving characteristic
+            write_handle = ble_obj.service_discovery_on_remote(HealthThermometerService.UUID,
+                                                               CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID,
+                                                               CustomNotifyCharacteristic)
+            # Configure Buffer Mode
+            ble_obj.configure_buffer_mode(mode=0, count=2)
+
+            # subscribe to notifications
+            ble_obj.gatt_notify_rx(write_handle=write_handle, enable_notify=1, data=data, notify_time=600, svc=svc,
+                                   charc=charc)
+
+            # disconnect from remote.
+            ble_obj.disconnect_from_remote()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+
+    finally:
+        ble_dut.interfaces.wifi.ble_remove_service()
         ble_obj.clear_dut()
