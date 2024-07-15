@@ -20,13 +20,17 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xPowerSaveProcedureTypes,
     Si91xMqttQos
 )
+from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utils.thread_base import ThreadBase
 from utf.utf_config import UtfConfig
-
+from utf.interfaces.bluetooth.bluez.gatt_application.heart_rate_service import HeartRateService, \
+    BodySensorLocationCharacteristic, HeartRateMeasurementCharacterstic
+from utf.utils.stopwatch import Stopwatch
+import re
 def logger():
     return get_logger(__name__)
 
@@ -158,7 +162,9 @@ class BleThreadFunctionality(ThreadBase):
         sl_collections=None,
         ble_scan_type=1,
         ble_pairing=0,
-        dev_state=8
+        dev_state=8,
+        gatt=False,
+        service_class=None,
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -169,18 +175,27 @@ class BleThreadFunctionality(ThreadBase):
         self.ble_scan_type = ble_scan_type
         self.ble_pairing = ble_pairing
         self.dev_state = dev_state
+        self.gatt = gatt
+        self.service_class = service_class
+        self.ble_client_address = None
 
-        # Set up DUT for BLE advertising
-        logger().info("Initialising BLE")
-        self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start(
-            set_smp=self.ble_pairing
-        )
+        if self.gatt:
+            # Set up DUT for BLE advertising
+            logger().info("start ble GATT service in DUT")
+            self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(
+                set_smp=self.ble_pairing)
+        else:
+            # Set up DUT for BLE advertising
+            logger().info("Initialising BLE")
+            self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start(
+                set_smp=self.ble_pairing
+            )
         assert (
             self.ble_dut_address is not None
         ), "Unable to fetch bluetooth address from DUT"
         logger().info(f"bt_dut_address : {self.ble_dut_address}")
         time.sleep(5)
-        self.ble_client_address = None
+
 
     def stop_adv_scan(self):
         logger().info("Initiating stop advertise from DUT")
@@ -223,12 +238,13 @@ class BleThreadFunctionality(ThreadBase):
         self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
 
     def scan_and_connect_from_remote(self):
-        self.sl_collections.scan_and_connect_from_remote(
+        self.ble_client_address = self.sl_collections.scan_and_connect_from_remote(
             wifi_dut=self.wifi_dut,
             ble_client=self.ble_client,
             ble_dut_address=self.ble_dut_address,
             ble_pairing=self.ble_pairing,
-            dev_state=self.dev_state
+            dev_state=self.dev_state,
+            services=self.service_class
         )
 
     def scan_and_connect_from_dut(self):
@@ -241,7 +257,7 @@ class BleThreadFunctionality(ThreadBase):
 
     def run(self):
         if self.ble_test_type == "advertise":
-            self.sl_collections.check_ble_advertise_functionality(
+            self.ble_client_address = self.sl_collections.check_ble_advertise_functionality(
                 wifi_dut=self.wifi_dut,
                 ble_client=self.ble_client,
                 ble_dut_address=self.ble_dut_address,
@@ -249,7 +265,7 @@ class BleThreadFunctionality(ThreadBase):
             )
 
         if self.ble_test_type == "scan":
-            self.sl_collections.check_ble_scan_functionality(
+            self.ble_client_address = self.sl_collections.check_ble_scan_functionality(
                 wifi_dut=self.wifi_dut,
                 ble_client=self.ble_client,
                 ble_address=self.ble_dut_address,
@@ -267,17 +283,35 @@ class BleThreadFunctionality(ThreadBase):
             # Stop scanning
             self.wifi_dut.interfaces.wifi.ble_stop_scanning()
 
-        if self.ble_test_type == "slave" or self.ble_test_type == "master":
-            self.ble_client_address = self.sl_collections.ble_connection(
+        if self.ble_test_type == "slave":
+            logger().info("Starting DUT BLE advertising")
+            self.wifi_dut.interfaces.wifi.ble_start_advertising()
+            time.sleep(5)
+            self.ble_client_address = self.sl_collections.scan_and_connect_from_remote(
                 wifi_dut=self.wifi_dut,
                 ble_client=self.ble_client,
                 ble_dut_address=self.ble_dut_address,
-                mode=self.ble_test_type,
-                ble_pairing=self.ble_pairing,
-                dev_state=self.dev_state
+                ble_pairing=self.ble_pairing, services=self.service_class,
+                dev_state=self.dev_state)
+
+        if self.ble_test_type == "master":
+            logger().info("Configuring heart rate profile with advertising on remote device")
+            self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
+                bt_dut_address=self.ble_dut_address,
+                service_classes=self.service_class
             )
+            self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=self.ble_client_address, timeout=60)
+            logger().info(f"Remote device found in scan results ,BLE scanning is successful")
+            self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+            self.wifi_dut.interfaces.wifi.ble_advertising = False
+            self.sl_collections.connect_ble(wifi_dut=self.wifi_dut, ble_client=self.ble_client,
+                                            ble_client_address=self.ble_client_address, mode="master", retries=3,
+                                            ble_pairing=self.ble_pairing,
+                                            dev_state=self.dev_state)
+            logger().info("BLE Connection success")
+
         if self.ble_test_type == "scan_from_remote_device":
-            self.sl_collections.scan_from_remote_device(
+            self.ble_client_address = self.sl_collections.scan_from_remote_device(
                 wifi_dut=self.wifi_dut,
                 ble_client=self.ble_client,
                 ble_dut_address=self.ble_dut_address,
@@ -313,8 +347,8 @@ class BleThreadFunctionality(ThreadBase):
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
@@ -325,7 +359,8 @@ class BleThreadFunctionality(ThreadBase):
 )
 
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA3", "passphrase": "231469460", "ipv6_state": "0",
+    "wifi_access_point", wifi={"security": "WPA3", "passphrase": "231469460",
+                               "protected_management_frame": "Capable", "ipv6_state": "0",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -380,7 +415,9 @@ def test_Coex_sdk_WLAN_ipv6_BLE_master_C156991(
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="master",
-            dev_state=9
+            dev_state=9,
+            gatt = True,
+            service_class=["HeartRateService"]
         )
         ble_obj.advertise_dut()
         ble_obj.start()
@@ -388,6 +425,52 @@ def test_Coex_sdk_WLAN_ipv6_BLE_master_C156991(
         wifi_dut.interfaces.wifi.ble_advertising = True
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+        uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=ble_obj.ble_client_address)
+        assert HeartRateService.UUID.lower() in uuids, "Unable to get HeartRateService profile of RD from DUT"
+
+        logger().info(" ******************** Resolving Profile ********************")
+        start_handle, end_handle, data = wifi_dut.interfaces.wifi.ble_get_profile_async(
+            ble_remote_dev_address=ble_obj.ble_client_address, uuid=int(HeartRateService.UUID, 16))
+        assert start_handle is not None, "failed to fetch the start handle.."
+        assert end_handle is not None, "failed to fetch end handle.."
+
+        char_uuids, write_handles, char_properties = wifi_dut.interfaces.wifi.ble_get_char_services_async(
+            ble_remote_dev_address=ble_obj.ble_client_address,
+            start_handle=int(start_handle, 16),
+            end_handle=int(end_handle, 16),
+            async_timeout=60)
+        logger().info(
+            f"characteristics uuids :{char_uuids}  write_handles{write_handles} : Characteristics_properties"
+            f"{char_properties}")
+
+        assert HeartRateMeasurementCharacterstic.HR_Measure_UUID in char_uuids, "Unable to find {} uuid"
+        index = char_uuids.index(HeartRateMeasurementCharacterstic.HR_Measure_UUID)
+        logger().info(f"UUID's are:{char_uuids}")
+        logger().info(f"write_handles:{write_handles}")
+        logger().info(f"index:{index}")
+        assert char_properties[index].isdigit(), "Character property found is not an integer"
+        write_handle = int(write_handles[index], 16)
+        logger().info(f"write_handle:{write_handle}")
+        assert write_handle > 0, "Unable to get write handle for configured service"
+        logger().info(f"Enabling notification on dut")
+        wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=ble_obj.ble_client_address,
+                                                   handle=(write_handle + 1), enable_notify=1)
+        time.sleep(10)
+
+        tw = Stopwatch()
+        Data_received_on_dut = []
+        while tw.elapsed_sec < 10:
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            for event in events:
+                if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
+                    if "rsi_ble_on_gatt_write_event_gatt" in event.event_data:
+                        received_data = re.findall(r"att_length: 1, att_value: (.*)", event.event_data)
+                        Data_received_on_dut = received_data + Data_received_on_dut
+                        received_data = ord(received_data[0])
+                        logger().info(f"received_data:{received_data}")
+        assert len(Data_received_on_dut) > 0,"Notifications not received on DUT"
+        wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=ble_obj.ble_client_address,
+                                                   handle=(write_handle + 1), enable_notify=0)
         wifi_sniffer.interfaces.capture.stop_capture()
         ble_obj.ble_disconnect()
         wifi_dut.interfaces.wifi.leave()
@@ -415,8 +498,8 @@ def test_Coex_sdk_WLAN_ipv6_BLE_master_C156991(
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
@@ -440,7 +523,7 @@ def test_Coex_sdk_WLAN_ipv6_BLE_slave_C156992(
     wifi_sniffer,
     wifi_access_point,
     wifi_dut,
-    ble_clients,
+    ble_client,
     request,
     utf_constants,
     sl_collections,
@@ -459,7 +542,7 @@ def test_Coex_sdk_WLAN_ipv6_BLE_slave_C156992(
     """
 
     try:
-        assert len(ble_clients) == 2, f"2 Raspi devices needed"
+        #assert len(ble_clients) == 2, f"2 Raspi devices needed"
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         logger().info("configuring the Sniffer with the channel")
@@ -478,24 +561,72 @@ def test_Coex_sdk_WLAN_ipv6_BLE_slave_C156992(
 
         ble_obj = BleThreadFunctionality(
             wifi_dut=wifi_dut,
-            ble_client=ble_clients[0],
+            ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="scan_and_connect_from_remote",
-            dev_state=10
+            dev_state=10,
+            gatt=True,
+            service_class=["HeartRateService"]
         )
 
         ble_obj.advertise_dut()
-        sl_collections.check_ble_scan_functionality(
+        ble_client_address = sl_collections.check_ble_scan_functionality(
             wifi_dut=wifi_dut,
-            ble_client=ble_clients[1],
+            ble_client=ble_client,
             ble_address=ble_obj.ble_dut_address,
             timeout=60,
         )
+        ble_client.interfaces.bluetooth.close()
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
         ble_obj.start()
         ble_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.ble_scanning = True
-        wlan_obj.start()
-        wlan_obj.wait_for_exit()
+        uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=ble_obj.ble_client_address)
+        assert HeartRateService.UUID.lower() in uuids, "Unable to get HeartRateService profile of RD from DUT"
+
+        logger().info(" ******************** Resolving Profile ********************")
+        start_handle, end_handle, data = wifi_dut.interfaces.wifi.ble_get_profile_async(
+            ble_remote_dev_address=ble_obj.ble_client_address, uuid=int(HeartRateService.UUID, 16))
+        assert start_handle is not None, "failed to fetch the start handle.."
+        assert end_handle is not None, "failed to fetch end handle.."
+
+        char_uuids, write_handles, char_properties = wifi_dut.interfaces.wifi.ble_get_char_services_async(
+            ble_remote_dev_address=ble_obj.ble_client_address,
+            start_handle=int(start_handle, 16),
+            end_handle=int(end_handle, 16),
+            async_timeout=60)
+        logger().info(
+            f"characteristics uuids :{char_uuids}  write_handles{write_handles} : Characteristics_properties"
+            f"{char_properties}")
+
+        assert HeartRateMeasurementCharacterstic.HR_Measure_UUID in char_uuids, "Unable to find {} uuid"
+        index = char_uuids.index(HeartRateMeasurementCharacterstic.HR_Measure_UUID)
+        logger().info(f"UUID's are:{char_uuids}")
+        logger().info(f"write_handles:{write_handles}")
+        logger().info(f"index:{index}")
+        assert char_properties[index].isdigit(), "Character property found is not an integer"
+        write_handle = int(write_handles[index], 16)
+        logger().info(f"write_handle:{write_handle}")
+        assert write_handle > 0, "Unable to get write handle for configured service"
+        logger().info(f"Enabling notification on dut")
+        wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=ble_obj.ble_client_address,
+                                                   handle=(write_handle + 1), enable_notify=1)
+        time.sleep(10)
+
+        tw = Stopwatch()
+        Data_received_on_dut = []
+        while tw.elapsed_sec < 10:
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            for event in events:
+                if "rsi_ble_on_gatt_write_event_gatt" in event.event_data:
+                    received_data = re.findall(r"att_length: 1, att_value: (.*)", event.event_data)
+                    Data_received_on_dut = received_data + Data_received_on_dut
+                    received_data = ord(received_data[0])
+        logger().info(f"received_data:{received_data}")
+        assert len(Data_received_on_dut) > 0, "Notifications not received on DUT"
+        wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=ble_obj.ble_client_address,
+                                                   handle=(write_handle + 1), enable_notify=0)
         wifi_sniffer.interfaces.capture.stop_capture()
         ble_obj.ble_disconnect()
         wifi_dut.interfaces.wifi.leave()
@@ -523,8 +654,8 @@ def test_Coex_sdk_WLAN_ipv6_BLE_slave_C156992(
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
@@ -635,8 +766,8 @@ def test_Coex_sdk_WLAN_ipv6_BLE_adv_scan_C156989(
         "ble_features": Si91xBLEFeatureBitMap.Default
         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
-        #| Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
@@ -647,7 +778,9 @@ def test_Coex_sdk_WLAN_ipv6_BLE_adv_scan_C156989(
 )
 
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA3", "passphrase": "1234567890", "ipv6_state": "1",
+    "wifi_access_point", wifi={"security": "WPA3", "passphrase": "1234567890",
+                               "protected_management_frame": "Capable",
+                               "ipv6_state": "1",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"),
                                }
 )
