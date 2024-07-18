@@ -106,21 +106,40 @@ class WLanThread(ThreadBase):
         time.sleep(10)
         logger().info(f"Ping successful")
 
+    def join_to_ap(self):
+
+        if not self.wifi_dut.interfaces.wifi.associated:
+
+            self.dut_add_dict = self.sl_collections. \
+                join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                     wifi_access_point=self.wifi_access_point,
+                                     associated=self.wifi_dut.interfaces.wifi.associated,
+                                     ip_version='ipv6',
+                                     ping_after_power_save=False,
+                                     ping_before_power_save=False,
+                                     power_save=self.power_save,
+                                     ipv6_type=self.addr_type
+                                     )
+            logger().info(
+                f"DUT MAC ADDRESS :  {self.dut_add_dict['dut_mac_address']} "
+                f"DUT IPV6 ADDRESS : {self.dut_add_dict['device_ip']}")
+
     def run(self):
 
-        self.dut_add_dict = self.sl_collections.\
-            join_to_wifi_network(wifi_dut=self.wifi_dut,
-                                 wifi_access_point=self.wifi_access_point,
-                                 associated=self.wifi_dut.interfaces.wifi.associated,
-                                 ip_version='ipv6',
-                                 ping_after_power_save=False,
-                                 ping_before_power_save=False,
-                                 power_save=self.power_save,
-                                 ipv6_type=self.addr_type
-                                 )
-        logger().info(
-            f"DUT MAC ADDRESS :  {self.dut_add_dict['dut_mac_address']} "
-            f"DUT IPV6 ADDRESS : {self.dut_add_dict['device_ip']}")
+        if not self.wifi_dut.interfaces.wifi.associated:
+            self.dut_add_dict = self.sl_collections.\
+                join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                     wifi_access_point=self.wifi_access_point,
+                                     associated=self.wifi_dut.interfaces.wifi.associated,
+                                     ip_version='ipv6',
+                                     ping_after_power_save=False,
+                                     ping_before_power_save=False,
+                                     power_save=self.power_save,
+                                     ipv6_type=self.addr_type
+                                     )
+            logger().info(
+                f"DUT MAC ADDRESS :  {self.dut_add_dict['dut_mac_address']} "
+                f"DUT IPV6 ADDRESS : {self.dut_add_dict['device_ip']}")
 
         if self.test_type == "ping":
 
@@ -178,6 +197,7 @@ class BleThreadFunctionality(ThreadBase):
         self.gatt = gatt
         self.service_class = service_class
         self.ble_client_address = None
+        self.write_handle = None
 
         if self.gatt:
             # Set up DUT for BLE advertising
@@ -225,6 +245,86 @@ class BleThreadFunctionality(ThreadBase):
             logger().info(f"Initiating BLE disconnection from DUT")
             self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
         self.ble_client.interfaces.bluetooth.close()
+
+    def ble_connect(self, role="master"):
+
+        if role == "master":
+            self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
+                bt_dut_address=self.ble_dut_address,
+                service_classes=self.service_class
+            )
+            self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=self.ble_client_address, timeout=60)
+            logger().info(f"Remote device found in scan results ,BLE scanning is successful")
+            self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+            self.wifi_dut.interfaces.wifi.ble_advertising = False
+            self.sl_collections.connect_ble(wifi_dut=self.wifi_dut, ble_client=self.ble_client,
+                                            ble_client_address=self.ble_client_address, mode="master", retries=3,
+                                            ble_pairing=self.ble_pairing,
+                                            dev_state=self.dev_state)
+
+        else:
+            logger().info("Starting DUT BLE advertising")
+            self.wifi_dut.interfaces.wifi.ble_start_advertising()
+            time.sleep(5)
+            self.ble_client_address = self.sl_collections.scan_and_connect_from_remote(
+                wifi_dut=self.wifi_dut,
+                ble_client=self.ble_client,
+                ble_dut_address=self.ble_dut_address,
+                ble_pairing=self.ble_pairing, services=self.service_class,
+                dev_state=self.dev_state)
+    def fetch_profiles(self):
+
+        uuids = self.wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=self.ble_client_address)
+        assert HeartRateService.UUID.lower() in uuids, "Unable to get HeartRateService profile of RD from DUT"
+
+        logger().info(" ******************** Resolving Profile ********************")
+        start_handle, end_handle, data = self.wifi_dut.interfaces.wifi.ble_get_profile_async(
+            ble_remote_dev_address=self.ble_client_address, uuid=int(HeartRateService.UUID, 16))
+        assert start_handle is not None, "failed to fetch the start handle.."
+        assert end_handle is not None, "failed to fetch end handle.."
+
+        char_uuids, write_handles, char_properties = self.wifi_dut.interfaces.wifi.ble_get_char_services_async(
+            ble_remote_dev_address=self.ble_client_address,
+            start_handle=int(start_handle, 16),
+            end_handle=int(end_handle, 16),
+            async_timeout=60)
+        logger().info(
+            f"characteristics uuids :{char_uuids}  write_handles{write_handles} : Characteristics_properties"
+            f"{char_properties}")
+
+        assert HeartRateMeasurementCharacterstic.HR_Measure_UUID in char_uuids, "Unable to find {} uuid"
+        index = char_uuids.index(HeartRateMeasurementCharacterstic.HR_Measure_UUID)
+        logger().info(f"UUID's are:{char_uuids}")
+        logger().info(f"write_handles:{write_handles}")
+        logger().info(f"index:{index}")
+        assert char_properties[index].isdigit(), "Character property found is not an integer"
+        self.write_handle = int(write_handles[index], 16)
+        logger().info(f"write_handle:{self.write_handle}")
+        assert self.write_handle > 0, "Unable to get write handle for configured service"
+
+    def enable_notifications(self):
+
+        if self.write_handle:
+
+            logger().info(f"Enabling notification on dut")
+            self.wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=self.ble_client_address,
+                                                       handle=(self.write_handle + 1), enable_notify=1)
+            time.sleep(10)
+
+            tw = Stopwatch()
+            Data_received_on_dut = []
+            while tw.elapsed_sec < 60:
+                events = self.wifi_dut.interfaces.wifi.get_async_events()
+                for event in events:
+                    if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
+                        if "rsi_ble_on_gatt_write_event_gatt" in event.event_data:
+                            received_data = re.findall(r"att_length: 1, att_value: (.*)", event.event_data)
+                            Data_received_on_dut = received_data + Data_received_on_dut
+                            received_data = ord(received_data[0])
+                            logger().info(f"received_data:{received_data}")
+            assert len(Data_received_on_dut) > 0, "Notifications not received on DUT"
+            self.wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=self.ble_client_address,
+                                                       handle=(self.write_handle + 1), enable_notify=0)
 
     def advertise_remote_device(self):
         self.ble_client_address = self.sl_collections.advertise_remote_device(
@@ -284,31 +384,14 @@ class BleThreadFunctionality(ThreadBase):
             self.wifi_dut.interfaces.wifi.ble_stop_scanning()
 
         if self.ble_test_type == "slave":
-            logger().info("Starting DUT BLE advertising")
-            self.wifi_dut.interfaces.wifi.ble_start_advertising()
-            time.sleep(5)
-            self.ble_client_address = self.sl_collections.scan_and_connect_from_remote(
-                wifi_dut=self.wifi_dut,
-                ble_client=self.ble_client,
-                ble_dut_address=self.ble_dut_address,
-                ble_pairing=self.ble_pairing, services=self.service_class,
-                dev_state=self.dev_state)
+            self.ble_connect(role="slave")
+
 
         if self.ble_test_type == "master":
-            logger().info("Configuring heart rate profile with advertising on remote device")
-            self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
-                bt_dut_address=self.ble_dut_address,
-                service_classes=self.service_class
-            )
-            self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=self.ble_client_address, timeout=60)
-            logger().info(f"Remote device found in scan results ,BLE scanning is successful")
-            self.wifi_dut.interfaces.wifi.ble_stop_scanning()
-            self.wifi_dut.interfaces.wifi.ble_advertising = False
-            self.sl_collections.connect_ble(wifi_dut=self.wifi_dut, ble_client=self.ble_client,
-                                            ble_client_address=self.ble_client_address, mode="master", retries=3,
-                                            ble_pairing=self.ble_pairing,
-                                            dev_state=self.dev_state)
-            logger().info("BLE Connection success")
+            self.ble_connect(role="master")
+
+        if self.ble_test_type == "notifications":
+            self.enable_notifications()
 
         if self.ble_test_type == "scan_from_remote_device":
             self.ble_client_address = self.sl_collections.scan_from_remote_device(
@@ -322,8 +405,6 @@ class BleThreadFunctionality(ThreadBase):
 
         if self.ble_test_type == "scan_and_connect_from_remote":
             self.scan_and_connect_from_remote()
-
-
 
 
 
@@ -414,63 +495,20 @@ def test_Coex_sdk_WLAN_ipv6_BLE_master_C156991(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
             sl_collections=sl_collections,
-            ble_test_type="master",
+            ble_test_type="notifications",
             dev_state=9,
             gatt = True,
-            service_class=["HeartRateService"]
+            service_class=["HeartRateService"],
         )
         ble_obj.advertise_dut()
+        ble_obj.ble_connect(role="master")
+        ble_obj.fetch_profiles()
         ble_obj.start()
-        ble_obj.wait_for_exit()
-        wifi_dut.interfaces.wifi.ble_advertising = True
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-        uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=ble_obj.ble_client_address)
-        assert HeartRateService.UUID.lower() in uuids, "Unable to get HeartRateService profile of RD from DUT"
+        ble_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.ble_advertising = True
 
-        logger().info(" ******************** Resolving Profile ********************")
-        start_handle, end_handle, data = wifi_dut.interfaces.wifi.ble_get_profile_async(
-            ble_remote_dev_address=ble_obj.ble_client_address, uuid=int(HeartRateService.UUID, 16))
-        assert start_handle is not None, "failed to fetch the start handle.."
-        assert end_handle is not None, "failed to fetch end handle.."
-
-        char_uuids, write_handles, char_properties = wifi_dut.interfaces.wifi.ble_get_char_services_async(
-            ble_remote_dev_address=ble_obj.ble_client_address,
-            start_handle=int(start_handle, 16),
-            end_handle=int(end_handle, 16),
-            async_timeout=60)
-        logger().info(
-            f"characteristics uuids :{char_uuids}  write_handles{write_handles} : Characteristics_properties"
-            f"{char_properties}")
-
-        assert HeartRateMeasurementCharacterstic.HR_Measure_UUID in char_uuids, "Unable to find {} uuid"
-        index = char_uuids.index(HeartRateMeasurementCharacterstic.HR_Measure_UUID)
-        logger().info(f"UUID's are:{char_uuids}")
-        logger().info(f"write_handles:{write_handles}")
-        logger().info(f"index:{index}")
-        assert char_properties[index].isdigit(), "Character property found is not an integer"
-        write_handle = int(write_handles[index], 16)
-        logger().info(f"write_handle:{write_handle}")
-        assert write_handle > 0, "Unable to get write handle for configured service"
-        logger().info(f"Enabling notification on dut")
-        wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=ble_obj.ble_client_address,
-                                                   handle=(write_handle + 1), enable_notify=1)
-        time.sleep(10)
-
-        tw = Stopwatch()
-        Data_received_on_dut = []
-        while tw.elapsed_sec < 10:
-            events = wifi_dut.interfaces.wifi.get_async_events()
-            for event in events:
-                if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
-                    if "rsi_ble_on_gatt_write_event_gatt" in event.event_data:
-                        received_data = re.findall(r"att_length: 1, att_value: (.*)", event.event_data)
-                        Data_received_on_dut = received_data + Data_received_on_dut
-                        received_data = ord(received_data[0])
-                        logger().info(f"received_data:{received_data}")
-        assert len(Data_received_on_dut) > 0,"Notifications not received on DUT"
-        wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=ble_obj.ble_client_address,
-                                                   handle=(write_handle + 1), enable_notify=0)
         wifi_sniffer.interfaces.capture.stop_capture()
         ble_obj.ble_disconnect()
         wifi_dut.interfaces.wifi.leave()
@@ -563,7 +601,7 @@ def test_Coex_sdk_WLAN_ipv6_BLE_slave_C156992(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
             sl_collections=sl_collections,
-            ble_test_type="scan_and_connect_from_remote",
+            ble_test_type="notifications",
             dev_state=10,
             gatt=True,
             service_class=["HeartRateService"]
@@ -579,54 +617,12 @@ def test_Coex_sdk_WLAN_ipv6_BLE_slave_C156992(
         ble_client.interfaces.bluetooth.close()
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+        ble_obj.scan_and_connect_from_remote()
+        ble_obj.fetch_profiles()
         ble_obj.start()
         ble_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.ble_scanning = True
-        uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=ble_obj.ble_client_address)
-        assert HeartRateService.UUID.lower() in uuids, "Unable to get HeartRateService profile of RD from DUT"
 
-        logger().info(" ******************** Resolving Profile ********************")
-        start_handle, end_handle, data = wifi_dut.interfaces.wifi.ble_get_profile_async(
-            ble_remote_dev_address=ble_obj.ble_client_address, uuid=int(HeartRateService.UUID, 16))
-        assert start_handle is not None, "failed to fetch the start handle.."
-        assert end_handle is not None, "failed to fetch end handle.."
-
-        char_uuids, write_handles, char_properties = wifi_dut.interfaces.wifi.ble_get_char_services_async(
-            ble_remote_dev_address=ble_obj.ble_client_address,
-            start_handle=int(start_handle, 16),
-            end_handle=int(end_handle, 16),
-            async_timeout=60)
-        logger().info(
-            f"characteristics uuids :{char_uuids}  write_handles{write_handles} : Characteristics_properties"
-            f"{char_properties}")
-
-        assert HeartRateMeasurementCharacterstic.HR_Measure_UUID in char_uuids, "Unable to find {} uuid"
-        index = char_uuids.index(HeartRateMeasurementCharacterstic.HR_Measure_UUID)
-        logger().info(f"UUID's are:{char_uuids}")
-        logger().info(f"write_handles:{write_handles}")
-        logger().info(f"index:{index}")
-        assert char_properties[index].isdigit(), "Character property found is not an integer"
-        write_handle = int(write_handles[index], 16)
-        logger().info(f"write_handle:{write_handle}")
-        assert write_handle > 0, "Unable to get write handle for configured service"
-        logger().info(f"Enabling notification on dut")
-        wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=ble_obj.ble_client_address,
-                                                   handle=(write_handle + 1), enable_notify=1)
-        time.sleep(10)
-
-        tw = Stopwatch()
-        Data_received_on_dut = []
-        while tw.elapsed_sec < 10:
-            events = wifi_dut.interfaces.wifi.get_async_events()
-            for event in events:
-                if "rsi_ble_on_gatt_write_event_gatt" in event.event_data:
-                    received_data = re.findall(r"att_length: 1, att_value: (.*)", event.event_data)
-                    Data_received_on_dut = received_data + Data_received_on_dut
-                    received_data = ord(received_data[0])
-        logger().info(f"received_data:{received_data}")
-        assert len(Data_received_on_dut) > 0, "Notifications not received on DUT"
-        wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=ble_obj.ble_client_address,
-                                                   handle=(write_handle + 1), enable_notify=0)
         wifi_sniffer.interfaces.capture.stop_capture()
         ble_obj.ble_disconnect()
         wifi_dut.interfaces.wifi.leave()
@@ -735,6 +731,12 @@ def test_Coex_sdk_WLAN_ipv6_BLE_adv_scan_C156989(
     )
     wlan_obj.start()
     wlan_obj.wait_for_exit()
+    ble_client.interfaces.bluetooth.close()
+    sl_collections.scan_from_remote_device(
+        wifi_dut=wifi_dut,
+        ble_client=ble_client,
+        ble_dut_address=ble_obj.ble_dut_address,
+    )
     wifi_dut.interfaces.wifi.ble_stop_scanning()
     wifi_dut.interfaces.wifi.ble_stop_advertising()
     ble_client.interfaces.bluetooth.stop_advertising()
@@ -858,6 +860,12 @@ def test_Coex_sdk_WLAN_ipv6_BLE_adv_scan_C156990(
                                  retry_count=3)
     assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
     logger().info("ping successful")
+    ble_client.interfaces.bluetooth.close()
+    sl_collections.scan_from_remote_device(
+        wifi_dut=wifi_dut,
+        ble_client=ble_client,
+        ble_dut_address=ble_obj.ble_dut_address,
+    )
     wifi_dut.interfaces.wifi.ble_stop_scanning()
     wifi_dut.interfaces.wifi.ble_stop_advertising()
     ble_client.interfaces.bluetooth.stop_advertising()
