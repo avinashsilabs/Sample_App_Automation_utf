@@ -172,19 +172,17 @@ def test_wifi_sdk_tcp_open_send_close_socket_c19347(sniffer_filter, wifi_access_
                                                     sl_collections, wifi_sniffer, request):
     """This test case Verfies the tcp client socket is open, send data,close functionality"""
     try:
-        no_of_pkts = 10000
-        pkt_length = 1460
-        local_port = randint(5001, 6000)
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
-        remote_socket.interfaces.socket.time_limit = 1800
         wifi_thread = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, test_name=test_name)
         wifi_thread.start()
         wifi_thread.wait_for_exit()
+        local_port = randint(5001, 6000)
+        remote_socket.interfaces.socket.time_limit = 1800
         remote_socket.interfaces.socket.start_server(port=local_port)
         server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
         server_port = remote_socket.interfaces.socket.server_port
@@ -209,14 +207,18 @@ def test_wifi_sdk_tcp_open_send_close_socket_c19347(sniffer_filter, wifi_access_
                 time.sleep(10)
         assert connect_status, "Socket connection failed in DUT"
         logger().info("Socket connection is successful")
+
+        data_size = 100
         sw = Stopwatch()
-        while sw.elapsed_sec < 60:
-            data_transfer_obj = data_transfer()
-            th_start = Thread(target=data_transfer_obj.receive_data_socket,
-                              args=(remote_socket, no_of_pkts, pkt_length, 0), daemon=True)
-            th_start.start()
-            bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(tcp_socket_id, pkt_length, no_of_pkts)
-            logger().info(f"Number of bytes sent by dut {bytes_sent}")
+        while sw.elapsed_sec <= 60:
+            tx_data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=data_size))
+            wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=tcp_socket_id, data=tx_data)
+            remote_socket.interfaces.socket.recv_timeout = 100
+            rx_data = remote_socket.interfaces.socket.recv_data_tcp(data_size)
+            logger().info(f"Data received at remote side is --> {rx_data}")
+            assert tx_data == rx_data, "Data sent from DUT and received at remote side is not matching"
+            time.sleep(1)
+
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=tcp_socket_id)
         remote_socket.interfaces.socket.socket_close_indication(1)
         logger().info("Successfully closed opened socket in the DUT")
