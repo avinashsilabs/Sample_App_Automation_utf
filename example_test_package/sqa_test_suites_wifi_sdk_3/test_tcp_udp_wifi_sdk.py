@@ -693,7 +693,7 @@ def test_wifi_sdk_socket_tcp_data_transfer_mss_c19356(wifi_access_point, wifi_du
         for count in range(30):
             tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1460))
             logger().info(f"*********** Sending packet_{count + 1} with size --> {len(tx_buffer)} bytes ***********")
-            wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=tx_buffer, timeout=60)
+            wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=tx_buffer, higher_data_len=1, timeout=60)
         tp = net_perf_client.interfaces.net_perf.process_output()
         assert tp is not None, "Throughput not found"
         net_perf_client.interfaces.net_perf.close_files()
@@ -705,6 +705,10 @@ def test_wifi_sdk_socket_tcp_data_transfer_mss_c19356(wifi_access_point, wifi_du
         wifi_sniffer.interfaces.capture.stop_capture()
         sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
                                                sniffer_filter)
+        logger().info("********** Validating MSS value in sniffer packets **********")
+        packet_filter = f"(wlan.addr == {dut_mac_address}) && (tcp.options.mss_val == 1460)"
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)[
+            'packet_count'], "Unable to find configured MSS value in sniffer packets"
     except Exception as e:
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
