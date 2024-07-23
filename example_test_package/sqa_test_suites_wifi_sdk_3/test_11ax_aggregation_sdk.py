@@ -184,7 +184,8 @@ class WifiJoin(ThreadBase):
         receiver_address = re.findall(r"(\s\s\s\sReceiver\saddress:\s[\w:]+)", content)
         sequence_number = re.findall(r"(....\s=\sSequence\snumber:\s\d+)", content)
         tid = re.findall(r"(TID:\s\d+)", content)
-        logger().info(f' ********* Calculating length of AP mac address : {len(receiver_address)} and length of Qos Packet Sequence Number : {len(sequence_number)} and length of TID : {len(tid)} ***********')
+        logger().info(
+            f' ********* Calculating length of AP mac address : {len(receiver_address)} and length of Qos Packet Sequence Number : {len(sequence_number)} and length of TID : {len(tid)} ***********')
 
         """The below code lines is used to print receiver_address and sequence number and TID from DUT Tx Packet"""
         for i in range(len(sequence_number)):
@@ -653,6 +654,64 @@ def test_dut_receiving_mpdu_same_qos_cateqory_c148326(wifi_sniffer, wifi_access_
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2'})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.parametrize("traffic, qos", [('0x20', 1)])
+def test_dut_send_mpdu_with_same_receiver_addr_c148322(
+        wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client, protocol, sl_collections,
+        sniffer_filter, traffic, qos):
+    """ To verify whether DUT is sending individual MPDU within an A-MPDU are having the same receiver address """
+
+    capture_filename = request.node.name
+    try:
+        packet_filter4 = '    Type/Subtype: QoS Data (0x0028)'
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                            net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
+                            capture_filename=capture_filename, sl_collections=sl_collections, test_case_no=148322,
+                            sniffer_filter=sniffer_filter, qos=qos, traffic=traffic)
+
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+        packet_filter3 = f'(wlan.sa == {wifi_obj.dut_addr["dut_mac_address"]}) || (wlan.ra == {wifi_obj.ap_mac_address}) and (wlan.qos.priority == 1)'
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter3, packet_filter2=packet_filter4)['packet_count']
+
+        assert snif_pkt_count, "Unable to find qos access data packets with same receiver address"
+
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wifi_obj.dut_addr['dut_mac_address'], da_addr=wifi_obj.ap_mac_address,
+            filter_name="association_request_HE")
+
+        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            ra_addr=wifi_obj.dut_addr['dut_mac_address'], sa_addr=wifi_obj.ap_mac_address,
+            filter_name="11ax_aggre_block_ack")
+
+        logger().info(f"***** Validating Association Request with HE Element ******")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find Association Request with HE Element"
+
+        logger().info(f"***** Validating Block ACK packets ******")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find Block ACK packets"
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
+
+        """This below method is used to validate Receiver Address and Sequence Numbers and TID from DUT Tx Packet"""
+        wifi_obj.receiver_address_sequence_number_validation()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+        """ ************************* The below Cases are Skipped and Marked as Manual ********************"""
+
+
+@pytest.mark.skip()
+@pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2'})
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos", [('0x00', 0)])
 def test_dut_receive_block_ack_after_ampdu_frames_c148324(
         wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client, protocol, sl_collections,
@@ -704,6 +763,7 @@ def test_dut_receive_block_ack_after_ampdu_frames_c148324(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2'})
@@ -757,60 +817,5 @@ def test_dut_duration_id_carrying_same_value_c148325(
         """This below method is used to validate duration ID and sequence numbers from DUT Tx Packet"""
         wifi_obj.duration_id_sequence_number_validation()
 
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
-
-@pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2'})
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.parametrize("traffic, qos", [('0x20', 1)])
-def test_dut_send_mpdu_with_same_receiver_addr_c148322(
-        wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client, protocol, sl_collections,
-        sniffer_filter, traffic, qos):
-    """ To verify whether DUT is sending individual MPDU within an A-MPDU are having the same receiver address """
-
-    capture_filename = request.node.name
-    try:
-        packet_filter4 = '    Type/Subtype: QoS Data (0x0028)'
-        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                            net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
-                            capture_filename=capture_filename, sl_collections=sl_collections, test_case_no=148322,
-                            sniffer_filter=sniffer_filter, qos=qos, traffic=traffic)
-
-        wifi_obj.start()
-        wifi_obj.wait_for_exit()
-
-        packet_filter3 = f'(wlan.sa == {wifi_obj.dut_addr["dut_mac_address"]}) || (wlan.ra == {wifi_obj.ap_mac_address}) and (wlan.qos.priority == 1)'
-        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(
-            packet_filter1=packet_filter3, packet_filter2=packet_filter4)['packet_count']
-
-        assert snif_pkt_count, "Unable to find qos access data packets with same receiver address"
-
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=wifi_obj.dut_addr['dut_mac_address'], da_addr=wifi_obj.ap_mac_address,
-            filter_name="association_request_HE")
-
-        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            ra_addr=wifi_obj.dut_addr['dut_mac_address'], sa_addr=wifi_obj.ap_mac_address,
-            filter_name="11ax_aggre_block_ack")
-
-        logger().info(f"***** Validating Association Request with HE Element ******")
-        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
-            'packet_count']
-        assert snif_pkt_count, "Unable to find Association Request with HE Element"
-
-        logger().info(f"***** Validating Block ACK packets ******")
-        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)[
-            'packet_count']
-        assert snif_pkt_count, "Unable to find Block ACK packets"
-
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info("Stop Sniffer finally")
-
-        """This below method is used to validate Receiver Address and Sequence Numbers and TID from DUT Tx Packet"""
-        wifi_obj.receiver_address_sequence_number_validation()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
