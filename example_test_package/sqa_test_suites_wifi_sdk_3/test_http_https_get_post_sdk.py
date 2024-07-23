@@ -56,7 +56,7 @@ class WLanThread(ThreadBase):
     def run(self):
         try:
             self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
-            if self.test_name == '476928':
+            if self.test_name == '476930' or self.test_name == '476938' or self.test_name == '476939':
                 for i in range(0, 5):
                     logger().info('\n*** Configuring Sniffer with WAP channel ***\n')
                     self.wifi_sniffer.interfaces.capture.configure_interface(
@@ -72,22 +72,38 @@ class WLanThread(ThreadBase):
                     self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
                     self.wifi_dut.interfaces.wifi.http_client_init(https_enable=False)
                     logger().info("\n\n***Fetching the data on https using get method***\n\n")
-                    status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(self.http_server.interfaces.http,
-                                                                                     self.index_path,
-                                                                                     server_port=80)
-                    status_client, content_client = self.http_client.interfaces.http.http_get(
-                        self.http_server.interfaces.http, self.index_path)
+                    if self.test_name == '476938':
+                        status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
+                            self.http_server.interfaces.http,
+                            self.index_path,
+                            server_port=80,
+                            expected_status=SLStatus.SL_STATUS_HAS_OVERFLOWED)
 
-                    assert not status_dut, "failed to fetch the https data"
-                    assert status_client, "failed to load the https data"
+                    elif self.test_name == '476939':
+                        status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
+                            self.http_server.interfaces.http,
+                            self.index_path,
+                            server_port=80,
+                            expected_status=SLStatus.SL_STATUS_SI91X_ERROR_IN_LEN_OF_THE_COMMAND)
 
-                    logger().info(status_dut)
-                    logger().info(content_dut)
-                    assert content_dut == content_client, "fetched data is not same as expected data"
+                    else:
+                        status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
+                            self.http_server.interfaces.http,
+                            self.index_path,
+                            server_port=80)
+                        status_client, content_client = self.http_client.interfaces.http.http_get(
+                            self.http_server.interfaces.http, self.index_path)
+
+                        assert not status_dut, "failed to fetch the https data"
+                        assert status_client, "failed to load the https data"
+
+                        logger().info(status_dut)
+                        logger().info(content_dut)
+                        assert content_dut == content_client, "fetched data is not same as expected data"
+                        self.wifi_dut.interfaces.wifi.http_client_deinit()
 
                     logger().info("Stopping sniffer capture")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
-                    self.wifi_dut.interfaces.wifi.http_client_deinit()
                     time.sleep(5)
                     self.wifi_dut.interfaces.wifi.leave()
 
@@ -315,52 +331,6 @@ def test_wifi_sdk_http_get_functionality_c19209(http_server, wifi_dut, http_clie
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPClient,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-    }
-)
-@pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"index.html"})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
-def test_wifi_sdk_http_get_functionality_multiple_times_with_long_http_url_bit_disable_c476928(http_server, wifi_dut,
-                                                                                               http_client,
-                                                                                               wifi_access_point,
-                                                                                               index_path,
-                                                                                               wifi_sniffer,
-                                                                                               sl_collections,
-                                                                                               sniffer_filter):
-    """
-    Test Steps:
-        1. Configure the DUT in Wlan coex mode for 2.4Ghz
-        2. Scan and Join the access point and enable the dhcp
-        3. Enable the wlan and bt power save mode in dut after the connection
-        4. Initiate http get for http content
-        5. Verify the http get response
-    """
-    try:
-        test_name = '476928'
-        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                              http_client=http_client,
-                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
-                              index_path=index_path,
-                              sniffer_filter=sniffer_filter)
-        wlan_obj.start()
-        wlan_obj.wait_for_exit()
-
-    except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
-
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.config(
     "wifi_dut",
@@ -376,16 +346,10 @@ def test_wifi_sdk_http_get_functionality_multiple_times_with_long_http_url_bit_d
     }
 )
 @pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
-def test_wifi_sdk_http_get_functionality_multiple_times_with_long_http_url_bit_enable_open_security_c476930(http_server,
-                                                                                                            wifi_dut,
-                                                                                                            http_client,
-                                                                                                            wifi_access_point,
-                                                                                                            index_path,
-                                                                                                            wifi_sniffer,
-                                                                                                            sl_collections,
-                                                                                                            sniffer_filter):
+def test_wifi_sdk_http_get_with_url_length_1140_with_open_security_c476930(http_server, wifi_dut, http_client,
+                                                                           wifi_access_point, wifi_sniffer,
+                                                                           sl_collections, sniffer_filter):
     """
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -395,7 +359,8 @@ def test_wifi_sdk_http_get_functionality_multiple_times_with_long_http_url_bit_e
         5. Verify the http get response
     """
     try:
-        test_name = '476928'
+        test_name = '476930'
+        index_path = "url_greater_than_1024_and_less_than_2048/" * 27 + "LONG_PATH.htm"
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               http_client=http_client,
                               test_name=test_name, sl_collections=sl_collections, http_server=http_server,
@@ -408,7 +373,7 @@ def test_wifi_sdk_http_get_functionality_multiple_times_with_long_http_url_bit_e
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config("wifi_access_point", wifi={"security": 'WPA3'})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -423,14 +388,10 @@ def test_wifi_sdk_http_get_functionality_multiple_times_with_long_http_url_bit_e
     }
 )
 @pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
-def test_wifi_sdk_http_get_multiple_times_with_long_http_url_bit_enable_wpa3_security_c476931(http_server,
-                                                                                              wifi_dut, http_client,
-                                                                                              wifi_access_point,
-                                                                                              index_path, wifi_sniffer,
-                                                                                              sl_collections,
-                                                                                              sniffer_filter):
+def test_wifi_sdk_http_get_with_url_length_1140_with_wpa3_security_c476931(http_server, wifi_dut, http_client,
+                                                                           wifi_access_point, wifi_sniffer,
+                                                                           sl_collections, sniffer_filter):
     """
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -440,7 +401,8 @@ def test_wifi_sdk_http_get_multiple_times_with_long_http_url_bit_enable_wpa3_sec
         5. Verify the http get response
     """
     try:
-        test_name = '476928'
+        test_name = '476930'
+        index_path = "url_greater_than_1024_and_less_than_2048/" * 27 + "LONG_PATH.htm"
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               http_client=http_client,
                               test_name=test_name, sl_collections=sl_collections, http_server=http_server,
@@ -489,6 +451,300 @@ def test_wifi_sdk_http_get_multiple_times_with_long_http_url_bit_enable_eap_secu
     """
     try:
         test_name = '476932'
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              http_client=http_client,
+                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                              index_path=index_path,
+                              sniffer_filter=sniffer_filter)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+def test_wifi_sdk_http_get_with_url_length_approx_800_bytes_c476934(http_server, wifi_dut, http_client,
+                                                                    wifi_access_point, wifi_sniffer, sl_collections,
+                                                                    sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http get for http content
+        5. Verify the http get response
+    """
+    try:
+        test_name = '476930'
+        index_path = "url_approx_800bytes/" * 40 + "LONG_PATH.htm"
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              http_client=http_client,
+                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                              index_path=index_path,
+                              sniffer_filter=sniffer_filter)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+def test_wifi_sdk_http_get_with_url_length_1024_c476935(http_server, wifi_dut, http_client, wifi_access_point,
+                                                        wifi_sniffer, sl_collections, sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http get for http content
+        5. Verify the http get response
+    """
+    try:
+        test_name = '476930'
+        index_path = "url_exact_1024_bytes/" * 48 + "url_len_1024.htm"
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              http_client=http_client,
+                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                              index_path=index_path,
+                              sniffer_filter=sniffer_filter)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+def test_wifi_sdk_http_get_with_url_length_1140_c476936(http_server, wifi_dut, http_client, wifi_access_point,
+                                                        wifi_sniffer, sl_collections, sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection`
+        4. Initiate http get for http content
+        5. Verify the http get response
+    """
+    try:
+        test_name = '476930'
+        index_path = "url_greater_than_1024_and_less_than_2048/" * 27 + "LONG_PATH.htm"
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              http_client=http_client,
+                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                              index_path=index_path,
+                              sniffer_filter=sniffer_filter)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+def test_wifi_sdk_http_get_with_url_length_2048_c476937(http_server, wifi_dut, http_client, wifi_access_point,
+                                                        wifi_sniffer, sl_collections, sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http get for http content
+        5. Verify the http get response
+    """
+    try:
+        test_name = '476930'
+        index_path = "url_exact_2048_bytes/" * 97 + "2048url.htm"
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              http_client=http_client,
+                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                              index_path=index_path,
+                              sniffer_filter=sniffer_filter)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+def test_wifi_sdk_http_get_with_url_length_greater_than_2048_c476938(http_server, wifi_dut, http_client,
+                                                                     wifi_access_point, wifi_sniffer,
+                                                                     sl_collections, sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http get for http content
+        5. Verify the http get response
+    """
+    try:
+        test_name = '476938'
+        index_path = "url_greater_than_2048_bytes/" * 75 + "LONG_PATH.htm"
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              http_client=http_client,
+                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                              index_path=index_path,
+                              sniffer_filter=sniffer_filter)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+def test_wifi_sdk_http_get_with_url_length_2048_with_longer_url_bit_disable_c476939(http_server, wifi_dut, http_client,
+                                                                                    wifi_access_point, wifi_sniffer,
+                                                                                    sl_collections, sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http get for http content
+        5. Verify the http get response
+    """
+    try:
+        test_name = '476939'
+        index_path = "url_exact_2048_bytes/" * 97 + "2048url.htm"
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              http_client=http_client,
+                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                              index_path=index_path,
+                              sniffer_filter=sniffer_filter)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+def test_wifi_sdk_http_get_with_url_length_greater_than_2048_with_longer_url_bit_disable_c476940(http_server, wifi_dut,
+                                                                                                 http_client,
+                                                                                                 wifi_access_point,
+                                                                                                 wifi_sniffer,
+                                                                                                 sl_collections,
+                                                                                                 sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http get for http content
+        5. Verify the http get response
+    """
+    try:
+        test_name = '476938'
+        index_path = "url_greater_than_2048_bytes/" * 75 + "LONG_PATH.htm"
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               http_client=http_client,
                               test_name=test_name, sl_collections=sl_collections, http_server=http_server,
