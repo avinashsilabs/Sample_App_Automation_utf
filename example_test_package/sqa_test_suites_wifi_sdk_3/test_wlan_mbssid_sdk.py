@@ -81,6 +81,13 @@ class WLanThread(ThreadBase):
         self.no_of_clients = 1
         self.protocol = protocol
         self.multicast_client = multicast_client
+        self.security_dict = {
+            'OPEN': 0,
+            'WPA2': 2,
+            'WPA3': 7,
+            'WPA2ENTERPRISE': 5,
+            'WPA2WPA3MIXEDMODE': 8
+        }
 
     def run(self):
         try:
@@ -151,8 +158,10 @@ class WLanThread(ThreadBase):
                     channel=self.wifi_access_point.interfaces.wifi.channel)
                 self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
                 self.wifi_dut.interfaces.wifi.join(ssid=vap_list[0],
-                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0]['passphrase'],
-                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0]['security'].name.lower())
+                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       'passphrase'],
+                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       'security'].name.lower())
 
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
@@ -197,12 +206,17 @@ class WLanThread(ThreadBase):
                         MgmtFrameProtectionRequired)
                     self.wifi_dut.interfaces.wifi.scan()
                     self.wifi_dut.interfaces.wifi.join(ssid=vap_list[0],
-                                                       security=self.wifi_access_point.interfaces.wifi.guest_networks[0]['security'].name.lower(),
-                                                       passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0]['passphrase'])
+                                                       security=
+                                                       self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                           'security'].name.lower(),
+                                                       passphrase=
+                                                       self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                           'passphrase'])
                     self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                              wifi_access_point=self.wifi_access_point,
                                                                              associated=False
-                                                                             , ping_after_power_save=False, skip_scan=True,
+                                                                             , ping_after_power_save=False,
+                                                                             skip_scan=True,
                                                                              skip_connect=True)
 
                     host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -259,18 +273,22 @@ class WLanThread(ThreadBase):
                     logger().info(f"DUT joining to the multicast group {multicast_ip}")
                     self.wifi_dut.interfaces.wifi.sl_net_join_multicast_address()
 
-                    self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=multicast_ip, time_out=70,
-                                                                    protocol=self.protocol, time_to_leave="32", bandwidth="60M",
-                                                                    host_role="C", bind_address=host_ip)
-                    logger().info(f"Host IP: {host_ip}, Dut IP: {self.dut_addr['device_ip']}, Protocol: {self.protocol}")
+                    self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=multicast_ip,
+                                                                         time_out=70,
+                                                                         protocol=self.protocol, time_to_leave="32",
+                                                                         bandwidth="60M",
+                                                                         host_role="C", bind_address=host_ip)
+                    logger().info(
+                        f"Host IP: {host_ip}, Dut IP: {self.dut_addr['device_ip']}, Protocol: {self.protocol}")
                     logger().info(f"***** starting iperf ******")
                     self.net_perf_client.interfaces.net_perf.start()
                     logger().info(f"***** start listening  ******")
                     self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=2, protocol=17,
-                                                   local_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                   local_ip=multicast_ip, remote_ip=host_ip,
-                                                   remote_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                   size=1470, ttl=60, throughput_type=4, qos=0, async_socket=1, timeout=70)
+                                                        local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                        local_ip=multicast_ip, remote_ip=host_ip,
+                                                        remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                        size=1470, ttl=60, throughput_type=4, qos=0, async_socket=1,
+                                                        timeout=70)
 
                     self.wifi_dut.interfaces.wifi.sl_net_leave_multicast_address()
                     logger().info("Stop Sniffer finally")
@@ -327,8 +345,10 @@ class WLanThread(ThreadBase):
                 vap_list = self.verfiy_T_and_NT_based_mbssid_in_dut_list()
                 self.wifi_dut.interfaces.wifi.scan()
                 self.wifi_dut.interfaces.wifi.join(ssid=vap_list[0],
-                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0]['passphrase'],
-                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0]['security'].name.lower())
+                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       'passphrase'],
+                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       'security'].name.lower())
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=False
@@ -367,8 +387,8 @@ class WLanThread(ThreadBase):
             elif self.test_case_no == 219297:
                 logger().info("\n *** Enable Rejoin *** \n")
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
-                                                                         beacon_missed_count=40,
-                                                                         first_time_retry_enable=0)
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=0)
 
                 vap_list = self.verfiy_T_and_NT_based_mbssid_in_dut_list()
                 self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
@@ -376,8 +396,10 @@ class WLanThread(ThreadBase):
                     MgmtFrameProtectionRequired)
                 self.wifi_dut.interfaces.wifi.scan()
                 self.wifi_dut.interfaces.wifi.join(ssid=vap_list[0],
-                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0]['security'].name.lower(),
-                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0]['passphrase'])
+                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       'security'].name.lower(),
+                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       'passphrase'])
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=False
@@ -397,7 +419,9 @@ class WLanThread(ThreadBase):
                 vap_list = self.verfiy_T_and_NT_based_mbssid_in_dut_list()
                 self.wifi_dut.interfaces.wifi.scan()
                 status = self.wifi_dut.interfaces.wifi.join(ssid=vap_list[0],
-                                                            security=self.wifi_access_point.interfaces.wifi.guest_networks[0]['security'].name.lower(),
+                                                            security=
+                                                            self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                                'security'].name.lower(),
                                                             passphrase='1234567899',
                                                             expected_status=
                                                             SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION or
@@ -490,8 +514,10 @@ class WLanThread(ThreadBase):
                 time.sleep(2)
                 self.wifi_dut.interfaces.wifi.scan()
                 self.wifi_dut.interfaces.wifi.join(ssid=vap_list[0],
-                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0]['security'].name.lower(),
-                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0]['passphrase'])
+                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       'security'].name.lower(),
+                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       'passphrase'])
 
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
@@ -551,8 +577,10 @@ class WLanThread(ThreadBase):
                 time.sleep(5)
                 self.wifi_dut.interfaces.wifi.scan()
                 self.wifi_dut.interfaces.wifi.join(ssid=vap_list[0],
-                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0]['security'].name.lower(),
-                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0]['passphrase'])
+                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       'security'].name.lower(),
+                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       'passphrase'])
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=False, power_save=False
@@ -600,8 +628,10 @@ class WLanThread(ThreadBase):
                     MgmtFrameProtectionRequired)
                 self.wifi_dut.interfaces.wifi.scan()
                 self.wifi_dut.interfaces.wifi.join(ssid=vap_list[0],
-                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0]['security'].name.lower(),
-                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0]['passphrase'])
+                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       'security'].name.lower(),
+                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       'passphrase'])
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=False
@@ -628,7 +658,8 @@ class WLanThread(ThreadBase):
                                                                              associated=self.wifi_dut.interfaces.wifi.associated,
                                                                              ping_after_power_save=False)
                     packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                        sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address, filter_name="power_mgmt_bit")
+                        sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
+                        filter_name="power_mgmt_bit")
 
                     self.sl_collections.ping(self.dut_addr['device_ip'], ping_count=60)
                     self.wifi_dut.interfaces.wifi.leave()
@@ -647,13 +678,18 @@ class WLanThread(ThreadBase):
 
                     self.wifi_dut.interfaces.wifi.scan()
                     self.wifi_dut.interfaces.wifi.join(ssid=vap_list[0],
-                                                       security=self.wifi_access_point.interfaces.wifi.guest_networks[0]['security'].name.lower(),
-                                                       passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0]['passphrase'])
+                                                       security=
+                                                       self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                           'security'].name.lower(),
+                                                       passphrase=
+                                                       self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                           'passphrase'])
 
                     self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                              wifi_access_point=self.wifi_access_point,
                                                                              associated=False
-                                                                             , ping_after_power_save=False, skip_scan=True,
+                                                                             , ping_after_power_save=False,
+                                                                             skip_scan=True,
                                                                              skip_connect=True, retry_count=3)
                     time.sleep(10)
                     packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -702,6 +738,7 @@ class WLanThread(ThreadBase):
         return vap0_bssid
 
     def find_mbssid_vaps(self):
+        # Regular expression pattern to match ssid and bssid
         packet_filter = '                    SSID:'
         count = 0
         ssid_list = []
@@ -721,6 +758,7 @@ class WLanThread(ThreadBase):
         return final_ssid_list
 
     def find_ssid_list_from_dut_scan(self):
+        # collect all ssid from DUT scan list
         ssid_list = []
         self.scan_list = self.wifi_dut.interfaces.wifi.scan()
         logger().info(f'\n\n *** Start to collect all available ssid in DUT scan list ***\n\n')
@@ -730,7 +768,8 @@ class WLanThread(ThreadBase):
         return ssid_list
 
     def compare_list(self, list1, list2):
-        """Returns True if list1 contains all elements of list2, False otherwise."""
+        """Returns True if list1(sniffer based ssid list) contains all elements of list2(scan based ssid list),
+        False otherwise."""
         counter1 = Counter(list1)
         counter2 = Counter(list2)
         logger().info(f'***** Counter1 = {counter1}')
@@ -740,6 +779,7 @@ class WLanThread(ThreadBase):
         return all(counter2[element] <= counter1[element] for element in counter1)
 
     def verfiy_T_and_NT_based_mbssid_in_dut_list(self):
+        # Validation for T and NT based MBSSID in DUT scan list & sniffer capture
         packet_filter2 = '                    SSID:'
         ssid_list = self.find_ssid_list_from_dut_scan()
         time.sleep(2)
@@ -763,6 +803,119 @@ class WLanThread(ThreadBase):
         logger().info("\n\n ***** DUT is able to scan all VAP's info ***** \n\n")
         return vap_list
 
+    def validate_rssi_channel_security(self):
+        # Validate same RSSI values for all T & MT based ssid, and configured channel & security values matching with
+        # DUT scan list
+        channel_dict = {}
+        security_dict = {}
+
+        # Define a dictionary to store SSID and BSSID values
+        ssid_dict = {'main_bssid': self.wifi_access_point.interfaces.wifi.ssid,
+                     'vap0_bssid': self.wifi_access_point.interfaces.wifi.guest_networks[0]['ssid'],
+                     'vap1_bssid': self.wifi_access_point.interfaces.wifi.guest_networks[1]['ssid'],
+                     'vap2_bssid': self.wifi_access_point.interfaces.wifi.guest_networks[2]['ssid']}
+        logger().info(f'\n\n *** SSID Dictionary = {ssid_dict} ***\n\n')
+
+        # Define a dictionary to store channel and security values
+        channel_dict[ssid_dict['main_bssid']] = self.wifi_access_point.interfaces.wifi.channel
+        channel_dict[ssid_dict['vap0_bssid']] = self.wifi_access_point.interfaces.wifi.guest_networks[0]['channel']
+        channel_dict[ssid_dict['vap1_bssid']] = self.wifi_access_point.interfaces.wifi.guest_networks[1]['channel']
+        channel_dict[ssid_dict['vap2_bssid']] = self.wifi_access_point.interfaces.wifi.guest_networks[2]['channel']
+
+        # Define a dictionary to store security values
+        security_dict[ssid_dict['main_bssid']] = self.wifi_access_point.interfaces.wifi.security.name.upper()
+        security_dict[ssid_dict['vap0_bssid']] = self.wifi_access_point.interfaces.wifi.guest_networks[0][
+            'security'].name.upper()
+        security_dict[ssid_dict['vap1_bssid']] = self.wifi_access_point.interfaces.wifi.guest_networks[1][
+            'security'].name.upper()
+        security_dict[ssid_dict['vap2_bssid']] = self.wifi_access_point.interfaces.wifi.guest_networks[2][
+            'security'].name.upper()
+
+        # Define a dictionary to store security numbers for each SSID
+        main_vap_sec_num = self.get_security_numbers(security_dict[ssid_dict['main_bssid']])
+        main_vap0_sec_num = self.get_security_numbers(security_dict[ssid_dict['vap0_bssid']])
+        main_vap1_sec_num = self.get_security_numbers(security_dict[ssid_dict['vap1_bssid']])
+        main_vap2_sec_num = self.get_security_numbers(security_dict[ssid_dict['vap2_bssid']])
+
+        scan_list = self.wifi_dut.interfaces.wifi.scan()
+        ssid_rssi_dict = {}
+        for entry in scan_list:
+            ssid_rssi_dict[entry.ssid] = entry.rssi
+
+        # Validate that the RSSI values are same for all SSID
+        assert self.validate_for_same_rssi_values_for_all_ssid(ssid_rssi_dict, ssid_dict), \
+            'RSSI values are not same for all SSID'
+
+        # Define a list of VAP configurations to iterate over
+        vap_configs = [
+            ('main_bssid', main_vap_sec_num, 'Main BSSID'),
+            ('vap0_bssid', main_vap0_sec_num, 'VAP 0'),
+            ('vap1_bssid', main_vap1_sec_num, 'VAP 1'),
+            ('vap2_bssid', main_vap2_sec_num, 'VAP 2')
+        ]
+
+        # Initialize flag to count matches
+        flag = 0
+
+        # Iterate over each VAP configuration
+        for vap_key, sec_num, vap_name in vap_configs:
+            for scan_item in scan_list:
+                if scan_item.ssid == ssid_dict[vap_key]:
+                    if (scan_item.rf_channel == channel_dict[ssid_dict[vap_key]]
+                            and scan_item.security_mode == sec_num):
+                        logger().info(
+                            f"\n\n\n {vap_name} channel={channel_dict[ssid_dict[vap_key]]} & "
+                            f"Security={self.get_keys_from_value(self.security_dict, sec_num)} match\n\n")
+                        flag += 1
+                        break  # Exit inner loop once a match is found
+
+        # Logging the flag value
+        logger().info(f"\n\n\n Flag Value = {flag}\n\n\n")
+        # Assertion to ensure all VAPs were matched
+        assert flag == len(vap_configs), 'Unable to match all configured VAPs with DUT scan list'
+
+    # Function to retrieve the security number based on the security type
+    def get_security_numbers(self, security_type):
+        # Define a dictionary to map security types to numbers
+        for value in self.security_dict.keys():
+            if value == security_type:
+                return self.security_dict[value]
+        return None  # Return None if the number does not match any key
+
+    def validate_for_same_rssi_values_for_all_ssid(self, scan_results, ssid_dict):
+        # Create a mapping of SSID to RSSI from Scan Results
+        scan_results_ssid_rssi = scan_results
+        ssid_dict_ssids = set(ssid_dict.values())
+
+        # Find RSSI values for SSIDs in ssid_dict
+        rssi_values = {}
+        for ssid in ssid_dict_ssids:
+            if ssid in scan_results_ssid_rssi:
+                rssi_values[ssid] = scan_results_ssid_rssi[ssid]
+            else:
+                rssi_values[ssid] = None  # or some default value if the SSID isn't found in scan_results
+
+        pass_test_case = len(set(rssi_values.values())) == 1
+
+        # Print the results
+        logger().info("RSSI values for SSIDs in ssid_dict:")
+        for ssid, rssi in rssi_values.items():
+            logger().info(f"{ssid}: {rssi}")
+
+        if pass_test_case:
+            log_message = "RSSI values are same for all SSID"
+        else:
+            log_message = "RSSI values are not same for all SSID"
+
+        logger().info(log_message)
+        return pass_test_case
+
+    def get_keys_from_value(self, dictionary, val):
+        keys = []
+        for key, value in dictionary.items():
+            if value == val:
+                keys.append(key)
+        return keys
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1142,15 +1295,18 @@ def test_wifi_sdk_mbssid_NT_wpa3_c219290(wifi_sniffer, wifi_access_point, wifi_d
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
-def test_wifi_sdk_mbssid_T_wpa2_enterprise_c219291(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, multicast_client,
+def test_wifi_sdk_mbssid_T_wpa2_enterprise_c219291(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
+                                                   multicast_client,
                                                    radius_server, sl_collections, request, net_perf_client, wifi_client
                                                    , protocol):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap tls method with multicast traffic"""
     try:
         test_name = request.node.name
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                              sl_collections=sl_collections, test_case_no=219291, test_name=test_name, wifi_client=wifi_client,
-                              sniffer_filter=sniffer_filter, net_perf_client=net_perf_client, protocol=protocol, multicast_client=multicast_client)
+                              sl_collections=sl_collections, test_case_no=219291, test_name=test_name,
+                              wifi_client=wifi_client,
+                              sniffer_filter=sniffer_filter, net_perf_client=net_perf_client, protocol=protocol,
+                              multicast_client=multicast_client)
 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
