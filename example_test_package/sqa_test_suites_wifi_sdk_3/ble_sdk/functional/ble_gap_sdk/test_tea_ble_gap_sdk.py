@@ -260,6 +260,13 @@ def test_ble_sdk_different_adv_data_C537625(ble_dut, ble_client, sl_collections,
         logger().info("Set DUT in advertise mode")
         ble_dut.interfaces.bluetooth.ble_start_advertising(ble_advertising_data=Advertise_data)
 
+        enable_wifi_ps = ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        assert enable_wifi_ps == 0, 'failed to enable wlan power save'
+        enable_bt_ps = ble_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps == 0, 'failed to enable bt power save'
+
         logger().info("Start smp scan from the remote device")
         ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
         assert ble_client_address, "failed to initiate ble in remote device"
