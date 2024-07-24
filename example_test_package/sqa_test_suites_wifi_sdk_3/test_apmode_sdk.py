@@ -5,6 +5,7 @@ import random
 import string
 from utf.utf_config import UtfConfig
 import re
+from utf.interfaces.wifi import SecurityMode
 from utf.utils.stopwatch import Stopwatch
 from utf.interfaces.wifi import WlanError
 from utf.utils import print_dict
@@ -667,7 +668,7 @@ def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer,  wifi_du
         "passphrase": "12345678", "beacon": 100,
         "channel": 14,
         "region": 1,
-        "region_code": "korean"
+        "region_code": "korea"
 
     },
 )
@@ -1351,9 +1352,9 @@ def test_wifi_sdk_dutap_fixed_data_rate_c19441(wifi_sniffer, wifi_dut,
         packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'], da_addr=ap_dut_obj.dut_addr_dict['rasp_mac_address'],
             radio_ch=ap_dut_obj.channel,
-            filter_name='mgmt_data_rates_data_rate_54mbps_apmode')
+            filter_name='mgmt_data_rates_data_rate_24mbps_apmode')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
-            'Unable to find any packets for Data/Qos/Null packet for 54 Mbps data rates'
+            'Unable to find any packets for Data/Qos/Null packet for 24 Mbps data rates'
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -1438,7 +1439,7 @@ def test_wifi_sdk_dutap_korea_region_ap_mode_rx_C477826(wifi_dut, wifi_sniffer, 
         "passphrase": "12345678", "beacon": 100,
         "channel": 14,
         "region": 1,
-        "region_code": "Korea"
+        "region_code": "korea"
 
     },
 )
@@ -1449,7 +1450,7 @@ def test_wifi_sdk_dutap_korea_region_unsupported_channel_C477827(wifi_dut, wifi_
         logger().info("********* configuring static ip to DUT *********")
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.168", static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.168")
-        logger().info(" ********** Starting DUT as an AP with region as Korean and channel as 14 ********* ")
+        logger().info(" ********** Starting DUT as an AP with region as Korea and channel as 14 ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", psk="12345678", channel=channel,
                                           dtim_beacon_count=4,
                                           beacon_interval=100,

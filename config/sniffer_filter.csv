@@ -178,3 +178,4 @@ pmf_bit_enable, (wlan.fc.type_subtype == 0 && wlan.rsn.capabilities.mfpc == 1), 
 concurrent_wpa3, (((wlan.extended_supported_rates == 0xfb)) && (wlan.rsn.akms == 1027080)), and (wlan.sa == {{sa_addr}})
 he_cap_radio_tap, ((wlan.addr == {{sa_addr}}) && (radiotap.he.data_1.ppdu_format == 0x0000)), and (wlan.fc.type_subtype == 0x0028)
 aput_beaconing, (wlan.addr == {{wlan_addr}}), and (wlan.rsn.akms.type ==8)
+mgmt_data_rates_data_rate_24mbps_apmode,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}) and (wlan.da== {{ da_addr }}), and (wlan.fc.type_subtype == 0x0028) and (wlan_radio.data_rate == 24)
