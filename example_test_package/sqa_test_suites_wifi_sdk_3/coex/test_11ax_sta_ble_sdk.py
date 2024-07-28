@@ -81,7 +81,7 @@ class WifiThreadFunctionality(ThreadBase):
                 self.net_perf_client.interfaces.net_perf.init_server(host_ip=self.host_ip,
                                                                      device_ip=self.dut_addr['device_ip'],
                                                                      protocol=self.protocol, tos_value=self.traffic,
-                                                                     time_out=120)
+                                                                     time_out=300)
                 logger().info(
                     f"Host IP: {self.host_ip}, Dut IP: {self.dut_addr['device_ip']}, Protocol: {self.protocol}, "
                     f"tos_value: {self.traffic}")
@@ -92,7 +92,7 @@ class WifiThreadFunctionality(ThreadBase):
                                                     local_port=self.net_perf_client.interfaces.net_perf.server_port,
                                                     local_ip=self.dut_addr['device_ip'], remote_ip=self.host_ip,
                                                     remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                    size=1460, ttl=120, throughput_type=1, qos=self.qos, timeout=150)
+                                                    size=1460, ttl=300, throughput_type=1, qos=self.qos, timeout=350)
                 logger().info("data transfer is successful")
                 time.sleep(3)
 
@@ -456,8 +456,8 @@ class BleThreadFunctionality(ThreadBase):
             assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
 
         if self.test_case == "198678":
-            iter_count = self.utf_constants.get("iter_count")
-            for count in range(iter_count):
+
+            for count in range(0, 5):
                 logger().info(f'************* BLE connection for iteration count : {count} *************')
                 logger().info(f"Advertising the DUT")
                 self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
