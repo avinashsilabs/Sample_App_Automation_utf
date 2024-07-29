@@ -179,3 +179,5 @@ concurrent_wpa3, (((wlan.extended_supported_rates == 0xfb)) && (wlan.rsn.akms ==
 he_cap_radio_tap, ((wlan.addr == {{sa_addr}}) && (radiotap.he.data_1.ppdu_format == 0x0000)), and (wlan.fc.type_subtype == 0x0028)
 aput_beaconing, (wlan.addr == {{wlan_addr}}), and (wlan.rsn.akms.type ==8)
 mgmt_data_rates_data_rate_24mbps_apmode,(wlan.sa == {{ sa_addr }}) and (wlan_radio.channel == {{ radio_ch }}) and (wlan.da== {{ da_addr }}), and (wlan.fc.type_subtype == 0x0028) and (wlan_radio.data_rate == 24)
+aput_wpa3_alone, (wlan.sa == {{ sa_addr }} and (wlan.fc.type_subtype == 8)), and (wlan.rsn.capabilities.mfpr == True and wlan.rsn.capabilities.mfpc == True)
+aput_wpa3_mixed, (wlan.sa == {{ sa_addr }} and (wlan.fc.type_subtype == 8)), and (wlan.rsn.capabilities.mfpr == False and wlan.rsn.capabilities.mfpc == True)

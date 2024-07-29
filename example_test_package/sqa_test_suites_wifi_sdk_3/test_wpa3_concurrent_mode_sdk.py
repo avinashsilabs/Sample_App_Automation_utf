@@ -63,6 +63,14 @@ class WifiConnectionThread(ThreadBase):
         self.dut_mac_addr = None
         self.device_ip = device_ip
 
+    def Traffic_Ping(self):
+        # Initiate ping from third party wifi-client to DUT
+        self.wifi_client.interfaces.wifi.get_ip_address(version=4)
+        logger().info(f"Initiate ping from third party wifi-client to DUT")
+        self.wifi_dut.interfaces.wifi.ping(server_ip='192.168.50.5', ip_version=4, ping_size=64,
+                                              num_ping_attempts=45)
+        time.sleep(2)
+
     def Secondary_SDK_Conn(self):
         self.remote_wiseconnect3.interfaces.sapi.set_join_feature_bitmap(
             join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
@@ -74,6 +82,7 @@ class WifiConnectionThread(ThreadBase):
         ssid = "Concurent_ap"
         channel = 1
         password = "Automation@Silabs"
+
         self.remote_wiseconnect3.interfaces.sapi.join(ssid=ssid,
                                                  security="wpa3_transition",
                                                  passphrase=password,
@@ -81,6 +90,9 @@ class WifiConnectionThread(ThreadBase):
         self.remote_wiseconnect3.interfaces.sapi.start_ip(ip_version=ip_version, static_ip=static_ip,
                                                      static_subnet=static_subnet,
                                                      static_gateway=static_gateway, timeout=10)
+        time.sleep(2)
+        self.remote_wiseconnect3.interfaces.sapi.ping(server_ip=static_gateway, num_ping_attempts=self.ping_count,
+                                           ping_timeout=10,  ip_version='ipv4', ping_size=64)
         time.sleep(2)
         self.remote_wiseconnect3.interfaces.sapi.leave()
         time.sleep(1)
@@ -119,7 +131,7 @@ class WifiConnectionThread(ThreadBase):
                                                       static_subnet="255.255.255.0",
                                                       static_gateway="192.168.100.76")
             time.sleep(2)
-            if self.test_case_no == 463723:
+            if self.test_case_no == 463723 or self.test_case_no == 463710 or self.test_case_no == 463711:
                 self.wifi_dut.interfaces.wifi.start_ap(ssid=ssid, security=security, channel=channel, psk=password,
                                                        dtim_beacon_count=dtim_count,
                                                        beacon_interval=beacon_interval, encryption=None,
@@ -171,14 +183,16 @@ class WifiConnectionThread(ThreadBase):
 
 
 class WifiPingThread(ThreadBase):
-    def __init__(self, device_ip):
+    def __init__(self, device_ip=None):
         super().__init__()
+        logger().info(f"#########==========>>>>>")
         self.device_ip = device_ip
 
     def run(self):
         # Initiate ping from third party wifi-client to DUT
-        ping(self.device_ip, 150)
-        time.sleep(2)
+        logger().info(f"Initiate ping from third party wifi-client to DUT")
+        ping(self.device_ip, 60)
+        time.sleep(1)
 
 
 class Data_transfer(ThreadBase):
@@ -210,6 +224,7 @@ class Data_transfer(ThreadBase):
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3', "channel": 1})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
@@ -234,16 +249,17 @@ class Data_transfer(ThreadBase):
         "ble_custom_ext_features": 0,
     }
 )
+# @pytest.mark.start_state("remote_wiseconnect3", sapi="init")
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.WPSSupportDisabled,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
@@ -288,7 +304,7 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463706(wifi_sniffer, wifi_access
     finally:
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
-@pytest.mark.skip()
+
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 1})
@@ -318,12 +334,12 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463706(wifi_sniffer, wifi_access
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.WPSSupportDisabled,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
         "tcpip_features":  Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
@@ -355,10 +371,10 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463710(wifi_sniffer, wifi_access
     finally:
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
-@pytest.mark.skip()
+
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 1})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "channel": 1})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.config(
     "wifi_dut",
@@ -384,12 +400,12 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463710(wifi_sniffer, wifi_access
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.WPSSupportDisabled,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
@@ -450,13 +466,13 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463711(wifi_sniffer, wifi_access
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.WPSSupportDisabled,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
@@ -536,7 +552,7 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463723(wifi_sniffer, wifi_access
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.WPSSupportDisabled,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |

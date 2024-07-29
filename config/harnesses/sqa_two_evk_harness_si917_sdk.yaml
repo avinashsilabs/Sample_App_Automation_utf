@@ -149,7 +149,7 @@ devices:
                 vid: 0x1366
                 pid: 0x0105
                 serial_number: '000440318528' # configure secondary evk serial number
-            sapi:
+            wifi:
                 type: 'sl_wifi_test_agent_cli'
                 src_dir: 'utf_wiseconnect_3.tests'
                 commander_options: '--serialno 000440318528 --device Si917' #configure secondary EVK serial number
