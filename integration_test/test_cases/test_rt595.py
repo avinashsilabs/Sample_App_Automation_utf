@@ -11,32 +11,11 @@ import time
 def logger():
     return get_logger(__name__)
 
+@pytest.fixture(autouse=True)
+def reset_dut():
+    # override the reset_dut fixture to do nothing
+    pass
 
-pytestmark = [
-    pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='FEATURE',
-                                                          feature_name='wifi_tests',
-                                                          test_creation_date='2022-06-06',
-                                                          module_name='wifi',
-                                                          test_description='module desc',
-                                                          iot_req_id='IOTREQ-1194',
-                                                          tool_chain='tool_chain',
-                                                          test_case_version_num=1,
-                                                          test_suite_name='test_suite_name',
-                                                          phy_name='phy_name',
-                                                          vendor_result='vendor_result',
-                                                          vendor_build='vendor_build',
-                                                          vendor_name='vendor_name',
-                                                          portal_watch='true',
-                                                          test_parametric_data='p1'
-                                                          ))
-
-]
-
-
-@pytest.mark.database_properties(UtfDatabaseProperties(test_result_type='SMOKE',
-                                                       test_case_name='test_version1',
-                                                       test_case_id='test_version1::1',
-                                                       notes='test notes'))
 def test_scan(wifi_dut):
     time.sleep(6)
     with TimeMeasurer() as t:
