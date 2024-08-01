@@ -1,6 +1,7 @@
 import pytest
 import datetime
 from datetime import datetime
+from retry import retry
 import re
 import uuid
 from typing import Dict
@@ -325,6 +326,7 @@ class DnsThread(ThreadBase):
         self.dns_mode = dns_mode
         self.utf_constants = utf_constants
 
+    @retry(Exception, delay=15, tries=3)
     def dns_request_with_server(self):
         if self.dns_mode == "dnsquery":
             logger().info("=======DNS SERVER WITH DHCP========")
@@ -460,33 +462,36 @@ def test_DNS_client_functionality_by_configuring_wrong_DNS_server_after_BLE_conn
                                                                                               wifi_sniffer,
                                                                                               utf_constants,
                                                                                               ble_client):
-    logger().info("*******************C133480************************")
-    validation = True
-    testcase = "wrong_dnsserver + ble"
-    channel = wifi_access_point.interfaces.wifi.channel
-    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
-    logger().info(f"**********wifi*******************")
-    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, testcase=testcase)
-    dns_mode = "wrong_dnsserver"
-    logger().info(f"wrong_dnsserver :  '{dns_mode}'")
-    dns_obj = DnsThread(wifi_dut, utf_constants, dns_mode=dns_mode)
-    bssid, dut_mac_address, device_ip = wifi_obj.join_get_ip()
-    time.sleep(5)
-    wifi_obj.powersave_ping()
-    ble_mode = "ble_slave"
-    logger().info(f"ble mode : {ble_mode}")
-    ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None)
-    dns_obj.dns_request_with_server()
-    time.sleep(5)
-    check_connection_status(wifi_dut, wlan=True)
-    check_connection_status(wifi_dut, ble=True)
-    wifi_leave(wifi_dut)
-    logger().info("Initiating BLE disconnection from ble_client")
-    ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
-    logger().info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_obj.sniffer_validation()
+    try:
+        logger().info("*******************C133480************************")
+        testcase = "wrong_dnsserver + ble"
+        channel = wifi_access_point.interfaces.wifi.channel
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+        logger().info(f"**********wifi*******************")
+        wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, testcase=testcase)
+        dns_mode = "wrong_dnsserver"
+        logger().info(f"wrong_dnsserver :  '{dns_mode}'")
+        dns_obj = DnsThread(wifi_dut, utf_constants, dns_mode=dns_mode)
+        bssid, dut_mac_address, device_ip = wifi_obj.join_get_ip()
+        time.sleep(5)
+        wifi_obj.powersave_ping()
+        ble_mode = "ble_slave"
+        logger().info(f"ble mode : {ble_mode}")
+        ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode, ble_dut_address=None)
+        dns_obj.dns_request_with_server()
+        time.sleep(5)
+        check_connection_status(wifi_dut, wlan=True)
+        check_connection_status(wifi_dut, ble=True)
+        wifi_leave(wifi_dut)
+        logger().info("Initiating BLE disconnection from ble_client")
+        ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation()
+
+    except Exception as error:
+        raise error
 
 
 @pytest.mark.config(
@@ -513,43 +518,46 @@ def test_DNS_client_functionality_by_configuring_wrong_DNS_server_after_BLE_conn
 def test_functionality_of_DNS_query_When_BLE_is_in_ADV_state_and_later_in_scan_state_C133583(wifi_dut, wifi_access_point,
                                                                                             utf_constants, wifi_sniffer,
                                                                                             ble_client):
-    logger().info("*******************C133583************************")
-    validation = True
-    testcase = "dns_query+ble"
-    channel = wifi_access_point.interfaces.wifi.channel
-    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
-    ble_mode = "ble_slave"
-    logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
-    ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
-    logger().info(f"**********wifi*******************")
-    wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, testcase=testcase)
-    dns_mode = "dnsquery"
-    logger().info(f"dns_mode : {dns_mode}")
-    dns_obj = DnsThread(wifi_dut, utf_constants, dns_mode=dns_mode)
-    bssid, dut_mac_address, device_ip = wifi_obj.join_get_ip()
-    time.sleep(5)
-    wifi_obj.powersave_ping()
-    dns_obj.dns_request_with_server()
-    time.sleep(5)
-    check_connection_status(wifi_dut, wlan=True)
-    check_connection_status(wifi_dut, ble=True)
-    logger().info(f"Clean up activity")
-    wifi_leave(wifi_dut)
-    logger().info("Initiating BLE disconnection from ble_client")
-    ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
-    time.sleep(4)
-    logger().info("Successfully disconnected from BLE SLAVE Device")
-    logger().info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-    dns_pkt = dns_pkt_check(
-        wifi_sniffer,
-        logger,
-        decryption_key,
-        dut_mac_address,
-        testcase,
-    )
-    logger().info(f"*********** DNS packet {dns_pkt} ***********")
-    assert dns_pkt, "***** Unable to find dns packet in the sniffer capture ***"
-    wifi_obj.sniffer_validation()
+    try:
+        logger().info("*******************C133583************************")
+        testcase = "dns_query+ble"
+        channel = wifi_access_point.interfaces.wifi.channel
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+        ble_mode = "ble_slave"
+        logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
+        ble_client_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
+        logger().info(f"**********wifi*******************")
+        wifi_obj = WifiThread(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, testcase=testcase)
+        dns_mode = "dnsquery"
+        logger().info(f"dns_mode : {dns_mode}")
+        dns_obj = DnsThread(wifi_dut, utf_constants, dns_mode=dns_mode)
+        bssid, dut_mac_address, device_ip = wifi_obj.join_get_ip()
+        time.sleep(5)
+        wifi_obj.powersave_ping()
+        dns_obj.dns_request_with_server()
+        time.sleep(5)
+        check_connection_status(wifi_dut, wlan=True)
+        check_connection_status(wifi_dut, ble=True)
+        logger().info(f"Clean up activity")
+        wifi_leave(wifi_dut)
+        logger().info("Initiating BLE disconnection from ble_client")
+        ble_client.interfaces.bluetooth.disconnect(ble_dut_address)
+        time.sleep(4)
+        logger().info("Successfully disconnected from BLE SLAVE Device")
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        dns_pkt = dns_pkt_check(
+            wifi_sniffer,
+            logger,
+            decryption_key,
+            dut_mac_address,
+            testcase,
+        )
+        logger().info(f"*********** DNS packet {dns_pkt} ***********")
+        assert dns_pkt, "***** Unable to find dns packet in the sniffer capture ***"
+        wifi_obj.sniffer_validation()
+
+    except Exception as error:
+        raise error
