@@ -107,10 +107,6 @@ class WLanThread(ThreadBase):
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated,
                                                                          channel=self.wifi_access_point.interfaces.wifi.channel)
-                power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address, filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=power_save_filter)[
-                           'packet_count'] > 0, "Unable to find NULL-Data frame packets with power save bit = 1"
                 for i in range(0, 5):
                     self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
                     self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
@@ -128,10 +124,6 @@ class WLanThread(ThreadBase):
                     logger().info(content_dut)
                     assert content_dut == content_client, "fetched data is not same as expected data"
                     self.wifi_dut.interfaces.wifi.http_client_deinit()
-
-                logger().info("Stopping sniffer capture")
-                self.wifi_sniffer.interfaces.capture.stop_capture()
-
                 time.sleep(5)
                 self.wifi_dut.interfaces.wifi.leave()
                 return
@@ -872,7 +864,12 @@ def test_wifi_sdk_https_get_functionality_with_long_http_url_bit_disable_without
                               sniffer_filter=sniffer_filter)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        power_save_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=wlan_obj.ap_mac_address, filter_name="power_mgmt_bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=power_save_filter)[
+                   'packet_count'] > 0, "Unable to find NULL-Data frame packets with power save bit = 1"
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
