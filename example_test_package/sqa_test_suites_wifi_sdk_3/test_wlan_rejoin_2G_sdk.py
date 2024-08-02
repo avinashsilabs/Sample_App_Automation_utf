@@ -275,10 +275,10 @@ class WLanThread(ThreadBase):
 
             else:
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
-                                                                     wifi_access_point=self.wifi_access_point,
-                                                                     associated=self.wifi_dut.interfaces.wifi.associated
-                                                                     , ping_after_power_save=False,
-                                                                     channel=self.wifi_access_point.interfaces.wifi.channel)
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated
+                                                                         , ping_after_power_save=False, retry_count=3,
+                                                                         channel=self.wifi_access_point.interfaces.wifi.channel)
                 logger().info("DUT successfully connected with AP")
             time.sleep(2)
 
@@ -326,17 +326,18 @@ class WLanThread(ThreadBase):
                 logger().error(f"Unable to open socket id: {self.socket_id}")
                 raise RuntimeError(self.socket_id)
 
-            logger().error(f"\n\n Socket bind in DUT for socket-id: {self.socket_id}")
-            self.wifi_dut.interfaces.wifi.bind(socket_fd=self.socket_id, device_ip=self.dut_addr['device_ip'], timeout=15)
-            logger().error(f"\n\n Trying to connect with server ")
-            self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=self.socket_id, server_ip=self.host_ip, server_port=5002, timeout=30)
-
+            server_port = self.net_perf_client.interfaces.net_perf.server_port
+            logger().info(f"\nSocket bind in DUT for socket-id: {self.socket_id}")
+            self.wifi_dut.interfaces.wifi.bind(socket_fd=self.socket_id, device_ip=self.dut_addr['device_ip'],
+                                               timeout=15)
+            logger().info(f"\nTrying to connect with server ")
+            self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=self.socket_id, server_ip=self.host_ip,
+                                                           server_port=server_port, timeout=60)
             if bsdSetSocketOpt:
-                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=self.socket_id, option_name=option_name, option_val=option_val,
-                                                   )
-
-            logger().error(f"\n **** Start validation of socket data transfer in rejoin scenario with AP turn off & "
-                           f"Turn on again ****\n")
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=self.socket_id, option_name=option_name,
+                                                              option_val=option_val)
+            logger().info(f"\n **** Start validation of socket data transfer in rejoin scenario with AP turn off & "
+                          f"Turn on again ****\n")
             sw = Stopwatch()
             check_flag = False
             while sw.elapsed_sec < end_time:

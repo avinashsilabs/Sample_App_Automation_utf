@@ -139,13 +139,14 @@ class WLanThread(ThreadBase):
                 logger().error(f"Unable to open socket id: {socket_id}")
                 raise RuntimeError(socket_id)
 
-            logger().error(f"\n\n Socket bind in DUT for socket-id: {socket_id}")
+            server_port = self.net_perf_client.interfaces.net_perf.server_port
+            logger().info(f"\nSocket bind in DUT for socket-id: {socket_id}")
             self.wifi_dut.interfaces.wifi.bind(socket_fd=socket_id, device_ip=self.dut_addr['device_ip'], timeout=15)
-            logger().error(f"\n\n Trying to connect with server ")
-            self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=socket_id, server_ip=self.host_ip, server_port=5002, timeout=30)
-
-            logger().error(f"\n **** Start validation of socket data transfer in rejoin scenario with AP turn off & "
-                           f"Turn on again ****\n")
+            logger().info(f"\nTrying to connect with server")
+            self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=socket_id, server_ip=self.host_ip,
+                                                           server_port=server_port, timeout=60)
+            logger().info(f"\n **** Start validation of socket data transfer in rejoin scenario with AP turn off & "
+                          f"Turn on again ****\n")
             sw = Stopwatch()
             check_flag = False
             while sw.elapsed_sec < end_time:
@@ -163,7 +164,7 @@ class WLanThread(ThreadBase):
                         self.switch.interfaces.pdu_switch.turn_off(delay=20)
 
                         logger().info('******* Turn on Access point **********')
-                        self.switch.interfaces.pdu_switch.turn_on(delay=40)
+                        self.switch.interfaces.pdu_switch.turn_on(delay=60)
                         check_flag = True
 
             self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=socket_id, timeout=15)
