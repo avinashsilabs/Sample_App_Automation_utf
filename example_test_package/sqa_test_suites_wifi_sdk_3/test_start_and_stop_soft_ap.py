@@ -2093,3 +2093,82 @@ def test_wifi_sdk_enh_max_psp_after_stop_ap_dtim_based_concurrent_concurrent_C19
     finally:
         logger().info(f"Clean up activity")
         wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.parametrize("channel", [1])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 1
+    },
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@Silabs",
+                "channel": 1,
+                "interface": "wlan0",
+         }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 1,
+    }
+)
+def test_wifi_sdk_sta_ap_conn_disconn_concurrent_mode_C191357(wifi_sniffer, wifi_dut, wifi_clients,
+                                                 utf_constants, sl_collections, sniffer_filter, channel,
+                                                 wifi_access_point):
+    """Do start and Stop AP along with RSI_STA connect & disconnectin concurrent mode"""
+    try:
+        iter_count = utf_constants.get("iter_count")
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=channel)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191357.pcap")
+        time.sleep(3)
+        for i in range(0, iter_count):
+            sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                wifi_access_point=wifi_access_point,
+                                                associated=wifi_dut.interfaces.wifi.associated,
+                                                power_save=False, ping_after_power_save=False)
+            time.sleep(2)
+            wifi_dut.interfaces.wifi.leave()
+            time.sleep(2)
+            wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", psk="Automation@123",
+                                              channel=1,
+                                              dtim_beacon_count=5,
+                                              beacon_interval=100)
+            dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+            logger().info(f"AP-UT MAC Address: {dut_mac_address}")
+            ap_bssid = wifi_access_point.interfaces.wifi.bssid
+            time.sleep(2)
+            wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+            time.sleep(5)
+            wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", psk="Automation@123",
+                                              channel=1,
+                                              dtim_beacon_count=5,
+                                              beacon_interval=100)
+            time.sleep(2)
+            wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+            logger().info(f'AP BSSID = {ap_bssid}')
+            logger().info(f"stop the AP")
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

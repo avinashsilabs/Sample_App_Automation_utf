@@ -1213,7 +1213,6 @@ def test_wifi_sdk_concurrent_mode_sta_ap_C535104(wifi_access_point, wifi_dut, wi
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -1221,4 +1220,54 @@ def test_wifi_sdk_concurrent_mode_sta_ap_C535104(wifi_access_point, wifi_dut, wi
         wifi_dut.interfaces.wifi.stop_ap()
 
 
-
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+def test_wifi_sdk_concurrent_mode_read_mac_C537336(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer, sniffer_filter, utf_constants, sl_collections):
+    try:
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C535104.pcap")
+        time.sleep(3)
+        sta_mac = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"STA-UT MAC Address: {sta_mac}")
+        sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                            wifi_access_point=wifi_access_point,
+                                            associated=wifi_dut.interfaces.wifi.associated,
+                                            power_save=False, ping_after_power_save=False)
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", psk="Automation@123", channel=11,
+                                          dtim_beacon_count=1,
+                                          beacon_interval=100)
+        time.sleep(2)
+        ap_mac = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"AP-UT MAC Address: {ap_mac}")
+        time.sleep(2)
+        wifi_client.interfaces.wifi.leave()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
