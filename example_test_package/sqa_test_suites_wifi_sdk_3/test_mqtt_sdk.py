@@ -4253,7 +4253,7 @@ def test_wifi_sdk_qos0_mqtt_ssl_simultaneous_with_two_topic_length_C537955(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["mqtt_disconnect", "unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_qos1_mqtt_ssl_simultaneous_with_two_topic_length_C537953(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter,
         utf_constants):
@@ -4278,43 +4278,53 @@ def test_wifi_sdk_qos1_mqtt_ssl_simultaneous_with_two_topic_length_C537953(
 
         wifi_obj.start()
         wifi_obj.wait_for_exit()
-        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
 
-        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(server_port=8883, is_connection_encrypted=True,
-                                                                        client_id="Si91x_mqtt_client", qos=1)
-        logger().info(".....DUT connects to MQTT server.....")
-        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
-        time.sleep(25)
-        logger().info(".....MQTT Client connects to MQTT server.....")
-        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
-        time.sleep(5)
+        for count in range(0, 3):
+            wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+            wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(server_port=8883, is_connection_encrypted=True,
+                                                                            client_id="Si91x_mqtt_client", qos=1)
+            logger().info(".....DUT connects to MQTT server.....")
+            wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+            time.sleep(25)
+            logger().info(".....MQTT Client connects to MQTT server.....")
+            mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+            time.sleep(5)
 
-        logger().info("*************** MQTT Client subscribes to the topic1 *****************")
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic1, qos=1)
-        time.sleep(2)
-        logger().info("*************** DUT subscribes to the topic1 *******************")
-        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic1, qos=1)
-        time.sleep(5)
+            logger().info("*************** MQTT Client subscribes to the topic1 *****************")
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic1, qos=1)
+            time.sleep(2)
+            logger().info("*************** DUT subscribes to the topic1 *******************")
+            wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic1, qos=1)
+            time.sleep(5)
 
-        logger().info("*************** MQTT Client subscribes to the topic2 ***************")
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic2, qos=1)
-        time.sleep(2)
-        logger().info("*************** DUT subscribes to the topic2 ***************")
-        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic2, qos=1)
-        time.sleep(5)
+            logger().info("*************** MQTT Client subscribes to the topic2 ***************")
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic2, qos=1)
+            time.sleep(2)
+            logger().info("*************** DUT subscribes to the topic2 ***************")
+            wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic2, qos=1)
+            time.sleep(5)
 
-        mqtt_rx_obj.start()
-        mqtt_tx_obj.start()
-        mqtt_tx_obj.wait_for_exit()
-        mqtt_rx_obj.wait_for_exit()
-        time.sleep(5)
-        mqtt_rx_obj.dut_receive_check()
+            mqtt_rx_obj.start()
+            mqtt_tx_obj.start()
+            mqtt_tx_obj.wait_for_exit()
+            mqtt_rx_obj.wait_for_exit()
+            time.sleep(5)
+            mqtt_rx_obj.dut_receive_check()
 
-        logger().info("....Unsubscribing from the topic1....")
-        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic1)
+            logger().info("....Unsubscribing from the topic1....")
+            wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic1)
+            time.sleep(5)
 
-        logger().info("....Unsubscribing from the topic2....")
-        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic2)
+            logger().info("....Unsubscribing from the topic2....")
+            wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic2)
+            time.sleep(5)
+
+            logger().info("....disconnecting from MQTT broker....")
+            wifi_dut.interfaces.mqtt.mqtt_client_disconnect()
+            time.sleep(5)
+
+            logger().info("....calling de-init API....")
+            wifi_dut.interfaces.mqtt.mqtt_client_deinit()
 
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
