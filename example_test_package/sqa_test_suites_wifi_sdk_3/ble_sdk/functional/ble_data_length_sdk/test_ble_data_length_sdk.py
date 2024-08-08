@@ -533,13 +533,14 @@ def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wif
                                                                                   service_classes=[svc])
                 assert bt_client_address, "failed to initialize ble in remote device"
 
+                logger().info("******************** start scanning in dut ********************")
+                ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=100)
+                ble_dut.interfaces.bluetooth.ble_stop_scanning()
+
                 logger().info(f"....Applying performance profile mode and Enable_bt_power_save")
                 ble_dut.interfaces.bluetooth.set_performance_profile()
                 ble_dut.interfaces.bluetooth.enable_bt_power_save()
 
-                logger().info("******************** start scanning in dut ********************")
-                ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=100)
-                ble_dut.interfaces.bluetooth.ble_stop_scanning()
                 timeout = 30
                 logger().info(f"Initiating connection this can take upto {timeout} seconds....")
                 ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
@@ -675,13 +676,14 @@ def test_ble_master_rx_100_bytes_C19930(ble_dut, ble_client, sl_collections, wif
                                                                                   service_classes=[svc])
                 assert bt_client_address, "failed to initialize ble in remote device"
 
+                logger().info("******************** start scanning in dut ********************")
+                ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=100)
+                ble_dut.interfaces.bluetooth.ble_stop_scanning()
+
                 logger().info(f"....Applying performance profile mode and Enable_bt_power_save")
                 wifi_dut.interfaces.wifi.set_performance_profile()
                 wifi_dut.interfaces.wifi.enable_bt_power_save()
 
-                logger().info("******************** start scanning in dut ********************")
-                ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=100)
-                ble_dut.interfaces.bluetooth.ble_stop_scanning()
                 timeout = 30
                 logger().info(f"Initiating connection this can take upto {timeout} seconds....")
                 ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
