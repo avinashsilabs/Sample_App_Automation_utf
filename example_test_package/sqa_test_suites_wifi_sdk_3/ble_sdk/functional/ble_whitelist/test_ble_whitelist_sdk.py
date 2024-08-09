@@ -974,6 +974,7 @@ def test_ble_dut_slave_2_white_list_rd_1_non_white_list_rd_c19844(ble_dut, ble_c
                     except Exception:
                         logger().info(
                             f"\n\n **** ble connection Failed....retrying for the {count + 1} iteration ****\n\n")
+                break
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
