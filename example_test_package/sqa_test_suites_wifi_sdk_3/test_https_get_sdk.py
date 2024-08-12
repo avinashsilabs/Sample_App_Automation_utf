@@ -160,9 +160,10 @@ class WLanThread(ThreadBase):
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
             time.sleep(3)
 
-            self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
-                                                     associated=self.wifi_dut.interfaces.wifi.associated,
-                                                     channel=self.wifi_access_point.interfaces.wifi.channel)
+            self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                     wifi_access_point=self.wifi_access_point,
+                                                                     associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                     channel=self.wifi_access_point.interfaces.wifi.channel)
 
             self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
             self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
@@ -734,13 +735,12 @@ def test_wifi_sdk_https_get_functionality_different_urls_c19205(http_server, wif
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.skip('Not Supported on WSDK 3.0')
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.DualBluetoothBLE,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPClient
@@ -750,12 +750,12 @@ def test_wifi_sdk_https_get_functionality_different_urls_c19205(http_server, wif
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
-@pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"index_long_lf.html"})
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_http_get_with_host_name_c19216(http_server, wifi_sniffer, http_client, wifi_dut, wifi_access_point,
-                                                 index_path, utf_constants, sl_collections):
+                                                 index_path, utf_constants, sl_collections, sniffer_filter):
     """
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -772,15 +772,22 @@ def test_wifi_sdk_http_get_with_host_name_c19216(http_server, wifi_sniffer, http
         wlan_obj.wait_for_exit()
 
         logger().info("fetches https data using get method")
-        status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path,
-                                                            host_name="www.google.com")
+        status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path, server_port=443)
         logger().info(status)
         logger().info(content)
-        assert status, "failed to fetch the http data"
+        assert not status, "failed to fetch the http data"
         assert content, "failed to load the http data"
+
+        wifi_dut.interfaces.wifi.http_client_deinit()
 
         logger().info("Stopping sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
+
+        power_save_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=wlan_obj.ap_mac_address,
+            filter_name="power_mgmt_bit")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=power_save_filter)[
+                   'packet_count'] > 0, "Unable to find NULL-Data frame packets with power save bit = 1"
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)

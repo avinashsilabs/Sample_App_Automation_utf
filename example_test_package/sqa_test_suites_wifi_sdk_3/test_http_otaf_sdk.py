@@ -214,7 +214,7 @@ class WifiJoin(ThreadBase):
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
@@ -258,7 +258,7 @@ def test_sdk_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780(http_serv
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 0, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}, "ble": {"count": 0, "stack_len": 2048}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
@@ -302,7 +302,7 @@ def test_sdk_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 0, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}, "ble": {"count": 0, "stack_len": 2048}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
@@ -345,7 +345,7 @@ def test_sdk_http_fw_upgrade_failure_with_empty_rps_C19800(http_server, wifi_sni
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 0, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}, "ble": {"count": 0, "stack_len": 2048}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
@@ -388,7 +388,7 @@ def test_sdk_http_fw_upgrade_failure_without_enabling_http_C19799(http_server, w
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
@@ -432,6 +432,7 @@ def test_sdk_fw_upgrade_failure_when_STA_is_not_connected_C19779(http_server, wi
 @pytest.mark.config(
     "wifi_dut",
     wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
@@ -469,6 +470,7 @@ def test_sdk_http_fw_upgrade_failure_with_non_rps_C19798(http_server, wifi_sniff
 @pytest.mark.config(
     "wifi_dut",
     wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
@@ -505,7 +507,7 @@ def test_http_fw_upgrade_failure_with_junk_rps_C19797(http_server, wifi_sniffer,
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 0, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}, "ble": {"count": 0, "stack_len": 2048}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
@@ -550,6 +552,7 @@ def test_sdk_http_fw_upgrade_failure_when_enabled_only_ble_C19796(http_server, w
 @pytest.mark.config(
     "wifi_dut",
     wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
@@ -590,6 +593,7 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_sniffer, wifi_acces
 @pytest.mark.config(
     "wifi_dut",
     wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
@@ -631,6 +635,7 @@ def test_sdk_http_fw_upgrade_over_night_corrupted_file_C19794(http_server, wifi_
 @pytest.mark.config(
     "wifi_dut",
     wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
@@ -671,7 +676,7 @@ def test_sdk_http_fw_upgrade_over_night_corrupted_file_C19795(http_server, wifi_
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
         "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,

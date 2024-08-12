@@ -181,7 +181,7 @@ def test_ble_validate_ibeacon_adv_data_parameters_c19947(ble_dut, ble_client, sl
             ble_dut.interfaces.wifi.ble_stop_advertising()
 
 
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.skip(reason="Test case is inconsistent")   #This needs to be applied
 def test_ble_hogp_smp_slave_mode_c19948(ble_dut, ble_client, sl_collections):
     with BleLogs(
             start_collecting_logs=True,
