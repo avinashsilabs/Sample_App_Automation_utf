@@ -151,7 +151,6 @@ class SocketDataTransfer:
                 remote_socket.interfaces.socket.sockets[sock_id].send_data_tcp(tx_buffer, use_server_socket)
 
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1106,16 +1105,24 @@ def test_wifi_sdk_sync_socket_select_with_timeout_null_c19335(wifi_sniffer, wifi
         while sw.elapsed_sec <= 30:
             wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
             tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=buffer_length))
-            trf_thread = Thread(target=sock_obj.send_data_tcp, args=(remote_socket, tx_buffer),
+            trf_thread = Thread(target=sock_obj.send_data_tcp, args=(remote_socket, tx_buffer, 1),
                                 kwargs={'wait_time': time_interval})
             trf_thread.start()
             wifi_dut.interfaces.wifi.bsdSocketSelect(numberOfFds=1, time='NULL', timeout=time_interval + 10,
                                                      async_timeout=time_interval + 10)
             trf_thread.join()
-            buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock, timeout=120, async_timeout=120)
-            assert len(tx_buffer) == len(buffer_rx), f"buffer length sent by remote peer and received on the socket " \
-                                                     f"id {sock} opened in the DUT is not matched"
-            logger.info("Data sent by remote peer and received at DUT is matching")
+            count = 0
+            for pkt_count in range(5):
+                tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=buffer_length))
+                logger().info(f"Sending data from remote peer, data --> {tx_buffer}")
+                sock_obj.send_data_tcp(remote_socket, tx_buffer, count)
+                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock, timeout=120,
+                                                                          async_timeout=120)
+                assert len(tx_buffer) == len(
+                    buffer_rx), f"buffer length sent by remote peer and received on the socket " \
+                                f"id {sock} opened in the DUT is not matched"
+                logger.info("Data sent by remote peer and received at DUT is matching")
+                count = 1
 
         logger.info(f"Closing socket_id->{sock}")
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)

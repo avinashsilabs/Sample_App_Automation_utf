@@ -468,6 +468,6 @@ def test_wsdk_verify_rts_in_high_congestion_tcp_rx_c537948(wifi_dut, wifi_access
         rts_status = rts_cts_data_sequence_check(wifi_sniffer, dut_mac_address, ap_bssid, rts_threshold=235,
                                                  test_case="test_c537948", data_len_check=False)
         assert rts_status, "Unable to find sequence RTS--->CTS--->DATA packets sequence in sniffer capture"
-        assert zero_stalls_count, "Observed tcp zero stalls in iperf log file"
+        assert zero_stalls_count == 0, "Observed tcp zero stalls in iperf log file"
     except Exception as err:
         sl_collections.exception_handling(wifi_dut, err)
