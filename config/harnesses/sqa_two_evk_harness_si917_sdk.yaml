@@ -129,6 +129,56 @@ devices:
                         count: 2
                         stack_len: 2048
 
+    remote_wiseconnect3_1:
+        type: 'efx32'
+        subtype: 'efr32'
+        commander_options: '--serialno 000440280963 --device Si917' #configure secondary EVK serial number
+        defaults:
+            cli_transport: 'serial'
+        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
+        interfaces:
+            serial:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440280963' # configure secondary evk serial number
+            wifi:
+                type: 'sl_wifi_test_agent_cli'
+                src_dir: 'utf_wiseconnect_3.tests'
+                commander_options: '--serialno 000440280963 --device Si917' #configure secondary EVK serial number
+
+    remote_wiseconnect3_2:
+        type: 'efx32'
+        subtype: 'efr32'
+        commander_options: '--serialno 000440296594 --device Si917' #configure secondary EVK serial number
+        defaults:
+            cli_transport: 'serial'
+        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
+        interfaces:
+            serial:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440296594' # configure secondary evk serial number
+            wifi:
+                type: 'sl_wifi_test_agent_cli'
+                src_dir: 'utf_wiseconnect_3.tests'
+                commander_options: '--serialno 000440296594 --device Si917' #configure secondary EVK serial number
+
     remote_wiseconnect3:
         type: 'efx32'
         subtype: 'efr32'
@@ -967,6 +1017,10 @@ defaults:
     efx32: 'efr32_4180b_Si917'
 
     remote_wiseconnect3: 'remote_wiseconnect3'
+
+    remote_wiseconnect3s:
+        - 'remote_wiseconnect3_1'
+        - 'remote_wiseconnect3_2'
 
 #    # List of devices on test bed, used for loading/upgrading firmware at test case level
     wiseconnect_duts:
