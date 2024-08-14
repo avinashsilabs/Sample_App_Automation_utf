@@ -191,22 +191,21 @@ class BleFunctionality(ThreadBase):
         return char_path
     def tx_on_dut(self, char_path=None, char_uuid=None, data=None):
         sw = Stopwatch()
+        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
+                                                                                     char_uid=char_uuid)
         while sw.elapsed_sec <= 60:
-            self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
-            self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
-                                                                                    char_uid=char_uuid)
             self.wifi_dut.interfaces.wifi.ble_set_local_att_value(notify_data=data, val_handle=12)
             time.sleep(3)
-            # unsubscribe to notifications
-            self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-            self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uuid)
-            time.sleep(1)
             logger().info("\n\n\n ***** validating Received notifications on Remote *****\n\n")
             notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uuid]
             logger().info(f"Notifications received on remote: {notifications}")
-            # logger().info("\n * NOtifications: \n {} \n\n".format(notifications))
-            assert len(notifications) > 0, "received data is empty"
-            assert data in notifications[0], "failed to fetch data"
+            # unsubscribe to notifications
+        self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uuid)
+        time.sleep(1)
+        assert len(notifications) > 0, "received data is empty"
+        assert data in notifications[0], "failed to fetch data"
 
 
     def check_device_state_on_dut(self):
