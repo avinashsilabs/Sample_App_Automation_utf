@@ -852,7 +852,7 @@ def test_wifi_sdk_device_as_ap_and_sta_c19324(sl_collections, wifi_access_point,
         "features": Si91xFeatureBitMap.WPSSupportDisabled,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid |  Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
         "security": "OPEN", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
     },
@@ -900,9 +900,8 @@ def test_wifi_sdk_device_as_ap_and_sta_c19317(sl_collections, wifi_access_point,
         logger().info("Checking for rejoin fail event from dut, this may take some time....")
         sw = Stopwatch()
         rejoin_msg = 0
-        since_time = time.perf_counter_ns()
         while sw.elapsed_sec <= 500:
-            events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+            events = wifi_dut.interfaces.wifi.get_async_events()
             for event in events:
                 if event.event_type == AsyncEventIdentifiers.REJOIN_EVENT:
                     rejoin_msg = 1
