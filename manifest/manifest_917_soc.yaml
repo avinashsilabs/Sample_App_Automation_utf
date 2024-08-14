@@ -1,9 +1,9 @@
 firmware:
   efx32:
     load_binary:
-      file_name: &firmware_file_anchor 'SiWG917-B.2.12.1.0.0.10.rps'
+      file_name: &firmware_file_anchor 'SiWG917-B.2.12.2.1.0.9.rps'
     write_firmware:
-      file_name: 'test_agent_soc_generic_rcf3_commit_a146ffad27.rps'
+      file_name: 'test_agent_soc_rcf2_daf57c7579_generic192k.rps'
 
 firmware_version_file: *firmware_file_anchor
 # List of devices to be reset when needed
@@ -73,10 +73,25 @@ firmware_applications:
         device_subtype: 'efr32'
         filename: '917_ccp/generic_test_agent_without_aws.rps'
 
+    test_twt_sta:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_soc_rcf2_daf57c7579_twt.rps'
+
+    test_ipv6:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_soc_rcf2_daf57c7579_ipv6.rps'
+
+    test_azure:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_soc_rcf2_daf57c7579_azure.rps'
+
     test_480K_M4SS_192K:
       - device_type: 'efx32'
         device_subtype: 'efr32'
-        filename: 'test_agent_soc_cf_480k.rps'
+        filename: 'test_agent_soc_rcf2_daf57c7579_generic192k.rps'
 
     test_416K_M4SS_256K:
       - device_type: 'efx32'

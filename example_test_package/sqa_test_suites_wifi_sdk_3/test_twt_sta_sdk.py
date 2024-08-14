@@ -453,13 +453,13 @@ pytestmark = [
         }
     )
 ]
-
-
+@pytest.mark.firmware_app("test_twt_sta")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
-def test_wifi_sdk_verify_twt_in_assoc_req_c113725(wifi_dut, wifi_access_point, sl_collections, wifi_sniffer,
+@pytest.mark.test_src_map_id('C113725')
+def test_wifi_sdk_verify_twt_in_assoc_req_c113725(firmware_loader, wifi_dut, wifi_access_point, sl_collections, wifi_sniffer,
                                                   sniffer_filter, utf_constants):
     """Verify whether DUT is able to send TWT requester capability in Assoc req packet when TWT support is enabled"""
     """
@@ -483,6 +483,7 @@ def test_wifi_sdk_verify_twt_in_assoc_req_c113725(wifi_dut, wifi_access_point, s
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113726')
 def test_wifi_sdk_verify_twt_functionality_when_enabled_through_join_c113726(wifi_dut, wifi_access_point,
                                                                              sl_collections, wifi_sniffer,
                                                                              sniffer_filter, utf_constants):
@@ -507,6 +508,7 @@ def test_wifi_sdk_verify_twt_functionality_when_enabled_through_join_c113726(wif
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113727')
 def test_wifi_sdk_verify_twt_request_when_enabled_before_join_c113727(wifi_dut, wifi_access_point, sl_collections,
                                                                       wifi_sniffer, sniffer_filter, utf_constants):
     """Verify whether DUT is able to create TWT setup with request support after association(key exchange) when we call
@@ -532,6 +534,7 @@ def test_wifi_sdk_verify_twt_request_when_enabled_before_join_c113727(wifi_dut, 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113728')
 def test_wifi_sdk_verify_twt_suggest_when_enabled_before_join_c113728(wifi_dut, wifi_access_point, sl_collections,
                                                                       wifi_sniffer, sniffer_filter, utf_constants):
     """Verify whether DUT is able to create TWT setup with suggest support after association(key exchange) when we call
@@ -558,6 +561,7 @@ def test_wifi_sdk_verify_twt_suggest_when_enabled_before_join_c113728(wifi_dut, 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113729')
 def test_wifi_sdk_verify_twt_demand_when_enabled_before_join_c113729(wifi_dut, wifi_access_point,
                                                                      sl_collections, wifi_sniffer,
                                                                      sniffer_filter, utf_constants):
@@ -586,6 +590,7 @@ def test_wifi_sdk_verify_twt_demand_when_enabled_before_join_c113729(wifi_dut, w
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", 'disable_twt'])
+@pytest.mark.test_src_map_id('C113730')
 def test_wifi_sdk_verify_twt_request_when_enabled_after_join_c113730(wifi_dut, wifi_access_point,
                                                                      sl_collections, wifi_sniffer,
                                                                      sniffer_filter, utf_constants):
@@ -614,6 +619,7 @@ def test_wifi_sdk_verify_twt_request_when_enabled_after_join_c113730(wifi_dut, w
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", 'disable_twt'])
+@pytest.mark.test_src_map_id('C113731')
 def test_wifi_sdk_verify_twt_suggest_when_enabled_after_join_c113731(wifi_dut, wifi_access_point,
                                                                      sl_collections, wifi_sniffer,
                                                                      sniffer_filter, utf_constants):
@@ -642,6 +648,7 @@ def test_wifi_sdk_verify_twt_suggest_when_enabled_after_join_c113731(wifi_dut, w
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113732')
 def test_wifi_sdk_verify_twt_demand_when_enabled_after_join_c113732(wifi_dut, wifi_access_point,
                                                                     sl_collections, wifi_sniffer,
                                                                     sniffer_filter, utf_constants):
@@ -668,6 +675,7 @@ def test_wifi_sdk_verify_twt_demand_when_enabled_after_join_c113732(wifi_dut, wi
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113733')
 def test_wifi_sdk_verify_default_retry_attempts_for_twt_c113733(wifi_dut, wifi_access_point, sl_collections,
                                                                 wifi_sniffer, sniffer_filter, switch, utf_constants):
     """Verify DUT is able to retry the TWT req frame for default number of TWT setup retry limit if AP doesn't give TWT
@@ -693,6 +701,7 @@ def test_wifi_sdk_verify_default_retry_attempts_for_twt_c113733(wifi_dut, wifi_a
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113734')
 def test_wifi_sdk_verify_configured_retry_attempts_for_twt_c113734(wifi_dut, wifi_access_point, sl_collections,
                                                                    wifi_sniffer, sniffer_filter, switch, utf_constants):
     """Verify DUT is able to retry the TWT req frame for configured number of TWT setup retry limit if AP doesn't give
@@ -719,6 +728,7 @@ def test_wifi_sdk_verify_configured_retry_attempts_for_twt_c113734(wifi_dut, wif
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113735')
 def test_wifi_sdk_verify_default_retry_interval_for_twt_c113735(wifi_dut, wifi_access_point, sl_collections,
                                                                 wifi_sniffer, sniffer_filter, switch, utf_constants):
     """Verify the delay between each retry TWT request frame when we configured the Retry Periodicity"""
@@ -744,6 +754,7 @@ def test_wifi_sdk_verify_default_retry_interval_for_twt_c113735(wifi_dut, wifi_a
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113736')
 def test_wifi_sdk_verify_whether_dut_accepts_rejects_alternate_twt_setup_c113736(wifi_dut, wifi_access_point,
                                                                                  sl_collections, wifi_sniffer,
                                                                                  sniffer_filter, utf_constants):
@@ -764,12 +775,13 @@ def test_wifi_sdk_verify_whether_dut_accepts_rejects_alternate_twt_setup_c113736
     except Exception as Ex:
         logger().info(f"Exception occurred: {Ex}")
 
-
+@pytest.mark.firmware_app("test_twt_sta")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
-def test_wifi_sdk_verify_whether_dut_able_to_teardown_with_second_twt_enablement_c113738(wifi_dut, wifi_access_point,
+@pytest.mark.test_src_map_id('C113738')
+def test_wifi_sdk_verify_whether_dut_able_to_teardown_with_second_twt_enablement_c113738(firmware_loader, wifi_dut, wifi_access_point,
                                                                                          sl_collections, wifi_sniffer,
                                                                                          sniffer_filter, utf_constants):
     """
@@ -793,6 +805,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_teardown_with_second_twt_enablement
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113739')
 def test_wifi_sdk_verify_whether_dut_able_to_setup_second_time_when_first_twt_fails_c113739(wifi_dut, wifi_access_point,
                                                                                             sl_collections,
                                                                                             wifi_sniffer,
@@ -820,6 +833,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_second_time_when_first_twt_fa
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113742')
 def test_wifi_sdk_verify_whether_dut_able_to_setup_implicit_twt_c113742(wifi_dut, wifi_access_point,
                                                                         sl_collections, wifi_sniffer,
                                                                         sniffer_filter, utf_constants):
@@ -846,6 +860,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_implicit_twt_c113742(wifi_dut
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113743')
 def test_wifi_sdk_verify_whether_dut_able_to_send_implicit_twt_after_sending_explicit_twt_c113743(wifi_dut,
                                                                                                   wifi_access_point,
                                                                                                   sl_collections,
@@ -875,6 +890,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_send_implicit_twt_after_sending_exp
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113744')
 def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_twt_c113744(wifi_dut, wifi_access_point,
                                                                            sl_collections, wifi_sniffer,
                                                                            sniffer_filter, utf_constants):
@@ -901,6 +917,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_twt_c113744(wifi_
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113745')
 def test_wifi_sdk_verify_whether_dut_able_to_setup_announced_twt_c113745(wifi_dut, wifi_access_point,
                                                                          sl_collections, wifi_sniffer,
                                                                          sniffer_filter, utf_constants):
@@ -927,6 +944,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_announced_twt_c113745(wifi_du
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113746')
 def test_wifi_sdk_verify_whether_dut_able_to_setup_announced_and_triggered_twt_c113746(wifi_dut, wifi_access_point,
                                                                                        sl_collections, wifi_sniffer,
                                                                                        sniffer_filter, utf_constants):
@@ -953,6 +971,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_announced_and_triggered_twt_c
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113747')
 def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_and_triggered_twt_c113747(wifi_dut, wifi_access_point,
                                                                                          sl_collections, utf_constants,
                                                                                          wifi_sniffer, sniffer_filter):
@@ -979,6 +998,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_and_triggered_twt
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113748')
 def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_duration_c113748(wifi_dut, wifi_access_point,
                                                                                      sl_collections, utf_constants,
                                                                                      wifi_sniffer, sniffer_filter):
@@ -1004,6 +1024,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_duration_c11
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113749')
 def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_duration_tolerance_c113749(wifi_dut,
                                                                                                wifi_access_point,
                                                                                                sl_collections,
@@ -1032,6 +1053,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_duration_tol
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113750')
 def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_exponent_c113750(wifi_dut,
                                                                                               wifi_access_point,
                                                                                               sl_collections,
@@ -1061,6 +1083,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_exp
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113751')
 def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_exponent_tolerance_c113751(wifi_dut,
                                                                                                         wifi_access_point,
                                                                                                         sl_collections,
@@ -1089,6 +1112,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_exp
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113752')
 def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_mantissa_c113752(wifi_dut,
                                                                                               wifi_access_point,
                                                                                               sl_collections,
@@ -1117,6 +1141,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_man
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113753')
 def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_mantissa_tolerance_c113753(wifi_dut,
                                                                                                         wifi_access_point,
                                                                                                         sl_collections,
@@ -1145,6 +1170,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_man
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113762')
 def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_and_triggered_twt_before_join_c113762(wifi_dut,
                                                                                                      wifi_access_point,
                                                                                                      sl_collections,
@@ -1176,6 +1202,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_and_triggered_twt
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113763')
 def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_and_triggered_twt_after_join_c113763(wifi_dut,
                                                                                                     wifi_access_point,
                                                                                                     sl_collections,
@@ -1205,6 +1232,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_and_triggered_twt
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C113764')
 def test_wifi_sdk_verify_whether_dut_able_to_setup_twt_with_bg_scan_after_join_c113764(wifi_dut, wifi_access_point,
                                                                                        sl_collections, wifi_sniffer,
                                                                                        sniffer_filter, utf_constants):
@@ -1231,6 +1259,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_twt_with_bg_scan_after_join_c
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C540487')
 def test_wifi_sdk_verify_whether_dut_able_to_teardown_when_first_session_is_active_c540487(wifi_dut, wifi_access_point,
                                                                                            sl_collections, wifi_sniffer,
                                                                                            sniffer_filter, utf_constants):
@@ -1255,6 +1284,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_teardown_when_first_session_is_acti
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C540489')
 def test_wifi_sdk_verify_whether_dut_able_to_send_error_when_disable_twt_without_enable_twt_c540489(wifi_dut,
                                                                                                     wifi_access_point,
                                                                                                     sl_collections,

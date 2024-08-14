@@ -1,0 +1,32 @@
+id: 882a5e96-c605-4362-bcd6-b7c3bfdc6d79
+name: ipv6_testcases
+description: ''
+test_cases:
+  - test_case_id: 6769d17d0ac183de6e4b4dd20fbf5112470f629e
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_ip_conflict_sdk.py::test_wifi_sdk_static_ip_assignment_with_existing_ip_c101962
+    iterations: 1
+  - test_case_id: 7202d4145e04236fbde4843fa9ac68103a49bdb3
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_azure_mqtt_sdk.py::test_azure_mqtt_subscribe_publish_C19515
+    iterations: 1
+  - test_case_id: 556603bb5d55d128bc3c8a49bbbad546a43d522d
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_twt_sta_sdk.py::test_wifi_sdk_verify_twt_in_assoc_req_c113725
+    iterations: 1
+  - test_case_id: e56edbff3d45e2bb9f87aae16793caf264e9d090
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_twt_sta_sdk.py::test_wifi_sdk_verify_whether_dut_able_to_teardown_with_second_twt_enablement_c113738
+    iterations: 1
+  - test_case_id: 30fd361f0ce05acb40c7c3788ec1af5ef5944fbf
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_ipv6_ipv4_sdk.py::test_wifi_sdk_sim_ping_ipv4_ipv6_stateless_dhcpv6_WPA3_C156961
+    iterations: 1
+  - test_case_id: 825f92710a0ba653c917aa696926d351544d917d
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_ipv6_sdk.py::test_wifi_sdk_verify_stateless_dhcpv6_configuration_c119348
+    iterations: 1
+  - test_case_id: f711053aef0908d1a1ee9008497d911878c86549
+    test_case_path: >-
+      sqa_test_suites_wifi_sdk_3/test_ipv6_sdk.py::test_wifi_sdk_verify_stateful_dhcpv6_procedure_c119349
+    iterations: 1
