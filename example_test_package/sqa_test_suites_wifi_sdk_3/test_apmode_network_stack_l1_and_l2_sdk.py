@@ -1311,7 +1311,7 @@ def test_wifi_sdk_Verify_Multicast_RX_C19484(wifi_sniffer, net_perf_client, wifi
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
-@pytest.nmark.skip()
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
