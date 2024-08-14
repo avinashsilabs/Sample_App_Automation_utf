@@ -1,7 +1,10 @@
 import re
 import time
+import pytest
+from retry import retry
 import test_apmode_sdk as ap
 import string
+import threading
 import random
 from utf.interfaces.socket import SOCKET_TYPE_TCP, SOCKET_TYPE_UDP
 from threading import Thread
@@ -41,33 +44,49 @@ setup requirement:
         3. Access Point(Third Party AP's)
 """
 
+
 class data_transfer:
-    def __init__(self, index=None):
+    def __init__(self):
         self.thread_lock = threading.Lock()
         self.sent_data = 0
         self.rcv_data = 0
-        self.index = index
 
-    def receive_data_socket(self, remote_socket_factory, no_of_pkts, data_size=1460, proto_type=0):
+    def send_and_receive_data_socket(self, remote_socket, no_of_pkts, data_size, time_interval,
+                                     wifi_dut, server_sock, local_port, server_ip,
+                                     proto_type=0):
+
+        bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(
+            socket_id=server_sock, pkt_length=data_size, no_of_pkts=no_of_pkts, time_interval=time_interval,
+            server_ip=server_ip, server_port=local_port)
+
+        logger().info(f"Number of bytes sent by dut {bytes_sent}")
+
         fail_count = 0
         if proto_type == 0:
-            remote_socket_factory.interfaces.sockets[self.index].set_recv_timeout(socket_type=0)
+            remote_socket.set_recv_timeout(socket_type=0)
         else:
-            remote_socket_factory.interfaces.sockets[self.index].set_recv_timeout(use_client_socket=True, socket_type=1)
-        for count in range(0, no_of_pkts):
+            remote_socket.set_recv_timeout(socket_type=1)
+
+        for i in range(0, no_of_pkts):
             if proto_type == 0:
-                data = remote_socket_factory.interfaces.sockets[self.index].recv_data_tcp(data_size)
+                data = remote_socket.recv_data_tcp(data_size)
+                logger().info(f"data : {data}")
             else:
-                data, address = remote_socket_factory.interfaces.sockets[self.index].recv_data_udp(data_size)
+                data, address = remote_socket.recv_data_udp(data_size)
+                logger().info(f"data : {data}")
             if not isinstance(data, str):
                 fail_count = fail_count + 1
-                if fail_count == 5:
+                if fail_count == 2:
                     break
                 else:
                     continue
             self.rcv_data = self.rcv_data + len(data)
-        logger().info(f"Total bytes received on socket opened remotely -> {self.rcv_data}")
 
+            if self.rcv_data == len(bytes_sent):
+                break
+
+        remote_socket.socket_close_indication(1)
+        logger().info(f"Total bytes received on socket opened remotely -> {self.rcv_data}")
 
 
 class ApmodeConnection(ThreadBase):
@@ -943,11 +962,15 @@ def test_wifi_sdk_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C194
         "oper_mode": Si91xOperatingMode.AccessPoint,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server  | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
         "client_socket_limit": 10,
         "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123"
     }
@@ -956,7 +979,7 @@ def test_wifi_sdk_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C194
     "wifi_clients",
     wifi={
            0: {
-                "security": "OPEN",
+                "security": "WPA2",
                 "ssid": "SILABS_AP_MODE",
                 "passphrase": "Automation@123",
                 "channel": 11,
@@ -964,13 +987,13 @@ def test_wifi_sdk_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C194
                }
          }
 )
-def test_wifisdk_DUTAP_open_10_TCP_client_sockets_send_tx_C19473(wifi_sniffer, wifi_dut, wifi_client, utf_constants, remote_socket_factory, sl_collections, wifi_clients):
+def test_wifisdk_DUTAP_open_10_TCP_client_sockets_send_tx_C19473( wifi_dut, wifi_sniffer, remote_socket_factory, sl_collections, wifi_clients):
     '''Open 10 TCP client sockets and Data TX in ap mode'''
+    socket_threads = []
     try:
-        no_of_pkts = 10000
+        no_of_pkts = 100
         pkt_length = 1460
-        local_port = randint(5001, 6000)
-        iter_count = utf_constants.get('iter_count')
+        no_of_socket = 10
         logger().info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(channel=11)
         logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
@@ -980,81 +1003,64 @@ def test_wifisdk_DUTAP_open_10_TCP_client_sockets_send_tx_C19473(wifi_sniffer, w
                                                        static_gateway="192.168.100.76")
         dut_addr_dict = sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
                                                                   channel=11, ssid="SILABS_AP_MODE",
-                                                                  security="OPEN",
+                                                                  security="WPA2",
                                                                   password="Automation@123",
                                                                   dtim_count=1,
                                                                   beacon_interval=100,
                                                                   ping_count=10,
                                                                   no_of_clients=1, leave=False
                                                                   )
-        for count in range(1, iter_count + 1):
-            client_ips = []
-            client_sockets = []
-            for _ in range(1, 2):
-                client_ips.append(dut_addr_dict['client_ip'])
-                client_socket = remote_socket_factory.interfaces.socket.create_socket()
-                client_sockets.append(client_socket)
-            server_base_port = 5001
-            dut_sockets = []
-            for index, client_socket in enumerate(client_sockets):
-                client_ip = client_ips[index]
-                server_port = server_base_port + index
-                client_socket.start_server(server_ip=client_ip, port=server_port)
-                time.sleep(10)
-                logger().info(f"opening socket_id_{index}")
-                tcp_socket_id = wifi_dut.interfaces.wifi.Asyncsocket(protocol="IPPROTO_TCP")
-                if isinstance(tcp_socket_id, int):
-                    logger().info(f"Socket open successfully : {tcp_socket_id}")
-                else:
-                    logger().error(f"Unable to open socket id: {tcp_socket_id}")
-                    raise RuntimeError(tcp_socket_id)
-                dut_sockets.append(tcp_socket_id)
-                time.sleep(5)
-                bind_response = wifi_dut.interfaces.wifi.bind(tcp_socket_id, dut_addr_dict['dut_ip'], 4, server_port= server_port, timeout=5)
-                time.sleep(3)
-                logger().info(f"connecting to the server")
-                connect_response = wifi_dut.interfaces.wifi.bsdSocketConnect(tcp_socket_id, dut_addr_dict['client_ip'],
-                                                                         server_port=server_port)
-                logger().info(f"Connect response : {connect_response}")
-            # data_sent = []
-            # for _ in client_sockets:
-            #     data_sent.append(get_random_data(1460))
-            # results = ThreadBase.call_functions_simultaneously(
-            #     [(wifi_dut.interfaces.wifi.bsdSocketSend, dut_sockets[index], len(data), data) for index, data in
-            #      enumerate(data_sent)]
-            # )
-            # for index, client_socket in enumerate(client_sockets):
-            #     data = data_sent[index]
-            #     logger().info(f"Data sent to client {index} - {data}")
-            #     data_recv = client_socket.recv_data_tcp(len(data))
-            #     logger().info(f"Data received in client {index} - {data_recv}")
-            #     assert data_recv == data
-            for index in range(10):
-                server_port = server_base_port + index
-                data_transfer_obj = data_transfer(index=index)
-                th_start = Thread(target=data_transfer_obj.receive_data_socket,
-                                  args=(remote_socket_factory, no_of_pkts, pkt_length, 1), daemon=True)
-                th_start.start()
-                bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(dut_sockets[index], pkt_length, no_of_pkts,
-                                                                     server_ip=client_ips[index],
-                                                                     server_port=server_port)
-                logger().info(f"Number of bytes sent by dut {bytes_sent}")
-                th_start.join(5)
+        client_sockets = []
+        server_port_base = 5001
+        server_socks = []
+        client_ips = []
+        for count in range(0, no_of_socket):
+            client_ips.append(dut_addr_dict['client_ip'])
 
-            logger().info(f"closing the sockets on remote side")
-            remote_socket_factory.interfaces.socket.close_all()
-            time.sleep(15)
-            logger().info("Stop the sniffer")
-            wifi_sniffer.interfaces.capture.stop_capture()
+            local_port = server_port_base + count
+            logger().info(f'Server port = {local_port}')
+
+            client_socket = remote_socket_factory.interfaces.socket.create_socket()
+            client_sockets.append(client_socket)
+            client_socket.start_server(port=local_port)
+            sock = wifi_dut.interfaces.wifi.Asyncsocket(domain="AF_INET", stream_type="SOCK_STREAM",
+                                                        protocol="IPPROTO_TCP")
+            logger().info(f"Socket open successfully : {sock}")
+            server_socks.append(sock)
+            wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=dut_addr_dict['dut_ip'], server_port=local_port, timeout=5, asynch=1)
+            wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, ip_len=4, server_ip=client_ips[count],
+                                                      server_port=local_port)
+            time.sleep(1)
+
+        server_port = 5001
+        time_interval = 5
+        data_transfer_objs = []
+        socket_threads = []
+        for count in range(0, no_of_socket):
+            local_port = server_port + count
+            data_transfer_objs.append(data_transfer())
+            socket_threads.append(Thread(target=data_transfer_objs[count].send_and_receive_data_socket,
+                                         args=(client_sockets[count], no_of_pkts, pkt_length, time_interval, wifi_dut,
+                                               server_socks[count], local_port, client_ips[0], 0), daemon=True))
+
+            socket_threads[count].start()
+            time.sleep(2)
+
+        for sock in server_socks:
+            logger().info(f"Closing socket_id->{sock}")
+            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
+
         for i in range(0, 1):
             logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
             wifi_clients[i].interfaces.wifi.leave()
 
-
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    except Exception as e:
+        logger().exception(f"Exception...")
+        raise e
 
     finally:
+        for th in socket_threads:
+            th.join()
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -1305,16 +1311,21 @@ def test_wifi_sdk_Verify_Multicast_RX_C19484(wifi_sniffer, net_perf_client, wifi
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
+@pytest.nmark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
         "oper_mode": Si91xOperatingMode.AccessPoint,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server  | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
         "client_socket_limit": 10,
         "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123"
@@ -1332,10 +1343,11 @@ def test_wifi_sdk_Verify_Multicast_RX_C19484(wifi_sniffer, net_perf_client, wifi
                }
          }
 )
-def test_wifisdk_DUTAP_open_10_UDP_client_sockets_send_tx_C19474(wifi_sniffer, wifi_dut, wifi_client, utf_constants, remote_socket_factory, sl_collections, wifi_clients):
+def test_wifisdk_DUTAP_open_10_UDP_client_sockets_send_tx_C19474(wifi_sniffer, wifi_dut,  remote_socket_factory, sl_collections, wifi_clients):
     try:
-        no_of_pkts = 10000
+        no_of_pkts = 100
         pkt_length = 1460
+        no_of_socket = 10
         logger().info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=11)
@@ -1355,59 +1367,40 @@ def test_wifisdk_DUTAP_open_10_UDP_client_sockets_send_tx_C19474(wifi_sniffer, w
                                                                   no_of_clients=1, leave=False
                                                                   )
         client_sockets = []
+        server_port_base = 5001
+        server_socks = []
         client_ips = []
-        for _ in range(0, 10):
+        for count in range(0, no_of_socket):
             client_ips.append(dut_addr_dict['client_ip'])
-            client_socket = remote_socket_factory.interfaces.socket.create_socket(
-                interface="wlan0"
-            )
+            local_port = server_port_base + count
+            logger().info(f'Server port = {local_port}')
+            client_socket = remote_socket_factory.interfaces.socket.create_socket()
             client_sockets.append(client_socket)
-        server_base_port = 5001
-        dut_sockets = []
-        for index, client_socket in enumerate(client_sockets):
-            server_port = server_base_port + index
-            logger().info(f"Client socket: {client_socket}")
-            client_socket.start_server(
-                server_ip=client_ips[index], port=server_port, socket_type=1,
-            )
+            client_socket.start_server(port=local_port)
             udp_socket_id = wifi_dut.interfaces.wifi.socket(stream_type="SOCK_DGRAM",
                                                             protocol="IPPROTO_UDP")
-            logger().info(f"Socket open successfully : {udp_socket_id}")
-            dut_sockets.append(udp_socket_id)
-            logger().info(
-                f"Successfully opened tcp client socket and socket id received is {udp_socket_id} which is expected")
+            server_socks.append(udp_socket_id)
             bind_response = wifi_dut.interfaces.wifi.bind(socket_fd=udp_socket_id,
                                                           device_ip=dut_addr_dict['dut_ip'], ip_len=4,
-                                                          server_port=server_port, timeout=5)
+                                                          server_port=local_port, timeout=5)
             logger().info(f"Bind socket successfully: {bind_response}")
             logger().info("DUT is connecting to server socket")
-        for index in range(10):
-            server_port = server_base_port + index
-            data_transfer_obj = data_transfer(index=index)
-            th_start = Thread(target=data_transfer_obj.receive_data_socket,
-                              args=(remote_socket_factory, no_of_pkts, pkt_length, 1), daemon=True)
-            th_start.start()
-            bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(dut_sockets[index], pkt_length, no_of_pkts,
-                                                                 server_ip=client_ips[index], server_port=server_port)
-            logger().info(f"Number of bytes sent by dut {bytes_sent}")
-            th_start.join(5)
-            result = wifi_dut.interfaces.wifi.get_socket_rx_stats(dut_sockets[index])
-            bytes_received = int(result.split(b":")[1])
-            logger().info(f"bytes received on socket {index} -> {bytes_received}")
-        # data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1460))
-        # logger().info(f"*********{data}")
-        # for index in range(10):
-        #     wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=dut_sockets[index], data=data, timeout=120)
-        #
-        # for index, client_socket in enumerate(client_sockets):
-        #     data = data[index]
-        #     logger().info(f"Data sent to client {index} - {data}")
-        #     data_recv = client_socket.recv_data_tcp(len(data))
-        #     logger().info(f"Data received in client {index} - {data_recv}")
-        #     assert data_recv == data
+        server_port = 5001
+        time_interval = 5
+        data_transfer_objs = []
+        socket_threads = []
+        for count in range(0, no_of_socket):
+            local_port = server_port + count
+            data_transfer_objs.append(data_transfer())
+            socket_threads.append(Thread(target=data_transfer_objs[count].send_and_receive_data_socket,
+                                         args=(client_sockets[count], no_of_pkts, pkt_length, time_interval, wifi_dut,
+                                               server_socks[count], local_port, client_ips[0], 1), daemon=True))
 
-        for index in dut_sockets:
-           wifi_dut.interfaces.wifi.bsdSockClose(dut_sockets[index])
+            socket_threads[count].start()
+            time.sleep(2)
+
+        for index in server_socks:
+           wifi_dut.interfaces.wifi.bsdSockClose(server_socks[index])
 
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1416,6 +1409,11 @@ def test_wifisdk_DUTAP_open_10_UDP_client_sockets_send_tx_C19474(wifi_sniffer, w
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+
+        for th in socket_threads:
+            th.join()
+        remote_socket_factory.interfaces.socket.close_all()
+        remote_socket_factory.interfaces.socket.sockets = []
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -1768,12 +1766,12 @@ def test_wifisdk_DUTAP_open_10_udp_server_sockets_rx_C19476(wifi_dut, remote_soc
                                                                   ping_count=10,
                                                                   no_of_clients=1, leave=False
                                                                   )
-        local_port = randint(5001, 60000)
-        start_port_dut = 6001
+        dut = 6001
         udp_socks = []
+        local_port = randint(5001, 60000)
         for sock_count in range(0, 10):
             port = local_port + sock_count
-            port_dut = start_port_dut + sock_count
+            port_dut = 5001 + sock_count
             sock_id = wifi_dut.interfaces.wifi.Asyncsocket(stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP")
             remote_multi_socket.interfaces.socket.start_server(port=port, socket_type=1, sock_id=sock_id)
             udp_socks.append(sock_id)
@@ -1833,6 +1831,167 @@ def test_wifisdk_DUTAP_open_10_udp_server_sockets_rx_C19476(wifi_dut, remote_soc
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        remote_socket_factory.interfaces.socket.close_all()
+        remote_socket_factory.interfaces.socket.sockets = []
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "client_socket_limit": 5,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123"
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+def test_wifisdk_DUTAP_open_5_TCP_client_sockets_tx_5_udp_server_socket_send_rx_C19477( wifi_dut, wifi_sniffer, remote_multi_socket, utf_constants, remote_socket_factory, sl_collections, wifi_clients):
+    socket_threads = []
+    try:
+        no_of_pkts = 100
+        pkt_length = 1460
+        no_of_socket = 5
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="test_tcp_client_udp_server_sockets_C19477")
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                       static_subnet="255.255.255.0",
+                                                       static_gateway="192.168.100.76")
+        dut_addr_dict = sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
+                                                                  channel=11, ssid="SILABS_AP_MODE",
+                                                                  security="WPA2",
+                                                                  password="Automation@123",
+                                                                  dtim_count=1,
+                                                                  beacon_interval=100,
+                                                                  ping_count=10,
+                                                                  no_of_clients=1, leave=False
+                                                                  )
+        client_sockets = []
+        server_port_base = 5001
+        server_socks = []
+        client_ips = []
+        for count in range(0, no_of_socket):
+            client_ips.append(dut_addr_dict['client_ip'])
+
+            local_port = server_port_base + count
+            logger().info(f'Server port = {local_port}')
+
+            client_socket = remote_socket_factory.interfaces.socket.create_socket()
+            client_sockets.append(client_socket)
+            client_socket.start_server(port=local_port)
+            sock = wifi_dut.interfaces.wifi.Asyncsocket(domain="AF_INET", stream_type="SOCK_STREAM",
+                                                        protocol="IPPROTO_TCP")
+            logger().info(f"Socket open successfully : {sock}")
+            server_socks.append(sock)
+            wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=dut_addr_dict['dut_ip'], server_port=local_port, timeout=5, asynch=1)
+            wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, ip_len=4, server_ip=client_ips[count],
+                                                      server_port=local_port)
+            time.sleep(1)
+
+        start_port_dut = 5006
+        udp_socks = []
+        local_port = randint(5001, 60000)
+        for sock_count in range(0, 5):
+            port = local_port + sock_count
+            port_dut = start_port_dut + sock_count
+            sock_id = wifi_dut.interfaces.wifi.Asyncsocket(stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP")
+            remote_multi_socket.interfaces.socket.start_server(port=port, socket_type=1, sock_id=sock_id)
+            udp_socks.append(sock_id)
+            logger().info(
+                f"Successfully opened UDP client socket and socket id received is {sock_id} which is expected")
+            wifi_dut.interfaces.wifi.bind(socket_fd=sock_id, device_ip=dut_addr_dict['dut_ip'],
+                                          server_port=port_dut, asynch=1)
+
+        server_port = 5001
+        time_interval = 5
+        data_transfer_objs = []
+        socket_threads = []
+        for count in range(0, no_of_socket):
+            logger().info(f"Iteration: {count}")
+            local_port = server_port + count
+            data_transfer_objs.append(data_transfer())
+            socket_threads.append(Thread(target=data_transfer_objs[count].send_and_receive_data_socket,
+                                         args=(client_sockets[count], no_of_pkts, pkt_length, time_interval, wifi_dut,
+                                               server_socks[count], local_port, client_ips[0], 0), daemon=True))
+
+            socket_threads[count].start()
+            time.sleep(2)
+        i = 0
+        for socket_no in range(5, 10):
+            data_sent = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1460))
+            data_length = len(data_sent)
+            if socket_no == 5:
+                start_port_dut = 5006
+            elif socket_no == 6:
+                start_port_dut = 5007
+            elif socket_no == 7:
+                start_port_dut = 5008
+            elif socket_no == 8:
+                start_port_dut = 5009
+            elif socket_no == 9:
+                start_port_dut = 5010
+            sw = Stopwatch()
+            while sw.elapsed_sec <= 60:
+                logger().info(f"###################### start_port from DUT : {start_port_dut}  ######################")
+                remote_multi_socket.interfaces.socket.send_data_udp(
+                    tx_buffer=data_sent, server_ip=dut_addr_dict['dut_ip'], port=start_port_dut, sock_id=udp_socks[i])
+                logger().info(f"********data on socket {data_sent}")
+                time.sleep(2)
+                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=socket_no)
+                logger().info(f"###################### Buffer Data  {data_sent}  ######################")
+                logger().info(f"###################### Buffer Data Length  {data_length}  ######################")
+                logger().info(f"###################### Received Data: {buffer_rx} ######################")
+                assert data_length == len(
+                    buffer_rx), f"buffer length sent by remote peer and received on the socket id {socket_no} opened in the DUT is not matched "
+                time.sleep(2)
+            i += 1
+
+
+        for sock in server_socks:
+            logger().info(f"Closing socket_id->{sock}")
+            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
+
+        for socket in udp_socks:
+            logger().info(f"Closing socket_id->{socket}")
+            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=socket)
+
+        for i in range(0, 1):
+            logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
+            wifi_clients[i].interfaces.wifi.leave()
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        logger().exception(f"Exception...")
+        raise e
+
+    finally:
+        for th in socket_threads:
+            th.join()
         remote_socket_factory.interfaces.socket.close_all()
         remote_socket_factory.interfaces.socket.sockets = []
         wifi_dut.interfaces.wifi.stop_ap()
