@@ -68,7 +68,7 @@ class BleThread(ThreadBase):
     def run(self):
         BleThread.ble_dut_addr = self.ble_dut.interfaces.wifi.ble_gatt_start()
         assert self.ble_dut_addr, "FAILED TO LOAD BT ADDRESS..."
-        if self.testcase_id == 19948:
+        if self.testcase_id == 19948 and self.ble_dut.interfaces.wifi.add_hid_service:
             logger().info("....ADDING HID SERVICE....")
             self.ble_dut.interfaces.wifi.ble_add_hid_service()
         logger().info("..STARTING BLE ADVERTISEMENT..")
@@ -80,18 +80,32 @@ class BleThread(ThreadBase):
 
     def scan_and_connect(self):
         self.ble_client.interfaces.bluetooth.close()
-        self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.ble_dut_addr)
-        time.sleep(5)
+        ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=self.ble_dut_addr)
+        assert ble_client_address is not None
+
+        device_found = False
+        sw = Stopwatch()
+        while sw.elapsed_sec < 30:
+            found_devices = self.ble_client.interfaces.bluetooth.get_devices()
+            if (
+                    self.ble_dut_addr in found_devices
+                    and found_devices[self.ble_dut_addr]
+                    == self.ble_dut.interfaces.wifi.ble_advertising_data
+            ):
+                device_found = True
+                break
+
+        assert device_found, "FAILED TO FIND DUT IN SCAN LIST..."
+
         self.ble_client.interfaces.bluetooth.stop_scanning()
-        logger().info("..CHECKING FOR DEVICE IN SCAN LIST..")
-        found_devices = self.ble_client.interfaces.bluetooth.get_devices()
-        logger().info(f"FOUND DEVICES: {found_devices}")
-        assert self.ble_dut.interfaces.wifi.ble_address in found_devices, "FAILED TO FIND DUT IN SCAN LIST..."
-        assert (found_devices[
-                    self.ble_dut.interfaces.wifi.ble_address] == self.ble_dut.interfaces.wifi.ble_advertising_data), \
-            "FAILED TO FIND DUT IN SCAN LIST..."
+
         logger().info("..CONNECTING TO DEVICE..")
-        self.ble_client.interfaces.bluetooth.pair_and_connect(self.ble_dut_addr)
+        assert self.ble_client.interfaces.bluetooth.pair_and_connect(self.ble_dut_addr)
+        time.sleep(2)
+        # Get the state of the dut
+        state = self.ble_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected
 
     def power_save(self):
         enable_wifi_ps = self.ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
@@ -163,6 +177,10 @@ pytestmark = [
 ]
 
 
+# test_ble_validate_ibeacon_adv_data_parameters_c19947: This test case is designed to validate the iBeacon
+# advertising data parameters. The test case initiates the Device Under Test (DUT) in Coex mode (WLAN and BT mode),
+# initializes the BLE GATT task in DUT, and starts BLE advertising. It then validates the iBeacon advertising data
+# parameters such as mac_address, type, uuid, major, minor, and tx_power.
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_validate_ibeacon_adv_data_parameters_c19947(ble_dut, ble_client, sl_collections):
     with BleLogs(
@@ -181,7 +199,11 @@ def test_ble_validate_ibeacon_adv_data_parameters_c19947(ble_dut, ble_client, sl
             ble_dut.interfaces.wifi.ble_stop_advertising()
 
 
-@pytest.mark.skip(reason="Test case is inconsistent")   #This needs to be applied
+# test_ble_hogp_smp_slave_mode_c19948: This test case is designed to validate the Human Interface Device (HID)
+# over GATT Profile (HOGP) in slave mode. The test case initiates the DUT in Coex mode (WLAN and BT mode),
+# initializes the BLE GATT task in DUT, and starts BLE advertising. It then scans for the DUT from a client device,
+# connects to the DUT, and validates the HID data sent from the DUT.
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_hogp_smp_slave_mode_c19948(ble_dut, ble_client, sl_collections):
     with BleLogs(
             start_collecting_logs=True,
