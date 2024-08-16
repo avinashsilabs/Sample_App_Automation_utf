@@ -1,4 +1,3 @@
-import paramiko.ssh_gss
 import pytest
 import time
 import re
@@ -7,7 +6,6 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBit
     Si91xOperatingMode, Si91xTCPIPFeatureBitMap
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.sl_status import SLStatus
-import paramiko
 
 """
     Setup requirement:
@@ -39,7 +37,8 @@ class WLanTwTThread(ThreadBase):
                  implicit_twt=1, un_announced_twt=1, triggered_twt=0, twt_channel=0, twt_protection=0,
                  restrict_tx_outside_tsp=1, twt_retry_limit=6, twt_retry_interval=10, req_type=1, negotiation_type=0,
                  wifi_dut=None, sl_collections=None, wifi_sniffer=None, wifi_access_point=None, switch=None,
-                 test_case=None, sniffer_filter=None, power_save=False, before_join=False, utf_constants=None):
+                 test_case=None, sniffer_filter=None, power_save=False, before_join=False, utf_constants=None,
+                 sniffer_capture=None):
         super().__init__()
         # Define all the parameters
         self.twt_enable = twt_enable
@@ -84,6 +83,7 @@ class WLanTwTThread(ThreadBase):
         self.wake_period_resp = None
 
         self.sniffer_filter = sniffer_filter
+        self.sniffer_capture = sniffer_capture
         self.switch = switch
         self.dut_addr = None
         self.ap_mac_address = None
@@ -101,14 +101,14 @@ class WLanTwTThread(ThreadBase):
     def run(self):
         try:
             # Check test case 113733 or 113735 and set advanced client configuration
-            if self.test_case == '113733' or self.test_case == '113735':
+            if self.test_case == '113733' or self.test_case == '113735' or self.test_case == '113754':
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                               beacon_missed_count=1000,
                                                                               first_time_retry_enable=0)
             # Configure the sniffer on wifi_access_point channel
             self.wifi_sniffer.interfaces.capture.configure_interface(self.wifi_access_point.interfaces.wifi.channel)
             # Start the sniffer on wifi_access_point channel
-            self.wifi_sniffer.interfaces.capture.start_capture(self.test_case)
+            self.wifi_sniffer.interfaces.capture.start_capture(self.sniffer_capture)
             # Get the mac address of the wifi_access_point
             self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
 
@@ -189,27 +189,28 @@ class WLanTwTThread(ThreadBase):
                     logger().info("***** TWT is set successfully for second time *****")
 
             # Check test case 113733 and turn off the switch
-            if self.test_case == '113733' or self.test_case == '113735':
+            if self.test_case == '113733' or self.test_case == '113735' or self.test_case == '113754':
                 self.switch.interfaces.pdu_switch.turn_off()
-                self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
-                                                      twt_flow_id=self.twt_flow_id,
-                                                      wake_duration=self.wake_duration,
-                                                      wake_duration_unit=self.wake_duration_unit,
-                                                      wake_duration_tol=self.wake_duration_tol,
-                                                      wake_int_exp=self.wake_int_exp,
-                                                      wake_int_exp_tol=self.wake_int_exp_tol,
-                                                      wake_int_mantissa=self.wake_int_mantissa,
-                                                      wake_int_mantissa_tol=self.wake_int_mantissa_tol,
-                                                      implicit_twt=self.implicit_twt,
-                                                      un_announced_twt=self.un_announced_twt,
-                                                      triggered_twt=self.triggered_twt,
-                                                      twt_channel=self.twt_channel,
-                                                      twt_protection=self.twt_protection,
-                                                      restrict_tx_outside_tsp=self.restrict_tx_outside_tsp,
-                                                      twt_retry_limit=self.twt_retry_limit,
-                                                      twt_retry_interval=self.twt_retry_interval,
-                                                      req_type=self.req_type,
-                                                      negotiation_type=self.negotiation_type)
+                if self.test_case != '113754':
+                    self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
+                                                          twt_flow_id=self.twt_flow_id,
+                                                          wake_duration=self.wake_duration,
+                                                          wake_duration_unit=self.wake_duration_unit,
+                                                          wake_duration_tol=self.wake_duration_tol,
+                                                          wake_int_exp=self.wake_int_exp,
+                                                          wake_int_exp_tol=self.wake_int_exp_tol,
+                                                          wake_int_mantissa=self.wake_int_mantissa,
+                                                          wake_int_mantissa_tol=self.wake_int_mantissa_tol,
+                                                          implicit_twt=self.implicit_twt,
+                                                          un_announced_twt=self.un_announced_twt,
+                                                          triggered_twt=self.triggered_twt,
+                                                          twt_channel=self.twt_channel,
+                                                          twt_protection=self.twt_protection,
+                                                          restrict_tx_outside_tsp=self.restrict_tx_outside_tsp,
+                                                          twt_retry_limit=self.twt_retry_limit,
+                                                          twt_retry_interval=self.twt_retry_interval,
+                                                          req_type=self.req_type,
+                                                          negotiation_type=self.negotiation_type)
                 time.sleep(180)
                 retry_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                     sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
@@ -230,6 +231,8 @@ class WLanTwTThread(ThreadBase):
                     self.validate_retry_interval()
                     logger().info('\n\n**** Retry interval verified successfully ****\n\n')
                     return
+                if self.test_case == '113754':
+                    self.switch.interfaces.pdu_switch.turn_on(delay=60)
 
             # Check the test 540489 and call the disable TWT API
             if self.test_case == '540489':
@@ -471,7 +474,7 @@ def test_wifi_sdk_verify_twt_in_assoc_req_c113725(firmware_loader, wifi_dut, wif
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, test_case='113725',
-                                 before_join=True, utf_constants=utf_constants)
+                                 before_join=True, utf_constants=utf_constants, sniffer_capture='113725')
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
@@ -523,7 +526,8 @@ def test_wifi_sdk_verify_twt_request_when_enabled_before_join_c113727(wifi_dut, 
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, power_save=True,
-                                 test_case='113727', req_type=0, before_join=True, utf_constants=utf_constants)
+                                 test_case='113727', req_type=0, before_join=True, utf_constants=utf_constants,
+                                 sniffer_capture='113727')
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
@@ -550,7 +554,8 @@ def test_wifi_sdk_verify_twt_suggest_when_enabled_before_join_c113728(wifi_dut, 
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, power_save=True,
-                                 test_case='113728', req_type=1, before_join=True, utf_constants=utf_constants)
+                                 test_case='113728', req_type=1, before_join=True, utf_constants=utf_constants,
+                                 sniffer_capture='113728')
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
@@ -579,7 +584,8 @@ def test_wifi_sdk_verify_twt_demand_when_enabled_before_join_c113729(wifi_dut, w
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, power_save=True,
                                  test_case='113729', before_join=True, wake_int_mantissa=0x0E4C,
-                                 wake_int_mantissa_tol=0x0E4C, un_announced_twt=0, req_type=2, utf_constants=utf_constants)
+                                 wake_int_mantissa_tol=0x0E4C, un_announced_twt=0, req_type=2,
+                                 utf_constants=utf_constants, sniffer_capture='113729')
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
@@ -605,7 +611,7 @@ def test_wifi_sdk_verify_twt_request_when_enabled_after_join_c113730(wifi_dut, w
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113730',
                                  power_save=True, test_case='113730', wake_duration=0x80, wake_duration_tol=0x80,
                                  wake_int_exp=15, wake_int_exp_tol=15, wake_int_mantissa=0x1E4C,
                                  wake_int_mantissa_tol=0x1E4C, un_announced_twt=0, req_type=0, utf_constants=utf_constants)
@@ -634,7 +640,7 @@ def test_wifi_sdk_verify_twt_suggest_when_enabled_after_join_c113731(wifi_dut, w
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113731',
                                  power_save=True, test_case='113731', wake_duration=0x20, wake_duration_tol=0x20,
                                  wake_int_exp=10, wake_int_exp_tol=15, wake_int_mantissa=0x104C,
                                  wake_int_mantissa_tol=0x104C, un_announced_twt=0, utf_constants=utf_constants)
@@ -664,7 +670,8 @@ def test_wifi_sdk_verify_twt_demand_when_enabled_after_join_c113732(wifi_dut, wi
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, req_type=2,
-                                 power_save=True, test_case='113732', utf_constants=utf_constants)
+                                 power_save=True, test_case='113732', utf_constants=utf_constants,
+                                 sniffer_capture='113732',)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
@@ -688,7 +695,7 @@ def test_wifi_sdk_verify_default_retry_attempts_for_twt_c113733(wifi_dut, wifi_a
         4. Exit the thread
     """
     try:
-        wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+        wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sniffer_capture='113733',
                                  sl_collections=sl_collections, test_case='113733', wifi_sniffer=wifi_sniffer,
                                  sniffer_filter=sniffer_filter, switch=switch, power_save=True, utf_constants=utf_constants)
         wlan_obj.start()
@@ -715,7 +722,7 @@ def test_wifi_sdk_verify_configured_retry_attempts_for_twt_c113734(wifi_dut, wif
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                 sl_collections=sl_collections, test_case='113733',
+                                 sl_collections=sl_collections, test_case='113733', sniffer_capture='113734',
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, switch=switch,
                                  power_save=True, twt_retry_limit=10, utf_constants=utf_constants)
         wlan_obj.start()
@@ -741,7 +748,7 @@ def test_wifi_sdk_verify_default_retry_interval_for_twt_c113735(wifi_dut, wifi_a
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                 sl_collections=sl_collections, test_case='113735',
+                                 sl_collections=sl_collections, test_case='113735', sniffer_capture='113735',
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, switch=switch,
                                  power_save=True, twt_retry_limit=10, utf_constants=utf_constants)
         wlan_obj.start()
@@ -769,7 +776,8 @@ def test_wifi_sdk_verify_whether_dut_accepts_rejects_alternate_twt_setup_c113736
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, power_save=True,
-                                 test_case='113736', wake_duration=0x50, wake_duration_tol=0x50, utf_constants=utf_constants)
+                                 test_case='113736', wake_duration=0x50, wake_duration_tol=0x50,
+                                 utf_constants=utf_constants, sniffer_capture='113736')
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
@@ -793,7 +801,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_teardown_with_second_twt_enablement
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113738',
                                  power_save=True, test_case='113738', utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -820,7 +828,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_second_time_when_first_twt_fa
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113739',
                                  power_save=True, test_case='113739', wake_duration=0x50, wake_duration_tol=0x60,
                                  twt_retry_limit=10, req_type=2, utf_constants=utf_constants)
         wlan_obj.start()
@@ -848,7 +856,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_implicit_twt_c113742(wifi_dut
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113742',
                                  power_save=True, test_case='113742', implicit_twt=1, utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -878,7 +886,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_send_implicit_twt_after_sending_exp
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113743',
                                  power_save=True, test_case='113743', implicit_twt=0, utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -905,7 +913,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_twt_c113744(wifi_
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113744',
                                  power_save=True, test_case='113744', twt_retry_limit=10, utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -932,7 +940,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_announced_twt_c113745(wifi_du
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113745',
                                  power_save=True, test_case='113736', twt_retry_limit=10, utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -959,8 +967,9 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_announced_and_triggered_twt_c
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
-                                 power_save=True, test_case='113736', twt_retry_limit=10, utf_constants=utf_constants)
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113746',
+                                 power_save=True, test_case='113736', twt_retry_limit=10, un_announced_twt=0,
+                                 utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
@@ -986,7 +995,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_and_triggered_twt
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113747',
                                  power_save=True, test_case='113736', twt_retry_limit=10, utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1012,7 +1021,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_duration_c11
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113748',
                                  power_save=True, test_case='113736', twt_retry_limit=10, utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1042,7 +1051,8 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_duration_tol
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, utf_constants=utf_constants,
-                                 power_save=True, test_case='113736', wake_duration=0xF0, wake_duration_tol=0xFF)
+                                 power_save=True, test_case='113736', wake_duration=0xF0, wake_duration_tol=0xFF,
+                                 sniffer_capture='113749')
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
@@ -1070,7 +1080,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_exp
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113750',
                                  power_save=True, test_case='113736', wake_duration=0x80, wake_duration_tol=0x80,
                                  twt_retry_limit=10, utf_constants=utf_constants)
         wlan_obj.start()
@@ -1100,7 +1110,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_exp
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113751',
                                  power_save=True, test_case='113736', utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1130,7 +1140,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_man
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, test_case='113730',
                                  wake_duration=0x90, wake_duration_tol=0x90, wake_int_mantissa=0x7530,
-                                 utf_constants=utf_constants)
+                                 utf_constants=utf_constants, sniffer_capture='113752')
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
@@ -1159,7 +1169,34 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_man
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, test_case='113730',
                                  wake_duration=0x90, wake_duration_tol=0x90, wake_int_mantissa=0x4E20,
-                                 wake_int_mantissa_tol=0x2710, utf_constants=utf_constants)
+                                 wake_int_mantissa_tol=0x2710, utf_constants=utf_constants, sniffer_capture='113753')
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_verify_whether_dut_able_to_setup_twt_after_rejoin_c113754(wifi_dut, wifi_access_point, sl_collections,
+                                                                            wifi_sniffer, sniffer_filter, switch,
+                                                                            utf_constants):
+    """Verify whether DUT is able to create TWT setup after rejoined to the AP"""
+    """
+    Test Steps:
+        1. Create thread for twt functionality
+        2. Enable power-save mode
+        3. Run the thread
+        4. Exit the thread
+    """
+    try:
+        wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                 sl_collections=sl_collections, test_case='113754', sniffer_capture='113754',
+                                 wake_duration=0x90, wake_duration_tol=0x90, before_join=True,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, switch=switch,
+                                 power_save=True, twt_retry_limit=10, utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
@@ -1191,7 +1228,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_and_triggered_twt
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, power_save=True,
                                  test_case='113762', un_announced_twt=1, triggered_twt=1, before_join=True,
-                                 utf_constants=utf_constants)
+                                 utf_constants=utf_constants, sniffer_capture='113762')
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
@@ -1220,7 +1257,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_unannounced_and_triggered_twt
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113763',
                                  power_save=True, test_case='113730', utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1247,7 +1284,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_twt_with_bg_scan_after_join_c
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113764',
                                  power_save=True, test_case='113764', utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1272,7 +1309,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_teardown_when_first_session_is_acti
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='540487',
                                  power_save=True, test_case='113738', utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1300,7 +1337,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_send_error_when_disable_twt_without
     """
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='540489',
                                  power_save=True, test_case='540489', utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
