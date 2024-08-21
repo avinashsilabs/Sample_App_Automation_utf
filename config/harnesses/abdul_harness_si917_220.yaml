@@ -213,7 +213,6 @@ devices:
                 # radius server configuration
                 radius_ip: "10.207.17.220"
                 radius_port: "1812"
-
     switched_ap:
         interfaces:
             wifi:
@@ -515,7 +514,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '10.207.17.219'
+                ip_address: '10.207.18.227'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
                 username: pi
                 password: 'raspberry'
@@ -545,11 +544,10 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '10.207.18.227'
+                ip_address: '10.207.17.219'
                 image: 'utfsilabs/rpi_ubuntu_secondary'
                 username: pi
                 password: 'raspberry'
-                skip_rabbitmq_check: True
             shell:
                 type: 'rpc.rpc_client'
                 # the 'forward_to' property specifies the destination device and interface on the server
@@ -834,7 +832,6 @@ devices:
                 private_key: 'private-key.key'
                 client_cert: 'client-certificate.crt'
                 root_ca: 'start_field.pem'
-
     azure_iot:
         interfaces:
             hub:
@@ -853,7 +850,6 @@ devices:
                 device_id: 'symmetric_device'
                 cert_file: 'mydevkitcertificate.pem'
                 key_file: 'mydevkitkey.pem'
-
 
 
     aws_s3_boto3:
@@ -1431,7 +1427,7 @@ start_state:
     wifi_access_point:
         wifi: 'ap_enabled'
     wifi_dut:
-#        device: 'reset'
+        device: 'reset'
         wifi: 'init'
 
 #end_state:
@@ -1440,7 +1436,7 @@ start_state:
 
 constants:
     time_duration:
-        value: 5
+        value: 300
     ping_count:
         value: 10
     iter_count:

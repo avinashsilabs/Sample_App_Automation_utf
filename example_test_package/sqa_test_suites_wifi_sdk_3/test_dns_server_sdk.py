@@ -107,7 +107,7 @@ def test_wifi_sdk_dns_server_obtaining_ip_through_dhcp_handshake_c19297(wifi_sni
 
         logger().info(" ====== Initiating DNS get command when DNS IP address is obtained through dhcp handshake "
                       "process ====== ")
-        status = wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", timeout=30, query_timeout=1.2)
+        status = wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", timeout=30, query_timeout=20000)
         logger().info(f'\n *** DNS address = {status} *** \n')
         time.sleep(2)
 

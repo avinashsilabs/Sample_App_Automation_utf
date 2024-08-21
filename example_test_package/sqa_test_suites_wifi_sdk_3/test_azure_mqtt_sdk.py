@@ -285,7 +285,7 @@ def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None):
         config["client_key"] = client_key
     return pytest.mark.config("wifi_dut", wifi=config)
 
-@pytest.mark.firmware_app("test_twt_sta")
+@pytest.mark.firmware_app("test_azure")
 @wifi_dut_marker(ca_cert=["silabs_dgcert_ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "password": "12345678"}
@@ -296,7 +296,7 @@ def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None):
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19515')
-def test_azure_mqtt_subscribe_publish_C19515(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_subscribe_publish_C19515(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                              sl_collections, wifi_client, request, utf_constants, sniffer_filter):
 
     """
