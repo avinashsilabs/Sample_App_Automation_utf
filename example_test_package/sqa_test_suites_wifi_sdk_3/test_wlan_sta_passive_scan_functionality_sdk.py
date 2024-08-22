@@ -35,6 +35,8 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xExtCustomFeatureBitMap,
     Si91xPowerSaveProcedureTypes
 )
+from utf_wiseconnect_3.tests.sl_status import SLStatus
+from utf.utils.stopwatch import Stopwatch
 
 
 def logger():
@@ -57,21 +59,28 @@ class PassiveScanFunctionality:
         self.ap_bssid = self.wifi_access_point.interfaces.wifi.bssid
         self.dut_mac = None
 
-    def scan(self):
+    def scan(self, all_ch_scan=True, test_id=''):
         self.dut_mac = self.wifi_dut.interfaces.wifi.get_mac_address()
+        channel = 0 if all_ch_scan else self.wifi_access_point.interfaces.wifi.channel
         if self.scan_type == 1:
-            scan_time_threshold = ((11 * self.dwell_time) + 100) / 1000
+            scan_time_threshold = (11 * self.dwell_time + 100) / 1000 if all_ch_scan else (self.dwell_time + 100) / 1000
             logger().info(f"Configuring the sniffer with channel {self.wifi_access_point.interfaces.wifi.channel}")
             self.wifi_sniffer.interfaces.capture.configure_interface(
                 channel=self.wifi_access_point.interfaces.wifi.channel)
-            self.wifi_sniffer.interfaces.capture.start_capture(
-                capture_file=f"unicast_probe_check_{self.test_name[-7:]}")
+            self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"unicast_probe_check_{test_id}")
             time.sleep(5)
-            logger().info(
-                f"************ Starting passive scan by enabling passive scan bit in scan request ************")
-            scan_time = self.wifi_dut.interfaces.wifi.scan(scan_type=self.scan_type, lp_mode=self.lp_mode,
-                                                           measure_scan_time=self.measure_scan_time)[-1]
-            scan_time = float(scan_time.split(':')[-1])
+            scan_time = 0
+            logger().info(f"*********** Starting passive scan by enabling passive scan bit in scan request ***********")
+            for count in range(3):
+                try:
+                    scan_time = self.wifi_dut.interfaces.wifi.scan(measure_scan_time=self.measure_scan_time,
+                                                                   scan_type=self.scan_type, lp_mode=self.lp_mode,
+                                                                   channel=channel)[-1]
+                    scan_time = float(scan_time.split(':')[-1])
+                    break
+                except Exception as err:
+                    logger().info("..........Scan_Retry..........")
+                    if count == 2: raise err
             assert scan_time <= scan_time_threshold, (f"Observed passive scan time is more than expected value:"
                                                       f"{scan_time_threshold} Seconds")
             logger().info(f"\n\n******** Time taken for passive scan is --> '{scan_time}' seconds, which is within the "
@@ -83,11 +92,13 @@ class PassiveScanFunctionality:
                 "Found unicast probe request packet in sniffer capture, which is not expected"
         else:
             logger().info(f"************ Starting active scan from DUT ************")
-            self.wifi_dut.interfaces.wifi.scan(scan_type=self.scan_type, measure_scan_time=self.measure_scan_time)
+            self.wifi_dut.interfaces.wifi.scan(scan_type=self.scan_type, channel=channel,
+                                               measure_scan_time=self.measure_scan_time)
 
     def join_to_ap(self, ping_count=120):
         logger().info(f"\n\nConfiguring the sniffer with channel {self.wifi_access_point.interfaces.wifi.channel}")
-        self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
+        self.wifi_sniffer.interfaces.capture.configure_interface(
+            channel=self.wifi_access_point.interfaces.wifi.channel)
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
         time.sleep(3)
         self.sl_collections.connect(self.wifi_dut, self.wifi_access_point, retry_count=3)
@@ -143,7 +154,7 @@ def test_wsdk_passive_scan_with_dwell_time_400ms_c551130(wifi_access_point, wifi
     try:
         wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
                                             request, dwell_time=400, scan_type=1, lp_mode=0)
-        wlan_obj.scan()
+        wlan_obj.scan(test_id='c551130')
         wlan_obj.join_to_ap()
         wlan_obj.sniffer_validation()
     except Exception as error:
@@ -177,7 +188,7 @@ def test_wsdk_passive_scan_with_dwell_time_110ms_c551131(wifi_access_point, wifi
     try:
         wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
                                             request, dwell_time=110, scan_type=1, lp_mode=0)
-        wlan_obj.scan()
+        wlan_obj.scan(test_id='c551131')
         wlan_obj.join_to_ap()
         wlan_obj.sniffer_validation()
     except Exception as error:
@@ -218,7 +229,7 @@ def test_wsdk_passive_scan_for_diff_dwell_time_lp_chain_enabled_c551133(wifi_acc
         wifi_dut.interfaces.wifi.init(config_required=False)
         wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
                                             request, dwell_time=dwell_time, scan_type=1, lp_mode=1)
-        wlan_obj.scan()
+        wlan_obj.scan(test_id='c551133')
         wlan_obj.join_to_ap()
         wlan_obj.sniffer_validation()
     except Exception as error:
@@ -259,7 +270,7 @@ def test_wsdk_passive_scan_for_diff_dwell_time_lp_chain_disabled_c551134(wifi_ac
         wifi_dut.interfaces.wifi.init(config_required=False)
         wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
                                             request, dwell_time=dwell_time, scan_type=1, lp_mode=0)
-        wlan_obj.scan()
+        wlan_obj.scan(test_id='c551134')
         wlan_obj.join_to_ap()
         wlan_obj.sniffer_validation()
         wifi_dut.interfaces.wifi.oper_mode_opts.passive_chan_scan_timeout_value = dwell_time
@@ -297,7 +308,7 @@ def test_wsdk_passive_scan_and_active_scan_c551137(wifi_access_point, wifi_sniff
             logger().info(f"\n\n***************** Initiating test for scan type: {scan_type} *****************")
             wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                 sl_collections, request, dwell_time=110, scan_type=scan_type, lp_mode=0)
-            wlan_obj.scan()
+            wlan_obj.scan(test_id='c551137')
             wlan_obj.join_to_ap()
             wlan_obj.sniffer_validation()
             if scan_type:
@@ -306,3 +317,183 @@ def test_wsdk_passive_scan_and_active_scan_c551137(wifi_access_point, wifi_sniff
                 wifi_dut.interfaces.wifi.init(config_required=False)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "enable_timeout_config": True,
+        "passive_chan_scan_timeout_value": 1000,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_wsdk_passive_scan_max_dwell_time_1000ms_c551132(wifi_access_point, wifi_sniffer, wifi_dut, request,
+                                                         sniffer_filter, sl_collections):
+    """
+    Verify Passive scan functionality by enabling dwell time to maximum value of 1000ms(1s)
+    """
+    try:
+        wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
+                                            request, dwell_time=1000, scan_type=1, lp_mode=0)
+        wlan_obj.scan(test_id='c551132')
+        wlan_obj.join_to_ap()
+        wlan_obj.sniffer_validation()
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "enable_timeout_config": True,
+        "passive_chan_scan_timeout_value": 110,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_wsdk_passive_scan_func_probe_response_check_c551135(wifi_access_point, wifi_sniffer, wifi_dut, request,
+                                                             sniffer_filter, sl_collections):
+    """
+    Negative Case : Verify Passive scan functionality if DUT did not receives any probe response whether DUT is
+    switching to Active scan or not.
+    """
+    try:
+        wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
+                                            request, dwell_time=110, scan_type=1, lp_mode=0)
+        wlan_obj.scan(test_id='c551135')
+        logger().info("******** Checking for probe response packet in sniffer capture ********")
+        packet_filter1 = f"wlan.fc.type_subtype == 5 && wlan.sa == {wlan_obj.ap_bssid} && wlan.da == {wlan_obj.dut_mac}"
+        assert not wifi_sniffer.interfaces.capture.sniffer_validation(True, packet_filter1)['packet_count'], \
+            "Found probe response packet in sniffer capture, which is not expected"
+        logger().info("****************** DUT did not switch to active scan ************************")
+        wlan_obj.join_to_ap()
+        wlan_obj.sniffer_validation()
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['deinit'])
+@pytest.mark.end_state("wifi_dut", wifi=["reset"])
+def test_wsdk_passive_scan_with_dwell_time_1001ms_c551136(wifi_dut, sl_collections):
+    """
+    Negative Case : Verify Passive scan functionality by enabling Dwell time to 1001msec.
+    """
+    try:
+        wifi_dut.interfaces.wifi.set_wifi_config()
+        logger().info(f"\nSetting dwell time: 1001ms in DUT")
+        wifi_dut.interfaces.wifi.set_timeout_config(keep_alive_timeout_value=10, auth_assoc_timeout_value=100,
+                                                    active_chan_scan_timeout_value=100,
+                                                    passive_chan_scan_timeout_value=1001)
+        wifi_dut.interfaces.wifi.init(expected_status=SLStatus.SL_STATUS_SI91X_WRONG_PARAMETERS)
+        logger().info(f"Observed error code:'{hex(SLStatus.SL_STATUS_SI91X_WRONG_PARAMETERS)}' from DUT,"
+                      f" when dwell time is set to more than maximum value")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "enable_timeout_config": True,
+        "passive_chan_scan_timeout_value": 110,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_wsdk_passive_scan_with_dwell_time_110ms_lp_chain_enabled_c551138(wifi_access_point, wifi_sniffer, wifi_dut,
+                                                                          request, sniffer_filter, sl_collections):
+    """
+    Verify Passive scan functionality with minimum dwell time 110ms and LP chain enabled , scan should happen in all
+    channels.
+    """
+    try:
+        wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
+                                            request, dwell_time=110, scan_type=1, lp_mode=1)
+        wlan_obj.scan(test_id='c551138')
+        wlan_obj.join_to_ap()
+        wlan_obj.sniffer_validation()
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "enable_timeout_config": True,
+        "passive_chan_scan_timeout_value": 1000,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_wsdk_passive_scan_with_dwell_time_1000ms_lp_chain_disabled_c551139(wifi_access_point, wifi_sniffer, wifi_dut,
+                                                                            request, sniffer_filter, sl_collections):
+    """
+    Verify Passive scan functionality with maximum dwell time 1000ms and LP chain disabled, scan should happen only in
+    single channel.
+    """
+    try:
+        wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
+                                            request, dwell_time=1000, scan_type=1, lp_mode=0)
+        wlan_obj.scan(all_ch_scan=False, test_id='c551139')
+        wlan_obj.join_to_ap()
+        wlan_obj.sniffer_validation()
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
