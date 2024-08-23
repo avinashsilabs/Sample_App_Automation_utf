@@ -1,8 +1,12 @@
 import time
 import pytest
 import re
+import string
+import random
 from utf.interfaces.wifi import WlanError
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
+from utf.interfaces.bluetooth.bluez.gatt_application.glucose_service import GlucoseService, \
+    GlucoseMeasurementCharacteristic
 from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import BatteryService
 from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import BatteryLevelCharacteristic
 from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import BatteryService
@@ -51,7 +55,7 @@ def logger():
 
 
 class BleFunctionality(ThreadBase):
-    def __init__(self, wifi_dut=None, ble_client=None, ble_start=True, bt_dut_address=None, thermometer=None, powersave=False, battery_service=False, HeartRate=False, ht=False, battery_heartrate=False, pair=False, link_loss=True):
+    def __init__(self, wifi_dut=None, ble_client=None, ble_start=True, bt_dut_address=None, thermometer=None, powersave=False, battery_service=False, HeartRate=False, ht=False, battery_heartrate=False, pair=False, link_loss=False, glucose=False):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_client = ble_client
@@ -61,10 +65,11 @@ class BleFunctionality(ThreadBase):
         self.HeartRate = HeartRate
         self.ht = ht
         self.battery_heartrate = battery_heartrate
-        self.link_loss= link_loss
+        self.link_loss = link_loss
         self.pair = pair
         self.ble_start = ble_start
         self.thermometer = thermometer
+        self.glucose = glucose
 
 
     def ble_adv(self):
@@ -137,6 +142,11 @@ class BleFunctionality(ThreadBase):
                 bt_dut_address=bt_dut_address, service_classes=["HealthThermometerService"]
             )
             assert self.bt_client_address is not None, "init failed for rpi"
+        elif self.glucose:
+            self.bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
+                bt_dut_address=bt_dut_address, service_classes=["GlucoseService"]
+            )
+            assert self.bt_client_address is not None, "init failed for rpi"
         elif self.ht:
             self.bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
                 bt_dut_address=bt_dut_address, service_classes=["HeartRateService", "HealthThermometerService"]
@@ -189,6 +199,32 @@ class BleFunctionality(ThreadBase):
         assert char_path, "characters are empty"
         assert len(char_props) > 0, "length of characters is 0"
         return char_path
+
+    def tx_on_dut_custom(self, bt_client_address=None, char_path=None, char_uid=None):
+        logger().info(f' *********************** subscribe to notifications ***********************')
+        self.wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(ble_remote_dev_address=bt_client_address,
+                                                                 buffer_mode=0,
+                                                                 buffer_count=2)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
+                                                                                     char_uid=char_uid)
+        sw = Stopwatch()
+        count = 0
+        while sw.elapsed_sec < 600:
+            data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+            self.wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
+            time.sleep(15)
+            logger().info("******************** Validate Data ********************")
+            notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+            logger().info(f' *********************** Notification is {notifications} ***********************')
+            assert len(notifications) > 0, "received data is empty"
+            assert notifications[count] == data, "Data Mismatched"
+            count += 1
+
+        logger().info(f' *********************** unsubscribe to notifications ***********************')
+        self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+
     def tx_on_dut(self, char_path=None, char_uuid=None, data=None):
         sw = Stopwatch()
         self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
@@ -1371,4 +1407,82 @@ def test_ble_sdk_enable_health_thermomter_service_in_client_role_C19886(wifi_dut
 
     finally:
         ble_client.interfaces.bluetooth.close()
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan"])
+def test_ble_sdk_enable_glucose_service_in_client_role_C19888(wifi_dut, ble_client, sl_collections):
+    """ENABLE Glucose SERVICE IN CLIENT ROLE"""
+    bt_mon_log_file = "reports/test_wifi_sdk_C19888"
+    try:
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
+        assert bt_dut_address is not None, "gatt init failed in DUT"
+        ble_obj = BleFunctionality(wifi_dut, ble_client, bt_dut_address=bt_dut_address, ble_start=False, glucose=True)
+        bt_client_address = ble_obj.ble_gatt_scan()
+        ble_obj.check_device_state_on_dut()
+        write_handle = ble_obj.fetch_profiles(service=GlucoseService, characterstic=GlucoseMeasurementCharacteristic.Measure_UUID.lower())
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=bt_mon_log_file):
+            wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=bt_client_address,
+                                                            handle=(write_handle + 1), enable_notify=1)
+            time.sleep(10)
+            wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=bt_client_address,
+                                                            handle=(write_handle + 1), enable_notify=0)
+
+        Data= ble_obj.events_on_dut()
+        glucose_notifcations = ble_obj.btmon_validation_for_remote_tx(bt_mon_log_file=bt_mon_log_file, Data_received_on_dut=Data)
+        for data in glucose_notifcations:
+            logger().info(f"******************")
+            Notification = str(data) + "mg/L"
+            logger().info(f"Notifications received on dut: {Notification}")
+        wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+
+
+
+def test_ble_sdk_enable_slave_connection_in_client_role_C19877(wifi_dut, ble_clients, sl_collections):
+    assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+    ble_client1 = ble_clients[0]
+    ble_client2 = ble_clients[1]
+    try:
+        service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
+        char_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(set_smp=0)
+        assert bt_dut_address is not None, "gatt init failed in DUT"
+        wifi_dut.interfaces.wifi.bt_set_local_name("BLE_AUTOMATION")
+        status = wifi_dut.interfaces.wifi.bt_get_local_name()
+        logger().info(f" ======= Getting the local name : {status}")
+        ble_obj = BleFunctionality(wifi_dut, ble_client=ble_client1, bt_dut_address=bt_dut_address, ble_start=False, powersave=True)
+        ble_obj.add_services_on_dut(uuid=0xAABB, Charc_serv=0x1AA1)
+        ble_client_address = ble_obj.ble_adv()
+        time.sleep(60)
+        ble_obj.check_device_state_on_rasp()
+        char_path = ble_obj.resolving_services_on_remote(service_uuid=service_uid, char_uuid=char_uid)
+        ble_obj.tx_on_dut_custom(bt_client_address=ble_client_address, char_path=char_path, char_uid=char_uid)
+        ble_obj = BleFunctionality(wifi_dut, ble_client=ble_client2, bt_dut_address=bt_dut_address, ble_start=False)
+        ble_client_address = ble_obj.ble_adv()
+        time.sleep(60)
+        ble_obj.check_device_state_on_rasp()
+        char_path = ble_obj.resolving_services_on_remote(service_uuid=service_uid, char_uuid=char_uid)
+        ble_obj.tx_on_dut_custom(bt_client_address=ble_client_address, char_path=char_path, char_uid=char_uid)
+        ble_obj.check_device_state_on_rasp()
+        status = ble_client1.interfaces.bluetooth.get_connection_status(bt_dut_address)
+        logger().info(f"Connection status in remote device '{ble_client1.name}' is:{status}")
+        ble_client1.interfaces.bluetooth.disconnect(bt_dut_address)
+        time.sleep(5)
+        ble_client2.interfaces.bluetooth.disconnect(bt_dut_address)
+        logger().info("******************** ble_remove_service ***********************")
+        wifi_dut.interfaces.wifi.ble_remove_service()
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
+
+
 
