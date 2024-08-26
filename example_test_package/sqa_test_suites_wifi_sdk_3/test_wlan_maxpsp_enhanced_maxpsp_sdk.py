@@ -32,10 +32,10 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xPowerSaveModes,
     Si91xPowerSaveProcedureTypes
 )
-from test_iot_socket_sdk import IoTSocketDataTransfer
 from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+from utf.utils.iperf.iperf_utils import ping
 
 
 def __print_throughput(iperf_throughput: dict):
@@ -80,11 +80,9 @@ class WLanThread(ThreadBase):
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
         self.time_period = time_period
-        self.data = 'Thisisfromclient'
         self.dut_addr = None
         self.wifi_sniffer = wifi_sniffer
         self.test_case_no = test_case_no
-        self.data_transfer = data_transfer
         self.sl_collections = sl_collections
         self.test_name = test_name
         self.net_perf_client = net_perf_client
@@ -112,14 +110,9 @@ class WLanThread(ThreadBase):
                                                                          mode='power_save',
                                                                          listen_interval=1100)
 
-                '''Send traffic TX for 1 min '''
-                time.sleep(40)
-                self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
-                                                protocol=self.protocol, device_ip=self.dut_addr['device_ip'],
-                                                host_ip=host_ip,
-                                                timeout=60, traffic_type="RX")
-                logger().info("\n\n Time sleep for 1 min \n\n")
-                time.sleep(10)
+                status = ping(self.dut_addr['device_ip'], 60, size="300")
+                assert status == 1, "Ping failed"
+
             if self.test_case_no == 19679:
                 listen_interval = 1100
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -135,14 +128,8 @@ class WLanThread(ThreadBase):
                                                                          dtim_aligned_type=0, monitor_interval=50,
                                                                          num_of_dtim_skip=0, listen_interval=1100)
 
-                '''Send traffic TX for 1 min '''
-                time.sleep(40)
-                self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
-                                                protocol=self.protocol, device_ip=self.dut_addr['device_ip'],
-                                                host_ip=host_ip,
-                                                timeout=60, traffic_type="RX")
-                logger().info("\n\n Time sleep for 1 min \n\n")
-                time.sleep(10)
+                status = ping(self.dut_addr['device_ip'], 60, size="300")
+                assert status == 1, "Ping failed"
 
             if self.test_case_no == 19680:
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
@@ -152,14 +139,16 @@ class WLanThread(ThreadBase):
                                                                          mode='power_save',
                                                                          dtim_aligned_type=0, monitor_interval=50,
                                                                          num_of_dtim_skip=0)
-                ping(self.dut_addr['device_ip'], count=300)
+
+                status = ping(self.dut_addr['device_ip'], 60, size="300")
+                assert status == 1, "Ping failed"
+                time.sleep(60)
 
             if self.test_case_no == 19682:
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated
-                                                                         , ping_after_power_save=False,
-                                                                         power_save=False)
+                                                                         , ping_after_power_save=False)
 
             if self.test_case_no == 19693:
                 listen_interval = 1100
@@ -168,6 +157,7 @@ class WLanThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
                                                                       Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
                 self.wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
+                time.sleep(2)
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated
@@ -175,14 +165,30 @@ class WLanThread(ThreadBase):
                                                                          num_of_dtim_skip=0, mode='power_save',
                                                                          listen_interval=1100)
 
-                '''Send traffic TX for 1 min '''
-                time.sleep(60)
-                self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
-                                                protocol=self.protocol, device_ip=self.dut_addr['device_ip'],
-                                                host_ip=host_ip,
-                                                timeout=60, traffic_type="RX")
-                logger().info("\n\n Time sleep for 1 min \n\n")
                 time.sleep(10)
+                self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
+                self.dut_addr['device_ip'], protocol=self.protocol, time_out=120)
+
+                def start_client():
+                    time.sleep(1)
+                    logger().info(f"***** start listening  ******")
+                    self.net_perf_client.interfaces.net_perf.start()
+
+                client_thread1 = Thread(target=start_client, args=(), )
+                client_thread1.start()
+                time.sleep(2)
+
+                # open socket and listen for data
+                timeout = 130
+                self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                                    local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                    remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    size=1460, ttl=120, throughput_type=3, qos=0,
+                                                    async_socket=1, timeout=timeout + 2)
+                client_thread1.join()
+                logger().info("data received is successful")
+                time.sleep(3)
 
             if self.test_case_no == 19694:
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -193,14 +199,32 @@ class WLanThread(ThreadBase):
                                                                          , dtim_aligned_type=0, monitor_interval=50,
                                                                          num_of_dtim_skip=0, mode='power_save')
 
-                '''Send traffic TX for 2 min '''
-                time.sleep(40)
-                self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
-                                                protocol=self.protocol, device_ip=self.dut_addr['device_ip'],
-                                                host_ip=host_ip,
-                                                timeout=120, traffic_type="RX")
-                logger().info("\n\n Time sleep for 1 min \n\n")
+                '''Send traffic RX for 2 min '''
                 time.sleep(10)
+                self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip,
+                                                                     device_ip=self.dut_addr['device_ip'],
+                                                                     protocol=self.protocol, time_out=120)
+
+                def start_client():
+                    time.sleep(1)
+                    logger().info(f"***** start listening  ******")
+                    self.net_perf_client.interfaces.net_perf.start()
+
+                client_thread1 = Thread(target=start_client, args=(), )
+                client_thread1.start()
+                time.sleep(2)
+
+                # open socket and listen for data
+                timeout = 130
+                self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                                    local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                    remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    size=1460, ttl=120, throughput_type=3, qos=0,
+                                                    async_socket=1, timeout=timeout + 2)
+                client_thread1.join()
+                logger().info("data received is successful")
+                time.sleep(3)
 
             if self.test_case_no == 19695:
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -212,14 +236,29 @@ class WLanThread(ThreadBase):
                                                                          num_of_dtim_skip=0, mode='power_save',
                                                                          listen_interval=1200)
 
-                '''Send traffic TX for 1 min '''
-                time.sleep(40)
-                self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
-                                                protocol=self.protocol, device_ip=self.dut_addr['device_ip'],
-                                                host_ip=host_ip,
-                                                timeout=60, traffic_type="RX")
-                logger().info("\n\n Time sleep for 1 min \n\n")
-                time.sleep(10)
+                '''Send traffic RX for 2 min '''
+                self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
+                self.dut_addr['device_ip'], protocol="TCP", time_out=120)
+
+                def start_client():
+                    time.sleep(1)
+                    logger().info(f"***** start listening  ******")
+                    self.net_perf_client.interfaces.net_perf.start()
+
+                client_thread1 = Thread(target=start_client, args=(), )
+                client_thread1.start()
+
+                # open socket and listen for data
+                timeout = 130
+                self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                                    local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                    remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    size=1460, ttl=120, throughput_type=3, qos=0,
+                                                    async_socket=1, timeout=timeout + 2)
+                client_thread1.join()
+                logger().info("data received is successful")
+                time.sleep(3)
 
             if self.test_case_no == 19696:
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -230,12 +269,28 @@ class WLanThread(ThreadBase):
                                                                          , dtim_aligned_type=0, monitor_interval=100,
                                                                          num_of_dtim_skip=0, mode='power_save',
                                                                          listen_interval=1200)
-                '''Start RX traffic for 1 min '''
-                time.sleep(40)
-                self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
-                                                protocol=self.protocol, device_ip=self.dut_addr['device_ip'],
-                                                host_ip=host_ip,
-                                                timeout=60, traffic_type="RX")
+                '''Send traffic RX for 2 min '''
+                self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
+                self.dut_addr['device_ip'], protocol="TCP", time_out=120)
+
+                def start_client():
+                    time.sleep(1)
+                    logger().info(f"***** start listening  ******")
+                    self.net_perf_client.interfaces.net_perf.start()
+
+                client_thread1 = Thread(target=start_client, args=(), )
+                client_thread1.start()
+
+                # open socket and listen for data
+                timeout = 130
+                self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                                    local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                    remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    size=1460, ttl=120, throughput_type=3, qos=0,
+                                                    async_socket=1, timeout=timeout + 2)
+                client_thread1.join()
+                logger().info("data received is successful")
                 time.sleep(10)
 
             if self.test_case_no == 19697:
@@ -247,12 +302,29 @@ class WLanThread(ThreadBase):
                                                                          , dtim_aligned_type=0, monitor_interval=50,
                                                                          num_of_dtim_skip=0, mode='power_save',
                                                                          listen_interval=600)
-                '''Start RX traffic for 1 min '''
-                time.sleep(40)
-                self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
-                                                protocol=self.protocol, device_ip=self.dut_addr['device_ip'],
-                                                host_ip=host_ip,
-                                                timeout=60, traffic_type="RX")
+
+                '''Send traffic RX for 2 min '''
+                self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
+                self.dut_addr['device_ip'], protocol="TCP", time_out=120)
+
+                def start_client():
+                    time.sleep(1)
+                    logger().info(f"***** start listening  ******")
+                    self.net_perf_client.interfaces.net_perf.start()
+
+                client_thread1 = Thread(target=start_client, args=(), )
+                client_thread1.start()
+
+                # open socket and listen for data
+                timeout = 130
+                self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                                    local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                    remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    size=1460, ttl=120, throughput_type=3, qos=0,
+                                                    async_socket=1, timeout=timeout + 2)
+                client_thread1.join()
+                logger().info("data received is successful")
                 time.sleep(10)
 
             if self.test_case_no == 19698:
@@ -261,21 +333,33 @@ class WLanThread(ThreadBase):
                                                                          associated=self.wifi_dut.interfaces.wifi.associated
                                                                          , dtim_aligned_type=0, monitor_interval=50,
                                                                          num_of_dtim_skip=0,
-                                                                         ping_after_power_save=False,
-                                                                         power_save=False)
+                                                                         ping_after_power_save=False)
 
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
-                self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
-                                                                     device_ip=self.dut_addr['device_ip'],
-                                                                     protocol='TCP')
-                self.net_perf_client.interfaces.net_perf.start()
+                '''Send traffic RX for 2 min '''
+                self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
+                self.dut_addr['device_ip'], protocol="TCP", time_out=120)
 
-                iot_socket_obj = IoTSocketDataTransfer(wifi_dut=self.wifi_dut,
-                                                       wifi_access_point=self.wifi_access_point,
-                                                       time_period=120, data=self.data,
-                                                       dut_ip=self.dut_addr['device_ip'])
-                iot_socket_obj.socket_data_transfer(stream_type=self.stream_type, protocol='tcp')
+                def start_client():
+                    time.sleep(1)
+                    logger().info(f"***** start listening  ******")
+                    self.net_perf_client.interfaces.net_perf.start()
+
+                client_thread1 = Thread(target=start_client, args=(), )
+                client_thread1.start()
+
+                # open socket and listen for data
+                timeout = 130
+                self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                                    local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                    remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    size=1460, ttl=120, throughput_type=3, qos=0,
+                                                    async_socket=1, timeout=timeout + 2)
+                client_thread1.join()
+                logger().info("data received is successful")
+                time.sleep(10)
 
             if self.test_case_no == 19699:
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
@@ -287,18 +371,31 @@ class WLanThread(ThreadBase):
 
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
-                self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
-                                                                     device_ip=self.dut_addr['device_ip'],
-                                                                     protocol='TCP')
-                self.net_perf_client.interfaces.net_perf.start()
+                '''Send traffic RX for 2 min '''
+                self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
+                self.dut_addr['device_ip'], protocol="TCP", time_out=120)
 
-                iot_socket_obj = IoTSocketDataTransfer(wifi_dut=self.wifi_dut,
-                                                       wifi_access_point=self.wifi_access_point,
-                                                       time_period=120, data=self.data,
-                                                       dut_ip=self.dut_addr['device_ip'])
-                iot_socket_obj.socket_data_transfer(stream_type=self.stream_type, protocol='tcp')
+                def start_client():
+                    time.sleep(1)
+                    logger().info(f"***** start listening  ******")
+                    self.net_perf_client.interfaces.net_perf.start()
 
-            if self.test_case_no == 196700:
+                client_thread1 = Thread(target=start_client, args=(), )
+                client_thread1.start()
+
+                # open socket and listen for data
+                timeout = 130
+                self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                                    local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                    remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    size=1460, ttl=120, throughput_type=3, qos=0,
+                                                    async_socket=1, timeout=timeout + 2)
+                client_thread1.join()
+                logger().info("data received is successful")
+                time.sleep(10)
+
+            if self.test_case_no == 19700:
                 qos_value = ['0x00', '0x20', '0x80', '0xC8']
                 traffic = '0x00'
                 protocol = 'TCP'
@@ -306,14 +403,15 @@ class WLanThread(ThreadBase):
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated
                                                                          , dtim_aligned_type=0, monitor_interval=50,
-                                                                         num_of_dtim_skip=0, listen_interval=1200)
+                                                                         num_of_dtim_skip=0, listen_interval=1200,
+                                                                         mode='power_save')
 
                 for qos in qos_value:
                     host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                     logger().info(f"Remote device ip :{host_ip}")
                     self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
                                                                          device_ip=self.dut_addr['device_ip'],
-                                                                         protocol=protocol)
+                                                                         protocol=protocol, time_out=120)
                     logger().info(
                         f"Host IP: {host_ip}, Dut IP: {self.dut_addr['device_ip']}, Protocol: {protocol}, "
                         f"tos_value: {traffic}")
@@ -327,20 +425,18 @@ class WLanThread(ThreadBase):
                     client_thread1 = Thread(target=start_client, args=(), )
                     client_thread1.start()
 
+                    timeout = 130
                     logger().info(f"***** send traffic  ******")
                     self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=2, protocol=17,
                                                         local_port=self.net_perf_client.interfaces.net_perf.server_port,
                                                         local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
                                                         remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                                        size=1460, ttl=30, throughput_type=2, qos=qos)
-                    logger().info(f"***** get and print throughput ******")
-                    # tp = self.net_perf_client.interfaces.net_perf.process_output()
-                    # assert tp, "failed to get throughput..."
-                    # __print_throughput(tp)
+                                                        size=1460, ttl=120, throughput_type=2, qos=qos,
+                                                        timeout=timeout + 2)
                     logger().info("data received is successful")
                     time.sleep(5)
 
-            if self.test_case_no == 196703:
+            if self.test_case_no == 19703:
                 self.wifi_dut.interfaces.wifi.set_transmit_rate(rate_protocol="802.11n", data_rate='72.2Mbps',
                                                                 expected_status=SLStatus.SL_STATUS_OK)
 
@@ -353,18 +449,32 @@ class WLanThread(ThreadBase):
 
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
-                self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
-                                                                     device_ip=self.dut_addr['device_ip'],
-                                                                     protocol='TCP')
-                self.net_perf_client.interfaces.net_perf.start()
 
-                iot_socket_obj = IoTSocketDataTransfer(wifi_dut=self.wifi_dut,
-                                                       wifi_access_point=self.wifi_access_point,
-                                                       time_period=120, data=self.data,
-                                                       dut_ip=self.dut_addr['device_ip'])
-                iot_socket_obj.socket_data_transfer(stream_type=self.stream_type, protocol='tcp')
+                '''Send traffic RX for 2 min '''
+                self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
+                self.dut_addr['device_ip'], protocol="TCP", time_out=120)
 
-            if self.test_case_no == 196704:
+                def start_client():
+                    time.sleep(1)
+                    logger().info(f"***** start listening  ******")
+                    self.net_perf_client.interfaces.net_perf.start()
+
+                client_thread1 = Thread(target=start_client, args=(), )
+                client_thread1.start()
+
+                # open socket and listen for data
+                timeout = 130
+                self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                                    local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                    remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    size=1460, ttl=120, throughput_type=3, qos=0,
+                                                    async_socket=1, timeout=timeout + 2)
+                client_thread1.join()
+                logger().info("data received is successful")
+                time.sleep(10)
+
+            if self.test_case_no == 19704:
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated
@@ -374,15 +484,30 @@ class WLanThread(ThreadBase):
 
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
-                self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
-                                                                     device_ip=self.dut_addr['device_ip'],
-                                                                     protocol='TCP')
-                self.net_perf_client.interfaces.net_perf.start()
-                iot_socket_obj = IoTSocketDataTransfer(wifi_dut=self.wifi_dut,
-                                                       wifi_access_point=self.wifi_access_point,
-                                                       time_period=120, data=self.data,
-                                                       dut_ip=self.dut_addr['device_ip'])
-                iot_socket_obj.socket_data_transfer(stream_type=self.stream_type, protocol='tcp')
+
+                '''Send traffic RX for 2 min '''
+                self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
+                self.dut_addr['device_ip'], protocol="TCP", time_out=120)
+
+                def start_client():
+                    time.sleep(1)
+                    logger().info(f"***** start listening  ******")
+                    self.net_perf_client.interfaces.net_perf.start()
+
+                client_thread1 = Thread(target=start_client, args=(), )
+                client_thread1.start()
+
+                # open socket and listen for data
+                timeout = 130
+                self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                                    local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                    remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    size=1460, ttl=120, throughput_type=3, qos=0,
+                                                    async_socket=1, timeout=timeout + 2)
+                client_thread1.join()
+                logger().info("data received is successful")
+                time.sleep(10)
 
             if self.test_case_no == 19705:
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -396,45 +521,40 @@ class WLanThread(ThreadBase):
                                                                          associated=self.wifi_dut.interfaces.wifi.associated
                                                                          , dtim_aligned_type=0, monitor_interval=50,
                                                                          num_of_dtim_skip=0, listen_interval=1100,
-                                                                         mode='power_save', power_save=True)
-                '''Send traffic RX for 1 and 5 min after 1 min interval'''
-                time.sleep(40)
-                # self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
-                #                                 protocol="TCP", device_ip=self.dut_addr['device_ip'],
-                #                                 host_ip=host_ip,
-                #                                 timeout=60, traffic_type="RX")
-                # logger().info("\n\n Time sleep for 1 min \n\n")
-                # time.sleep(60)
-                # self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
-                #                                 protocol="TCP", device_ip=self.dut_addr['device_ip'],
-                #                                 host_ip=host_ip,
-                #                                 timeout=300, traffic_type="RX")
-                # logger().info("\n\n Time sleep for 2 min \n\n")
-                # time.sleep(120)
+                                                                         mode='power_save')
+
+                logger().info("\n\n Time sleep for 1 minutes \n\n")
+                time.sleep(60)
+
+                '''Send traffic RX for 5 min after 1 minutes interval'''
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
-                self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
-                                                                     device_ip=self.dut_addr['device_ip'],
-                                                                     protocol='TCP')
-                output = self.net_perf_client.interfaces.net_perf.start()
-                for i in range(5):
-                    self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
-                                                                         device_ip=self.dut_addr['device_ip'],
-                                                                         protocol='TCP')
-                    self.net_perf_client.interfaces.net_perf.start()
-                    iot_socket_obj = IoTSocketDataTransfer(wifi_dut=self.wifi_dut,
-                                                           wifi_access_point=self.wifi_access_point,
-                                                           time_period=120, data=self.data,
-                                                           dut_ip=self.dut_addr['device_ip'])
-                    iot_socket_obj.socket_data_transfer(stream_type=self.stream_type, protocol='tcp')
-                    time.sleep(60)
 
-                    iot_socket_obj = IoTSocketDataTransfer(wifi_dut=self.wifi_dut,
-                                                           wifi_access_point=self.wifi_access_point,
-                                                           time_period=300, data=self.data,
-                                                           dut_ip=self.dut_addr['device_ip'])
-                    iot_socket_obj.socket_data_transfer(stream_type=self.stream_type, protocol='tcp')
-                    time.sleep(120)
+                logger().info(f"\n\n *** Run TCP RX traffic for 5 minutes ***\n\n")
+                self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
+                self.dut_addr['device_ip'], protocol="TCP", time_out=300)
+
+                def start_client():
+                    time.sleep(1)
+                    logger().info(f"***** start listening  ******")
+                    self.net_perf_client.interfaces.net_perf.start()
+
+                client_thread1 = Thread(target=start_client, args=(), )
+                client_thread1.start()
+
+                # open socket and listen for data
+                timeout = 310
+                self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                                    local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                    remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    size=1460, ttl=300, throughput_type=3, qos=0,
+                                                    async_socket=1, timeout=timeout + 2)
+                client_thread1.join()
+                logger().info("data received is successful")
+
+                logger().info("\n\n Time sleep for 2 minutes \n\n")
+                time.sleep(120)
 
             if self.test_case_no == 19706:
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -443,43 +563,64 @@ class WLanThread(ThreadBase):
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated
                                                                          , dtim_aligned_type=0, monitor_interval=50,
-                                                                         num_of_dtim_skip=0, mode='power_save',
-                                                                         power_save=True)
+                                                                         num_of_dtim_skip=0, mode='power_save')
 
-                # '''Send traffic RX for 1 and 5 min after 1 min interval'''
-                # time.sleep(40)
-                # self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
-                #                                 protocol="TCP", device_ip=self.dut_addr['device_ip'],
-                #                                 host_ip=host_ip,
-                #                                 timeout=60, traffic_type="RX")
-                # logger().info("\n\n Time sleep for 1 min \n\n")
-                # time.sleep(60)
-                # self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
-                #                                 protocol="TCP", device_ip=self.dut_addr['device_ip'],
-                #                                 host_ip=host_ip,
-                #                                 timeout=300, traffic_type="RX")
-                # logger().info("\n\n Time sleep for 2 min \n\n")
-                # time.sleep(120)
-                time.sleep(40)
+                '''Send traffic RX for 2 min '''
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
-                self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip,
+
+                logger().info(f"\n\n *** Run TCP RX traffic for 1 minutes ***\n\n")
+                self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip,
                                                                      device_ip=self.dut_addr['device_ip'],
-                                                                     protocol='TCP')
-                self.net_perf_client.interfaces.net_perf.start()
-                iot_socket_obj = IoTSocketDataTransfer(wifi_dut=self.wifi_dut,
-                                                       wifi_access_point=self.wifi_access_point,
-                                                       time_period=120, data=self.data,
-                                                       dut_ip=self.dut_addr['device_ip'])
-                iot_socket_obj.socket_data_transfer(stream_type=self.stream_type, protocol='tcp')
+                                                                     protocol="TCP", time_out=60)
+
+                def start_client():
+                    time.sleep(1)
+                    logger().info(f"***** start listening  ******")
+                    self.net_perf_client.interfaces.net_perf.start()
+
+                client_thread1 = Thread(target=start_client, args=(), )
+                client_thread1.start()
+
+                # open socket and listen for data
+                timeout = 70
+                self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                                    local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                    remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    size=1460, ttl=60, throughput_type=3, qos=0,
+                                                    async_socket=1, timeout=timeout + 2)
+                client_thread1.join()
+                logger().info("data received is successful")
+
+                logger().info("\n\n Time sleep for 1 minutes \n\n")
                 time.sleep(60)
 
-                iot_socket_obj = IoTSocketDataTransfer(wifi_dut=self.wifi_dut,
-                                                       wifi_access_point=self.wifi_access_point,
-                                                       time_period=300, data=self.data,
-                                                       dut_ip=self.dut_addr['device_ip'])
-                iot_socket_obj.socket_data_transfer(stream_type=self.stream_type, protocol='tcp')
+                logger().info(f"\n\n *** Run TCP RX traffic for 5 minutes ***\n\n")
+                self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
+                self.dut_addr['device_ip'], protocol="TCP", time_out=300)
+
+                def start_client():
+                    time.sleep(1)
+                    logger().info(f"***** start listening  ******")
+                    self.net_perf_client.interfaces.net_perf.start()
+
+                client_thread1 = Thread(target=start_client, args=(), )
+                client_thread1.start()
+
+                # open socket and listen for data
+                timeout = 310
+                self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                                    local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                    remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                    size=1460, ttl=300, throughput_type=3, qos=0,
+                                                    async_socket=1, timeout=timeout + 2)
+                client_thread1.join()
+                logger().info("data received is successful")
+                logger().info("\n\n Time sleep for 2 minutes \n\n")
                 time.sleep(120)
+
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case {self.test_case_no} thread: {str(e)} ****\n\n")
             raise e
@@ -1419,7 +1560,7 @@ def test_wifi_sdk_max_psp_enable_disable_c19682(wifi_sniffer, wifi_access_point,
             wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                           psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
-            status = ping(device_ip, 20)
+            status = ping(device_ip, 20, size=300)
             assert status == 1
 
             '''Disable the Power save mode'''
@@ -1430,7 +1571,7 @@ def test_wifi_sdk_max_psp_enable_disable_c19682(wifi_sniffer, wifi_access_point,
                                                           psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
             time.sleep(25)
-            status = ping(device_ip, 20)
+            status = ping(device_ip, 20, size=300)
             assert status == 1
             count = count + 1
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -2141,7 +2282,9 @@ def test_wifi_sdk_enhanced_max_psp_with_diff_ap_c19699(wifi_sniffer, wifi_access
        Netgear WNR1000,TP-LINK(TL-WDR5620),ASUS-LYRA, Xfinity XB3 ,Xfinity XB6 & Belkin AP'''
 
     '''Verify whether DUT is waked up before the nearest Beacon that does not exceed the specified listen interval
-       time, Retrieving the buffered data by sending PS-POLL for every packet'''
+       time, Retrieving the buffered data by sending PS-POLL for every packet if AP sends data within 20msec of sending 
+       PS-POLL(IOP)'''
+
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
     wifi_access_point.interfaces.wifi.start_ap()
@@ -2249,7 +2392,7 @@ def test_wifi_sdk_enhanced_max_psp_with_diff_traffic_c19700(wifi_sniffer, wifi_a
                                                             utf_constants):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
-    test_case_no = 196700
+    test_case_no = 19700
     frame_exchange_obj = FilterPacket()
     packet_filter2 = '    Type/Subtype: Power-Save poll (0x001a)'
 
@@ -2280,6 +2423,7 @@ def test_wifi_sdk_enhanced_max_psp_with_diff_traffic_c19700(wifi_sniffer, wifi_a
                                                                                         filter_name='coex_enhanced_max_psp_34469')
 
         wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
                                                                   packet_filter2=packet_filter2)[
             'packet_count']
@@ -2333,7 +2477,7 @@ def test_wifi_sdk_enhanced_max_psp_with_high_data_rate_c19703(wifi_sniffer, wifi
                                                               wifi_client, net_perf_client):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
-    test_case_no = 196703
+    test_case_no = 19703
     frame_exchange_obj = FilterPacket()
     assoc_obj = FilterPacket()
     packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
@@ -2451,7 +2595,7 @@ def test_wifi_sdk_enhanced_max_psp_with_ulp_mode_dtim_c19704(wifi_sniffer, wifi_
                                                              request, utf_constants):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
-    test_case_no = 196704
+    test_case_no = 19704
     frame_exchange_obj = FilterPacket()
     assoc_obj = FilterPacket()
     packet_filter10 = '    Type/Subtype: Association Response (0x0001)'
