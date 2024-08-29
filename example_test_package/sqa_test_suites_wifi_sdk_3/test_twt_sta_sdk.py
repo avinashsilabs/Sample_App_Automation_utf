@@ -6,6 +6,7 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBit
     Si91xOperatingMode, Si91xTCPIPFeatureBitMap
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
 
 """
     Setup requirement:
@@ -143,6 +144,33 @@ class WLanTwTThread(ThreadBase):
                                                                      power_save=self.power_save,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated)
 
+            if self.before_join:
+                while True:
+                    events = self.wifi_dut.interfaces.wifi.get_async_events()
+                    twt_setup_success_event = [event for event in events if
+                                               event.event_type == AsyncEventIdentifiers.WIFI_TWT_RESPONSE_EVENT]
+                    if len(twt_setup_success_event):
+                        break
+                    self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
+                                                          twt_flow_id=self.twt_flow_id,
+                                                          wake_duration=self.wake_duration,
+                                                          wake_duration_unit=self.wake_duration_unit,
+                                                          wake_duration_tol=self.wake_duration_tol,
+                                                          wake_int_exp=self.wake_int_exp,
+                                                          wake_int_exp_tol=self.wake_int_exp_tol,
+                                                          wake_int_mantissa=self.wake_int_mantissa,
+                                                          wake_int_mantissa_tol=self.wake_int_mantissa_tol,
+                                                          implicit_twt=self.implicit_twt,
+                                                          un_announced_twt=self.un_announced_twt,
+                                                          triggered_twt=self.triggered_twt,
+                                                          twt_channel=self.twt_channel,
+                                                          twt_protection=self.twt_protection,
+                                                          restrict_tx_outside_tsp=self.restrict_tx_outside_tsp,
+                                                          twt_retry_limit=self.twt_retry_limit,
+                                                          twt_retry_interval=self.twt_retry_interval,
+                                                          req_type=self.req_type,
+                                                          negotiation_type=self.negotiation_type)
+
             if self.test_case == '113739':
                 try:
                     self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
@@ -167,26 +195,32 @@ class WLanTwTThread(ThreadBase):
                     logger().info("***** TWT is failed for first time trying for second time *****")
 
                 except Exception as e:
-                    self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
-                                                          twt_flow_id=self.twt_flow_id,
-                                                          wake_duration=self.wake_duration,
-                                                          wake_duration_unit=self.wake_duration_unit,
-                                                          wake_duration_tol=self.wake_duration_tol,
-                                                          wake_int_exp=self.wake_int_exp,
-                                                          wake_int_exp_tol=self.wake_int_exp_tol,
-                                                          wake_int_mantissa=self.wake_int_mantissa,
-                                                          wake_int_mantissa_tol=self.wake_int_mantissa_tol,
-                                                          implicit_twt=self.implicit_twt,
-                                                          un_announced_twt=self.un_announced_twt,
-                                                          triggered_twt=self.triggered_twt,
-                                                          twt_channel=self.twt_channel,
-                                                          twt_protection=self.twt_protection,
-                                                          restrict_tx_outside_tsp=self.restrict_tx_outside_tsp,
-                                                          twt_retry_limit=self.twt_retry_limit,
-                                                          twt_retry_interval=self.twt_retry_interval,
-                                                          req_type=self.req_type,
-                                                          negotiation_type=self.negotiation_type)
-                    logger().info("***** TWT is set successfully for second time *****")
+                    while True:
+                        self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
+                                                              twt_flow_id=self.twt_flow_id,
+                                                              wake_duration=self.wake_duration,
+                                                              wake_duration_unit=self.wake_duration_unit,
+                                                              wake_duration_tol=self.wake_duration_tol,
+                                                              wake_int_exp=self.wake_int_exp,
+                                                              wake_int_exp_tol=self.wake_int_exp_tol,
+                                                              wake_int_mantissa=self.wake_int_mantissa,
+                                                              wake_int_mantissa_tol=self.wake_int_mantissa_tol,
+                                                              implicit_twt=self.implicit_twt,
+                                                              un_announced_twt=self.un_announced_twt,
+                                                              triggered_twt=self.triggered_twt,
+                                                              twt_channel=self.twt_channel,
+                                                              twt_protection=self.twt_protection,
+                                                              restrict_tx_outside_tsp=self.restrict_tx_outside_tsp,
+                                                              twt_retry_limit=self.twt_retry_limit,
+                                                              twt_retry_interval=self.twt_retry_interval,
+                                                              req_type=self.req_type,
+                                                              negotiation_type=self.negotiation_type)
+                        events = self.wifi_dut.interfaces.wifi.get_async_events()
+                        twt_setup_success_event = [event for event in events if
+                                                   event.event_type == AsyncEventIdentifiers.WIFI_TWT_RESPONSE_EVENT]
+                        if len(twt_setup_success_event):
+                            logger().info("***** TWT is set successfully for second time *****")
+                            break
 
             # Check test case 113733 and turn off the switch
             if self.test_case == '113733' or self.test_case == '113735' or self.test_case == '113754':
@@ -240,27 +274,39 @@ class WLanTwTThread(ThreadBase):
                 logger().info("***** Getting 0x10073 Error, which is expected *****")
                 return
 
+            if self.test_case == '540488':
+                self.wifi_dut.interfaces.wifi.disable_twt(twt_flow_id=0,
+                                                          expected_status=SLStatus.SL_STATUS_TWT_TEARDOWN_ERR_FLOWID_NOT_MATCHED)
+                logger().info('***** Getting expected error code which is 0x10072 *****')
+                return
+
             if not self.before_join and self.test_case != '113739':
                 # Call set_twt API
-                self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
-                                                      twt_flow_id=self.twt_flow_id,
-                                                      wake_duration=self.wake_duration,
-                                                      wake_duration_unit=self.wake_duration_unit,
-                                                      wake_duration_tol=self.wake_duration_tol,
-                                                      wake_int_exp=self.wake_int_exp,
-                                                      wake_int_exp_tol=self.wake_int_exp_tol,
-                                                      wake_int_mantissa=self.wake_int_mantissa,
-                                                      wake_int_mantissa_tol=self.wake_int_mantissa_tol,
-                                                      implicit_twt=self.implicit_twt,
-                                                      un_announced_twt=self.un_announced_twt,
-                                                      triggered_twt=self.triggered_twt,
-                                                      twt_channel=self.twt_channel,
-                                                      twt_protection=self.twt_protection,
-                                                      restrict_tx_outside_tsp=self.restrict_tx_outside_tsp,
-                                                      twt_retry_limit=self.twt_retry_limit,
-                                                      twt_retry_interval=self.twt_retry_interval,
-                                                      req_type=self.req_type,
-                                                      negotiation_type=self.negotiation_type)
+                while True:
+                    self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
+                                                          twt_flow_id=self.twt_flow_id,
+                                                          wake_duration=self.wake_duration,
+                                                          wake_duration_unit=self.wake_duration_unit,
+                                                          wake_duration_tol=self.wake_duration_tol,
+                                                          wake_int_exp=self.wake_int_exp,
+                                                          wake_int_exp_tol=self.wake_int_exp_tol,
+                                                          wake_int_mantissa=self.wake_int_mantissa,
+                                                          wake_int_mantissa_tol=self.wake_int_mantissa_tol,
+                                                          implicit_twt=self.implicit_twt,
+                                                          un_announced_twt=self.un_announced_twt,
+                                                          triggered_twt=self.triggered_twt,
+                                                          twt_channel=self.twt_channel,
+                                                          twt_protection=self.twt_protection,
+                                                          restrict_tx_outside_tsp=self.restrict_tx_outside_tsp,
+                                                          twt_retry_limit=self.twt_retry_limit,
+                                                          twt_retry_interval=self.twt_retry_interval,
+                                                          req_type=self.req_type,
+                                                          negotiation_type=self.negotiation_type)
+                    events = self.wifi_dut.interfaces.wifi.get_async_events()
+                    twt_setup_success_event = [event for event in events if
+                                               event.event_type == AsyncEventIdentifiers.WIFI_TWT_RESPONSE_EVENT]
+                    if len(twt_setup_success_event):
+                        break
 
             # Call set_twt API by checking test case
             if self.test_case == '113738':
@@ -456,6 +502,8 @@ pytestmark = [
         }
     )
 ]
+
+
 @pytest.mark.firmware_app("test_twt_sta")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -614,7 +662,8 @@ def test_wifi_sdk_verify_twt_request_when_enabled_after_join_c113730(wifi_dut, w
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113730',
                                  power_save=True, test_case='113730', wake_duration=0x80, wake_duration_tol=0x80,
                                  wake_int_exp=15, wake_int_exp_tol=15, wake_int_mantissa=0x1E4C,
-                                 wake_int_mantissa_tol=0x1E4C, un_announced_twt=0, req_type=0, utf_constants=utf_constants)
+                                 wake_int_mantissa_tol=0x1E4C, un_announced_twt=0, req_type=0,
+                                 utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
@@ -671,7 +720,7 @@ def test_wifi_sdk_verify_twt_demand_when_enabled_after_join_c113732(wifi_dut, wi
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, req_type=2,
                                  power_save=True, test_case='113732', utf_constants=utf_constants,
-                                 sniffer_capture='113732',)
+                                 sniffer_capture='113732')
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
@@ -697,7 +746,8 @@ def test_wifi_sdk_verify_default_retry_attempts_for_twt_c113733(wifi_dut, wifi_a
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sniffer_capture='113733',
                                  sl_collections=sl_collections, test_case='113733', wifi_sniffer=wifi_sniffer,
-                                 sniffer_filter=sniffer_filter, switch=switch, power_save=True, utf_constants=utf_constants)
+                                 sniffer_filter=sniffer_filter, switch=switch, power_save=True,
+                                 utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
@@ -782,6 +832,7 @@ def test_wifi_sdk_verify_whether_dut_accepts_rejects_alternate_twt_setup_c113736
         wlan_obj.wait_for_exit()
     except Exception as Ex:
         logger().info(f"Exception occurred: {Ex}")
+
 
 @pytest.mark.firmware_app("test_twt_sta")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
@@ -1299,7 +1350,8 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_twt_with_bg_scan_after_join_c
 @pytest.mark.test_src_map_id('C540487')
 def test_wifi_sdk_verify_whether_dut_able_to_teardown_when_first_session_is_active_c540487(wifi_dut, wifi_access_point,
                                                                                            sl_collections, wifi_sniffer,
-                                                                                           sniffer_filter, utf_constants):
+                                                                                           sniffer_filter,
+                                                                                           utf_constants):
     """
     Test Steps:
         1. Create thread for twt functionality
@@ -1311,6 +1363,33 @@ def test_wifi_sdk_verify_whether_dut_able_to_teardown_when_first_session_is_acti
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='540487',
                                  power_save=True, test_case='113738', utf_constants=utf_constants)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_verify_whether_dut_able_to_send_error_when_different_flow_id_is_provided_c540488(wifi_dut,
+                                                                                                   wifi_access_point,
+                                                                                                   sl_collections,
+                                                                                                   wifi_sniffer,
+                                                                                                   sniffer_filter,
+                                                                                                   utf_constants):
+    """
+    Test Steps:
+        1. Create thread for twt functionality
+        2. Enable powersave mode
+        3. Run the thread
+        4. Exit the thread
+    """
+    try:
+        wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='540488',
+                                 power_save=True, test_case='540488', utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
