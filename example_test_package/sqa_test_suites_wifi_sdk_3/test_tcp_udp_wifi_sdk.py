@@ -1451,7 +1451,8 @@ def test_wifi_sdk_5tcp_5udp_dut_server_socket_c19353(
             time.sleep(1)
             count += 1
             wifi_dut.interfaces.wifi.bsdAsyncSocketSelect(numberOfFds=2, time=10)
-            buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock_no + 1)
+            buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock_no + 1, timeout=60,
+                                                                      async_timeout=60)
             logger().info(f"###################### Buffer Data  {buffer_rx}  ######################")
             logger().info(f"###################### Buffer Data Length  {buffer_length}  ######################")
             assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id " \
@@ -1494,19 +1495,21 @@ def test_wifi_sdk_5tcp_5udp_dut_server_socket_c19353(
             elif socket_no == 14:
                 start_port_dut = 6005
             logger().info(f"###################### start_port from DUT : {start_port_dut}  ######################")
-            remote_multi_socket.interfaces.socket.send_data_udp(
-                tx_buffer=data_sent, server_ip=wifi_thread.dut_addr['device_ip'], port=start_port_dut,
-                sock_id=udp_socks[i])
+            remote_multi_socket.interfaces.socket.send_data_udp(tx_buffer=data_sent,port=start_port_dut,
+                                                                server_ip=wifi_thread.dut_addr['device_ip'],
+                                                                sock_id=udp_socks[i])
             i += 1
-            time.sleep(2)
+
             wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
-            buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=socket_no)
+            time.sleep(3)
+            buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=socket_no, timeout=60,
+                                                                      async_timeout=60)
             logger().info(f"###################### Buffer Data  {data_sent}  ######################")
             logger().info(f"###################### Buffer Data Length  {data_length}  ######################")
             logger().info(f"###################### Received Data: {buffer_rx} ######################")
-            assert data_length == len(
-                buffer_rx), f"buffer length sent by remote peer and received on the socket id {socket_no} opened in the DUT is not matched "
-        time.sleep(2)
+            assert data_length == len(buffer_rx), (f"buffer length sent by remote peer and received on the socket id "
+                                                   f"{socket_no} opened in the DUT is not matched ")
+            time.sleep(2)
         for sock in tcp_socks:
             logger().info(f"Closing socket_id->{sock}")
             wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
