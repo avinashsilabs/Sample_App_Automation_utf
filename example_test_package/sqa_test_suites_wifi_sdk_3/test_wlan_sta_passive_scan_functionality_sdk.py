@@ -35,8 +35,9 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xExtCustomFeatureBitMap,
     Si91xPowerSaveProcedureTypes
 )
-from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utils.stopwatch import Stopwatch
+from utf.interfaces.wifi import CountryCode
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 
 
 def logger():
@@ -45,7 +46,7 @@ def logger():
 
 class PassiveScanFunctionality:
     def __init__(self, wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections, request,
-                 dwell_time, scan_type, lp_mode=0, measure_scan_time=1):
+                 dwell_time, scan_type, lp_mode=0, measure_scan_time=1, ap_bssid=None):
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
         self.wifi_sniffer = wifi_sniffer
@@ -56,7 +57,7 @@ class PassiveScanFunctionality:
         self.scan_type = scan_type
         self.measure_scan_time = measure_scan_time
         self.test_name = request.node.name
-        self.ap_bssid = self.wifi_access_point.interfaces.wifi.bssid
+        self.ap_bssid = ap_bssid if ap_bssid else self.wifi_access_point.interfaces.wifi.bssid
         self.dut_mac = None
 
     def scan(self, all_ch_scan=True, test_id=''):
@@ -102,7 +103,7 @@ class PassiveScanFunctionality:
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
         time.sleep(3)
         self.sl_collections.connect(self.wifi_dut, self.wifi_access_point, retry_count=3)
-        ip_config = self.sl_collections.configure_ip(self.wifi_dut, retry_count=3)[-1]
+        ip_config = self.sl_collections.configure_ip(self.wifi_dut, retry_count=3, timeout=120)[-1]
         device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
         self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
         self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
@@ -118,7 +119,7 @@ class PassiveScanFunctionality:
                                                                                              filter_name='power_mgmt_bit')
         packet_filter3 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=self.dut_mac,
                                                                                              da_addr=self.ap_bssid,
-                                                                                             filter_name='association_request_HE')
+                                                                                             filter_name='association_request')
         logger().info("******** Checking for power management bit in sniffer capture ********")
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(True, packet_filter2)['packet_count'], \
             "Unable to find power management bit 1 in sniffer"
@@ -311,10 +312,7 @@ def test_wsdk_passive_scan_and_active_scan_c551137(wifi_access_point, wifi_sniff
             wlan_obj.scan(test_id='c551137')
             wlan_obj.join_to_ap()
             wlan_obj.sniffer_validation()
-            if scan_type:
-                wifi_dut.interfaces.wifi.leave()
-                wifi_dut.interfaces.wifi.deinit()
-                wifi_dut.interfaces.wifi.init(config_required=False)
+            wifi_dut.interfaces.wifi.leave()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
 
@@ -497,3 +495,244 @@ def test_wsdk_passive_scan_with_dwell_time_1000ms_lp_chain_disabled_c551139(wifi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
 
 
+"""***************************************** Announcement3 *****************************************"""
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "region": Si91xRegion.FromUser,
+        "region_code": Si91xRegionCode.Japan,
+        "enable_timeout_config": True,
+        "passive_chan_scan_timeout_value": 110,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.wifi_access_point("raspi_wifi")
+@pytest.mark.config('wifi_access_point', wifi={'interface': 'wlan0', 'region': 'Japan', 'channel': 13})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_wsdk_passive_scan_in_japan_region_lp_chain_enabled_c551142(wifi_access_point, wifi_sniffer, wifi_dut,
+                                                                    request, sniffer_filter, sl_collections):
+    """
+    Verify Passive scan functionality with different regions in Japan by setting scan in specific channel and LP
+    enabled.
+    """
+    try:
+        ap_bssid = wifi_access_point.interfaces.wifi.get_mac_address()
+        channel = wifi_access_point.interfaces.wifi.channel
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"beacon_check_japan_region_c551145")
+        time.sleep(10)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        beacon_filter = f"(wlan.sa == {ap_bssid} && wlan.fc.type_subtype == 8 && wlan.ds.current_channel == {channel})"
+        logger().info("******** Checking for japan region beacon in sniffer capture ********")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(True, beacon_filter)['packet_count'], \
+            "Unable to find japan region beacons in sniffer"
+        wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
+                                            request, dwell_time=110, scan_type=1, lp_mode=1, ap_bssid=ap_bssid)
+        wlan_obj.scan(all_ch_scan=False, test_id='c551142')
+        wlan_obj.join_to_ap()
+        wlan_obj.sniffer_validation()
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "region": Si91xRegion.FromUser,
+        "region_code": Si91xRegionCode.Europe,
+        "enable_timeout_config": True,
+        "passive_chan_scan_timeout_value": 110,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={'region': 'Europe', 'channel': 12})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_wsdk_passive_scan_in_europe_region_lp_chain_enabled_c551143(wifi_access_point, wifi_sniffer, wifi_dut,
+                                                                     request, sniffer_filter, sl_collections):
+    """
+    Verify Passive scan functionality with different regions in Europe by setting scan in specific channel and LP
+    enabled.
+    """
+    try:
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        channel = wifi_access_point.interfaces.wifi.channel
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"beacon_check_eu_region_c551143")
+        time.sleep(10)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        beacon_filter = f"(wlan.sa == {ap_bssid} && wlan.fc.type_subtype == 8 && wlan.ds.current_channel == {channel})"
+        logger().info("******** Checking for europe region beacon in sniffer capture ********")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(True, beacon_filter)['packet_count'], \
+            "Unable to find europe region beacons in sniffer"
+        wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
+                                            request, dwell_time=110, scan_type=1, lp_mode=1)
+        wlan_obj.scan(all_ch_scan=False, test_id='c551143')
+        wlan_obj.join_to_ap()
+        wlan_obj.sniffer_validation()
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "region": Si91xRegion.FromUser,
+        "region_code": Si91xRegionCode.US,
+        "enable_timeout_config": True,
+        "passive_chan_scan_timeout_value": 110,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={'region': 'US'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_wsdk_passive_scan_in_us_region_lp_chain_enabled_c551144(wifi_access_point, wifi_sniffer, wifi_dut,
+                                                                 request, sniffer_filter, sl_collections):
+    """
+    Verify Passive scan functionality with different regions in US by setting scan in specific channel and LP enabled.
+    """
+    try:
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        channel = wifi_access_point.interfaces.wifi.channel
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"beacon_check_us_region_c551144")
+        time.sleep(10)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        beacon_filter = f"(wlan.sa == {ap_bssid} && wlan.fc.type_subtype == 8 && wlan.ds.current_channel == {channel})"
+        logger().info("******** Checking for us region beacon in sniffer capture ********")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(True, beacon_filter)['packet_count'], \
+            "Unable to find us region beacons in sniffer"
+        wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
+                                            request, dwell_time=110, scan_type=1, lp_mode=1)
+        wlan_obj.scan(all_ch_scan=False, test_id='c551144')
+        wlan_obj.join_to_ap()
+        wlan_obj.sniffer_validation()
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "region": Si91xRegion.FromUser,
+        "region_code": Si91xRegionCode.Korea,
+        "enable_timeout_config": True,
+        "passive_chan_scan_timeout_value": 110,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.wifi_access_point("raspi_wifi")
+@pytest.mark.config('wifi_access_point', wifi={'interface': 'wlan0', 'region': 'Korea', 'channel': 13})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_wsdk_passive_scan_in_korea_region_lp_chain_enabled_c551145(wifi_access_point, wifi_sniffer, wifi_dut,
+                                                                    request, sniffer_filter, sl_collections):
+    """
+    Verify Passive scan functionality with different regions in KR by setting scan in specific channel and LP enabled.
+    """
+    try:
+        ap_bssid = wifi_access_point.interfaces.wifi.get_mac_address()
+        channel = wifi_access_point.interfaces.wifi.channel
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"beacon_check_korea_region_c551145")
+        time.sleep(10)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        beacon_filter = f"(wlan.sa == {ap_bssid} && wlan.fc.type_subtype == 8 && wlan.ds.current_channel == {channel})"
+        logger().info("******** Checking for korea region beacon in sniffer capture ********")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(True, beacon_filter)['packet_count'], \
+            "Unable to find korea region beacons in sniffer"
+        wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
+                                            request, dwell_time=110, scan_type=1, lp_mode=1, ap_bssid=ap_bssid)
+        wlan_obj.scan(all_ch_scan=False, test_id='c551145')
+        wlan_obj.join_to_ap()
+        wlan_obj.sniffer_validation()
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "region": Si91xRegion.FromUser,
+        "region_code": Si91xRegionCode.Worldwide,
+        "enable_timeout_config": True,
+        "passive_chan_scan_timeout_value": 110,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={'region': 'Asia'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_wsdk_passive_scan_in_world_wide_domain_lp_chain_enabled_c551146(wifi_access_point, wifi_sniffer, wifi_dut,
+                                                                         request, sniffer_filter, sl_collections):
+    """
+    Verify Passive scan functionality with different regions in WORLD_DOMAIN by setting scan in specific channel and
+    LP enabled
+    """
+    try:
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        channel = wifi_access_point.interfaces.wifi.channel
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"beacon_check_asia_region_c551146")
+        time.sleep(10)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        beacon_filter = f"(wlan.sa == {ap_bssid} && wlan.fc.type_subtype == 8 && wlan.ds.current_channel == {channel})"
+        logger().info("******** Checking for asia region beacon in sniffer capture ********")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(True, beacon_filter)['packet_count'], \
+            "Unable to find asia region beacons in sniffer"
+        wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
+                                            request, dwell_time=110, scan_type=1, lp_mode=1)
+        wlan_obj.scan(all_ch_scan=False, test_id='c551146')
+        wlan_obj.join_to_ap()
+        wlan_obj.sniffer_validation()
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
