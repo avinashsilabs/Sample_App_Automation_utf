@@ -455,8 +455,9 @@ pytestmark = [
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
-def test_wifi_sdk_ssl_standalone_tx_480_192K_c20742(firmware_loader, wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
-                                           logger, wifi_sniffer, request):
+def test_wifi_sdk_ssl_standalone_tx_480_192K_with_long_imcp_C512088(firmware_loader, wifi_access_point, sniffer_filter,
+                                                                   sl_collections, wifi_dut, ssl_server, logger,
+                                                                   wifi_sniffer, request):
     testcase = request.node.name
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               testcase=testcase, sl_collections=sl_collections, ssl_server=ssl_server,
@@ -473,8 +474,9 @@ def test_wifi_sdk_ssl_standalone_tx_480_192K_c20742(firmware_loader, wifi_access
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_wifi_sdk_ssl_standalone_rx_480_192K_C20743(firmware_loader, wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
-                                           ssl_server, logger, utf_constants, wifi_sniffer):
+def test_wifi_sdk_ssl_standalone_rx_480_192K_with_long_imcp_C512089(firmware_loader, wifi_access_point, sniffer_filter,
+                                                                   request, sl_collections, wifi_dut, ssl_server,
+                                                                   logger, utf_constants, wifi_sniffer):
     testcase = request.node.name
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               testcase=testcase, sl_collections=sl_collections, ssl_server=ssl_server,
