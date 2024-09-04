@@ -69,6 +69,8 @@ def logger():
         4. Sniffer(NUC device)
 
 """
+
+
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None,
                  ping_count=None, data_transfer=True, test_name=None, sl_collections=None, switch=None, wifi_client=None, net_perf_client=None,
@@ -93,29 +95,13 @@ class WLanThread(ThreadBase):
         self.wifi_client = wifi_client
         self.net_perf_client = net_perf_client
         self.protocol = protocol
+        self.channel_bitmap_2_4 = 8
 
     def run(self):
         try:
             if self.test_case_no == 19721:
                 """ Enabling Rejoin """
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
-                                                                         beacon_missed_count=40,
-                                                                         first_time_retry_enable=0)
-            elif self.test_case_no == 19722:
-                """ Enabling Rejoin for max retry count = 4 """
-                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=4,
-                                                                         scan_interval=4,
-                                                                         beacon_missed_count=40,
-                                                                         first_time_retry_enable=0)
-                self.rejoin_event=True
-            elif self.test_case_no == 19729:
-                """ Enabling Rejoin for security mode change"""
-                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=4, scan_interval=6,
-                                                                         beacon_missed_count=40,
-                                                                         first_time_retry_enable=0)
-            elif self.test_case_no == 19733:
-                """ Enabling Rejoin for security mode change"""
-                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=20, scan_interval=6,
                                                                          beacon_missed_count=40,
                                                                          first_time_retry_enable=0)
             elif self.test_case_no == 19735:
@@ -222,6 +208,21 @@ class WLanThread(ThreadBase):
 
                 self.dut_addr = dut_add_dict
 
+            elif self.test_case_no == 19729:
+                """ Enabling Rejoin for security mode change"""
+                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=4, scan_interval=6,
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=0)
+                self.logger.info(f"********** rejoin_plan channel_bitmap_2_4:{self.channel_bitmap_2_4}****************")
+                logger().info("DUT Joining to AP ")
+                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                         channel_bitmap_2_4=self.channel_bitmap_2_4,
+                                                                         ping_after_power_save=False,
+                                                                         channel=self.wifi_access_point.interfaces.wifi.channel)
+                logger().info("DUT successfully connected with AP")
+
             elif self.test_case_no == 19730:
                 self.wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
 
@@ -273,6 +274,31 @@ class WLanThread(ThreadBase):
                 self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET, option_val=SocketOptions.TCP_MAX_RETRY)
                 self.wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
 
+            elif self.test_case_no == 19733:
+                self.logger.info(f"********** rejoin_plan channel_bitmap_2_4:{self.channel_bitmap_2_4}****************")
+                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                         channel_bitmap_2_4=self.channel_bitmap_2_4,
+                                                                         ping_after_power_save=False,
+                                                                         channel=self.wifi_access_point.interfaces.wifi.channel)
+                logger().info("DUT successfully connected with AP")
+
+            elif self.test_case_no == 19722:
+                """ Enabling Rejoin for max retry count = 4 """
+                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=4,
+                                                                              scan_interval=4,
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=0)
+                self.rejoin_event = True
+                self.logger.info(f"********** rejoin_plan channel_bitmap_2_4:{self.channel_bitmap_2_4}****************")
+                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                         channel_bitmap_2_4=self.channel_bitmap_2_4,
+                                                                         ping_after_power_save=False,
+                                                                         channel=self.wifi_access_point.interfaces.wifi.channel)
+                logger().info("DUT successfully connected with AP")
             else:
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
@@ -2409,5 +2435,4 @@ def test_wifi_sdk_rejoin_roaming_c19726(wifi_access_points, wifi_dut, switches, 
         logger().info("pdu switch state for AP1: " + str(state))
         assert state == 'false', 'Please check PDU outlet manually'
         wifi_dut.interfaces.wifi.leave()
-
 
