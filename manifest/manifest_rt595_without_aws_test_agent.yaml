@@ -13,7 +13,7 @@ reset: []
 #     # List of devices and their firmware images for this marker
 #     - device_type: 'rs911x'
 #       device_subtype: 'rs9116'
-#       filename: 'RS9116W.2.10.1.3.rps'
+#       filename: 'RS9116W.2.11.0.1.rps'
 #     - device_type: 'stm32'
 #       device_subtype: 'efr32'
 #       filename: 'generic_stm32_test_agent_without_aws.hex'
