@@ -5217,8 +5217,10 @@ def test_wifi_sdk_qos1_two_topic_with_SSL_connection_rejoin_failed_c537957(
         wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
             client_id="Si91x_mqtt_client", server_port=8883, qos=1, is_connection_encrypted=True)
         logger().info("Both DUT and third-party mqtt client connects to MQTT server")
-        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
-        time.sleep(25)
+        with TimeMeasurer() as t:
+            wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+            time.sleep(20)
+        logger().info(f"mqtt connection time duration {t.duration} seconds")
         mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
         time.sleep(5)
         mqtt_client.interfaces.mqtt.received_messages.clear()
@@ -5270,8 +5272,11 @@ def test_wifi_sdk_qos1_two_topic_with_SSL_connection_rejoin_failed_c537957(
         wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
             client_id="Si91x_mqtt_client", server_port=8883, qos=1, is_connection_encrypted=True)
         logger().info("Both DUT and third-party mqtt client connects to MQTT server")
-        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
-        time.sleep(25)
+        with TimeMeasurer() as t1:
+            logger().info("Both DUT and third-party mqtt client connects to MQTT server")
+            wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+            time.sleep(20)
+        logger().info(f"mqtt connection after rejoin time duration {t1.duration} seconds")
         mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
         time.sleep(5)
         mqtt_client.interfaces.mqtt.received_messages.clear()
@@ -5314,6 +5319,12 @@ def test_wifi_sdk_qos1_two_topic_with_SSL_connection_rejoin_failed_c537957(
         time.sleep(3)
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
+        mqtt_connection = 0
+        if t1.duration < t.duration:
+            logger().info(
+                " after rejoin mqtt connection time is less than 1st time mqtt connection time . which is expected")
+            mqtt_connection = 1
+            assert mqtt_connection, f"after rejoin mqtt connection time is more than 1st time mqtt connection time . which is not expected"
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
