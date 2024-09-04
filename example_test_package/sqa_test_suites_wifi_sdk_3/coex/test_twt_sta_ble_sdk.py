@@ -669,9 +669,10 @@ class WLanTwTThread(ThreadBase):
         self.verify_twt_wake_interval()
 
 
-
 class ble_device_state:
-    Connected= 9    # 8 for connection + 1 for advertising
+    connected_adv = 9  # 8 for connection + 1 for advertising
+    connected_scanning = 10  # 10 for connection and scanning
+
 
 class BleThreadFunctionality(ThreadBase):
     def __init__(self, wifi_dut=None, ble_client=None, ble_test_type=None, sl_collections=None, test_case=None,
@@ -688,17 +689,19 @@ class BleThreadFunctionality(ThreadBase):
         self.ble_pairing = ble_pairing
         self.utf_constants = utf_constants
 
+        """ **************** Set up DUT for BLE advertising **************** """
+        self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start(set_smp=self.ble_pairing)
+        assert (self.ble_dut_address is not None), "Unable to fetch bluetooth address from DUT"
+        logger().info(f" BLE DUT ADDRESS : {self.ble_dut_address}")
+        time.sleep(5)
+
     def run(self):
         try:
-            """ **************** Set up DUT for BLE advertising **************** """
-            self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start(set_smp=self.ble_pairing)
-            assert (self.ble_dut_address is not None), "Unable to fetch bluetooth address from DUT"
-            logger().info(f" BLE DUT ADDRESS : {self.ble_dut_address}")
-            time.sleep(5)
 
             if self.test_case == '198619':
                 self.sl_collections.check_ble_advertise_functionality(
-                    wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_dut_address=self.ble_dut_address, timeout=20)
+                    wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_dut_address=self.ble_dut_address,
+                    timeout=20)
                 self.ble_client.interfaces.bluetooth.close()
                 time.sleep(3)
                 self.sl_collections.check_ble_scan_functionality(
@@ -713,8 +716,8 @@ class BleThreadFunctionality(ThreadBase):
                 self.ble_client.interfaces.bluetooth.close()
                 time.sleep(3)
                 self.ble_client_address = self.sl_collections.ble_connection(
-                    wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_dut_address=self.ble_dut_address, timeout=20,
-                    dev_state=9, mode='master')
+                    wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_dut_address=self.ble_dut_address,
+                    timeout=20, dev_state=9, mode='master')
 
                 logger().info("..... checking for ble connection stability ......")
                 time.sleep(60)
@@ -722,15 +725,15 @@ class BleThreadFunctionality(ThreadBase):
             if self.test_case == '198622':
                 self.sl_collections.check_ble_scan_functionality(
                     wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_address=self.ble_dut_address, timeout=20)
-                self.wifi_dut.interfaces.wifi.ble_stop_scanning()
                 time.sleep(2)
                 self.ble_client.interfaces.bluetooth.close()
+
                 logger().info("..... Advertising the DUT .....")
                 self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
 
-                self.sl_collections.scan_and_connect_from_remote(
+                self.ble_client_address = self.sl_collections.scan_and_connect_from_remote(
                     wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_dut_address=self.ble_dut_address,
-                    ble_pairing=self.ble_pairing)
+                    ble_pairing=self.ble_pairing, dev_state=10)
 
                 logger().info("..... checking for ble connection stability ......")
                 time.sleep(60)
@@ -742,10 +745,6 @@ class BleThreadFunctionality(ThreadBase):
         try:
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
-
-            logger().info("*********************** Start BLE in DUT ***********************")
-            self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
-            assert self.ble_dut_address, "failed to initialize ble in dut"
 
             self.wifi_dut.interfaces.wifi.ble_add_service(uid=0x1AA1)
             self.wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1)
@@ -773,9 +772,7 @@ class BleThreadFunctionality(ThreadBase):
 
             if self.test_case == '198627':
                 self.sl_collections.check_ble_scan_functionality(
-                    wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_address=self.ble_dut_address,
-                    timeout=20)
-                self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+                    wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_address=self.ble_dut_address, timeout=20)
                 time.sleep(2)
                 self.ble_client.interfaces.bluetooth.close()
 
@@ -792,12 +789,12 @@ class BleThreadFunctionality(ThreadBase):
             if self.test_case == '198625' or self.test_case == '198626' or self.test_case == '198632':
                 state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
                 state_int = int(state) if state.isdigit() else -1
-                assert state_int == ble_device_state.Connected, "DUT BLE device is not in connected state"
+                assert state_int == ble_device_state.connected_adv, "DUT BLE device is not in connected state"
 
             if self.test_case == '198627':
                 state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
                 state_int = int(state) if state.isdigit() else -1
-                assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
+                assert state_int == ble_device_state.connected_scanning, "DUT BLE device is not in connected state"
 
             servs, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
             assert len(servs) > 0, "no services fetched"
@@ -856,6 +853,7 @@ class BleThreadFunctionality(ThreadBase):
         self.sl_collections.cleanup_ble(
             ble_dut=self.wifi_dut, ble_client=self.ble_client, ble_client_address=self.ble_client_address)
 
+
 pytestmark = [
     pytest.mark.config(
         "wifi_dut",
@@ -887,9 +885,10 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv",
                              "disable_twt"])
-def test_wifi_sdk_verify_twt_ble_scan_adv_c198619(
+def test_wifi_sdk_verify_ble_scan_adv_after_twt_c198619(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client,
         utf_constants):
+
     """Verify whether DUT is able to perform BLE Scan and advertising after setting the TWT Interval before WLAN join"""
 
     try:
@@ -915,8 +914,9 @@ def test_wifi_sdk_verify_twt_ble_scan_adv_c198619(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv",
                              "disable_twt"])
-def test_wifi_sdk_verify_twt_ble_scan_adv_c198620(
+def test_wifi_sdk_verify_ble_scan_adv_before_twt_c198620(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client, utf_constants):
+
     """Verify whether DUT is able to perform BLE Scan and advertising if we set the TWT Interval after WLAN Join"""
 
     try:
@@ -942,8 +942,9 @@ def test_wifi_sdk_verify_twt_ble_scan_adv_c198620(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
-def test_wifi_sdk_verify_twt_after_ble_master_c198621(
+def test_wifi_sdk_verify_ble_master_before_twt_c198621(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client, utf_constants):
+
     """Verify whether DUT is able setup the Suggested TWT with AP after the BLE Master connection."""
 
     try:
@@ -971,9 +972,10 @@ def test_wifi_sdk_verify_twt_after_ble_master_c198621(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv",
                              "disable_twt"])
-def test_wifi_sdk_verify_twt_after_ble_slave_c198622(
+def test_wifi_sdk_verify_ble_slave_before_twt_c198622(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client, utf_constants):
-    """Verify whether DUT is able to setup the Requested TWT with AP Before WLAN Join command with BLE As slave"""
+
+    """Verify whether DUT is able to set up the Requested TWT with AP Before WLAN Join command with BLE As slave"""
 
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
@@ -987,7 +989,7 @@ def test_wifi_sdk_verify_twt_after_ble_slave_c198622(
         ble_obj.wait_for_exit()
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-        ble_obj.ble_disconnect(disconnect_from="remote")
+        ble_obj.ble_cleanup()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -1003,7 +1005,8 @@ def test_wifi_sdk_verify_twt_after_ble_slave_c198622(
 def test_wifi_sdk_verify_twt_and_dut_wake_interval_before_ble_master_c198623(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client,
         utf_constants):
-    """Verify whether DUT is able to setup the Suggested TWT with  BLE Master connection and able to wake up and
+
+    """Verify whether DUT is able to set up the Suggested TWT with  BLE Master connection and able to wake up and
     receive the Data at regular TWT Intervals"""
 
     try:
@@ -1035,6 +1038,7 @@ def test_wifi_sdk_verify_twt_and_dut_wake_interval_before_ble_master_c198623(
 def test_wifi_sdk_verify_twt_and_dut_wake_interval_after_ble_slave_c198624(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client,
         utf_constants):
+
     """Verify whether DUT is able to wake up and receive the DATA at regular TWT Intervals when TWT Command is given
     after connection with BLE Slave connection """
 
@@ -1052,7 +1056,7 @@ def test_wifi_sdk_verify_twt_and_dut_wake_interval_after_ble_slave_c198624(
         ble_obj.start()
         ble_obj.wait_for_exit()
         wlan_obj.set_twt_operation()
-        ble_obj.ble_disconnect(disconnect_from="remote")
+        ble_obj.ble_cleanup()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -1068,6 +1072,7 @@ def test_wifi_sdk_verify_twt_and_dut_wake_interval_after_ble_slave_c198624(
 def test_wifi_sdk_verify_twt_with_ble_master_tx_data_transfer_c198625(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client,
         utf_constants):
+
     """Check whether DUT is able to wake up at regular TWT intervals and receive data or not in suggested
     when DUT is doing BLE Data transfer in master connection"""
 
@@ -1097,6 +1102,7 @@ def test_wifi_sdk_verify_twt_with_ble_master_tx_data_transfer_c198625(
 def test_wifi_sdk_verify_twt_unannounced_trigger_with_ble_master_tx_data_transfer_c198626(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client,
         utf_constants):
+
     """Check whether DUT is able to wake up at regular TWT intervals and receive data or not in unannounced + trigger
     based TWT type when DUT is connected as BLE Master connection with data transfer from DUT to Remote device"""
 
@@ -1122,10 +1128,12 @@ def test_wifi_sdk_verify_twt_unannounced_trigger_with_ble_master_tx_data_transfe
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt",
+                             "ble_stop_adv"])
 def test_wifi_sdk_verify_twt_unannounced_trigger_with_ble_slave_tx_data_transfer_c198627(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client,
         utf_constants):
+
     """Check whether DUT is able to wake up at regular TWT intervals and receive data or not in unannounced + trigger
     based TWT type when DUT is connected as BLE Slave connection with data transfer between DUT to Remote device"""
 
@@ -1142,7 +1150,7 @@ def test_wifi_sdk_verify_twt_unannounced_trigger_with_ble_slave_tx_data_transfer
         wlan_obj.wait_for_exit()
         ble_obj.ble_master_slave_data_transfer()
         wlan_obj.set_twt_operation()
-        ble_obj.ble_disconnect(disconnect_from="remote")
+        ble_obj.ble_cleanup()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -1158,6 +1166,7 @@ def test_wifi_sdk_verify_twt_unannounced_trigger_with_ble_slave_tx_data_transfer
 def test_wifi_sdk_verify_twt_retry_frames_with_ble_master_c198628(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client,
         utf_constants, switch):
+
     """Check whether DUT is able to send the TWT Retry frames or not for Failed TWT Setup when DUT as BLE Master role"""
 
     try:
@@ -1189,6 +1198,7 @@ def test_wifi_sdk_verify_twt_retry_frames_with_ble_master_c198628(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_verify_twt_conn_with_invalid_parameter_ble_master_c198629(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client, utf_constants):
+
     """Check DUT is able to create the TWT Connection to AP with invalid TWT Parameters when DUT is connected as
     master"""
 
@@ -1250,6 +1260,7 @@ def test_wifi_sdk_verify_twt_teardown_recreate_session_with_ble_master_c198630(
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
 def test_wifi_sdk_verify_twt_teardown_recreate_session_with_another_type_and_ble_slave_c198631(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client, utf_constants):
+
     """Check whether DUT is able to teardown and recreate the TWT Session with another TWT type When DUT BLE as slave"""
 
     try:
@@ -1264,7 +1275,7 @@ def test_wifi_sdk_verify_twt_teardown_recreate_session_with_another_type_and_ble
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wlan_obj.twt_teardown_and_recreate_session()
-        ble_obj.ble_disconnect(disconnect_from="remote")
+        ble_obj.ble_cleanup()
 
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name="twt_teardown_check")
@@ -1284,6 +1295,7 @@ def test_wifi_sdk_verify_twt_teardown_recreate_session_with_another_type_and_ble
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
 def test_wifi_sdk_verify_twt_with_ble_master_conn_reconn_c198632(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client, utf_constants):
+
     """DUT is able to wake up at regular TWT Intervals when The DUT BLE is connecting, Sending the Data and
     disconnecting continuously"""
 
