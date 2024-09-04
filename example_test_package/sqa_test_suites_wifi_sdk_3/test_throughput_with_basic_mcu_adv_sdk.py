@@ -326,7 +326,7 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "band": 0,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
 def test_wlan_standalone_tcp_tx_with_352K_C532926(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
@@ -417,7 +417,7 @@ def test_wlan_standalone_tcp_rx_with_352K_C532927(firmware_loader, wifi_sniffer,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "band": 0,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
 def test_wlan_standalone_udp_tx_with_352K_C532923(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
@@ -462,7 +462,7 @@ def test_wlan_standalone_udp_tx_with_352K_C532923(firmware_loader, wifi_sniffer,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "band": 0,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
 def test_wlan_standalone_udp_rx_with_352K_C532925(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
@@ -681,7 +681,7 @@ def test_wlan_standalone_udp_rx_with_352k_11n_C537727(firmware_loader, wifi_snif
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
@@ -721,7 +721,7 @@ def test_wlan_ble_connected_tcp_tx_with_352K_C532954(firmware_loader, wifi_sniff
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
@@ -762,7 +762,7 @@ def test_wlan_ble_connected_tcp_rx_with_352K_C532955(firmware_loader, wifi_sniff
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
@@ -802,7 +802,7 @@ def test_wlan_ble_connected_udp_tx_with_352K_C532952(firmware_loader, wifi_sniff
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
@@ -843,7 +843,7 @@ def test_wlan_ble_connected_udp_rx_with_352K_C532953(firmware_loader, wifi_sniff
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
@@ -884,7 +884,7 @@ def test_wlan_ble_with_ble_data_trans_352K_tcp_tx_C532958(firmware_loader, wifi_
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
@@ -925,7 +925,7 @@ def test_wlan_ble_with_ble_data_trans_352K_tcp_rx_C532959(firmware_loader, wifi_
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
@@ -966,7 +966,7 @@ def test_wlan_ble_with_ble_data_trans_352K_udp_tx_C532956(firmware_loader, wifi_
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
@@ -1007,7 +1007,7 @@ def test_wlan_ble_with_ble_data_trans_352K_udp_rx_C532957(firmware_loader, wifi_
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
@@ -1046,7 +1046,7 @@ def test_wlan_ble_connected_tcp_tx_with_352K_11n_C537870(firmware_loader, wifi_s
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
@@ -1085,7 +1085,7 @@ def test_wlan_ble_connected_tcp_rx_with_352K_11n_C537871(firmware_loader, wifi_s
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
@@ -1124,7 +1124,7 @@ def test_wlan_ble_connected_udp_tx_with_352K_11n_C537868(firmware_loader, wifi_s
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
@@ -1163,7 +1163,7 @@ def test_wlan_ble_connected_udp_rx_with_352K_11n_C537869(firmware_loader, wifi_s
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
@@ -1204,7 +1204,7 @@ def test_wlan_ble_with_ble_data_trans_352K_11n_tcp_tx_C537874(firmware_loader, w
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
@@ -1245,7 +1245,7 @@ def test_wlan_ble_with_ble_data_trans_352K_11n_tcp_rx_C537875(firmware_loader, w
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
@@ -1286,7 +1286,7 @@ def test_wlan_ble_with_ble_data_trans_352K_11n_udp_tx_C537872(firmware_loader, w
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
 
     }
 )
