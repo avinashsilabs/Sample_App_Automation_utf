@@ -21,7 +21,7 @@ pytestmark = [
 @pytest.mark.test_src_map_id('SM11882')
 def test_device_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # preparing wifi_dut
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, timeout=30)
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
     # preparing wifi_client
@@ -62,7 +62,7 @@ def test_device_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_cli
 @pytest.mark.test_src_map_id('SM11887')
 def test_host_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # preparing wifi_dut
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, timeout=30)
     ip_config = wifi_dut.interfaces.wifi.start_ip()
     device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
