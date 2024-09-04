@@ -1,6 +1,6 @@
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, \
-    Si91xOperatingMode
+    Si91xOperatingMode, Si91xCertificateType, Si91xCertIdentifier
 import time
 import pytest
 from utf.utils.logger import get_logger
@@ -8,6 +8,10 @@ from utf.utils.thread_base import ThreadBase
 from utf.utils.iperf.iperf_utils import get_host_ip, ping
 from utf.utils.time_measurer import TimeMeasurer
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+from utf.utils.stopwatch import Stopwatch
+from random import randint
+from utf.utils import get_tls_certificate_dir
+
 
 """This Test plan is validating Firmware version updation through OTAF
 
@@ -35,7 +39,7 @@ def logger():
 
 class WifiJoin(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, net_perf_client=None, wifi_client=None,
-                 protocol=None, sl_collections=None, http_server=None, test_case=None, switch=None, wifi_clients=None):
+                 protocol=None, sl_collections=None, http_server=None, test_case=None, switch=None, wifi_clients=None, cert_index=None):
         super().__init__()
         self.host_ip = None
         self.wifi_dut = wifi_dut
@@ -55,6 +59,7 @@ class WifiJoin(ThreadBase):
         self.clients_connected = True
         self.fw_version_before_upgrade = None
         self.fw_version_after_upgrade = None
+        self.cert_index = cert_index
 
     def connect_clients_to_dut_as_ap(self, wifi_clients, wifi_dut, count=3, ping_count=10, dut_ip=None):
         ip_dict = {}
@@ -94,6 +99,13 @@ class WifiJoin(ThreadBase):
 
     def run(self):
         try:
+            if self.test_case == '564244' or self.test_case == '564245':
+                logger().info("Loading certificates in DUT")
+                self.wifi_dut.interfaces.wifi.set_ssl_certificate(
+                    str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")),
+                    Si91xCertificateType.SL_NET_SIGNING_CERTIFICATE,
+                    Si91xCertIdentifier.SL_NET_TLS_SERVER_CREDENTIAL_START,
+                    cert_index=self.cert_index)
             with TimeMeasurer() as T:
                 status_http = self.http_server.interfaces.http.started
                 assert status_http, 'Server is inactive'
@@ -796,5 +808,85 @@ def test_wifi_sdk_https_fw_upgrade_in_concurrent_mode_and_measure_time_c19762(ht
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
+                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF | Si91xExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_wifi_sdk_https_fw_upgrade_by_loading_cert_into_index_1_c564244(http_server, wifi_client, wifi_sniffer,
+                                                                             wifi_access_point, wifi_dut,
+                                                                             sl_collections):
+    """This Test case is validating Firmware updation in STA Alone mode when certificate loaded into index 1"""
+    try:
+        test_case = '564244'
+        wlan_obj = WifiJoin(http_server=http_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case, cert_index=1)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
+                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF | Si91xExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+            },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_wifi_sdk_https_fw_upgrade_by_loading_cert_into_index_2_c564245(http_server, wifi_client, wifi_sniffer,
+                                                                             wifi_access_point, wifi_dut,
+                                                                             sl_collections):
+    """This Test case is validating Firmware updation in STA Alone mode when certificate loaded into index 2"""
+    try:
+        test_case = '564245'
+        wlan_obj = WifiJoin(http_server=http_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case, cert_index=2)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
