@@ -1279,10 +1279,16 @@ devices:
                 host_ip: '10.207.22.26'
                 port: 22901
                 max_to_read: 1000
-                remote_capture_file_path: 'C:\\Users\\Public\\Documents\\WPS_Captures'
+                remote_capture_file_path: 'C:\\FTScapture'
                 personality_key: 'X500'
                 wps_server_path: 'C:\\Program Files (x86)\\Teledyne LeCroy Wireless\\Wireless Protocol Suite 3.10\\Executables\\Core'
 
+    # This represents the mock for frontline sniffer configuration
+    mock_bluetooth_sniffer:
+        interfaces:   
+            sniffer:
+                type: 'bluetooth.sniffer.mock.mock_sniffer'   
+ 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
