@@ -88,6 +88,63 @@ class data_transfer:
         remote_socket.socket_close_indication(1)
         logger().info(f"Total bytes received on socket opened remotely -> {self.rcv_data}")
 
+class DataTransfer(ThreadBase):
+    def __init__(self, wifi_dut, remote_socket, utf_constants, dut_ip=None, data=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.remote_socket = remote_socket
+        self.utf_constants = utf_constants
+        self.dut_ip = dut_ip
+        self.data = data
+
+    def run(self):
+        logger().info("Starting TCP server socket remotely")
+        local_port = randint(6000, 6100)
+        self.remote_socket.interfaces.socket.interface = "wlan0"
+        logger().info("Starting TCP Server socket at remote device")
+        self.remote_socket.interfaces.socket.start_server(port=local_port)
+        server_ip = self.remote_socket.interfaces.socket.hostname_or_ip_address()
+        time.sleep(5)
+        server_port = self.remote_socket.interfaces.socket.server_port
+
+        logger().info(f"DUT opens tcp client socket")
+        tcp_socket_id = self.wifi_dut.interfaces.wifi.socket()
+        logger().info(f"Socket open successfully : {tcp_socket_id}")
+        logger().info(
+            f"Successfully opened tcp client socket and socket id received is {tcp_socket_id} which is expected")
+        logger().info(f"Socket binds at (device_ip, 5001) in DUT")
+        bind_response = self.wifi_dut.interfaces.wifi.bind(socket_fd=tcp_socket_id, device_ip=self.dut_ip,
+                                                      server_port=server_port,
+                                                      timeout=5)
+        logger().info(f"Bind socket successfully: {bind_response}")
+
+        logger().info("DUT is connecting to server socket")
+        connect_status = False
+        for count in range(3):
+            try:
+                self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=tcp_socket_id, server_ip=server_ip,
+                                                          server_port=server_port)
+                connect_status = True
+                break
+            except:
+                logger().info(f"Socket connection failed in DUT...retry_count:{count + 1}")
+                time.sleep(10)
+        assert connect_status, "Socket connection failed in DUT"
+        logger().info("Socket connection is successful")
+        for packets in range(10):
+            logger().info("DUT Sending Data packets")
+            bytes_sent = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=tcp_socket_id, data=self.data, timeout=30)
+            logger().info(f"Number of bytes sent by dut {bytes_sent}")
+
+
+
+class Disconnection(ThreadBase):
+    def __init__(self, wifi_clients):
+        super().__init__()
+        self.wifi_clients = wifi_clients
+
+    def run(self):
+        self.wifi_clients[0].interfaces.wifi.leave()
 
 class ApmodeConnection(ThreadBase):
     def __init__(self, wifi_dut, wifi_clients):
@@ -2052,3 +2109,66 @@ def test_wifi_sdk_DUTAP_Validate_TCP_Tx_data_for_multiple_iterations_C551123(wif
 
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,"channel": 11
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['net_init'])
+def test_wifi_sdk_DUTAP_wlan_disconnect_while_sending_data_C551124(wifi_sniffer, wifi_dut,
+                                                    utf_constants, sl_collections, wifi_clients, remote_socket):
+    """trigger WLAN disconnect callback while sending TCP data"""
+    try:
+        ap_dut_obj = ap.ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+                                                utf_constants, capture_filename="test_C551124",
+                                                testcase_no=19465, leave=False, sniffer_stop=False)
+        ap_dut_obj.start()
+        ap_dut_obj.wait_for_exit()
+        socket_obj = DataTransfer(wifi_dut, remote_socket, utf_constants, dut_ip=ap_dut_obj.dut_addr_dict['dut_ip'],
+                                    data="Thisisfromtcpclient")
+        disc_obj = Disconnection(wifi_clients)
+        socket_obj.start()
+        time.sleep(8)
+        disc_obj.start()
+        socket_obj.wait_for_exit()
+        disc_obj.wait_for_exit()
+        sw = Stopwatch()
+        client_disconnect = 0
+        while sw.elapsed_sec < 120:
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            for event in events:
+                 logger().info(f"*********{event.event_data}******")
+                 if "Client disconnected:" in event.event_data:
+                    client_disconnect = 1
+                    break
+        assert client_disconnect, f"unable to find client disconnect event"
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+        time.sleep(10)

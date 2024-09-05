@@ -2311,3 +2311,83 @@ def test_wifi_sdk_beacon_stop_functionality_C563999(wifi_sniffer, wifi_dut,
 
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.AccessPoint,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.OpenMode,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+         "custom_features": Si91xCustomFeatureBitMap.HiddenSSID | Si91xCustomFeatureBitMap.Default,
+         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+    }
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+                "ssid": "SILABS_C535822",
+                "channel": 11,
+                "interface": "wlan0",
+         }
+)
+def test_wifi_sdk_sta_association_to_aput_hidden_ssid_C586186(wifi_sniffer, wifi_dut,
+                                                    sl_collections, wifi_client):
+    """Check the 3rd party STA Association to APUT with Hidden SSID Mode (OPEN SECURITY)"""
+    try:
+        packet_filter2 = "    Type/Subtype: Beacon (0x0008)"
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C535822.pcap")
+        time.sleep(3)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                       static_subnet="255.255.255.0",
+                                                       static_gateway="192.168.100.76")
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_C535822", security="OPEN", channel=11,
+                                          dtim_beacon_count=1,
+                                          beacon_interval=100)
+        logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
+        wifi_client.interfaces.wifi.join(ssid="SILABS_C535822", security=SecurityMode.Open)
+        time.sleep(10)
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f"********* Dut IP **********: {dut_ip}")
+        rasp_mac_address = wifi_client.interfaces.wifi.get_mac_address()
+        logger().info(f"raspi_mac: {rasp_mac_address}")
+        client_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Client_ip: {client_ip}")
+        time.sleep(30)
+        logger().info(f"Initiating wlan ping from RASPI_STA for ping_count")
+        rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute(
+            f"sudo ping -c {10} {dut_ip}")
+        assert rc == 0, f"RASPI-STA failed to ping DUT"
+        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"*********{dut_mac_address}**********")
+        logger().info(f'RASPI-STA Disconnecting from DUT-AP')
+        wifi_client.interfaces.wifi.leave()
+        packet_filter1 = f'(wlan.addr == {dut_mac_address}) && (wlan.fc.type_subtype==8)'
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
+                                                                  packet_filter2=packet_filter2), "not found beacon from DUT "
+        logger().info('********** Validating Beacon interval **********')
+        IE_obj = FilterPacket(open_file=True)
+        ssid = IE_obj.get_hidden_ssid()
+        logger().info(f"*******{ssid}*********")
+        hidden_ssid = 0
+        if "Wildcard SSID" in ssid:
+            logger().info(f"found the hidden ssid")
+            hidden_ssid = 1
+        assert hidden_ssid
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()

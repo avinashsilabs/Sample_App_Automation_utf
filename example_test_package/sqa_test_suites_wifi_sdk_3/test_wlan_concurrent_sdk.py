@@ -1270,3 +1270,159 @@ def test_wifi_sdk_concurrent_mode_read_mac_C537336(wifi_access_point, wifi_dut, 
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
+    },
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_device_as_ap_and_sta_C477524(sl_collections, wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
+                                      utf_constants, sniffer_filter, net_perf_client, protocol):
+    """Enable the module to act as 802.11n supported AP, the default HT Capabilities should show the support only for 20Mhz & the supported data rate should be  72.2 Mbps"""
+    try:
+        conc_obj = ConcurrentThread(wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants,
+                                    wifi_access_point, net_perf_client=net_perf_client, protocol=protocol, testcase_no=477524,
+                                    capture_filename="test_C477524", ping=True, traffic_type="Tx", stop_sniffer=True, htcaps=1)
+        conc_obj.start()
+        conc_obj.wait_for_exit()
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=conc_obj.dut_addr_dict['dut_mac_address'],
+            filter_name="beacon_ht")
+        logger().info(f"packet_filter1: {packet_filter1}")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Sniffer: Unable to find htcaps_IES packet in sniffer'
+
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.HiddenSSID | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+    }
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+            "ssid": "SILABS_AP_MODE",
+            "channel": 11,
+            "interface": "wlan0",
+         }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+def test_wifi_sdk_concurrent_mode_sta_ap_C586187(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,sl_collections):
+    """Check the 3rd party STA Association to APUT(OPEN security) with Hidden SSID Mode in Concurrent Mode"""
+    try:
+        packet_filter2 = "    Type/Subtype: Beacon (0x0008)"
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C535823.pcap")
+        time.sleep(3)
+        sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                                 wifi_access_point=wifi_access_point,
+                                                                 power_save=False,
+                                                                 ping_after_power_save=True, retry_count=3,
+                                                                 associated=wifi_dut.interfaces.wifi.associated
+                                                                 )
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="OPEN", channel=11,
+                                          dtim_beacon_count=1,
+                                          beacon_interval=100)
+        logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
+        wifi_client.interfaces.wifi.join(ssid="SILABS_AP_MODE", security=SecurityMode.Open,
+                                         scan_ssid=1)
+        time.sleep(10)
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f"********* Dut IP **********: {dut_ip}")
+        rasp_mac_address = wifi_client.interfaces.wifi.get_mac_address()
+        logger().info(f"raspi_mac: {rasp_mac_address}")
+        client_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Client_ip: {client_ip}")
+        time.sleep(30)
+        logger().info(f"Initiating wlan ping from RASPI_STA for ping_count:10")
+        rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute(
+            f"sudo ping -c {10} {dut_ip}")
+        assert rc == 0, f"RASPI-STA failed to ping DUT"
+        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(
+            f"DUT MAC ADDRESS :  {dut_mac_address}")
+        packet_filter1 = f'(wlan.addr == {dut_mac_address}) && (wlan.fc.type_subtype==8)'
+        logger().info(f'RASPI-STA Disconnecting from DUT-AP')
+        wifi_client.interfaces.wifi.leave()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
+                                                                  packet_filter2=packet_filter2), "not found beacon from DUT "
+        IE_obj = FilterPacket(open_file=True)
+        ssid = IE_obj.get_hidden_ssid()
+        logger().info(f"*******{ssid}*********")
+        hidden_ssid = 0
+        if "Wildcard SSID" in ssid:
+            logger().info(f"found the hidden ssid")
+            hidden_ssid = 1
+        assert hidden_ssid
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
