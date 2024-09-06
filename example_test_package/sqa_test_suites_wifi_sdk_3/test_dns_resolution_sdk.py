@@ -7,6 +7,8 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBit
 from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+from utf.utf_config import UtfConfig
+from utf.utils.iperf.iperf_utils import ping
 
 
 def logger():
@@ -67,30 +69,30 @@ class WifiJoinThread(ThreadBase):
             time.sleep(2)
 
             if self.test_case_no == 19302:
-                logger().info(
-                    "==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
-                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",
-                                                              secondary_dns_server_address="10.8.4.10")
-                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,
-                                                      ip_version="ipv4")
+                logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
 
             if self.test_case_no == 19303:
-                logger().info(
-                    "=======DNS address command is given when only primary DNS server ip address is given statically ========")
-                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",
-                                                              secondary_dns_server_address="NULL")
-                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,
-                                                      ip_version="ipv4")
+                logger().info("=======DNS address command is given when only primary DNS server ip address is given statically ========")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="NULL")
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000, ip_version="ipv4")
 
             if self.test_case_no == 19304:
                 logger().info(
                     "=======DNS address command is given when only secondary DNS server ip address is given statically ========")
-                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="NULL",
-                                                              secondary_dns_server_address="10.8.4.10")
-                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,
-                                                      ip_version="ipv4")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="NULL",secondary_dns_server_address="10.8.4.10")
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
 
-            if self.test_case_no == 19302 or self.test_case_no == 19303 or self.test_case_no == 19304:
+            if self.test_case_no == 19310:
+                logger().info("==DNS address command is given 'twice' with the different DNS server IP addresses ==")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
+
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
+
+            if self.test_case_no == 19302 or self.test_case_no == 19303 or self.test_case_no == 19304 or self.test_case_no == 19310:
                 device_address = {'sa_addr': self.dut_addr['dut_mac_address'], 'da_addr': ap_addr}
                 filters_name = {1: 'dns_id', 2: 'association_request', 3: 'power_mgmt_bit', 4: 'ps_poll'}
                 # filters_name = {1: 'dns_id'}
@@ -98,7 +100,7 @@ class WifiJoinThread(ThreadBase):
                                                                           device_address,
                                                                           filter_name=filters_name)
 
-            if self.test_case_no == 19305 or self.test_case_no == 19308 or self.test_case_no == 19309:
+            if self.test_case_no == 19305 or self.test_case_no == 19306 or self.test_case_no == 19308 or self.test_case_no == 19309:
                 self.negative_test_cases()
 
         except Exception as e:
@@ -115,27 +117,29 @@ class WifiJoinThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,
                                                       ip_version="ipv4",
                                                       expected_status=SLStatus.SL_STATUS_SI91X_SMTP_OVER_SIZE_MAIL_DATA)
-                logger().info(f"\n Observed the expected error code: 0x1BBA1 (SMTP_OVER_SIZE_MAIL_DATA) \n")
+                logger().info(f"\n\n Observed the expected error code: 0x1BBA1 (SMTP_OVER_SIZE_MAIL_DATA) \n\n")
+
+            if self.test_case_no == 19306:
+                logger().info("=======DNS get command with Primary & Secondary DNS server IP's which are wrong ========")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.210.91",secondary_dns_server_address="10.81.44.13")
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=240000, ip_version="ipv4",timeout=240,
+                                                      expected_status=SLStatus.SL_STATUS_SI91X_SMTP_DNS_QUERY_FAILED)
+                logger().info(f"\n\n Observed the expected error code: 0x1BBA3 (SMTP_DNS_QUERY_FAILED) \n\n")
 
             if self.test_case_no == 19308:
                 logger().info("=======DNS address command is given with the same IP address ========")
                 self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",
                                                               secondary_dns_server_address="10.207.110.11",
                                                               expected_status=SLStatus.SL_STATUS_SI91X_DUPLICATE_ENTRY_EXISTS_IN_DNS_SERVER_TABLE)
-                logger().info(
-                    f"\n Observed the expected error code: 0x100AF (DUPLICATE_ENTRY_EXISTS_IN_DNS_SERVER_TABLE) \n")
+                logger().info(f"\n\n Observed the expected error code: 0x100AF (DUPLICATE_ENTRY_EXISTS_IN_DNS_SERVER_TABLE) \n\n")
 
             if self.test_case_no == 19309:
-                logger().info(
-                    "=======DNS address command is given 'twice' with the same DNS server IP addresses ========")
-                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",
-                                                              secondary_dns_server_address="10.207.110.11",
+                logger().info("=======DNS address command is given 'twice' with the same DNS server IP addresses ========")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.207.110.11",
                                                               expected_status=SLStatus.SL_STATUS_SI91X_DUPLICATE_ENTRY_EXISTS_IN_DNS_SERVER_TABLE)
-                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",
-                                                              secondary_dns_server_address="10.207.110.11",
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.207.110.11",
                                                               expected_status=SLStatus.SL_STATUS_SI91X_DUPLICATE_ENTRY_EXISTS_IN_DNS_SERVER_TABLE)
-                logger().info(
-                    f"\n Observed the expected error code: 0x100AF (DUPLICATE_ENTRY_EXISTS_IN_DNS_SERVER_TABLE) \n")
+                logger().info(f"\n\n Observed the expected error code: 0x100AF (DUPLICATE_ENTRY_EXISTS_IN_DNS_SERVER_TABLE) \n\n")
 
             logger().info("DUT going leave the AP")
             self.wifi_dut.interfaces.wifi.leave()
@@ -279,6 +283,94 @@ def test_wifi_sdk_when_both_pri_sec_set_to_0_statically_c19305(wifi_sniffer, wif
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_when_both_pri_sec_ip_with_wrong_dns_server_ips_c19306(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
+                                                              request, utf_constants, sniffer_filter):
+
+    """Obtain the IP address of the specific domain name when both
+       primary and secondary wrong DNS server ip addresses are configured statically.  """
+    capture_filename = request.node.name
+    ping_count = utf_constants.get("ping_count")
+
+    try:
+        wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter,
+                                  test_case=capture_filename,
+                                  ping_count=ping_count, test_case_no=19306)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_when_both_pri_sec_dut_static_ip_with_wrong_gateway_c19307(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
+                                                              request, utf_constants, sniffer_filter):
+    """Obtain the IP address of the specific domain name when both
+       primary and secondary DNS server ip addresses are given statically
+       using dns server command, DUT IP is static and selected wrong gateway address in the ip config command. """
+    try:
+        capture_filename = request.node.name
+        mode = "power_save_low_latency"
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+
+        static_ip = UtfConfig.instance().defaults["wifi"].get("static_ip", None)
+        logger().info(f"in harness static_ip flag set to be : {static_ip}")
+
+        static_subnet = UtfConfig.instance().defaults["wifi"].get("static_subnet", None)
+        logger().info(f"in harness static_subnet flag set to be : {static_subnet}")
+
+        static_gateway = '192.168.50.55'
+        logger().info(f"in harness static_gateway flag set to be : {static_gateway}")
+
+        ip_version = 'ipv4'
+
+        logger().info(f"=======>>>>>Verifying Static IP<<<<<<<======")
+        sl_collections.scan(wifi_dut=wifi_dut)
+        sl_collections.connect(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point)
+
+        logger().info(f"***** Assigning static IP for DUT with wrong gateway ******")
+        wifi_dut.interfaces.wifi.start_ip(ip_version=ip_version, static_ip=static_ip, static_subnet=static_subnet,
+                                          static_gateway=static_gateway, timeout=10)
+
+        logger().info(f"....Applying performance profile mode : {mode}")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        logger().info("=======Get DNS response when DUT get static IP and with wrong gateway ========")
+        wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11", secondary_dns_server_address="10.8.4.10")
+        wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=240000,ip_version="ipv4", timeout=240,
+                                         expected_status=SLStatus.SL_STATUS_SI91X_SMTP_DNS_QUERY_FAILED)
+        logger().info(f"\n Observed the expected error code: 0x1BBA3 (SMTP_DNS_QUERY_FAILED) \n")
+
+        logger().info("DUT going leave the AP")
+        wifi_dut.interfaces.wifi.leave()
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(2)
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_when_pri_sec_with_same_dns_server_ips_c19308(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                sl_collections, request, utf_constants, sniffer_filter):
     """Obtain the IP address of the specific domain name when both
@@ -324,3 +416,31 @@ def test_wifi_sdk_when_pri_sec_set_twice_with_same_dns_server_ips_c19309(wifi_sn
 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_when_both_pri_sec_twice_diff_dns_server_ips_c19310(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
+                                                              request, utf_constants, sniffer_filter):
+    """Obtain the IP address of the specific domain name when
+       both primary and secondary DNS server ip addresses are
+       configured statically twice, but with different ip addresses"""
+
+    capture_filename = request.node.name
+    ping_count = utf_constants.get("ping_count")
+
+    try:
+        wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter,
+                                  test_case=capture_filename,
+                                  ping_count=ping_count, test_case_no=19310)
+        for i in range(3):
+            wlan_obj.start()
+            wlan_obj.wait_for_exit()
+            wifi_dut.interfaces.wifi.leave()
+            time.sleep(5)
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
