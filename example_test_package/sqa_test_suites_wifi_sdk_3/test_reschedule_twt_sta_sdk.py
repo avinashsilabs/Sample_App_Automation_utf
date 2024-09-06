@@ -105,6 +105,22 @@ class RescheduleTwTThread(ThreadBase):
                                                                      power_save=self.power_save,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated)
 
+            if self.test_case == '540483':
+                self.packet_filter3 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
+                    filter_name="twt_assoc_request_frame")
+
+                logger().info(f'***** twt_assoc_request_frame = {self.packet_filter3}')
+                self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=self.packet_filter3,
+                                                                        packet_filter2=self.second_level_filter)
+
+                self.wifi_dut.interfaces.wifi.twt_reschedule(flow_id=1, twt_reschedule_action=Si91xTWTRescheduleParams.SL_WIFI_SUSPEND_FOR_DURATION,
+                                                             expected_status=SLStatus.SL_STATUS_SI91X_RESCHEDULE_TWT_ERR_NOACTIVE_SESS)
+
+                logger().info('***** Getting error code 0x10076, which is expected *****')
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                return
+
             if self.test_case == '540486':
                 self.wifi_dut.interfaces.wifi.twt_reschedule(flow_id=1, suspend_duration=0,
                                                              twt_reschedule_action=Si91xTWTRescheduleParams.SL_WIFI_RESUME_IMMEDIATELY,
@@ -364,6 +380,23 @@ def test_wifi_sdk_reschedule_twt_for_duration_c540479(wifi_dut, wifi_access_poin
                                        sl_collections=sl_collections, wifi_sniffer=wifi_sniffer,
                                        sniffer_filter=sniffer_filter, power_save=True, test_case='540479',
                                        utf_constants=utf_constants, sniffer_capture='540479')
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_reschedule_twt_connecting_to_non_twt_ap_c540483(wifi_dut, wifi_access_point, sl_collections,
+                                                                  wifi_sniffer, sniffer_filter, utf_constants):
+    try:
+        wlan_obj = RescheduleTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                       sl_collections=sl_collections, wifi_sniffer=wifi_sniffer,
+                                       sniffer_filter=sniffer_filter, test_case='540483',
+                                       sniffer_capture='540483', utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:

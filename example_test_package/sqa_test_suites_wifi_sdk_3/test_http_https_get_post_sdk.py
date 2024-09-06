@@ -18,10 +18,28 @@ from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
+import ipaddress
+import random
 
 
 def logger():
     return get_logger(__name__)
+
+
+def random_ipv6_addr(network):
+    """
+    Generate a random IPv6 address in the given network
+    Example: random_ipv6_addr("fd66:6cbb:8c10::/48")
+    Returns an IPv6Address object.
+    """
+    net = ipaddress.IPv6Network(network)
+    # Which of the network.num_addresses we want to select?
+    addr_no = random.randint(0, net.num_addresses)
+    # Create the random address by converting to a 128-bit integer, adding addr_no and converting back
+    network_int = int.from_bytes(net.network_address.packed, byteorder="big")
+    addr_int = network_int + addr_no
+    addr = ipaddress.IPv6Address(addr_int.to_bytes(16, byteorder="big"))
+    return addr
 
 
 """
@@ -40,7 +58,7 @@ def logger():
 
 
 class WLanThread(ThreadBase):
-    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, http_client=None,
+    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, http_client=None, wifi_client=None,
                  test_name=None, sl_collections=None, http_server=None, index_path=None, sniffer_filter=None, switch=None):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -52,6 +70,7 @@ class WLanThread(ThreadBase):
         self.index_path = index_path
         self.http_client = http_client
         self.sniffer_filter = sniffer_filter
+        self.wifi_client = wifi_client
         self.power_save_filter = None
         self.dut_addr = None
         self.ap_mac_address = None
@@ -60,6 +79,54 @@ class WLanThread(ThreadBase):
     def run(self):
         try:
             self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
+            if self.test_name == '564481':
+                logger().info('\n*** Configuring Sniffer with WAP channel ***\n')
+                self.wifi_sniffer.interfaces.capture.configure_interface(
+                    channel=self.wifi_access_point.interfaces.wifi.channel)
+                self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+                time.sleep(3)
+
+                for _ in range(5):
+                    self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                             wifi_access_point=self.wifi_access_point,
+                                                                             associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                             ip_version='ipv6',
+                                                                             ipv6_type="global",
+                                                                             retry_count=3)
+
+                    self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                        sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
+                        filter_name="power_mgmt_bit")
+                    assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
+                        packet_filter1=self.power_save_filter)['packet_count'] > 0, \
+                        "Unable to find NULL-Data frame packets with power save bit = 1"
+
+                    self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
+                    remote_ip = self.wifi_client.interfaces.wifi.get_ip_address(version=6)
+                    self.wifi_dut.interfaces.wifi.http_client_init(https_enable=False, ip_version='ipv6')
+
+                    status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(server=None,
+                                                                                     resource_path=self.index_path,
+                                                                                     server_ip=f'"{remote_ip}"',
+                                                                                     server_port=80)
+                    status_client, content_client = self.http_client.interfaces.http.http_get(
+                        self.http_server.interfaces.http, self.index_path)
+
+                    assert not status_dut, "failed to fetch the https data"
+                    assert status_client, "failed to load the https data"
+
+                    logger().info(status_dut)
+                    logger().info(content_dut)
+                    assert content_dut == content_client, "fetched data is not same as expected data"
+                    self.wifi_dut.interfaces.wifi.http_client_deinit()
+                    time.sleep(5)
+                    self.wifi_dut.interfaces.wifi.leave()
+
+                logger().info("Stopping sniffer capture")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+
+                return
+
             if self.test_name == '476930' or self.test_name == '476938' or self.test_name == '476939':
                 for i in range(0, 5):
                     logger().info('\n*** Configuring Sniffer with WAP channel ***\n')
@@ -2188,3 +2255,71 @@ def test_wifi_sdk_https_get_tls_v1_3_c535795(http_server, wifi_dut, http_client,
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={"ipv6_state": "0",
+                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.DHCPv6Client
+                          | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode
+                          | Si91xTCPIPFeatureBitMap.DHCPv6Server,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+def test_wifi_sdk_http_get_with_ipv6_stateless_c564481(http_server, wifi_dut, http_client, wifi_access_point,
+                                                       wifi_sniffer, sl_collections, sniffer_filter, wifi_client):
+    test_name = '564481'
+    index_path = "index.html"
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                          http_client=http_client, wifi_client=wifi_client,
+                          test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                          index_path=index_path,
+                          sniffer_filter=sniffer_filter)
+    wlan_obj.start()
+    wlan_obj.wait_for_exit()
+
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={"ipv6_state": "1",
+                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.DHCPv6Client
+                          | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode
+                          | Si91xTCPIPFeatureBitMap.DHCPv6Server,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+def test_wifi_sdk_http_get_with_ipv6_stateful_c476941(http_server, wifi_dut, http_client, wifi_access_point,
+                                                      wifi_sniffer, sl_collections, sniffer_filter, wifi_client):
+    test_name = '564481'
+    index_path = "index.html"
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                          http_client=http_client, wifi_client=wifi_client,
+                          test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                          index_path=index_path,
+                          sniffer_filter=sniffer_filter)
+    wlan_obj.start()
+    wlan_obj.wait_for_exit()
