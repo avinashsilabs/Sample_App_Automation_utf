@@ -47,7 +47,7 @@ def logger():
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
         5. set scan ,connect, data transfer
-       
+
 
     Author: Swathi.Chinthala
 """
@@ -55,13 +55,13 @@ def logger():
 
 class SnifferValidationProcess:
     def __init__(
-        self,
-        wifi_sniffer=None,
-        wifi_access_point=None,
-        dut_mac_address=None,
-        ap_mac_address=None,
-        sniffer_filter=None,
-        sl_collections=None,
+            self,
+            wifi_sniffer=None,
+            wifi_access_point=None,
+            dut_mac_address=None,
+            ap_mac_address=None,
+            sniffer_filter=None,
+            sl_collections=None,
     ):
         self.wifi_sniffer = wifi_sniffer
         self.sniffer_filter = sniffer_filter
@@ -139,27 +139,30 @@ class WifiJoinThread(ThreadBase):
     """This function is responsible for wifi scan ,connectivity ,powersave ,data transfer"""
 
     def __init__(
-        self,
-        wifi_sniffer=None,
-        wifi_dut=None,
-        wifi_access_point=None,
-        testcase=None,
-        wifi_client=None,
-        net_perf_client=None,
-        protocol=None,
-        test_type=None,
-        sl_collections=None,
-        ping_count=None,
-        sniffer_filter=None,
-        region=None,
-        switch=None,
-        pmk_enable=False,
-        traffic_type="TX",
-        tcp_ip_bypass=False,
-        enc="ccmp",
-        timeout=60,
-        http_server=None,
-        index_path=None
+            self,
+            wifi_sniffer=None,
+            wifi_dut=None,
+            wifi_access_point=None,
+            testcase=None,
+            wifi_client=None,
+            net_perf_client=None,
+            protocol=None,
+            test_type=None,
+            sl_collections=None,
+            ping_count=None,
+            sniffer_filter=None,
+            region=None,
+            switch=None,
+            pmk_enable=False,
+            traffic_type="TX",
+            tcp_ip_bypass=False,
+            enc="ccmp",
+            timeout=60,
+            http_server=None,
+            index_path=None,
+            http_client=None,
+            https=0,
+            scan_count=5
     ):
 
         super().__init__()
@@ -184,13 +187,16 @@ class WifiJoinThread(ThreadBase):
         self.tcp_ip_bypass = tcp_ip_bypass
         self.enc = enc
         self.timeout = timeout
+        self.http_client = http_client
         self.http_server = http_server
+        self.https = https
         self.index_path = index_path
+        self.scan_count = scan_count
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
 
     def check_scan_functionality(self):
-        for count in range(0, 5):
+        for count in range(0, self.scan_count):
             logger().info("Initiating wlan scan")
             # enables the scan in dut on channel
             scan_status, scan_results = self.sl_collections.scan(self.wifi_dut, scan_status=False, retry_count=3,
@@ -199,7 +205,7 @@ class WifiJoinThread(ThreadBase):
             assert len(scan_results) > 0, "scan failed"
             time.sleep(5)
         self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"DUT MAC ADDRESS :  {self.dut_mac_address }")
+        logger().info(f"DUT MAC ADDRESS :  {self.dut_mac_address}")
 
     def run_traffic(self, protocol="TCP", traffic_type="TX"):
 
@@ -223,7 +229,30 @@ class WifiJoinThread(ThreadBase):
             http_server=self.http_server,
             index_path=self.index_path,
             device_ip=self.device_ip,
+            https=self.https
         )
+
+    def http_get(self):
+        mode = True if self.https else False
+        self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
+        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=mode)
+
+        status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
+            self.http_server.interfaces.http,
+            self.index_path,
+            server_port=self.http_server.interfaces.http.port,
+            timeout=100)
+        status_client, content_client = self.http_client.interfaces.http.http_get(
+            self.http_server.interfaces.http, self.index_path)
+
+        assert not status_dut, "failed to fetch the https data"
+        assert status_client, "failed to load the https data"
+
+        logger().info(status_dut)
+        logger().info(content_dut)
+        assert content_dut == content_client, "fetched data is not same as expected data"
+        time.sleep(2)
+        self.wifi_dut.interfaces.wifi.http_client_deinit()
 
     def set_power_save(self):
 
@@ -262,6 +291,7 @@ class WifiJoinThread(ThreadBase):
                 power_save=pwr_save,
                 associated=self.wifi_dut.interfaces.wifi.associated,
                 retry_count=3,
+                ping_before_power_save=True,
                 ping_after_power_save=True,
                 ping_count=self.ping_count,
                 pmk_enable=self.pmk_enable,
@@ -347,6 +377,10 @@ class WifiJoinThread(ThreadBase):
                 self.join_to_ap()
             logger().info("http download")
             self.run_http_download()
+        if self.test_type == "http_get":
+            self.join_to_ap()
+            self.http_get()
+
 
 class ScanTime_JoinTime(ThreadBase):
     def __init__(
@@ -671,13 +705,16 @@ def cleanup_ble(ble_client, ble_dut_address):
 # this thread used for sta+ble as a slave
 class BleThreadFunctionality(ThreadBase):
     def __init__(
-        self,
-        wifi_dut=None,
-        ble_client=None,
-        ble_test_type=None,
-        sl_collections=None,
-        ble_scan_type=1,
-        ble_pairing=0,
+            self,
+            wifi_dut=None,
+            ble_client=None,
+            ble_test_type=None,
+            sl_collections=None,
+            ble_scan_type=1,
+            ble_pairing=0,
+            capability=3,
+            dev_state=8,
+            conn_int=160
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -687,14 +724,18 @@ class BleThreadFunctionality(ThreadBase):
         self.sl_collections = sl_collections
         self.ble_scan_type = ble_scan_type
         self.ble_pairing = ble_pairing
+        self.capability = capability
+        self.dev_state = dev_state
+        self.conn_int = conn_int
 
         # Set up DUT for BLE advertising
         logger().info("Initialising BLE")
         self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start(
-            set_smp=self.ble_pairing
+            set_smp=self.ble_pairing,
+            capability=self.capability
         )
         assert (
-            self.ble_dut_address is not None
+                self.ble_dut_address is not None
         ), "Unable to fetch bluetooth address from DUT"
         logger().info(f"bt_dut_address : {self.ble_dut_address}")
         time.sleep(5)
@@ -735,12 +776,22 @@ class BleThreadFunctionality(ThreadBase):
         logger().info(f"Advertising the DUT")
         self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
 
+    def check_scan_functionality_of_dut(self):
+        self.ble_client_address = self.sl_collections.check_ble_scan_functionality(
+            wifi_dut=self.wifi_dut,
+            ble_client=self.ble_client,
+            ble_address=self.ble_dut_address,
+            ble_scan_type=self.ble_scan_type,
+            timeout=60,
+        )
+
     def scan_and_connect_from_remote(self):
-        self.sl_collections.scan_and_connect_from_remote(
+        self.ble_client_address = self.sl_collections.scan_and_connect_from_remote(
             wifi_dut=self.wifi_dut,
             ble_client=self.ble_client,
             ble_dut_address=self.ble_dut_address,
             ble_pairing=self.ble_pairing,
+            dev_state=self.dev_state
         )
 
     def scan_and_connect_from_dut(self):
@@ -748,11 +799,12 @@ class BleThreadFunctionality(ThreadBase):
             wifi_dut=self.wifi_dut,
             ble_client=self.ble_client,
             ble_client_address=self.ble_client_address,
+            dev_state=self.dev_state
         )
 
     def run(self):
         if self.ble_test_type == "advertise":
-            self.sl_collections.check_ble_advertise_functionality(
+            self.ble_client_address = self.sl_collections.check_ble_advertise_functionality(
                 wifi_dut=self.wifi_dut,
                 ble_client=self.ble_client,
                 ble_dut_address=self.ble_dut_address,
@@ -760,7 +812,7 @@ class BleThreadFunctionality(ThreadBase):
             )
 
         if self.ble_test_type == "scan":
-            self.sl_collections.check_ble_scan_functionality(
+            self.ble_client_address = self.sl_collections.check_ble_scan_functionality(
                 wifi_dut=self.wifi_dut,
                 ble_client=self.ble_client,
                 ble_address=self.ble_dut_address,
@@ -785,9 +837,11 @@ class BleThreadFunctionality(ThreadBase):
                 ble_dut_address=self.ble_dut_address,
                 mode=self.ble_test_type,
                 ble_pairing=self.ble_pairing,
+                min_conn_interval=self.conn_int,
+                max_conn_interval=self.conn_int
             )
         if self.ble_test_type == "scan_from_remote_device":
-            self.sl_collections.scan_from_remote_device(
+            self.ble_client_address = self.sl_collections.scan_from_remote_device(
                 wifi_dut=self.wifi_dut,
                 ble_client=self.ble_client,
                 ble_dut_address=self.ble_dut_address,
