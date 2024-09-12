@@ -4376,7 +4376,6 @@ def test_wifi_sdk_qos1_mqtt_simultaneous_with_two_topic_length_C537954(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -4402,6 +4401,7 @@ def test_wifi_sdk_qos1_mqtt_simultaneous_with_two_topic_length_C537954(
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_mqtt_password_more_than_61_bytes_C463963(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
+
     """QOS1: If password length is given more than 61 bytes error code should be seen"""
 
     try:
@@ -4419,11 +4419,12 @@ def test_wifi_sdk_mqtt_password_more_than_61_bytes_C463963(
         wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
 
         wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
-            client_id="Si91x_mqtt_client", qos=0)
+            client_id="Si91x_mqtt_client", qos=1)
 
         logger().info("Both DUT and third-party mqtt client connects to MQTT server")
         wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(
-            server=mqtt_server.interfaces.mqtt, send_credentials=True, username=username, password=password)
+            server=mqtt_server.interfaces.mqtt, send_credentials=True, username=username, password=password,
+            expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
         time.sleep(25)
         mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
         time.sleep(5)
