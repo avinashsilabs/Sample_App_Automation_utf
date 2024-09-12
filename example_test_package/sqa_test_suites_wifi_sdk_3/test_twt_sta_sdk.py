@@ -89,6 +89,7 @@ class WLanTwTThread(ThreadBase):
         self.dut_addr = None
         self.ap_mac_address = None
         self.before_join = before_join
+        self.utf_constants = utf_constants
         self.time_duration = utf_constants.get("time_duration")
 
         # Create packet filters variables
@@ -106,6 +107,9 @@ class WLanTwTThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                               beacon_missed_count=1000,
                                                                               first_time_retry_enable=0)
+            if self.test_case == '113761':
+                self.time_duration = self.utf_constants.get("long_duration")
+
             # Configure the sniffer on wifi_access_point channel
             self.wifi_sniffer.interfaces.capture.configure_interface(self.wifi_access_point.interfaces.wifi.channel)
             # Start the sniffer on wifi_access_point channel
@@ -363,13 +367,16 @@ class WLanTwTThread(ThreadBase):
             # Call wake_interval_and_wake_period for request frames
             self.wake_interval_and_wake_period(filter=0)
 
-            # Sleep for 10 minutes
-            logger().info(f'**** Pinging for {self.time_duration} seconds ****')
+            if self.test_case != '113761':
+                logger().info(f'**** Pinging for {self.time_duration} seconds ****')
 
-            start_time = time.time()
-            while (time.time() - start_time) < self.time_duration:
-                self.sl_collections.ping_with_custom_interval(device_ip=self.dut_addr['device_ip'],
-                                                              interval=int(self.wake_interval_resp) // 10000000)
+                start_time = time.time()
+                while (time.time() - start_time) < self.time_duration:
+                    self.sl_collections.ping_with_custom_interval(device_ip=self.dut_addr['device_ip'],
+                                                                  interval=int(self.wake_interval_resp) // 10000000)
+            if self.test_case == '113761':
+                logger().info(f'Setting DUT IDLE for {self.time_duration / 3600} hours')
+                time.sleep(self.time_duration)
 
             # Stop the sniffer
             self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -1248,6 +1255,35 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_twt_after_rejoin_c113754(wifi
                                  wake_duration=0x90, wake_duration_tol=0x90, before_join=True,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, switch=switch,
                                  power_save=True, twt_retry_limit=10, utf_constants=utf_constants)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'Open'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_verify_twt_when_device_idle_for_long_hours_c113761(wifi_dut, wifi_access_point,
+                                                                     sl_collections, wifi_sniffer,
+                                                                     sniffer_filter, utf_constants):
+    """Verify whether DUT is able to create TWT setup with demand support after association(key exchange) when we call
+    TWT config api before join and also verify the DUT behavior whether it is able to wakeup and receive data based on
+    the TWT agreement"""
+    """
+    Test Steps:
+        1. Create thread for twt functionality
+        2. Enable power-save mode
+        3. Run the thread
+        4. Exit the thread
+    """
+    try:
+        wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, power_save=True,
+                                 test_case='113761', wake_duration=0xF0,
+                                 wake_duration_tol=0x90, wake_int_mantissa=0x37D0, wake_int_mantissa_tol=0x37D0,
+                                 utf_constants=utf_constants, sniffer_capture='113761')
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:

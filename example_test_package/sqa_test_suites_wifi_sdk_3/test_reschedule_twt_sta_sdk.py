@@ -93,16 +93,23 @@ class RescheduleTwTThread(ThreadBase):
         self.packet_filter2 = None
         self.packet_filter3 = None
         self.packet_filter4 = None
+        self.packet_filter5 = None
         self.power_save_filter = None
         self.second_level_filter = '        Tag: Target Wake Time'
 
     def run(self):
         try:
+            if self.test_case == '540490':
+                self.wifi_dut.interfaces.wifi.twt_auto_config(estimated_extra_wake_duration_percent=50,
+                                                              average_tx_throughput=10000,
+                                                              expected_status=SLStatus.SL_STATUS_TWT_SESSION_NOT_FEASIBLE)
+                logger().info('***** Getting 0x10074 status which is expected *****')
+                return
             self.wifi_sniffer.interfaces.capture.configure_interface(self.wifi_access_point.interfaces.wifi.channel)
             self.wifi_sniffer.interfaces.capture.start_capture(self.sniffer_capture)
             self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
             self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
-                                                                     power_save=self.power_save,
+                                                                     power_save=True,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated)
 
             if self.test_case == '540483':
@@ -187,7 +194,7 @@ class RescheduleTwTThread(ThreadBase):
             # Call wake_interval_and_wake_period for request frames
             self.wake_interval_and_wake_period(filter=0)
 
-            logger().info(f'**** Pinging for {self.time_duration} seconds ****')
+            logger().info(f'**** Pinging DUT for 300 seconds ****')
 
             start_time = time.time()
             while (time.time() - start_time) < 300:
@@ -198,11 +205,9 @@ class RescheduleTwTThread(ThreadBase):
 
             self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                 sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address, filter_name="power_mgmt_bit")
-            packet_count = self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=self.power_save_filter)[
-                       'find_packet_num']
+            packet_count = self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=self.power_save_filter)['packet_count']
 
-            assert int(packet_count), 'Unable to find ps-poll packets'
-            logger().info(f'***** Power Save packets before rescheduling TWT = {packet_count} *****')
+            assert packet_count, 'Unable to find ps-poll packets'
 
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=self.packet_filter3)[
                 'packet_count'], f"DUT is not able to send TWT association request frame to AP"
@@ -222,14 +227,38 @@ class RescheduleTwTThread(ThreadBase):
                                                                     packet_filter2='        Timestamp:')
             self.verify_twt_wake_interval()
 
+            if self.test_case == '540480' or self.test_case == '540481':
+                self.wifi_sniffer.interfaces.capture.configure_interface(self.wifi_access_point.interfaces.wifi.channel)
+                self.wifi_sniffer.interfaces.capture.start_capture(f'{self.sniffer_capture}_2')
+                if self.test_case == '540480':
+                    self.wifi_dut.interfaces.wifi.twt_reschedule(flow_id=1, suspend_duration=0)
+
+                else:
+                    self.wifi_dut.interfaces.wifi.twt_reschedule(flow_id=1,
+                                                                 twt_reschedule_action=Si91xTWTRescheduleParams.SL_WIFI_SUSPEND_FOR_DURATION)
+
+                self.wifi_dut.interfaces.wifi.twt_reschedule(flow_id=1, suspend_duration=0,
+                                                             twt_reschedule_action=Si91xTWTRescheduleParams.SL_WIFI_RESUME_IMMEDIATELY)
+
+                logger().info('***** Pinging DUT for 300 seconds *****')
+                start_time = time.time()
+                while (time.time() - start_time) < 300:
+                    self.sl_collections.ping_with_custom_interval(device_ip=self.dut_addr['device_ip'],
+                                                                  interval=10)
+                self.packet_filter5 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                    dut_addr=self.dut_addr['dut_mac_address'], filter_name="twt_data_transfer_packets_1")
+
+                self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=self.packet_filter5,
+                                                                        packet_filter2='        Timestamp:')
+                self.verify_twt_wake_interval()
+
             if self.test_case == '540478':
                 self.wifi_dut.interfaces.wifi.twt_reschedule(flow_id=1, suspend_duration=0)
 
                 time.sleep(60)
 
                 packet_count = self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)[
-                    'find_packet_num']
+                    packet_filter1=self.power_save_filter)['packet_count']
 
                 assert int(packet_count), 'Unable to find ps-poll packets'
                 logger().info(f'***** Power Save packets after rescheduling TWT = {packet_count} *****')
@@ -245,11 +274,9 @@ class RescheduleTwTThread(ThreadBase):
                 time.sleep(60)
 
                 packet_count = self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)[
-                    'find_packet_num']
+                    packet_filter1=self.power_save_filter)['packet_count']
 
-                assert int(packet_count), 'Unable to find ps-poll packets'
-                logger().info(f'***** Power Save packets after rescheduling TWT = {packet_count} *****')
+                assert packet_count, 'Unable to find ps-poll packets'
 
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
@@ -389,6 +416,40 @@ def test_wifi_sdk_reschedule_twt_for_duration_c540479(wifi_dut, wifi_access_poin
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", 'disable_twt'])
+def test_wifi_sdk_twt_resume_back_immediately_suspend_indefinitely_c540480(wifi_dut, wifi_access_point, sl_collections,
+                                                                           wifi_sniffer, sniffer_filter, utf_constants):
+    try:
+        wlan_obj = RescheduleTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                       sl_collections=sl_collections, wifi_sniffer=wifi_sniffer,
+                                       sniffer_filter=sniffer_filter, test_case='540480',
+                                       sniffer_capture='540480', utf_constants=utf_constants)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", 'disable_twt'])
+def test_wifi_sdk_twt_resume_back_immediately_suspend_for_duration_c540481(wifi_dut, wifi_access_point, sl_collections,
+                                                                           wifi_sniffer, sniffer_filter, utf_constants):
+    try:
+        wlan_obj = RescheduleTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                       sl_collections=sl_collections, wifi_sniffer=wifi_sniffer,
+                                       sniffer_filter=sniffer_filter, test_case='540481',
+                                       sniffer_capture='540481', utf_constants=utf_constants)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_reschedule_twt_connecting_to_non_twt_ap_c540483(wifi_dut, wifi_access_point, sl_collections,
                                                                   wifi_sniffer, sniffer_filter, utf_constants):
@@ -437,4 +498,18 @@ def test_wifi_sdk_reschedule_twt_without_set_twt_c540486(wifi_dut, wifi_access_p
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_twt_autoconfig_fails_or_not_c540490(wifi_dut, wifi_access_point, sl_collections,
+                                                      wifi_sniffer, sniffer_filter, utf_constants):
+    try:
+        wlan_obj = RescheduleTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                       sl_collections=sl_collections, wifi_sniffer=wifi_sniffer,
+                                       sniffer_filter=sniffer_filter, power_save=True, test_case='540490',
+                                       utf_constants=utf_constants)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
