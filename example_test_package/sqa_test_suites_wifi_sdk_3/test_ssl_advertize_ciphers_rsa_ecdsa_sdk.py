@@ -664,7 +664,7 @@ def test_wifi_sdk_ssl_1_3_with_all_ciphers_c537928(wifi_sniffer, wifi_access_poi
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list", [['TLS13_AES_128_GCM_SHA256']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
-def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537615(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537933(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                          cipher_list, sl_collections, request, sniffer_filter, ca_cert):
     """
     Verify SSL functionality by setting particular cipher BIT_TLS13_AES_128_GCM_SHA256 with TLS 1.3
@@ -683,7 +683,7 @@ def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537615(wifi_sniffer, wifi_acce
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list", [['TLS13_AES_256_GCM_SHA384']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
-def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537616(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537934(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                          cipher_list, sl_collections, request, sniffer_filter, ca_cert):
     """
     Verify SSL functionality by setting particular cipher BIT_TLS13_AES_256_GCM_SHA384 with TLS 1.3
@@ -702,7 +702,8 @@ def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537616(wifi_sniffer, wifi_acce
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list", [['TLS13_CHACHA20_POLY1305_SHA256']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
-def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537617(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+@pytest.mark.check2
+def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537941(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                          cipher_list, sl_collections, request, sniffer_filter, ca_cert):
     """
     Verify SSL functionality by setting particular cipher BIT_TLS13_CHACHA20_POLY1305_SHA256  with TLS 1.3
