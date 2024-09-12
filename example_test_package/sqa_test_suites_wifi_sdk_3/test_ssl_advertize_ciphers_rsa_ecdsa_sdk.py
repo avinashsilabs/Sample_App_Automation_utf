@@ -3,6 +3,7 @@ import random
 import string
 import time
 import pytest
+import collections
 from random import randint
 from utf.utils.logger import get_logger
 from utf.utils.stopwatch import Stopwatch
@@ -87,16 +88,17 @@ class ssl_connection:
         dut_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
         return dut_ip, dut_mac_address
 
-    def ssl_connection_tx_rx(self, ca_cert=None, sniff_validation=True):
+    def ssl_connection_tx_rx(self, ca_cert=None, sniff_validation=True, ssl_client_version='tls_1_2'):
         if ca_cert is not None:
             self.wifi_dut.interfaces.wifi.set_ssl_certificate(str(get_tls_certificate_dir().joinpath(ca_cert)),
                                                               Si91xCertificateType.SL_NET_SIGNING_CERTIFICATE,
                                                               Si91xCertIdentifier.SL_NET_TLS_SERVER_CREDENTIAL_START,
                                                               cert_index=0)
-        expected_cipher = DefaultCipher.cipher_list
+        expected_cipher = DefaultCipher.cipher_list if ssl_client_version == 'tls_1_2' else DefaultCipher.cipher_list_tls1_3
         if len(self.cipher_list):
             cipher = self.select_cipher_list(self.cipher_list)
-            self.wifi_dut.interfaces.wifi.set_ssl_cipher(cipher_list=cipher)
+            self.wifi_dut.interfaces.wifi.set_ssl_cipher(cipher_list=cipher) if ssl_client_version == 'tls_1_2' \
+                else self.wifi_dut.interfaces.wifi.set_extended_ssl_cipher(cipher_list=cipher)
             expected_cipher = self.cipher_list
         device_ip, dut_mac = self.join_get_ip()
         ap_bssid = self.wifi_access_point.interfaces.wifi.bssid
@@ -117,7 +119,7 @@ class ssl_connection:
             server_ip = self.ssl_server.interfaces.ssl.server_ip
 
         sock = self.wifi_dut.interfaces.wifi.socket()
-        self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+        self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val=ssl_client_version)
         self.wifi_dut.interfaces.wifi.bsdSsetCustomSyncSockopt(socket_fd=sock, cert_index=0)
         self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port,
                                            timeout=15, asynch=0)
@@ -196,12 +198,13 @@ class ssl_connection:
                 f"tls client hello packet is not captured or one of the wifi 4-way handshake "
                 f"packet is not captured")
             logger().info(f"'{len(cipher_suite)}' times tls client hello message captured on sniffer log")
+            if ssl_client_version != "tls_1_2":
+                expected_cipher = [ec.replace('TLS13', 'TLS') for ec in expected_cipher]
             cipher_suite_cmp = None
             for cipher in cipher_suite:
                 cipher_suite_cmp = cipher[1]
-                assert cipher_suite_cmp == expected_cipher, (
-                    f"Cipher Suite Mismatched, Expected is '{expected_cipher}'\n"
-                    f"But Observed '{cipher_suite_cmp}'")
+                status = collections.Counter(cipher_suite_cmp) == collections.Counter(expected_cipher)
+                assert status, f"Cipher Suite Mismatched, Expected is '{expected_cipher}'\nBut Observed '{cipher_suite_cmp}'"
             logger().info(f"****** As per sniffer capture cipher suite advertised by device {dut_mac} --> "
                           f"{cipher_suite_cmp} *******")
 
@@ -632,6 +635,158 @@ def test_wifi_sdk_ssl_client_1_3_version_server_1_2_c537926(wifi_sniffer, wifi_d
                         logger.info("TLS Version supported by DUT is not found in sniffer capture")
         else:
             logger.info("SSL packets are not found")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
+@pytest.mark.parametrize("cipher_list", [[]])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
+def test_wifi_sdk_ssl_1_3_with_all_ciphers_c537928(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+                                                   cipher_list, sl_collections, request, sniffer_filter, ca_cert):
+    """
+    Verify SSL functionality with TLS 1.3 all the supported cipher suites
+    """
+    try:
+        ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
+                                 cipher_list, sniffer_filter=sniffer_filter, mode=0)
+        ssl_obj.ssl_connection_tx_rx(ca_cert, ssl_client_version='tls_1_3')
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
+@pytest.mark.parametrize("cipher_list", [['TLS13_AES_128_GCM_SHA256']])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
+def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537615(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+                                                         cipher_list, sl_collections, request, sniffer_filter, ca_cert):
+    """
+    Verify SSL functionality by setting particular cipher BIT_TLS13_AES_128_GCM_SHA256 with TLS 1.3
+    """
+    try:
+        ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
+                                 cipher_list, sniffer_filter=sniffer_filter, mode=0)
+        ssl_obj.ssl_connection_tx_rx(ca_cert, ssl_client_version='tls_1_3')
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
+@pytest.mark.parametrize("cipher_list", [['TLS13_AES_256_GCM_SHA384']])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
+def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537616(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+                                                         cipher_list, sl_collections, request, sniffer_filter, ca_cert):
+    """
+    Verify SSL functionality by setting particular cipher BIT_TLS13_AES_256_GCM_SHA384 with TLS 1.3
+    """
+    try:
+        ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
+                                 cipher_list, sniffer_filter=sniffer_filter, mode=0)
+        ssl_obj.ssl_connection_tx_rx(ca_cert, ssl_client_version='tls_1_3')
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
+@pytest.mark.parametrize("cipher_list", [['TLS13_CHACHA20_POLY1305_SHA256']])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
+def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537617(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+                                                         cipher_list, sl_collections, request, sniffer_filter, ca_cert):
+    """
+    Verify SSL functionality by setting particular cipher BIT_TLS13_CHACHA20_POLY1305_SHA256  with TLS 1.3
+    """
+    try:
+        ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
+                                 cipher_list, sniffer_filter=sniffer_filter, mode=0)
+        ssl_obj.ssl_connection_tx_rx(ca_cert, ssl_client_version='tls_1_3')
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                             "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
+@pytest.mark.parametrize("cipher_list", [[]])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
+def test_wifi_sdk_ssl_client_1_3_and_server_1_2_with_ciphers_c537944(wifi_sniffer, wifi_access_point, wifi_dut,
+                                                                     ssl_server, cipher_list, sl_collections, request,
+                                                                     sniffer_filter, ca_cert):
+    """
+    Connect to ssl client socket using cipher selection only TLS1.3 which run with version 1.2 at remote side and connect
+    to it from module with version 1.3
+    """
+    try:
+        capture_filename = "test_wifi_sdk_ssl_client_1_3_and_server_1_2_with_ciphers_c537944"
+
+        wifi_dut.interfaces.wifi.set_ssl_certificate(str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")),
+                                                     Si91xCertificateType.SL_NET_SIGNING_CERTIFICATE,
+                                                     Si91xCertIdentifier.SL_NET_TLS_SERVER_CREDENTIAL_START,
+                                                     cert_index=0)
+        ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
+                                 cipher_list=None)
+        cipher = ssl_obj.select_cipher_list(cipher_list)
+        ssl_obj.wifi_dut.interfaces.wifi.set_extended_ssl_cipher(cipher_list=cipher)
+        device_ip, dut_mac_address = ssl_obj.join_get_ip()
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f'AP BSSID = {ap_bssid}')
+
+        ssl_server.interfaces.ssl.start_server(port=5001, version="ssl_1.2")
+        server_ip = ssl_server.interfaces.ssl.server_ip
+
+        sock = wifi_dut.interfaces.wifi.socket()
+        assert sock == 0, "Socket id received is wrong. expected is 0"
+        logger().info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+        wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_3")
+        local_port = randint(5001, 60000)
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
+
+        error_code = 0
+        try:
+            wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=5001)
+        except Exception as err:
+            error_match = re.search("status:(.*)", str(err))
+            if error_match:
+                error_code = error_match.group()
+                logger().info(f"error_code: {error_code}")
+        assert error_code, ("DUT did not send error code when trying to connect to ssl socket with open_ssl_v1_2 "
+                            "which is not expected")
+        logger().info(f"DUT sent error code when trying to connect to ssl socket with ssl_v1_2 which is expected")
+
+        ssl_server.interfaces.ssl.stop_server()
+        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                               sniffer_filter)
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        logger().info(f"DECRYPTION KEY-->{decryption_key}")
+        ssl_pkt = sl_collections.ssl_packet_decryption(wifi_sniffer, decryption_key, dut_mac_address, ["tls"],
+                                                       capture_filename, ap_bssid)['tls']
+        if len(ssl_pkt) > 0:
+            for i in ssl_pkt:
+                if re.search(".*Client Hello", i):
+                    result = re.search(r"Supported Version:([\s\w.]+)", i, re.IGNORECASE)
+                    if result:
+                        version = result.group(1)
+                        logger().info(f"TLS VERSION USED BY DUT is--->{version}")
+                        assert "TLS 1.3" in version, "TLS version mismatch, expected TLS VERSION 1.3 to be sent by DUT"
+                    else:
+                        logger().info("TLS Version supported by DUT is not found in sniffer capture")
+        else:
+            logger().info("SSL client packets are not found in sniffer capture")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
