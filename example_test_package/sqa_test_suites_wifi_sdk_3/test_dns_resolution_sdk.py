@@ -58,8 +58,7 @@ class WifiJoinThread(ThreadBase):
             ap_addr = self.wifi_access_point.interfaces.wifi.bssid
             logger().info(f"AP MAC: {ap_addr}")
             logger().info(f"Start sniffer capture on channel {self.wifi_access_point.interfaces.wifi.channel}")
-            self.wifi_sniffer.interfaces.capture.configure_interface(
-                channel=self.wifi_access_point.interfaces.wifi.channel)
+            self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.capture_filename}.pcap")
             self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                      wifi_access_point=self.wifi_access_point,
@@ -67,6 +66,11 @@ class WifiJoinThread(ThreadBase):
                                                                      retry_count=3,
                                                                      ping_count=self.ping_count)
             time.sleep(2)
+
+            if self.test_case_no == 19300:
+                logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
 
             if self.test_case_no == 19302:
                 logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
@@ -79,8 +83,7 @@ class WifiJoinThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000, ip_version="ipv4")
 
             if self.test_case_no == 19304:
-                logger().info(
-                    "=======DNS address command is given when only secondary DNS server ip address is given statically ========")
+                logger().info("=======DNS address command is given when only secondary DNS server ip address is given statically ========")
                 self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="NULL",secondary_dns_server_address="10.8.4.10")
                 self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
 
@@ -92,13 +95,34 @@ class WifiJoinThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
                 self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
 
-            if self.test_case_no == 19302 or self.test_case_no == 19303 or self.test_case_no == 19304 or self.test_case_no == 19310:
+            if self.test_case_no == 19311:
+                logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
+
+            if self.test_case_no == 551125:
+                logger().info(f"\n==========>>>>>> Verifying DNS functionality for 30 minutes <<<<<<===========\n")
+                start_time = time.time()
+                while (time.time() - start_time) < 1800:
+                    logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
+                    self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
+                    self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
+
+            if self.test_case_no == 553434:
+                logger().info(f"\n==========>>>>>> Verifying DNS functionality for 24 hours <<<<<<===========\n")
+                start_time = time.time()
+                while (time.time() - start_time) < 86400:
+                    logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
+                    self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
+                    self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
+
+            if self.test_case_no == 19302 or self.test_case_no == 19303 or self.test_case_no == 19304 or self.test_case_no == 19310\
+                    or self.test_case_no == 551125 or self.test_case_no == 553434 or self.test_case_no == 19311:
+
                 device_address = {'sa_addr': self.dut_addr['dut_mac_address'], 'da_addr': ap_addr}
                 filters_name = {1: 'dns_id', 2: 'association_request', 3: 'power_mgmt_bit', 4: 'ps_poll'}
-                # filters_name = {1: 'dns_id'}
-                self.sl_collections.sniffer_validation_for_packet_filters(self.wifi_sniffer, self.sniffer_filter,
-                                                                          device_address,
-                                                                          filter_name=filters_name)
+
+                self.sl_collections.sniffer_validation_for_packet_filters(self.wifi_sniffer, self.sniffer_filter,device_address, filter_name=filters_name)
 
             if self.test_case_no == 19305 or self.test_case_no == 19306 or self.test_case_no == 19308 or self.test_case_no == 19309:
                 self.negative_test_cases()
@@ -110,12 +134,9 @@ class WifiJoinThread(ThreadBase):
     def negative_test_cases(self):
         try:
             if self.test_case_no == 19305:
-                logger().info(
-                    "=======DNS address command is given both primary and secondary DNS server addresses are set to '0' statically ========")
-                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="0.0.0.0",
-                                                              secondary_dns_server_address="0.0.0.0")
-                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,
-                                                      ip_version="ipv4",
+                logger().info("=======DNS address command is given both primary and secondary DNS server addresses are set to '0' statically ========")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="0.0.0.0",secondary_dns_server_address="0.0.0.0")
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4",
                                                       expected_status=SLStatus.SL_STATUS_SI91X_SMTP_OVER_SIZE_MAIL_DATA)
                 logger().info(f"\n\n Observed the expected error code: 0x1BBA1 (SMTP_OVER_SIZE_MAIL_DATA) \n\n")
 
@@ -417,6 +438,7 @@ def test_wifi_sdk_when_pri_sec_set_twice_with_same_dns_server_ips_c19309(wifi_sn
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
+
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -444,3 +466,105 @@ def test_wifi_sdk_when_both_pri_sec_twice_diff_dns_server_ips_c19310(wifi_sniffe
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
+
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN', "dhcp_dns1":'8.8.8.8'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_when_only_pri_dns_server_ip_assign_through_dhcp_c19300(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
+                                                              request, utf_constants, sniffer_filter):
+    """Obtain the IP address of the specific domain name
+       when only primary DNS server ip address is received by dhcp server"""
+
+    capture_filename = request.node.name
+    ping_count = utf_constants.get("ping_count")
+
+    try:
+        wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter,
+                                  test_case=capture_filename,
+                                  ping_count=ping_count, test_case_no=19300)
+        for i in range(3):
+            wlan_obj.start()
+            wlan_obj.wait_for_exit()
+            wifi_dut.interfaces.wifi.leave()
+            time.sleep(5)
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN', "dhcp_dns1":'8.8.8.8', "dhcp_dns2":'8.8.4.4'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_when_two_dns_server_ips_assign_through_dhcp_c19301_c19311(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
+                                                              request, utf_constants, sniffer_filter):
+    """DNS client functionality when 2 DNS server Ips are got through DHCP"""
+
+    capture_filename = request.node.name
+    ping_count = utf_constants.get("ping_count")
+
+    try:
+        wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter,
+                                  test_case=capture_filename,
+                                  ping_count=ping_count, test_case_no=19311)
+        for i in range(3):
+            wlan_obj.start()
+            wlan_obj.wait_for_exit()
+            wifi_dut.interfaces.wifi.leave()
+            time.sleep(5)
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_dns_functionality_for_30_minutes_c551125(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
+                                                              request, utf_constants, sniffer_filter):
+    """Verify DNS functionality for 30 minutes"""
+
+    capture_filename = request.node.name
+    ping_count = utf_constants.get("ping_count")
+
+    try:
+        wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter,
+                                  test_case=capture_filename,
+                                  ping_count=ping_count, test_case_no=551125)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(5)
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_dns_functionality_for_24_hours_c553434(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
+                                                              request, utf_constants, sniffer_filter):
+    """Verify DNS functionality for 24 hours"""
+
+    capture_filename = request.node.name
+    ping_count = utf_constants.get("ping_count")
+
+    try:
+        wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter,
+                                  test_case=capture_filename,
+                                  ping_count=ping_count, test_case_no=553434)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(5)
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
