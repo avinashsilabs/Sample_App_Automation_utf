@@ -54,7 +54,7 @@ class ApModeClientConnections(ThreadBase):
 
     def run(self):
         try:
-            if self.testcase_no == 654501 or self.testcase_no == 654503:
+            if self.testcase_no == 535824 or self.testcase_no == 654501 or self.testcase_no == 654503:
                 self.channel = "13"
             logger().info("********** Configuring the sniffer with access point channel **********")
             self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.channel)
@@ -89,7 +89,15 @@ class ApModeClientConnections(ThreadBase):
                 f"sudo ping -c {10} {dut_ip}")
             assert rc == 0, f"RASPI-STA failed to ping DUT"
             logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
-            time.sleep(10)
+            time.sleep(5)
+            if self.testcase_no == 535824:
+                test_end_time = time.time() + 300
+                while time.time() < test_end_time:
+                    logger().info("******************* Scanning on AP interface for 5 mins in loop ***************")
+                    scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, interface="ap")
+                    time.sleep(5)
+            time.sleep(5)
+            assert len(scan_results) >= 1, " region based probe requests not seen in scan results"
             logger().info(f'RASPI-STA Disconnecting from DUT-AP')
             self.wifi_client.interfaces.wifi.leave()
             logger().info("Stop sniffer finally")
@@ -129,12 +137,13 @@ def test_wifi_sdk_ap_mode_scan_in_region_default_specific_ssid_c654498(wifi_dut,
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
 
-        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
-        logger().info(f"*********{dut_mac_address}**********")
+        dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"*********{dut_ap_mac_address}**********")
         rasp_mac_address = wifi_client.interfaces.wifi.get_mac_address()
         logger().info(f"raspi_mac: {rasp_mac_address}")
-        device_address = {'sa_addr': dut_mac_address, 'da_addr': rasp_mac_address, 'radio_ch': 11,
-                          'wlan_addr': dut_mac_address}
+        device_address = {'sa_addr': dut_ap_mac_address, 'da_addr': rasp_mac_address, 'radio_ch': 11,
+                          'wlan_addr': dut_ap_mac_address}
+
         filters_name = {1: 'beacon_ap_mode_us_region', 2: 'probe_request'}
         output = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
                                                                         device_address, filters_name=filters_name)
@@ -178,12 +187,14 @@ def test_wifi_sdk_ap_mode_scan_in_region_default_c654499(wifi_dut, wifi_access_p
                                              testcase_no=654499)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
-        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
-        logger().info(f"*********{dut_mac_address}**********")
+
+        dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"*********{dut_ap_mac_address}**********")
         rasp_mac_address = wifi_client.interfaces.wifi.get_mac_address()
         logger().info(f"raspi_mac: {rasp_mac_address}")
-        device_address = {'sa_addr': dut_mac_address, 'da_addr': rasp_mac_address,'radio_ch': 11,
-                          'wlan_addr': dut_mac_address}
+        device_address = {'sa_addr': dut_ap_mac_address, 'da_addr': rasp_mac_address,'radio_ch': 11,
+                          'wlan_addr': dut_ap_mac_address}
+
         filters_name = {1: 'beacon_ap_mode_us_region', 2: 'probe_request'}
         output = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
                                                                         device_address, filters_name=filters_name)
@@ -227,12 +238,14 @@ def test_wifi_sdk_ap_mode_scan_in_region_us_c654500(wifi_dut, wifi_access_point,
                                              testcase_no=654500)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
-        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
-        logger().info(f"*********{dut_mac_address}**********")
+
+        dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"*********{dut_ap_mac_address}**********")
         rasp_mac_address = wifi_client.interfaces.wifi.get_mac_address()
         logger().info(f"raspi_mac: {rasp_mac_address}")
-        device_address = {'sa_addr': dut_mac_address, 'da_addr': rasp_mac_address,'radio_ch': 11,
-                          'wlan_addr': dut_mac_address}
+        device_address = {'sa_addr': dut_ap_mac_address, 'da_addr': rasp_mac_address,'radio_ch': 11,
+                          'wlan_addr': dut_ap_mac_address}
+
         filters_name = {1: 'beacon_ap_mode_us_region', 2: 'probe_request'}
         output = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
                                                                         device_address, filters_name=filters_name)
@@ -276,12 +289,14 @@ def test_wifi_sdk_ap_mode_scan_in_region_eu_c654501(wifi_dut, wifi_access_point,
                                              testcase_no=654501)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
-        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
-        logger().info(f"*********{dut_mac_address}**********")
+
+        dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"*********{dut_ap_mac_address}**********")
         rasp_mac_address = wifi_client.interfaces.wifi.get_mac_address()
         logger().info(f"raspi_mac: {rasp_mac_address}")
-        device_address = {'sa_addr': dut_mac_address, 'da_addr': rasp_mac_address, 'radio_ch': 13,
-                          'wlan_addr': dut_mac_address}
+        device_address = {'sa_addr': dut_ap_mac_address, 'da_addr': rasp_mac_address, 'radio_ch': 13,
+                          'wlan_addr': dut_ap_mac_address}
+
         filters_name = {1: 'beacon_ap_mode_eu', 2: 'probe_request'}
         output = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
                                                                         device_address, filters_name=filters_name)
@@ -325,13 +340,65 @@ def test_wifi_sdk_ap_mode_scan_in_region_korea_c654503(wifi_dut, wifi_access_poi
                                              testcase_no=654503)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
-        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
-        logger().info(f"*********{dut_mac_address}**********")
+
+        dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"*********{dut_ap_mac_address}**********")
         rasp_mac_address = wifi_client.interfaces.wifi.get_mac_address()
         logger().info(f"raspi_mac: {rasp_mac_address}")
-        device_address = {'sa_addr': dut_mac_address, 'da_addr': rasp_mac_address,'radio_ch': 13,
-                          'wlan_addr': dut_mac_address}
+        device_address = {'sa_addr': dut_ap_mac_address, 'da_addr': rasp_mac_address,'radio_ch': 13,
+                          'wlan_addr': dut_ap_mac_address}
+
         filters_name = {1: 'beacon_ap_mode_korea_region', 2: 'probe_request'}
+        output = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
+                                                                        device_address, filters_name=filters_name)
+        logger().info(f'\n OUTPUT = {output}\n')
+        assert all(output.values()), 'Unable to find expected filter'
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "917_AP_MODE", "passphrase": "Automation@123", "channel": 13,
+        "region": 1,
+        "region_code": "europe"
+    }
+)
+@pytest.mark.config("wifi_client", wifi={"country": "GE", "channel": "13"})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'bgnax', "security": 'WPA2', "channel": 13, "region": 'Europe'})
+def test_wifi_sdk_ap_mode_scan_for_5mins_c535824(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer,
+                                                    sl_collections, sniffer_filter):
+    """ Scan for available APs in the vicinity after Soft AP Started for 5 minutes in loop """
+    try:
+        ap_dut_obj = ApModeClientConnections(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                             wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+                                             sl_collections=sl_collections, capture_filename="test_C535824",
+                                             testcase_no=535824)
+        ap_dut_obj.start()
+        ap_dut_obj.wait_for_exit()
+
+        dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"*********{dut_ap_mac_address}**********")
+        rasp_mac_address = wifi_client.interfaces.wifi.get_mac_address()
+        logger().info(f"raspi_mac: {rasp_mac_address}")
+        device_address = {'sa_addr': dut_ap_mac_address, 'da_addr': rasp_mac_address,'radio_ch': 13,
+                          'wlan_addr': dut_ap_mac_address}
+
+        filters_name = {1: 'beacon_ap_mode_eu', 2: 'probe_request'}
         output = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
                                                                         device_address, filters_name=filters_name)
         logger().info(f'\n OUTPUT = {output}\n')
