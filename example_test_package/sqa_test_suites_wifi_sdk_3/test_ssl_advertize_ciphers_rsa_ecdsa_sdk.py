@@ -631,6 +631,7 @@ def test_wifi_sdk_ssl_client_1_3_version_server_1_2_c537926(wifi_sniffer, wifi_d
                         version = result.group(1)
                         logger.info(f"TLS VERSION USED BY DUT is--->{version}")
                         assert "TLS 1.3" in version, "TLS version mismatch, expected TLS VERSION 1.3 to be sent by DUT"
+                        break
                     else:
                         logger.info("TLS Version supported by DUT is not found in sniffer capture")
         else:
@@ -784,6 +785,78 @@ def test_wifi_sdk_ssl_client_1_3_and_server_1_2_with_ciphers_c537944(wifi_sniffe
                         version = result.group(1)
                         logger().info(f"TLS VERSION USED BY DUT is--->{version}")
                         assert "TLS 1.3" in version, "TLS version mismatch, expected TLS VERSION 1.3 to be sent by DUT"
+                        break
+                    else:
+                        logger().info("TLS Version supported by DUT is not found in sniffer capture")
+        else:
+            logger().info("SSL client packets are not found in sniffer capture")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
+def test_wifi_sdk_verify_ssl_functionality_with_tls_1_3_c537927(wifi_sniffer, wifi_access_point, wifi_dut,
+                                                                ssl_server, sl_collections, request,
+                                                                sniffer_filter, ca_cert):
+    """
+    Verify SSL functionality with TLS 1.3.
+    """
+    try:
+        capture_filename = "test_wifi_sdk_verify_ssl_functionality_with_tls_1_3_c537927"
+        wifi_dut.interfaces.wifi.set_ssl_certificate(str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")),
+                                                     Si91xCertificateType.SL_NET_SIGNING_CERTIFICATE,
+                                                     Si91xCertIdentifier.SL_NET_TLS_SERVER_CREDENTIAL_START,
+                                                     cert_index=0)
+        ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
+                                 cipher_list=None)
+        device_ip, dut_mac_address = ssl_obj.join_get_ip()
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f'AP BSSID = {ap_bssid}')
+
+        ssl_server.interfaces.ssl.start_server(port=5001, version="ssl_1.2")
+        server_ip = ssl_server.interfaces.ssl.server_ip
+
+        sock = wifi_dut.interfaces.wifi.socket()
+        assert sock == 0, "Socket id received is wrong. expected is 0"
+        logger().info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+        wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_3")
+        local_port = randint(5001, 60000)
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
+
+        error_code = 0
+        try:
+            wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=5001)
+        except Exception as err:
+            error_match = re.search("status:(.*)", str(err))
+            if error_match:
+                error_code = error_match.group()
+                logger().info(f"error_code: {error_code}")
+        assert error_code, ("DUT did not send error code when trying to connect to ssl socket with open_ssl_v1_2 "
+                            "which is not expected")
+        logger().info(f"DUT sent error code when trying to connect to ssl socket with ssl_v1_2 which is expected")
+
+        ssl_server.interfaces.ssl.stop_server()
+        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                               sniffer_filter)
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        logger().info(f"DECRYPTION KEY-->{decryption_key}")
+        ssl_pkt = sl_collections.ssl_packet_decryption(wifi_sniffer, decryption_key, dut_mac_address, ["tls"],
+                                                       capture_filename, ap_bssid)['tls']
+        if len(ssl_pkt) > 0:
+            for i in ssl_pkt:
+                if re.search(".*Client Hello", i):
+                    result = re.search(r"Supported Version:([\s\w.]+)", i, re.IGNORECASE)
+                    if result:
+                        version = result.group(1)
+                        logger().info(f"TLS VERSION USED BY DUT is--->{version}")
+                        assert "TLS 1.3" in version, "TLS version mismatch, expected TLS VERSION 1.3 to be sent by DUT"
+                        break
                     else:
                         logger().info("TLS Version supported by DUT is not found in sniffer capture")
         else:
@@ -793,6 +866,7 @@ def test_wifi_sdk_ssl_client_1_3_and_server_1_2_with_ciphers_c537944(wifi_sniffe
 
 
 """ Below testcase is not working as of now, commented for future validation."""
+
 # @pytest.mark.parametrize("iter_count", range(iteration_count))
 # @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # @pytest.mark.parametrize("cert", ["ca-chain.cert.pem"])
