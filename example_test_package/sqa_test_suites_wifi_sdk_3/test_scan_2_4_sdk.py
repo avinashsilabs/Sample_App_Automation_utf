@@ -6,6 +6,7 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBit
     Si91xExtTCPIPFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xOperatingMode, Si91xPowerSaveModes
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 
+
 def logger():
     return get_logger(__name__)
 
@@ -22,8 +23,9 @@ def logger():
         4. Access Point(Third Party AP's)
         5. NUC
 
-    Author: Shaik Abdul Azeez
+    Author: Shaik Abdul Azeez and Anshul Bhargava(477822 and 477824)
 """
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -904,5 +906,108 @@ def test_wifi_sdk_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut, wifi_a
             logger().info(f"Initiating the scan in DUT with the given channel bitmap value ---->>>{count}")
             wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=channel_bitmap_2_4, expected_status=SLStatus.SL_STATUS_SI91X_INVALID_CHANNEL)
 
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "korea"
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'Korea'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_wifi_sdk_scan_all_channels_in_korea_region_c477822(wifi_sniffer, wifi_dut, wifi_access_point, request,
+                                                            sniffer_filter, sl_collections):
+    """Verify Whether DUT is able to scan till 13 channels when it is configured in Korea Region"""
+    try:
+        test_name = request.node.name
+        logger().info("Setting DUT in wlan power save...")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
+        channels_list_2g = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        true_result_list = []
+        false_result_list = []
+        probe_captured_channel_list = []
+        probe_not_captured_channel_list = []
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        for channel in channels_list_2g:
+            logger().info(f"configuring the Sniffer with the channel : {channel}")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{channel}")
+            time.sleep(2)
+            logger().info("Initiating scan from dut...")
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+            time.sleep(20)
+            assert (len(scan_results) >= 1), "Scan failed"
+            logger().info(scan_results)
+            wifi_sniffer.interfaces.capture.stop_capture()
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
+                                                                                            filter_name="probe_request")
+            logger().info(f"Validate Probe req(Broadcast)")
+            output = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count']
+            if bool(output) is False:
+                false_result_list.append(bool(output))
+                probe_not_captured_channel_list.append(channel)
+            else:
+                true_result_list.append(bool(output))
+                probe_captured_channel_list.append(channel)
+            logger().info(f"True list = {true_result_list}")
+            logger().info(f"false list = {false_result_list}")
+        assert probe_not_captured_channel_list == [], logger().info(f"**** unable to find the Probe requests  in all "
+                                                                    f"these channels:{probe_not_captured_channel_list}")
+        logger().info(f"found Probe req(Broadcast) in all the channel:{probe_captured_channel_list}'")
+        logger().info("DUT scan success in all channels")
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "korea"
+    }
+)
+@pytest.mark.config('wifi_access_point',
+                    wifi={"standard": '11n', "security": 'WPA2', "region": 'Korea'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_wifi_sdk_scan_in_korea_region_for_channel_14_c477824(wifi_dut, sl_collections):
+    """Verify Whether DUT is throwing error or not when scan in 14 channel and DUT is configured in Korea Region"""
+    try:
+        scan_results, status = wifi_dut.interfaces.wifi.scan(channel=14, ssid=None,
+                                                             expected_status=SLStatus.SL_STATUS_SI91X_INVALID_CHANNEL)
+        time.sleep(10)
+        logger.info('**** Getting 0x1000A error code, which is expected ****')
+        logger().info(scan_results)
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
