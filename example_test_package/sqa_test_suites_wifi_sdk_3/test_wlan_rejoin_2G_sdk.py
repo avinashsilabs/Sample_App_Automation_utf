@@ -73,7 +73,8 @@ def logger():
 
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None,
-                 ping_count=None, data_transfer=True, test_name=None, sl_collections=None, switch=None, wifi_client=None, net_perf_client=None,
+                 ping_count=None, data_transfer=True, test_name=None, sl_collections=None, switch=None,
+                 wifi_client=None, net_perf_client=None, sniffer_filter=None,
                  protocol=None):
         super().__init__()
         self.socket_obj = None
@@ -96,6 +97,7 @@ class WLanThread(ThreadBase):
         self.net_perf_client = net_perf_client
         self.protocol = protocol
         self.channel_bitmap_2_4 = 8
+		self.sniffer_filter = sniffer_filter
 
     def run(self):
         try:
@@ -120,6 +122,35 @@ class WLanThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=4, scan_interval=1,
                                                                               beacon_missed_count=40,
                                                                               first_time_retry_enable=0)
+
+            elif self.test_case_no == 19738:
+                """Enabling Rejoin functionality by setting number of retries to infinite"""
+                max_retry_attempts = 0
+
+                logger().info("\n *** Start sniffer configuration *** \n")
+                self.wifi_sniffer.interfaces.capture.configure_interface(
+                    channel=self.wifi_access_point.interfaces.wifi.channel)
+                self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+
+                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=max_retry_attempts,
+                                                                              scan_interval=4,
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=0)
+
+                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated
+                                                                         , ping_after_power_save=False, retry_count=3,
+                                                                         channel=self.wifi_access_point.interfaces.wifi.channel)
+
+                time.sleep(5)
+                self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET,
+                                                             option_val=SocketOptions.TCP_MAX_RETRY,
+                                                             data_transfer=True)
+
+                logger().info("Stop sniffer capture")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+
             elif self.test_case_no == 19739:
                 """ Enabling BG scan """
                 self.wifi_dut.interfaces.wifi.set_advanced_scan_configuration(adv_active_channel_time=15,
@@ -237,8 +268,8 @@ class WLanThread(ThreadBase):
                                                                         wifi_access_point=self.wifi_access_point,
                                                                         eap_type="tls", ping_after_power_save=True)
                 time.sleep(5)
-                self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET, option_val=SocketOptions.TCP_MAX_RETRY)
-                self.wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
+                self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET,
+                                                             option_val=SocketOptions.TCP_MAX_RETRY)
 
             elif self.test_case_no == 19731:
                 self.wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
@@ -254,8 +285,8 @@ class WLanThread(ThreadBase):
                                                                         wifi_access_point=self.wifi_access_point,
                                                                         eap_type="ttls", ping_after_power_save=True)
                 time.sleep(5)
-                self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET, option_val=SocketOptions.TCP_MAX_RETRY)
-                self.wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
+                self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET,
+                                                             option_val=SocketOptions.TCP_MAX_RETRY, data_transfer=False)
 
             elif self.test_case_no == 19732:
                 self.wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
@@ -271,8 +302,8 @@ class WLanThread(ThreadBase):
                                                                         wifi_access_point=self.wifi_access_point,
                                                                         eap_type="peap", ping_after_power_save=True)
                 time.sleep(5)
-                self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET, option_val=SocketOptions.TCP_MAX_RETRY)
-                self.wifi_dut.interfaces.wifi.clear_certificate(cert_type=1, cert_index=0)
+                self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET,
+                                                             option_val=SocketOptions.TCP_MAX_RETRY)
 
             elif self.test_case_no == 19733:
                 self.logger.info(f"********** rejoin_plan channel_bitmap_2_4:{self.channel_bitmap_2_4}****************")
@@ -314,7 +345,8 @@ class WLanThread(ThreadBase):
 
             if self.data_transfer:
                 self.socket_obj = SocketDataTransfer(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
-                                                     time_period=self.time_period, data=self.data, dut_ip=self.dut_addr['device_ip'])
+                                                     time_period=self.time_period, data=self.data,
+                                                     dut_ip=self.dut_addr['device_ip'])
                 self.socket_obj.socket_data_transfer()
 
             if self.rejoin_event:
@@ -333,57 +365,98 @@ class WLanThread(ThreadBase):
             raise e
 
     def socket_data_transfer_recovery_in_rejoin(self, option_name=None, option_val=None, bsdSetSocketOpt=True,
-                                                option_length=None, timeout=10):
-        logger().info(f"\n\nRunning tcp server on remote device \n\n")
-        self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-        logger().info(f"Remote device ip :{self.host_ip}")
-        self.net_perf_client.interfaces.net_perf.init_server(host_ip=self.host_ip, device_ip=
-        self.dut_addr['device_ip'], protocol=self.protocol)
-        self.net_perf_client.interfaces.net_perf.start()
-        end_time = 600
+                                                data_transfer=False):
 
         """ This method is responsible to validate socket data transfer recovery after rejoin event """
+        if data_transfer:
+            logger().info(f"\n\nRunning tcp server on remote device \n\n")
+            self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+            logger().info(f"Remote device ip :{self.host_ip}")
+            self.net_perf_client.interfaces.net_perf.init_server(host_ip=self.host_ip,
+                                                                 device_ip=self.dut_addr['device_ip'],
+                                                                 protocol=self.protocol)
+            self.net_perf_client.interfaces.net_perf.start()
+            end_time = 750
+            if isinstance(self.wifi_dut.interfaces.wifi, SLWifiCLI):
+                try:
+                    self.socket_id = self.wifi_dut.interfaces.wifi.socket(timeout=15)
+                    if isinstance(self.socket_id, int):
+                        logger().info(f"Socket open successfully : {self.socket_id}")
+                    else:
+                        logger().error(f"Unable to open socket id: {self.socket_id}")
+                        raise RuntimeError(self.socket_id)
 
-        if isinstance(self.wifi_dut.interfaces.wifi, SLWifiCLI):
-            self.socket_id = self.wifi_dut.interfaces.wifi.socket(timeout=15)
-            if isinstance(self.socket_id, int):
-                logger().info(f"Socket open successfully : {self.socket_id}")
+                    if bsdSetSocketOpt:
+                        self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=self.socket_id, option_name=option_name,
+                                                                      option_val=option_val)
+
+                    server_port = self.net_perf_client.interfaces.net_perf.server_port
+                    logger().info(f"\nSocket bind in DUT for socket-id: {self.socket_id}")
+                    self.wifi_dut.interfaces.wifi.bind(socket_fd=self.socket_id, device_ip=self.dut_addr['device_ip'],
+                                                       timeout=15)
+                    logger().info(f"\nTrying to connect with server ")
+                    self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=self.socket_id, server_ip=self.host_ip,
+                                                                   server_port=server_port, timeout=60)
+
+                    logger().info(f"\n **** Start validation of socket data transfer in rejoin scenario with AP turn "
+                                  f"off &"
+                                  f"Turn on again ****\n")
+
+                    sw = Stopwatch()
+                    check_flag = False
+                    while sw.elapsed_sec < end_time:
+                        send_bytes = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=self.socket_id,
+                                                                                 data=self.data,
+                                                                                 timeout=120)
+                        logger().info(f'SEND-Bytes = {send_bytes}')
+                        time.sleep(1)
+                        while sw.elapsed_sec < 20:
+                            send_bytes = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=self.socket_id,
+                                                                                     data=self.data,
+                                                                                     timeout=120)
+                            logger().info(f'SEND-Bytes = {send_bytes}')
+
+                        if check_flag is not True:
+                            logger().info('***** Turn off Access point *****')
+                            self.switch.interfaces.pdu_switch.turn_off(delay=10)
+
+                            """validate rejoin retry failure"""
+                            logger().info("Checking for rejoin fail event from dut, this may take some time....")
+                            sw = Stopwatch()
+                            end_time_event = 600
+                            while sw.elapsed_sec <= end_time_event:
+                                event_data_output = ""
+                                events = self.wifi_dut.interfaces.wifi.get_async_events()
+                                for event in events:
+                                    if event.event_type == AsyncEventIdentifiers.REJOIN_EVENT:
+                                        event_data_output = event.event_data
+                                        logger().info(f"*****{event_data_output}*******")
+                                logger().info(f"wait for 10 min to verify that Rejoin error event doesn't occur")
+
+                            logger().info('******* Turn on Access point **********')
+                            self.switch.interfaces.pdu_switch.turn_on(delay=60)
+                            check_flag = True
+                            logger().info('******* Trying to reconnect DUT and resume data transfer **********')
+                    self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.socket_id)
+                except Exception as e:
+                    logger().error(f"An error occurred: {str(e)}")
+                    raise
             else:
-                logger().error(f"Unable to open socket id: {self.socket_id}")
-                raise RuntimeError(self.socket_id)
+                logger().error("Invalid WiFi DUT interface. Expected SLWifiCLI")
+                raise RuntimeError("Invalid WiFi DUT interface")
+        else:
+            logger().info("\n\n ****** Access point is going to turn off  ******")
+            self.switch.interfaces.pdu_switch.turn_off(delay=150)
+            logger().info("Stop sniffer capture")
 
-            server_port = self.net_perf_client.interfaces.net_perf.server_port
-            logger().info(f"\nSocket bind in DUT for socket-id: {self.socket_id}")
-            self.wifi_dut.interfaces.wifi.bind(socket_fd=self.socket_id, device_ip=self.dut_addr['device_ip'],
-                                               timeout=15)
-            logger().info(f"\nTrying to connect with server ")
-            self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=self.socket_id, server_ip=self.host_ip,
-                                                           server_port=server_port, timeout=60)
-            if bsdSetSocketOpt:
-                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=self.socket_id, option_name=option_name,
-                                                              option_val=option_val)
-            logger().info(f"\n **** Start validation of socket data transfer in rejoin scenario with AP turn off & "
-                          f"Turn on again ****\n")
-            sw = Stopwatch()
-            check_flag = False
-            while sw.elapsed_sec < end_time:
-                send_bytes = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=self.socket_id, data=self.data,
-                                                                         timeout=120)
-                logger().info(f'SEND-Bytes = {send_bytes}')
-                time.sleep(1)
-                while sw.elapsed_sec < 120:
-                    send_bytes = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=self.socket_id, data=self.data,
-                                                                             timeout=120)
-                    logger().info(f'SEND-Bytes = {send_bytes}')
+            logger().info('******* Turn on Access point **********')
+            self.switch.interfaces.pdu_switch.turn_on(delay=100)
 
-                if check_flag is not True:
-                    logger().info('***** Turn off Access point *****')
-                    self.switch.interfaces.pdu_switch.turn_off(delay=20)
-
-                    logger().info('******* Turn on Access point **********')
-                    self.switch.interfaces.pdu_switch.turn_on(delay=60)
-                    check_flag = True
-            self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.socket_id)
+            # Initiate ping from third party wifi-client to DUT
+            status = ping(self.dut_addr['device_ip'], 20)
+            assert status, "Failed to ping to DUT"
+        self.wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(5)
 
     def delta_between_probe_packet(self):
         packet_filter = "Time delta from previous captured frame"
@@ -531,8 +604,9 @@ def test_wifi_sdk_rejoin_c19721(switch, wifi_sniffer, wifi_access_point, wifi_du
 
         logger().info("***** Turn off Access Point *****")
         switch.interfaces.pdu_switch.turn_off(delay=10)
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-                                                                            filter_name="probe_request")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_addr['dut_mac_address'],
+            filter_name="probe_request")
         logger().info("\n\n Adding sleep for 10 sec \n")
         time.sleep(20)
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -589,8 +663,9 @@ def test_wifi_sdk_rejoin_max_retry_failure_c19722(switch, wifi_sniffer, wifi_acc
 
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-                                                                            filter_name="probe_request")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_addr['dut_mac_address'],
+            filter_name="probe_request")
         time.sleep(5)
 
         # Validating Probe req broadcast packet
@@ -602,12 +677,11 @@ def test_wifi_sdk_rejoin_max_retry_failure_c19722(switch, wifi_sniffer, wifi_acc
         logger().info(
             f"Successfully matched Broadcast probe request packet count:'{packet_count}' to one less than rejoin_max_value:'{max_retry_attempts}'")
 
-
         logger().info("****** Access point is going to turn on  ******")
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
         sl_collections.join_to_wifi_network(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, associated=False,
-                                                                 ping_after_power_save=False)
+                                            ping_after_power_save=False)
 
         wlan_obj.socket_obj.socket_data_transfer()
 
@@ -694,8 +768,9 @@ def test_wifi_sdk_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_poin
             logger().info("Stop sniffer capture")
             wifi_sniffer.interfaces.capture.stop_capture()
 
-            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_add_dict['dut_mac_address'],
-                                                                                filter_name="probe_request")
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=dut_add_dict['dut_mac_address'],
+                filter_name="probe_request")
 
             output = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count']
             probe_check_dict[channel] = int(output)
@@ -792,8 +867,9 @@ def test_wifi_sdk_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point
             logger().info("Stop sniffer capture")
             wifi_sniffer.interfaces.capture.stop_capture()
 
-            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_add_dict['dut_mac_address'],
-                                                                                filter_name="probe_request")
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=dut_add_dict['dut_mac_address'],
+                filter_name="probe_request")
 
             output = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count']
             probe_check_dict[channel] = int(output)
@@ -865,8 +941,9 @@ def test_wifi_sdk_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
 
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-                                                                            filter_name="probe_request")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_addr['dut_mac_address'],
+            filter_name="probe_request")
 
         packet_count = int(
             wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['find_packet_num'])
@@ -1057,8 +1134,9 @@ def test_wifi_sdk_rejoin_with_disconnect_c19735(switch, wifi_sniffer, wifi_acces
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(5)
 
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-                                                                            filter_name='probe_request')
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_addr['dut_mac_address'],
+            filter_name='probe_request')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find Broadcast packet'
 
@@ -1216,7 +1294,8 @@ def test_wifi_sdk_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_poi
 
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name='probe_request')
-        result = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1, packet_filter2=packet_filter2)[
+        result = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
+                                                                    packet_filter2=packet_filter2)[
             'packet_count']
         probe_packets_time_delta_list = wlan_obj.delta_between_probe_packet()
         logger().info(f'Probe packet time delta list= {probe_packets_time_delta_list}')
@@ -1248,7 +1327,8 @@ def test_wifi_sdk_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_poi
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
-@pytest.mark.skip
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -1267,15 +1347,10 @@ def test_wifi_sdk_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_poi
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_rejoin_infinite_retry_c19738(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants,
-                                               request, sl_collections, sniffer_filter):
-    max_retry_attempts = 0
-    time_period = utf_constants.get("time_period")
-
-    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, test_name=test_name,
-                          test_case_no=19738, sl_collections=sl_collections, switch=switch)
-
+def test_wifi_sdk_rejoin_infinite_retry_c19738(wifi_dut, wifi_access_point, wifi_sniffer, radius_server, request,
+                                               sl_collections, switch, wifi_client, net_perf_client, protocol,
+                                               sniffer_filter):
+    test_name = request.node.name
     """Verify rejoin functionality by setting number of retries to infinite"""
     """bsdSetSocketOpt API is not working
     HostSerialConnectionAsync - RX: bsd_socket.set_sock_opt 0 SO_RCVTIMEO 1\r\nNot supported\r\n\r\n>
@@ -1283,91 +1358,14 @@ def test_wifi_sdk_rejoin_infinite_retry_c19738(wifi_sniffer, wifi_access_point, 
     try:
         logger().info('******* Turn on Access point **********')
         switch.interfaces.pdu_switch.turn_on(delay=60)
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=max_retry_attempts, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0)
-        logger().info("Joining into wifi_access_point")
-        socket_obj.wifi_join()
 
-        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"DUT MAC_Address: {dut_mac_address}")
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, test_case_no=19738, sl_collections=sl_collections,
+                              switch=switch, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                              protocol=protocol, sniffer_filter=sniffer_filter, data_transfer=False)
 
-        tcp_socket_id = tcp_socket_obj.open_socket(wifi_dut, dut_ip)
-        time.sleep(5)
-        logger().info(f"Setting the tcp retry count for the socket_id->{tcp_socket_id} to {SocketOptions.TCP_MAX_RETRY}"
-                      f" seconds")
-        socket_obj.socket_data_transfer(set_socket_opt=True)
-        connect_status = tcp_socket_obj.connect_socket(wifi_dut, tcp_socket_id)
-
-        # '''Verify first scenario, data transfer should resume once it is reconnected to the AP '''
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='rejoin_max_retry_validation')
-
-        if connect_status is False:
-            logger().info("Unable to connect with Server")
-            assert connect_status
-        else:
-            sw = Stopwatch()
-            check_flag = False
-            while sw.elapsed_sec < end_time_sec:
-                send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes, timeout=60)
-                logger().info(f'SEND-RESPONSE = {send_response}')
-                if b"-1" in send_response:
-                    try:
-                        wifi_dut.interfaces.wifi.wlan_get_status()
-                    except:
-                        wifi_dut.interfaces.wifi.wlan_get_socket_info()
-                        break
-                time.sleep(1)
-                while sw.elapsed_sec < 30:
-                    send_response = wifi_dut.interfaces.wifi.send(tcp_socket_id, send_bytes, timeout=60)
-                    logger().info(f'SEND-RESPONSE = {send_response}')
-                    if b"-1" in send_response:
-                        try:
-                            wifi_dut.interfaces.wifi.wlan_get_status()
-                        except:
-                            wifi_dut.interfaces.wifi.wlan_get_socket_info()
-                            break
-                    time.sleep(1)
-
-                if check_flag is not True:
-                    logger().info('***** Turn off Access point *****')
-                    switch.interfaces.pdu_switch.turn_off(delay=20)
-
-                    logger().info('******* Turn on Access point **********')
-                    switch.interfaces.pdu_switch.turn_on(delay=30)
-                    check_flag = True
-        time.sleep(5)
-
-        logger().info("\n\n ****** Access point is going to turn off  ******")
-        switch.interfaces.pdu_switch.turn_off()
-
-        # validate rejoin retry failure
-        logger().info("Checking for rejoin fail event from dut, this may take some time....")
-        sw = Stopwatch()
-        rejoin_msg = 0
-        end_time = 200
-        while sw.elapsed_sec <= end_time:
-            events = wifi_dut.interfaces.wifi.get_async_events()
-            if len(events):
-                for event in events:
-                    if event.event_type == Si91xAsyncEventType.RejoinError:
-                        rejoin_msg = 1
-                        logger().info(
-                            "******** Rejoin error found from DUT, which is not expected as per the test step ********")
-            if rejoin_msg:
-                break
-        assert rejoin_msg == 0, f"rejoin fail event found from DUT which is not expected as per test step"
-
-        logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=30)
-
-        logger().info("Stop sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
-
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=mac_address,
-                                                                            filter_name='probe_request')
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find Broadcast probe request packet'
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1396,7 +1394,6 @@ def test_wifi_sdk_rejoin_infinite_retry_c19738(wifi_sniffer, wifi_access_point, 
 )
 def test_wifi_sdk_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants, request,
                                             sl_collections, sniffer_filter):
-
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
     ping_count = 20
@@ -1422,11 +1419,10 @@ def test_wifi_sdk_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wif
         wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.
                                                                                         dut_addr['dut_mac_address'],
-                                                                            filter_name='probe_request')
+                                                                                        filter_name='probe_request')
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find Broadcast Probe request packet'
-
 
         logger().info('******* Turn on Access point **********')
         switch.interfaces.pdu_switch.turn_on(delay=100)
@@ -1484,8 +1480,9 @@ def test_wifi_sdk_rejoin_first_time_retry_c19740(wifi_sniffer, wifi_access_point
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
 
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(radio_ch=wifi_access_point.interfaces.wifi.channel,
-                                                                            filter_name='eapol_m2_after_deauth')
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            radio_ch=wifi_access_point.interfaces.wifi.channel,
+            filter_name='eapol_m2_after_deauth')
         packet_count = int(
             wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['find_packet_num'])
 
@@ -1521,7 +1518,6 @@ def test_wifi_sdk_rejoin_first_time_retry_c19740(wifi_sniffer, wifi_access_point
         "ble_custom_ext_features": 0,
     }
 )
-
 def test_wifi_sdk_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants, request,
                                             sl_collections, sniffer_filter):
     """Rejoin functionality with hidden mode AP"""
@@ -1603,9 +1599,11 @@ def test_wifi_sdk_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wi
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
 
-    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
+                          wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
-                          test_case_no=19742, sl_collections=sl_collections, switch=switch, data_transfer=False,protocol=protocol, net_perf_client=net_perf_client)
+                          test_case_no=19742, sl_collections=sl_collections, switch=switch, data_transfer=False,
+                          protocol=protocol, net_perf_client=net_perf_client)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1726,7 +1724,8 @@ def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wi
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 13})
 def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_access_point, wifi_sniffer, wifi_dut, switch, utf_constants,
-                                                request, sl_collections, sniffer_filter,net_perf_client, protocol, wifi_client):
+                                                request, sl_collections, sniffer_filter, net_perf_client, protocol,
+                                                wifi_client):
     """ Verify Rejoin Functionality with JP region enabled in 2.4GHZ band,
         # Please Note - ASUS AP doesn't have Japan region, So changed to US region"""
     test_name = request.node.name
@@ -1735,7 +1734,7 @@ def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_access_point, wifi_sniffer,
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
                           test_case_no=19744, sl_collections=sl_collections, switch=switch, data_transfer=False
-                          ,protocol=protocol, net_perf_client=net_perf_client,wifi_client=wifi_client)
+                          , protocol=protocol, net_perf_client=net_perf_client, wifi_client=wifi_client)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1797,7 +1796,6 @@ def test_wifi_sdk_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_po
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
 
-
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
                           test_case_no=19745, sl_collections=sl_collections, switch=switch)
@@ -1842,42 +1840,8 @@ def test_wifi_sdk_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_po
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
-# EAP Connection in TLS mode
-# @pytest.mark.start_state("wifi_dut", wifi="init")
-# @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-# @pytest.mark.config('wifi_access_point',
-#                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "clear_certs"])
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={
-#         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-#         "oper_mode": Si91xOperatingMode.EAPWiFiClient,
-#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-#         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.ULPGPIOHandshake
-#                     | Si91xFeatureBitMap.Aggregation,
-#         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-#         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
-#         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower
-#                                | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3
-#                                | Si91xExtCustomFeatureBitMap.Feature384kBMemoryMode,
-#         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-#                               | Si91xCertificateType.EAPClientCertificate,
-#         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-#                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-#         "tx_wait_time": 16000,
-#         "band": 0,
-#         "eap_cert": "wifi-user.pem",
-#         "bt_features": 0,
-#         "ble_features": 0,
-#         "ble_custom_ext_features": 0,
-# },
-# )
-# def test_wifi_sdk_rejoin_eap_tls_c19730(switch, wifi_sniffer, wifi_access_point, wifi_dut, radius_server,
-#                                         utf_constants, request, sl_collections, sniffer_filter):
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1887,12 +1851,12 @@ def test_wifi_sdk_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_po
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.Aggregation,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
-                            Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|
-                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
         "bt_features": 0,
@@ -1904,16 +1868,21 @@ def test_wifi_sdk_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_po
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
-def test_wifi_sdk_rejoin_eap_tls_c19730(wifi_dut, wifi_access_point, wifi_sniffer, radius_server, request, sl_collections, switch):
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+def test_wifi_sdk_rejoin_eap_tls_c19730(wifi_dut, wifi_access_point, wifi_sniffer, radius_server, request,
+                                        sl_collections, switch, wifi_client, net_perf_client, protocol, sniffer_filter):
     """Verify rejoin functionality in EAP-TLS mode"""
     test_name = request.node.name
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, test_case_no=19730, sl_collections=sl_collections,
-                          switch=switch, data_transfer=False)
+                          switch=switch, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                          protocol=protocol, sniffer_filter=sniffer_filter, data_transfer=False)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
+                                                   cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1923,6 +1892,8 @@ def test_wifi_sdk_rejoin_eap_tls_c19730(wifi_dut, wifi_access_point, wifi_sniffe
 
 
 # EAP Connection in TTLS mode
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1932,12 +1903,12 @@ def test_wifi_sdk_rejoin_eap_tls_c19730(wifi_dut, wifi_access_point, wifi_sniffe
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.Aggregation,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
-                            Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|
-                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
         "bt_features": 0,
@@ -1949,16 +1920,22 @@ def test_wifi_sdk_rejoin_eap_tls_c19730(wifi_dut, wifi_access_point, wifi_sniffe
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
-def test_wifi_sdk_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point, wifi_dut, radius_server, request, sl_collections):
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+def test_wifi_sdk_rejoin_eap_ttls_c19731(wifi_dut, wifi_access_point, wifi_sniffer, radius_server, request,
+                                        sl_collections, switch, wifi_client, net_perf_client, protocol, sniffer_filter):
     """Verify rejoin functionality in EAP-TTLS mode"""
     test_name = request.node.name
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          test_name=test_name, test_case_no=19731,
-                          sl_collections=sl_collections, switch=switch, data_transfer=False)
+                          test_name=test_name, test_case_no=19731, sl_collections=sl_collections,
+                          switch=switch, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                          protocol=protocol, sniffer_filter=sniffer_filter, data_transfer=False)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+        time.sleep(5)
+        wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
+                                                   cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1966,7 +1943,10 @@ def test_wifi_sdk_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point
         logger().info('******* Turn on Access point Finally **********')
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
+
 # EAP Connection in PEAP mode
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1976,12 +1956,12 @@ def test_wifi_sdk_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.Aggregation,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
-                            Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|
-                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
         "bt_features": 0,
@@ -1993,18 +1973,22 @@ def test_wifi_sdk_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
-
-def test_wifi_sdk_rejoin_eap_peap_c19732(switch, wifi_sniffer, wifi_access_point, wifi_dut, radius_server,
-                                         request, sl_collections):
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+def test_wifi_sdk_rejoin_eap_peap_c19732(wifi_dut, wifi_access_point, wifi_sniffer, radius_server, request,
+                                        sl_collections, switch, wifi_client, net_perf_client, protocol, sniffer_filter):
     """Verify rejoin functionality in EAP-, PEAP mode"""
     test_name = request.node.name
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          time_period=time_period, test_name=test_name,
-                          test_case_no=19732, sl_collections=sl_collections, switch=switch, data_transfer=False)
+                          test_name=test_name, test_case_no=19732, sl_collections=sl_collections,
+                          switch=switch, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                          protocol=protocol, sniffer_filter=sniffer_filter, data_transfer=False)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+        time.sleep(5)
+        wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
+                                                   cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -2435,4 +2419,3 @@ def test_wifi_sdk_rejoin_roaming_c19726(wifi_access_points, wifi_dut, switches, 
         logger().info("pdu switch state for AP1: " + str(state))
         assert state == 'false', 'Please check PDU outlet manually'
         wifi_dut.interfaces.wifi.leave()
-
