@@ -69,7 +69,7 @@ class WifiJoinThread(ThreadBase):
 
             if self.test_case_no == 19300:
                 logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
-                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="NULL")
                 self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
 
             if self.test_case_no == 19302:
@@ -97,7 +97,7 @@ class WifiJoinThread(ThreadBase):
 
             if self.test_case_no == 19311:
                 logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
-                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="NULL",secondary_dns_server_address="NULL")
                 self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
 
             if self.test_case_no == 551125:
