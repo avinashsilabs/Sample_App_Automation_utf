@@ -486,3 +486,113 @@ def test_wifi_sdk_ssl_standalone_rx_480_192K_with_long_imcp_C512089(firmware_loa
         wlan_obj.wait_for_exit()
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+pytestmark = [
+    pytest.mark.config(
+        "wifi_dut",
+        wifi=
+        {
+            "oper_mode": Si91xOperatingMode.WiFiClient,
+            "coex_mode": Si91xCoexMode.WLANOnly,
+            "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
+                              Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
+            "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                                   | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                                  Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                                  Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1) |
+                                  Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+            "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+            "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+        }
+    )
+]
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+def test_wlan_with_rtt_40_ssl_tx_C146659(wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
+                                           logger, wifi_sniffer, request, wifi_client):
+    testcase = request.node.name
+    wifi_client.interfaces.tc.add_delay(40)
+    time.sleep(2)
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, sl_collections=sl_collections, ssl_server=ssl_server,
+                              data_transfer=True, traffic_type="TX")
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_client.interfaces.tc.delete_delay()
+        time.sleep(2)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+def test_wlan_with_rtt_40_rx_C146660(wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
+                                           ssl_server, logger, utf_constants, wifi_sniffer, wifi_client):
+    testcase = request.node.name
+    wifi_client.interfaces.tc.add_delay(40)
+    time.sleep(2)
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, sl_collections=sl_collections, ssl_server=ssl_server,
+                              data_transfer=True, traffic_type="RX")
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_client.interfaces.tc.delete_delay()
+        time.sleep(2)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+def test_wlan_with_rtt_80_ssl_tx_C146661(wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
+                                           logger, wifi_sniffer, request, wifi_client):
+    testcase = request.node.name
+    wifi_client.interfaces.tc.add_delay(80)
+    time.sleep(2)
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, sl_collections=sl_collections, ssl_server=ssl_server,
+                              data_transfer=True, traffic_type="TX")
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_client.interfaces.tc.delete_delay()
+        time.sleep(2)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+def test_wlan_with_rtt_80_ssl_rx_C146662(wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
+                                           ssl_server, logger, utf_constants, wifi_sniffer, wifi_client):
+    testcase = request.node.name
+    wifi_client.interfaces.tc.add_delay(80)
+    time.sleep(2)
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=testcase, sl_collections=sl_collections, ssl_server=ssl_server,
+                              data_transfer=True, traffic_type="RX")
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_client.interfaces.tc.delete_delay()
+        time.sleep(2)
