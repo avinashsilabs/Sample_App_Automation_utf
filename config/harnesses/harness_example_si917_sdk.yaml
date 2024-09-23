@@ -1373,5 +1373,13 @@ constants:
         value: 30
     hostname:
         value: 'rs9116test'
+    wreck_host_name:
+        value: '192.168.50.175'
+    wreck_port:
+        value: 22
+    wreck_username:
+        value: 'test'
+    wreck_password:
+        value: 'test123'
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
