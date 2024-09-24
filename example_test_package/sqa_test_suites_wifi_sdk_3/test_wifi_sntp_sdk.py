@@ -3,12 +3,14 @@ import string
 import pytest
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xTCPIPFeatureBitMap, Si91xExtTCPIPFeatureBitMap, \
     Si91xFeatureBitMap, Si91xConfigFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xPowerSaveModes, \
-    Si91xCustomFeatureBitMap, Si91xOperatingMode
+    Si91xCustomFeatureBitMap, Si91xOperatingMode, Si91xJoinFeatureBitMap, Si91xPowerSaveProcedureTypes
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 import time
 
 power_save = True
+
+from utf.utf_config import UtfConfig
 
 
 def logger():
@@ -232,3 +234,118 @@ def test_wifi_sdk_sntp_ludp_coexit_c19017(wifi_sniffer, wifi_dut, wifi_client, w
                                                                                     filter_name="power_mgmt_bit")
     assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
         'Unable to find the power save sniffer packets'
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_sntp_client_functionality_c37580(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
+                                      sl_collections):
+    """
+    Command Type Response for SNTP Client Functionality.
+    """
+    capture_filename = request.node.name
+    logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+    sl_collections.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"in harness power_save flag set to be : {sl_collections.power_save}")
+    wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=Si91xJoinFeatureBitMap.ListenIntervalFromPowerSave)
+    result = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, retry_count=3,
+                                                associated=wifi_dut.interfaces.wifi.associated, power_save=False, )
+
+    dut_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC: {ap_bssid}")
+    time.sleep(3)
+
+    logger().info(f"***** Enabling Powersave in DUT ******")
+    wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', dtim_aligned_type=0,
+                                                     num_of_dtim_skip=0, listen_interval=700,
+                                                     monitor_interval=50)
+    wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                  psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+
+    logger().info("**************** Creating SNTP Client Session in DUT ***************")
+    wifi_dut.interfaces.wifi.sntp_client_start()
+    time.sleep(10)
+    logger().info("**************** Getting SNTP Time and DATE from DUT ***************")
+    sntp_time, sntp_date = wifi_dut.interfaces.wifi.sntp_get_time_data()
+    logger().info(f">>>>>>>>>>>>>>> SNTP TIME ----> '{sntp_time}'")
+    logger().info(f">>>>>>>>>>>>>>> SNTP DATE ----> '{sntp_date}'\n")
+    logger().info("**************** Getting SNTP Server Information from DUT ***************")
+    ip_version, sntp_method, sntp_server_address = wifi_dut.interfaces.wifi.sntp_get_server_info()
+    logger().info(f">>>>>>>>>>>>>>> SNTP SERVER {ip_version}")
+    logger().info(f">>>>>>>>>>>>>>> SNTP SERVER ADDRESS: {sntp_server_address}")
+    logger().info(f">>>>>>>>>>>>>>> SNTP {sntp_method}\n")
+    logger().info("**************** Deleting SNTP Client Session in DUT ***************")
+    wifi_dut.interfaces.wifi.sntp_client_stop()
+
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                           sniffer_filter, power_save=power_save)
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger().info(f"DECRYPTION_KEY --> {decryption_key}")
+    logger().info("SSL Packet Decryption is going to start, This may take some time")
+    ntp_capture_list = sl_collections.ssl_packet_decryption(wifi_sniffer, decryption_key, dut_mac_address, ["ntp"],
+                                                            capture_filename, ap_bssid)['ntp']
+    assert len(ntp_capture_list), (f"NTP packets are not captured or one of the 4-way handshake packets are not "
+                                   f"captured in the sniffer capture")
+    for ntp_pkt in ntp_capture_list:
+        if (ntp_pkt[2] == sntp_server_address) and (ntp_pkt[3] == dut_ip):
+            logger().info(f"************** SNTP response body received in the sniffer **************\n{ntp_pkt}")
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_sntp_client_functionality_loop_c538048(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
+                                                   sl_collections):
+    """
+    Verify SNTP methods (sntp_start->gettime->get_time_date->get_server_info->sntp_client_stop)in loop.
+    """
+    capture_filename = request.node.name
+    logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+    # sl_collections.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    # logger().info(f"in harness power_save flag set to be : {sl_collections.power_save}")
+
+    result = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, retry_count=3,
+                                                 associated=wifi_dut.interfaces.wifi.associated, power_save=power_save, )
+
+    dut_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"AP MAC: {ap_bssid}")
+    time.sleep(3)
+    for count in range(10):
+        logger().info(f"**************** Creating SNTP Client Session in DUT -'{count}'***************")
+        wifi_dut.interfaces.wifi.sntp_client_start()
+        time.sleep(10)
+        logger().info("**************** Getting SNTP Time and DATE from DUT ***************")
+        sntp_time, sntp_date = wifi_dut.interfaces.wifi.sntp_get_time_data()
+        logger().info(f">>>>>>>>>>>>>>> SNTP TIME ----> '{sntp_time}'")
+        logger().info(f">>>>>>>>>>>>>>> SNTP DATE ----> '{sntp_date}'\n")
+        logger().info("**************** Getting SNTP Server Information from DUT ***************")
+        ip_version, sntp_method, sntp_server_address = wifi_dut.interfaces.wifi.sntp_get_server_info()
+        logger().info(f">>>>>>>>>>>>>>> SNTP SERVER {ip_version}")
+        logger().info(f">>>>>>>>>>>>>>> SNTP SERVER ADDRESS: {sntp_server_address}")
+        logger().info(f">>>>>>>>>>>>>>> SNTP {sntp_method}\n")
+        logger().info("**************** Deleting SNTP Client Session in DUT ***************")
+        wifi_dut.interfaces.wifi.sntp_client_stop()
+        time.sleep(5)
+
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                           sniffer_filter, power_save=power_save)
+    decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+    logger().info(f"DECRYPTION_KEY --> {decryption_key}")
+    logger().info("SSL Packet Decryption is going to start, This may take some time")
+    ntp_capture_list = sl_collections.ssl_packet_decryption(wifi_sniffer, decryption_key, dut_mac_address, ["ntp"],
+                                                            capture_filename, ap_bssid)['ntp']
+    assert len(ntp_capture_list), (f"NTP packets are not captured or one of the 4-way handshake packets are not "
+                                   f"captured in the sniffer capture")
+    for ntp_pkt in ntp_capture_list:
+        if (ntp_pkt[2] == sntp_server_address) and (ntp_pkt[3] == dut_ip):
+            logger().info(f"************** SNTP response body received in the sniffer **************\n{ntp_pkt}")
+
