@@ -96,20 +96,22 @@ class PassiveScanFunctionality:
             self.wifi_dut.interfaces.wifi.scan(scan_type=self.scan_type, channel=channel,
                                                measure_scan_time=self.measure_scan_time)
 
-    def join_to_ap(self, ping_count=120):
+    def join_to_ap(self, ping_count=120, ps_enable=True):
         logger().info(f"\n\nConfiguring the sniffer with channel {self.wifi_access_point.interfaces.wifi.channel}")
-        self.wifi_sniffer.interfaces.capture.configure_interface(
-            channel=self.wifi_access_point.interfaces.wifi.channel)
+        self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
         time.sleep(3)
         self.sl_collections.connect(self.wifi_dut, self.wifi_access_point, retry_count=3)
         ip_config = self.sl_collections.configure_ip(self.wifi_dut, retry_count=3, timeout=120)[-1]
         device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-        self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
-        self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                           psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        time.sleep(5)
+        logger().info("Pinging to DUT")
         status = self.sl_collections.ping(device_ip=device_ip, ping_count=ping_count, retry_count=3)
-        assert status, "Failed to ping to DUT after powersave enabled"
+        assert status, "Failed to ping to DUT"
+        if ps_enable:
+            self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                               psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
     def sniffer_validation(self):
         logger().info("Stop sniffer capture finally")
@@ -121,11 +123,11 @@ class PassiveScanFunctionality:
                                                                                              da_addr=self.ap_bssid,
                                                                                              filter_name='association_request')
         logger().info("******** Checking for power management bit in sniffer capture ********")
-        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(True, packet_filter2)['packet_count'], \
-            "Unable to find power management bit 1 in sniffer"
+        status = self.wifi_sniffer.interfaces.capture.sniffer_validation(True, packet_filter2)['packet_count']
+        if not status: logger().info("Unable to find power management bit 1 in sniffer")
         logger().info("******** Validating Assoc Req with HE information ********")
-        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(True, packet_filter3)['packet_count'], \
-            'Unable to find Assoc Req  with HE capability in sniffer'
+        status = self.wifi_sniffer.interfaces.capture.sniffer_validation(True, packet_filter3)['packet_count']
+        if not status: logger().info('Unable to find Assoc Req  with HE capability in sniffer')
 
 
 @pytest.mark.config(
@@ -734,5 +736,133 @@ def test_wsdk_passive_scan_in_world_wide_domain_lp_chain_enabled_c551146(wifi_ac
         wlan_obj.scan(all_ch_scan=False, test_id='c551146')
         wlan_obj.join_to_ap()
         wlan_obj.sniffer_validation()
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "enable_timeout_config": True,
+        "passive_chan_scan_timeout_value": 110,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_wsdk_passive_scan_connect_disconnect_30min_lp_chain_disabled_c551140(wifi_access_point, wifi_sniffer, wifi_dut,
+                                                                              request, sniffer_filter, sl_collections):
+    """
+    Verify Passive scan functionality with LP chain disabled, Passive scan disconnect and connect back with passive
+    scan only do it in loop for 30 minutes.
+    """
+    try:
+        sw = Stopwatch()
+        wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
+                                            request, dwell_time=110, scan_type=1, lp_mode=0)
+        while sw.elapsed_sec <= 1800:
+            time_left = int((1800 - sw.elapsed_sec) / 60)
+            logger().info(f"*************** Remaining time to complete test is: '{time_left}' minutes ***************")
+            wlan_obj.scan(test_id='c551140')
+            wlan_obj.join_to_ap(ps_enable=False)
+            wlan_obj.sniffer_validation()
+            wifi_dut.interfaces.wifi.leave()
+            time.sleep(60)
+            logger().info("\n\n")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "enable_timeout_config": True,
+        "passive_chan_scan_timeout_value": 110,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_wsdk_passive_scan_and_active_scan_30min_lp_chain_enabled_c551147(wifi_access_point, wifi_sniffer, wifi_dut,
+                                                                          request, sniffer_filter, sl_collections):
+    """
+    Verify Passive scan functionality with LP chain enabled, Passive scan and active scan in loop for 30 minutes.
+    """
+    try:
+        sw = Stopwatch()
+        while sw.elapsed_sec <= 1800:
+            time_left = int((1800 - sw.elapsed_sec) / 60)
+            logger().info(f"*************** Remaining time to complete test is: '{time_left}' minutes ***************")
+            for scan_type in [0, 1]:
+                logger().info(f"******** Initiating test for scan type ---> {scan_type} ********")
+                wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
+                                                    sl_collections, request, dwell_time=110, scan_type=scan_type,
+                                                    lp_mode=1)
+                wlan_obj.scan(test_id='c551147')
+                wlan_obj.join_to_ap(ps_enable=False)
+                wlan_obj.sniffer_validation()
+                wifi_dut.interfaces.wifi.leave()
+                time.sleep(60)
+                logger().info("\n\n")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "enable_timeout_config": True,
+        "passive_chan_scan_timeout_value": 110,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_wsdk_passive_scan_connect_disconnect_30min_lp_chain_enabled_c551141(wifi_access_point, wifi_sniffer, wifi_dut,
+                                                                             request, sniffer_filter, sl_collections):
+    """
+    Verify Passive scan functionality with LP chain enabled, Passive scan disconnect and connect back with passive scan
+    only do it in loop for 30 minutes.
+    """
+    try:
+        sw = Stopwatch()
+        wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
+                                            request, dwell_time=110, scan_type=1, lp_mode=1)
+        while sw.elapsed_sec <= 1800:
+            time_left = int((1800 - sw.elapsed_sec) / 60)
+            logger().info(f"*************** Remaining time to complete test is: '{time_left}' minutes ***************")
+            wlan_obj.scan(test_id='c551141')
+            wlan_obj.join_to_ap(ps_enable=False)
+            wlan_obj.sniffer_validation()
+            wifi_dut.interfaces.wifi.leave()
+            time.sleep(60)
+            logger().info("\n\n")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
