@@ -632,7 +632,7 @@ def test_wifi_sdk_dynamic_load_powersave_not_enabled_TC19646(
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
     }
 )
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -708,7 +708,7 @@ def test_wifi_sdk_connection_and_transfer_of_index0_index1_when_trying_loadcert_
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
     }
 )
 @pytest.mark.parametrize("cert1, cert2, cert3",
@@ -1270,7 +1270,7 @@ def test_wifi_sdk_load_certs_without_erasing_multiple_times_TC19644(
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
     }
 )
 @pytest.mark.parametrize("cert1, cert2, cert3",
