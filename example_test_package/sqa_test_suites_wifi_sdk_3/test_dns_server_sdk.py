@@ -4,7 +4,7 @@ from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode
 from utf_wiseconnect_3.tests.devices.si91x import (Si91xTCPIPFeatureBitMap, Si91xFeatureBitMap, \
-                                                   Si91xConfigFeatureBitMap)
+                                                   Si91xConfigFeatureBitMap, Si91xOperatingMode, Si91xCustomFeatureBitMap,Si91xExtCustomFeatureBitMap,Si91xExtTCPIPFeatureBitMap)
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 
 
@@ -119,8 +119,7 @@ def test_wifi_sdk_dns_server_obtaining_ip_through_dhcp_handshake_c19297(wifi_sni
         wifi_dut.interfaces.wifi.leave()
 
         logger().info("\n\n ====== Validating the sniffer ====== \n\n")
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            wlan_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name='dns_id')
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name='dns_id')
 
         result = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)
         logger().info(f"DNS address = {result}")
@@ -192,23 +191,26 @@ def test_wifi_sdk_dns_server_dns_feature_disable_c19299(wifi_sniffer, wifi_acces
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.skip('Not supported on WSDK 3.0')
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
-@pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
     "wifi_dut",
     wifi=
     {
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
+        "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
         "bt_features": 0,
         "ble_features": 0,
-        "ble_custom_ext_features": 0
+        "ble_custom_ext_features": 0,
     }
 )
 def test_wifi_sdk_dns_server_c19298(wifi_sniffer, wifi_access_point, wifi_dut, request, sniffer_filter, sl_collections):
@@ -227,19 +229,22 @@ def test_wifi_sdk_dns_server_c19298(wifi_sniffer, wifi_access_point, wifi_dut, r
                               test_case_no=test_name, sl_collections=sl_collections)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-        logger().info("=======Initiating DNS get command with Primary and Secondary Static IPs for DNS server========")
-        status = wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com")
-        logger().info(f'\n *** DNS address = {status} *** \n')
+
+        logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
+        wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
+        wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=240000, ip_version="ipv4",timeout=240)
+
         time.sleep(2)
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
-        time.sleep(2)
+
         wifi_dut.interfaces.wifi.leave()
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            wlan_addr=wlan_obj.dut_addr['dut_mac_address'],
-            filter_name='dns_id')
-        result = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
-                                                                    sniffer_validation=False)
+
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name='dns_id')
+
+        result = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1, sniffer_validation=True)
+
         assert result['packet_count'], "DNS packets are not found in sniffer file"
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
