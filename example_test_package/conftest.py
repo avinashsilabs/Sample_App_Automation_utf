@@ -109,7 +109,6 @@ def firmware_loader(request, wiseconnect_duts):
             last_loaded_custom_app_name = app_name
         yield fw_mgr
 
-
 @pytest.fixture(autouse=True, scope="function")
 def roll_back_to_default_firmware(request, wiseconnect_duts):
     global last_loaded_custom_app_name
