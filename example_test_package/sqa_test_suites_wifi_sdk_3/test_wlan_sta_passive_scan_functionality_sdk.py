@@ -497,9 +497,6 @@ def test_wsdk_passive_scan_with_dwell_time_1000ms_lp_chain_disabled_c551139(wifi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
 
 
-"""***************************************** Announcement3 *****************************************"""
-
-
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -864,5 +861,59 @@ def test_wsdk_passive_scan_connect_disconnect_30min_lp_chain_enabled_c551141(wif
             wifi_dut.interfaces.wifi.leave()
             time.sleep(60)
             logger().info("\n\n")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "enable_timeout_config": True,
+        "passive_chan_scan_timeout_value": 110,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_wsdk_passive_scan_with_bg_scan_and_lp_chain_enabled_c551148(wifi_access_point, wifi_sniffer, wifi_dut,
+                                                                     request, sniffer_filter, sl_collections):
+    """
+    Verify Passive scan functionality with default dwell time and LP chain enabled and move to BGscan API.
+    """
+    try:
+        wlan_obj = PassiveScanFunctionality(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections,
+                                            request, dwell_time=110, scan_type=1, lp_mode=1)
+        wlan_obj.join_to_ap()
+        wlan_obj.dut_mac = wifi_dut.interfaces.wifi.get_mac_address()
+        wlan_obj.sniffer_validation()
+
+        logger().info(f"Configuring the sniffer with channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"unicast_probe_check_c551148")
+        time.sleep(5)
+        scan_time_threshold = (11 * 110 + 100) / 1000
+        wifi_dut.interfaces.wifi.set_advanced_scan_configuration(adv_active_channel_time=50, adv_trigger_level_change=4,
+                                                                 adv_trigger_level=63, adv_passive_channel_time=50)
+        scan_time = wifi_dut.interfaces.wifi.scan(scan_type=1, lp_mode=1, bgscan=True, bg_scan_periodicity=2,
+                                                  measure_scan_time=True)[-1]
+        scan_time = float(scan_time.split(':')[-1])
+        assert scan_time <= scan_time_threshold, (f"Observed passive scan time is more than expected value:"
+                                                  f"{scan_time_threshold} Seconds")
+        logger().info(f"\n\n******** Time taken for passive scan is --> '{scan_time}' seconds, which is within the "
+                      f"expected threshold value '{scan_time_threshold}' seconds ********")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("******** Checking for unicast probe request packet in sniffer capture ********")
+        packet_filter1 = f"(wlan.fc.type_subtype == 4) && (wlan.sa == {wlan_obj.dut_mac}) && (wlan.da == {wlan_obj.ap_bssid})"
+        assert not wifi_sniffer.interfaces.capture.sniffer_validation(True, packet_filter1)['packet_count'], \
+            "Found unicast probe request packet in sniffer capture, which is not expected"
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
