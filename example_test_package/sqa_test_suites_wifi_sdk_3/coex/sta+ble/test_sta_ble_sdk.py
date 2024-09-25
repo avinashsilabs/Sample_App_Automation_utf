@@ -162,7 +162,8 @@ class WifiJoinThread(ThreadBase):
             index_path=None,
             http_client=None,
             https=0,
-            scan_count=5
+            scan_count=5,
+            mac=None,
     ):
 
         super().__init__()
@@ -186,6 +187,7 @@ class WifiJoinThread(ThreadBase):
         self.traffic_type = traffic_type
         self.tcp_ip_bypass = tcp_ip_bypass
         self.enc = enc
+        self.mac = mac
         self.timeout = timeout
         self.http_client = http_client
         self.http_server = http_server
@@ -207,7 +209,7 @@ class WifiJoinThread(ThreadBase):
         self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"DUT MAC ADDRESS :  {self.dut_mac_address}")
 
-    def run_traffic(self, protocol="TCP", traffic_type="TX"):
+    def run_traffic(self, protocol="TCP", traffic_type="TX", packet_size_tcp=1460, packet_size_udp=1470):
 
         host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
@@ -219,6 +221,8 @@ class WifiJoinThread(ThreadBase):
             host_ip=host_ip,
             timeout=self.timeout,
             traffic_type=traffic_type,
+            buffer_size_tcp=packet_size_tcp,
+            buffer_size_udp=packet_size_udp,
         )
 
     def run_http_download(self):
@@ -296,7 +300,8 @@ class WifiJoinThread(ThreadBase):
                 ping_count=self.ping_count,
                 pmk_enable=self.pmk_enable,
                 tcp_ip_bypass=self.tcp_ip_bypass,
-                enc=self.enc
+                enc=self.enc,
+                mac=self.mac
             )
             if not self.tcp_ip_bypass:
                 self.device_ip = self.dut_addr["device_ip"]
