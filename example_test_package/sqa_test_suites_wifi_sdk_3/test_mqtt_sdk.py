@@ -1167,7 +1167,7 @@ def test_wifi_sdk_mqtt_keep_alive_120_with_qos1_TC127784(wifi_sniffer, mqtt_serv
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
@@ -1175,14 +1175,15 @@ def test_wifi_sdk_mqtt_keep_alive_120_with_qos1_TC127784(wifi_sniffer, mqtt_serv
         "set_send_feature_frame": True,
     }
 )
+@pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
-def test_wifi_sdk_mqtt_check_error_0xFFFFFFD3_C127802(
+def test_wifi_sdk_mqtt_check_error_0x21_C127802(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, mqtt_client):
-    """If username or password is given more than 60 bytes 0xFFFFFFD3 error code should be seen"""
+    """If topic is given more than 201 bytes 0x21 error code should be seen"""
 
     try:
-        username = ''.join(random.choices(string.ascii_uppercase + string.digits, k=65))
+        topic = ''.join(random.choices(string.ascii_uppercase + string.digits, k=205))
         capture_filename = request.node.name
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
                             wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
@@ -1190,14 +1191,13 @@ def test_wifi_sdk_mqtt_check_error_0xFFFFFFD3_C127802(
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
-        logger().info(f"username is {username}")
-        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client",
-                                                                        is_connection_encrypted=True)
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client")
 
-        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt,
-                                                               username=username,
-                                                               expected_status=SLStatus.SL_STATUS_SI91X_PARAMETER_LENGTH_EXCEED)
-        logger().info("DUT sent 0xFFFFFFD3 when the username or password is more than 60 bytes")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1,
+                                                       expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
+        logger().info("DUT sent 0x21 when the topic is more than 201 bytes")
 
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -2870,109 +2870,9 @@ def test_wifi_sdk_mqtt_username_topic_length_check_C206125(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_mqtt_check_error_0xFFFFFFD3_C206117(
+def test_wifi_sdk_mqtt_check_error_0x21_C206117(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, mqtt_client):
-    """If the MQTT username is given more than 120 bytes and topic length is more than 200 bytes an error code of
-    0xFFFFFFD3 should be seen."""
-
-    try:
-        topic = ''.join(random.choices(string.ascii_uppercase + string.digits, k=203))
-        username = ''.join(random.choices(string.ascii_uppercase + string.digits, k=122))
-        capture_filename = request.node.name
-        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
-                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
-                            sl_collections=sl_collections, sniffer_filter=sniffer_filter)
-        wifi_obj.start()
-        wifi_obj.wait_for_exit()
-        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
-        logger().info(f"<<<<<<<< Username is : {username} >>>>>>>>>>>>")
-        logger().info(f"<<<<<<<< Topic is {topic} >>>>>>>>>>>>>>>>>>>>")
-        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client",
-                                                                        is_connection_encrypted=True)
-
-        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(
-            server=mqtt_server.interfaces.mqtt, send_credentials=True, username=username,
-            expected_status=SLStatus.SL_STATUS_SI91X_PARAMETER_LENGTH_EXCEED)
-        logger().info("DUT sent 0xFFFFFFD3 when the username or topic length is more than 120 and 200 bytes")
-
-        logger().info("Stop the sniffer")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_dut.interfaces.wifi.leave()
-
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "set_send_feature_frame": True,
-    }
-)
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_mqtt_check_error_0x1_topic_length_more_than_202_bytes_C463961(
-        wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, mqtt_client):
-    """If topic length is given more than 202 bytes 0x1 error code should be seen"""
-
-    try:
-        topic = ''.join(random.choices(string.ascii_uppercase + string.digits, k=205))
-        capture_filename = request.node.name
-        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
-                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
-                            sl_collections=sl_collections, sniffer_filter=sniffer_filter)
-        wifi_obj.start()
-        wifi_obj.wait_for_exit()
-        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
-        logger().info(f"<<<<<<<< Topic is {topic} >>>>>>>>>>>>>>>>>>>>")
-        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client")
-        logger().info("*********** DUT connects to MQTT server *****************")
-        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
-        time.sleep(5)
-        logger().info("************** DUT subscribes to the topic ******************")
-        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS0)
-        logger().info("DUT sent 0x1 when the topic length is more than 202 bytes")
-
-        logger().info("Stop the sniffer")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_dut.interfaces.wifi.leave()
-
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "set_send_feature_frame": True,
-    }
-)
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_mqtt_check_error_0x1_username_more_than_122_bytes_C463963(
-        wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, mqtt_client):
-    """If username length is given more than 122 bytes 0x1 error code should be seen"""
-
+    """If the MQTT username is given more than 120 bytes 0x21 error code should be seen."""
     try:
         username = ''.join(random.choices(string.ascii_uppercase + string.digits, k=123))
         capture_filename = request.node.name
@@ -2987,8 +2887,10 @@ def test_wifi_sdk_mqtt_check_error_0x1_username_more_than_122_bytes_C463963(
                                                                         is_connection_encrypted=True)
 
         wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(
-            server=mqtt_server.interfaces.mqtt, send_credentials=True, username=username)
-        logger().info("DUT sent 0x1 when the username is more than 122 bytes")
+            server=mqtt_server.interfaces.mqtt, send_credentials=True, username=username,
+            expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
+
+        logger().info("DUT sent 0x21 when the username is more than 120 bytes")
 
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
