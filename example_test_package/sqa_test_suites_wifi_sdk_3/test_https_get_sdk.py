@@ -310,12 +310,12 @@ def test_wifi_sdk_https_get_functionality_not_loading_cert_c19203(http_server, w
     """
     try:
         test_name = '19203'
+
+        wifi_dut.interfaces.wifi.clear_certificate()
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               test_name=test_name, sl_collections=sl_collections)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-
-        wifi_dut.interfaces.wifi.clear_certificate()
 
         logger().info("fetching https data using get method")
         wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path, server_port=443,
@@ -723,6 +723,7 @@ def test_wifi_sdk_http_get_when_httpserver_does_not_ssl_handshake_c19210(wifi_sn
     """
     try:
         test_name = '19210'
+        wifi_dut.interfaces.wifi.clear_certificate()
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               test_name=test_name, sl_collections=sl_collections)
         wlan_obj.start()
@@ -749,7 +750,7 @@ def test_wifi_sdk_http_get_when_httpserver_does_not_ssl_handshake_c19210(wifi_sn
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.SSL,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
     }
@@ -1307,6 +1308,63 @@ def test_wifi_sdk_https_get_functionality_c537610(http_server, wifi_dut, http_cl
         logger().info(status_dut)
         logger().info(content_dut)
         assert content_dut == content_client, "fetched data is not same as expected data"
+
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.http_client_deinit()
+        time.sleep(5)
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_https_get_with_different_url_length_c19205(http_server, wifi_dut, http_client, wifi_access_point,
+                                                             utf_constants, wifi_sniffer, sl_collections):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http get for http content
+        5. Verify the http get response
+    """
+    try:
+        test_name = '19209'
+        index_paths = ["index.html", "index_index.htm", "index_index_index.htm", "index_index_index_index.htm",
+                       "index_index_index_index_index.htm"]
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        for index_path in index_paths:
+            logger().info("\n\n***Fetching the data on https using get method***\n\n")
+            status_dut, content_dut = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path,
+                                                                        server_port=443)
+            status_client, content_client = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
+
+            assert not status_dut, "failed to fetch the https data"
+            assert status_client, "failed to load the https data"
+
+            logger().info(status_dut)
+            logger().info(content_dut)
+            assert content_dut in content_client, "fetched data is not same as expected data"
 
         logger().info("Stopping sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
