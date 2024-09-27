@@ -17,6 +17,7 @@ from utf.interfaces.bluetooth import BLEDeviceState
 from utf.utils.defaults import defaults
 import string
 import random
+from random import randint
 from utf.utils.iperf.iperf_utils import ping
 
 
@@ -88,7 +89,7 @@ class WifiJoinThread(ThreadBase):
         self.dut_addr = None
         self.mode = mode
         self.ble_data_transfer = ble_data_transfer
-        ssl_server = ssl_server
+        self.ssl_server = ssl_server
 
     def run(self):
         if self.test_case_no == 20740 or self.test_case_no == 20750:
@@ -232,8 +233,8 @@ class WifiJoinThread(ThreadBase):
                 self.iteration_count = self.iteration_count
                 for i in range(0, self.iteration_count):
                     # starting iperf
-                    self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=
-                    self.dut_addr['device_ip'], protocol=self.protocol)
+                    self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=self.dut_addr['device_ip'],
+                                                                         protocol=self.protocol)
                     self.net_perf_client.interfaces.net_perf.start()
                     logger().info("sending data from DUT")
                     timeout = 40
@@ -254,8 +255,9 @@ class WifiJoinThread(ThreadBase):
                     # Iperf Client Started
                     if self.protocol == "UDP":
                         bandwidth = "68M"
-                        self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
-                        self.dut_addr['device_ip'], protocol=self.protocol, bandwidth=bandwidth)
+                        self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip,
+                                                                             device_ip=self.dut_addr['device_ip'],
+                                                                            protocol=self.protocol, bandwidth=bandwidth)
                         logger().info(f"***** start listening  ******")
                         self.net_perf_client.interfaces.net_perf.start()
                         timeout = 40
@@ -269,8 +271,9 @@ class WifiJoinThread(ThreadBase):
                         time.sleep(3)
 
                     elif self.protocol == "TCP":
-                        self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
-                        self.dut_addr['device_ip'], protocol=self.protocol)
+                        self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip,
+                                                                             device_ip=self.dut_addr['device_ip'],
+                                                                             protocol=self.protocol)
 
                         def start_client():
                             time.sleep(1)
@@ -293,82 +296,81 @@ class WifiJoinThread(ThreadBase):
                         time.sleep(3)
 
         if self.ssl_data_transfer:
-            if self.data_transfer:
-                if self.traffic_type == "TX":
-                    buffer_length = 1370
-                    port1 = self.ssl_server.interfaces.ssl.config['device_port1']
-                    self.ssl_server.interfaces.ssl.start_server()
-                    server_ip = self.ssl_server.interfaces.ssl.server_ip
-                    # Open ssl client socket in the DUT
-                    sock = self.wifi_dut.interfaces.wifi.socket()
-                    assert sock == 0, "Socket id received is wrong. expected is 0"
-                    logger().info(
-                        f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
-                    logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
-                    # Enable ssl option for socket opened
-                    self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
-                    local_port = randint(5001, 60000)
-                    self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port,
-                                                       timeout=15)
-                    time.sleep(3)
-                    self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
-                                                                   server_port=port1)
-                    pkt_count = 50000
-                    time.sleep(1)
-                    server_socket_no = 1
-                    if self.ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
-                        self.ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
-                    result = self.wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
-                    logger().info(f"Number of bytes sent by dut {result}")
-                    bytes_sent = result
-                    bytes_received = self.ssl_server.interfaces.ssl.data_receive_stats(server_socket_no)
-                    logger().info(
-                        f"bytes sent by DUT on the ssl socket opened-> {bytes_sent}, received by remote peer-> {bytes_received}")
-                    self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
-                    logger().info("Successfully closed opened socket in the DUT")
-                    self.ssl_server.interfaces.ssl.stop_server()
-                    time.sleep(5)
-                if self.traffic_type == "RX":
-                    buffer_length = 1370
-                    port1 = self.ssl_server.interfaces.ssl.config['device_port1']
-                    self.ssl_server.interfaces.ssl.start_server()
-                    server_ip = self.ssl_server.interfaces.ssl.server_ip
-                    time.sleep(2)
-                    self.wifi_dut.interfaces.wifi.set_socket_config()
-                    # Open ssl client socket in the DUT
-                    time.sleep(2)
-                    sock = self.wifi_dut.interfaces.wifi.async_sdk_socket(domain="AF_INET", stream_type="SOCK_STREAM",
-                                                                          protocol="IPPROTO_TCP")
-                    assert sock == 0, "Socket id received is wrong. expected is 0"
-                    logger().info(
-                        f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
-                    logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
-                    # Enable ssl option for socket opened
-                    self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
-                    local_port = randint(5001, 60000)
-                    self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port,
-                                                       timeout=15)
-                    time.sleep(3)
-                    self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
-                                                                   server_port=port1)
-                    socket_no = 1
-                    pkt_count = 50000
-                    duration = 60
-                    self.ssl_server.interfaces.ssl.send_data(socket_no, pkt_count, msg_length=buffer_length,
-                                                             duration=duration)
-                    time.sleep(80)
-                    bytes_sent = self.ssl_server.interfaces.ssl.data_send_stats(socket_no)
-                    result = self.wifi_dut.interfaces.wifi.get_socket_rx_stats(sock, no_of_pkts="pkt_count", ttl=30)
-                    logger().info(f"*** result of rx_stats in wifidut {result}")
-                    bytes_received = int(result)
-                    logger().info(f"bytes sent by remote peer -> {bytes_sent}")
-                    logger().info(f"bytes received on socket {sock} -> {bytes_received}")
-                    logger().info(f"SSL rx throughput ->  {((bytes_received * 8) / (1000 * 1000 * duration))} Mbps")
-                    time.sleep(2)
-                    self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
-                    logger().info("Successfully closed opened socket in the DUT")
-                    self.ssl_server.interfaces.ssl.stop_server()
-                    time.sleep(5)
+            if self.traffic_type == "TX":
+                buffer_length = 1370
+                port1 = self.ssl_server.interfaces.ssl.config['device_port1']
+                self.ssl_server.interfaces.ssl.start_server()
+                server_ip = self.ssl_server.interfaces.ssl.server_ip
+                # Open ssl client socket in the DUT
+                sock = self.wifi_dut.interfaces.wifi.socket()
+                assert sock == 0, "Socket id received is wrong. expected is 0"
+                logger().info(
+                    f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+                logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
+                # Enable ssl option for socket opened
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP")
+                local_port = randint(5001, 60000)
+                self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.dut_addr['device_ip'], server_port=local_port,
+                                                   timeout=15)
+                time.sleep(3)
+                self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
+                                                               server_port=port1)
+                pkt_count = 50000
+                time.sleep(1)
+                server_socket_no = 1
+                if self.ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
+                    self.ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
+                result = self.wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+                logger().info(f"Number of bytes sent by dut {result}")
+                bytes_sent = result
+                bytes_received = self.ssl_server.interfaces.ssl.data_receive_stats(server_socket_no)
+                logger().info(
+                    f"bytes sent by DUT on the ssl socket opened-> {bytes_sent}, received by remote peer-> {bytes_received}")
+                self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                logger().info("Successfully closed opened socket in the DUT")
+                self.ssl_server.interfaces.ssl.stop_server()
+                time.sleep(5)
+            if self.traffic_type == "RX":
+                buffer_length = 1370
+                port1 = self.ssl_server.interfaces.ssl.config['device_port1']
+                self.ssl_server.interfaces.ssl.start_server()
+                server_ip = self.ssl_server.interfaces.ssl.server_ip
+                time.sleep(2)
+                self.wifi_dut.interfaces.wifi.set_socket_config()
+                # Open ssl client socket in the DUT
+                time.sleep(2)
+                sock = self.wifi_dut.interfaces.wifi.async_sdk_socket(domain="AF_INET", stream_type="SOCK_STREAM",
+                                                                      protocol="IPPROTO_TCP")
+                assert sock == 0, "Socket id received is wrong. expected is 0"
+                logger().info(
+                    f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+                logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
+                # Enable ssl option for socket opened
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP")
+                local_port = randint(5001, 60000)
+                self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.dut_addr['device_ip'], server_port=local_port,
+                                                   timeout=15)
+                time.sleep(3)
+                self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
+                                                               server_port=port1)
+                socket_no = 1
+                pkt_count = 50000
+                duration = 60
+                self.ssl_server.interfaces.ssl.send_data(socket_no, pkt_count, msg_length=buffer_length,
+                                                         duration=duration)
+                time.sleep(80)
+                bytes_sent = self.ssl_server.interfaces.ssl.data_send_stats(socket_no)
+                result = self.wifi_dut.interfaces.wifi.get_socket_rx_stats(sock, no_of_pkts="pkt_count", ttl=30)
+                logger().info(f"*** result of rx_stats in wifidut {result}")
+                bytes_received = int(result)
+                logger().info(f"bytes sent by remote peer -> {bytes_sent}")
+                logger().info(f"bytes received on socket {sock} -> {bytes_received}")
+                logger().info(f"SSL rx throughput ->  {((bytes_received * 8) / (1000 * 1000 * duration))} Mbps")
+                time.sleep(2)
+                self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                logger().info("Successfully closed opened socket in the DUT")
+                self.ssl_server.interfaces.ssl.stop_server()
+                time.sleep(5)
 
         if self.ble_conn:
             self.bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
@@ -1687,7 +1689,8 @@ def test_wlan_standalone_udp_rx_with_long_imcp_C512085(firmware_loader, wifi_sni
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
+                  Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
@@ -1725,7 +1728,8 @@ def test_wlan_ble_conn_with_data_trans_ssl_tx_ax_C20766(firmware_loader, wifi_sn
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
+                  Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
@@ -1764,7 +1768,8 @@ def test_wlan_ble_conn_with_data_trans_ssl_rx_ax_C20767(firmware_loader, wifi_sn
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
+                  Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
@@ -1802,7 +1807,8 @@ def test_wlan_ble_conn_with_data_trans_ssl_tx_11n_C537856(firmware_loader, wifi_
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
+                  Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,

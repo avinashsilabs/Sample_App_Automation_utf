@@ -216,6 +216,7 @@ class WLanThread(ThreadBase):
                 time.sleep(5)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460", "ipv6_state": "1",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
@@ -253,6 +254,7 @@ class WLanThread(ThreadBase):
     }
 )
 def test_sdk_WLAN_IPV6_TCP_TX_C119377(
+        firmware_loader,
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
@@ -295,6 +297,7 @@ def test_sdk_WLAN_IPV6_TCP_TX_C119377(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460", "ipv6_state": "1",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
@@ -332,6 +335,7 @@ def test_sdk_WLAN_IPV6_TCP_TX_C119377(
     }
 )
 def test_sdk_WLAN_IPV6_TCP_RX_C119376(
+        firmware_loader,
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
@@ -374,6 +378,7 @@ def test_sdk_WLAN_IPV6_TCP_RX_C119376(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460", "ipv6_state": "1",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
@@ -411,6 +416,7 @@ def test_sdk_WLAN_IPV6_TCP_RX_C119376(
     }
 )
 def test_sdk_WLAN_IPV6_UDP_TX_C119380(
+        firmware_loader,
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
@@ -453,6 +459,7 @@ def test_sdk_WLAN_IPV6_UDP_TX_C119380(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460", "ipv6_state": "1",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
@@ -490,6 +497,7 @@ def test_sdk_WLAN_IPV6_UDP_TX_C119380(
     }
 )
 def test_sdk_WLAN_IPV6_UDP_RX_C119379(
+        firmware_loader,
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
@@ -532,6 +540,7 @@ def test_sdk_WLAN_IPV6_UDP_RX_C119379(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460", "ipv6_state": "1",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
@@ -567,6 +576,7 @@ def test_sdk_WLAN_IPV6_UDP_RX_C119379(
     }
 )
 def test_sdk_WLAN_SSL_IPV6_TX_C119382(
+        firmware_loader,
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
@@ -604,6 +614,7 @@ def test_sdk_WLAN_SSL_IPV6_TX_C119382(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460", "ipv6_state": "1",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
@@ -641,6 +652,7 @@ def test_sdk_WLAN_SSL_IPV6_TX_C119382(
     }
 )
 def test_sdk_WLAN_SSL_IPV6_RX_C119384(
+        firmware_loader,
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
