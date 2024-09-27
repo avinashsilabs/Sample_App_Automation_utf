@@ -52,21 +52,21 @@ class BLEThread(ThreadBase):
         BLEThread.ble_public_address = self.ble_dut.interfaces.wifi.ble_start(set_smp=1)
         assert self.ble_public_address is not None, "Failed to start BLE"
 
-        if self.testcase_id == 520580:
-            self.testcase_520580()
-        if self.testcase_id == 520581:
-            self.testcase_520581()
-        if self.testcase_id == 520582:
-            self.testcase_520582()
-        if self.testcase_id == 520583:
-            self.testcase_520583()
-        if self.testcase_id == 520584:
-            self.testcase_520584()
-        if self.testcase_id == 520585:
-            self.testcase_520585()
+        if self.testcase_id == 485433:
+            self.testcase_485433()
+        if self.testcase_id == 485438:
+            self.testcase_485438()
+        if self.testcase_id == 485439:
+            self.testcase_485439()
+        if self.testcase_id == 478666:
+            self.testcase_478666()
+        if self.testcase_id == 478667:
+            self.testcase_478667()
+        if self.testcase_id == 477084:
+            self.testcase_477084()
 
-    # Testcase 520580: Verify advertising start/stop using public/random addresses
-    def testcase_520580(self):
+    # Testcase 485433: Verify advertising start/stop using public/random addresses
+    def testcase_485433(self):
         records = self.advertise_dut_using_address(BLEThread.ble_public_address, "Public", 0, ["UNDIR_CONN", 128])
         self.validate_address(records, BLEThread.ble_public_address, "Public")
         self.ble_client.interfaces.bluetooth.close()
@@ -75,9 +75,9 @@ class BLEThread(ThreadBase):
         records = self.advertise_dut_using_address(BLEThread.ble_private_address, "Random", 1, ["UNDIR_CONN", 128])
         self.validate_address(records, BLEThread.ble_private_address, "Random")
 
-    # Testcase 520581: Verify advertisement types with resolvable private address and different advertisement types
+    # Testcase 485438: Verify advertisement types with resolvable private address and different advertisement types
     # and intervals
-    def testcase_520581(self):
+    def testcase_485438(self):
         logger().info(f"Setting BLE address to random LE address: {BLEThread.ble_private_address}...")
         self.ble_dut.interfaces.wifi.set_ble_address(ble_address=BLEThread.ble_private_address)
         ble_adv_types = {
@@ -120,7 +120,7 @@ class BLEThread(ThreadBase):
                            1] == btmon_advertisement_types[
                            index], f"Advertisement type doesn't match for : {BLEThread.ble_private_address}"
 
-    def testcase_520582(self):
+    def testcase_485439(self):
         logger().info(f"....Adding device {BLEThread.ble_public_address} into BLE Resolve list")
         self.ble_dut.interfaces.wifi.ble_resolvelist(process_type=1, remote_addr_type=0,
                                                      ble_device_address=BLEThread.ble_public_address)
@@ -157,7 +157,7 @@ class BLEThread(ThreadBase):
             logger().info("....DISABLING THE BLE ADDRESS RESOLUTION....")
             self.ble_dut.interfaces.wifi.ble_set_address_resolution_enable(address_resolution_enable=0)
 
-    def testcase_520585(self):
+    def testcase_477084(self):
         logger().info(f"....Adding device {BLEThread.ble_public_address} into BLE Resolve list")
         self.ble_dut.interfaces.wifi.ble_resolvelist(process_type=1, remote_addr_type=0,
                                                      ble_device_address=BLEThread.ble_public_address)
@@ -193,8 +193,8 @@ class BLEThread(ThreadBase):
             assert BLEThread.ble_public_address not in resolved_addresses, "\n\n....ADDRESS ISN'T RESOLVED....\n\n"
             self.ble_dut.interfaces.wifi.ble_stop_advertising()
 
-    # Testcase 520583: Verify advertising start/stop using public/random addresses and UNDIR_CONN adv_type
-    def testcase_520583(self):
+    # Testcase 478666: Verify advertising start/stop using public/random addresses and UNDIR_CONN adv_type
+    def testcase_478666(self):
         records = self.advertise_dut_using_address(BLEThread.ble_public_address, "Public", 0, ["UNDIR_CONN", 128])
         found_desired_record = self.validate_address(records, BLEThread.ble_public_address, "Public")
         assert found_desired_record[
@@ -207,8 +207,8 @@ class BLEThread(ThreadBase):
         assert found_desired_record[
                    1] == "Connectable undirected - ADV_IND (0x00)", f"Advertisement type doesn't match for : {BLEThread.ble_private_address}"
 
-    # Testcase 520583: Verify advertising start/stop using public/random addresses and UNDIR_CONN adv_type
-    def testcase_520584(self):
+    # Testcase 478666: Verify advertising start/stop using public/random addresses and UNDIR_CONN adv_type
+    def testcase_478667(self):
         records = self.advertise_dut_using_address(BLEThread.ble_public_address, "Public", 0, ["UNDIR_SCAN", 130])
         found_desired_record = self.validate_address(records, BLEThread.ble_public_address, "Public")
         assert found_desired_record[
@@ -325,10 +325,10 @@ pytestmark = [
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_c520580(ble_dut, ble_client,
+def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_c485433(ble_dut, ble_client,
                                                                                      sl_collections):
     """
-        Test Case 520580: Verify advertising start/stop using public/random addresses
+        Test Case 485433: Verify advertising start/stop using public/random addresses
 
         This test case verifies the BLE advertising functionality with both public and random addresses.
         It creates a BLEThread instance and starts it. The BLEThread instance is responsible for starting
@@ -345,8 +345,8 @@ def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_c52
     """
     bt_mon_log_file_name = (
         f"reports/test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses"
-        f"c520580_{int(time.time())}.log")
-    testcase_id = 520580
+        f"c485433_{int(time.time())}.log")
+    testcase_id = 485433
     try:
         ble_thread = BLEThread(ble_dut=ble_dut, ble_client=ble_client, testcase_id=testcase_id, power_save_enable=True, bt_mon_log_file_name=bt_mon_log_file_name)
         ble_thread.start()
@@ -356,10 +356,10 @@ def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_c52
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_sdk_verify_adv_types_resolvable_private_address_diff_adv_intervals_c520581(ble_dut, ble_client,
+def test_ble_sdk_verify_adv_types_resolvable_private_address_diff_adv_intervals_c485438(ble_dut, ble_client,
                                                                                         sl_collections):
     """
-        Test Case 520581: Verify advertisement types with resolvable private address and different advertisement intervals
+        Test Case 485438: Verify advertisement types with resolvable private address and different advertisement intervals
 
         This test case verifies the BLE advertising functionality with resolvable private address and different
         advertisement intervals. It creates a BLEThread instance and starts it. The BLEThread instance is responsible
@@ -375,8 +375,8 @@ def test_ble_sdk_verify_adv_types_resolvable_private_address_diff_adv_intervals_
         Exception: If there is an error during the test execution.
         """
     bt_mon_log_file_name = f"reports" \
-                           f"/test_ble_sdk_verify_adv_types_resolvable_private_address_diff_adv_intervals_c520581{int(time.time())}.log"
-    testcase_id = 520581
+                           f"/test_ble_sdk_verify_adv_types_resolvable_private_address_diff_adv_intervals_c485438{int(time.time())}.log"
+    testcase_id = 485438
     try:
         ble_thread = BLEThread(ble_dut=ble_dut, ble_client=ble_client, testcase_id=testcase_id,
                                 power_save_enable=True, bt_mon_log_file_name=bt_mon_log_file_name)
@@ -385,9 +385,9 @@ def test_ble_sdk_verify_adv_types_resolvable_private_address_diff_adv_intervals_
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_sdk_verify_address_resolution_enable_disable_c520582(ble_dut, ble_client, sl_collections):
+def test_ble_sdk_verify_address_resolution_enable_disable_c485439(ble_dut, ble_client, sl_collections):
     """
-    Test Case 520582: Verify address resolution enable/disable functionality
+    Test Case 485439: Verify address resolution enable/disable functionality
 
     This test case verifies the BLE address resolution enable/disable functionality. It creates a BLEThread instance
     and starts it. The BLEThread instance is responsible for adding the device to the BLE resolve list, enabling
@@ -402,10 +402,10 @@ def test_ble_sdk_verify_address_resolution_enable_disable_c520582(ble_dut, ble_c
     Raises:
     Exception: If there is an error during the test execution.
     """
-    testcase_id = 520582
+    testcase_id = 485439
     bt_mon_log_file_name = (
         f"reports/test_ble_sdk_verify_address_resolution_enable_disable"
-        f"c520582_{int(time.time())}.log")
+        f"c485439_{int(time.time())}.log")
     try:
         ble_thread = BLEThread(ble_dut=ble_dut, ble_client=ble_client, testcase_id=testcase_id, power_save_enable=True, bt_mon_log_file_name=bt_mon_log_file_name)
         ble_thread.start()
@@ -416,11 +416,11 @@ def test_ble_sdk_verify_address_resolution_enable_disable_c520582(ble_dut, ble_c
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_with_UNDIR_CONN_c520583(ble_dut,
+def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_with_UNDIR_CONN_c478666(ble_dut,
                                                                                                      ble_client,
                                                                                                      sl_collections):
     """
-        Test Case 520583: Verify advertising start/stop using public/random addresses with UNDIR_CONN
+        Test Case 478666: Verify advertising start/stop using public/random addresses with UNDIR_CONN
 
         This test case verifies the BLE advertising functionality with both public and random addresses using UNDIR_CONN.
         It creates a BLEThread instance and starts it. The BLEThread instance is responsible for starting
@@ -437,8 +437,8 @@ def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_wit
     """
     bt_mon_log_file_name = (
         f"reports/test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_with_UNDIR_CONN"
-        f"c520583_{int(time.time())}.log")
-    testcase_id = 520583
+        f"c478666_{int(time.time())}.log")
+    testcase_id = 478666
     try:
         ble_thread = BLEThread(ble_dut=ble_dut, ble_client=ble_client, testcase_id=testcase_id, power_save_enable=True, bt_mon_log_file_name=bt_mon_log_file_name)
         ble_thread.start()
@@ -448,11 +448,11 @@ def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_wit
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_with_UNDIR_SCAN_c520584(ble_dut,
+def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_with_UNDIR_SCAN_c478667(ble_dut,
                                                                                                      ble_client,
                                                                                                      sl_collections):
     """
-        Test Case 520584: Verify advertising start/stop using public/random addresses with UNDIR_SCAN
+        Test Case 478667: Verify advertising start/stop using public/random addresses with UNDIR_SCAN
 
         This test case verifies the BLE advertising functionality with both public and random addresses using UNDIR_SCAN.
         It creates a BLEThread instance and starts it. The BLEThread instance is responsible for starting
@@ -469,9 +469,9 @@ def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_wit
     """
     bt_mon_log_file_name = (
         f"reports/test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_with_UNDIR_SCAN"
-        f"c520584_{int(time.time())}.log")
+        f"c478667_{int(time.time())}.log")
 
-    testcase_id = 520584
+    testcase_id = 478667
     try:
         ble_thread = BLEThread(ble_dut=ble_dut, ble_client=ble_client, testcase_id=testcase_id, power_save_enable=True, bt_mon_log_file_name=bt_mon_log_file_name)
         ble_thread.start()
@@ -480,9 +480,9 @@ def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_wit
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_sdk_verify_address_resolution_enable_c520585(ble_dut, ble_client, sl_collections):
+def test_ble_sdk_verify_address_resolution_enable_c477084(ble_dut, ble_client, sl_collections):
     """
-        Test Case 520585: Verify address resolution enable functionality
+        Test Case 477084: Verify address resolution enable functionality
 
         This test case verifies the BLE address resolution enable functionality. It creates a BLEThread instance
         and starts it. The BLEThread instance is responsible for adding the device to the BLE resolve list, enabling
@@ -496,9 +496,9 @@ def test_ble_sdk_verify_address_resolution_enable_c520585(ble_dut, ble_client, s
         Raises:
         Exception: If there is an error during the test execution.
     """
-    testcase_id = 520585
+    testcase_id = 477084
     bt_mon_log_file_name = (
-        f"reports/test_ble_sdk_verify_address_resolution_enable_c520585"
+        f"reports/test_ble_sdk_verify_address_resolution_enable_c477084"
         f"{int(time.time())}.log")
     try:
         ble_thread = BLEThread(ble_dut=ble_dut, ble_client=ble_client, testcase_id=testcase_id, power_save_enable=True, bt_mon_log_file_name=bt_mon_log_file_name)
