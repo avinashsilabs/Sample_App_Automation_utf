@@ -164,6 +164,7 @@ class WifiJoinThread(ThreadBase):
             https=0,
             scan_count=5,
             mac=None,
+            async_socket=0,
     ):
 
         super().__init__()
@@ -194,6 +195,9 @@ class WifiJoinThread(ThreadBase):
         self.https = https
         self.index_path = index_path
         self.scan_count = scan_count
+        self.async_socket = async_socket
+        self.throughput_remote = None
+        self.throughput_dut = None
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
 
@@ -205,7 +209,6 @@ class WifiJoinThread(ThreadBase):
                                                                  channel=0)
             logger().info(f"scan results : {scan_results}")
             assert len(scan_results) > 0, "scan failed"
-            time.sleep(5)
         self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"DUT MAC ADDRESS :  {self.dut_mac_address}")
 
@@ -213,7 +216,7 @@ class WifiJoinThread(ThreadBase):
 
         host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
-        self.sl_collections.run_traffic(
+        self.throughput_remote, self.throughput_dut = self.sl_collections.run_traffic(
             wifi_dut=self.wifi_dut,
             net_perf_client=self.net_perf_client,
             protocol=protocol,
@@ -223,6 +226,8 @@ class WifiJoinThread(ThreadBase):
             traffic_type=traffic_type,
             buffer_size_tcp=packet_size_tcp,
             buffer_size_udp=packet_size_udp,
+            async_socket=self.async_socket,
+
         )
 
     def run_http_download(self):
@@ -271,6 +276,7 @@ class WifiJoinThread(ThreadBase):
             )
         else:
             logger().info("skipping power save beacuse power save flag set to be false in harness")
+
 
     def join_to_ap(self, skip_power_save=False):
 
