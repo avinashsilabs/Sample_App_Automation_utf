@@ -2,7 +2,7 @@ import pytest
 import time
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
-    Si91xOperatingMode, Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap
+    Si91xOperatingMode, Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xPowerSaveModes
 from utf.utils.thread_base import ThreadBase
 from utf.utils.time_measurer import TimeMeasurer
 from utf_wiseconnect_3.tests.sl_status import SLStatus
@@ -73,7 +73,11 @@ class WLanRTCSTAThread(ThreadBase):
             time.sleep(10)
             self.wifi_dut.interfaces.wifi.set_rtc(seconds=self.set_seconds, minutes=self.set_minutes,
                                                   hours=self.set_hour, day=self.set_month_day, month=self.set_month,
-                                                  year=self.set_year, weekday=self.set_week_day)
+                                                  year=self.set_year, weekday=self.set_week_day,
+                                                  expected_status=SLStatus.SL_STATUS_NOT_INITIALIZED)
+
+            logger().info("DUT can able to set the RTC Timer in Incorrect state")
+            logger().info("set RTC timer has received the error which it matches to the expected error 0x11")
             return
         if '19055' in self.test_case:
             self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
@@ -81,9 +85,12 @@ class WLanRTCSTAThread(ThreadBase):
                                                                           first_time_retry_enable=0)
 
         logger().info(f"Time in seconds just before initiating set rtc ->  {self.set_time_sec}")
-
-        self.wifi_dut.interfaces.wifi.set_performance_profile()
-        self.wifi_dut.interfaces.wifi.enable_bt_power_save()
+        if "40858" in self.test_case:
+            self.wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save")
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode8)
+        else:
+            self.wifi_dut.interfaces.wifi.set_performance_profile()
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save()
         self.wifi_dut.interfaces.wifi.set_rtc(seconds=self.set_seconds, minutes=self.set_minutes, hours=self.set_hour,
                                               day=self.set_month_day, month=self.set_month, year=self.set_year,
                                               weekday=self.set_week_day)
@@ -509,7 +516,6 @@ def test_wifi_sdk_get_rtc_after_rejoin_c19055(switch, wifi_dut, wifi_access_poin
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -527,17 +533,47 @@ def test_wifi_sdk_get_rtc_after_rejoin_c19055(switch, wifi_dut, wifi_access_poin
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi="reset")
-def test_wifi_sdk_get_rtc_in_incorrect_state_c19048(wifi_dut, wifi_sniffer, sl_collections):
-    """
-    Test Steps:
-        1. Set RTC time
-        2. Get RTC time
-        3. Validate error code
-    """
+def test_wifi_sdk_set_rtc_in_incorrect_state_c19048(wifi_dut, wifi_sniffer, sl_collections):
+    """ Check whether the device is able to set the RTC Timer in Incorrect state."""
     try:
         wlan_obj = WLanRTCSTAThread(wifi_dut=wifi_dut, wifi_sniffer=wifi_sniffer, test_case='19048')
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.RealTimeClockFromHost,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_set_rtc_timer_in_deep_sleep_mode_C40858(wifi_dut, wifi_access_point, sl_collections, wifi_sniffer):
+    """ Check whether the device is able to set the RTC timer when device is in deep sleep mode."""
+    tolerance_threshold = [-1, 2]
+    try:
+        wlan_obj = WLanRTCSTAThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                    sl_collections=sl_collections, tolerance_threshold=tolerance_threshold, wifi_sniffer=wifi_sniffer, test_case='40858',
+                                    channel=wifi_access_point.interfaces.wifi.channel)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        logger().info(
+            f"Time difference observed between set time and get time is {wlan_obj.time_dif} seconds,"
+            f"which is in tolerance level")
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
