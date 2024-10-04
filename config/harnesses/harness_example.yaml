@@ -374,6 +374,7 @@ devices:
                 # radius server configuration
                 radius_ip: "192.168.1.231"
                 radius_port: "1812"
+    
     # This represents another access point configuration.
     asus_rt_ax53u_ap:
         interfaces:
@@ -390,6 +391,17 @@ devices:
                 radius_ip: "192.168.50.231"
                 radius_port: "1812"
 
+    # This represents another access point configuration.
+    linksys_e7350_ap:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.linksys_e7350'
+                ip_address: '192.168.1.1'
+                web_ui_port: 8080
+                admin_password: 'password'
+                ssid: "TEST_LINKSYS"
+                security: WPA2
+    
     switched_ap:
         interfaces:
             wifi:
