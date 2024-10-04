@@ -33,6 +33,10 @@ from utf.interfaces.bluetooth.bluez.gatt_application.battery_service import Batt
 from utf.interfaces.bluetooth.bluez.gatt_application.health_thermometer_service import HealthThermometerService
 from utf.interfaces.bluetooth.bluez.gatt_application.immediate_alert_service import ImmediateAlertService, \
     ImmediateAlertLevelCharacteristic
+from utf.interfaces.bluetooth.bluez.gatt_application.link_loss_service import (
+    LinkLossService,
+    LinkLossAlertLevelCharacteristic,
+)
 from utf.utils.thread_base import ThreadBase
 import random
 import string
@@ -182,6 +186,7 @@ class BleGattThread(ThreadBase):
         self.wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x2A06)
         self.wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x2A06)
 
+
     def run(self):
 
         if self.ble_test_type == "scan_and_connect_from_remote":
@@ -234,8 +239,7 @@ pytestmark = [
             "custom_features": Si91xCustomFeatureBitMap.NWP120MHz
                            | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-                                   | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
-                                   | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                                   | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "ble_features": Si91xBLEFeatureBitMap.Default
                             | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
@@ -244,8 +248,8 @@ pytestmark = [
             "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
                                | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
-                "wifi": {"count": 1, "stack_len": 3584, "priority": 8},
-                "ble": {"count": 1, "stack_len": 3584, "priority": 8},
+                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
             },
         },
     )
@@ -278,8 +282,7 @@ def test_Coex_sdk_read_char_uuid_wlan_conn_C133434(
         3. Scan & connect DUT as master
         3.
     """
-    ble_dut_addr = ""
-    ble_client_address = ""
+    ble_obj = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -321,9 +324,6 @@ def test_Coex_sdk_read_char_uuid_wlan_conn_C133434(
             ble_obj.start()
             ble_obj.wait_for_exit()
 
-            ble_dut_addr = ble_obj.ble_dut_address
-            ble_client_address = ble_obj.ble_client_address
-
             logger().info("Fetching HeartRateService profile from RD1")
             uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=ble_obj.ble_client_address,
                                                                     timeout=30)
@@ -361,8 +361,8 @@ def test_Coex_sdk_read_char_uuid_wlan_conn_C133434(
     finally:
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                       ble_client_address=ble_client_address,
-                                       ble_dut_address=ble_dut_addr)
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 @pytest.mark.config(
@@ -397,8 +397,7 @@ def test_Coex_sdk_BLE_services_wlan_connected_C133446(
         3. Scan & connect DUT as master
         3.
     """
-    ble_dut_addr = ""
-    ble_client_address = ""
+    ble_obj = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -500,8 +499,8 @@ def test_Coex_sdk_BLE_services_wlan_connected_C133446(
     finally:
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                       ble_client_address=ble_client_address,
-                                       ble_dut_address=ble_dut_addr)
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 @pytest.mark.config(
@@ -530,8 +529,7 @@ def test_Coex_sdk_supported_profiles_wlan_conneced_C133557(
         3. Scan & connect DUT as master
         3.
     """
-    ble_dut_addr = ""
-    ble_client_address = ""
+    ble_obj = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -609,8 +607,9 @@ def test_Coex_sdk_supported_profiles_wlan_conneced_C133557(
     finally:
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                       ble_client_address=ble_client_address,
-                                       ble_dut_address=ble_dut_addr)
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
@@ -638,8 +637,7 @@ def test_Coex_sdk_supported_particular_profile_wlan_conneced_C133558(
         3. Scan & connect DUT as master
         3.
     """
-    ble_dut_addr = ""
-    ble_client_address = ""
+    ble_obj = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -724,8 +722,8 @@ def test_Coex_sdk_supported_particular_profile_wlan_conneced_C133558(
     finally:
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                       ble_client_address=ble_client_address,
-                                       ble_dut_address=ble_dut_addr)
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 @pytest.mark.config(
@@ -760,8 +758,7 @@ def test_Coex_sdk_BLE_link_loss_TCP_TX_C133439(
         3. Scan & connect DUT as master
         3.
     """
-    ble_dut_addr = ""
-    ble_client_address = ""
+    ble_obj = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -853,10 +850,8 @@ def test_Coex_sdk_BLE_link_loss_TCP_TX_C133439(
     finally:
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                       ble_client_address=ble_client_address,
-                                       ble_dut_address=ble_dut_addr)
-
-
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 @pytest.mark.config(
@@ -894,8 +889,7 @@ def test_Coex_sdk_BLE_query_att_desc_remote_while_TCP_TX_C133435(
         6. Get all profiles
         7. Get descriptor of remote device
     """
-    ble_dut_addr = ""
-    ble_client_address = ""
+    ble_obj = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -942,21 +936,19 @@ def test_Coex_sdk_BLE_query_att_desc_remote_while_TCP_TX_C133435(
         wifi_obj.start()
         ble_obj.start()
         ble_obj.wait_for_exit()
-        ble_dut_addr = ble_obj.ble_dut_address
-        ble_client_address = ble_obj.ble_client_address
         logger().info(f"get all profiles")
-        uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=ble_client_address,
+        uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=ble_obj.ble_client_address,
                                                                 timeout=60, async_timeout=60)
         assert HeartRateService.UUID.lower() in uuids is not None, "Could not fetch the heartrate profile"
         logger().info(" Resolving Heartrate profile from RD1")
         start_handle, end_handle, data = wifi_dut.interfaces.wifi.ble_get_profile_async(
-            ble_remote_dev_address=ble_client_address,
+            ble_remote_dev_address=ble_obj.ble_client_address,
             uuid=int(HeartRateService.UUID, 16),
             timeout=60, async_timeout=60)
         assert start_handle is not None, "failed to fetch the start handle.."
         assert end_handle is not None, "failed to fetch end handle.."
         logger().info(f"********fetching descriptor*************")
-        wifi_dut.interfaces.wifi.ble_get_att_descriptor(ble_devices_address=ble_client_address,
+        wifi_dut.interfaces.wifi.ble_get_att_descriptor(ble_devices_address=ble_obj.ble_client_address,
                                                         start_handle=start_handle,
                                                         end_handle=end_handle)
         wifi_obj.wait_for_exit()
@@ -978,9 +970,9 @@ def test_Coex_sdk_BLE_query_att_desc_remote_while_TCP_TX_C133435(
     finally:
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                       ble_client_address=ble_client_address,
-                                       ble_dut_address=ble_dut_addr)
-            ble_client.interfaces.bluetooth.remove_device(ble_dut_addr)
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 @pytest.mark.config(
@@ -1018,8 +1010,7 @@ def test_Coex_sdk_BLE_query_att_desc_value_remote_while_TCP_TX_C133436(
         6. Get all profiles
         7. Get descriptor of remote device
     """
-    ble_dut_addr = ""
-    ble_client_address = ""
+    ble_obj = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1066,31 +1057,14 @@ def test_Coex_sdk_BLE_query_att_desc_value_remote_while_TCP_TX_C133436(
         wifi_obj.start()
         ble_obj.start()
         ble_obj.wait_for_exit()
-        ble_dut_addr = ble_obj.ble_dut_address
-        ble_client_address = ble_obj.ble_client_address
-        logger().info(f"get all profiles")
-        uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=ble_client_address)
-        assert HeartRateService.UUID.lower() in uuids is not None, "Could not fetch the heartrate profile"
-        logger().info(" Resolving Heartrate profile from RD1")
-        start_handle, end_handle, data = wifi_dut.interfaces.wifi.ble_get_profile_async(
-            ble_remote_dev_address=ble_client_address,
-            uuid=int(HeartRateService.UUID, 16))
-        assert start_handle is not None, "failed to fetch the start handle.."
-        assert end_handle is not None, "failed to fetch end handle.."
-        uuids, write_handles, char_properties = wifi_dut.interfaces.wifi.ble_get_char_services_async(
-            ble_remote_dev_address=ble_client_address,
-            start_handle=int(start_handle, 16), end_handle=int(end_handle, 16))
-        logger().info(
-            f"*********uuids, write_handles, char_properties: {uuids}, {write_handles}, {char_properties} ************")
-        assert BodySensorLocationCharacteristic.Sensor_Location_UUID in uuids
-        index = uuids.index(BodySensorLocationCharacteristic.Sensor_Location_UUID)
-        assert char_properties[index].isdigit()
-        assert BodySensorLocationCharacteristic.prop_int == int(char_properties[index])
-        write_handle = int(write_handles[index], 16)
-        assert write_handle > 0, "failed to fetch write handle"
+        write_handle = sl_collections.service_discovery_on_dut(ble_dut=wifi_dut,
+                                                               ble_client_address=ble_obj.ble_client_address,
+                                                               service_uuid=HeartRateService.UUID,
+                                                               char_uuid=BodySensorLocationCharacteristic.Sensor_Location_UUID,
+                                                               characteristic=BodySensorLocationCharacteristic)
         time.sleep(2)
         logger().info(f"To fetch value of descriptor")
-        wifi_dut.interfaces.wifi.ble_get_att_value_async(ble_remote_dev_address=ble_client_address,
+        wifi_dut.interfaces.wifi.ble_get_att_value_async(ble_remote_dev_address=ble_obj.ble_client_address,
                                                          char_property=write_handle)
 
         wifi_obj.wait_for_exit()
@@ -1112,6 +1086,130 @@ def test_Coex_sdk_BLE_query_att_desc_value_remote_while_TCP_TX_C133436(
     finally:
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                       ble_client_address=ble_client_address,
-                                       ble_dut_address=ble_dut_addr)
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@pytest.mark.skip("WIFI_BT_UTFHELP-4428")
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
+)
+def test_Coex_sdk_BLE_link_loss_master_TCP_TX_C133561(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+    net_perf_client,
+    protocol,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure heart rate profile in remote BLE and start adv
+        3. Scan & connect DUT as master
+        3.
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "iperf"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleGattThread(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="master",
+            ble_pairing=0,
+            service_class=["LinkLossService"]
+        )
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            net_perf_client=net_perf_client,
+            sl_collections=sl_collections,
+            protocol=protocol,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+            traffic_type="TX",
+            timeout=150
+        )
+
+        wifi_obj.join_to_ap()
+        # wifi_obj.start()
+
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        logger().info(f"get all profiles")
+
+        write_handle = sl_collections.service_discovery_on_dut(ble_dut=wifi_dut,
+                                                              ble_client_address=ble_obj.ble_client_address,
+                                                              service_uuid=LinkLossService.UUID,
+                                                              char_uuid=LinkLossAlertLevelCharacteristic.LLA_UUID,
+                                                              characteristic=LinkLossAlertLevelCharacteristic)
+
+        alerts_allowed = {0: 'NO_ALERT', 1: 'MID_ALERT', 2: 'HIGH_ALERT'}
+        logger().info(f"\n\nAlerts Allowed: {alerts_allowed}")
+        for alert in alerts_allowed.keys():
+            logger().info(f"\n\nSetting alert level '{alert}' from DUT to remote BLE Device ")
+            wifi_dut.interfaces.wifi.ble_set_att_value_async(ble_remote_dev_address=ble_obj.ble_client_address,
+                                                             char_property=write_handle,
+                                                             data=alert, data_length=1)
+
+            time.sleep(5)
+            # read value
+            received_alert = wifi_dut.interfaces.wifi.ble_get_att_value_async(ble_obj.ble_client_address, write_handle)
+            assert int(received_alert) == alert, "Sent alert and received alerts are not matching"
+            logger().info(f"Received alert level:'{received_alert}'")
+
+        # wifi_obj.wait_for_exit()
+        logger().info("Checking connection stability for 60 seconds")
+        time.sleep(60)
+        wifi_obj.disconnect()
+        sl_collections.ble_disconnect(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            ble_dut_address=ble_obj.ble_dut_address,
+            disconnect_from="dut",
+            ble_client_address=ble_obj.ble_client_address,
+        )
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 

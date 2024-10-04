@@ -1407,42 +1407,9 @@ def test_Coex_sdk_ADV_BLE_WLAN_TCP_RX_packet_loss_C133468(
 
 
 
-def tcp_udp_packet_check(wifi_sniffer, decryption_key: str, dut_mac_address, capture_filename, tcp_port, udp_port):
-    time_stamp = str(datetime.fromtimestamp(time.time()).strftime('%H_%M_%S'))
-    updated_capture_file = 'filter_' + capture_filename + '_' + time_stamp
-    local_capture_file = f'./reports/{updated_capture_file}.pcap'
-    wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
-    packet_filter = f"'(wlan.addr == {dut_mac_address})' -T fields -e frame.number -w {wlan_filter_file}"
-    wifi_sniffer.interfaces.capture.shell(
-        f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y {packet_filter}")
-    with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
-        sftp.get(wlan_filter_file, local_capture_file)
-
-    pack_tcp_port, pack_udp_port, tcp_data_list, udp_data_list = [[] for _ in range(4)]
-    logger().info("******** Initiating sniffer packets decryption process ---> this will take some time *********")
-    for packet in wifi_sniffer.interfaces.capture.iter_packets(decrypt_packets=True, encryption_type="WPA-PWD",
-                                                               decryption_key=decryption_key):
-        for layer in packet.layers:
-            layer_name = layer.layer_name.lower()
-            if layer_name == "tcp":
-                tcp_layer = str(layer)
-                # logger().info(tcp_layer)
-                tcp_data_list.append(re.findall(f"TCP payload.*", tcp_layer))
-                pack_tcp_port.append(re.findall(f"Destination Port:.*{tcp_port}", tcp_layer))
-            if layer_name == "udp":
-                udp_layer = str(layer)
-                # logger().info(udp_layer)
-                pack_udp_port.append(re.findall(f"Destination Port:.*{udp_port}", udp_layer))
-                if pack_udp_port[-1] and (pack_udp_port[-1][0].split()[-1] == str(udp_port)):
-                    udp_data_list.append(re.findall(f"Length:.*", udp_layer))
-    tcp_data = list(set(itertools.chain(*(filter(None, tcp_data_list)))))
-    udp_data = list(set(itertools.chain(*(filter(None, udp_data_list)))))
-    tcp_data.sort(key=num_sort), udp_data.sort(key=num_sort)
-    return tcp_data, udp_data
-
 
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "Open", "passphrase": "1234567890"}
+    "wifi_access_point", wifi={"security": "Open"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1458,7 +1425,6 @@ def tcp_udp_packet_check(wifi_sniffer, decryption_key: str, dut_mac_address, cap
         "disassociated",
     ],
 )
-@pytest.mark.skip(reason="sniffer check is pending for packet size verification")
 def test_Coex_sdk_WLAN_TCP_UDP_TX_1_1460_BLE_slave_C133470(
         wifi_sniffer,
         wifi_access_point,
@@ -1496,14 +1462,15 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_1_1460_BLE_slave_C133470(
         )
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-        # ble_obj = BleThreadFunctionality(
-        #     wifi_dut=wifi_dut,
-        #     ble_client=ble_client,
-        #     sl_collections=sl_collections,
-        #     ble_test_type="slave",
-        # )
-        # ble_obj.start()
-        # ble_obj.wait_for_exit()
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="slave",
+            ble_pairing=1
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1521,50 +1488,150 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_1_1460_BLE_slave_C133470(
         wifi_obj.join_to_ap()
         tcp_size_list = [1, 1460]
         udp_size_list = [1, 1470]
-        #tcp_size_list.extend(random.sample(range(2, 1459), 5))
-        #udp_size_list.extend(random.sample(range(2, 1469), 5))
+        tcp_size_list.extend(random.sample(range(2, 1459), 5))
+        udp_size_list.extend(random.sample(range(2, 1469), 5))
         logger().info(f"TCP packet size list is: {tcp_size_list}")
         logger().info(f"UDP packet size list is: {udp_size_list}")
         protocol_list = {"TCP": tcp_size_list, "UDP": udp_size_list}
-        wifi_obj.run_traffic(protocol="TCP", traffic_type="TX", packet_size_tcp=100,
-                             packet_size_udp=100)
-        # for protocol, size_list in protocol_list.items():
-        #     for size in size_list:
-        #         port = net_perf_client.interfaces.net_perf.host[protocol]["port"]
-        #         logger().info("***********************port: {port}*********************")
-        #         wifi_obj.run_traffic(protocol=protocol, traffic_type="TX", packet_size_tcp=size,
-        #                              packet_size_udp=size)
-        #         time.sleep(5)
+        ports = {}
+        for protocol, size_list in protocol_list.items():
+            for size in size_list:
 
-        # ble_obj.ble_disconnect()
+                wifi_obj.run_traffic(protocol=protocol, traffic_type="TX", packet_size_tcp=size,
+                                     packet_size_udp=size)
+                time.sleep(5)
+            ports[protocol] = net_perf_client.interfaces.net_perf.server_port
+            logger().info(f"***********************port:{ports[protocol]}*********************")
+
+
+        ble_obj.ble_disconnect()
         wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("\n********************* Validating TCP, UDP packets in sniffer capture **********************")
-        logger().info("passing passphrase and ssid to decrypt dhcp packets")
-        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        logger().info(f"decryption_key : {decryption_key}")
-        tcp_data_list, udp_data_list = tcp_udp_packet_check(wifi_sniffer, decryption_key,
-                                                            wifi_obj.dut_mac_address,
-                                                            capture_filename=test_name,
-                                                            tcp_port=net_perf_client.interfaces.net_perf.client_port,
-                                                            udp_port=net_perf_client.interfaces.net_perf.client_port)
-        tcp_data_list = list(dict.fromkeys(tcp_data_list))
-        udp_data_list = list(dict.fromkeys(udp_data_list))
-        logger().info(f"tcp pkts found in sniffer with size:{tcp_data_list}")
-        logger().info(f"udp pkts found in sniffer with size:{udp_data_list}")
-        assert tcp_size_list.sort() == tcp_data_list.sort(), "TCP packets are not captured in the sniffer"
-        # wifi_obj.sniffer_validation_join()
-        # logger().info("sniffer validation is successful")
-        # ble_client.interfaces.bluetooth.close()
+        for protocol, size_list in protocol_list.items():
+            for size in size_list:
+                packet_name = protocol.lower()
+                port = ports[protocol]
+                packet_filter1 = f"((wlan.addr =={wifi_obj.dut_mac_address}) &&" \
+                                 f" {packet_name}.port=={port} && (data.len == {size}))"
+                logger().info(f"***** Validating {protocol} packet with size {size} ******")
+                snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+                    'packet_count']
+                assert snif_pkt_count, f"Unable to {protocol} packet with size {size}"
+
+        wifi_obj.sniffer_validation_join()
+
+        logger().info("sniffer validation is successful")
+        ble_client.interfaces.bluetooth.close()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-    # finally:
-    #     if ble_obj is not None:
-    #         sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-    #                                    ble_client_address=ble_obj.ble_client_address,
-    #                                    ble_dut_address=ble_obj.ble_dut_address)
+    finally:
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+
+@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4414")
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+)
+def test_Coex_sdk_BLE_encrypt_UDP_TX_C133440(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+    net_perf_client,
+    protocol,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure AP on WPA2 security
+        3. Join the access point and enable the dhcp
+        4. Enable wlan and bt power save mode in dut after the connection
+        5. Do Wi-Fi data transfer UDP-tx
+        6. Advertise BLE remote
+        7. Scan from DUT BLE device and connect to remote through smp pairing
+        8. Issue disconnect from remote device and again advertise
+        9. Again issue pairing from DUT
+
+
+    """
+
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "iperf"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="master",
+            ble_pairing=1,
+        )
+
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            net_perf_client=net_perf_client,
+            sl_collections=sl_collections,
+            protocol=protocol,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+            traffic_type="TX",
+            timeout=120
+        )
+        wifi_obj.join_to_ap()
+        wifi_obj.start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj.wait_for_exit()
+        logger().info("Checking connection stability for 60 seconds")
+        time.sleep(60)
+        ble_obj.ble_disconnect()
+        logger().info("Advertise BLE remote")
+        ble_obj.advertise_remote_device()
+        logger().info("again issue pairing from DUT")
+        logger().info("***********need to add apis for pairing here******************")
+        wifi_obj.disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("sniffer validation is successful")
+        wifi_obj.sniffer_validation_join()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 
