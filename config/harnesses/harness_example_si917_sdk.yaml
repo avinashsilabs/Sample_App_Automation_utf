@@ -786,14 +786,20 @@ devices:
                 cert_file: 'mydevkitcertificate.pem'
                 key_file: 'mydevkitkey.pem'
 
+    azure_blob:
+        interfaces:
+            blob:
+                type: 'azure_blob'
+                connection_string_blob: "DefaultEndpointsProtocol=https;AccountName=httpotaf;AccountKey=mr7Rg12ZPUlKoVK6hq9VLAEBJ6rZutXKiuwZRaaCVFp6XmRaI1NFjZ5PIx4izLTaNpYjzfr1FIvH+AStsGAn4w==;EndpointSuffix=core.windows.net"
+                container_name: "firmware"
 
     aws_s3_boto3:
         interfaces:
             s3:
                 type: 'aws_s3.boto3'
-                aws_access_key_id: "AKIAQFAKKP7UIDS6GHE7"
-                aws_secret_access_key: "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"
-                region: "us-east-1"
+                aws_access_key_id: "AKIAQRVCCU6GZ2FJ4QX7"
+                aws_secret_access_key: "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"
+                region: "us-east-2"
 
 
     50pa500_attenuator:
@@ -1096,6 +1102,8 @@ defaults:
 
     azure_iot_client: 'azure_iot'
 
+    azure_blob: 'azure_blob'
+
     wifi_clients:
         - 'raspi_wifi'
         - 'raspi_wifi_ssh'
@@ -1171,7 +1179,7 @@ defaults:
         disable_sniffer_validation: false
 
         # firmware path for http/https otaf
-        http_url: '/SiWG917-B.2.10.1.0.0.6.bin'
+        http_url: '/SiWG917-B.2.13.2.0.0.3.rps'
 
         pll_mode: 0
         rf_type: 1
@@ -1204,9 +1212,9 @@ defaults:
         screenshot_file_name: 'wiseconnect_screenshot'
 
     s3:
-        aws_access_key_id: "AKIAQFAKKP7UIDS6GHE7"
-        aws_secret_access_key: "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"
-        region: "us-east-1"
+        aws_access_key_id: "AKIAQRVCCU6GZ2FJ4QX7"
+        aws_secret_access_key: "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"
+        region: "us-east-2"
 
     openssl_config:
         certfile: "mosquitto-utf.silabs.com.cert.pem"
@@ -1385,5 +1393,7 @@ constants:
         value: 'test'
     wreck_password:
         value: 'test123'
+    rps_filename:
+        value:  'SiWG917-B.2.13.2.0.0.2.rps'
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
