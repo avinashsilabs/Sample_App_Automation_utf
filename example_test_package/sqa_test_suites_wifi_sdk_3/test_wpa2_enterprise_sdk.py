@@ -95,6 +95,55 @@ class Eap_SnifferValidationProcess:
             'Unable to find EAP failure frames sent from AP in sniffer '
 
 
+class FilterPacket:
+
+    def get_beacon_interval(self):
+
+        try:
+            packet_filter = "Beacon Interval:"
+            beacon_interval_ap = None
+            count = 0
+
+            filter_file = open(f'./reports/filter2_file.txt', 'r')
+            line = filter_file.readlines()
+            for x in line:
+                count = count + 1
+                if packet_filter in x:
+                    beacon_interval_ap = float(x.split(":")[1].split("[Seconds]")[0].strip())
+                    beacon_interval_ap = int(beacon_interval_ap * 1000)
+                    beacon_interval_ap = beacon_interval_ap - (beacon_interval_ap % 100)
+                    print(f'Beacon Interval = {beacon_interval_ap}')
+                    break
+            filter_file.close()
+            return beacon_interval_ap
+
+        except Exception as e:
+            logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
+            raise e
+
+    def get_dtim_period(self):
+
+        try:
+            packet_filter = "DTIM period"
+            dtim_period_ap = None
+            count = 0
+
+            filter_file = open(f'./reports/filter2_file.txt', 'r')
+            line = filter_file.readlines()
+            for x in line:
+                count = count + 1
+                if packet_filter in x:
+                    dtim_period_ap = int(x.split(":")[1].strip())
+                    print(f'DTIM Period = {dtim_period_ap}')
+                    break
+            filter_file.close()
+            return dtim_period_ap
+
+        except Exception as e:
+            logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
+            raise e
+
+
 class WPA2Enterprise(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_client=None, sniffer_filter=None, wifi_sniffer=None,
                  sl_collections=None, test_name=None, eap_type=None, eap_type_tls_no_cert=None, http_Otaf=None):
@@ -1651,7 +1700,8 @@ def test_wifi_sdk_aws_connection_wpa2_enterprise_eap_tls_c113794(wifi_dut, wifi_
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
-        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.TLS_V2,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1665,31 +1715,187 @@ def test_wifi_sdk_aws_connection_wpa2_enterprise_eap_tls_c113794(wifi_dut, wifi_
 def test_wifi_sdk_wlan_get_stats_wpa2_enterprise_c113800(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                          radius_server, sl_collections, request, utf_constants):
     """ Test case verifies the device is able to get the wireless statistics in station mode"""
+
+    try:
+        test_name = request.node.name
+        beacon_interval_obj = FilterPacket()
+        dtim_period_obj = FilterPacket()
+        packet_filter3 = "    Type/Subtype: Beacon (0x0008)"
+        validation = True
+
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+
+        wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     eap_type="tls", sl_collections=sl_collections, test_name=test_name)
+
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+
+        operating_mode, dtim_period, ideal_beacon_info, busy_beacon_info, busy_interval = (
+            wifi_dut.interfaces.wifi.get_wifi_operational_stats(timeout=15))
+
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.leave()
+
+        packet_filter = f'(wlan.ssid == {wifi_access_point.interfaces.wifi.ssid}) and (wlan.fc.type_subtype == 0x008)'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter, packet_filter3)[
+            'packet_count']
+
+        beacon_interval_ap = beacon_interval_obj.get_beacon_interval()
+        if beacon_interval_ap is None:
+            logger().info(f'Unable to find Beacon Interval={beacon_interval_ap}')
+            assert False
+        else:
+            logger().info(f'\n\n *** Beacon Interval ={beacon_interval_ap} *** \n')
+
+        dtim_period_ap = dtim_period_obj.get_dtim_period()
+        if dtim_period_ap is None:
+            logger().info(f'Unable to find DTIM Period={dtim_period_ap}')
+            assert False
+        else:
+            logger().info(f'\n\n *** DTIM Period ={dtim_period_ap} *** \n')
+
+        logger().info(
+            f"\n\n Access point Beacon interval -> {beacon_interval_ap},  DTIM period-> {dtim_period_ap} \n\n "
+            f"\n\n DUT Beacon interval -> {busy_interval},  DTIM period-> {dtim_period}\n\n")
+
+        assert operating_mode == '2', "Operating mode is not matching, expected is 2"
+
+        assert busy_interval == f"{beacon_interval_ap}", \
+            f"AP beacon interval received in wlan stats and actual beacon " \
+            f"interval of connected AP is not matched," \
+            f"expected is {beacon_interval_ap}. But observed {busy_interval} "
+
+        assert dtim_period == f"{dtim_period_ap}", f"DTIM period received in wlan stats and actual DTIM " \
+                                                   f"interval of connected AP is not matched, e" \
+                                                   f"expected is {dtim_period_ap}. But observed {dtim_period} "
+
+        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                        wifi_access_point=wifi_access_point,
+                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                        ap_mac_address=ap_mac_address)
+
+        sniffer_verification.verify_sniffer_validation()
+
+        packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=ap_mac_address,
+            sa_addr=wifi_thread.dut_addr['dut_mac_address'], filter_name='eap_type_tls_verification')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
+            'packet_count'], 'Unable to find EAP frames sent from AP in sniffer'
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.RsaKeyWith4096Support | Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.TLS_V2,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user_4096.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.config("radius_server",
+                    radius_server={"private_key_file": 'wifi-user_4096.pem', "certificate_file": 'wifi-user_4096.pem',
+                                   "ca_file": 'wifi-user_4096.pem'})
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_wpa2_enterprise_eap_with_4k_length_c113876(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
+                                                             radius_server, sl_collections, request, utf_constants,
+                                                             net_perf_client, wifi_client, protocol):
+    """ This test case verifies the WPA2 Enterprise Connectivity while using EAP TLS Method when the 4096 Length
+        certificates were loaded """
+
     try:
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      eap_type="tls", sl_collections=sl_collections, test_name=test_name)
+
         wifi_thread.start()
         wifi_thread.wait_for_exit()
-        wifi_dut.interfaces.wifi.get_wifi_operational_stats(timeout=15)
+
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+
+        logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
+
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Remote device ip :{host_ip}")
+
+        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
+
+        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
+
+        net_perf_client.interfaces.net_perf.start()
+        logger().info("sending data from DUT")
+        wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                       local_port=net_perf_client.interfaces.net_perf.server_port,
+                                       local_ip=device_ip, remote_ip=host_ip,
+                                       remote_port=net_perf_client.interfaces.net_perf.server_port,
+                                       size=1460, ttl=30, throughput_type=1, qos=0, async_socket=0)
+        time.sleep(5)
+
+        tp = net_perf_client.interfaces.net_perf.process_output()
+        assert tp is not None, "Throughput not found"
+        logger().info("data transfer is successful")
+
         wifi_dut.interfaces.wifi.leave()
         sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                         wifi_access_point=wifi_access_point,
                                                         dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
                                                         ap_mac_address=ap_mac_address)
         sniffer_verification.verify_sniffer_validation()
+
         packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             da_addr=ap_mac_address,
             sa_addr=wifi_thread.dut_addr['dut_mac_address'], filter_name='eap_type_tls_verification')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
             'packet_count'], 'Unable to find EAP frames sent from AP in sniffer'
+
+        packet_filter6 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wifi_thread.dut_addr['dut_mac_address'],
+            da_addr=ap_mac_address,
+            filter_name='eap_tls_cert_verification_1_2')
+        logger().info(f"Validating EAP frames TLS version 1.2 in sniffer")
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter6)['packet_count'], \
+            'Unable to find EAP frames with TLS version 1.2 sent'
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
