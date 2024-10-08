@@ -607,3 +607,33 @@ def test_wifi_sdk_wifi_join_PMK_without_SSID_C19717(wifi_dut, wifi_access_point,
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+
+@pytest.mark.config('wifi_access_point', wifi={"ssid": 'TESTTEST-ASUS-ANSHUL',"security": 'WPA2', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_wlan_get_stats_sta_C19175(wifi_dut, wifi_access_point, wifi_sniffer,  sl_collections, request, utf_constants):
+    """ Test case verifies the device is able to get the wireless statistics in station mode"""
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        test_case = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
+        sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point, ping_after_power_save=True,
+                                            retry_count=3, associated=wifi_dut.interfaces.wifi.associated)
+
+        operating_mode, dtim_period, ideal_beacon_info, busy_beacon_info, busy_interval = wifi_dut.interfaces.wifi.get_wifi_operational_stats(timeout=15)
+        logger().info(f'Operating mode: {operating_mode}')
+        logger().info(f'Dtim period: {dtim_period}')
+        logger().info(f'Ideal beacon info: {ideal_beacon_info}')
+        logger().info(f'Busy beacon info: {busy_beacon_info}')
+        logger().info(f'Busy interval: {busy_interval}')
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
