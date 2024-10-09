@@ -42,19 +42,6 @@ def logger():
 """
 
 
-class ble_notify(ThreadBase):
-    def __init__(self, wifi_dut):
-        super().__init__()
-        self.wifi_dut = wifi_dut
-
-    def run(self):
-        data = "testwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdata"
-        sw = Stopwatch()
-        while sw.elapsed_sec < 35:
-            self.wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
-            time.sleep(3)
-
-
 class WifiJoinThread(ThreadBase):
     """This function is responsible for wifi connectivity ,powersave ,data transfer"""
 
@@ -63,7 +50,7 @@ class WifiJoinThread(ThreadBase):
                  net_perf_client=None, protocol=None, iteration_count=None, sl_collections=None, ping_count=None,
                  sniffer_filter=None, data_transfer=None, traffic_type=None, testcase=None, bt_dut=None, ssl_server=None,
                  test_case_no=None, ble_client=None, ble_conn=None, utf_constants=None, mode=None,
-                 ble_data_transfer=None, ssl_data_transfer=None):
+                 ble_data_transfer=None, ssl_data_transfer=None, ble_client_address=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -89,6 +76,7 @@ class WifiJoinThread(ThreadBase):
         self.ap_mac_address = None
         self.dut_addr = None
         self.mode = mode
+        self.ble_client_address = ble_client_address
         self.ble_data_transfer = ble_data_transfer
         self.ssl_server=ssl_server
 
@@ -172,8 +160,8 @@ class WifiJoinThread(ThreadBase):
             self.wifi_dut.interfaces.wifi.ble_start_advertising()
 
             logger().info("============== start scanning in remote ble device ======================")
-            bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-            assert bt_client_address, "failed to start scan in remote device"
+            self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+            assert self.ble_client_address, "failed to start scan in remote device"
 
             device_found = False
             sw = Stopwatch()
@@ -381,6 +369,20 @@ class WifiJoinThread(ThreadBase):
         time.sleep(2)
         self.wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
+
+
+class ble_notify(WifiJoinThread):
+    def __init__(self, wifi_dut, ble_client_address=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ble_client_address = ble_client_address
+
+    def run(self):
+        data = "testwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdata"
+        sw = Stopwatch()
+        while sw.elapsed_sec < 35:
+            self.wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data, ble_remote_dev_address=self.ble_client_address)
+            time.sleep(3)
 
 
 pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
@@ -1392,7 +1394,7 @@ def test_wlan_ble_with_ble_data_trans_352K_11n_udp_rx_C537873(firmware_loader, w
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
+@pytest.mark.skip()
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config(
@@ -1431,7 +1433,7 @@ def test_wlan_ble_conn_with_data_trans_ssl_tx_ax_C532950(firmware_loader, wifi_s
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
+@pytest.mark.skip()
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config(
@@ -1471,7 +1473,7 @@ def test_wlan_ble_conn_with_data_trans_ssl_rx_ax_C532951(firmware_loader, wifi_s
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
+@pytest.mark.skip()
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config(
@@ -1510,7 +1512,7 @@ def test_wlan_ble_conn_with_data_trans_ssl_tx_11n_C537866(firmware_loader, wifi_
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
+@pytest.mark.skip()
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config(

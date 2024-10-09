@@ -136,6 +136,7 @@ class WifiJoinThread(ThreadBase):
                         host_ip=host_ip,
                         timeout=35,
                         traffic_type=traffic_type,
+                        async_socket=1
                     )
         if self.test_case_no == 20788:
             protocols = ["TCP"]

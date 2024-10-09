@@ -42,19 +42,6 @@ def logger():
 """
 
 
-class ble_notify(ThreadBase):
-    def __init__(self, wifi_dut):
-        super().__init__()
-        self.wifi_dut = wifi_dut
-
-    def run(self):
-        data = "testwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdata"
-        sw = Stopwatch()
-        while sw.elapsed_sec < 35:
-            self.wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
-            time.sleep(3)
-
-
 class WifiJoinThread(ThreadBase):
     """This function is responsible for wifi connectivity ,powersave ,data transfer"""
 
@@ -63,7 +50,7 @@ class WifiJoinThread(ThreadBase):
                  net_perf_client=None, protocol=None, iteration_count=None, sl_collections=None, ping_count=None,
                  sniffer_filter=None, data_transfer=None, traffic_type=None, testcase=None, bt_dut=None, ssl_server=None,
                  test_case_no=None, ble_client=None, ble_conn=None, utf_constants=None, mode=None,
-                 ble_data_transfer=None, ssl_data_transfer=None):
+                 ble_data_transfer=None, ssl_data_transfer=None, ble_client_address=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -89,6 +76,7 @@ class WifiJoinThread(ThreadBase):
         self.ap_mac_address = None
         self.dut_addr = None
         self.mode = mode
+        self.ble_client_address = ble_client_address
         self.ble_data_transfer = ble_data_transfer
         self.ssl_server = ssl_server
 
@@ -172,8 +160,8 @@ class WifiJoinThread(ThreadBase):
             self.wifi_dut.interfaces.wifi.ble_start_advertising()
 
             logger().info("============== start scanning in remote ble device ======================")
-            bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-            assert bt_client_address, "failed to start scan in remote device"
+            self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+            assert self.ble_client_address, "failed to start scan in remote device"
 
             device_found = False
             sw = Stopwatch()
@@ -334,8 +322,8 @@ class WifiJoinThread(ThreadBase):
             if self.traffic_type == "RX":
                 buffer_length = 1370
                 port1 = self.ssl_server.interfaces.ssl.config['device_port1']
-                self.ssl_server.interfaces.ssl.start_server()
-                server_ip = self.ssl_server.interfaces.ssl.server_ip
+                # self.ssl_server.interfaces.ssl.start_server()
+                # server_ip = self.ssl_server.interfaces.ssl.server_ip
                 time.sleep(2)
                 self.wifi_dut.interfaces.wifi.set_socket_config()
                 # Open ssl client socket in the DUT
@@ -351,6 +339,8 @@ class WifiJoinThread(ThreadBase):
                 local_port = randint(5001, 60000)
                 self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.dut_addr['device_ip'], server_port=local_port,
                                                    timeout=15)
+                self.ssl_server.interfaces.ssl.start_server()
+                server_ip = self.ssl_server.interfaces.ssl.server_ip
                 time.sleep(3)
                 self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
                                                                server_port=port1)
@@ -381,6 +371,20 @@ class WifiJoinThread(ThreadBase):
         time.sleep(2)
         self.wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
+
+
+class ble_notify(WifiJoinThread):
+    def __init__(self, wifi_dut, ble_client_address=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ble_client_address = ble_client_address
+
+    def run(self):
+        data = "testwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdata"
+        sw = Stopwatch()
+        while sw.elapsed_sec < 35:
+            self.wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data, ble_remote_dev_address=self.ble_client_address)
+            time.sleep(3)
 
 
 pytestmark = [pytest.mark.firmware_app("test_416K_M4SS_256K")]
@@ -1374,8 +1378,7 @@ def test_wlan_ble_with_ble_data_trans_416_256K_11N_udp_rx_C537863(firmware_loade
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
-                  Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
@@ -1413,8 +1416,7 @@ def test_wlan_ble_conn_with_data_trans_ssl_tx_ax_C532960(firmware_loader, wifi_s
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
-                  Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
@@ -1453,8 +1455,7 @@ def test_wlan_ble_conn_with_data_trans_ssl_rx_ax_C532961(firmware_loader, wifi_s
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
-                  Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
@@ -1492,8 +1493,7 @@ def test_wlan_ble_conn_with_data_trans_ssl_tx_11n_C537876(firmware_loader, wifi_
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
-                  Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
