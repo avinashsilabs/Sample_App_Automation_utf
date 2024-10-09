@@ -30,15 +30,15 @@ def logger():
         2. Scan and Join the access point and enable the dhcp
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate http post for http content
-        
-     Author: Achal Raghav 
+
+     Author: Achal Raghav and Ayush Agarwal(537608)
 """
 
 
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None,
                  test_name=None, sl_collections=None, https_enable=False, http_client=None, http_server=None,
-                 index_path=None, sniffer_filter=None):
+                 index_path=None, sniffer_filter=None, wifi_client=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -51,19 +51,54 @@ class WLanThread(ThreadBase):
         self.http_server = http_server
         self.index_path = index_path
         self.sniffer_filter = sniffer_filter
-
-
+        self.wifi_client = wifi_client
+        self.ap_mac_address = None
 
     def run(self):
-        self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
-        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
-        time.sleep(3)
+        self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
+        if self.test_name == '537608':
+            url = 'https://www.google.com/'
+            self.wifi_sniffer.interfaces.capture.configure_interface(
+                channel=self.wifi_access_point.interfaces.wifi.channel)
+            self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+            time.sleep(3)
 
-        self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
-                                                 associated=self.wifi_dut.interfaces.wifi.associated)
+            self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                     wifi_access_point=self.wifi_access_point,
+                                                                     associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                     channel=self.wifi_access_point.interfaces.wifi.channel)
+            time.sleep(1)
+            power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
+                filter_name="power_mgmt_bit")
 
-        self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=self.https_enable)
+            time.sleep(5)
+
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=power_save_filter)[
+                       'packet_count'] > 0, "Unable to find NULL-Data frame packets with power save bit = 1"
+
+            for i in range(5):
+                self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
+
+                self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True, sni_enable=True,
+                                                               url=url)
+                status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(self.http_server.interfaces.http,
+                                                                                  resource_path=self.index_path,
+                                                                                  server_port=443, timeout=60,
+                                                                                  post_data="hellothisisfordiffere")
+                assert not status_dut, "failed to post http data"
+                logger().info(status_dut)
+                self.wifi_dut.interfaces.wifi.http_client_deinit()
+            logger().info("Stopping sniffer capture")
+            self.wifi_sniffer.interfaces.capture.stop_capture()
+            time.sleep(5)
+            remote_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+            sni_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                filter_name="http_sni", sa_addr=self.dut_addr['device_ip'], da_addr=remote_ip, url=url)
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=sni_filter)[
+                'packet_count'], "Client Hello packet with SNI not found"
+
+            return
 
         if self.test_name == '19222':
             try:
@@ -110,6 +145,16 @@ class WLanThread(ThreadBase):
                 logger().info(f"\n\n **** Got exception in test case {self.test_name} thread: {str(e)} ****\n\n")
                 raise e
             return
+
+        self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
+        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+        time.sleep(3)
+
+        self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
+                                                 associated=self.wifi_dut.interfaces.wifi.associated)
+
+        self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
+        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=self.https_enable)
 
 
 @pytest.mark.config(
@@ -495,30 +540,21 @@ def test_wifi_sdk_http_post_diff_urls_diff_data_C19222(http_server, wifi_dut, wi
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.config("wifi_access_point", wifi={"security": 'Open'})
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "clear_certs"])
-def test_wifi_sdk_https_post_functionality_c537608(http_server, wifi_dut, http_client, wifi_access_point, index_path,
-                                                   utf_constants, wifi_sniffer, sl_collections):
+def test_wifi_sdk_https_post_sni_functionality_c537608(http_server, wifi_dut, http_client, wifi_access_point,
+                                                       index_path, utf_constants, wifi_sniffer, sl_collections,
+                                                       sniffer_filter, wifi_client):
     """Verify DUT functionality with SNI feature in HTTPS POST"""
 
     try:
         test_name = '537608'
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                              test_name=test_name, sl_collections=sl_collections)
+                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                              index_path=index_path, sniffer_filter=sniffer_filter, wifi_client=wifi_client)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-
-        logger().info("\n\n***Fetching the data on https using get method***\n\n")
-        status_dut, content_dut = wifi_dut.interfaces.http.http_post(http_server.interfaces.http, resource_path=url,
-                                                                     post_data=''.join(random.choices(
-                                                                         string.ascii_uppercase + string.digits,
-                                                                         k=30)), server_port=443)
-        assert not status_dut, "failed to post http data"
-
-        logger().info("Stopping sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_dut.interfaces.wifi.http_client_deinit()
-        time.sleep(5)
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)

@@ -37,7 +37,8 @@ def logger():
 
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, http_client=None,
-                 test_name=None, sl_collections=None, http_server=None, index_path=None, sniffer_filter=None):
+                 test_name=None, sl_collections=None, http_server=None, index_path=None, sniffer_filter=None,
+                 wifi_client=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -48,6 +49,7 @@ class WLanThread(ThreadBase):
         self.index_path = index_path
         self.http_client = http_client
         self.sniffer_filter = sniffer_filter
+        self.wifi_client = wifi_client
         self.dut_addr = None
         self.ap_mac_address = None
 
@@ -165,11 +167,41 @@ class WLanThread(ThreadBase):
                                                                      associated=self.wifi_dut.interfaces.wifi.associated,
                                                                      channel=self.wifi_access_point.interfaces.wifi.channel)
 
-            self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
             if self.test_name == '537610':
-                self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True, sni_enable=True,
-                                                               url='https://www.google.com/')
+                url = 'https://www.google.com/'
+                for _ in range(5):
+                    self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
+                    self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True, sni_enable=True,
+                                                                   url=url)
+                    logger().info("\n\n***Fetching the data on https using get method***\n\n")
+                    status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(self.http_server.interfaces.http,
+                                                                                     self.index_path, server_port=443,
+                                                                                     timeout=60)
+                    status_client, content_client = self.http_client.interfaces.http.http_get(self.http_server.interfaces.http,
+                                                                                              self.index_path)
+
+                    assert not status_dut, "failed to fetch the https data"
+                    assert status_client, "failed to load the https data"
+
+                    logger().info(status_dut)
+                    logger().info(content_dut)
+                    assert content_dut == content_client, "fetched data is not same as expected data"
+
+                    self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                logger().info("Stopping sniffer capture")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                time.sleep(5)
+                remote_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+                logger().info(f'**** Remote IP: {remote_ip} ****')
+                sni_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                    sa_addr=self.dut_addr['device_ip'], da_addr=remote_ip, filter_name="http_sni")
+                logger().info(sni_filter)
+                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=sni_filter)[
+                    'packet_count'], "Client Hello packet with SNI not found"
+
             else:
+                self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
                 self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
 
         except Exception as e:
@@ -1278,10 +1310,12 @@ def test_wifi_sdk_http_get_with_url_length_2048_c476967(http_server, wifi_dut, h
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.config("wifi_access_point", wifi={"security": 'Open'})
 @pytest.mark.parametrize("index_path", {"index.html"})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_https_get_functionality_c537610(http_server, wifi_dut, http_client, wifi_access_point, index_path,
-                                                  utf_constants, wifi_sniffer, sl_collections):
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_https_get_sni_functionality_c537610(http_server, wifi_dut, http_client, wifi_access_point, index_path,
+                                                      utf_constants, wifi_sniffer, sl_collections, wifi_client,
+                                                      sniffer_filter):
     """
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -1293,26 +1327,11 @@ def test_wifi_sdk_https_get_functionality_c537610(http_server, wifi_dut, http_cl
     try:
         test_name = '537610'
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                              test_name=test_name, sl_collections=sl_collections)
+                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                              http_client=http_client, index_path=index_path, wifi_client=wifi_client,
+                              sniffer_filter=sniffer_filter)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-
-        logger().info("\n\n***Fetching the data on https using get method***\n\n")
-        status_dut, content_dut = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path,
-                                                                    server_port=443)
-        status_client, content_client = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
-
-        assert not status_dut, "failed to fetch the https data"
-        assert status_client, "failed to load the https data"
-
-        logger().info(status_dut)
-        logger().info(content_dut)
-        assert content_dut == content_client, "fetched data is not same as expected data"
-
-        logger().info("Stopping sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_dut.interfaces.wifi.http_client_deinit()
-        time.sleep(5)
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
