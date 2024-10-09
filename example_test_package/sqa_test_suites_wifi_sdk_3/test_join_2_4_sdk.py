@@ -4,7 +4,8 @@ import re
 from datetime import datetime, date
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
-    Si91xOperatingMode, Si91xTCPIPFeatureBitMap
+    Si91xOperatingMode, Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xPowerSaveModes, Si91xJoinFeatureBitMap,\
+    Si91xPowerSaveProcedureTypes
 from utf.utils.thread_base import ThreadBase
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utf_config import UtfConfig
@@ -28,7 +29,7 @@ def logger():
         3. Enable the wlan and bt power save mode in dut after the connection
         4. Initiate ping from the dut
 
-    Author: Ayush and Harshitha
+    Author: Abdul, Ayush and Harshitha
 
 """
 
@@ -77,12 +78,9 @@ class WLanJoinThread(ThreadBase):
 
             else:
                 logger().info(" ====== configuring the Sniffer with access point channel ====== ")
-                self.wifi_sniffer.interfaces.capture.configure_interface(
-                    channel=self.wifi_access_point.interfaces.wifi.channel)
-
+                self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
                 logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
                 self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_case)
-
                 self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          power_save=self.power_save,
@@ -139,25 +137,20 @@ class WLanJoinThread(ThreadBase):
         return time_taken
 
 
-pytestmark = [
-    pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-            "oper_mode": Si91xOperatingMode.WiFiClient,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.Default,
-            "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-            "bt_features": 0,
-            "ble_features": 0,
-            "ble_custom_ext_features": 0,
-        }
-    )
-]
-
-
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.WiFiClient,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.Default,
+         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "bt_features": 0,
+         "ble_features": 0,
+         "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -193,6 +186,20 @@ def test_wifi_sdk_connectivity_with_11n_mode_c19707(wifi_dut, wifi_access_point,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.WiFiClient,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.Default,
+         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "bt_features": 0,
+         "ble_features": 0,
+         "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "TEST-ASUS-hidden", "broadcast_ssid": False})
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -233,6 +240,20 @@ def test_wifi_sdk_connectivity_with_hidden_mode_ap_c19708(wifi_dut, wifi_access_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.WiFiClient,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.Default,
+         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "bt_features": 0,
+         "ble_features": 0,
+         "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -283,6 +304,20 @@ def test_wifi_sdk_join_time_providing_psk_c19712(wifi_dut, wifi_access_point, wi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.WiFiClient,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.Default,
+         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "bt_features": 0,
+         "ble_features": 0,
+         "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"passphrase": 'test123@random'})
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -316,6 +351,20 @@ def test_wifi_sdk_Joining_by_rsi_psk_command_c19714(wifi_dut, wifi_access_point,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.WiFiClient,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.Default,
+         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "bt_features": 0,
+         "ble_features": 0,
+         "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "Testssid",
                           "passphrase": "1234567890qwertyuioplkjhgfdsazxcvbnmoirgrgrtyuio123456!@#$%+=_,",
@@ -352,6 +401,20 @@ def test_wifi_sdk_psk_with_64_different_characters_c19719(wifi_dut, wifi_access_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.WiFiClient,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.Default,
+         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "bt_features": 0,
+         "ble_features": 0,
+         "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'testing', "security": 'WPA2', "channel": 7})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -390,6 +453,20 @@ def test_wifi_sdk_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_p
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.WiFiClient,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.Default,
+         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "bt_features": 0,
+         "ble_features": 0,
+         "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -422,6 +499,20 @@ def test_wifi_sdk_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sn
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.WiFiClient,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.Default,
+         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "bt_features": 0,
+         "ble_features": 0,
+         "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "pmkwithwrongpsk", "passphrase": 'thisisatestnetwork', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -456,6 +547,20 @@ def test_wifi_sdk_Joining_to_PMK_in_module_by_wrong_PSK_C19716(wifi_dut, wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.WiFiClient,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.Default,
+         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "bt_features": 0,
+         "ble_features": 0,
+         "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "Thisssidis32bytesofsize!@#$%+=_,",
                                                "passphrase": "123456789qwertyuio123456789qwertyuio123456789zxcvbnmzx!@#$%+=_,",
                                                "security": "WPA2"})
@@ -495,6 +600,20 @@ def test_wifi_sdk_join_PMK_with_64_characters_psk_32_characters_ssid_C19720(wifi
 
 
 @pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.WiFiClient,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.Default,
+         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "bt_features": 0,
+         "ble_features": 0,
+         "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"ssid": ' redpine', "passphrase": '12345678', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -528,6 +647,20 @@ def test_wifi_sdk_wifi_join_PMK_with_space_before_redpine_ssid_C19718(wifi_dut, 
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.WiFiClient,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.Default,
+         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "bt_features": 0,
+         "ble_features": 0,
+         "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "testingpmk", "passphrase": 'Testing_pmk', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -576,6 +709,20 @@ def test_wifi_sdk_Joining_time_PMK_C19711(wifi_dut, wifi_access_point, wifi_snif
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.WiFiClient,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.Default,
+         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "bt_features": 0,
+         "ble_features": 0,
+         "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": '""', "passphrase": 'Testing_pmk', "security": "WPA2"})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -609,7 +756,20 @@ def test_wifi_sdk_wifi_join_PMK_without_SSID_C19717(wifi_dut, wifi_access_point,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.WiFiClient,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.Default,
+         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "bt_features": 0,
+         "ble_features": 0,
+         "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'TESTTEST-ASUS-ANSHUL',"security": 'WPA2', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_wlan_get_stats_sta_C19175(wifi_dut, wifi_access_point, wifi_sniffer,  sl_collections, request, utf_constants):
@@ -637,3 +797,379 @@ def test_wifi_sdk_wlan_get_stats_sta_C19175(wifi_dut, wifi_access_point, wifi_sn
         wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point',wifi={"ssid":'sta_mode_ssid', "passphrase":'12345678', "security":'WPA2',})
+def test_wifi_sdk_verify_device_wpa2_sec_to_sta_mode_c564145(wifi_dut, request,utf_constants, wifi_sniffer, sniffer_filter,wifi_access_point, sl_collections):
+
+    """Verify whether the device is able to get the
+       wireless information in WPA2 security-station mode)"""
+
+    try:
+        test_case = request.node.name
+        mode = "power_save_low_latency"
+        ping_count = utf_constants.get("ping_count")
+        logger().info(" ====== configuring the Sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
+
+        sl_collections.join_to_wifi_network(wifi_dut,wifi_access_point=wifi_access_point, power_save=True,
+                                            mode=mode,ping_after_power_save=True, retry_count=3,
+                                            associated=wifi_dut.interfaces.wifi.associated, ping_count=ping_count)
+
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+
+        wifi_dut.interfaces.wifi.sl_wifi_get_wireless_info(timeout=100)
+
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr,
+                                                                                  filter_name='power_mgmt_bit')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
+            'Unable to find the power management save sniffer packets'
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.AccessPoint,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.PSKSecurity,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+         "custom_features": Si91xCustomFeatureBitMap.Default,
+         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+         "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": "11",
+    }
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+         }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_wifi_sdk_verify_device_wpa2_sec_to_ap_mode_c564146(wifi_dut, wifi_client, request,utf_constants, wifi_sniffer, sniffer_filter, sl_collections):
+
+    """Verify whether the device is able to get
+       the wireless information in WPA2 security- AP mode)"""
+
+    try:
+        test_case = request.node.name
+
+        logger().info(" ====== configuring the Sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=11)
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
+
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        time.sleep(2)
+
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", psk="Automation@123", channel=11,
+                                          dtim_beacon_count=1, beacon_interval=100)
+
+        logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
+        wifi_client.interfaces.wifi.join(ssid="SILABS_AP_MODE", security="WPA2",passphrase="Automation@123")
+        time.sleep(10)
+
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f"********* Dut IP **********: {dut_ip}")
+
+        rasp_mac_address = wifi_client.interfaces.wifi.get_mac_address()
+        logger().info(f"raspi_mac: {rasp_mac_address}")
+
+        client_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Client_ip: {client_ip}")
+        time.sleep(10)
+        logger().info(f"Initiating wlan ping from RASPI_STA for ping_count:10")
+        rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute(f"sudo ping -c {10} {dut_ip}")
+        assert rc == 0, f"RASPI-STA failed to ping DUT"
+        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {dut_mac_address}")
+
+        wifi_dut.interfaces.wifi.sl_wifi_get_wireless_info(timeout=200)
+
+        wifi_client.interfaces.wifi.leave()
+        time.sleep(2)
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point',wifi={"ssid":'sta_mode_ssid', "passphrase":'12345678', "security": 'WPA3', "protected_management_frame": "Capable",})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_verify_device_wpa3_sec_to_sta_mode_c564147(wifi_dut, request,utf_constants, wifi_sniffer, sniffer_filter,wifi_access_point, sl_collections):
+
+    """Verify whether the device is able to get the
+       wireless information in WPA3 security-station mode)"""
+
+    try:
+        test_case = request.node.name
+        mode = "power_save_low_latency"
+        ping_count = utf_constants.get("ping_count")
+        logger().info(" ====== configuring the Sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
+
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable |
+                                                                             Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+        sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,wifi_access_point=wifi_access_point, power_save=True,
+                                            mode=mode,ping_after_power_save=True, retry_count=3,
+                                            associated=wifi_dut.interfaces.wifi.associated, ping_count=ping_count)
+
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+
+        wifi_dut.interfaces.wifi.sl_wifi_get_wireless_info(timeout=100)
+
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr,
+                                                                                  filter_name='power_mgmt_bit')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
+            'Unable to find the power management save sniffer packets'
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Aggregation,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "security": "WPA3", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 1
+    },
+)
+def test_wifi_sdk_verify_device_wpa3_sec_to_ap_mode_c564148(wifi_dut, wifi_client, request, utf_constants, remote_wiseconnect3,
+                                                                wifi_sniffer, sniffer_filter, sl_collections):
+    """Verify whether the device is able to get
+       the wireless information in WPA3 security- AP mode)"""
+    try:
+        test_case = request.node.name
+        ping_count = utf_constants.get("ping_count")
+
+        wifi_sniffer.interfaces.capture.configure_interface(channel=1)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
+
+        remote_wiseconnect3.interfaces.sapi.set_join_feature_bitmap(join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable |
+                                                                                        Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+        static_ip = "192.168.100.77"
+        static_subnet = "255.255.255.0"
+        static_gateway = "192.168.100.76"
+        ip_version = 'ipv4'
+        ssid = "SILABS_AP_MODE"
+        password = "Automation@123"
+        channel = 1
+
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="wpa3", psk="Automation@123", channel=1,
+                                          dtim_beacon_count=1, beacon_interval=100)
+
+        remote_wiseconnect3.interfaces.sapi.scan(channel=None, ssid=None)
+        time.sleep(2)
+
+        remote_wiseconnect3.interfaces.sapi.join(ssid=ssid, security="wpa3", passphrase=password, channel=channel, timeout=60)
+
+        remote_wiseconnect3.interfaces.sapi.start_ip(ip_version=ip_version, static_ip=static_ip, static_subnet=static_subnet,
+                                                     static_gateway=static_gateway, timeout=10)
+        time.sleep(2)
+
+        remote_wiseconnect3.interfaces.sapi.ping(server_ip=static_gateway, num_ping_attempts=ping_count,
+                                                 ping_timeout=10,  ip_version='ipv4', ping_size=64)
+        time.sleep(2)
+
+        ap_mac = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"DUT as AP MAC Address: {ap_mac}")
+
+        sec_sdk_mac = remote_wiseconnect3.interfaces.sapi.get_mac_address()
+        logger().info(f"DUT MAC is : {sec_sdk_mac}")
+        time.sleep(2)
+
+        wifi_dut.interfaces.wifi.sl_wifi_get_wireless_info(timeout=200)
+
+        remote_wiseconnect3.interfaces.sapi.leave()
+        time.sleep(1)
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop Sniffer finally")
+        time.sleep(2)
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.TLS_V1,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
+def test_wifi_sdk_verify_device_wpa2_enterprise_to_sta_mode_c564149(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
+                                                                    radius_server, sl_collections, request, utf_constants, wifi_client):
+
+    """Verify whether the device is able to get the
+       wireless information in Enterprise security- Station mode)"""
+
+    try:
+        test_case = request.node.name
+        logger().info(" ====== configuring the Sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
+
+        wifi_dut.interfaces.wifi.load_certs(eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+
+        sl_collections.join_to_eap_network(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                           ping_after_power_save=True, eap_type="tls")
+
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+
+        data=wifi_dut.interfaces.wifi.sl_wifi_get_wireless_info(timeout=200)
+        logger().info(f'========= wireless_info {data}===========')
+
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr,
+                                                                                  filter_name='power_mgmt_bit')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
+            'Unable to find the power management save sniffer packets'
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+
