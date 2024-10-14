@@ -69,8 +69,6 @@ class WifiJoin(ThreadBase):
         method = "GET"
         current_time = time.time()
 
-        # self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-
         if self.test_case == '19235' or self.test_case == '528822' or self.test_case == '641388':
             self.wifi_dut.interfaces.wifi.http_server_init()
 
@@ -217,7 +215,6 @@ def test_wifi_sdk_webpage_http_server_write_data_c564051(
         raise e
 
 
-@pytest.mark.skip("HTTP Server is not working in a loop -- WIFI_BT_UTFHELP-4388")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])

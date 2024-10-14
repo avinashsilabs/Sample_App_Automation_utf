@@ -304,7 +304,8 @@ def test_ble_slave_data_length_20_bytes_C148515(wifi_dut, ble_client, sl_collect
                 data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
                 sw = Stopwatch()
                 while sw.elapsed_sec < 1800:
-                    wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
+                    wifi_dut.interfaces.wifi.ble_notify_custom_value(
+                        ble_remote_dev_address=ble_client_address, data=data)
                     time.sleep(7)
 
                 logger().info(f' *********************** unsubscribe to notifications ***********************')
@@ -409,7 +410,8 @@ def test_ble_slave_data_length_230_bytes_C148516(wifi_dut, ble_client, sl_collec
                 data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=230))
                 sw = Stopwatch()
                 while sw.elapsed_sec < 1800:
-                    wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
+                    wifi_dut.interfaces.wifi.ble_notify_custom_value(
+                        ble_remote_dev_address=ble_client_address, data=data)
                     time.sleep(7)
 
                 logger().info(f' *********************** unsubscribe to notifications ***********************')
@@ -555,16 +557,16 @@ def test_ble_master_data_length_20_bytes_C148513(ble_dut, ble_client, sl_collect
                                 if data in event.event_data:
                                     found = True
                                     break
-                        assert found, "No data received on DUT"
                         if found:
                             break
+                    if not found:
+                        raise Exception("No data received on DUT")
 
                 time.sleep(1)
 
                 ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=bt_client_address,
                                                                handle=(write_handle + 1), enable_notify=0)
                 ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
-
                 ble_client.interfaces.bluetooth.close()
 
     except Exception as Ex:
@@ -647,7 +649,8 @@ def test_ble_master_data_length_230_bytes_C148514(wifi_dut, ble_client, sl_colle
                 data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=230))
                 sw = Stopwatch()
                 while sw.elapsed_sec < 1800:
-                    wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
+                    wifi_dut.interfaces.wifi.ble_notify_custom_value(
+                        ble_remote_dev_address=ble_client_address, data=data)
                     time.sleep(7)
 
                 logger().info(f' *********************** unsubscribe to notifications ***********************')
