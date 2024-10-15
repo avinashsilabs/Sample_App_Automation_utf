@@ -9,6 +9,7 @@ from utf.utils.iperf.iperf_utils import ping
 from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
 from utf.utf_config import UtfConfig
+from random import randint
 
 def logger():
     return get_logger(__name__)
@@ -35,7 +36,7 @@ class WifiJoinThread(ThreadBase):
     def __init__(self, wifi_sniffer=None, wifi_dut=None, \
                  wifi_access_point=None, wifi_client=None, \
                  net_perf_client=None, protocol=None, sl_collections=None, ping_count=None, utf_constants=None,
-                 sniffer_filter=None, data_transfer=None, traffic_type=None, testcase=None, test_case_no=None):
+                 sniffer_filter=None, data_transfer=None, traffic_type=None, testcase=None, test_case_no=None, ssl_server=None, ssl_data_transfer=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -55,6 +56,8 @@ class WifiJoinThread(ThreadBase):
         self.dut_mac_address = None
         self.ap_mac_address = None
         self.dut_addr = None
+        self.ssl_server = ssl_server
+        self.ssl_data_transfer = ssl_data_transfer
 
     def run(self):
         logger().info(f"Enabling DHCP lease time")
@@ -65,7 +68,7 @@ class WifiJoinThread(ThreadBase):
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
         time.sleep(2)
 
-        if self.test_case_no == 19293 or self.test_case_no == 19295 or self.test_case_no == 19296:
+        if self.test_case_no == 19293 or self.test_case_no == 19295 or self.test_case_no == 19296 or self.test_case_no == 551871 or self.test_case_no == 551872:
             self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                      wifi_access_point=self.wifi_access_point,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated,
@@ -106,9 +109,91 @@ class WifiJoinThread(ThreadBase):
                                                     size=1460, ttl=30, throughput_type=3, qos=0, timeout=timeout + 2)
                 time.sleep(5)
                 logger().info("data received is successful")
+
+        if self.ssl_data_transfer:
+            if self.traffic_type == "TX":
+                buffer_length = 1370
+                port1 = self.ssl_server.interfaces.ssl.config['device_port1']
+                self.ssl_server.interfaces.ssl.start_server()
+                server_ip = self.ssl_server.interfaces.ssl.server_ip
+                # Open ssl client socket in the DUT
+                sock = self.wifi_dut.interfaces.wifi.socket()
+                assert sock == 0, "Socket id received is wrong. expected is 0"
+                logger().info(
+                    f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+                logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
+                # Enable ssl option for socket opened
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP")
+                local_port = randint(5001, 60000)
+                self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.dut_addr['device_ip'], server_port=local_port,
+                                              timeout=15)
+                time.sleep(3)
+                self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
+                                                          server_port=port1)
+                pkt_count = 50000
+                time.sleep(1)
+                server_socket_no = 1
+                if self.ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
+                    self.ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
+                result = self.wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+                logger().info(f"Number of bytes sent by dut {result}")
+                bytes_sent = result
+                bytes_received = self.ssl_server.interfaces.ssl.data_receive_stats(server_socket_no)
+                logger().info(
+                    f"bytes sent by DUT on the ssl socket opened-> {bytes_sent}, received by remote peer-> {bytes_received}")
+                self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                logger().info("Successfully closed opened socket in the DUT")
+                self.ssl_server.interfaces.ssl.stop_server()
+                time.sleep(5)
+
+            if self.traffic_type == "RX":
+                buffer_length = 1370
+                port1 = self.ssl_server.interfaces.ssl.config['device_port1']
+                self.ssl_server.interfaces.ssl.start_server()
+                server_ip = self.ssl_server.interfaces.ssl.server_ip
+                time.sleep(2)
+                self.wifi_dut.interfaces.wifi.set_socket_config()
+                # Open ssl client socket in the DUT
+                time.sleep(2)
+                sock = self.wifi_dut.interfaces.wifi.async_sdk_socket(domain="AF_INET", stream_type="SOCK_STREAM",
+                                                                 protocol="IPPROTO_TCP")
+                assert sock == 0, "Socket id received is wrong. expected is 0"
+                logger().info(
+                    f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+                logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
+                # Enable ssl option for socket opened
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP")
+                local_port = randint(5001, 60000)
+                self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.dut_addr['device_ip'], server_port=local_port,
+                                              timeout=15)
+                time.sleep(3)
+                self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
+                                                          server_port=port1)
+                socket_no = 1
+                pkt_count = 50000
+                duration = 60
+                self.ssl_server.interfaces.ssl.send_data(socket_no, pkt_count, msg_length=buffer_length, duration=duration)
+                time.sleep(80)
+                bytes_sent = self.ssl_server.interfaces.ssl.data_send_stats(socket_no)
+                result = self.wifi_dut.interfaces.wifi.get_socket_rx_stats(sock, no_of_pkts="pkt_count", ttl=30)
+                logger().info(f"*** result of rx_stats in wifidut {result}")
+                bytes_received = int(result)
+                logger().info(f"bytes sent by remote peer -> {bytes_sent}")
+                logger().info(f"bytes received on socket {sock} -> {bytes_received}")
+                logger().info(f"SSL rx throughput ->  {((bytes_received * 8) / (1000 * 1000 * duration))} Mbps")
+                time.sleep(2)
+                self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                logger().info("Successfully closed opened socket in the DUT")
+                self.ssl_server.interfaces.ssl.stop_server()
+                time.sleep(5)
+
         if self.test_case_no == 19295:
             time.sleep(300)
         if self.test_case_no == 19296:
+            time.sleep(300)
+        if self.test_case_no == 551871:
+            time.sleep(300)
+        if self.test_case_no == 551872:
             time.sleep(300)
         if self.test_case_no == 19293:
             logger().info(f"\n==========>>>>>>Waiting up to 1800 seconds for dhcp renewal packets<<<<<<===========\n")
@@ -396,6 +481,153 @@ def test_wifi_sdk_tcp_rx_functionality_while_dhcp_renewal_c19296(wifi_sniffer, w
                               protocol=protocol, sl_collections=sl_collections, ping_count=ping_count,
                               data_transfer=True,
                               traffic_type="RX", test_case_no=19296)
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(2)
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+        time.sleep(2)
+        device_address = {'sa_addr': wlan_obj.dut_addr['dut_mac_address'], 'da_addr': da_addr,
+                          'wlan_addr': wlan_obj.dut_addr['dut_mac_address']}
+        filters_name = {1: 'power_mgmt_bit', 2: 'dhcp'}
+        output_1 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
+                                                                        device_address, filters_name=filters_name)
+        logger().info(f'\n OUTPUT 1 = {output_1}\n')
+        assert all(output_1.values()), 'Unable to find expected filter'
+        filters_name_1 = {1: 'dhcp_renewal'}
+        output_2 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
+                                                                        device_address, filters_name=filters_name_1,
+                                                                        packet_filter2=packet_filter2)
+        logger().info(f'\n OUTPUT 1 = {output_2}\n')
+        assert all(output_2.values()), 'Unable to find expected filter'
+        dhcp_request_packets_time_delta_list = wlan_obj.delta_between_dhcp_req_packet()
+        logger().info(f'Probe packet time delta list= {dhcp_request_packets_time_delta_list}')
+        dhcp_request_packets_time_delta_list.pop(0)
+        logger().info(f'DHCP Req packet time delta list after removing 0 = {dhcp_request_packets_time_delta_list}')
+
+        for time_diff in dhcp_request_packets_time_delta_list:
+            print(int(time_diff))
+            is_between = int(time_diff) in range(50, time_delta)
+            if is_between is False:
+                logger().info(f"{is_between}")
+                status = is_between
+                break
+            else:
+                logger().info(f"{is_between}")
+                status = is_between
+        assert status, 'value is out of range so test case is failed'
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
+                          Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1) |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"dhcp_lease": "100", "security": 'OPEN', "standard": 'gnbax'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "close_sockets", "disassociated",])
+@pytest.mark.parametrize("dhcp_lease", [100])
+def test_wifi_sdk_ssl_tx_functionality_while_dhcp_renewal_c551871(wifi_access_point, wifi_sniffer, wifi_dut,
+                                                                  utf_constants, request, sl_collections, dhcp_lease, ssl_server, sniffer_filter):
+    time_delta = 60
+    packet_filter2 = '        DHCP: Request (3)'
+    ping_count = utf_constants.get("ping_count")
+    capture_filename = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_access_point=wifi_access_point, wifi_dut=wifi_dut,
+                              testcase=capture_filename, sl_collections=sl_collections, ping_count=ping_count,
+                              ssl_server=ssl_server, ssl_data_transfer=True, traffic_type="TX", test_case_no=551871)
+
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(2)
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+        time.sleep(2)
+        device_address = {'sa_addr': wlan_obj.dut_addr['dut_mac_address'], 'da_addr': da_addr,
+                          'wlan_addr': wlan_obj.dut_addr['dut_mac_address']}
+        filters_name = {1: 'power_mgmt_bit', 2: 'dhcp'}
+        output_1 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
+                                                                        device_address, filters_name=filters_name)
+        logger().info(f'\n OUTPUT 1 = {output_1}\n')
+        assert all(output_1.values()), 'Unable to find expected filter'
+        filters_name_1 = {1: 'dhcp_renewal'}
+        output_2 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
+                                                                        device_address, filters_name=filters_name_1,
+                                                                        packet_filter2=packet_filter2)
+        logger().info(f'\n OUTPUT 1 = {output_2}\n')
+        assert all(output_2.values()), 'Unable to find expected filter'
+        dhcp_request_packets_time_delta_list = wlan_obj.delta_between_dhcp_req_packet()
+        logger().info(f'Probe packet time delta list= {dhcp_request_packets_time_delta_list}')
+        dhcp_request_packets_time_delta_list.pop(0)
+        logger().info(f'DHCP Req packet time delta list after removing 0 = {dhcp_request_packets_time_delta_list}')
+
+        for time_diff in dhcp_request_packets_time_delta_list:
+            print(int(time_diff))
+            is_between = int(time_diff) in range(50, time_delta)
+            if is_between is False:
+                logger().info(f"{is_between}")
+                status = is_between
+                break
+            else:
+                logger().info(f"{is_between}")
+                status = is_between
+        assert status, 'value is out of range so test case is failed'
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
+                          Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1) |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"dhcp_lease": "100", "security": 'OPEN', "standard": 'gnbax'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "close_sockets", "disassociated",])
+@pytest.mark.parametrize("dhcp_lease", [100])
+def test_wifi_sdk_ssl_rx_functionality_while_dhcp_renewal_c551872(wifi_access_point, wifi_sniffer, wifi_dut,
+                                                                  utf_constants, request, sl_collections, dhcp_lease, ssl_server, sniffer_filter):
+    time_delta = 60
+    packet_filter2 = '        DHCP: Request (3)'
+    ping_count = utf_constants.get("ping_count")
+    capture_filename = request.node.name
+    wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_access_point=wifi_access_point, wifi_dut=wifi_dut,
+                              testcase=capture_filename, sl_collections=sl_collections, ping_count=ping_count,
+                              ssl_server=ssl_server, ssl_data_transfer=True, traffic_type="RX", test_case_no=551872)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
