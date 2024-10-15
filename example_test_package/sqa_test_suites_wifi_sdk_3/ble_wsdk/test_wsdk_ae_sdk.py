@@ -2047,7 +2047,7 @@ def test_verify_2ADV_sets_PHY_1M_2M_C528578_to_C528584(ble_dut, ble_sniffer, rem
                                                                                          "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Non-Connectable Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type == 1 else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type == 1 else data_len_s2)).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type == 1 else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2153,10 +2153,10 @@ def test_verify_2ADV_sets_PHY_LECoded_C528585_to_C528591(ble_dut, ble_sniffer, r
     if adv_type in [1,5] or adv_type_s2 in [1,5]:
         # Assert if there is no connectable non-scannable advertising mode found and Aux Pointer is present
         assert len(df.loc[(df['Advertising Mode'] == "Connectable Non-Scannable") & (df[
-                                                                                      "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                                                                                      "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [1,5] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2166,10 +2166,10 @@ def test_verify_2ADV_sets_PHY_LECoded_C528585_to_C528591(ble_dut, ble_sniffer, r
     if adv_type in [0,4] or adv_type_s2 in [0,4]:
         # Assert if there is no non-connectable non-scannable advertising mode found and Aux Pointer is present
         assert len(df.loc[(df['Advertising Mode'] == "Non-Connectable Non-Scannable") & (df[
-                                                                                      "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                                                                                      "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Non-Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [0,4] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2179,10 +2179,10 @@ def test_verify_2ADV_sets_PHY_LECoded_C528585_to_C528591(ble_dut, ble_sniffer, r
     if adv_type in [2,6] or adv_type_s2 in [2,6]:
         # Assert if there is no non-connectable scannable advertising mode found and Aux Pointer is present
         assert len(df.loc[(df['Advertising Mode'] == "Non-Connectable Scannable") & (df[
-                                                                                         "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                                                                                         "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Non-Connectable Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [2,6] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2190,20 +2190,20 @@ def test_verify_2ADV_sets_PHY_LECoded_C528585_to_C528591(ble_dut, ble_sniffer, r
         logger().info(
             "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
     assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
-        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with the reason AUX_SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
     logger().info("\n\n **** AUX_SCAN_RSP packet found on 37,38,39 channels ****\n\n")
     # Assert if primary PHY is not LE CODED on ADV_EXT_IND packets
     assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no primary PHY is LE CODED on ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** Primary PHY is LE CODED on ADV_EXT_IND packets ****\n\n")
     # Assert if Secondary PHY is not LE CODED on AUX_ADV_IND packets
     assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no Secondary PHY is LE CODED on AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** Secondary PHY is LE CODED on AUX_ADV_IND packets ****\n\n")
     # Assert if PDU length is not data_len in AUX_ADV_IND packets
     assert (df.loc[df[
                        'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).all() or (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_SCAN_RSP packets ****\n\n"
     logger().info(f"\n\n **** PDU length is {data_len} or {data_len_s2} in AUX_SCAN_RSP packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -2276,10 +2276,10 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
     if adv_type in [1,5] or adv_type_s2 in [1,5]:
         # Assert if there is no connectable non-scannable advertising mode found and Aux Pointer is present
         assert len(df.loc[(df['Advertising Mode'] == "Connectable Non-Scannable") & (df[
-                                                                                      "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                                                                                      "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [1,5] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2289,10 +2289,10 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
     if adv_type in [2,6] or adv_type_s2 in [2,6]:
         # Assert if there is no non-connectable scannable advertising mode found and Aux Pointer is present
         assert len(df.loc[(df['Advertising Mode'] == "Non-Connectable Scannable") & (df[
-                                                                                         "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                                                                                         "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Non-Connectable Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [2,6] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2302,10 +2302,10 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
     if adv_type in [0,4] or adv_type_s2 in [0,4]:
         # Assert if there is no non-connectable non-scannable advertising mode found and Aux Pointer is present
         assert len(df.loc[(df['Advertising Mode'] == "Non-Connectable Non-Scannable") & (df[
-                                                                                      "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                                                                                      "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Non-Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [0,4] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2315,10 +2315,10 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
     if adv_type in [16] or adv_type_s2 in [16]:
         # Assert if there is no ADV_NONCONN_IND advertising mode found and Aux Pointer is present
         assert len(df.loc[(df['Type'] == "ADV_NONCONN_IND") & (df[
-                                                                                      "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                                                                                      "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with no ADV_NONCONN_IND advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** ADV_NONCONN_IND advertising mode found and Aux Pointer is not present ****\n\n")
         # Assert if PDU length is not data_len in ADV_NONCONN_IND packets
-        assert (df[(df['Type'] == 'ADV_NONCONN_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [16] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Type'] == 'ADV_NONCONN_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [16] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in ADV_NONCONN_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [16] else data_len_s2} in ADV_NONCONN_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2326,12 +2326,12 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
         logger().info(
             "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
     if adv_type in [19] or adv_type_s2 in [19]:
-        # Assert if there is no ADV_NONCONN_IND advertising mode found and Aux Pointer is present
+        # Assert if there is no ADV_IND advertising mode found and Aux Pointer is present
         assert len(df.loc[(df['Type'] == "ADV_IND") & (df[
-                                                                                      "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                                                                                      "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with no ADV_IND advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** ADV_IND advertising mode found and Aux Pointer is not present ****\n\n")
         # Assert if PDU length is not data_len in ADV_NONCONN_IND packets
-        assert (df[(df['Type'] == 'ADV_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [19] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Type'] == 'ADV_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [19] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [19] else data_len_s2} in ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2341,10 +2341,10 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
     if adv_type in [18] or adv_type_s2 in [18]:
         # Assert if there is no ADV_NONCONN_IND advertising mode found and Aux Pointer is present
         assert len(df.loc[(df['Type'] == "ADV_SCAN_IND") & (df[
-                                                                                      "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                                                                                      "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with no ADV_SCAN_IND advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** ADV_SCAN_IND advertising mode found and Aux Pointer is not present ****\n\n")
         # Assert if PDU length is not data_len in ADV_NONCONN_IND packets
-        assert (df[(df['Type'] == 'ADV_SCAN_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [18] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Type'] == 'ADV_SCAN_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [18] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in ADV_SCAN_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [18] else data_len_s2} in ADV_SCAN_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2354,10 +2354,10 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
     if adv_type in [21] or adv_type_s2 in [21]:
         # Assert if there is no ADV_NONCONN_IND advertising mode found and Aux Pointer is present
         assert len(df.loc[(df['Type'] == "ADV_DIRECT_IND") & (df[
-                                                                                      "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                                                                                      "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with no ADV_DIRECT_IND advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** ADV_DIRECT_IND advertising mode found and Aux Pointer is not present ****\n\n")
         # Assert if PDU length is not data_len in ADV_NONCONN_IND packets
-        assert (df[(df['Type'] == 'ADV_DIRECT_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [21] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Type'] == 'ADV_DIRECT_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [21] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in ADV_DIRECT_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [21] else data_len_s2} in ADV_DIRECT_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2366,16 +2366,16 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
             "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
     # Assert if primary PHY is not 1M on ADV_EXT_IND packets
     assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with no primary PHY is 1M on ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** Primary PHY is 1M on ADV_EXT_IND packets ****\n\n")
     # Assert if Secondary PHY is not 1M on AUX_ADV_IND packets
     assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with no Secondary PHY is 1M on AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** Secondary PHY is 1M on AUX_ADV_IND packets ****\n\n")
     # Assert if PDU length is not data_len in AUX_ADV_IND packets
     assert (df.loc[df[
                        'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).all() or (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_SCAN_RSP packets ****\n\n"
     logger().info(f"\n\n **** PDU length is {data_len} or {data_len_s2} in AUX_SCAN_RSP packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -2450,10 +2450,10 @@ def test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605(ble_dut, ble_sniffe
         # Assert if there is no connectable non-scannable advertising mode found and Aux Pointer is present
         assert len(df.loc[(df['Advertising Mode'] == "Connectable Non-Scannable") & (df[
                                                                                       "Aux Pointer"] == "Present") & (df[
-                                                                                      "Ext Adv Address Type"] == "random")]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                                                                                      "Ext Adv Address Type"] == "random")]) >= 1, "\n\n **** Test case Failed with no Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [1,5] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2464,10 +2464,10 @@ def test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605(ble_dut, ble_sniffe
         # Assert if there is no connectable non-scannable advertising mode found and Aux Pointer is present
         assert len(df.loc[(df['Advertising Mode'] == "Non-Connectable Non-Scannable") & (df[
                                                                                       "Aux Pointer"] == "Present") & (df[
-                                                                                      "Ext Adv Address Type"] == "random")]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                                                                                      "Ext Adv Address Type"] == "random")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Non-Connectable Non-Scannable advertising mode found and Aux Pointer is present and is advertising with random address ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [0,4] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2478,10 +2478,10 @@ def test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605(ble_dut, ble_sniffe
         # Assert if there is no non-connectable scannable advertising mode found and Aux Pointer is present
         assert len(df.loc[(df['Advertising Mode'] == "Non-Connectable Scannable") & (df[
                                                                                          "Aux Pointer"] == "Present") & (df[
-                                                                                      "Ext Adv Address Type"] == "random")]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                                                                                      "Ext Adv Address Type"] == "random")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Non-Connectable Scannable advertising mode found and Aux Pointer is present and is advertising with random address ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [2,6] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2489,20 +2489,20 @@ def test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605(ble_dut, ble_sniffe
         logger().info(
             "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
     assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
-        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets are not found ****\n\n"
     logger().info("\n\n **** AUX_SCAN_RSP packets are not found ****\n\n")
     # Assert if primary PHY is not LE Coded on ADV_EXT_IND packets
     assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no primary PHY is LE Coded on ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** Primary PHY is LE CODED on ADV_EXT_IND packets ****\n\n")
     # Assert if secondary PHY is not LE Coded on AUX_ADV_IND packets
     assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no Secondary PHY is LE CODED on AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** Secondary PHY is LE CODED on AUX_ADV_IND packets ****\n\n")
     # Assert if PDU length is not data_len in AUX_ADV_IND packets
     assert (df.loc[df[
                        'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).all() or (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_SCAN_RSP packets ****\n\n"
     logger().info(f"\n\n **** PDU length is {data_len} or {data_len_s2} in AUX_SCAN_RSP packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -2518,8 +2518,8 @@ def test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605(ble_dut, ble_sniffe
         (2, 0, 200, 120, "C528607", 0, 1),
         (1, 6, 120, 200, "C528608", 0, 1),
         (5, 6, 31, 31,  "C528609", 0, 1),
-        (6, 4, 0, 31, "C528610", 0, 1),
-        (5, 0, 31, 0, "C528611", 0, 1),
+        # (6, 4, 0, 31, "C528610", 0, 1),
+        (5, 0, 31, 1, "C528611", 0, 1),
         (1, 4, 200, 31, "C528612", 0, 1),
     ],
 )
@@ -2579,10 +2579,10 @@ def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffe
                         (df['Advertising Mode'] == "Connectable Non-Scannable") &
                         (df['Aux Pointer'] == "Present") &
                         (df.apply(lambda row: row['Ext Adv Address Type'] == ("random" if adv_type_s2 in [1, 5] else "public"), axis=1))
-                    ]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                    ]) >= 1, "\n\n **** Test case Failed with no connectable non-scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info(f"\n\n **** Connectable Non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [1, 5] else 'public'} ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [1,5] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2597,10 +2597,10 @@ def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffe
                        (df.apply(
                            lambda row: row['Ext Adv Address Type'] == ("random" if adv_type_s2 in [0, 4] else "public"),
                            axis=1))
-                       ]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                       ]) >= 1, "\n\n **** Test case Failed with no non-connectable non-scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info(f"\n\n **** Non-Connectable Non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [0, 4] else 'public'} ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [0,4] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2615,10 +2615,10 @@ def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffe
                        (df.apply(
                            lambda row: row['Ext Adv Address Type'] == ("random" if adv_type_s2 in [2, 6] else "public"),
                            axis=1))
-                       ]) >= 1, "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                       ]) >= 1, "\n\n **** Test case Failed with no non-connectable scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info(f"\n\n **** Non-Connectable Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [2, 6] else 'public'} ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [2,6] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2626,20 +2626,20 @@ def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffe
         logger().info(
             "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
     assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
-        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets are not found ****\n\n"
     logger().info("\n\n **** AUX_SCAN_RSP packets are not found ****\n\n")
     # Assert if primary PHY is not 1M on ADV_EXT_IND packets
     assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** Primary PHY is 1M on ADV_EXT_IND packets ****\n\n")
     # Assert if secondary PHY is not 1M on AUX_ADV_IND packets
     assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with secondary PHY is not 1M on AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** Secondary PHY is 1M on AUX_ADV_IND packets ****\n\n")
     # Assert if PDU length is not data_len in AUX_ADV_IND packets
     assert (df.loc[df[
                        'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).all() or (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with the reason no match found..! ****\n\n"
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_SCAN_RSP packets ****\n\n"
     logger().info(f"\n\n **** PDU length is {data_len} or {data_len_s2} in AUX_SCAN_RSP packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -2655,8 +2655,8 @@ def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffe
         (2, 0, 200, 120, "C528614", 0, 1),
         (1, 6, 120, 200, "C528615", 0, 1),
         (5, 6, 31, 31,  "C528616", 0, 1),
-        (6, 4, 0, 31, "C528617", 0, 1),
-        (5, 0, 31, 0, "C528618", 0, 1),
+        # (6, 4, 0, 31, "C528617", 0, 1),
+        (5, 0, 31, 1, "C528618", 0, 1),
         (1, 4, 200, 31, "C528619", 0, 1),
     ],
 )
@@ -2700,9 +2700,9 @@ def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffe
     )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
-def test_verify_2ADV_sets_Legacy_Extended_C1638255_to_C1638461(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
+def test_verify_2ADV_sets_Legacy_Extended_C528613_to_C528619(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                         adv_type, adv_type_s2, data_len, data_len_s2, test_case_id, adv_handle, adv_handle_s2,
-                                        event_type_1, event_type_2):
+                                        ):
     random_address="11:33:33:33:33:11"
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
@@ -2710,84 +2710,380 @@ def test_verify_2ADV_sets_Legacy_Extended_C1638255_to_C1638461(ble_dut, ble_snif
                                     pri_adv_phy=1, sec_adv_phy=2, min_interval=32, max_interval=32,  min_interval_s2=48, max_interval_s2=48, data_len=data_len, data_len_s2=data_len_s2, random_address_s2=random_address,
                                     adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", test_case_id=test_case_id, adv_handle=adv_handle,
                                     adv_handle_s2=adv_handle_s2, ble_sniffer=ble_sniffer, ble_client_address=ble_client_address, central=remote_wiseconnect3, powersave_p=True)
+    if adv_type in [1,5] or adv_type_s2 in [1,5]:
+        # Assert if there is no connectable non-scannable advertising mode found and Aux Pointer is present
+        assert len(df.loc[
+                        (df['Advertising Mode'] == "Connectable Non-Scannable") &
+                        (df['Aux Pointer'] == "Present") &
+                        (df.apply(lambda row: row['Ext Adv Address Type'] == ("random" if adv_type_s2 in [1, 5] else "public"), axis=1))
+                    ]) >= 1, "\n\n **** Test case Failed with no connectable non-scannable advertising mode found and Aux Pointer is present..! ****\n\n"
+        logger().info(f"\n\n **** Connectable Non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [1, 5] else 'public'} ****\n\n")
+        # Assert if PDU length is not data_len in AUX_ADV_IND packets
+        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_ADV_IND packets ****\n\n"
+        logger().info(f"\n\n **** PDU length is {data_len if adv_type in [1,5] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
+        # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
+        assert calculate_offset(
+            df), "\n\n **** Test case Failed: Calculated Offset does not match with the time difference between the last channel index and the random channel index ****\n\n"
+        logger().info(
+            "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
+    if adv_type in [0,4] or adv_type_s2 in [0,4]:
+        # Assert if there is no non-connectable non-scannable advertising mode found and Aux Pointer is present
+        assert len(df.loc[
+                       (df['Advertising Mode'] == "Non-Connectable Non-Scannable") &
+                       (df['Aux Pointer'] == "Present") &
+                       (df.apply(
+                           lambda row: row['Ext Adv Address Type'] == ("random" if adv_type_s2 in [0, 4] else "public"),
+                           axis=1))
+                       ]) >= 1, "\n\n **** Test case Failed with no non-connectable non-scannable advertising mode found and Aux Pointer is present..! ****\n\n"
+        logger().info(f"\n\n **** Non-Connectable Non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [0, 4] else 'public'} ****\n\n")
+        # Assert if PDU length is not data_len in AUX_ADV_IND packets
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_ADV_IND packets ****\n\n"
+        logger().info(f"\n\n **** PDU length is {data_len if adv_type in [0,4] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
+        # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
+        assert calculate_offset(
+            df), "\n\n **** Test case Failed: Calculated Offset does not match with the time difference between the last channel index and the random channel index ****\n\n"
+        logger().info(
+            "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
+    if adv_type in [2,6] or adv_type_s2 in [2,6]:
+        # Assert if there is no connectable non-scannable advertising mode found and Aux Pointer is present
+        assert len(df.loc[
+                       (df['Advertising Mode'] == "Non-Connectable Scannable") &
+                       (df['Aux Pointer'] == "Present") &
+                       (df.apply(
+                           lambda row: row['Ext Adv Address Type'] == ("random" if adv_type_s2 in [2, 6] else "public"),
+                           axis=1))
+                       ]) >= 1, "\n\n **** Test case Failed with no non-connectable non-scannable advertising mode found and Aux Pointer is present..! ****\n\n"
+        logger().info(f"\n\n **** Non-Connectable Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [2, 6] else 'public'} ****\n\n")
+        # Assert if PDU length is not data_len in AUX_ADV_IND packets
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_ADV_IND packets ****\n\n"
+        logger().info(f"\n\n **** PDU length is {data_len if adv_type in [2,6] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
+        # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
+        assert calculate_offset(
+            df), "\n\n **** Test case Failed: Calculated Offset does not match with the time difference between the last channel index and the random channel index ****\n\n"
+        logger().info(
+            "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
+    assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
+        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with AUX_SCAN_RSP packets are not found..! ****\n\n"
+    logger().info("\n\n **** AUX_SCAN_RSP packets are not found ****\n\n")
+    # Assert if primary PHY is not 1M on ADV_EXT_IND packets
+    assert (df[df['Chan'].isin([37, 38, 39])][
+                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with no primary PHY is 1M on ADV_EXT_IND packets..! ****\n\n"
+    logger().info("\n\n **** Primary PHY is 1M on ADV_EXT_IND packets ****\n\n")
+    # Assert if secondary PHY is not 2M on AUX_ADV_IND packets
+    assert (df[~df['Chan'].isin([37, 38, 39])][
+                '+PHY Type (LE BB)'] == '2M').all(), "\n\n **** Test case Failed with secondary PHY is not 2M on AUX_ADV_IND packets..! ****\n\n"
+    logger().info("\n\n **** Secondary PHY is 2M on AUX_ADV_IND packets ****\n\n")
+    # Assert if PDU length is not data_len in AUX_ADV_IND packets
+    assert (df.loc[df[
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).all() or (df.loc[df[
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
+    logger().info(f"\n\n **** PDU length is {data_len} or {data_len_s2} in AUX_SCAN_RSP packets ****\n\n")
+    logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
 """
-    Test case category : Two adv sets using public addr of DUT on one handle and Random addr on another. Primary phy =LE COded and Sec Phy LE Coded
-    Device roles       : DUT is performing Peripheral role 
-    Fixures used: * ble_sniffer: To caputre BLE OTA logs through Teledyne sniffer, wifi sniffer: TO validate caputured OTA logs through NUC(wireshark), 
-                    bt_sniffer: To capture OTA logs through Ellysis.
+    Test case category : Two adv sets using public addr of DUT on one handle and Random addr on another. Primary phy =LE Coded and Sec Phy LE Coded
+    Device roles       : DUT is performing Peripheral role and Reference is performing Central role
+    Fixures used       : ble_sniffer - To caputre BLE OTA logs through Teledyne sniffer
 """
 @pytest.mark.parametrize(
     "adv_type, adv_type_s2, data_len, data_len_s2, test_case_id, adv_handle, adv_handle_s2",
     [
-        (0, 1, 0, 0, "C163862", 0, 1),
-        (1, 0, 0, 191, "C163863", 0, 1),
-        (0, 5, 191, 0, "C163864", 0, 1),
-        (0, 2, 191, 191,  "C163865", 0, 1),
-        (1, 4, 200, 200, "C163866", 0, 1),
-        (0, 1, 200, 0, "C163867", 0, 1),
-        (0, 5, 474, 0, "C163868", 0, 1),
+        (1, 2, 180, 180, "C528620", 0, 1),
+        (2, 0, 180, 120, "C528621", 0, 1),
+        (1, 6, 120, 180, "C528622", 0, 1),
+        (5, 6, 31, 31,  "C528623", 0, 1),
+        # (6, 4, 0, 31, "C528624", 0, 1),
+        (5, 0, 31, 1, "C528625", 0, 1),
+        (1, 4, 180, 31, "C528626", 0, 1),
     ],
 )
-@pytest.mark.ble_client("bt_wiseconnect")
-def test_verify_2ADV_sets_Legacy_Extended_C1638262_to_C1638468(ble_dut, rs_helper_ble, bt_sniffer,
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+            },
+        },
+    )
+@pytest.mark.config(
+        "remote_wiseconnect3",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+            },
+        },
+    )
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.ble_sniffer("frontline_sniffer")
+def test_verify_2ADV_sets_Legacy_Extended_C528620_to_C528626(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                         adv_type, adv_type_s2, data_len, data_len_s2, test_case_id, adv_handle, adv_handle_s2,
                                         ):
-    ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
-    random_address="11:33:33:33:33:11"
-    rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=adv_type, adv_type_s2=adv_type_s2, ble_dut_address=ble_dut_address, bt_sniffer=bt_sniffer,
-                                    pri_adv_phy=3, sec_adv_phy=3, min_interval=32, max_interval=32, data_len=data_len, data_len_s2=data_len_s2,
+    random_address = "11:33:33:33:33:11"
+    ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
+    ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
+    df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, adv_type_s2=adv_type_s2, ble_dut_address=ble_dut_address,
+                                    pri_adv_phy=3, sec_adv_phy=3, min_interval=48, max_interval=48, min_interval_s2=64, max_interval_s2=64, data_len=data_len, data_len_s2=data_len_s2,
                                     random_address_s2=random_address, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", test_case_id=test_case_id, adv_handle=adv_handle,
-                                    adv_handle_s2=adv_handle_s2, powersave_p=True)
+                                    adv_handle_s2=adv_handle_s2, ble_sniffer=ble_sniffer, ble_client_address=ble_client_address, central=remote_wiseconnect3, powersave_p=True)
+    if adv_type in [1,5] or adv_type_s2 in [1,5]:
+        # Assert if there is no connectable non-scannable advertising mode found and Aux Pointer is present
+        assert len(df.loc[
+                        (df['Advertising Mode'] == "Connectable Non-Scannable") &
+                        (df['Aux Pointer'] == "Present") &
+                        (df.apply(lambda row: row['Ext Adv Address Type'] == ("random" if adv_type_s2 in [1, 5] else "public"), axis=1))
+                    ]) >= 1, "\n\n **** Test case Failed with no connectable non-scannable advertising mode found..! ****\n\n"
+        logger().info(f"\n\n **** Connectable Non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [1, 5] else 'public'} ****\n\n")
+        # Assert if PDU length is not data_len in AUX_ADV_IND packets
+        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_ADV_IND packets..! ****\n\n"
+        logger().info(f"\n\n **** PDU length is {data_len if adv_type in [1,5] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
+        # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
+        assert calculate_offset(
+            df), "\n\n **** Test case Failed: Calculated Offset does not match with the time difference between the last channel index and the random channel index ****\n\n"
+        logger().info(
+            "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
+    if adv_type in [0,4] or adv_type_s2 in [0,4]:
+        # Assert if there is no non-connectable non-scannable advertising mode found and Aux Pointer is present
+        assert len(df.loc[
+                       (df['Advertising Mode'] == "Non-Connectable Non-Scannable") &
+                       (df['Aux Pointer'] == "Present") &
+                       (df.apply(
+                           lambda row: row['Ext Adv Address Type'] == ("random" if adv_type_s2 in [0, 4] else "public"),
+                           axis=1))
+                       ]) >= 1, "\n\n **** Test case Failed with no non-connectable non-scannable advertising mode found..! ****\n\n"
+        logger().info(f"\n\n **** Non-Connectable Non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [0, 4] else 'public'} ****\n\n")
+        # Assert if PDU length is not data_len in AUX_ADV_IND packets
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_ADV_IND packets..! ****\n\n"
+        logger().info(f"\n\n **** PDU length is {data_len if adv_type in [0,4] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
+        # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
+        assert calculate_offset(
+            df), "\n\n **** Test case Failed: Calculated Offset does not match with the time difference between the last channel index and the random channel index ****\n\n"
+        logger().info(
+            "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
+    if adv_type in [2,6] or adv_type_s2 in [2,6]:
+        # Assert if there is no non-connectable scannable advertising mode found and Aux Pointer is present
+        assert len(df.loc[
+                       (df['Advertising Mode'] == "Non-Connectable Scannable") &
+                       (df['Aux Pointer'] == "Present") &
+                       (df.apply(
+                           lambda row: row['Ext Adv Address Type'] == ("random" if adv_type_s2 in [2, 6] else "public"),
+                           axis=1))
+                       ]) >= 1, "\n\n **** Test case Failed with no non-connectable scannable advertising mode found..! ****\n\n"
+        logger().info(f"\n\n **** Non-Connectable Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [2, 6] else 'public'} ****\n\n")
+        # Assert if PDU length is not data_len in AUX_ADV_IND packets
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with no pdu length match found..! ****\n\n"
+        logger().info(f"\n\n **** PDU length is {data_len if adv_type in [2,6] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
+        # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
+        assert calculate_offset(
+            df), "\n\n **** Test case Failed: Calculated Offset does not match with the time difference between the last channel index and the random channel index ****\n\n"
+        logger().info(
+            "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
+    assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
+        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
+    logger().info("\n\n **** AUX_SCAN_RSP packets are not found ****\n\n")
+    # Assert if primary PHY is not LE Coded on ADV_EXT_IND packets
+    assert (df[df['Chan'].isin([37, 38, 39])][
+                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
+    logger().info("\n\n **** Primary PHY is LE Coded on ADV_EXT_IND packets ****\n\n")
+    # Assert if secondary PHY is not LE Coded on AUX_ADV_IND packets
+    assert (df[~df['Chan'].isin([37, 38, 39])][
+                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
+    logger().info("\n\n **** Secondary PHY is LE Coded on AUX_ADV_IND packets ****\n\n")
+    # Assert if PDU length is not data_len in AUX_ADV_IND packets
+    assert (df.loc[df[
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).all() or (df.loc[df[
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
+    logger().info(f"\n\n **** PDU length is {data_len} or {data_len_s2} in AUX_SCAN_RSP packets ****\n\n")
+    logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
 """
     Test case category : 
-    1. Enable - Disable Ext Adv in Loop while ref device is continously scanning for adv type = scannable undirected (C163869 to C163880)
-    2. Enable - Disable Ext Adv in Loop ,adv type = non conn non scan undirected (C163881 to C163886)
-    Device roles       : DUT is performing Peripheral role 
+    1. Enable - Disable Ext Adv in Loop while ref device is continously scanning for adv type = scannable undirected (C528627 to C528638)
+    2. Enable - Disable Ext Adv in Loop ,adv type = non conn non scan undirected. (C528639 to C528644)
+    Device roles       : DUT is performing Peripheral role and Reference is performing Central role
 """
 @pytest.mark.parametrize(
-    "adv_type, min_interval, max_interval, test_case_id, pri_adv_phy, sec_adv_phy, event_type_1, random_address",
+    "adv_type, min_interval, max_interval, test_case_id, pri_adv_phy, sec_adv_phy, random_address",
     [
-        (1, 32, 40, "C163869", 1, 1, "0x1", None),
-        (1, 32, 40, "C163870", 1, 2, "0x1", None),
-        (1, 32, 40, "C163871", 3, 3, "0x1", None),
-        (1, 32, 40, "C163872", 1, 1, "0x1", "11:33:33:33:33:11"),
-        (1, 32, 40, "C163873", 2, 2, "0x1", "11:33:33:33:33:11"),
-        (1, 32, 40, "C163874", 3, 3, "0x1", "11:33:33:33:33:11"),
-        (1, 80, 160, "C163875", 1, 1, "0x1", None),
-        (1, 80, 160, "C163876", 1, 2, "0x1", None),
-        (1, 80, 160, "C163877", 3, 3, "0x1", None),
-        (1, 80, 160, "C163878", 1, 1, "0x1", "11:33:33:33:33:11"),
-        (1, 80, 160, "C163879", 2, 2, "0x1", "11:33:33:33:33:11"),
-        (1, 80, 160, "C163880", 3, 3, "0x1", "11:33:33:33:33:11"),
-        (0, 32, 40, "C163881", 1, 1, "0x0", None),
-        (0, 32, 40, "C163882", 1, 2, "0x0", None),
-        (0, 32, 40, "C163883", 3, 3, "0x0", None),
-        (0, 32, 40, "C163884", 1, 1, "0x0", "11:33:33:33:33:11"),
-        (0, 32, 40, "C163885", 2, 2, "0x0", "11:33:33:33:33:11"),
-        (0, 32, 40, "C163886", 3, 3, "0x0", "11:33:33:33:33:11"),
+        (2, 32, 40, "C528627", 1, 1, None),
+        (2, 32, 40, "C528628", 1, 2, None),
+        (2, 32, 40, "C528629", 3, 3, None),
+        (2, 32, 40, "C528630", 1, 1, "11:33:33:33:33:11"),
+        (2, 32, 40, "C528631", 1, 2, "11:33:33:33:33:11"),
+        (2, 32, 40, "C528632", 3, 3, "11:33:33:33:33:11"),
+        (2, 80, 160, "C528633", 1, 1, None),
+        (2, 80, 160, "C528634", 1, 2, None),
+        (2, 80, 160, "C528635", 3, 3, None),
+        (2, 80, 160, "C528636", 1, 1, "11:33:33:33:33:11"),
+        (2, 80, 160, "C528637", 2, 2, "11:33:33:33:33:11"),
+        (2, 80, 160, "C528638", 3, 3, "11:33:33:33:33:11"),
+        (0, 32, 40, "C528639", 1, 1, None),
+        (0, 32, 40, "C528640", 1, 2, None),
+        (0, 32, 40, "C528641", 3, 3, None),
+        (0, 32, 40, "C528642", 1, 1, "11:33:33:33:33:11"),
+        (0, 32, 40, "C528643", 1, 2, "11:33:33:33:33:11"),
+        (0, 32, 40, "C528644", 3, 3, "11:33:33:33:33:11"),
     ],
 )
-@pytest.mark.ble_client("bt_wiseconnect")
-def test_verify_Enable_Disable_Ext_Adv_scannable_undirected_C163869_C163886(ble_dut, rs_helper_ble, ble_sniffer, wifi_sniffer, bt_sniffer,
-                                        adv_type, min_interval, max_interval, test_case_id, pri_adv_phy, sec_adv_phy, event_type_1, random_address):
-    ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
-    packet_filter1 = f"(btle.extended_advertising_header.mode == {event_type_1})"
-    rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=adv_type, ble_dut_address=ble_dut_address, bt_sniffer=bt_sniffer,
-                                    pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, max_ae_events=20, adv_async_required=True,  min_interval=min_interval, max_interval=max_interval,
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+            },
+        },
+    )
+@pytest.mark.config(
+        "remote_wiseconnect3",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+            },
+        },
+    )
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.ble_sniffer("frontline_sniffer")
+def test_verify_Enable_Disable_Ext_Adv_scannable_undirected_C163869_C163886(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
+                                        adv_type, min_interval, max_interval, test_case_id, pri_adv_phy, sec_adv_phy, random_address):
+    ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
+    ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
+    df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, ble_dut_address=ble_dut_address,
+                                    pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, adv_async_required=True,  min_interval=min_interval, max_interval=max_interval,
                                     data_len=19, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", test_case_id=test_case_id, adv_handle=0,
-                                    ble_sniffer=ble_sniffer, wifi_sniffer=wifi_sniffer, loop_count=5,
-                                    packet_filter1={packet_filter1:"Positive"}, random_address=random_address, powersave_p=True)
+                                    loop_count=4,random_address=random_address,
+                                    ble_sniffer=ble_sniffer, ble_client_address=ble_client_address, central=remote_wiseconnect3, scanning_phys= 5)
+    if adv_type in [2]:
+        # Assert if there is no non-connectable scannable advertising mode found and Aux Pointer is present
+        assert len(df.loc[
+                       (df['Advertising Mode'] == "Non-Connectable Scannable") &
+                       (df['Aux Pointer'] == "Present") &
+                       (df.apply(
+                           lambda row: row['Ext Adv Address Type'] == ("random" if random_address != None else "public"),
+                           axis=1))
+                       ]) >= 1, "\n\n **** Test case Failed with no non-connectable scannable advertising mode found..! ****\n\n"
+        logger().info(
+            f"\n\n **** Non-Connectable Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if random_address != None  else 'public'} ****\n\n")
+        # Assert if PDU length is not 19 in AUX_ADV_IND packets
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))][
+                    'PDU Length'] > (19)).all(), "\n\n **** Test case Failed with no pdu length match found..! ****\n\n"
+        logger().info(
+            f"\n\n **** PDU length is {19} in AUX_ADV_IND packets ****\n\n")
+        # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
+        assert calculate_offset(
+            df), "\n\n **** Test case Failed: Calculated Offset does not match with the time difference between the last channel index and the random channel index ****\n\n"
+        logger().info(
+            "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
+    if adv_type in [0]:
+        # Assert if there is no non-connectable non-scannable advertising mode found and Aux Pointer is present
+        assert len(df.loc[
+                       (df['Advertising Mode'] == "Non-Connectable Non-Scannable") &
+                       (df['Aux Pointer'] == "Present") &
+                       (df.apply(
+                           lambda row: row['Ext Adv Address Type'] == ("random" if random_address != None else "public"),
+                           axis=1))
+                       ]) >= 1, "\n\n **** Test case Failed with no non-connectable non-scannable advertising mode found..! ****\n\n"
+        logger().info(f"\n\n **** Non-Connectable Non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if random_address != None  else 'public'} ****\n\n")
+        # Assert if PDU length is not 19 in AUX_ADV_IND packets
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (19)).all(), "\n\n **** Test case Failed with no pdu length is not 19 in AUX_ADV_IND packets..! ****\n\n"
+        logger().info(f"\n\n **** PDU length is {19} in AUX_ADV_IND packets ****\n\n")
+        # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
+        assert calculate_offset(
+            df), "\n\n **** Test case Failed: Calculated Offset does not match with the time difference between the last channel index and the random channel index ****\n\n"
+        logger().info(
+            "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
 
-## Negative Test scenarios
+    assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
+        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
+    logger().info("\n\n **** AUX_SCAN_RSP packets are not found ****\n\n")
+    if pri_adv_phy in [3] and sec_adv_phy in [3]:
+        # Assert if primary PHY is not LE Coded on ADV_EXT_IND packets
+        assert (df[df['Chan'].isin([37, 38, 39])][
+                    '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
+        logger().info("\n\n **** Primary PHY is LE Coded on ADV_EXT_IND packets ****\n\n")
+        # Assert if secondary PHY is not LE Coded on AUX_ADV_IND packets
+        assert (df[~df['Chan'].isin([37, 38, 39])][
+                    '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
+        logger().info("\n\n **** Secondary PHY is LE Coded on AUX_ADV_IND packets ****\n\n")
+    elif pri_adv_phy in [1] and sec_adv_phy in [1]:
+        # Assert if primary PHY is not LE 1M on ADV_EXT_IND packets
+        assert (df[df['Chan'].isin([37, 38, 39])][
+                    '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
+        logger().info("\n\n **** Primary PHY is LE 1M on ADV_EXT_IND packets ****\n\n")
+        # Assert if secondary PHY is not LE 1M on AUX_ADV_IND packets
+        assert (df[~df['Chan'].isin([37, 38, 39])][
+                    '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
+        logger().info("\n\n **** Secondary PHY is LE 1M on AUX_ADV_IND packets ****\n\n")
+    elif pri_adv_phy in [2] and sec_adv_phy in [2]:
+        # Assert if primary PHY is not LE 2M on ADV_EXT_IND packets
+        assert (df[df['Chan'].isin([37, 38, 39])][
+                    '+PHY Type (LE BB)'] == '2M').all(), "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
+        logger().info("\n\n **** Primary PHY is LE 2M on ADV_EXT_IND packets ****\n\n")
+        # Assert if secondary PHY is not LE 2M on AUX_ADV_IND packets
+        assert (df[~df['Chan'].isin([37, 38, 39])][
+                    '+PHY Type (LE BB)'] == '2M').all(), "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
+        logger().info("\n\n **** Secondary PHY is LE 2M on AUX_ADV_IND packets ****\n\n")
+    elif pri_adv_phy in [1] and sec_adv_phy in [2]:
+        # Assert if primary PHY is not LE 1M on ADV_EXT_IND packets
+        assert (df[df['Chan'].isin([37, 38, 39])][
+                    '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
+        logger().info("\n\n **** Primary PHY is LE 1M on ADV_EXT_IND packets ****\n\n")
+        # Assert if secondary PHY is not LE 2M on AUX_ADV_IND packets
+        assert (df[~df['Chan'].isin([37, 38, 39])][
+                    '+PHY Type (LE BB)'] == '2M').all(), "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
+        logger().info("\n\n **** Secondary PHY is LE 2M on AUX_ADV_IND packets ****\n\n")
+    logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
+
+# Negative Test scenarios
 
 """ Test case : This test case will verify 0x04c error, when legacy and ext adv started together with single adv set"""
 def test_verify_Negative_case_C163735(ble_dut, rs_helper_ble):
     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=0, ble_dut_address=ble_dut_address,
                                     pri_adv_phy=1, sec_adv_phy=1, data_len=160, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", test_case_id="C163736",
-                                    dont_cleanup=True, test_in_progress=True)
+                                    dont_cleanup=True)
     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=17, ble_dut_address=ble_dut_address,
                                     pri_adv_phy=1, sec_adv_phy=1, data_len=31, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", test_case_id="C163736",
                                     error_expected= "Error code: 0x4e0c Msg: Command disallowed Command")
