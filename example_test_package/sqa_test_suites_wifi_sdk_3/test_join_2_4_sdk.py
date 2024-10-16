@@ -801,6 +801,51 @@ def test_wifi_sdk_wlan_get_stats_sta_C19175(wifi_dut, wifi_access_point, wifi_sn
 
 @pytest.mark.config(
     "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "12345678", "channel": 11,
+        "region": 1,
+        "region_code": "us"
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+def test_wifi_sdk_wlan_get_stats_ap_c19176(wifi_dut, wifi_sniffer, sl_collections):
+
+    """Verify whether the device is able to get the Wireless Statistics in AP Mode"""
+    channel = 11
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(channel=f"{channel}")
+        capture_filename = "test_wifi_wireless_statistics_AP_TC19176"
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                       static_subnet="255.255.255.0",
+                                                       static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", psk="12345678", channel=channel,
+                                          dtim_beacon_count=4, beacon_interval=100, ht_caps=0)
+
+        operating_mode, dtim_period, ideal_beacon_info, busy_beacon_info, busy_interval = wifi_dut.interfaces.wifi.get_wifi_operational_stats(interface = "ap", timeout=15)
+
+        logger().info(f'Operating mode: {operating_mode}')
+        logger().info(f'Dtim period: {dtim_period}')
+        logger().info(f'Ideal beacon info: {ideal_beacon_info}')
+        logger().info(f'Busy beacon info: {busy_beacon_info}')
+        logger().info(f'Busy interval: {busy_interval}')
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.config(
+    "wifi_dut",
     wifi=
     {
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
@@ -1170,6 +1215,3 @@ def test_wifi_sdk_verify_device_wpa2_enterprise_to_sta_mode_c564149(wifi_dut, wi
 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
-
-
-
