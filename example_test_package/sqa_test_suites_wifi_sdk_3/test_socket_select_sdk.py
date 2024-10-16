@@ -5,10 +5,12 @@ import random
 from retry import retry
 from threading import Thread
 from random import randint
+from utf.interfaces.wifi import WlanError
 from utf.utils.logger import get_logger
 from utf.utils.stopwatch import Stopwatch
 from utf.utils.thread_base import ThreadBase
 from utf.interfaces.socket import SOCKET_TYPE_TCP, SOCKET_TYPE_UDP
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xCoexMode,
@@ -1618,60 +1620,53 @@ def test_wifi_sdk_tcp_rx_without_socket_select_for_first_time_c19339(wifi_sniffe
         wifi_dut.interfaces.wifi.is_dut_bad_state = True
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
 
-
-"""Below testcase needs rework on next announcements"""
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.DualBluetoothBLE,
-#         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-#         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-#         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-#         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
-#             1),
-#         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3 | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE,
-#         "server_socket_limit": 4,
-#         "client_socket_limit": 4,
-#     }
-# )
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-# def test_socket_select_neg_TCC19332(
-#         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, sl_collections
-# ):
-#     """
-#     Execute rsi_select() api when no socket is opened in the DUT
-#     pass if the expected error(0x0009) code is received
-#     """
-#     try:
-#         capture_filename = "test_socket_select_neg_TCC19332"
-#         wifi_sniffer.interfaces.capture.configure_interface(
-#             channel=wifi_access_point.interfaces.wifi.channel)
-#         wifi_sniffer.interfaces.capture.start_capture(
-#             capture_file=f"{capture_filename}.pcap"
-#         )
-#         result = sl_collections.join_to_wifi_network_with_rejoin(wifi_dut, wifi_access_point, ping_count=10,
-#                                                                  retry_count=3, rejoin_parms=[0, 6, 40, 0])
-#         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
-#         logger.info("Run socket select command before opening any socket")
-#         wifi_dut.interfaces.wifi.set_fd(socket_count=1) #not available
-#         with pytest.raises(WlanError) as exc_info:
-#             wifi_dut.interfaces.wifi.bsdSocketSelect(0, timeout=60)
-#         assert exc_info.value.error_code == 0xFFFFFFFF, "DUT sent wrong error code, expected is 0xFFFFFFFF"
-#         with pytest.raises(WlanError) as exc_info:
-#             wifi_dut.interfaces.wifi.wlan_get_status()  #not available
-#         assert exc_info.value.error_code == 0x0009, "DUT sent wrong error code, expected is 0x0009"
-#         if exc_info.value.error_code == 0x0009:
-#             logger.info(f"DUT sent expected error code {exc_info.value.error_code}")
-#         wifi_dut.interfaces.wifi.leave()
-#         wifi_sniffer.interfaces.capture.stop_capture()
-#         logger.info("Stop Sniffer finally")
-#         validation = True
-#         packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
-#         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
-#         assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
-#         logger.info(f"PS-POLL packets are captured in the sniffer")
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+    }
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable"])
+def test_socket_select_neg_TCC19332(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, sl_collections):
+    """
+    Execute select() api when no socket is opened in the DUT
+    pass if the expected error(0x0009) code is received
+    """
+    try:
+        capture_filename = "test_socket_select_neg_TCC19332"
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+        result = sl_collections.join_to_wifi_network_with_rejoin(wifi_dut, wifi_access_point, ping_count=10,
+                                                                 retry_count=3, rejoin_params=[0, 6, 40, 0])
+        device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+        data = wifi_dut.interfaces.wifi.bsdAsyncSocketSelect(numberOfFds=1, time=60, expected_status=SLStatus.SL_STATUS_FAIL)
+        logger.info(f"Received data from DUT {data}")
+        if "errno: 9" in data.decode():
+            logger.info("Expected error code received")
+        else:
+            assert False, "Expected error code not received"
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger.info("Stop Sniffer finally")
+        validation = True
+        packet_filter1 = f'(wlan.ta == {dut_mac_address}) and (wlan.fc.type_subtype == 0x001a)'
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)
+        assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+        logger.info(f"PS-POLL packets are captured in the sniffer")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
