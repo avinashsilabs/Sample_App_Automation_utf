@@ -128,6 +128,8 @@ eap_failure,(wlan.addr == {{ sa_addr }}) and  eap, or eapol
 beacon_pmf, (wlan.sa == {{ sa_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff), and (wlan.fc.type_subtype == 0x0008) and (wlan.rsn.capabilities.mfpc == 1)
 Coex Enhanced Max Psp,,
 coex_enhanced_max_psp_34469,(wlan.da == {{ da_addr }} and wlan.fc.type_subtype == 0x28), or (wlan.ta == {{ da_addr }} and (wlan.fc.type_subtype == 0x24 or wlan.fc.type_subtype ==0x1a)) or (wlan.addr == {{ wlan_addr }} and (wlan.fc.type_subtype==8 or wlan.fc.type_subtype == 0x002c))
+wait_time,((wlan.sa == {{sa_addr}}, and wlan.fc.type_subtype==0x24) or (wlan.fc.type_subtype==0x1a)) and !(wlan.fc.retry == 1) and !(wlan.flags == 0x11)
+inactivity_timeout,((wlan.da == {{da_addr}}, and wlan.fc.type_subtype==0x28) or (wlan.fc.type_subtype==0x24 and wlan.fc.retry == 0) and !(wlan.flags==0x01))
 PMF(11w),,
 protection_capable_with_assoc_req,(wlan_radio.channel ==  {{ radio_ch }} and wlan.ta ==  {{ ta_addr }}), and (wlan.fc.type_subtype == 0x0000 and wlan.rsn.capabilities.mfpc == 1)
 protection_required_with_assoc_req,(wlan_radio.channel ==  {{ radio_ch }} and wlan.ta ==  {{ ta_addr }}), and (wlan.fc.type_subtype == 0x0000 and wlan.rsn.capabilities.mfpr == 1)
