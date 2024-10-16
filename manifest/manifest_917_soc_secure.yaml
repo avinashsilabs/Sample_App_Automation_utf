@@ -11,36 +11,51 @@ secure_firmware_config:
   init:
      default_mbr: /app/manifest/secure_firmware_keys/ta_mbr_SiWG917M111MGTBA.bin
 
+  base_keys_path:  /app/manifest/secure_firmware_keys/
+
+  generate_keys : True
+  generate_keys_config:
+    # need to add three level keys.json path, extract_dir_path
+    - keys_json_path: &level_1_keys_json level_1/keys.json
+      extract_dir_path: level_1/keys
+
+    - keys_json_path: &level_2_keys_json level_2/keys.json
+      extract_dir_path: level_2/keys
+
+    - keys_json_path: &level_3_keys_json level_3/keys.json
+      extract_dir_path: level_3/keys
+
+
   conversion:
     - file_name: *firmware_file_anchor # &firmware_file_anchor defined in line 4
       TA: True
       config:
           - prefix: level_1 # the output file will be prefixed with this name
-            key: /app/manifest/secure_firmware_keys/level_1/keys.json
-            sign: /app/manifest/secure_firmware_keys/level_1/keys/ta_private_key.pem
+            key: *level_1_keys_json
+            sign: level_1/keys/ta_private_key.pem
 
           - prefix: level_2
-            key: /app/manifest/secure_firmware_keys/level_2/keys.json
-            sign: /app/manifest/secure_firmware_keys/level_2/keys/ta_private_key.pem
+            key: *level_2_keys_json
+            sign: level_2/keys/ta_private_key.pem
 
           - prefix: level_3
-            key: /app/manifest/secure_firmware_keys/level_3/keys.json
-            sign: /app/manifest/secure_firmware_keys/level_3/keys/ta_private_key.pem
+            key: *level_3_keys_json
+            sign: level_3/keys/ta_private_key.pem
 
     - file_name: *test_agent_file_anchor # &test_agent_file_anchor should be defined in line 6
       TA: False
       config:
           - prefix: level_1
-            key: /app/manifest/secure_firmware_keys/level_1/keys.json
-            sign: /app/manifest/secure_firmware_keys/level_1/keys/m4_private_key.pem
+            key: *level_1_keys_json
+            sign: level_1/keys/m4_private_key.pem
 
           - prefix: level_2
-            key: /app/manifest/secure_firmware_keys/level_2/keys.json
-            sign: /app/manifest/secure_firmware_keys/level_2/keys/m4_private_key.pem
+            key: *level_2_keys_json
+            sign: level_2/keys/m4_private_key.pem
 
           - prefix: level_3
-            key: /app/manifest/secure_firmware_keys/level_3/keys.json
-            sign: /app/manifest/secure_firmware_keys/level_3/keys/m4_private_key.pem
+            key: *level_3_keys_json
+            sign: level_3/keys/m4_private_key.pem
 
 firmware_version_file: *firmware_file_anchor
 # List of devices to be reset when needed
