@@ -1394,6 +1394,8 @@ constants:
     wreck_password:
         value: 'test123'
     rps_filename:
-        value:  'SiWG917-B.2.13.2.0.0.2.rps'
+        value:  'ta_fw_3.rps'
+    m4_rps_filename:
+        value:  'secured_wifi_station_ping_soc.rps'
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']

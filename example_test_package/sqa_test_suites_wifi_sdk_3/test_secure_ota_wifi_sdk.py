@@ -48,23 +48,23 @@ def wifi_dut_marker(ca_cert=None):
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
-                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.Aggregation |
-                    Si91xFeatureBitMap.OpenMode,
+        Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.Aggregation |
+        Si91xFeatureBitMap.OpenMode,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
-                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
-                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+        Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient |
-                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL |
-                          Si91xTCPIPFeatureBitMap.DNSClient,
+        Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL |
+        Si91xTCPIPFeatureBitMap.DNSClient,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF |
-                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_SSL_16K_RECORD |
-                              Si91xExtTCPIPFeatureBitMap.Default,
+        Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_SSL_16K_RECORD |
+        Si91xExtTCPIPFeatureBitMap.Default,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
-                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
-                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
+        Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+        Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+        Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
     if ca_cert:
@@ -121,7 +121,7 @@ class WifiJoin(ThreadBase):
                 self.url = self.fw_download_from_azure_server(azure_blob=self.azure_blob, rps_path=self.rps_path)
                 logger().info(f"Firmware URL obtained: {self.url}")
 
-            if self.test_case == '510698':
+            if self.test_case == '510698' or self.test_case == '510702':
                 # Use fw_download_from_aws_server to upload the firmware to aws s3 bucket
                 logger().info("Downloading firmware from AWS server...")
                 self.url = self.fw_download_from_aws_server(aws_s3=self.aws_s3, rps_path=self.rps_path)
@@ -133,7 +133,7 @@ class WifiJoin(ThreadBase):
             logger().info(" ====== Start capturing with Sniffer by giving the test case name as filename ====== ")
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_case)
 
-            if self.test_case == '510696' or self.test_case == '510697' or self.test_case == '510707':
+            if self.test_case not in ['510698', '510699', '510702']:
                 """ ******* SERVER CHECKS ******* """
                 logger().info("checking server stats....")
                 server_stat = self.http_server.interfaces.http.started
@@ -168,7 +168,8 @@ class WifiJoin(ThreadBase):
                         logger().info(f'*** Firmware upgrade time = {t.duration} ***')
 
                     logger().info(f'*** Firmware upgrade time: {t.duration} ***')
-                    self.wifi_dut.interfaces.wifi.reset()
+                    # self.wifi_dut.interfaces.wifi.reset()
+                    self.wifi_dut.interfaces.wifi.deinit()
                     time.sleep(15)
                     self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
                     self.wifi_dut.interfaces.wifi.init(load_certificate=False)
@@ -185,7 +186,8 @@ class WifiJoin(ThreadBase):
 
                     self.wifi_dut.interfaces.wifi.default_fw = True
                     self.wifi_dut.interfaces.wifi.close()
-                    self.wifi_dut.interfaces.wifi.reset()
+                    # self.wifi_dut.interfaces.wifi.reset()
+                    self.wifi_dut.interfaces.wifi.deinit()
                     time.sleep(15)
                     self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
                     self.wifi_dut.interfaces.wifi.init(load_certificate=False)
@@ -205,7 +207,7 @@ class WifiJoin(ThreadBase):
                                                                timeout=100)
                 logger().info(f'**** Host IP: {result}')
                 self.host_ip = (result.decode()).strip()
-            if self.test_case == '510698':
+            if self.test_case == '510698' or self.test_case == '510702':
                 result = self.wifi_dut.interfaces.wifi.dns_get(domain_name=self.aws_host_name, query_timeout=20000,
                                                                timeout=100)
                 logger().info(f'**** Host IP: {result}')
@@ -223,8 +225,19 @@ class WifiJoin(ThreadBase):
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
                     ip_address=self.host_ip,
                     host_name=self.host_ip,
+                    http_url=self.rps_path,
                     timeout=150)
-            if self.test_case == '510698':
+
+            if self.test_case == '510697':
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(
+                    flags=1,
+                    ip_address=self.host_ip,
+                    port=443,
+                    host_name=self.host_ip,
+                    http_url=self.rps_path,
+                    timeout=150)
+
+            if self.test_case == '510698' or self.test_case == '510702':
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
                     flags=1,
                     ip_address=self.host_ip,
@@ -236,6 +249,7 @@ class WifiJoin(ThreadBase):
                     post_data='""',
                     http_url='rps_path',
                     async_timeout=500)
+
             if self.test_case == '510699':
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
                     flags=1,
@@ -248,32 +262,137 @@ class WifiJoin(ThreadBase):
                     post_data='""',
                     http_url='firmware/rps_path',
                     async_timeout=500)
-            if self.test_case == '510697':
+
+            if self.test_case == '510701':
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
                     flags=1,
                     ip_address=self.host_ip,
                     port=443,
                     host_name=self.host_ip,
-                    timeout=150
-                )
+                    http_url=self.rps_path,
+                    timeout=150)
+                logger().info("The M4 application will load after a reset...")
+                self.wifi_dut.interfaces.wifi.reset()
+                time.sleep(15)
+
+            if self.test_case == '510702':
+                logger().info("The M4 application will load after a reset...")
+                self.wifi_dut.interfaces.wifi.reset()
+                time.sleep(15)
+
+            if self.test_case == '510708':
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(
+                    flags=1,
+                    ip_address=self.host_ip,
+                    port=443,
+                    host_name=self.host_ip,
+                    http_url="/SiWG917-B.2.13.3.0.0.4.rps",
+                    expected_status=SLStatus.SL_STATUS_SI91X_FW_UPDATE_FAILED,
+                    timeout=150)
+                logger().info("stop Sniffer capture...")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                time.sleep(2)
+                logger().info("*******The error code 0x1DD04 occurs when updating a plain image "
+                              "on a DUT that is encrypted or secured ********")
+                return
+
+            if self.test_case == '510709':
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(
+                    flags=1,
+                    ip_address=self.host_ip,
+                    port=443,
+                    host_name=self.host_ip,
+                    http_url="/secure_SiWG917-B.2.13.2.0.0.4_corrupt.rps",
+                    expected_status=SLStatus.SL_STATUS_SI91X_INVALID_LENGTH,
+                    timeout=150)
+                logger().info("stop Sniffer capture...")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                time.sleep(2)
+                logger().info("*******The error code 0x1DD41 occurs when updating a corrupted image-added lines at end "
+                              "on a DUT that is encrypted or secured ********")
+                return
+
+            if self.test_case == '510710':
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(
+                    flags=1,
+                    ip_address=self.host_ip,
+                    port=443,
+                    host_name=self.host_ip,
+                    http_url="/TA.rps",
+                    expected_status=SLStatus.SL_STATUS_SI91X_HTTP_FAILED,
+                    timeout=150)
+                logger().info("stop Sniffer capture...")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                time.sleep(2)
+                logger().info("*******The error code 0xBBE2 occurs when image is not present in server"
+                              "on a DUT that is encrypted or secured ********")
+                return
+
+            if self.test_case == '510711':
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(
+                    flags=1,
+                    ip_address=self.host_ip,
+                    port=443,
+                    host_name=self.host_ip,
+                    http_url="/wifi_station_ping_soc.rps",
+                    expected_status=SLStatus.SL_STATUS_SI91X_FW_UPDATE_FAILED,
+                    timeout=150)
+                logger().info("stop Sniffer capture...")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                time.sleep(2)
+                logger().info("*******The error code 0x1DD04 occurs when updating a plain image "
+                              "on a DUT that is encrypted or secured ********")
+                return
+
+            if self.test_case == '510712':
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(
+                    flags=1,
+                    ip_address=self.host_ip,
+                    port=443,
+                    host_name=self.host_ip,
+                    http_url="/secured_wifi_station_ping_soc_corrupt.rps",
+                    expected_status=SLStatus.SL_STATUS_SI91X_INVALID_LENGTH,
+                    timeout=150)
+                logger().info("stop Sniffer capture...")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                logger().info("*******The error code 0x1DD41 occurs when updating a corrupted image-added lines at end "
+                              "on a DUT that is encrypted or secured ********")
+                return
+
+            if self.test_case == '510713':
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(
+                    flags=1,
+                    ip_address=self.host_ip,
+                    port=443,
+                    host_name=self.host_ip,
+                    http_url="/M4.rps",
+                    expected_status=SLStatus.SL_STATUS_SI91X_HTTP_FAILED,
+                    timeout=150)
+                logger().info("stop Sniffer capture...")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                time.sleep(2)
+                logger().info("*******The error code 0xBBE2 occurs when image is not present in server"
+                              "on a DUT that is encrypted or secured ********")
+                return
 
             logger().info("Stopping Sniffer capture...")
             self.wifi_sniffer.interfaces.capture.stop_capture()
 
-            self.wifi_dut.interfaces.wifi.reset()
-            time.sleep(15)
-            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-            self.wifi_dut.interfaces.wifi.init(load_certificate=False)
-            self.wifi_dut.interfaces.wifi.initialize_thread()
-            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+            if self.test_case != '510701' and self.test_case != '510702':
+                self.wifi_dut.interfaces.wifi.deinit(mode="client")
+                time.sleep(25)
+                self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+                self.wifi_dut.interfaces.wifi.init(load_certificate=False)
+                self.wifi_dut.interfaces.wifi.initialize_thread()
+                self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+                logger().info("DUT firmware version after upgrade...")
+                self.fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
+                logger().info(f"*** DUT firmware version after upgrade = {self.fw_version_after_upgrade} ***")
 
-            logger().info("DUT firmware version after upgrade...")
-            self.fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
-            logger().info(f"*** DUT firmware version after upgrade = {self.fw_version_after_upgrade} ***")
-            if self.fw_version_before_upgrade == self.fw_version_after_upgrade:
-                logger().info("Firmware after upgrade matched with the previous firmware")
-            else:
-                logger().info("Firmware upgrade successful. Versions are different.")
+                if self.fw_version_before_upgrade == self.fw_version_after_upgrade:
+                    logger().info("Firmware after upgrade matched with the previous firmware")
+                else:
+                    logger().info("Firmware upgrade successful. Versions are different.")
 
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
@@ -289,15 +408,17 @@ def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c510696(fi
                                                                               sl_collections, utf_constants):
     """Verify the TA firmware upgrade functionality using HTTP OTAF (Local Apache)with
      Full Security(security level_3 enabled"""
-    rps_path = utf_constants.get("rps_filename")
+
     try:
         test_case = '510696'
-        wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer, wifi_client=wifi_client, sl_collections=sl_collections,
-                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
-                            rps_path=rps_path)
+        rps_path = utf_constants.get("rps_filename")
+        wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer, wifi_client=wifi_client,
+                            sl_collections=sl_collections, rps_path=rps_path,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -309,18 +430,19 @@ def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c510696(fi
 def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c510697(firmware_loader, wifi_client,
                                                                               http_server, wifi_sniffer,
                                                                               wifi_access_point, wifi_dut,
-                                                                              sl_collections, utf_constants):
+                                                                              sl_collections,utf_constants):
     """Verify the TA firmware upgrade functionality using HTTP OTAF (Local Apache)with
      Full Security(security level_3 enabled"""
-    rps_path = utf_constants.get("rps_filename")
     try:
         test_case = '510697'
-        wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer, wifi_client=wifi_client,sl_collections=sl_collections,
-                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
-                            rps_path=rps_path)
+        rps_path = utf_constants.get("rps_filename")
+        wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer, wifi_client=wifi_client,
+                            sl_collections=sl_collections, rps_path=rps_path,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -367,19 +489,192 @@ def test_wifi_sdk_https_fw_upgrade_using_azure_server_c510699(firmware_loader, a
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@wifi_dut_marker()
+@pytest.mark.firmware_app("firmware_security_level_3")
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_wifi_sdk_m4_fw_upgrade_in_sta_alone_mode_and_measure_time_c510701(firmware_loader, wifi_client, http_server,
+                                                                           wifi_sniffer, wifi_access_point, wifi_dut,
+                                                                           sl_collections, utf_constants):
+    """Verify the M4 firmware upgrade functionality using HTTPS OTAF (Local Apache)with
+     Full Security(security level_3) enabled"""
+
+    try:
+        test_case = '510701'
+        rps_path = utf_constants.get("m4_rps_filename")
+        wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer, wifi_client=wifi_client,
+                            sl_collections=sl_collections, rps_path=rps_path,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.firmware_app("firmware_security_level_3")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@wifi_dut_marker(ca_cert=["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_wifi_sdk_m4_fw_upgrade_using_aws_server_c510702(firmware_loader, aws_s3, wifi_sniffer, wifi_access_point,
+                                                         wifi_dut, sl_collections, utf_constants):
+    """This Test case is validating m4 Firmware upgrade using aws server"""
+    rps_path = utf_constants.get("m4_rps_filename")
+    try:
+        test_case = '510702'
+        wlan_obj = WifiJoin(aws_s3=aws_s3, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
+                            rps_path=rps_path)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@wifi_dut_marker()
+@pytest.mark.firmware_app("firmware_security_level_3")
+def test_wifi_sdk_plain_fw_upgrade_negative_c510708(firmware_loader, wifi_client, http_server,
+                                                    wifi_sniffer, wifi_access_point, wifi_dut,
+                                                    sl_collections):
+    """Verify the TA firmware degradation (HTTP OTAF) functionality Plain firmware update application """
+    try:
+        test_case = '510708'
+        wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer, wifi_client=wifi_client,
+                            sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@wifi_dut_marker()
+@pytest.mark.firmware_app("firmware_security_level_3")
+def test_wifi_sdk_corrupted_fw_upgrade_negative_c510709(firmware_loader, wifi_client, http_server,
+                                                        wifi_sniffer, wifi_access_point, wifi_dut,
+                                                        sl_collections):
+    """Verify the M4 firmware upgradation(HTTP OTAF) functionality Plain FW update application"""
+    try:
+        test_case = '510709'
+        wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer, wifi_client=wifi_client,
+                            sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@wifi_dut_marker()
+@pytest.mark.firmware_app("firmware_security_level_3")
+def test_wifi_sdk_fw_upgrade_negative_with_no_file_c510710(firmware_loader, wifi_client, http_server,
+                                                           wifi_sniffer, wifi_access_point, wifi_dut,
+                                                           sl_collections):
+    """Verify the TA firmware update(HTTP OTAF) functionality with the File missing server"""
+    try:
+        test_case = '510710'
+        wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer, wifi_client=wifi_client,
+                            sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@wifi_dut_marker()
+@pytest.mark.firmware_app("firmware_security_level_3")
+def test_wifi_sdk_m4_plain_fw_upgrade_negative_c510711(firmware_loader, wifi_client,http_server,
+                                                       wifi_sniffer, wifi_access_point, wifi_dut, sl_collections):
+    """Verify the M4 firmware upgradation(HTTP OTAF) functionality Plain FW update application"""
+    try:
+        test_case = '510711'
+        wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer, wifi_client=wifi_client,
+                            sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@wifi_dut_marker()
+@pytest.mark.firmware_app("firmware_security_level_3")
+def test_wifi_sdk_m4_corrupted_fw_upgrade_negative_c510712(firmware_loader, wifi_client, http_server,
+                                                           wifi_sniffer, wifi_access_point, wifi_dut,
+                                                           sl_collections):
+    """Verify the M4 firmware upgradation(HTTP OTAF) functionality Plain FW update application"""
+    try:
+        test_case = '510712'
+        wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer, wifi_client=wifi_client,
+                            sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@wifi_dut_marker()
+@pytest.mark.firmware_app("firmware_security_level_3")
+def test_wifi_sdk_m4_fw_upgrade_negative_with_no_file_c510713(firmware_loader, wifi_client, http_server,
+                                                              wifi_sniffer, wifi_access_point, wifi_dut,
+                                                              sl_collections):
+    """Verify the M4 firmware update(HTTP OTAF) functionality with the File missing server"""
+    try:
+        test_case = '510713'
+        wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer, wifi_client=wifi_client,
+                            sl_collections=sl_collections, wifi_access_point=wifi_access_point, wifi_dut=wifi_dut,
+                            test_case=test_case)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
 @wifi_dut_marker()
 @pytest.mark.firmware_app("firmware_security_level_3")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
-def test_wifi_sdk_https_fw_upgrade_downgrade_overnight_c510707(firmware_loader,http_server, wifi_sniffer, wifi_client,
-                                                               wifi_access_point, wifi_dut, sl_collections, utf_constants):
-    """This Test case is validating Firmware updation overnight"""
-    rps_path = utf_constants.get("rps_filename")
+def test_wifi_sdk_https_fw_upgrade_downgrade_overnight_c510707(firmware_loader, http_server, wifi_sniffer, wifi_client,
+                                                               wifi_access_point, wifi_dut, sl_collections):
+    """This Test case is validating Firmware update overnight"""
+
     try:
         test_case = '510707'
         wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer,sl_collections=sl_collections,wifi_client=wifi_client,
-                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case, rps_path=rps_path)
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
