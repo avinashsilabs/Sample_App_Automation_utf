@@ -111,7 +111,7 @@ class WifiJoin(ThreadBase):
     def run(self):
         try:
 
-            if self.test_case == '652416':
+            if self.test_case == '652416' or self.test_case == '498663':
                 logger().info("Downloading firmware from Azure server...")
                 self.url1 = self.fw_download_from_azure_server(azure_blob=self.azure_blob, rps_path=self.rps_path)
                 logger().info(f"Firmware URL obtained: {self.url1}")
@@ -132,7 +132,7 @@ class WifiJoin(ThreadBase):
                                                      power_save=False,
                                                      retry_count=3,
                                                      associated=self.wifi_dut.interfaces.wifi.associated)
-            if self.test_case == '652416':
+            if self.test_case == '652416' or self.test_case == '498663':
                 result = self.wifi_dut.interfaces.wifi.dns_get(domain_name=self.azure_host_name, query_timeout=20000,
                                                                timeout=100)
             else:
@@ -149,7 +149,7 @@ class WifiJoin(ThreadBase):
             self.fw_version_before_upgrade = self.wifi_dut.interfaces.wifi.version()
             logger().info(f"*** DUT firmware version before upgrade = {self.fw_version_before_upgrade} ***")
 
-            if self.test_case == '19769':
+            if self.test_case == '19769' or self.test_case == '498662':
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
                     flags=1,
                     ip_address=self.host_ip,
@@ -173,7 +173,7 @@ class WifiJoin(ThreadBase):
                     post_data='""',
                     http_url='rps_path',
                     async_timeout=500)
-            if self.test_case == '652416':
+            if self.test_case == '652416' or self.test_case == '498663':
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
                     flags=1,
                     ip_address=self.host_ip,
@@ -189,21 +189,26 @@ class WifiJoin(ThreadBase):
             logger().info("Stopping Sniffer capture...")
             self.wifi_sniffer.interfaces.capture.stop_capture()
 
-            self.wifi_dut.interfaces.wifi.reset()
-            time.sleep(15)
-            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-            self.wifi_dut.interfaces.wifi.init(load_certificate=False)
-            self.wifi_dut.interfaces.wifi.initialize_thread()
-            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+            if self.test_case == '498662' or self.test_case == '498663':
+                self.wifi_dut.interfaces.wifi.reset()
+                time.sleep(15)
 
-            logger().info("DUT firmware version after upgrade...")
-            self.fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
-            logger().info(f"*** DUT firmware version after upgrade = {self.fw_version_after_upgrade} ***")
+            if self.test_case != '498662' and self.test_case != '498663':
+                self.wifi_dut.interfaces.wifi.deinit()
+                time.sleep(15)
+                self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+                self.wifi_dut.interfaces.wifi.init(load_certificate=False)
+                self.wifi_dut.interfaces.wifi.initialize_thread()
+                self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
 
-            if self.fw_version_before_upgrade == self.fw_version_after_upgrade:
-                logger().info("Firmware after upgrade matched with the previous firmware")
-            else:
-                logger().info("Firmware upgrade successful. Versions are different.")
+                logger().info("DUT firmware version after upgrade...")
+                self.fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
+                logger().info(f"*** DUT firmware version after upgrade = {self.fw_version_after_upgrade} ***")
+
+                if self.fw_version_before_upgrade == self.fw_version_after_upgrade:
+                    logger().info("Firmware after upgrade matched with the previous firmware")
+                else:
+                    logger().info("Firmware upgrade successful. Versions are different.")
 
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
@@ -234,7 +239,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_c19769(aws_s3, wifi_sniffer,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-def test_wifi_sdk_https_fw_upgrade_using_aws_server_c652581(aws_s3, wifi_sniffer, wifi_access_point,
+def test_wifi_sdk_https_fw_upgrade_using_aws_server_ext_header_c652581(aws_s3, wifi_sniffer, wifi_access_point,
                                                             wifi_dut, sl_collections, utf_constants):
     """This Test case is validating Firmware upgrade using aws server with extender header enable"""
     rps_path = utf_constants.get("rps_filename")
@@ -251,17 +256,58 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_c652581(aws_s3, wifi_sniffer
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.firmware_app("test_azure")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @wifi_dut_marker(ca_cert=["silabs_dgcert_ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-def test_wifi_sdk_https_fw_upgrade_using_azure_server_c652416(firmware_loader, azure_blob, wifi_sniffer,
+def test_wifi_sdk_https_fw_upgrade_using_azure_server_c652416(azure_blob, wifi_sniffer,
                                                               wifi_access_point, wifi_dut, sl_collections,
                                                               utf_constants):
-    """This Test case is validating Firmware upgrade using aws server with extender header enable"""
+    """This Test case is validating Firmware upgrade using azure server """
     rps_path = utf_constants.get("rps_filename")
     try:
         test_case = '652416'
+        wlan_obj = WifiJoin(azure_blob=azure_blob, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
+                            rps_path=rps_path)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@wifi_dut_marker()
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_wifi_sdk_https_fw_upgrade_using_aws_server_c498662(aws_s3, wifi_sniffer, wifi_access_point,
+                                                            wifi_dut, sl_collections, utf_constants):
+    """TVerify M4 firmware update functionlaity using HTTPS otaf (port 443)with aws server"""
+    rps_path = utf_constants.get("m4_rps_plain")
+    try:
+        test_case = '498662'
+
+        wlan_obj = WifiJoin(aws_s3=aws_s3, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
+                            rps_path=rps_path)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@wifi_dut_marker(ca_cert=["silabs_dgcert_ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_wifi_sdk_https_fw_upgrade_using_azure_server_498663(azure_blob, wifi_sniffer,
+                                                             wifi_access_point, wifi_dut, sl_collections,
+                                                             utf_constants):
+    """Wi-Fi - M4 Firmware Update functionality using azure server """
+    rps_path = utf_constants.get("m4_rps_plain")
+    try:
+        test_case = '498663'
         wlan_obj = WifiJoin(azure_blob=azure_blob, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
                             wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
                             rps_path=rps_path)
