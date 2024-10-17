@@ -4,6 +4,7 @@ import re
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xOperatingMode, Si91xTCPIPFeatureBitMap
+from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
@@ -39,7 +40,7 @@ class WLanTwTThread(ThreadBase):
                  restrict_tx_outside_tsp=1, twt_retry_limit=6, twt_retry_interval=10, req_type=1, negotiation_type=0,
                  wifi_dut=None, sl_collections=None, wifi_sniffer=None, wifi_access_point=None, switch=None,
                  test_case=None, sniffer_filter=None, power_save=False, before_join=False, utf_constants=None,
-                 sniffer_capture=None):
+                 sniffer_capture=None, wifi_client=None, net_perf_client=None):
         super().__init__()
         # Define all the parameters
         self.twt_enable = twt_enable
@@ -90,6 +91,8 @@ class WLanTwTThread(ThreadBase):
         self.ap_mac_address = None
         self.before_join = before_join
         self.utf_constants = utf_constants
+        self.wifi_client = wifi_client
+        self.net_perf_client = net_perf_client
         self.time_duration = utf_constants.get("time_duration")
 
         # Create packet filters variables
@@ -107,9 +110,8 @@ class WLanTwTThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                               beacon_missed_count=1000,
                                                                               first_time_retry_enable=0)
-            if self.test_case == '113761':
+            if self.test_case == '113760' or self.test_case == '113761':
                 self.time_duration = self.utf_constants.get("long_duration")
-
             # Configure the sniffer on wifi_access_point channel
             self.wifi_sniffer.interfaces.capture.configure_interface(self.wifi_access_point.interfaces.wifi.channel)
             # Start the sniffer on wifi_access_point channel
@@ -367,13 +369,16 @@ class WLanTwTThread(ThreadBase):
             # Call wake_interval_and_wake_period for request frames
             self.wake_interval_and_wake_period(filter=0)
 
-            if self.test_case != '113761':
+            if self.test_case != '113760' and self.test_case != '113761':
+                # Sleep for 10 minutes
                 logger().info(f'**** Pinging for {self.time_duration} seconds ****')
 
                 start_time = time.time()
                 while (time.time() - start_time) < self.time_duration:
                     self.sl_collections.ping_with_custom_interval(device_ip=self.dut_addr['device_ip'],
                                                                   interval=int(self.wake_interval_resp) // 10000000)
+            if self.test_case == '113760':
+                self.tcp_single_socket_dut_client()
             if self.test_case == '113761':
                 logger().info(f'Setting DUT IDLE for {self.time_duration / 3600} hours')
                 time.sleep(self.time_duration)
@@ -490,6 +495,25 @@ class WLanTwTThread(ThreadBase):
                 f"Expected Wake Period = {self.wake_period_resp}, but got beyond the threshold of 1%"
 
         logger().info(f"***** Wake Interval and wake Period is verified successfully *****")
+
+    def tcp_single_socket_dut_client(self):
+
+        # protocol = 6
+        traffic = '0x00'
+        host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+
+        self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=self.dut_addr['device_ip'],
+                                                             protocol=IperfConstants.TCP, tos_value=traffic)
+        # logger().info(f"Host IP: {host_ip}, Dut IP: {self.dut_addr['device_ip']}, Protocol: {protocol}, "
+        #               f"tos_value: {traffic}")
+        logger().info(f"***** starting iperf ******")
+        self.net_perf_client.interfaces.net_perf.start()
+        logger().info(f"***** send traffic  ******")
+        self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                            local_port=self.net_perf_client.interfaces.net_perf.server_port,
+                                            local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                            remote_port=self.net_perf_client.interfaces.net_perf.server_port, size=1460,
+                                            ttl=self.time_duration, throughput_type=1, qos=0, timeout=self.time_duration+100)
 
 
 pytestmark = [
@@ -1284,6 +1308,33 @@ def test_wifi_sdk_verify_twt_when_device_idle_for_long_hours_c113761(wifi_dut, w
                                  test_case='113761', wake_duration=0xF0,
                                  wake_duration_tol=0x90, wake_int_mantissa=0x37D0, wake_int_mantissa_tol=0x37D0,
                                  utf_constants=utf_constants, sniffer_capture='113761')
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'Open'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_verify_twt_tcp_data_transfer_for_long_hours_c113760(wifi_dut, wifi_access_point, sl_collections,
+                                                                      net_perf_client, wifi_sniffer, wifi_client,
+                                                                      sniffer_filter, utf_constants):
+    """Verify the DUT behavior when enable TWT setup and run continuous TCP traffic for long hours - 10 hours"""
+    """
+    Test Steps:
+        1. Create thread for twt functionality
+        2. Enable power-save mode
+        3. Run the thread
+        4. Exit the thread
+    """
+    try:
+        wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, power_save=True,
+                                 test_case='113760', wake_duration=0xF0, wake_duration_tol=0x90,
+                                 wake_int_mantissa=0x37D0, wake_int_mantissa_tol=0x37D0, utf_constants=utf_constants,
+                                 sniffer_capture='113760', net_perf_client=net_perf_client, wifi_client=wifi_client)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as Ex:
