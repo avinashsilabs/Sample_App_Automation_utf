@@ -173,6 +173,41 @@ class WifiJoinThread(ThreadBase):
             raise e
 
 
+class DnsFunctionalityThread(ThreadBase):
+    """Thread to verify DNS functionality."""
+
+    def __init__(self, wifi_dut):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+
+    def run(self):
+        try:
+            logger().info("Starting DNS functionality verification...")
+            self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11", secondary_dns_server_address="10.8.4.10")
+            self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000, ip_version="ipv4")
+        except Exception as ex:
+            logger().exception("Error in DNS functionality thread.")
+            raise
+
+
+class WLANDisconnectionThread(ThreadBase):
+    """Thread to disconnect WLAN."""
+
+    def __init__(self, wifi_dut):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+
+    def run(self):
+        try:
+            time.sleep(10)  # Delay before disconnection
+            logger().info("Disconnecting WLAN...")
+            self.wifi_dut.interfaces.wifi.leave()
+        except Exception as ex:
+            logger().exception("Error in WLAN disconnection thread.")
+            raise
+
+
+
 pytestmark = [
     pytest.mark.config(
         "wifi_dut",
@@ -565,6 +600,66 @@ def test_wifi_sdk_dns_functionality_for_24_hours_c553434(wifi_sniffer, wifi_acce
         wlan_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.leave()
         time.sleep(5)
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_verify_dns_and_wlan_disconnection_c553435(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
+                                                              request, utf_constants, sniffer_filter):
+    """Verify DNS functionality in one thread and WLAN disconnection in another."""
+
+    try:
+        test_case = request.node.name
+        mode = "power_save_low_latency"
+        ping_count = utf_constants.get("ping_count")
+
+        logger().info(" ====== configuring the Sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
+
+        sl_collections.join_to_wifi_network(wifi_dut,wifi_access_point=wifi_access_point, power_save=True,
+                                            mode=mode,ping_after_power_save=True, retry_count=3,
+                                            associated=wifi_dut.interfaces.wifi.associated, ping_count=ping_count)
+
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+
+        dns_thread = DnsFunctionalityThread(wifi_dut=wifi_dut)
+        disconnection_thread = WLANDisconnectionThread(wifi_dut=wifi_dut)
+
+        # Start both threads
+        dns_thread.start()
+        disconnection_thread.start()
+
+        # Wait for both threads to complete
+        dns_thread.wait_for_exit()
+        disconnection_thread.wait_for_exit()
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, filter_name='dns_id')
+        filter_2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr,filter_name='association_request')
+        filter_3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr,filter_name='power_mgmt_bit')
+        filter_4 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr,filter_name='ps_poll')
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
+            'Unable to find dns id sniffer packets'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_2)['packet_count'], \
+            'Unable to find the association request sniffer packets'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_3)['packet_count'], \
+            'Unable to find the power management save sniffer packets'
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_4)['packet_count'], \
+            'Unable to find the ps poll sniffer packets'
 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
