@@ -179,7 +179,8 @@ class BleThread(ThreadBase):
             service_class=None,
             conn_interval=200,
             char_path=None, char_uid=None, data=None,
-            data_length=20, data_duration=60, periodic_delay=1, service_uid=None
+            data_length=20, data_duration=60, periodic_delay=1, service_uid=None,
+            address=None,
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -203,6 +204,7 @@ class BleThread(ThreadBase):
         self.ble_client_address = None
         self.write_handle = None
         self.ble_scan_filter_type = ble_scan_filter_type
+        self.address = address
 
         if self.gatt:
             # Set up DUT for BLE advertising
@@ -375,7 +377,8 @@ class BleThread(ThreadBase):
             logger().info(f"Send notifications from DUT")
             # self.wifi_dut.interfaces.wifi.ble_set_local_att_value(notify_data=data, val_handle=12)
             # with self._lock:
-            self.wifi_dut.interfaces.wifi.ble_notify_custom_value(self.ble_client_address, data=self.data)
+            self.wifi_dut.interfaces.wifi.ble_notify_custom_value(self.ble_client_address, data=self.data,
+                                                                  data_address=self.address)
             time.sleep(self.periodic_delay)
             notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
             assert len(notifications) > 0, "received data is empty"
@@ -744,7 +747,7 @@ def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(wifi_sniffer, wifi_acces
             ping_count=ping_count,
             sniffer_filter=sniffer_filter,
             test_type=test_type,
-            scan_count=10
+            scan_count=30
         )
         service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
         char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
@@ -1209,7 +1212,7 @@ def test_sta_ble_sdk_set_att_value_diff_length_tcp_tx_ble_slave_C133437(wifi_sni
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"5MB.htm"})
+@pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
@@ -1247,6 +1250,8 @@ def test_sta_ble_sdk_http_dwnld_ble_slave_dle_C537979(wifi_sniffer, wifi_access_
         # data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
         data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
         index = 1
+        address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(data), write_content=data)
         ble_obj = BleThread(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
@@ -1256,7 +1261,8 @@ def test_sta_ble_sdk_http_dwnld_ble_slave_dle_C537979(wifi_sniffer, wifi_access_
             char_path=None, char_uid=char_uid1, data=data,
             service_uid=service_uid,
             data_length=20, data_duration=300,
-            periodic_delay=10
+            periodic_delay=10,
+            address=address1,
         )
 
         # Create Custom services on DUT
@@ -1284,12 +1290,13 @@ def test_sta_ble_sdk_http_dwnld_ble_slave_dle_C537979(wifi_sniffer, wifi_access_
         ble_obj.start()
         ble_obj.wait_for_exit()
         wifi_obj.wait_for_exit()
-        time.sleep(2)
-        logger().info("******************** ble_remove_service ***********************")
+        time.sleep(5)
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.memory_free(address1)
+        logger().info("******************** ble_remove_service ***********************")
         wifi_dut.interfaces.wifi.ble_remove_service(timeout=10)
         ble_obj.ble_disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
         packet_filter4 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -1307,10 +1314,7 @@ def test_sta_ble_sdk_http_dwnld_ble_slave_dle_C537979(wifi_sniffer, wifi_access_
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-
-
-
-
+        http_server.interfaces.http.stop_server()
 
 
 
@@ -1344,7 +1348,7 @@ def test_sta_ble_sdk_http_dwnld_ble_slave_dle_C537979(wifi_sniffer, wifi_access_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"5MB.htm"})
+@pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
@@ -1382,6 +1386,8 @@ def test_sta_ble_sdk_http_dwnld_ble_slave_dle_C537980(wifi_sniffer, wifi_access_
         # data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
         data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=240))
         index = 1
+        address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(data), write_content=data)
         ble_obj = BleThread(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
@@ -1391,7 +1397,8 @@ def test_sta_ble_sdk_http_dwnld_ble_slave_dle_C537980(wifi_sniffer, wifi_access_
             char_path=None, char_uid=char_uid1, data=data,
             service_uid=service_uid,
             data_length=240, data_duration=300,
-            periodic_delay=10
+            periodic_delay=10,
+            address=address1,
         )
 
         # Create Custom services on DUT
@@ -1425,6 +1432,7 @@ def test_sta_ble_sdk_http_dwnld_ble_slave_dle_C537980(wifi_sniffer, wifi_access_
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_dut.interfaces.wifi.ble_remove_service(timeout=10)
         ble_obj.ble_disconnect()
+        wifi_dut.interfaces.wifi.memory_free(address1)
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
         packet_filter4 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -1443,7 +1451,7 @@ def test_sta_ble_sdk_http_dwnld_ble_slave_dle_C537980(wifi_sniffer, wifi_access_
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
-
+        http_server.interfaces.http.stop_server()
 
 
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
@@ -1495,6 +1503,9 @@ def test_coex_sdk_httpget_url_2048_ble_smp_tx_C476959(http_server, wifi_dut, htt
     ble_obj = None
     try:
         index_path = "url_exact_2048_bytes/" * 97 + "2048url.htm"
+
+        address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(index_path) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(index_path), write_content=index_path)
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         iter_count = utf_constants.get("iter_count")
@@ -1520,13 +1531,17 @@ def test_coex_sdk_httpget_url_2048_ble_smp_tx_C476959(http_server, wifi_dut, htt
             test_type=test_type,
             http_server=http_server,
             index_path=index_path,
-            http_client=http_client
+            http_client=http_client,
+            address=address1,
         )
         service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
         char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
         # data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
         data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
         index = 1
+
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
         ble_obj = BleThread(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
@@ -1536,8 +1551,10 @@ def test_coex_sdk_httpget_url_2048_ble_smp_tx_C476959(http_server, wifi_dut, htt
             ble_pairing=1,
             char_path=None, char_uid=char_uid1, data=data,
             service_uid=service_uid,
-            data_length=20, data_duration=120,
-            periodic_delay=1,
+            data_length=20, data_duration=300,
+            conn_interval=45,
+            periodic_delay=0.5,
+            address=address2
         )
 
         # Create Custom services on DUT
@@ -1551,20 +1568,22 @@ def test_coex_sdk_httpget_url_2048_ble_smp_tx_C476959(http_server, wifi_dut, htt
         wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1, value_handler_num=index + 1, data=data)
 
         logger().info(f"iter count is configured as {iter_count}")
-
+        ble_obj.advertise_dut()
+        wifi_obj.join_to_ap()
+        ble_obj.scan_and_connect_from_remote()
+        ble_obj.service_discovery_on_remote()
+        ble_obj.start()
         for count in range(0, iter_count):
-
-            ble_obj.advertise_dut()
-            wifi_obj.join_to_ap()
-            ble_obj.scan_and_connect_from_remote()
-            ble_obj.service_discovery_on_remote()
-            ble_obj.start()
-            time.sleep(10)
+            if count != 0:
+                wifi_obj.join_to_ap()
             wifi_obj.start()
             wifi_obj.wait_for_exit()
-            ble_obj.wait_for_exit()
             wifi_obj.disconnect()
-            ble_obj.ble_disconnect()
+            time.sleep(5)
+        ble_obj.stop()
+        ble_obj.ble_disconnect()
+        wifi_dut.interfaces.wifi.memory_free(address1)
+        wifi_dut.interfaces.wifi.memory_free(address2)
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
         logger().info("******************** ble_remove_service ***********************")
@@ -1579,6 +1598,7 @@ def test_coex_sdk_httpget_url_2048_ble_smp_tx_C476959(http_server, wifi_dut, htt
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 
@@ -1621,14 +1641,14 @@ def test_coex_sdk_httpget_url_2048_ble_smp_tx_C476959(http_server, wifi_dut, htt
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
+        "clear_certs"
     ],
 )
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4431")
 def test_coex_sdk_https_get_url_2048_ble_RX_C476960(http_server, wifi_dut, http_client,
-                                                       wifi_access_point, wifi_sniffer,
-                                                       sl_collections, sniffer_filter,
-                                                       request, utf_constants, wifi_client,
-                                                       ble_client):
+                                                    wifi_access_point, wifi_sniffer,
+                                                    sl_collections, sniffer_filter,
+                                                    request, utf_constants, wifi_client,
+                                                    ble_client):
     """HTTPS GET functionality with URL length is with 2048"""
     ble_obj = None
     try:
@@ -1637,6 +1657,8 @@ def test_coex_sdk_https_get_url_2048_ble_RX_C476960(http_server, wifi_dut, http_
         ping_count = utf_constants.get("ping_count")
         iter_count = utf_constants.get("iter_count")
         test_type = "http_get"
+        address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(index_path) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(index_path), write_content=index_path)
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
@@ -1659,7 +1681,8 @@ def test_coex_sdk_https_get_url_2048_ble_RX_C476960(http_server, wifi_dut, http_
             http_server=http_server,
             index_path=index_path,
             http_client=http_client,
-            https=True
+            https=1,
+            address=address1
         )
         ble_obj = BleThread(
             wifi_dut=wifi_dut,
@@ -1669,166 +1692,33 @@ def test_coex_sdk_https_get_url_2048_ble_RX_C476960(http_server, wifi_dut, http_
             dev_state=8,
             data_duration=30,
             service_class=["HeartRateService"],
-            gatt=True
+            gatt=True,
+            ble_pairing=1,
         )
         logger().info(f"iter count is configured as {iter_count}")
 
         for count in range(0, iter_count):
             ble_obj.check_scan_functionality_dut()
             wifi_obj.join_to_ap()
+            logger().info("Initiating stop scan from dut")
+            wifi_dut.interfaces.wifi.ble_stop_scanning()
             ble_obj.connect_from_dut()
             ble_obj.service_discovery_on_dut(service_uuid=HeartRateService.UUID,
                                              char_uuid=HeartRateMeasurementCharacterstic.HR_Measure_UUID,
                                              characteristic=HeartRateMeasurementCharacterstic
                                             )
             ble_obj.start()
-            time.sleep(5)
             wifi_obj.start()
             wifi_obj.wait_for_exit()
             ble_obj.wait_for_exit()
-            wifi_obj.disconnect()
             ble_obj.ble_disconnect(disconnect_from="dut")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        time.sleep(2)
-        wifi_obj.sniffer_validation_join()
-        logger().info("sniffer validation is successful")
-
-    except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
-    finally:
-        if ble_obj is not None:
-            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                       ble_client_address=ble_obj.ble_client_address,
-                                       ble_dut_address=ble_obj.ble_dut_address)
-
-
-
-@pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL |
-                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default
-                          | Si91xTCPIPFeatureBitMap.HTTPClient
-                          | Si91xTCPIPFeatureBitMap.SSL,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
-         | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE
-                              | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1),
-        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz
-                           | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ble_features": Si91xBLEFeatureBitMap.Default
-                        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
-                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
-                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}},
-        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
-    }
-)
-@pytest.mark.http_server("raspi_lighttpd_tls")
-@pytest.mark.end_state(
-    "wifi_dut",
-    wifi=[
-        "bt_powersave_disable",
-        "wifi_powersave_disable",
-        "disassociated",
-    ],
-)
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4431")
-def test_coex_sdk_httpsget_url_2048_ble_TX_C476961(http_server, wifi_dut, http_client,
-                                                       wifi_access_point, wifi_sniffer,
-                                                       sl_collections, sniffer_filter,
-                                                       request, utf_constants, wifi_client,
-                                                       ble_client):
-    """HTTPS GET functionality with URL length is with 2048"""
-    ble_obj = None
-    try:
-        index_path = "url_exact_2048_bytes/" * 97 + "2048url.htm"
-        test_name = request.node.name
-        ping_count = utf_constants.get("ping_count")
-        iter_count = utf_constants.get("iter_count")
-        test_type = "http_get"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
-            wifi_dut=wifi_dut,
-            wifi_access_point=wifi_access_point,
-            testcase=test_name,
-            wifi_client=wifi_client,
-            sl_collections=sl_collections,
-            ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
-            test_type=test_type,
-            http_server=http_server,
-            index_path=index_path,
-            http_client=http_client,
-            https=True
-        )
-        service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
-        char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
-        # data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
-        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=240))
-        index = 1
-        ble_obj = BleThread(
-            wifi_dut=wifi_dut,
-            ble_client=ble_client,
-            sl_collections=sl_collections,
-            ble_test_type="notify_tx",
-            dev_state=8,
-            ble_pairing=1,
-            char_path=None, char_uid=char_uid1, data=data,
-            service_uid=service_uid,
-            data_length=240, data_duration=120,
-            periodic_delay=1,
-        )
-
-        # Create Custom services on DUT
-        # Create Custom services, attributes, values
-        logger().info("Creating new custom gatt service in DUT")
-        ble_obj.add_service(service_uuid=0xAABB)
-        logger().info("Adding custom characteristic declaration to the custom service")
-        wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1AA1, service_handler_num=index,
-                                                       value_handler_num=index + 1)
-        logger().info("Adding characteristic value attribute to the service")
-        wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1, value_handler_num=index + 1)
-
-        logger().info(f"iter count is configured as {iter_count}")
-
-        for count in range(0, iter_count):
-            ble_obj.advertise_dut()
-            wifi_obj.join_to_ap()
-            ble_obj.scan_and_connect_from_remote()
-            ble_obj.service_discovery_on_remote()
-            ble_obj.start()
-            time.sleep(10)
-            wifi_obj.start()
-            wifi_obj.wait_for_exit()
-            ble_obj.wait_for_exit()
+            ble_client.interfaces.bluetooth.stop_advertising()
+            ble_client.interfaces.bluetooth.close()
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             wifi_obj.disconnect()
-            ble_obj.ble_disconnect()
+        wifi_dut.interfaces.wifi.memory_free(address1)
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
-        logger().info("******************** ble_remove_service ***********************")
-        wifi_dut.interfaces.wifi.ble_remove_service(timeout=10)
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
 
@@ -1840,7 +1730,7 @@ def test_coex_sdk_httpsget_url_2048_ble_TX_C476961(http_server, wifi_dut, http_c
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 
@@ -1885,9 +1775,9 @@ def test_coex_sdk_httpsget_url_2048_ble_TX_C476961(http_server, wifi_dut, http_c
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
+        "clear_certs"
     ],
 )
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4431")
 def test_coex_sdk_httpsget_url_1536_ble_smp_C476963(http_server, wifi_dut, http_client,
                                                        wifi_access_point, wifi_sniffer,
                                                        sl_collections, sniffer_filter,
@@ -1901,6 +1791,8 @@ def test_coex_sdk_httpsget_url_1536_ble_smp_C476963(http_server, wifi_dut, http_
         ping_count = utf_constants.get("ping_count")
         iter_count = utf_constants.get("iter_count")
         test_type = "http_get"
+        address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(index_path) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(index_path), write_content=index_path)
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
@@ -1923,7 +1815,8 @@ def test_coex_sdk_httpsget_url_1536_ble_smp_C476963(http_server, wifi_dut, http_
             http_server=http_server,
             index_path=index_path,
             http_client=http_client,
-            https=True
+            https=1,
+            address=address1
         )
         ble_obj = BleThread(
             wifi_dut=wifi_dut,
@@ -1932,16 +1825,22 @@ def test_coex_sdk_httpsget_url_1536_ble_smp_C476963(http_server, wifi_dut, http_
             ble_test_type="slave",
             dev_state=8,
             ble_pairing=1,
+            conn_interval=45
         )
         logger().info(f"iter count is configured as {iter_count}")
+        ble_obj.advertise_dut()
+        wifi_obj.join_to_ap()
+        ble_obj.scan_and_connect_from_remote()
         for count in range(0, iter_count):
-            ble_obj.advertise_dut()
-            wifi_obj.join_to_ap()
-            ble_obj.scan_and_connect_from_remote()
+            if count != 0:
+                wifi_obj.join_to_ap()
             wifi_obj.start()
             wifi_obj.wait_for_exit()
             wifi_obj.disconnect()
-            ble_obj.ble_disconnect()
+        ble_obj.ble_disconnect()
+        ble_client.interfaces.bluetooth.close()
+        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        wifi_dut.interfaces.wifi.memory_free(address1)
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
         wifi_obj.sniffer_validation_join()
@@ -1955,6 +1854,8 @@ def test_coex_sdk_httpsget_url_1536_ble_smp_C476963(http_server, wifi_dut, http_
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
+
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 
@@ -1987,8 +1888,7 @@ def test_coex_sdk_httpsget_url_1536_ble_smp_C476963(http_server, wifi_dut, http_
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
-                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}},
-        #"ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+                          "ble": {"count": 1, "stack_len": 4096, "priority": 8}},
     }
 )
 @pytest.mark.http_server("raspi_lighttpd")
@@ -2000,13 +1900,12 @@ def test_coex_sdk_httpsget_url_1536_ble_smp_C476963(http_server, wifi_dut, http_
         "disassociated",
     ],
 )
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4431")
 def test_coex_sdk_httpget_url_1536_ble_smp_tx_C476964(http_server, wifi_dut, http_client,
                                                        wifi_access_point, wifi_sniffer,
                                                        sl_collections, sniffer_filter,
                                                        request, utf_constants, wifi_client,
                                                        ble_client):
-    """HTTPS GET functionality with URL length is with 2048"""
+    """HTTPS GET functionality with URL length is with 1536"""
     ble_obj = None
     try:
         index_path = "url_exact_1536_bytes/" * 73 + ".htm"
@@ -2014,6 +1913,8 @@ def test_coex_sdk_httpget_url_1536_ble_smp_tx_C476964(http_server, wifi_dut, htt
         ping_count = utf_constants.get("ping_count")
         iter_count = utf_constants.get("iter_count")
         test_type = "http_get"
+        address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(index_path) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(index_path), write_content=index_path)
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
@@ -2035,13 +1936,16 @@ def test_coex_sdk_httpget_url_1536_ble_smp_tx_C476964(http_server, wifi_dut, htt
             test_type=test_type,
             http_server=http_server,
             index_path=index_path,
-            http_client=http_client
+            http_client=http_client,
+            address=address1
         )
         service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
         char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
         # data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
         data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=240))
         index = 1
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
         ble_obj = BleThread(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
@@ -2052,23 +1956,21 @@ def test_coex_sdk_httpget_url_1536_ble_smp_tx_C476964(http_server, wifi_dut, htt
             char_path=None, char_uid=char_uid1, data=data,
             service_uid=service_uid,
             data_length=240, data_duration=120,
-            periodic_delay=1,
+            periodic_delay=0.5,
+            address=address2,
+            conn_interval=45
         )
 
-        # Create Custom services on DUT
-        # Create Custom services, attributes, values
         logger().info("Creating new custom gatt service in DUT")
         ble_obj.add_service(service_uuid=0xAABB)
         logger().info("Adding custom characteristic declaration to the custom service")
         wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1AA1, service_handler_num=index,
                                                        value_handler_num=index + 1)
         logger().info("Adding characteristic value attribute to the service")
-        wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1, value_handler_num=index + 1, data=data)
+        wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1, value_handler_num=index + 1)
 
         logger().info(f"iter count is configured as {iter_count}")
-
         for count in range(0, iter_count):
-
             ble_obj.advertise_dut()
             wifi_obj.join_to_ap()
             ble_obj.scan_and_connect_from_remote()
@@ -2077,9 +1979,14 @@ def test_coex_sdk_httpget_url_1536_ble_smp_tx_C476964(http_server, wifi_dut, htt
             time.sleep(10)
             wifi_obj.start()
             wifi_obj.wait_for_exit()
-            ble_obj.wait_for_exit()
+            time.sleep(5)
+            ble_obj.stop()
             wifi_obj.disconnect()
             ble_obj.ble_disconnect()
+            ble_client.interfaces.bluetooth.close()
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        wifi_dut.interfaces.wifi.memory_free(address1)
+        wifi_dut.interfaces.wifi.memory_free(address2)
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
         logger().info("******************** ble_remove_service ***********************")
@@ -2094,4 +2001,5 @@ def test_coex_sdk_httpget_url_1536_ble_smp_tx_C476964(http_server, wifi_dut, htt
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 

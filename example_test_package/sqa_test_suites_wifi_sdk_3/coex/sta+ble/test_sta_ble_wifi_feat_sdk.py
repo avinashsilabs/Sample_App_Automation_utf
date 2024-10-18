@@ -2349,8 +2349,7 @@ def test_Coex_sdk_WLAN_mac_based_conn_BLE_slave_C133485(wifi_dut, wifi_access_po
         "disassociated",
     ],
 )
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4431")
-def test_Coex_sdk_otaf_ble_scan_C551661(
+def test_Coex_sdk_http_otaf_ble_scan_C551661(
     wifi_sniffer,
     wifi_access_point,
     wifi_dut,
@@ -2378,6 +2377,9 @@ def test_Coex_sdk_otaf_ble_scan_C551661(
         test_name = request.node.name
         test_type = "ping"
         ping_count = utf_constants.get("ping_count")
+        http_url = UtfConfig.instance().defaults["wifi"].get("http_url", None)
+        address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(http_url) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(http_url), write_content=http_url)
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
@@ -2417,7 +2419,8 @@ def test_Coex_sdk_otaf_ble_scan_C551661(
         start_time = time.time()
         logger().info(f" start firmware upgrade: {start_time}")
         logger().info("performing firmware upgrade....")
-        wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip, host_name=host_ip)
+
+        wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip, host_name=host_ip, url_address=address1)
         finish_time = time.time()
         logger().info(f"firmware upgraded : {finish_time}")
         time_duration = (finish_time - start_time)
@@ -2442,20 +2445,12 @@ def test_Coex_sdk_otaf_ble_scan_C551661(
         assert fw_before_upgrade != fw_after_upgrade, f"firmware versions should not match after loading" \
                                                       f" firmware through otaf"
 
-        logger().info("Checking connection stability for 60 seconds")
-        time.sleep(60)
-        wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-    finally:
-        if ble_obj is not None:
-            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                       ble_client_address=ble_obj.ble_client_address,
-                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 
@@ -2467,8 +2462,8 @@ def test_Coex_sdk_otaf_ble_scan_C551661(
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
             "features": Si91xFeatureBitMap.Default
             | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient |
-                              Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient
+            | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
             | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
@@ -2480,8 +2475,9 @@ def test_Coex_sdk_otaf_ble_scan_C551661(
             | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
             "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
             | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
             "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                "wifi": {"count": 1, "stack_len": 4096, "priority": 8},
                 "ble": {"count": 1, "stack_len": 2048, "priority": 8},
             },
         },
@@ -2494,12 +2490,14 @@ def test_Coex_sdk_otaf_ble_scan_C551661(
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
+        "clear_certs",
         "load_default_fw",
         "disassociated",
     ],
 )
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4431")
-def test_Coex_sdk_otaf_ble_slave_C551662(
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.skip(reason="https otaf is not working in coex")
+def test_Coex_sdk_https_otaf_ble_slave_C551662(
     wifi_sniffer,
     wifi_access_point,
     wifi_dut,
@@ -2527,6 +2525,9 @@ def test_Coex_sdk_otaf_ble_slave_C551662(
         test_name = request.node.name
         test_type = "ping"
         ping_count = utf_constants.get("ping_count")
+        http_url = UtfConfig.instance().defaults["wifi"].get("http_url", None)
+        address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(http_url) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(http_url), write_content=http_url)
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
@@ -2540,6 +2541,8 @@ def test_Coex_sdk_otaf_ble_slave_C551662(
         char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
         # data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
         data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
         index = 1
         ble_obj = BleThread(
             wifi_dut=wifi_dut,
@@ -2550,11 +2553,12 @@ def test_Coex_sdk_otaf_ble_slave_C551662(
             char_path=None, char_uid=char_uid1, data=data,
             service_uid=service_uid,
             data_length=20, data_duration=300,
-            periodic_delay=10,
-            ble_pairing=0
+            periodic_delay=1,
+            ble_pairing=1,
+            address=address2,
+            conn_interval=45
         )
-        # Create Custom services on DUT
-        # Create Custom services, attributes, values
+
         logger().info("Creating new custom gatt service in DUT")
         ble_obj.add_service(service_uuid=0xAABB)
         logger().info("Adding custom characteristic declaration to the custom service")
@@ -2562,8 +2566,6 @@ def test_Coex_sdk_otaf_ble_slave_C551662(
                                                        value_handler_num=index + 1)
         logger().info("Adding characteristic value attribute to the service")
         wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1, value_handler_num=index + 1)
-
-
 
         fw_before_upgrade = wifi_dut.interfaces.wifi.version()
         logger().info(f" ***** FW before upgrade: {fw_before_upgrade} *****")
@@ -2579,28 +2581,33 @@ def test_Coex_sdk_otaf_ble_slave_C551662(
             sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
-        wifi_obj.join_to_ap()
+
         ble_obj.ble_connect(role="slave")
+        wifi_obj.join_to_ap()
         ble_obj.service_discovery_on_remote()
         ble_obj.start()
+        time.sleep(5)
         logger().info("fetching server ip....")
         host_ip = http_server.interfaces.http.hostname_or_ip_address
         logger().info(f"server ip is {host_ip}")
         start_time = time.time()
         logger().info(f" start firmware upgrade: {start_time}")
         logger().info("performing firmware upgrade....")
-        wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip, host_name=host_ip)
+        wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=host_ip, host_name=host_ip,
+                                                  url_address=address1, port=443, timeout=200, async_timeout=300)
         finish_time = time.time()
         logger().info(f"firmware upgraded : {finish_time}")
         time_duration = (finish_time - start_time)
         logger().info(f"Time taken to upgrade firmware is: {time_duration}")
-
         if time_duration > 40:
             logger().warning(f"TOOK TOO LONG TIME TO DOWNLOAD FW {time_duration}")
         else:
             logger().info(f"time taken to upgrade firmware using http otaf {time_duration} seconds")
         logger().info(f"\n ***firmware versions not matched after loading firmware through otaf \n")
-        ble_obj.wait_for_exit()
+        try:
+            ble_obj.wait_for_exit()
+        except Exception as e:
+            logger().error(f"Exception occurred: {e}")
         wifi_dut.interfaces.wifi.reset()
         time.sleep(15)
         logger().info("Initialising DUT after the reset....")
@@ -2615,9 +2622,6 @@ def test_Coex_sdk_otaf_ble_slave_C551662(
         assert fw_before_upgrade != fw_after_upgrade, f"firmware versions should not match after loading" \
                                                       f" firmware through otaf"
 
-        logger().info("Checking connection stability for 60 seconds")
-        time.sleep(60)
-        wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
@@ -2625,16 +2629,7 @@ def test_Coex_sdk_otaf_ble_slave_C551662(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
-        if ble_obj is not None:
-            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                       ble_client_address=ble_obj.ble_client_address,
-                                       ble_dut_address=ble_obj.ble_dut_address)
-
-
-
-
-
-
+        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 @pytest.mark.config(

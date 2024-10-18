@@ -165,6 +165,7 @@ class WifiJoinThread(ThreadBase):
             scan_count=5,
             mac=None,
             async_socket=0,
+            address = None,
     ):
 
         super().__init__()
@@ -199,6 +200,7 @@ class WifiJoinThread(ThreadBase):
         self.throughput_remote = None
         self.throughput_dut = None
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        self.address = address
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
 
     def check_scan_functionality(self):
@@ -216,7 +218,7 @@ class WifiJoinThread(ThreadBase):
 
         host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
-        self.throughput_remote, self.throughput_dut = self.sl_collections.run_traffic(
+        self.sl_collections.run_traffic(
             wifi_dut=self.wifi_dut,
             net_perf_client=self.net_perf_client,
             protocol=protocol,
@@ -242,14 +244,14 @@ class WifiJoinThread(ThreadBase):
         )
 
     def http_get(self):
-        mode = True if self.https else False
         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=mode)
+        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=self.https)
 
         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
             self.http_server.interfaces.http,
             self.index_path,
             server_port=self.http_server.interfaces.http.port,
+            url_address=self.address,
             timeout=100)
         status_client, content_client = self.http_client.interfaces.http.http_get(
             self.http_server.interfaces.http, self.index_path)
