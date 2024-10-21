@@ -103,7 +103,7 @@ class WLanThread(ThreadBase):
                                      associated=self.wifi_dut.interfaces.wifi.associated,
                                      ip_version='ipv6',
                                      ping_after_power_save=False,
-                                     ping_before_power_save=True,
+                                     ping_before_power_save=False,
                                      power_save=False,
                                      ipv6_type=self.addr_type,
                                      retry_count=3
@@ -141,30 +141,28 @@ class WLanThread(ThreadBase):
             time.sleep(2)
         if self.data_transfer:
             if self.traffic_type == "TX":
-                buffer_length = 1370
+                buffer_length = 1100
                 port1 = self.ssl_server.interfaces.ssl.config['device_port1']
-                self.ssl_server.interfaces.ssl.start_server()
+                self.ssl_server.interfaces.ssl.start_server(ip_version=6)
                 server_ip = self.ssl_server.interfaces.ssl.server_ip
                 # Open ssl client socket in the DUT
-                sock = self.wifi_dut.interfaces.wifi.socket()
+                sock = self.wifi_dut.interfaces.wifi.socket(domain='AF_INET6')
                 assert sock == 0, "Socket id received is wrong. expected is 0"
                 logger().info(
                     f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
                 logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
                 # Enable ssl option for socket opened
-                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP")#, option_val="tls_1_2"
                 local_port = randint(5001, 60000)
-                self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.dut_add_dict['device_ip'], server_port=local_port,
-                                              timeout=15)
-                time.sleep(3)
                 self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=self.remote_ip,
                                                           server_port=port1, ip_len=16, timeout=15)
                 pkt_count = 50000
-                time.sleep(1)
+                time.sleep(2)
                 server_socket_no = 1
                 if self.ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
                     self.ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
                 result = self.wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+                time.sleep(5)
                 logger().info(f"Number of bytes sent by dut {result}")
                 bytes_sent = result
                 bytes_received = self.ssl_server.interfaces.ssl.data_receive_stats(server_socket_no)
@@ -177,23 +175,21 @@ class WLanThread(ThreadBase):
             if self.traffic_type == "RX":
                 buffer_length = 1370
                 port1 = self.ssl_server.interfaces.ssl.config['device_port1']
-                self.ssl_server.interfaces.ssl.start_server()
+                self.ssl_server.interfaces.ssl.start_server(ip_version=6)
                 server_ip = self.ssl_server.interfaces.ssl.server_ip
                 time.sleep(2)
                 self.wifi_dut.interfaces.wifi.set_socket_config()
                 # Open ssl client socket in the DUT
                 time.sleep(2)
-                sock = self.wifi_dut.interfaces.wifi.async_sdk_socket(domain="AF_INET", stream_type="SOCK_STREAM",
+                sock = self.wifi_dut.interfaces.wifi.async_sdk_socket(domain='AF_INET6', stream_type="SOCK_STREAM",
                                                                  protocol="IPPROTO_TCP")
                 assert sock == 0, "Socket id received is wrong. expected is 0"
                 logger().info(
                     f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
                 logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
                 # Enable ssl option for socket opened
-                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP")
                 local_port = randint(5001, 60000)
-                self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.dut_add_dict['device_ip'], server_port=local_port,
-                                              timeout=15)
                 time.sleep(3)
                 self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
                                                           server_port=port1, ip_len=16, timeout=15)
@@ -542,7 +538,7 @@ def test_sdk_WLAN_IPV6_UDP_RX_C119379(
 
 @pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460", "ipv6_state": "1",
+    "wifi_access_point", wifi={"ssid": 'IPV6-Perf12', "security": "WPA2", "passphrase": "231469460", "ipv6_state": "1",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -616,7 +612,7 @@ def test_sdk_WLAN_SSL_IPV6_TX_C119382(
 
 @pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460", "ipv6_state": "1",
+    "wifi_access_point", wifi={"ssid": 'IPV6-Perf12', "security": "WPA2", "passphrase": "231469460", "ipv6_state": "1",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -624,8 +620,6 @@ def test_sdk_WLAN_SSL_IPV6_TX_C119382(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -661,9 +655,7 @@ def test_sdk_WLAN_SSL_IPV6_RX_C119384(
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
-        net_perf_client,
-        protocol,
+        sniffer_filter
 ):
     try:
 
