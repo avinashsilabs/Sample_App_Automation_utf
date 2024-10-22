@@ -209,7 +209,7 @@ class WifiJoinThread(ThreadBase):
         if self.test_case_no == 20750 or self.test_case_no == 20751 or self.test_case_no == 20748 or \
                 self.test_case_no == 20749:
             logger().info(f"BLE Data Transfer is going to start")
-            ble_data = ble_notify(self.wifi_dut)
+            ble_data = ble_notify(self.wifi_dut, self.ble_client_address)
             ble_data.start()
         time.sleep(2)
         self.wifi_dut.interfaces.wifi.switch_host_frequency()
@@ -288,8 +288,6 @@ class WifiJoinThread(ThreadBase):
             if self.traffic_type == "TX":
                 buffer_length = 1370
                 port1 = self.ssl_server.interfaces.ssl.config['device_port1']
-                self.ssl_server.interfaces.ssl.start_server()
-                server_ip = self.ssl_server.interfaces.ssl.server_ip
                 # Open ssl client socket in the DUT
                 sock = self.wifi_dut.interfaces.wifi.socket()
                 assert sock == 0, "Socket id received is wrong. expected is 0"
@@ -301,6 +299,8 @@ class WifiJoinThread(ThreadBase):
                 local_port = randint(5001, 60000)
                 self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.dut_addr['device_ip'], server_port=local_port,
                                                    timeout=15)
+                self.ssl_server.interfaces.ssl.start_server()
+                server_ip = self.ssl_server.interfaces.ssl.server_ip
                 time.sleep(3)
                 self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
                                                                server_port=port1)
