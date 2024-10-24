@@ -99,6 +99,33 @@ class WLanThread(ThreadBase):
                 self.wifi_sniffer.interfaces.capture.stop_capture()
 
                 return
+                
+            if self.test_name == '37576':
+                logger().info('\n*** Configuring Sniffer with WAP channel ***\n')
+                self.wifi_sniffer.interfaces.capture.configure_interface(
+                    channel=self.wifi_access_point.interfaces.wifi.channel)
+                self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+
+                for _ in range(5):
+                    self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                             wifi_access_point=self.wifi_access_point,
+                                                                             associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                             channel=self.wifi_access_point.interfaces.wifi.channel)
+
+                    self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
+                    self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+
+                    self.wifi_dut.interfaces.http.http_put(self.http_server.interfaces.http, self.index_path,
+                                                           server_port=443)
+
+                    self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                    self.wifi_dut.interfaces.wifi.leave()
+
+                logger().info("Stopping sniffer capture")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+
+                return
 
             logger().info('\n*** Configuring Sniffer with WAP channel ***\n')
             self.wifi_sniffer.interfaces.capture.configure_interface(
@@ -148,12 +175,12 @@ class WLanThread(ThreadBase):
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.DNSClient,
     }
 )
-@pytest.mark.http_server("static_http")
-@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_http_put_functionality_c19231(http_server, wifi_dut, sniffer_filter,
                                                 wifi_sniffer, wifi_access_point, index_path,
-                                                sl_collections):
+                                                sl_collections, http_client):
     """HTTP PUT create functionality by enabling http feature in oper-mode"""
     try:
         test_name = '19231'
@@ -192,8 +219,8 @@ def test_wifi_sdk_http_put_functionality_c19231(http_server, wifi_dut, sniffer_f
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.DNSClient,
     }
 )
-@pytest.mark.http_server("static_http")
-@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_http_get_after_put_functionality_c19232(http_server, wifi_dut, sniffer_filter, wifi_sniffer,
                                                           wifi_access_point, index_path, sl_collections):
@@ -210,15 +237,16 @@ def test_wifi_sdk_http_get_after_put_functionality_c19232(http_server, wifi_dut,
 
         wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path, server_port=80)
 
+        wifi_dut.interfaces.wifi.http_client_deinit()
+
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
         power_save_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=wlan_obj.ap_mac_address,
             filter_name="power_mgmt_bit")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=power_save_filter)[
                    'packet_count'] > 0, "Unable to find NULL-Data frame packets with power save bit = 1"
-        wifi_dut.interfaces.wifi.http_client_deinit()
-
-        logger().info("Stopping sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -239,8 +267,8 @@ def test_wifi_sdk_http_get_after_put_functionality_c19232(http_server, wifi_dut,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.DNSClient,
     }
 )
-@pytest.mark.http_server("static_http")
-@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_http_post_after_put_functionality_c19233(http_server, wifi_dut, sniffer_filter, wifi_sniffer,
                                                            wifi_access_point, index_path, sl_collections):
@@ -274,7 +302,6 @@ def test_wifi_sdk_http_post_after_put_functionality_c19233(http_server, wifi_dut
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -289,11 +316,12 @@ def test_wifi_sdk_http_post_after_put_functionality_c19233(http_server, wifi_dut
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.DNSClient,
     }
 )
-@pytest.mark.http_server("static_http")
-@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_http_put_functionality_with_exact_buffer_c19234(http_server, wifi_dut, sniffer_filter, wifi_sniffer,
-                                                                  wifi_access_point, index_path, sl_collections):
+                                                                  wifi_access_point, index_path, sl_collections,
+                                                                  http_client):
     """	http put packet functionality with exact data buffer with the given buffer size"""
     try:
         test_name = '19231'
@@ -303,6 +331,12 @@ def test_wifi_sdk_http_put_functionality_with_exact_buffer_c19234(http_server, w
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wifi_dut.interfaces.http.http_put(http_server.interfaces.http, index_path)
+
+        wifi_dut.interfaces.wifi.http_client_deinit()
+
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
         power_save_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=wlan_obj.ap_mac_address,
             filter_name="power_mgmt_bit")
@@ -311,11 +345,6 @@ def test_wifi_sdk_http_put_functionality_with_exact_buffer_c19234(http_server, w
 
         status_client, content_client = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
         assert status_client, "failed to load the https data"
-
-        wifi_dut.interfaces.wifi.http_client_deinit()
-
-        logger().info("Stopping sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -335,11 +364,11 @@ def test_wifi_sdk_http_put_functionality_with_exact_buffer_c19234(http_server, w
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.DNSClient,
     }
 )
-@pytest.mark.http_server("static_http")
-@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_http_put_without_wlan_disconnect_c37541(http_server, wifi_dut, sniffer_filter, wifi_sniffer,
-                                                          wifi_access_point, index_path,
+                                                          wifi_access_point, index_path, http_client,
                                                           sl_collections):
     """Verify whether if HTTP PUT without WLAN disconnect"""
     try:
@@ -367,11 +396,11 @@ def test_wifi_sdk_http_put_without_wlan_disconnect_c37541(http_server, wifi_dut,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.DNSClient,
     }
 )
-@pytest.mark.http_server("static_http")
-@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_http_put_without_extended_header_c37573(http_server, wifi_dut, sniffer_filter, wifi_sniffer,
-                                                          wifi_access_point, index_path,
+                                                          wifi_access_point, index_path, http_client,
                                                           sl_collections):
     """HTTP PUT Functionality when the extended Header is not provided"""
     try:
@@ -382,20 +411,20 @@ def test_wifi_sdk_http_put_without_extended_header_c37573(http_server, wifi_dut,
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         wifi_dut.interfaces.http.http_put(http_server.interfaces.http, index_path)
+        wifi_dut.interfaces.wifi.http_client_deinit()
+
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
         power_save_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=wlan_obj.ap_mac_address,
             filter_name="power_mgmt_bit")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=power_save_filter)[
                    'packet_count'], "Unable to find NULL-Data frame packets with power save bit = 1"
-        wifi_dut.interfaces.wifi.http_client_deinit()
-
-        logger().info("Stopping sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1",
                                "wan_ipv6_address": WLanThread().random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
@@ -415,7 +444,7 @@ def test_wifi_sdk_http_put_without_extended_header_c37573(http_server, wifi_dut,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
     }
 )
-@pytest.mark.http_server("static_http")
+@pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 def test_wifi_sdk_http_put_with_ipv6_stateful_c537908(http_server, wifi_dut, http_client, wifi_access_point,
                                                       wifi_sniffer, sl_collections, sniffer_filter, wifi_client):
@@ -427,6 +456,39 @@ def test_wifi_sdk_http_put_with_ipv6_stateful_c537908(http_server, wifi_dut, htt
                               test_name=test_name, sl_collections=sl_collections, http_server=http_server,
                               index_path=index_path,
                               sniffer_filter=sniffer_filter)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": 0,
+        "features": Si91xFeatureBitMap.OpenMode,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.DNSClient,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_https_put_functionality_c37576(http_server, wifi_dut, http_client, wifi_access_point, wifi_sniffer,
+                                                 sl_collections, sniffer_filter, wifi_client, index_path):
+    """HTTPs PUT Functionality when the extended Header is not provided"""
+    try:
+        test_name = '37576'
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              http_client=http_client, wifi_client=wifi_client,
+                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                              index_path=index_path, sniffer_filter=sniffer_filter)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as e:
