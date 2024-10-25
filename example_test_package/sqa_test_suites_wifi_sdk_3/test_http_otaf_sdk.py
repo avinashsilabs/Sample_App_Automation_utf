@@ -1,4 +1,3 @@
-from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.utils import print_dict
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, \
@@ -11,6 +10,7 @@ from utf.utils.thread_base import ThreadBase
 from utf.utils.iperf.iperf_utils import get_host_ip, ping
 from utf.utils.stopwatch import Stopwatch
 from utf.interfaces.wifi import WlanError
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 
 """This function runs below test steps for DUT-Si91x
         1. Configuration of DUT in 2G : BGN
@@ -43,7 +43,8 @@ def __print_throughput(iperf_throughput: dict):
 
 class WifiJoin(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, net_perf_client=None, wifi_client=None,
-                 protocol=None, capture_filename=None, sl_collections=None, http_server=None, test_case_no=None):
+                 protocol=None, capture_filename=None, sl_collections=None, http_server=None, test_case_no=None,
+                 rps_path=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -56,6 +57,7 @@ class WifiJoin(ThreadBase):
         self.dut_addr = None
         self.http_server = http_server
         self.test_case_no = test_case_no
+        self.rps_path = rps_path
 
     def get_firmware_status(self):
         self.wifi_dut.interfaces.wifi.reset()
@@ -106,19 +108,12 @@ class WifiJoin(ThreadBase):
 
             logger().info("join WIFI network...")
             self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
+                                                                     retry_count=3,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated,
                                                                      power_save=False)
             time.sleep(2)
             start_time = time.time()
             logger().info(f" start firmware upgrade: {start_time}")
-
-            if self.test_case_no == 19795:
-                with pytest.raises(WlanError) as exc_info:
-                    logger().info("performing fw upgrade on dut non rps ...")
-                    self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/cgi-bin/cgi_example.py", host_ip)
-                    time.sleep(100)
-                assert exc_info.value.error_code == 0x1FFFD, "observed wrong error code expected is 0x1FFFD"
-                self.get_firmware_status()
 
             if self.test_case_no == 19800:
                 with pytest.raises(WlanError) as exc_info:
@@ -128,52 +123,64 @@ class WifiJoin(ThreadBase):
                 assert exc_info.value.error_code == 0x1FFF9, "observed wrong error code expected is 0xFFF9"
                 self.get_firmware_status()
 
-            if self.test_case_no == 19794:
-                with pytest.raises(WlanError) as exc_info:
-                    logger().info("performing fw upgrade on dut with empty rps file....")
-                    self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.0.0.6_corrupted_remove.rps",
-                                                                   host_ip)
-                    time.sleep(100)
-                assert exc_info.value.error_code == 0x1FFFD, "observed wrong error code expected is 0x1FFFD"
-
-                with pytest.raises(WlanError) as exc_info:
-                    logger().info("performing fw upgrade on dut by adding some content to  rps....")
-                    self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6_corrupted_add.rps",
-                                                                   host_ip)
-                    time.sleep(100)
-                assert exc_info.value.error_code == 0xBB41, "observed wrong error code expected is 0xBB41"
+            if self.test_case_no == 19797:
+                logger().info("performing fw upgrade on dut by using corrupted rps file add lines at end ....")
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip,
+                                                               host_name=host_ip,
+                                                               http_url='/SiWG917-B.2.13.3.0.0.5_corrupt_add.rps',
+                                                               expected_status=SLStatus.SL_STATUS_SI91X_INVALID_LENGTH)
+                time.sleep(5)
                 self.get_firmware_status()
+                logger().info("join WIFI network...")
+                self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
+                                                                         retry_count=3,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                         power_save=False)
+                logger().info("performing fw upgrade on dut by using corrupted rps file  remove lines at end ....")
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip,
+                                                               host_name=host_ip,
+                                                               http_url='/SiWG917-B.2.13.3.0.0.5_corrupt_remove.rps',
+                                                               expected_status=SLStatus.SL_STATUS_SI91X_HTTP_OTAF_INVALID_PACKET)
+
+                logger().info("stop Sniffer capture...")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                self.get_firmware_status()
+                return
 
             if self.test_case_no == 19798:
-                with pytest.raises(WlanError) as exc_info:
-                    logger().info("performing fw upgrade on dut by removing data in .xls file....")
-                    self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6_empty.xls",
-                                                                   host_ip)
-                    time.sleep(120)
-                assert exc_info.value.error_code == 0x1FFFD, "observed wrong error code expected is 0x1FFFD"
-
-                with pytest.raises(WlanError) as exc_info:
-                    logger().info("performing fw upgrade on dut by removing data in .xls file....")
-                    self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6_empty.txt",
-                                                                   host_ip)
-                    time.sleep(120)
-                assert exc_info.value.error_code == 0x1FFFD, "observed wrong error code expected is 0x1FFFD"
-
-                with pytest.raises(WlanError) as exc_info:
-                    logger().info("performing fw upgrade on dut by removing data in .xls file....")
-                    self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6_empty.docx",
-                                                                   host_ip)
-                    time.sleep(120)
-                assert exc_info.value.error_code == 0x1FFFD, "observed wrong error code expected is 0x1FFFD"
-
-            if self.test_case_no == 19797:
-                with pytest.raises(WlanError) as exc_info:
-                    logger().info("performing fw upgrade on dut by adding data in .xls file....")
-                    self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6_add.xls",
-                                                                   host_ip)
-                    time.sleep(120)
-                assert exc_info.value.error_code == 0xBB41, "observed wrong error code expected is 0xBB41"
+                logger().info("performing fw upgrade on dut by using excel xls file....")
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip,
+                                                               host_name=host_ip, http_url='/excel.xlsx',
+                                                               expected_status=SLStatus.SL_STATUS_SI91X_CORRUPTED_RPS_HEADER)
+                time.sleep(5)
                 self.get_firmware_status()
+
+                logger().info("join WIFI network...")
+                self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
+                                                                         retry_count=3,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                         power_save=False)
+                logger().info("performing fw upgrade on dut by using text file....")
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip,
+                                                               host_name=host_ip, http_url='/text_file.txt',
+                                                               expected_status=SLStatus.SL_STATUS_SI91X_CORRUPTED_RPS_HEADER)
+                time.sleep(5)
+                self.get_firmware_status()
+
+                logger().info("join WIFI network...")
+                self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
+                                                                         retry_count=3,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                         power_save=False)
+                logger().info("performing fw upgrade on dut by using word docx file....")
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip,
+                                                               host_name=host_ip, http_url='/word_file.docx',
+                                                               expected_status=SLStatus.SL_STATUS_SI91X_CORRUPTED_RPS_HEADER)
+
+                logger().info("stop Sniffer capture...")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                self.get_firmware_status()
+                return
 
             if self.test_case_no == 19799:
                 with pytest.raises(WlanError) as exc_info:
@@ -183,6 +190,23 @@ class WifiJoin(ThreadBase):
                 assert exc_info.value.error_code == 0x1FF74, "observed wrong error code expected is 0x1FF74"
                 time.sleep(3)
                 self.get_firmware_status()
+
+            if self.test_case_no == 498660:
+                logger().info("performing firmware upgrade....")
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip, http_url=self.rps_path,
+                                                               host_name=host_ip)
+                logger().info("Stop Sniffer finally")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                self.wifi_dut.interfaces.wifi.reset()
+                return
+
+            if self.test_case_no == 652582:
+                logger().info("performing firmware upgrade....")
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip, extended_header='HTTPS_SUPPORT',
+                                                               host_name=host_ip)
+                logger().info("Stop Sniffer finally")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+
 
             else:
                 logger().info("performing firmware upgrade....")
@@ -233,7 +257,7 @@ class WifiJoin(ThreadBase):
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-def test_sdk_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780(http_server, wifi_sniffer, wifi_access_point,
+def test_sdk_http_fw_upgrade_in_STA_alone_mode_and_measure_time_c19780(http_server, wifi_sniffer, wifi_access_point,
                                                                        wifi_dut, request, wifi_client, sl_collections,
                                                                        sniffer_filter):
     capture_filename = request.node.name
@@ -278,7 +302,7 @@ def test_sdk_http_fw_upgrade_in_STA_alone_mode_and_measure_time_C19780(http_serv
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-def test_sdk_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server, wifi_sniffer, wifi_access_point,
+def test_sdk_http_fw_upgrade_in_sta_ble_mode_and_measure_time_c19782(http_server, wifi_sniffer, wifi_access_point,
                                                                      wifi_dut, request, wifi_client, sl_collections,
                                                                      sniffer_filter):
     capture_filename = request.node.name
@@ -320,7 +344,7 @@ def test_sdk_http_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19782(http_server
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
     },
 )
-def test_sdk_http_fw_upgrade_failure_with_empty_rps_C19800(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
+def test_sdk_http_fw_upgrade_failure_with_empty_rps_c19800(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                            request, wifi_client, sl_collections, sniffer_filter):
     capture_filename = request.node.name
     try:
@@ -363,7 +387,8 @@ def test_sdk_http_fw_upgrade_failure_with_empty_rps_C19800(http_server, wifi_sni
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
     },
 )
-def test_sdk_http_fw_upgrade_failure_without_enabling_http_C19799(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
+def test_sdk_http_fw_upgrade_failure_without_enabling_http_c19799(http_server, wifi_sniffer, wifi_access_point,
+                                                                  wifi_dut,
                                                                   request, wifi_client, sl_collections, sniffer_filter):
     capture_filename = request.node.name
     try:
@@ -406,7 +431,7 @@ def test_sdk_http_fw_upgrade_failure_without_enabling_http_C19799(http_server, w
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
     },
 )
-def test_sdk_fw_upgrade_failure_when_STA_is_not_connected_C19779(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
+def test_sdk_fw_upgrade_failure_when_STA_is_not_connected_c19779(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                                  request, wifi_client, sl_collections, sniffer_filter):
     capture_filename = request.node.name
     try:
@@ -445,46 +470,8 @@ def test_sdk_fw_upgrade_failure_when_STA_is_not_connected_C19779(http_server, wi
 
     },
 )
-def test_sdk_http_fw_upgrade_failure_with_non_rps_C19798(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
-                                                              request,wifi_client, sl_collections, sniffer_filter):
-    capture_filename = request.node.name
-    try:
-        logger().info(f"******** AP MAC ADD *******")
-        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-        logger().info(f"ap mac is {ap_mac_address}")
-        logger().info(f"***** Start get IP address ******")
-        host_ip = wifi_client.interfaces.wifi.get_ip_address()
-        logger().info(f"host ip is {host_ip}")
-        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                            wifi_client=wifi_client, capture_filename=capture_filename, sl_collections=sl_collections,
-                            http_server=http_server, test_case_no=19798)
-        wifi_obj.start()
-        wifi_obj.wait_for_exit()
-
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default
-                          | Si91xTCPIPFeatureBitMap.SSL
-                          | Si91xTCPIPFeatureBitMap.LoadSSLCertificatesToRAM
-                          | Si91xTCPIPFeatureBitMap.LoadPublicPrivateCerts,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF | Si91xExtTCPIPFeatureBitMap.Default
-
-    },
-)
-def test_http_fw_upgrade_failure_with_junk_rps_C19797(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
-                                                              request,wifi_client, sl_collections, sniffer_filter):
+def test_http_fw_upgrade_failure_with_junk_rps_c19797(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
+                                                      request, wifi_client, sl_collections, sniffer_filter):
     capture_filename = request.node.name
     try:
         logger().info(f"******** AP MAC ADD *******")
@@ -525,7 +512,7 @@ def test_http_fw_upgrade_failure_with_junk_rps_C19797(http_server, wifi_sniffer,
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
     },
 )
-def test_sdk_http_fw_upgrade_failure_when_enabled_only_ble_C19796(http_server, wifi_sniffer, wifi_access_point,
+def test_sdk_http_fw_upgrade_failure_when_enabled_only_ble_c19796(http_server, wifi_sniffer, wifi_access_point,
                                                                   wifi_dut,
                                                                   request, wifi_client, sl_collections, sniffer_filter):
     capture_filename = request.node.name
@@ -542,131 +529,6 @@ def test_sdk_http_fw_upgrade_failure_when_enabled_only_ble_C19796(http_server, w
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.reset()
-
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default
-                          | Si91xTCPIPFeatureBitMap.SSL
-                          | Si91xTCPIPFeatureBitMap.LoadSSLCertificatesToRAM
-                          | Si91xTCPIPFeatureBitMap.LoadPublicPrivateCerts,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF | Si91xExtTCPIPFeatureBitMap.Default
-
-    },
-)
-def test_http_fw_upgrade_over_night_C19793(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
-                                           request,wifi_client, sl_collections, sniffer_filter,utf_constants):
-    try:
-        time_duration = utf_constants.get("time_duration")
-        sw = Stopwatch()
-        logger().info(f"Time duration is {time_duration} Mins")
-        capture_filename = request.node.name
-        while sw.elapsed_sec < time_duration:
-            logger().info(f"******** AP MAC ADD *******")
-            ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-            logger().info(f"ap mac is {ap_mac_address}")
-            logger().info(f"***** Start get IP address ******")
-            host_ip = wifi_client.interfaces.wifi.get_ip_address()
-            logger().info(f"host ip is {host_ip}")
-            wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                                wifi_client=wifi_client, capture_filename=capture_filename, sl_collections=sl_collections,
-                                http_server=http_server, test_case_no=19793)
-            wifi_obj.start()
-            wifi_obj.wait_for_exit()
-
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default
-                          | Si91xTCPIPFeatureBitMap.SSL
-                          | Si91xTCPIPFeatureBitMap.LoadSSLCertificatesToRAM
-                          | Si91xTCPIPFeatureBitMap.LoadPublicPrivateCerts,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF | Si91xExtTCPIPFeatureBitMap.Default
-
-    },
-)
-def test_sdk_http_fw_upgrade_over_night_corrupted_file_C19794(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
-                                           request,wifi_client, sl_collections, sniffer_filter, utf_constants):
-    try:
-        time_duration = utf_constants.get("time_duration")
-        sw = Stopwatch()
-        logger().info(f"Time duration is {time_duration} Mins")
-        capture_filename = request.node.name
-        while sw.elapsed_sec < time_duration:
-            logger().info(f"******** AP MAC ADD *******")
-            ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-            logger().info(f"ap mac is {ap_mac_address}")
-            logger().info(f"***** Start get IP address ******")
-            host_ip = wifi_client.interfaces.wifi.get_ip_address()
-            logger().info(f"host ip is {host_ip}")
-            wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                                wifi_client=wifi_client, capture_filename=capture_filename, sl_collections=sl_collections,
-                                http_server=http_server, test_case_no=19794)
-            wifi_obj.start()
-            wifi_obj.wait_for_exit()
-
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default
-                          | Si91xTCPIPFeatureBitMap.SSL
-                          | Si91xTCPIPFeatureBitMap.LoadSSLCertificatesToRAM
-                          | Si91xTCPIPFeatureBitMap.LoadPublicPrivateCerts,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF | Si91xExtTCPIPFeatureBitMap.Default
-
-    },
-)
-def test_sdk_http_fw_upgrade_over_night_corrupted_file_C19795(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
-                                           request,wifi_client, sl_collections, sniffer_filter, utf_constants):
-    try:
-        time_duration = utf_constants.get("time_duration")
-        sw = Stopwatch()
-        logger().info(f"Time duration is {time_duration} Mins")
-        capture_filename = request.node.name
-        while sw.elapsed_sec < time_duration:
-            logger().info(f"******** AP MAC ADD *******")
-            ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-            logger().info(f"ap mac is {ap_mac_address}")
-            logger().info(f"***** Start get IP address ******")
-            host_ip = wifi_client.interfaces.wifi.get_ip_address()
-            logger().info(f"host ip is {host_ip}")
-            wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                                wifi_client=wifi_client, capture_filename=capture_filename, sl_collections=sl_collections,
-                                http_server=http_server, test_case_no=19795)
-            wifi_obj.start()
-            wifi_obj.wait_for_exit()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -706,7 +568,7 @@ def test_sdk_http_fw_upgrade_over_night_corrupted_file_C19795(http_server, wifi_
 )
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19784(http_server, wifi_sniffer, wifi_dut, wifi_access_point,
+def test_http_fw_upgrade_in_conc_mode_and_measure_time_c19784(http_server, wifi_sniffer, wifi_dut, wifi_access_point,
                                                               request, sl_collections, wifi_client, utf_constants,
                                                               sniffer_filter):
     capture_filename = request.node.name
@@ -720,8 +582,9 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19784(http_server, wifi_
         logger().info(f" ***** FW before upgrade: {fw_before_upgrade} *****")
 
         logger().info("join WIFI network...")
-        sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, associated=wifi_dut.interfaces.wifi.associated,
-                                            power_save=False, retry_count=3)
+        sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, retry_count=3,
+                                            associated=wifi_dut.interfaces.wifi.associated,
+                                            power_save=False, )
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
                                                   static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
@@ -786,6 +649,141 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19784(http_server, wifi_
         logger().info(f"\n ***firmware versions not matched after loading firmware through otaf \n")
         time.sleep(5)
         wifi_dut.interfaces.wifi.reset()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
+                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF | Si91xExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_sdk_http_fw_upgrade_using_c19798(http_server, wifi_sniffer, wifi_access_point,
+                                          wifi_dut, request, wifi_client, sl_collections
+                                          ):
+    ''' verify the firmware upgrade functionality unsuccessful with non rps format(text or word or xls file)  '''
+    capture_filename = request.node.name
+    try:
+        logger().info(f"******** AP MAC ADD *******")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"***** Start get IP address ******")
+        logger().info(f"ap mac is {ap_mac_address}")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"host ip is {host_ip}")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                            wifi_client=wifi_client, capture_filename=capture_filename,
+                            sl_collections=sl_collections, http_server=http_server, test_case_no=19798)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
+                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF | Si91xExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_sdk_http_fw_upgrade_using_c498660(http_server, wifi_sniffer, wifi_access_point,
+                                           wifi_dut, request, wifi_client, sl_collections,
+                                           utf_constants):
+    ''' Verify M4 firmware update functionality using HTTP otaf (port 80)with local apache server  '''
+    capture_filename = request.node.name
+    try:
+        rps_path = utf_constants.get("m4_rps_plain")
+        logger().info(f"******** AP MAC ADD *******")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"***** Start get IP address ******")
+        logger().info(f"ap mac is {ap_mac_address}")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"host ip is {host_ip}")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                            wifi_client=wifi_client, capture_filename=capture_filename, rps_path=rps_path,
+                            sl_collections=sl_collections, http_server=http_server, test_case_no=498660)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
+                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF | Si91xExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_sdk_http_fw_upgrade_using_extended_header_c652582(http_server, wifi_sniffer, wifi_access_point,
+                                                           wifi_dut, request, wifi_client, sl_collections):
+    ''' Verify HTTP OTAF with extended header enable using Apache server  '''
+    capture_filename = request.node.name
+    try:
+        logger().info(f"******** AP MAC ADD *******")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"***** Start get IP address ******")
+        logger().info(f"ap mac is {ap_mac_address}")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"host ip is {host_ip}")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                            wifi_client=wifi_client, capture_filename=capture_filename,
+                            sl_collections=sl_collections, http_server=http_server, test_case_no=652582)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

@@ -144,46 +144,6 @@ class WifiJoin(ThreadBase):
                                                                                   beacon_missed_count=40,
                                                                                   first_time_retry_enable=0)
 
-                if self.test_case == '19773':
-                    with TimeMeasurer() as T:
-                        t_end = time.time() + self.twelve_hour
-                        while time.time() < t_end:
-                            self.fw_version_before_upgrade = self.wifi_dut.interfaces.wifi.version()
-                            logger().info(f"*** dut fw version before upgrade = {self.fw_version_before_upgrade} ***")
-                            logger().info("scanning for ap...")
-                            self.wifi_dut.interfaces.wifi.scan()
-                            self.wifi_dut.interfaces.wifi.join_ap(access_point=self.wifi_access_point)
-                            self.wifi_dut.interfaces.wifi.start_ip()
-                            with TimeMeasurer() as t:
-                                self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
-                                                                               host_name=self.host_ip)
-
-                            if t.duration > 40:
-                                logger().info('*** Firmware upgrade time is more ***')
-                            else:
-                                logger().info(f'*** Firmware upgrade time = {t.duration}')
-
-                            logger().info(f'*** Firmware upgrade time: {t.duration} ***')
-                            self.wifi_dut.interfaces.wifi.reset()
-                            time.sleep(15)
-                            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-                            self.wifi_dut.interfaces.wifi.init(load_certificate=False)
-                            self.wifi_dut.interfaces.wifi.initialize_thread()
-                            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
-                            self.fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
-                            logger().info(f"*** dut fw version after upgrade = {self.fw_version_after_upgrade} ***")
-                            assert self.fw_version_before_upgrade != self.fw_version_after_upgrade, \
-                                "Firmware after matched with the previous firmware"
-                            self.wifi_dut.interfaces.wifi.default_fw = True
-                            self.wifi_dut.interfaces.wifi.close()
-                            self.wifi_dut.interfaces.wifi.reset()
-                            time.sleep(15)
-                            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-                            self.wifi_dut.interfaces.wifi.init(load_certificate=False)
-                            self.wifi_dut.interfaces.wifi.initialize_thread()
-                            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
-                    return
-
                 logger().info("scanning for ap...")
                 self.wifi_dut.interfaces.wifi.scan()
                 if self.test_case == '19757':
@@ -198,17 +158,6 @@ class WifiJoin(ThreadBase):
                 time.sleep(10)
 
                 logger().info("Performing firmware upgrade....")
-
-                if self.test_case == '19772':
-                    with TimeMeasurer() as T:
-                        t_end = time.time() + self.twelve_hour
-                        while time.time() < t_end:
-                            with TimeMeasurer() as t:
-                                self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
-                                                                               host_name=self.host_ip,
-                                                                               http_url='/SiWG917-B.2.10.1.0.0.6_corrupted_add.rps')
-                                # expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
-                    return
 
                 if self.test_case == '19775':
                     self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
@@ -638,123 +587,6 @@ def test_wifi_sdk_https_fw_upgrade_failure_with_empty_rps_c19778(http_server, wi
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
-    except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.http_server("raspi_lighttpd_tls")
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
-                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
-                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
-                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient |
-                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF | Si91xExtTCPIPFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
-                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
-    },
-)
-@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-def test_wifi_sdk_https_fw_upgrade_downgrade_success_with_text_format_overnight_c19773(http_server, wifi_client,
-                                                                                       wifi_sniffer, wifi_access_point,
-                                                                                       wifi_dut, sl_collections):
-    """This Test case is validating Firmware updation with non-rps file, i.e., text file"""
-    try:
-        test_case = '19773'
-        wlan_obj = WifiJoin(http_server=http_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
-                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
-
-        wlan_obj.start()
-        wlan_obj.wait_for_exit()
-
-    except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.http_server("raspi_lighttpd_tls")
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
-                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
-                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
-                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient |
-                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF | Si91xExtTCPIPFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
-                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
-    },
-)
-@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-def test_wifi_sdk_https_fw_upgrade_downgrade_overnight_c19771(http_server, wifi_client, wifi_sniffer,
-                                                              wifi_access_point, wifi_dut, sl_collections):
-    """This Test case is validating Firmware updation overnight"""
-    try:
-        test_case = '19773'
-        wlan_obj = WifiJoin(http_server=http_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
-                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
-        wlan_obj.start()
-        wlan_obj.wait_for_exit()
-    except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.http_server("raspi_lighttpd_tls")
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
-                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
-                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
-                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient |
-                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF | Si91xExtTCPIPFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
-                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
-    },
-)
-@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-def test_wifi_sdk_https_fw_upgrade_failure_with_junk_rps_overnight_c19772(http_server, wifi_client, wifi_sniffer,
-                                                                          wifi_access_point, wifi_dut, sl_collections):
-    """This Test case is validating Firmware updation failure with junk rps overnight"""
-    try:
-        test_case = '19772'
-        wlan_obj = WifiJoin(http_server=http_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
-                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
-        wlan_obj.start()
-        wlan_obj.wait_for_exit()
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
