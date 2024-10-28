@@ -1,14 +1,17 @@
 import re
 import pytest
 import time
+import datetime
 import os
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap,\
     Si91xTCPIPFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xBTFeatureBitMap,\
     Si91xCustomFeatureBitMap, Si91xBLECustomFeatureBitMap, Si91xBLEFeatureBitMap, Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes
 from utf.utils.logger import get_logger
 from utf.utils.time_measurer import TimeMeasurer
+from utf.interfaces.bluetooth import BLEDeviceState
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
 from utf.utils.stopwatch import Stopwatch
+import pandas as pd
 
 
 def logger():
@@ -84,8 +87,15 @@ def ble_adv_and_scan(ble_dut=None, ble_client=None, ble_sniffer=None, capture_fi
     file_size = os.path.getsize(exported_csv_file)
     assert file_size > 0
     sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-    logger().info(sniffer_data_df.head())
-    assert sniffer_data_df is not None
+    filtered_df = sniffer_data_df[sniffer_data_df['Chan'].isin([37, 38, 39])]
+    result = []
+    for channel in filtered_df['Chan'].unique():
+        channel_data = filtered_df[filtered_df['Chan'] == channel]
+        if 'SCAN_REQ' in channel_data['Type'].values and 'SCAN_RSP' in channel_data['Type'].values:
+            for request_type in ['SCAN_REQ', 'SCAN_RSP']:
+                result.append([channel, request_type])
+    logger().info(f" channel response : {result}")
+    assert len(result)>1, f"Testcase failed with No scan response and scan request on same channel"
 
 
 pytestmark=[
@@ -308,7 +318,6 @@ def test_ble_sdk_same_scan_interval_and_window_C19819(ble_dut, ble_client, sl_co
             ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address,
                                                             ble_scan_interval=ble_scan_interval,
                                                             ble_scan_window=ble_scan_window, timeout=120)
-            # time.sleep(3)
             logger().info("stop scanning")
             ble_dut.interfaces.bluetooth.ble_stop_scanning()
 
@@ -342,7 +351,15 @@ def test_ble_sdk_same_scan_interval_and_window_C19819(ble_dut, ble_client, sl_co
             file_size = os.path.getsize(exported_csv_file)
             assert file_size > 0
             sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-            assert sniffer_data_df is not None
+            filtered_df = sniffer_data_df[sniffer_data_df['Chan'].isin([37, 38, 39])]
+            result = []
+            for channel in filtered_df['Chan'].unique():
+                channel_data = filtered_df[filtered_df['Chan'] == channel]
+                if 'SCAN_REQ' in channel_data['Type'].values and 'SCAN_RSP' in channel_data['Type'].values:
+                    for request_type in ['SCAN_REQ', 'SCAN_RSP']:
+                        result.append([channel, request_type])
+            logger().info(f" channel response : {result}")
+            assert len(result) > 1, f"Testcase failed with No scan response and scan request on same channel"
         logger().info(f"time taken for test {t.duration}")
 
     except Exception as error:
@@ -432,11 +449,20 @@ def test_ble_sdk_same_scan_interval_and_window_C537346(ble_dut, ble_client, sl_c
             file_size = os.path.getsize(exported_csv_file)
             assert file_size > 0
             sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-            assert sniffer_data_df is not None
+            filtered_df = sniffer_data_df[sniffer_data_df['Chan'].isin([37, 38, 39])]
+            result = []
+            for channel in filtered_df['Chan'].unique():
+                channel_data = filtered_df[filtered_df['Chan'] == channel]
+                if 'SCAN_REQ' in channel_data['Type'].values and 'SCAN_RSP' in channel_data['Type'].values:
+                    for request_type in ['SCAN_REQ', 'SCAN_RSP']:
+                        result.append([channel, request_type])
+            logger().info(f" channel response : {result}")
+            assert len(result) > 1, f"Testcase failed with No scan response and scan request on same channel"
         logger().info(f"time taken for test {t.duration}")
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
+
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -479,6 +505,7 @@ def test_ble_sdk_undirected_connectable_C91337(ble_dut, ble_client, sl_collectio
                                         "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
             )
             assert ble_client_address, "failed to initiate ble in remote device"
+
             logger().info("Start scanning....")
             ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address,
                                                             ble_scan_interval=ble_scan_interval,
@@ -507,7 +534,6 @@ def test_ble_sdk_undirected_connectable_C91337(ble_dut, ble_client, sl_collectio
 
             ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_int_min=ble_adv_int_min,
                                                                ble_adv_int_max=ble_adv_int_max)
-
             logger().info("enabling the power save modes ")
             ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
             ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
@@ -553,16 +579,10 @@ def test_ble_sdk_undirected_connectable_C91337(ble_dut, ble_client, sl_collectio
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
-
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_BLE_rejects_SMP_pair_request_C147312(ble_dut, ble_client, sl_collections, ble_sniffer):
-    """
-    Configure DUT in Slave and verify reject SMP pairing connectivity
-    :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
-    """
     try:
         with TimeMeasurer() as t:
             log_file_name = 'ble_gap_sdk_C147312'
@@ -578,7 +598,7 @@ def test_ble_BLE_rejects_SMP_pair_request_C147312(ble_dut, ble_client, sl_collec
             logger().info("enabling the power save modes ")
             ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
             ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                         psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+                                                          psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
             logger().info(f"Begin Scanning for BLE devices")
             logger().info("Executing lescan in raspi")
             ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address)
@@ -597,6 +617,8 @@ def test_ble_BLE_rejects_SMP_pair_request_C147312(ble_dut, ble_client, sl_collec
             assert state_int == 0, "DUT BLE device is in connected state"
 
             # Mapping Master and Slave Address for Adding devices for sniffer
+            # logger().info(f"dut address: {ble_dut_address}")
+            # logger().info(f"client address: {ble_client_address}")
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex = re.split(":", ble_client_address)
             master_address = "0x"
@@ -608,6 +630,9 @@ def test_ble_BLE_rejects_SMP_pair_request_C147312(ble_dut, ble_client, sl_collec
             ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address])
             time.sleep(10)
 
+            logger().info("stop advertising")
+            # ble_client.interfaces.bluetooth.stop_advertising()
+            # time.sleep(2)
             ble_client.interfaces.bluetooth.close()
             ble_sniffer.interfaces.sniffer.stop_capture()
             logger().info("Sniffer stop successful")
