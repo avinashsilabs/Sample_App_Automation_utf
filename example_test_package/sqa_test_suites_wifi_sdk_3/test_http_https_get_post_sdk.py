@@ -315,7 +315,7 @@ class WLanThread(ThreadBase):
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
                             self.http_server.interfaces.http,
-                            self.index_path,
+                            "cgi-bin/cgi_example.py",
                             post_data='hellotestingfrohttppostcontent',
                             server_port=443)
 
@@ -413,7 +413,7 @@ class WLanThread(ThreadBase):
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
                             self.http_server.interfaces.http,
-                            self.index_path,
+                            "cgi-bin/cgi_example.py",
                             post_data='hellotestingfrohttppostcontent',
                             server_port=443)
 
@@ -484,7 +484,7 @@ class WLanThread(ThreadBase):
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
                             self.http_server.interfaces.http,
-                            self.index_path,
+                            "cgi-bin/cgi_example.py",
                             post_data='hellotestingfrohttppostcontent',
                             server_port=443)
 
@@ -555,7 +555,7 @@ class WLanThread(ThreadBase):
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
                             self.http_server.interfaces.http,
-                            self.index_path,
+                            "cgi-bin/cgi_example.py",
                             post_data='hellotestingfrohttppostcontent',
                             server_port=443)
 
@@ -631,16 +631,16 @@ class WLanThread(ThreadBase):
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
                         self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
 
-                        # time.sleep(20)
-                        # logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
-                        # status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
-                        #     self.http_server.interfaces.http,
-                        #     self.index_path,
-                        #     post_data='hellotestingfrohttppostcontent',
-                        #     server_port=443)
-                        #
-                        # assert status_dut == SLStatus.SL_STATUS_OK, "failed to post data using http post request"
-                        # logger().info(status_dut)
+                        time.sleep(20)
+                        logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
+                        status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
+                            self.http_server.interfaces.http,
+                            "cgi-bin/cgi_example.py",
+                            post_data='hellotestingfrohttppostcontent',
+                            server_port=443)
+                        
+                        assert status_dut == SLStatus.SL_STATUS_OK, "failed to post data using http post request"
+                        logger().info(status_dut)
 
                         time.sleep(20)
                         logger().info(f"\n\n************* Put data using HTTP PUT request {i}*************\n\n")
@@ -649,23 +649,21 @@ class WLanThread(ThreadBase):
                             self.http_server.interfaces.http, self.index_path)
                         logger().info(status_dut)
                         logger().info(content_dut)
-
-                        #
-                        # time.sleep(25)
-                        # logger().info(f"\n\n***Fetching the data on https using get method iteration = {i} ***\n\n")
-                        # status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
-                        #     self.http_server.interfaces.http,
-                        #     self.index_path,
-                        #     server_port=443)
-                        # status_client, content_client = self.http_client.interfaces.http.http_get(
-                        #     self.http_server.interfaces.http, self.index_path)
-                        #
-                        # assert not status_dut, "failed to fetch the https data"
-                        # assert status_client, "failed to load the https data"
-                        #
-                        # logger().info(status_dut)
-                        # logger().info(content_dut)
-                        # assert content_dut == content_client, "fetched data is not same as expected data"
+                        
+                        logger().info(f"\n\n***Fetching the data on https using get method iteration = {i} ***\n\n")
+                        status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
+                            self.http_server.interfaces.http,
+                            self.index_path,
+                            server_port=443)
+                        status_client, content_client = self.http_client.interfaces.http.http_get(
+                            self.http_server.interfaces.http, self.index_path)
+                        
+                        assert not status_dut, "failed to fetch the https data"
+                        assert status_client, "failed to load the https data"
+                        
+                        logger().info(status_dut)
+                        logger().info(content_dut)
+                        assert content_dut == content_client, "fetched data is not same as expected data"
 
                         time.sleep(5)
                         self.wifi_dut.interfaces.wifi.http_client_deinit()

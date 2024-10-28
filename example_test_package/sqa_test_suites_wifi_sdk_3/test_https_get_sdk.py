@@ -199,7 +199,9 @@ class WLanThread(ThreadBase):
                 logger().info(sni_filter)
                 assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=sni_filter)[
                     'packet_count'], "Client Hello packet with SNI not found"
-
+			elif self.test_name == '19228':
+				self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
+                self.wifi_dut.interfaces.wifi.http_client_init()
             else:
                 self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
                 self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
@@ -207,6 +209,27 @@ class WLanThread(ThreadBase):
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
             raise e
+
+
+class HttpGet(ThreadBase):
+    def __init__(self, wifi_dut=None, http_server=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.http_server = http_server
+
+    def run(self):
+        self.wifi_dut.interfaces.http.http_get(self.http_server.interfaces.http, 'index.html', server_port=80)
+        time.sleep(1)
+
+
+class HttpDeInit(ThreadBase):
+    def __init__(self, wifi_dut=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+
+    def run(self):
+        time.sleep(1)
+        self.wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.config(
@@ -1389,6 +1412,45 @@ def test_wifi_sdk_https_get_with_different_url_length_c19205(http_server, wifi_d
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_dut.interfaces.wifi.http_client_deinit()
         time.sleep(5)
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 3, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_http_abort_functionality_c19228(http_server, wifi_dut, http_client, wifi_access_point, index_path,
+                                                  utf_constants, wifi_sniffer, sl_collections):
+    """HTTP abort for multiple times and check whether the Module closes the HTTP connection or not"""
+    try:
+        test_name = '19228'
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        logger().info("\n\n***Fetching the data on https using get method***\n\n")
+        httpget = HttpGet(wifi_dut, http_server)
+        httpdeinit = HttpDeInit(wifi_dut)
+        httpget.start()
+		httpdeinit.start()
+        httpdeinit.wait_for_exit()
+        logger().info("Called HTTP Abort")
+        httpget.wait_for_exit()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
