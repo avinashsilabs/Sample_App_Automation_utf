@@ -46,7 +46,6 @@ class WifiJoinThread(ThreadBase):
         self.data_transfer = data_transfer
         self.traffic_type = traffic_type
         self.test_case_no = test_case_no
-        self.device_ip = None
         self.dut_mac_address = None
         self.dut_addr = None
 
@@ -55,7 +54,7 @@ class WifiJoinThread(ThreadBase):
         self.wifi_sniffer.interfaces.capture.configure_interface(
             channel=self.wifi_access_point.interfaces.wifi.channel)
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
-        device_ip, dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+        dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                   wifi_access_point=self.wifi_access_point,
                                                                   associated=self.wifi_dut.interfaces.wifi.associated,
                                                                   retry_count=3, ping_after_power_save=False,
@@ -77,7 +76,7 @@ class WifiJoinThread(ThreadBase):
                 # Enable ssl option for socket opened
                 self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP")
                 local_port = randint(5001, 60000)
-                self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port,
+                self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=dut_addr['device_ip'], server_port=local_port,
                                               timeout=15)
                 time.sleep(3)
                 self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
@@ -114,8 +113,12 @@ class WifiJoinThread(ThreadBase):
                 logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
                 # Enable ssl option for socket opened
                 self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP")
+                time.sleep(2)
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOptAsync(sock,
+                                                                   option_name="SL_SI91X_SO_HIGH_PERFORMANCE_SOCKET",
+                                                                   cert_index=128)
                 local_port = randint(5001, 60000)
-                self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port,
+                self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=dut_addr['device_ip'], server_port=local_port,
                                               timeout=15)
                 time.sleep(3)
                 self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
