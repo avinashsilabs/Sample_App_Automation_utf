@@ -1,4 +1,5 @@
 import time
+import re
 import pytest
 from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
@@ -92,10 +93,6 @@ class WifiJoinThread(ThreadBase):
             logger().info("Stop Sniffer finally")
             self.wifi_sniffer.interfaces.capture.stop_capture()
             time.sleep(2)
-            # self.sl_collections.join_sniffer_validation(self.wifi_access_point, self.wifi_sniffer,
-            #                                             self.dut_addr['dut_mac_address'], self.ap_mac_address,
-            #                                             self.sniffer_filter, power_save=self.power_save)
-
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
             raise e
@@ -986,11 +983,30 @@ def test_wifi_sdk_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut, wifi_a
             logger().info(f"Initiating the scan in DUT with the given channel bitmap value ---->>>{count}")
             wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=channel_bitmap_2_4,
                                           expected_status=SLStatus.SL_STATUS_SI91X_INVALID_CHANNEL)
-
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "korea"
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'Korea'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_sdk_scan_all_channels_in_korea_region_c477822(wifi_sniffer, wifi_dut, wifi_access_point, request,
@@ -1073,30 +1089,26 @@ def test_wifi_sdk_scan_in_korea_region_for_channel_14_c477824(wifi_dut, sl_colle
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-pytestmark = [
-    pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-            "oper_mode": Si91xOperatingMode.WiFiClient,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.Default,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
-            "custom_features": Si91xCustomFeatureBitMap.Default,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
-            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "bt_features": 0,
-            "ble_features": 0,
-            "ble_custom_ext_features": 0,
-            "region": 1,
-            "region_code": "korea"
-        }
-    )
-]
-
-
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "europe"
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_sdk_scan_with_deep_sleep_c537999(wifi_dut, request, wifi_sniffer, sniffer_filter, wifi_access_point,
@@ -1164,6 +1176,26 @@ def test_wifi_sdk_scan_with_deep_sleep_c537999(wifi_dut, request, wifi_sniffer, 
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "europe"
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_sdk_scan_when_config_ap_is_not_available_c538001(wifi_dut, wifi_access_point, request, wifi_sniffer,
@@ -1197,6 +1229,26 @@ def test_wifi_sdk_scan_when_config_ap_is_not_available_c538001(wifi_dut, wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "europe"
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_sdk_verify_scan_possible_error_code_c538002(wifi_dut, wifi_access_point, request, wifi_sniffer,
@@ -1229,6 +1281,26 @@ def test_wifi_sdk_verify_scan_possible_error_code_c538002(wifi_dut, wifi_access_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "europe"
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "ssid": 'Explore@WiFi', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_sdk_verify_dut_scan_spe_char_ssid_or_not_c538003(wifi_dut, wifi_access_point, request, wifi_sniffer,
@@ -1341,11 +1413,32 @@ def test_wifi_sdk_conn_to_AP_in_korea_reg_C477823(wifi_dut, wifi_access_point, w
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "china"
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'China'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_sdk_scan_all_channels_in_China_region_c662088(wifi_sniffer, wifi_dut, wifi_access_point, request,
                                                             sniffer_filter, sl_collections):
-    """Verify Whether DUT is able to scan all channels when it is configured in China Region"""
+    """Verify Whether DUT is able to scan all channels
+       when it is configured in China Region"""
     try:
         test_name = request.node.name
         sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
@@ -1366,11 +1459,32 @@ def test_wifi_sdk_scan_all_channels_in_China_region_c662088(wifi_sniffer, wifi_d
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "china"
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'China'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_sdk_scan_type_extended_enabled_in_China_region_c662089(wifi_sniffer, wifi_dut, wifi_access_point, request,
                                                                      sniffer_filter, sl_collections):
-    """ Verify whether DUT is able to scan more than 11 scan results when SL_WIFI_SCAN_TYPE_EXTENDED is enabled"""
+    """ Verify whether DUT is able to scan more than 11 scan
+        results when SL_WIFI_SCAN_TYPE_EXTENDED is enabled"""
     try:
         test_name = request.node.name
         sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
@@ -1392,12 +1506,32 @@ def test_wifi_sdk_scan_type_extended_enabled_in_China_region_c662089(wifi_sniffe
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "china"
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'China'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_sdk_scan_connect_type_extended_enabled_in_China_region_c662090(wifi_sniffer, wifi_dut, wifi_access_point,
-                                                                             request,
-                                                                             sniffer_filter, sl_collections):
-    """ Verify whether DUT is able connect to AP which comes after 11 scan results when SL_WIFI_SCAN_TYPE_EXTENDED is enabled"""
+                                                                             request, sniffer_filter, sl_collections):
+    """ Verify whether DUT is able connect to AP which comes
+        after 11 scan results when SL_WIFI_SCAN_TYPE_EXTENDED is enabled"""
     try:
         test_name = request.node.name
         sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
@@ -1416,4 +1550,218 @@ def test_wifi_sdk_scan_connect_type_extended_enabled_in_China_region_c662090(wif
 
         wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'US'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_wifi_sdk_scan_type_extended_enabled_c653150(wifi_sniffer, wifi_dut, wifi_access_point, request,
+                                                     sniffer_filter, sl_collections):
+    """ Verify whether DUT is able to scan more than 11 scan results
+        when SL_WIFI_SCAN_TYPE_EXTENDED is enabled"""
+    try:
+        test_name = request.node.name
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+        logger().info("Setting the wifi region in US")
+        channel = 0
+        logger().info(f"configuring the Sniffer with the channel : {channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{channel}")
+        time.sleep(2)
+        logger().info("Initiating scan from dut...")
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=channel, ssid=None, scan_bitmap_2_4=0, scan_type=2)
+        time.sleep(10)
+        assert (len(scan_results) >= 1), "Scan failed"
+        logger().info(scan_results)
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'US'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_wifi_sdk_scan_connect_type_extended_enabled_c653151(wifi_sniffer, wifi_dut, wifi_access_point,
+                                                             request, sniffer_filter, sl_collections):
+    """ Verify whether DUT is able connect to AP which comes after
+        11 scan results when SL_WIFI_SCAN_TYPE_EXTENDED is enabled"""
+    try:
+        test_name = request.node.name
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+        logger().info("Setting the wifi region in US")
+        channel = 0
+        logger().info(f"configuring the Sniffer with the channel : {channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{channel}")
+        time.sleep(2)
+        logger().info("Initiating scan from dut...")
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=channel, ssid=None, scan_bitmap_2_4=0, scan_type=0)
+        network_to_connect = ""
+        if len(scan_results) > 11:
+            network_to_connect = scan_results[12].ssid
+            wifi_dut.interfaces.wifi.join(ssid=network_to_connect, passphrase="", channel=6)
+        time.sleep(10)
+        assert (len(scan_results) >= 1), "Scan failed"
+        # logger().info(scan_results)
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "worldwide"
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "ssid": 'My_Special!SSID@2023'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_wifi_sdk_passive_scan_in_worldwide_domain_c538000(wifi_sniffer, wifi_access_point, wifi_dut, request,
+                                                           sniffer_filter, sl_collections):
+    """Verify passive scan in the worldwide domain."""
+    try:
+        test_name = request.node.name
+        logger().info(f"configuring the Sniffer with the channel : {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        time.sleep(5)
+
+        logger().info("Initiating passive scan from DUT...")
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=0, scan_type=1)
+
+        time.sleep(20)  # Wait for scan results to populate
+        logger().info(scan_results)
+
+        assert len(scan_results) >= 1, "Scan results not found"
+
+        logger().info("Stopping sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_wifi_sdk_scan_with_high_beacon_length_c538006(wifi_access_point, wifi_dut, request, wifi_sniffer,
+                                                       sniffer_filter, sl_collections):
+    """Verify WLAN scan with a third-party AP configured with a high beacon length (max 512 bytes)."""
+    try:
+        test_name = request.node.name
+        channels_list_2g = [11]
+        packet_filter2 = '    Frame Length:'
+
+        for channel in channels_list_2g:
+            logger().info(f"Configuring the sniffer with the channel: {channel}")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{channel}")
+            time.sleep(2)
+
+            ap_bssid = wifi_access_point.interfaces.wifi.bssid
+            logger().info(f"AP MAC: {ap_bssid}")
+
+            logger().info("Initiating m4 ta secure_handshake...")
+            wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
+
+            logger().info("Initiating scan from DUT...")
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=0, scan_type=0,
+                                                         bg_scan_periodicity=10)
+            time.sleep(20)
+            assert len(scan_results) >= 1, "Scan failed"
+            logger().info(scan_results)
+
+            logger().info("Stopping sniffer")
+            wifi_sniffer.interfaces.capture.stop_capture()
+
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_bssid,
+                                                                                            filter_name="beacon")
+
+            logger().info("Validating Probe req(Broadcast)")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
+                                                                      packet_filter2=packet_filter2)['packet_count'], \
+                f'Unable to find beacon packet in channel: {channel}'
+
+            pattern = r"Frame Length:\s+(\d+)\s+bytes"
+            # Open the file and search for the pattern
+            with open(f'./reports/filter2_file.txt', 'r') as file:
+                for line in file.readlines():
+                    match = re.search(pattern, line)
+                    if match:
+                        # Extract the frame length in bytes
+                        frame_length = int(match.group(1))
+                        if frame_length < 512:
+                            return "Fail: Frame Length is less than 512 bytes"
+                logger().info(frame_length)
+
+    except Exception as e:
+        logger().error(f"Exception occurred: {e}")  # Log the exception
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)

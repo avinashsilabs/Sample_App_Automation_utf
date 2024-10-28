@@ -74,8 +74,8 @@ def logger():
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None,
                  ping_count=None, data_transfer=True, test_name=None, sl_collections=None, switch=None,
-                 wifi_client=None, net_perf_client=None, sniffer_filter=None,
-                 protocol=None):
+                 wifi_client=None, net_perf_client=None, protocol=None):
+
         super().__init__()
         self.socket_obj = None
         self.wifi_dut = wifi_dut
@@ -97,7 +97,6 @@ class WLanThread(ThreadBase):
         self.net_perf_client = net_perf_client
         self.protocol = protocol
         self.channel_bitmap_2_4 = 8
-		self.sniffer_filter = sniffer_filter
 
     def run(self):
         try:

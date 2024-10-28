@@ -525,3 +525,74 @@ def test_wifi_sdk_scan_and_connect_in_world_domain_c19076(wifi_dut, utf_constant
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_access_points",
+    wifi={
+        # Here, indexing (starts with 0) applies as per order defined in harness.
+        0: {
+             'ssid': 'same-security',
+             'security': 'WPA2',
+             'passphrase': '123123123',
+             'channel': 1
+        },
+        1: {
+             'ssid': 'same-security',
+             'security': 'WPA2',
+             'passphrase': '123123123',
+             'channel': 1}
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_wifi_sdk_quick_scan_c113700(wifi_dut, wifi_access_points,request,wifi_sniffer, sl_collections):
+
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=1)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        time.sleep(5)
+
+        logger().info("Enable wifi set advanced client configuration...")
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        logger().info("\n Initiating scan from DUT...\n")
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=1, ssid=None)
+        time.sleep(20)
+        logger().info(scan_results)
+        scan_list = list(scan_results)
+
+        logger().info("\n Initiating quick scan from DUT...\n")
+        logger().info(f"scan_list : {scan_list}")
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=1, ssid='same-security', scan_bitmap_2_4=0, scan_type=0,
+                                                     bg_scan_periodicity=10)
+        time.sleep(20)
+        logger().info(scan_results)
+        scan_list = list(scan_results)
+        logger().info(f"scan_list : {scan_list}")
+
+        logger().info("Stopping sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)

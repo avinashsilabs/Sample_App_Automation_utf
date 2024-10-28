@@ -1364,3 +1364,42 @@ def test_wifi_sdk_wifi_init_with_load_default_nwp_fw_active_low_c38056(wifi_dut,
 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": (Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode |
+                     Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake),
+        "tcpip_features": (Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                           Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid),
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": (Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0),
+        "ext_tcpip_features": (Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID),
+        "config_features": (Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp),
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"ssid": 'join:BSSID:00:11:22:33:44:55', "passphrase": '12345678', "security": 'WPA2', "protected_management_frame": "Capable"})
+def test_wifi_sdk_join_bssid_with_spaces_and_colons_c37566(wifi_dut, wifi_sniffer,wifi_access_point,
+                                                           sniffer_filter, utf_constants, sl_collections):
+
+    """Verify whether Device is throwing error for join BSSID command along with spaces /colons."""
+
+    try:
+        wifi_dut.interfaces.wifi.scan(ssid=None,channel=0)
+        wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.bssid, passphrase=wifi_access_point.interfaces.wifi.passphrase,
+                                      security=wifi_access_point.interfaces.wifi.security, expected_status=SLStatus.SL_STATUS_COMMAND_IS_INVALID)
+        logger().info(f"\n\n Observed the expected error code: 0x00048 (SL_STATUS_COMMAND_IS_INVALID) \n\n")
+        time.sleep(10)
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
