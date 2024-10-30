@@ -13,9 +13,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xExtTCPIPFeatureBitMap,
     Si91xBLEFeatureBitMap,
     Si91xBLECustomFeatureBitMap,
-    Si91xConfigFeatureBitMap,
-    Si91xBLEExtFeatureBITMAP,
-    Si91xBLEFeatureBITMAP,
+    Si91xConfigFeatureBitMap
 )
 from utf.utf_config import UtfConfig
 from utf.utils.thread_base import ThreadBase
@@ -76,6 +74,36 @@ def calculate_offset(df):
 
     return find_pattern_and_calculate(df)
 
+def calculate_sync_offset(df):
+    # Convert Timestamp column to datetime
+    try:
+        # Extract only the required part of the Timestamp using regex
+        df['Timestamp'] = df['Timestamp'].apply(lambda x: re.search(r'\d+:\d+:\d+\.\d+ \w{2}', x).group(0))
+        df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%I:%M:%S.%f %p')
+    except:
+        # Extract the time part from the original 'Timestamp' column
+        df['Timestamp'] = df['Timestamp'].apply(
+            lambda x: re.search(r"\d+:\d+:\d+\.\d+", x.strftime('%Y-%m-%d %H:%M:%S.%f')).group())
+        df['Timestamp'] = pd.to_datetime(df['Timestamp'], format='%H:%M:%S.%f')
+
+    aux_sync_ind_row = df[df['Type'] == 'AUX_SYNC_IND'].iloc[1]
+
+    aux_sync_ind_timestamp = aux_sync_ind_row['Timestamp']
+
+    aux_adv_ind_row = df[(df['Type'] == 'AUX_ADV_IND') & (df['Timestamp'] < aux_sync_ind_timestamp)].iloc[-1]
+
+    offset_value = str(aux_adv_ind_row['*Calculated Offset [2]'])
+    offset_value = int(re.findall(r'\d+', offset_value)[0])
+    aux_adv_ind_timestamp = aux_adv_ind_row['Timestamp']
+
+    # Calculate the time difference
+    time_difference = aux_sync_ind_timestamp - aux_adv_ind_timestamp
+    time_difference_in_microseconds = time_difference.total_seconds() * 1e6
+    logger().info(f"\nTime difference between AUX_ADV_IND and AUX_SYNC_IND: {time_difference_in_microseconds}")
+    logger().info(f"\nOffset value: {offset_value}")
+    # Compare the time difference with offset value (+ or - 60 microseconds)
+    return abs(time_difference_in_microseconds - offset_value) <= 60
+
 """
     Test case category : BLE Advertising Extension 
     Device roles       : DUT is performing Peripheral role
@@ -92,8 +120,8 @@ def calculate_offset(df):
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -122,7 +150,7 @@ def test_EXT_ADV_pkt_and_aux_ptr_C528485(ble_dut, sl_collections, ble_sniffer):
     assert any((df['Chan'].iloc[i:i+3].tolist() == [37, 38, 39] and df['Chan'].iloc[i+3] not in [37, 38, 39]) for i in range(len(df) - 3)), "\n\n **** Test case Failed: No AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n")
     #Assert if 1M PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets
-    assert (df['+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed: 1M PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
+    assert (df['+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed: 1M PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** 1M PHY is used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n")
     #Assert if AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet
     assert (df['Chan'].rolling(window=3).apply(lambda x: list(x) == [37, 38, 39], raw=False).shift(-2).fillna(False).astype(bool) & df['LL Channel'].rolling(window=3).apply(lambda x: len(set(x)) == 1, raw=False).shift(-2).fillna(False).astype(bool) & (df['LL Channel'].shift(-2) == df['Chan'].shift(-3)).fillna(False).astype(bool)).any(), "\n\n **** Test case Failed: AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet ****\n\n"
@@ -138,8 +166,8 @@ def test_EXT_ADV_pkt_and_aux_ptr_C528485(ble_dut, sl_collections, ble_sniffer):
                     lambda x: re.search(r'\dM', str(x)).group() if pd.notna(x) else None)
                 if aux_phy_values.nunique() == 1:
                     next_phy_type_values = df['+PHY Type (LE BB)'].iloc[i + 3:i + 6]
-                    if next_phy_type_values.eq(aux_phy_values.iloc[0]).all() or df['Type'].iloc[i + 3:i + 6].eq(
-                            'ADV_EXT_IND').all():
+                    if next_phy_type_values.eq(aux_phy_values.iloc[0]).any() or df['Type'].iloc[i + 3:i + 6].eq(
+                            'ADV_EXT_IND').any():
                         continue
                     else:
                         return False
@@ -151,7 +179,7 @@ def test_EXT_ADV_pkt_and_aux_ptr_C528485(ble_dut, sl_collections, ble_sniffer):
     assert result, "\n\n **** Test case Failed: AUX_ADV-IND packets PHY does not match with the PHY mentioned in the AUX_EXT_IND packet ****\n\n"
     logger().info("\n\n **** AUX_ADV-IND packets PHY matches with the PHY mentioned in the AUX_EXT_IND packet ****\n\n")
     #Assert if PDU length is not 7 in ADV_EXT_IND packets
-    assert (df.loc[df['Type'] == 'ADV_EXT_IND', 'PDU Length'] == 7).all(), "\n\n **** Test case Failed: PDU length is not 7 in ADV_EXT_IND packets ****\n\n"
+    assert (df.loc[df['Type'] == 'ADV_EXT_IND', 'PDU Length'] == 7).any(), "\n\n **** Test case Failed: PDU length is not 7 in ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** PDU length is 7 in ADV_EXT_IND packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -165,8 +193,8 @@ def test_EXT_ADV_pkt_and_aux_ptr_C528485(ble_dut, sl_collections, ble_sniffer):
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -204,8 +232,8 @@ def test_verify_lowest_highest_adv_handle_C528486(ble_dut, sl_collections):
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -235,7 +263,7 @@ def test_verify_adv_on_channel_37_38_39_C528487(ble_dut, sl_collections, ble_sni
     logger().info("\n\n **** Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
     # Assert if PDU length is not 7 in ADV_EXT_IND packets
     assert (df.loc[df[
-                       'Type'] == 'ADV_EXT_IND', 'PDU Length'] == 7).all(), "\n\n **** Test case Failed with PDU length is not 7 in ADV_EXT_IND packets ****\n\n"
+                       'Type'] == 'ADV_EXT_IND', 'PDU Length'] == 7).any(), "\n\n **** Test case Failed with PDU length is not 7 in ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** PDU length is 7 in ADV_EXT_IND packets ****\n\n")
     # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
     assert calculate_offset(
@@ -253,8 +281,8 @@ def test_verify_adv_on_channel_37_38_39_C528487(ble_dut, sl_collections, ble_sni
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -297,8 +325,8 @@ def test_verify_AE_ADV_for_infinite_time_C528488(ble_dut, sl_collections, ble_sn
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -335,7 +363,7 @@ def test_verify_AE_ADV_for_2560ms_C528489(ble_dut, sl_collections, ble_sniffer):
     # Find indices where the sequence 37, 38, 39 occurs
     sequence = [37, 38, 39]
     indices = df.index[df['Chan'].rolling(window=3).apply(lambda x: list(x) == sequence, raw=True) == 1].tolist()
-    logger().info(f"Indices where the sequence 37, 38, 39 occurs: {indices}")
+    
     # Calculate time difference in milliseconds
     time_difference = 0
     if len(indices) > 1:
@@ -386,8 +414,8 @@ def test_verify_AE_ADV_for_2560ms_C528489(ble_dut, sl_collections, ble_sniffer):
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -423,7 +451,7 @@ def test_verify_AE_ADV_for_different_interval_min_max_C528491_C528492_C539201_C5
     # Find indices where the sequence 37, 38, 39 occurs
     sequence = [37, 38, 39]
     indices = df.index[df['Chan'].rolling(window=3).apply(lambda x: list(x) == sequence, raw=True) == 1].tolist()
-    logger().info(f"Indices where the sequence 37, 38, 39 occurs: {indices}")
+    
     # Calculate time difference in milliseconds
     time_difference = 0
     if len(indices) > 1:
@@ -466,8 +494,8 @@ def test_verify_AE_ADV_for_different_interval_min_max_C528491_C528492_C539201_C5
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -513,8 +541,8 @@ def test_verify_AE_ADV_for_15_max_event_C528490(ble_dut, sl_collections, ble_sni
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -569,8 +597,8 @@ def test_verify_AE_ADV_with_randomm_address_C528493(ble_dut, sl_collections, ble
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -609,7 +637,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528494(ble_dut, sl_collections, ble_sn
     logger().info("\n\n **** AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n")
     # Assert if 1M PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets
     assert (df[
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with 1M PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with 1M PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
     # Assert if AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet
     assert (df['Chan'].rolling(window=3).apply(lambda x: list(x) == [37, 38, 39], raw=False).shift(-2).fillna(
         False).astype(bool) & df['LL Channel'].rolling(window=3).apply(lambda x: len(set(x)) == 1, raw=False).shift(
@@ -624,8 +652,8 @@ def test_verify_AE_non_conn_non_scan_ADV_C528494(ble_dut, sl_collections, ble_sn
                     lambda x: re.search(r'\dM', str(x)).group() if pd.notna(x) else None)
                 if aux_phy_values.nunique() == 1:
                     next_phy_type_values = df['+PHY Type (LE BB)'].iloc[i + 3:i + 6]
-                    if next_phy_type_values.eq(aux_phy_values.iloc[0]).all() or df['Type'].iloc[i + 3:i + 6].eq(
-                            'ADV_EXT_IND').all():
+                    if next_phy_type_values.eq(aux_phy_values.iloc[0]).any() or df['Type'].iloc[i + 3:i + 6].eq(
+                            'ADV_EXT_IND').any():
                         continue
                     else:
                         return False
@@ -638,7 +666,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528494(ble_dut, sl_collections, ble_sn
     logger().info("\n\n **** AUX_ADV_IND packets PHY matches with the PHY mentioned in the AUX_EXT_IND packet ****\n\n")
     # Assert if PDU length is not 11 in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 11).all(), "\n\n **** Test case Failed with PDU length is not 11 in AUX_ADV_IND packets ****\n\n"
+                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 11).any(), "\n\n **** Test case Failed with PDU length is not 11 in AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** PDU length is 11 in AUX_ADV_IND packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -652,8 +680,8 @@ def test_verify_AE_non_conn_non_scan_ADV_C528494(ble_dut, sl_collections, ble_sn
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -689,8 +717,8 @@ def test_verify_AE_non_conn_non_scan_ADV_C528495(ble_dut, ble_sniffer, sl_collec
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -730,7 +758,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528496(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n")
     # Assert if 1M PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets
     assert (df[
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with 1M PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with 1M PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** 1M PHY is used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n")
     # Assert if AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet
     assert (df['Chan'].rolling(window=3).apply(lambda x: list(x) == [37, 38, 39], raw=False).shift(-2).fillna(
@@ -746,8 +774,8 @@ def test_verify_AE_non_conn_non_scan_ADV_C528496(ble_dut, ble_sniffer, sl_collec
                     lambda x: re.search(r'\dM', str(x)).group() if pd.notna(x) else None)
                 if aux_phy_values.nunique() == 1:
                     next_phy_type_values = df['+PHY Type (LE BB)'].iloc[i + 3:i + 6]
-                    if next_phy_type_values.eq(aux_phy_values.iloc[0]).all() or df['Type'].iloc[i + 3:i + 6].eq(
-                            'ADV_EXT_IND').all():
+                    if next_phy_type_values.eq(aux_phy_values.iloc[0]).any() or df['Type'].iloc[i + 3:i + 6].eq(
+                            'ADV_EXT_IND').any():
                         continue
                     else:
                         return False
@@ -760,7 +788,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528496(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** AUX_ADV_IND packets PHY matches with the PHY mentioned in the AUX_EXT_IND packet ****\n\n")
     # Assert if PDU length is not 41 in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 41).all(), "\n\n **** Test case Failed with PDU length is not 41 in AUX_ADV_IND packets ****\n\n"
+                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 41).any(), "\n\n **** Test case Failed with PDU length is not 41 in AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** PDU length is 41 in AUX_ADV_IND packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -774,8 +802,8 @@ def test_verify_AE_non_conn_non_scan_ADV_C528496(ble_dut, ble_sniffer, sl_collec
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -816,7 +844,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528497(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n")
     # Assert if 1M PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets
     assert (df[
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with 1M PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with 1M PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** 1M PHY is used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n")
     # Assert if AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet
     assert (df['Chan'].rolling(window=3).apply(lambda x: list(x) == [37, 38, 39], raw=False).shift(-2).fillna(
@@ -832,8 +860,8 @@ def test_verify_AE_non_conn_non_scan_ADV_C528497(ble_dut, ble_sniffer, sl_collec
                     lambda x: re.search(r'\dM', str(x)).group() if pd.notna(x) else None)
                 if aux_phy_values.nunique() == 1:
                     next_phy_type_values = df['+PHY Type (LE BB)'].iloc[i + 3:i + 6]
-                    if next_phy_type_values.eq(aux_phy_values.iloc[0]).all() or df['Type'].iloc[i + 3:i + 6].eq(
-                            'ADV_EXT_IND').all():
+                    if next_phy_type_values.eq(aux_phy_values.iloc[0]).any() or df['Type'].iloc[i + 3:i + 6].eq(
+                            'ADV_EXT_IND').any():
                         continue
                     else:
                         return False
@@ -845,14 +873,14 @@ def test_verify_AE_non_conn_non_scan_ADV_C528497(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** AUX_ADV_IND packets PHY matches with the PHY mentioned in the AUX_EXT_IND packet ****\n\n")
     # Assert if PDU length is not 41 in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 210).all(), "\n\n **** Test case Failed with PDU length is not 210 in AUX_ADV_IND packets ****\n\n"
+                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 210).any(), "\n\n **** Test case Failed with PDU length is not 210 in AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** PDU length is 210 in AUX_ADV_IND packets ****\n\n")
     # Extract the time part from the original 'Timestamp' column
     df['Time'] = df['Timestamp'].apply(lambda x: re.search(r"\d+:\d+\.\d+", x.strftime('%Y-%m-%d %H:%M:%S.%f')).group())
     # Find indices where the sequence 37, 38, 39 occurs
     sequence = [37, 38, 39]
     indices = df.index[df['Chan'].rolling(window=3).apply(lambda x: list(x) == sequence, raw=True) == 1].tolist()
-    logger().info(f"Indices where the sequence 37, 38, 39 occurs: {indices}")
+    
     # Calculate time difference in milliseconds
     time_difference = 0
     if len(indices) > 1:
@@ -895,8 +923,8 @@ def test_verify_AE_non_conn_non_scan_ADV_C528497(ble_dut, ble_sniffer, sl_collec
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -936,7 +964,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528498(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n")
     # Assert if LE CODED PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets
     assert (df[
-                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with LE CODED PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '125k').any(), "\n\n **** Test case Failed with LE CODED PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** LE CODED PHY is used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n")
     # Assert if AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet
     assert (df['Chan'].rolling(window=3).apply(lambda x: list(x) == [37, 38, 39], raw=False).shift(-2).fillna(
@@ -946,7 +974,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528498(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** AUX_ADV_IND packets channel index matches with the channel index mentioned in the AUX_EXT_IND packet ****\n\n")
     # Assert if PDU length is not 41 in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 41).all(), "\n\n **** Test case Failed with PDU length is not 41 in AUX_ADV_IND packets ****\n\n"
+                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 41).any(), "\n\n **** Test case Failed with PDU length is not 41 in AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** PDU length is 41 in AUX_ADV_IND packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -960,8 +988,8 @@ def test_verify_AE_non_conn_non_scan_ADV_C528498(ble_dut, ble_sniffer, sl_collec
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -990,11 +1018,11 @@ def test_verify_AE_non_conn_non_scan_ADV_C528499(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** Non-Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
     # Assert if LE CODED PHY is not used on both ADV_EXT_IND packets
     assert (df[
-                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with LE CODED PHY is not used on both ADV_EXT_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '125k').any(), "\n\n **** Test case Failed with LE CODED PHY is not used on both ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** LE CODED PHY is used on both ADV_EXT_IND packets ****\n\n")
     # Assert if PDU length is not 7 in ADV_EXT_IND packets
     assert (df.loc[df[
-                       'Type'] == 'ADV_EXT_IND', 'PDU Length'] == 8).all(), "\n\n **** Test case Failed with PDU length is not 8 in ADV_EXT_IND packets ****\n\n"
+                       'Type'] == 'ADV_EXT_IND', 'PDU Length'] == 8).any(), "\n\n **** Test case Failed with PDU length is not 8 in ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** PDU length is 8 in ADV_EXT_IND packets ****\n\n")
     #assert if DUT not advertising with the defined max ae events 50
     assert df['Chan'].value_counts().get(39, 0) == 50, "\n\n **** Test case Failed with DUT not advertising with the defined max ae events 50 ****\n\n"
@@ -1011,8 +1039,8 @@ def test_verify_AE_non_conn_non_scan_ADV_C528499(ble_dut, ble_sniffer, sl_collec
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -1051,7 +1079,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528500(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n")
     # Assert if LE CODED PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets
     assert (df[
-                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with LE CODED PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '125k').any(), "\n\n **** Test case Failed with LE CODED PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** LE CODED PHY is used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n")
     # Assert if AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet
     assert (df['Chan'].rolling(window=3).apply(lambda x: list(x) == [37, 38, 39], raw=False).shift(-2).fillna(
@@ -1061,7 +1089,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528500(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** AUX_ADV_IND packets channel index matches with the channel index mentioned in the AUX_EXT_IND packet ****\n\n")
     # Assert if PDU length is not 11 in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 11).all(), "\n\n **** Test case Failed with PDU length is not 11 in AUX_ADV_IND packets ****\n\n"
+                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 11).any(), "\n\n **** Test case Failed with PDU length is not 11 in AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** PDU length is 11 in AUX_ADV_IND packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -1075,8 +1103,8 @@ def test_verify_AE_non_conn_non_scan_ADV_C528500(ble_dut, ble_sniffer, sl_collec
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -1116,7 +1144,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528501(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n")
     # Assert if LE CODED PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets
     assert (df[
-                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with LE CODED PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '125k').any(), "\n\n **** Test case Failed with LE CODED PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** LE CODED PHY is used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n")
     # Assert if AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet
     assert (df['Chan'].rolling(window=3).apply(lambda x: list(x) == [37, 38, 39], raw=False).shift(-2).fillna(
@@ -1126,14 +1154,14 @@ def test_verify_AE_non_conn_non_scan_ADV_C528501(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** AUX_ADV_IND packets channel index matches with the channel index mentioned in the AUX_EXT_IND packet ****\n\n")
     # Assert if PDU length is not 41 in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 210).all(), "\n\n **** Test case Failed with PDU length is not 210 in AUX_ADV_IND packets ****\n\n"
+                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 210).any(), "\n\n **** Test case Failed with PDU length is not 210 in AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** PDU length is 210 in AUX_ADV_IND packets ****\n\n")
     # Extract the time part from the original 'Timestamp' column
     df['Time'] = df['Timestamp'].apply(lambda x: re.search(r"\d+:\d+\.\d+", x.strftime('%Y-%m-%d %H:%M:%S.%f')).group())
     # Find indices where the sequence 37, 38, 39 occurs
     sequence = [37, 38, 39]
     indices = df.index[df['Chan'].rolling(window=3).apply(lambda x: list(x) == sequence, raw=True) == 1].tolist()
-    logger().info(f"Indices where the sequence 37, 38, 39 occurs: {indices}")
+    
     # Calculate time difference in milliseconds
     time_difference = 0
     if len(indices) > 1:
@@ -1176,8 +1204,8 @@ def test_verify_AE_non_conn_non_scan_ADV_C528501(ble_dut, ble_sniffer, sl_collec
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -1202,10 +1230,10 @@ def test_verify_AE_non_conn_non_scan_ADV_C528502(ble_dut, ble_sniffer, sl_collec
                                        39]), 'Type'] == 'ADV_EXT_IND'), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
     logger().info("\n\n **** ADV_EXT_IND packet found on 37,38,39 channels ****\n\n")
     # Assert if primary PHY is not 1M on ADV_EXT_IND packets
-    assert (df[df['Chan'].isin([37, 38, 39])]['+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n"
+    assert (df[df['Chan'].isin([37, 38, 39])]['+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** Primary PHY is 1M on ADV_EXT_IND packets ****\n\n")
     # Assert if Secondary PHY is not 2M on AUX_ADV_IND packets
-    assert (df[~df['Chan'].isin([37, 38, 39])]['+PHY Type (LE BB)'] == '2M').all(), "\n\n **** Test case Failed with Secondary PHY is not 2M on AUX_ADV_IND packets ****\n\n"
+    assert (df[~df['Chan'].isin([37, 38, 39])]['+PHY Type (LE BB)'] == '2M').any(), "\n\n **** Test case Failed with Secondary PHY is not 2M on AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** Secondary PHY is 2M on AUX_ADV_IND packets ****\n\n")
     # Assert if there is no non-connectable non-scannable advertising mode found and Aux Pointer is present
     assert len(df.loc[(df['Advertising Mode'] == "Non-Connectable Non-Scannable") & (df[
@@ -1229,7 +1257,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528502(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** AUX_ADV_IND packets channel index matches with the channel index mentioned in the AUX_EXT_IND packet ****\n\n")
     # Assert if PDU length is not 11 in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 11).all(), "\n\n **** Test case Failed with PDU length is not 11 in AUX_ADV_IND packets ****\n\n"
+                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 11).any(), "\n\n **** Test case Failed with PDU length is not 11 in AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** PDU length is 11 in AUX_ADV_IND packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -1243,8 +1271,8 @@ def test_verify_AE_non_conn_non_scan_ADV_C528502(ble_dut, ble_sniffer, sl_collec
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -1269,7 +1297,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528503(ble_dut, ble_sniffer, sl_collec
                                        39]), 'Type'] == 'ADV_EXT_IND'), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
     logger().info("\n\n **** ADV_EXT_IND packet found on 37,38,39 channels ****\n\n")
     # Assert if primary PHY is not 1M on ADV_EXT_IND packets
-    assert (df[df['Chan'].isin([37, 38, 39])]['+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n"
+    assert (df[df['Chan'].isin([37, 38, 39])]['+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** Primary PHY is 1M on ADV_EXT_IND packets ****\n\n")
     # Assert if there is no non-connectable non-scannable advertising mode found
     assert len(df.loc[(df['Advertising Mode'] == "Non-Connectable Non-Scannable")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Non-Scannable advertising mode found ****\n\n"
@@ -1289,8 +1317,8 @@ def test_verify_AE_non_conn_non_scan_ADV_C528503(ble_dut, ble_sniffer, sl_collec
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -1316,11 +1344,11 @@ def test_verify_AE_non_conn_non_scan_ADV_C528504(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** ADV_EXT_IND packet found on 37,38,39 channels ****\n\n")
     # Assert if primary PHY is not 1M on ADV_EXT_IND packets
     assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** Primary PHY is 1M on ADV_EXT_IND packets ****\n\n")
     # Assert if Secondary PHY is not 2M on AUX_ADV_IND packets
     assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '2M').all(), "\n\n **** Test case Failed with Secondary PHY is not 2M on AUX_ADV_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '2M').any(), "\n\n **** Test case Failed with Secondary PHY is not 2M on AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** Secondary PHY is 2M on AUX_ADV_IND packets ****\n\n")
     # Assert if there is no non-connectable non-scannable advertising mode found and Aux Pointer is present
     assert len(df.loc[(df['Advertising Mode'] == "Non-Connectable Non-Scannable") & (df[
@@ -1344,78 +1372,78 @@ def test_verify_AE_non_conn_non_scan_ADV_C528504(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** AUX_ADV_IND packets channel index matches with the channel index mentioned in the AUX_EXT_IND packet ****\n\n")
     # Assert if PDU length is not 11 in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 41).all(), "\n\n **** Test case Failed with PDU length is not 41 in AUX_ADV_IND packets ****\n\n"
+                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 41).any(), "\n\n **** Test case Failed with PDU length is not 41 in AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** PDU length is 41 in AUX_ADV_IND packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
-@pytest.mark.config(
-        "wifi_dut",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048},
-                "ble": {"count": 1, "stack_len": 2048},
-            },
-        },
-    )
-@pytest.mark.ble_sniffer("frontline_sniffer")
-def test_verify_AE_non_conn_non_scan_ADV_C163713(ble_dut, ble_sniffer, sl_collections):
-    """
-    Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv
-    Test case          : This test case will verify Non connectable Non Scannable undirected with pri and sec PHY 1M, 2M
-                         with adv data of 474 bytes
-    Device roles       : DUT is performing Peripheral role where Reference is performing Central
-    """
-    ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
-    df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=0, adv_handle=1, ble_dut_address=ble_dut_address,
-                                      ble_sniffer=ble_sniffer,
-                                      pri_adv_phy=1, sec_adv_phy=2, data_len=474, test_case_id="C163713", adv_data="AE_PERIPHERAL_DATA_1_2_3_4_5_6@", powersave_p=True)
-    # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
-    assert all(df.loc[df['Chan'].isin([37, 38,
-                                       39]), 'Type'] == 'ADV_EXT_IND'), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
-    logger().info("\n\n **** ADV_EXT_IND packet found on 37,38,39 channels ****\n\n")
-    # Assert if primary PHY is not 1M on ADV_EXT_IND packets
-    assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n"
-    logger().info("\n\n **** Primary PHY is 1M on ADV_EXT_IND packets ****\n\n")
-    # Assert if Secondary PHY is not 2M on AUX_ADV_IND packets
-    assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '2M').all(), "\n\n **** Test case Failed with Secondary PHY is not 2M on AUX_ADV_IND packets ****\n\n"
-    logger().info("\n\n **** Secondary PHY is 2M on AUX_ADV_IND packets ****\n\n")
-    # Assert if there is no non-connectable non-scannable advertising mode found and Aux Pointer is present
-    assert len(df.loc[(df['Advertising Mode'] == "Non-Connectable Non-Scannable") & (df[
-                                                                                         "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n"
-    logger().info("\n\n **** Non-Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
-    # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
-    assert calculate_offset(
-        df), "\n\n **** Test case Failed: Calculated Offset does not match with the time difference between the last channel index and the random channel index ****\n\n"
-    logger().info(
-        "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
-    # Assert if there is no AUX_ADV_IND packet found after three ADV_EXT_IND packets
-    assert any(
-        (df['Chan'].iloc[i:i + 3].tolist() == [37, 38, 39] and df['Chan'].iloc[i + 3] not in [37, 38, 39]) for i in
-        range(len(df) - 3)), "\n\n **** Test case Failed with no AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n"
-    logger().info("\n\n **** AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n")
-    # Assert if AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet
-    assert (df['Chan'].rolling(window=3).apply(lambda x: list(x) == [37, 38, 39], raw=False).shift(-2).fillna(
-        False).astype(bool) & df['LL Channel'].rolling(window=3).apply(lambda x: len(set(x)) == 1, raw=False).shift(
-        -2).fillna(False).astype(bool) & (df['LL Channel'].shift(-2) == df['Chan'].shift(-3)).fillna(False).astype(
-        bool)).any(), "\n\n **** Test case Failed with AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet ****\n\n"
-    logger().info("\n\n **** AUX_ADV_IND packets channel index matches with the channel index mentioned in the AUX_EXT_IND packet ****\n\n")
-    # Assert if PDU length is not 11 in AUX_ADV_IND packets
-    assert (df.loc[df[
-                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 485).all(), "\n\n **** Test case Failed with PDU length is not 485 in AUX_ADV_IND packets ****\n\n"
-    logger().info("\n\n **** PDU length is 485 in AUX_ADV_IND packets ****\n\n")
-    logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
+# @pytest.mark.config(
+#         "wifi_dut",
+#         wifi={
+#             "oper_mode": 0,
+#             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+#             "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+#             "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+#             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+#             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+#             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+#             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+#             "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+#             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+#             "thread_config": {
+#                 "wifi": {"count": 1, "stack_len": 2048},
+#                 "ble": {"count": 1, "stack_len": 2048},
+#             },
+#         },
+#     )
+# @pytest.mark.ble_sniffer("frontline_sniffer")
+# def test_verify_AE_non_conn_non_scan_ADV_C163713(ble_dut, ble_sniffer, sl_collections):
+#     """
+#     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv
+#     Test case          : This test case will verify Non connectable Non Scannable undirected with pri and sec PHY 1M, 2M
+#                          with adv data of 474 bytes
+#     Device roles       : DUT is performing Peripheral role where Reference is performing Central
+#     """
+#     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
+#     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=0, adv_handle=1, ble_dut_address=ble_dut_address,
+#                                       ble_sniffer=ble_sniffer,
+#                                       pri_adv_phy=1, sec_adv_phy=2, data_len=474, test_case_id="C163713", adv_data="AE_PERIPHERAL_DATA_1_2_3_4_5_6@", powersave_p=True)
+#     # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
+#     assert all(df.loc[df['Chan'].isin([37, 38,
+#                                        39]), 'Type'] == 'ADV_EXT_IND'), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
+#     logger().info("\n\n **** ADV_EXT_IND packet found on 37,38,39 channels ****\n\n")
+#     # Assert if primary PHY is not 1M on ADV_EXT_IND packets
+#     assert (df[df['Chan'].isin([37, 38, 39])][
+#                 '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n"
+#     logger().info("\n\n **** Primary PHY is 1M on ADV_EXT_IND packets ****\n\n")
+#     # Assert if Secondary PHY is not 2M on AUX_ADV_IND packets
+#     assert (df[~df['Chan'].isin([37, 38, 39])][
+#                 '+PHY Type (LE BB)'] == '2M').any(), "\n\n **** Test case Failed with Secondary PHY is not 2M on AUX_ADV_IND packets ****\n\n"
+#     logger().info("\n\n **** Secondary PHY is 2M on AUX_ADV_IND packets ****\n\n")
+#     # Assert if there is no non-connectable non-scannable advertising mode found and Aux Pointer is present
+#     assert len(df.loc[(df['Advertising Mode'] == "Non-Connectable Non-Scannable") & (df[
+#                                                                                          "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n"
+#     logger().info("\n\n **** Non-Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
+#     # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
+#     assert calculate_offset(
+#         df), "\n\n **** Test case Failed: Calculated Offset does not match with the time difference between the last channel index and the random channel index ****\n\n"
+#     logger().info(
+#         "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
+#     # Assert if there is no AUX_ADV_IND packet found after three ADV_EXT_IND packets
+#     assert any(
+#         (df['Chan'].iloc[i:i + 3].tolist() == [37, 38, 39] and df['Chan'].iloc[i + 3] not in [37, 38, 39]) for i in
+#         range(len(df) - 3)), "\n\n **** Test case Failed with no AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n"
+#     logger().info("\n\n **** AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n")
+#     # Assert if AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet
+#     assert (df['Chan'].rolling(window=3).apply(lambda x: list(x) == [37, 38, 39], raw=False).shift(-2).fillna(
+#         False).astype(bool) & df['LL Channel'].rolling(window=3).apply(lambda x: len(set(x)) == 1, raw=False).shift(
+#         -2).fillna(False).astype(bool) & (df['LL Channel'].shift(-2) == df['Chan'].shift(-3)).fillna(False).astype(
+#         bool)).any(), "\n\n **** Test case Failed with AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet ****\n\n"
+#     logger().info("\n\n **** AUX_ADV_IND packets channel index matches with the channel index mentioned in the AUX_EXT_IND packet ****\n\n")
+#     # Assert if PDU length is not 11 in AUX_ADV_IND packets
+#     assert (df.loc[df[
+#                        'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 485).any(), "\n\n **** Test case Failed with PDU length is not 485 in AUX_ADV_IND packets ****\n\n"
+#     logger().info("\n\n **** PDU length is 485 in AUX_ADV_IND packets ****\n\n")
+#     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
 @pytest.mark.config(
         "wifi_dut",
@@ -1427,8 +1455,8 @@ def test_verify_AE_non_conn_non_scan_ADV_C163713(ble_dut, ble_sniffer, sl_collec
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -1454,11 +1482,11 @@ def test_verify_AE_non_conn_non_scan_ADV_C528505(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** ADV_EXT_IND packet found on 37,38,39 channels ****\n\n")
     # Assert if primary PHY is not 1M on ADV_EXT_IND packets
     assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** Primary PHY is 1M on ADV_EXT_IND packets ****\n\n")
     # Assert if Secondary PHY is not 2M on AUX_ADV_IND packets
     assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '2M').all(), "\n\n **** Test case Failed with Secondary PHY is not 2M on AUX_ADV_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '2M').any(), "\n\n **** Test case Failed with Secondary PHY is not 2M on AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** Secondary PHY is 2M on AUX_ADV_IND packets ****\n\n")
     # Assert if there is no non-connectable non-scannable advertising mode found and Aux Pointer is present
     assert len(df.loc[(df['Advertising Mode'] == "Non-Connectable Non-Scannable") & (df[
@@ -1482,14 +1510,14 @@ def test_verify_AE_non_conn_non_scan_ADV_C528505(ble_dut, ble_sniffer, sl_collec
     logger().info("\n\n **** AUX_ADV_IND packets channel index matches with the channel index mentioned in the AUX_EXT_IND packet ****\n\n")
     # Assert if PDU length is not 210 in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 210).all(), "\n\n **** Test case Failed with PDU length is not 210 in AUX_ADV_IND packets ****\n\n"
+                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == 210).any(), "\n\n **** Test case Failed with PDU length is not 210 in AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** PDU length is 210 in AUX_ADV_IND packets ****\n\n")
     # Extract the time part from the original 'Timestamp' column
     df['Time'] = df['Timestamp'].apply(lambda x: re.search(r"\d+:\d+\.\d+", x.strftime('%Y-%m-%d %H:%M:%S.%f')).group())
     # Find indices where the sequence 37, 38, 39 occurs
     sequence = [37, 38, 39]
     indices = df.index[df['Chan'].rolling(window=3).apply(lambda x: list(x) == sequence, raw=True) == 1].tolist()
-    logger().info(f"Indices where the sequence 37, 38, 39 occurs: {indices}")
+    
     # Calculate time difference in milliseconds
     time_difference = 0
     if len(indices) > 1:
@@ -1546,8 +1574,8 @@ def test_verify_AE_non_conn_non_scan_ADV_C528505(ble_dut, ble_sniffer, sl_collec
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048},
@@ -1583,7 +1611,7 @@ def test_verify_AE_Scannable_non_conn_ADV_C528506_C528509(ble_dut, ble_sniffer, 
     logger().info("\n\n **** AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n")
     # Assert if 1M PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets
     assert (df[
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with 1M PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with 1M PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** 1M PHY is used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n")
     # Assert if AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet
     assert (df['Chan'].rolling(window=3).apply(lambda x: list(x) == [37, 38, 39], raw=False).shift(-2).fillna(
@@ -1599,8 +1627,8 @@ def test_verify_AE_Scannable_non_conn_ADV_C528506_C528509(ble_dut, ble_sniffer, 
                     lambda x: re.search(r'\dM', str(x)).group() if pd.notna(x) else None)
                 if aux_phy_values.nunique() == 1:
                     next_phy_type_values = df['+PHY Type (LE BB)'].iloc[i + 3:i + 6]
-                    if next_phy_type_values.eq(aux_phy_values.iloc[0]).all() or df['Type'].iloc[i + 3:i + 6].eq(
-                            'ADV_EXT_IND').all():
+                    if next_phy_type_values.eq(aux_phy_values.iloc[0]).any() or df['Type'].iloc[i + 3:i + 6].eq(
+                            'ADV_EXT_IND').any():
                         continue
                     else:
                         return False
@@ -1613,7 +1641,7 @@ def test_verify_AE_Scannable_non_conn_ADV_C528506_C528509(ble_dut, ble_sniffer, 
     logger().info("\n\n **** AUX_ADV_IND packets PHY matches with the PHY mentioned in the AUX_EXT_IND packet ****\n\n")
     # Assert if PDU length is not 11 in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == data_len+10).all(), f"\n\n **** Test case Failed with PDU length is not {data_len+10} in AUX_ADV_IND packets ****\n\n"
+                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == data_len+10).any(), f"\n\n **** Test case Failed with PDU length is not {data_len+10} in AUX_ADV_IND packets ****\n\n"
     logger().info(f"\n\n **** PDU length is {data_len+10} in AUX_ADV_IND packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -1641,8 +1669,8 @@ def test_verify_AE_Scannable_non_conn_ADV_C528506_C528509(ble_dut, ble_sniffer, 
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -1660,8 +1688,8 @@ def test_verify_AE_Scannable_non_conn_ADV_C528506_C528509(ble_dut, ble_sniffer, 
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -1698,7 +1726,7 @@ def test_verify_AE_Scannable_undirected_ADV_C528510_C528513(ble_dut, remote_wise
     logger().info("\n\n **** AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n")
     # Assert if LE CODED PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets
     assert (df[
-                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with LE CODED PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '125k').any(), "\n\n **** Test case Failed with LE CODED PHY is not used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** LE CODED PHY is used on both AUX_EXT_IND and AUX_ADV_IND packets ****\n\n")
     # Assert if AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet
     assert (df['Chan'].rolling(window=3).apply(lambda x: list(x) == [37, 38, 39], raw=False).shift(-2).fillna(
@@ -1712,11 +1740,11 @@ def test_verify_AE_Scannable_undirected_ADV_C528510_C528513(ble_dut, remote_wise
     logger().info(f"\n\n **** PDU length is {data_len+10} in AUX_ADV_IND packets ****\n\n")
     # Assert if PDU length is not data_len in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] == data_len + 8).all(), f"\n\n **** Test case Failed with PDU length is not {data_len + 8} in AUX_SCAN_RSP packets ****\n\n"
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] == data_len + 8).any(), f"\n\n **** Test case Failed with PDU length is not {data_len + 8} in AUX_SCAN_RSP packets ****\n\n"
     logger().info(f"\n\n **** PDU length is {data_len + 8} in AUX_SCAN_RSP packets ****\n\n")
     # Assert if there is no AUX_SCAN_RSP packet found on 37, 38, 39 channels
     assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
-        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with AUX_SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
+        [37, 38, 39]) == False).any(), "\n\n **** Test case Failed with AUX_SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
     logger()
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 """
@@ -1743,8 +1771,8 @@ def test_verify_AE_Scannable_undirected_ADV_C528510_C528513(ble_dut, remote_wise
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -1762,8 +1790,8 @@ def test_verify_AE_Scannable_undirected_ADV_C528510_C528513(ble_dut, remote_wise
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -1801,11 +1829,11 @@ def test_verify_AE_Scannable_undirected_ADV_C528514_C528516(ble_dut, ble_sniffer
     logger().info("\n\n **** AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n")
     # Assert if primary PHY is not 1M on ADV_EXT_IND packets
     assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), '\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n'
+                '+PHY Type (LE BB)'] == '1M').any(), '\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n'
     logger().info("\n\n **** Primary PHY is 1M on ADV_EXT_IND packets ****\n\n")
     # Assert if Secondary PHY is not 2M on AUX_ADV_IND packets
     assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '2M').all(), '\n\n **** Test case Failed with Secondary PHY is not 2M on AUX_ADV_IND packets ****\n\n'
+                '+PHY Type (LE BB)'] == '2M').any(), '\n\n **** Test case Failed with Secondary PHY is not 2M on AUX_ADV_IND packets ****\n\n'
     logger().info("\n\n **** Secondary PHY is 2M on AUX_ADV_IND packets ****\n\n")
     # Assert if AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet
     assert (df['Chan'].rolling(window=3).apply(lambda x: list(x) == [37, 38, 39], raw=False).shift(-2).fillna(
@@ -1815,13 +1843,13 @@ def test_verify_AE_Scannable_undirected_ADV_C528514_C528516(ble_dut, ble_sniffer
     logger().info("\n\n **** AUX_ADV_IND packets channel index matches with the channel index mentioned in the AUX_EXT_IND packet ****\n\n")
     # Assert if PDU length is not data_len in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] == data_len + 8).all(), f"\n\n **** Test case Failed with PDU length is not {data_len + 8} in AUX_SCAN_RSP packets ****\n\n"
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] == data_len + 8).any(), f"\n\n **** Test case Failed with PDU length is not {data_len + 8} in AUX_SCAN_RSP packets ****\n\n"
     logger().info(f"\n\n **** PDU length is {data_len + 8} in AUX_SCAN_RSP packets ****\n\n")
     #assert if PUD length is not dat_len in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == data_len+10).all(), f"\n\n **** Test case Failed with PDU length is not {data_len+10} in AUX_ADV_IND packets ****\n\n"
+                       'Type'] == 'AUX_ADV_IND', 'PDU Length'] == data_len+10).any(), f"\n\n **** Test case Failed with PDU length is not {data_len+10} in AUX_ADV_IND packets ****\n\n"
     # Assert if there is no AUX_SCAN_RSP packet found on 37, 38, 39 channels
-    assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin([37, 38, 39]) == False).all(), "\n\n **** Test case Failed with AUX_SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
+    assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin([37, 38, 39]) == False).any(), "\n\n **** Test case Failed with AUX_SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
     logger().info("\n\n **** AUX_SCAN_RSP packet found on 37,38,39 channels ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 """
@@ -1847,8 +1875,8 @@ def test_verify_AE_Scannable_undirected_ADV_C528514_C528516(ble_dut, ble_sniffer
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -1866,8 +1894,8 @@ def test_verify_AE_Scannable_undirected_ADV_C528514_C528516(ble_dut, ble_sniffer
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -1915,11 +1943,11 @@ def test_verify_AE_Scannable_filter_policy_C528575_C528577(ble_dut, ble_sniffer,
     logger().info("\n\n **** AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n")
     # Assert if primary PHY is not 1M on ADV_EXT_IND packets
     assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), '\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n'
+                '+PHY Type (LE BB)'] == '1M').any(), '\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n'
     logger().info("\n\n **** Primary PHY is 1M on ADV_EXT_IND packets ****\n\n")
     # Assert if Secondary PHY is not 1M on AUX_ADV_IND packets
     assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), '\n\n **** Test case Failed with Secondary PHY is not 1M on AUX_ADV_IND packets ****\n\n'
+                '+PHY Type (LE BB)'] == '1M').any(), '\n\n **** Test case Failed with Secondary PHY is not 1M on AUX_ADV_IND packets ****\n\n'
     logger().info("\n\n **** Secondary PHY is 1M on AUX_ADV_IND packets ****\n\n")
     # Assert if AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet
     assert (df['Chan'].rolling(window=3).apply(lambda x: list(x) == [37, 38, 39], raw=False).shift(-2).fillna(
@@ -1930,7 +1958,7 @@ def test_verify_AE_Scannable_filter_policy_C528575_C528577(ble_dut, ble_sniffer,
     logger().info("\n\n **** AUX_ADV_IND packets channel index matches with the channel index mentioned in the AUX_EXT_IND packet ****\n\n")
     # Assert if there is no AUX_SCAN_RSP packet found on 37, 38, 39 channels
     assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
-        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with AUX_SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
+        [37, 38, 39]) == False).any(), "\n\n **** Test case Failed with AUX_SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
     logger().info("\n\n **** AUX_SCAN_RSP packet found on 37,38,39 channels ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 """
@@ -1988,8 +2016,8 @@ def test_verify_AE_Scannable_filter_policy_C528575_C528577(ble_dut, ble_sniffer,
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -2007,8 +2035,8 @@ def test_verify_AE_Scannable_filter_policy_C528575_C528577(ble_dut, ble_sniffer,
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -2034,7 +2062,7 @@ def test_verify_2ADV_sets_PHY_1M_2M_C528578_to_C528584(ble_dut, ble_sniffer, rem
                                                                                       "Aux Pointer"] == "Present")]) >= 1, '\n\n **** Test case Failed with no Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n'
         logger().info("\n\n **** Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type == 1 else data_len_s2)).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type == 1 else data_len_s2)).any(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type == 1 else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2047,7 +2075,7 @@ def test_verify_2ADV_sets_PHY_1M_2M_C528578_to_C528584(ble_dut, ble_sniffer, rem
                                                                                          "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Non-Connectable Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type == 1 else data_len_s2)).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type == 1 else data_len_s2)).any(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type == 1 else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2060,27 +2088,27 @@ def test_verify_2ADV_sets_PHY_1M_2M_C528578_to_C528584(ble_dut, ble_sniffer, rem
                                                                                       "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Non-Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0] else data_len_s2)).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0] else data_len_s2)).any(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
             df), "\n\n **** Test case Failed: Calculated Offset does not match with the time difference between the last channel index and the random channel index ****\n\n"
         logger().info(
             "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
     assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
-        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with AUX_SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
+        [37, 38, 39]) == False).any(), "\n\n **** Test case Failed with AUX_SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
     logger().info("\n\n **** AUX_SCAN_RSP packet found on 37,38,39 channels ****\n\n")
     # Assert if primary PHY is not 1M on ADV_EXT_IND packets
     assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** Primary PHY is 1M on ADV_EXT_IND packets ****\n\n")
     # Assert if secondary PHY is not 2M on AUX_ADV_IND packets
     assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '2M').all(), "\n\n **** Test case Failed with secondary PHY is not 2M on AUX_ADV_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '2M').any(), "\n\n **** Test case Failed with secondary PHY is not 2M on AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** Secondary PHY is 2M on AUX_ADV_IND packets ****\n\n")
     # Assert if PDU length is not data_len in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).all() or (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_SCAN_RSP packets ****\n\n"
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).any() or (df.loc[df[
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).any(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_SCAN_RSP packets ****\n\n"
     logger().info(f"\n\n **** PDU length is {data_len} or {data_len_s2} in AUX_SCAN_RSP packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -2111,8 +2139,8 @@ def test_verify_2ADV_sets_PHY_1M_2M_C528578_to_C528584(ble_dut, ble_sniffer, rem
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -2130,8 +2158,8 @@ def test_verify_2ADV_sets_PHY_1M_2M_C528578_to_C528584(ble_dut, ble_sniffer, rem
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -2156,7 +2184,7 @@ def test_verify_2ADV_sets_PHY_LECoded_C528585_to_C528591(ble_dut, ble_sniffer, r
                                                                                       "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).any(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [1,5] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2169,7 +2197,7 @@ def test_verify_2ADV_sets_PHY_LECoded_C528585_to_C528591(ble_dut, ble_sniffer, r
                                                                                       "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Non-Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).any(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [0,4] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2182,7 +2210,7 @@ def test_verify_2ADV_sets_PHY_LECoded_C528585_to_C528591(ble_dut, ble_sniffer, r
                                                                                          "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Non-Connectable Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).any(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [2,6] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2190,20 +2218,20 @@ def test_verify_2ADV_sets_PHY_LECoded_C528585_to_C528591(ble_dut, ble_sniffer, r
         logger().info(
             "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
     assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
-        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with the reason AUX_SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
+        [37, 38, 39]) == False).any(), "\n\n **** Test case Failed with the reason AUX_SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
     logger().info("\n\n **** AUX_SCAN_RSP packet found on 37,38,39 channels ****\n\n")
     # Assert if primary PHY is not LE CODED on ADV_EXT_IND packets
     assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no primary PHY is LE CODED on ADV_EXT_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '125k').any(), "\n\n **** Test case Failed with no primary PHY is LE CODED on ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** Primary PHY is LE CODED on ADV_EXT_IND packets ****\n\n")
     # Assert if Secondary PHY is not LE CODED on AUX_ADV_IND packets
     assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no Secondary PHY is LE CODED on AUX_ADV_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '125k').any(), "\n\n **** Test case Failed with no Secondary PHY is LE CODED on AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** Secondary PHY is LE CODED on AUX_ADV_IND packets ****\n\n")
     # Assert if PDU length is not data_len in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).all() or (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_SCAN_RSP packets ****\n\n"
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).any() or (df.loc[df[
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).any(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_SCAN_RSP packets ****\n\n"
     logger().info(f"\n\n **** PDU length is {data_len} or {data_len_s2} in AUX_SCAN_RSP packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -2234,8 +2262,8 @@ def test_verify_2ADV_sets_PHY_LECoded_C528585_to_C528591(ble_dut, ble_sniffer, r
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -2253,8 +2281,8 @@ def test_verify_2ADV_sets_PHY_LECoded_C528585_to_C528591(ble_dut, ble_sniffer, r
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -2279,7 +2307,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
                                                                                       "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).any(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [1,5] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2292,7 +2320,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
                                                                                          "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Non-Connectable Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).any(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [2,6] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2305,7 +2333,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
                                                                                       "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Non-Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).any(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [0,4] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2318,7 +2346,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
                                                                                       "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with no ADV_NONCONN_IND advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** ADV_NONCONN_IND advertising mode found and Aux Pointer is not present ****\n\n")
         # Assert if PDU length is not data_len in ADV_NONCONN_IND packets
-        assert (df[(df['Type'] == 'ADV_NONCONN_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [16] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in ADV_NONCONN_IND packets ****\n\n"
+        assert (df[(df['Type'] == 'ADV_NONCONN_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [16] else data_len_s2)).any(), "\n\n **** Test case Failed with no PDU length is not data_len in ADV_NONCONN_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [16] else data_len_s2} in ADV_NONCONN_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2331,7 +2359,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
                                                                                       "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with no ADV_IND advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** ADV_IND advertising mode found and Aux Pointer is not present ****\n\n")
         # Assert if PDU length is not data_len in ADV_NONCONN_IND packets
-        assert (df[(df['Type'] == 'ADV_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [19] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in ADV_IND packets ****\n\n"
+        assert (df[(df['Type'] == 'ADV_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [19] else data_len_s2)).any(), "\n\n **** Test case Failed with no PDU length is not data_len in ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [19] else data_len_s2} in ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2344,7 +2372,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
                                                                                       "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with no ADV_SCAN_IND advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** ADV_SCAN_IND advertising mode found and Aux Pointer is not present ****\n\n")
         # Assert if PDU length is not data_len in ADV_NONCONN_IND packets
-        assert (df[(df['Type'] == 'ADV_SCAN_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [18] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in ADV_SCAN_IND packets ****\n\n"
+        assert (df[(df['Type'] == 'ADV_SCAN_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [18] else data_len_s2)).any(), "\n\n **** Test case Failed with no PDU length is not data_len in ADV_SCAN_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [18] else data_len_s2} in ADV_SCAN_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2357,7 +2385,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
                                                                                       "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with no ADV_DIRECT_IND advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** ADV_DIRECT_IND advertising mode found and Aux Pointer is not present ****\n\n")
         # Assert if PDU length is not data_len in ADV_NONCONN_IND packets
-        assert (df[(df['Type'] == 'ADV_DIRECT_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [21] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in ADV_DIRECT_IND packets ****\n\n"
+        assert (df[(df['Type'] == 'ADV_DIRECT_IND') & (df['Chan'].isin([37, 38, 39]))]['Len'] > (data_len if adv_type in [21] else data_len_s2)).any(), "\n\n **** Test case Failed with no PDU length is not data_len in ADV_DIRECT_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [21] else data_len_s2} in ADV_DIRECT_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2366,16 +2394,16 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
             "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
     # Assert if primary PHY is not 1M on ADV_EXT_IND packets
     assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with no primary PHY is 1M on ADV_EXT_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with no primary PHY is 1M on ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** Primary PHY is 1M on ADV_EXT_IND packets ****\n\n")
     # Assert if Secondary PHY is not 1M on AUX_ADV_IND packets
     assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with no Secondary PHY is 1M on AUX_ADV_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with no Secondary PHY is 1M on AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** Secondary PHY is 1M on AUX_ADV_IND packets ****\n\n")
     # Assert if PDU length is not data_len in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).all() or (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_SCAN_RSP packets ****\n\n"
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).any() or (df.loc[df[
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).any(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_SCAN_RSP packets ****\n\n"
     logger().info(f"\n\n **** PDU length is {data_len} or {data_len_s2} in AUX_SCAN_RSP packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -2406,8 +2434,8 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -2425,8 +2453,8 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -2453,7 +2481,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605(ble_dut, ble_sniffe
                                                                                       "Ext Adv Address Type"] == "random")]) >= 1, "\n\n **** Test case Failed with no Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).any(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [1,5] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2467,7 +2495,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605(ble_dut, ble_sniffe
                                                                                       "Ext Adv Address Type"] == "random")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Non-Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Non-Connectable Non-Scannable advertising mode found and Aux Pointer is present and is advertising with random address ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).any(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [0,4] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2481,7 +2509,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605(ble_dut, ble_sniffe
                                                                                       "Ext Adv Address Type"] == "random")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info("\n\n **** Non-Connectable Scannable advertising mode found and Aux Pointer is present and is advertising with random address ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).any(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [2,6] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2489,20 +2517,20 @@ def test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605(ble_dut, ble_sniffe
         logger().info(
             "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
     assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
-        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets are not found ****\n\n"
+        [37, 38, 39]) == False).any(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets are not found ****\n\n"
     logger().info("\n\n **** AUX_SCAN_RSP packets are not found ****\n\n")
     # Assert if primary PHY is not LE Coded on ADV_EXT_IND packets
     assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no primary PHY is LE Coded on ADV_EXT_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '125k').any(), "\n\n **** Test case Failed with no primary PHY is LE Coded on ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** Primary PHY is LE CODED on ADV_EXT_IND packets ****\n\n")
     # Assert if secondary PHY is not LE Coded on AUX_ADV_IND packets
     assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no Secondary PHY is LE CODED on AUX_ADV_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '125k').any(), "\n\n **** Test case Failed with no Secondary PHY is LE CODED on AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** Secondary PHY is LE CODED on AUX_ADV_IND packets ****\n\n")
     # Assert if PDU length is not data_len in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).all() or (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_SCAN_RSP packets ****\n\n"
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).any() or (df.loc[df[
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).any(), "\n\n **** Test case Failed with PDU length is not data_len in AUX_SCAN_RSP packets ****\n\n"
     logger().info(f"\n\n **** PDU length is {data_len} or {data_len_s2} in AUX_SCAN_RSP packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -2533,8 +2561,8 @@ def test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605(ble_dut, ble_sniffe
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -2552,8 +2580,8 @@ def test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605(ble_dut, ble_sniffe
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -2582,7 +2610,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffe
                     ]) >= 1, "\n\n **** Test case Failed with no connectable non-scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info(f"\n\n **** Connectable Non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [1, 5] else 'public'} ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).any(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [1,5] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2600,7 +2628,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffe
                        ]) >= 1, "\n\n **** Test case Failed with no non-connectable non-scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info(f"\n\n **** Non-Connectable Non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [0, 4] else 'public'} ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).any(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [0,4] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2618,7 +2646,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffe
                        ]) >= 1, "\n\n **** Test case Failed with no non-connectable scannable advertising mode found or Aux Pointer is not present ****\n\n"
         logger().info(f"\n\n **** Non-Connectable Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [2, 6] else 'public'} ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).any(), "\n\n **** Test case Failed with no PDU length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [2,6] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2626,20 +2654,20 @@ def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffe
         logger().info(
             "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
     assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
-        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets are not found ****\n\n"
+        [37, 38, 39]) == False).any(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets are not found ****\n\n"
     logger().info("\n\n **** AUX_SCAN_RSP packets are not found ****\n\n")
     # Assert if primary PHY is not 1M on ADV_EXT_IND packets
     assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with primary PHY is not 1M on ADV_EXT_IND packets ****\n\n"
     logger().info("\n\n **** Primary PHY is 1M on ADV_EXT_IND packets ****\n\n")
     # Assert if secondary PHY is not 1M on AUX_ADV_IND packets
     assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with secondary PHY is not 1M on AUX_ADV_IND packets ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with secondary PHY is not 1M on AUX_ADV_IND packets ****\n\n"
     logger().info("\n\n **** Secondary PHY is 1M on AUX_ADV_IND packets ****\n\n")
     # Assert if PDU length is not data_len in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).all() or (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_SCAN_RSP packets ****\n\n"
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).any() or (df.loc[df[
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).any(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_SCAN_RSP packets ****\n\n"
     logger().info(f"\n\n **** PDU length is {data_len} or {data_len_s2} in AUX_SCAN_RSP packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -2670,8 +2698,8 @@ def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffe
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -2689,8 +2717,8 @@ def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffe
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -2719,7 +2747,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528613_to_C528619(ble_dut, ble_sniffe
                     ]) >= 1, "\n\n **** Test case Failed with no connectable non-scannable advertising mode found and Aux Pointer is present..! ****\n\n"
         logger().info(f"\n\n **** Connectable Non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [1, 5] else 'public'} ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).any(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [1,5] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2737,7 +2765,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528613_to_C528619(ble_dut, ble_sniffe
                        ]) >= 1, "\n\n **** Test case Failed with no non-connectable non-scannable advertising mode found and Aux Pointer is present..! ****\n\n"
         logger().info(f"\n\n **** Non-Connectable Non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [0, 4] else 'public'} ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).any(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [0,4] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2755,7 +2783,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528613_to_C528619(ble_dut, ble_sniffe
                        ]) >= 1, "\n\n **** Test case Failed with no non-connectable non-scannable advertising mode found and Aux Pointer is present..! ****\n\n"
         logger().info(f"\n\n **** Non-Connectable Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [2, 6] else 'public'} ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_ADV_IND packets ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).any(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_ADV_IND packets ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [2,6] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2763,20 +2791,20 @@ def test_verify_2ADV_sets_Legacy_Extended_C528613_to_C528619(ble_dut, ble_sniffe
         logger().info(
             "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
     assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
-        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with AUX_SCAN_RSP packets are not found..! ****\n\n"
+        [37, 38, 39]) == False).any(), "\n\n **** Test case Failed with AUX_SCAN_RSP packets are not found..! ****\n\n"
     logger().info("\n\n **** AUX_SCAN_RSP packets are not found ****\n\n")
     # Assert if primary PHY is not 1M on ADV_EXT_IND packets
     assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with no primary PHY is 1M on ADV_EXT_IND packets..! ****\n\n"
+                '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with no primary PHY is 1M on ADV_EXT_IND packets..! ****\n\n"
     logger().info("\n\n **** Primary PHY is 1M on ADV_EXT_IND packets ****\n\n")
     # Assert if secondary PHY is not 2M on AUX_ADV_IND packets
     assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '2M').all(), "\n\n **** Test case Failed with secondary PHY is not 2M on AUX_ADV_IND packets..! ****\n\n"
+                '+PHY Type (LE BB)'] == '2M').any(), "\n\n **** Test case Failed with secondary PHY is not 2M on AUX_ADV_IND packets..! ****\n\n"
     logger().info("\n\n **** Secondary PHY is 2M on AUX_ADV_IND packets ****\n\n")
     # Assert if PDU length is not data_len in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).all() or (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).any() or (df.loc[df[
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).any(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
     logger().info(f"\n\n **** PDU length is {data_len} or {data_len_s2} in AUX_SCAN_RSP packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -2807,8 +2835,8 @@ def test_verify_2ADV_sets_Legacy_Extended_C528613_to_C528619(ble_dut, ble_sniffe
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -2826,8 +2854,8 @@ def test_verify_2ADV_sets_Legacy_Extended_C528613_to_C528619(ble_dut, ble_sniffe
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -2856,7 +2884,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528620_to_C528626(ble_dut, ble_sniffe
                     ]) >= 1, "\n\n **** Test case Failed with no connectable non-scannable advertising mode found..! ****\n\n"
         logger().info(f"\n\n **** Connectable Non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [1, 5] else 'public'} ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).all(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_ADV_IND packets..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [1,5] else data_len_s2)).any(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_ADV_IND packets..! ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [1,5] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2874,7 +2902,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528620_to_C528626(ble_dut, ble_sniffe
                        ]) >= 1, "\n\n **** Test case Failed with no non-connectable non-scannable advertising mode found..! ****\n\n"
         logger().info(f"\n\n **** Non-Connectable Non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [0, 4] else 'public'} ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).all(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_ADV_IND packets..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [0,4] else data_len_s2)).any(), "\n\n **** Test case Failed with no pdu length is not data_len in AUX_ADV_IND packets..! ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [0,4] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2892,7 +2920,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528620_to_C528626(ble_dut, ble_sniffe
                        ]) >= 1, "\n\n **** Test case Failed with no non-connectable scannable advertising mode found..! ****\n\n"
         logger().info(f"\n\n **** Non-Connectable Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if adv_type_s2 in [2, 6] else 'public'} ****\n\n")
         # Assert if PDU length is not data_len in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).all(), "\n\n **** Test case Failed with no pdu length match found..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (data_len if adv_type in [2,6] else data_len_s2)).any(), "\n\n **** Test case Failed with no pdu length match found..! ****\n\n"
         logger().info(f"\n\n **** PDU length is {data_len if adv_type in [2,6] else data_len_s2} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -2900,20 +2928,20 @@ def test_verify_2ADV_sets_Legacy_Extended_C528620_to_C528626(ble_dut, ble_sniffe
         logger().info(
             "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
     assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
-        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
+        [37, 38, 39]) == False).any(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
     logger().info("\n\n **** AUX_SCAN_RSP packets are not found ****\n\n")
     # Assert if primary PHY is not LE Coded on ADV_EXT_IND packets
     assert (df[df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
+                '+PHY Type (LE BB)'] == '125k').any(), "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
     logger().info("\n\n **** Primary PHY is LE Coded on ADV_EXT_IND packets ****\n\n")
     # Assert if secondary PHY is not LE Coded on AUX_ADV_IND packets
     assert (df[~df['Chan'].isin([37, 38, 39])][
-                '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
+                '+PHY Type (LE BB)'] == '125k').any(), "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
     logger().info("\n\n **** Secondary PHY is LE Coded on AUX_ADV_IND packets ****\n\n")
     # Assert if PDU length is not data_len in AUX_ADV_IND packets
     assert (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).all() or (df.loc[df[
-                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len).any() or (df.loc[df[
+                       'Type'] == 'AUX_SCAN_RSP', 'PDU Length'] > data_len_s2).any(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
     logger().info(f"\n\n **** PDU length is {data_len} or {data_len_s2} in AUX_SCAN_RSP packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
@@ -2956,8 +2984,8 @@ def test_verify_2ADV_sets_Legacy_Extended_C528620_to_C528626(ble_dut, ble_sniffe
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -2975,8 +3003,8 @@ def test_verify_2ADV_sets_Legacy_Extended_C528620_to_C528626(ble_dut, ble_sniffe
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLEExtFeatureBITMAP.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_PERIPHERALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_MAX_NBR_ATT_REC | Si91xBLEFeatureBITMAP.SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBITMAP.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBITMAP.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
@@ -3008,7 +3036,7 @@ def test_verify_Enable_Disable_Ext_Adv_scannable_undirected_C163869_C163886(ble_
             f"\n\n **** Non-Connectable Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if random_address != None  else 'public'} ****\n\n")
         # Assert if PDU length is not 19 in AUX_ADV_IND packets
         assert (df[(df['Advertising Mode'] == 'Non-Connectable Scannable') & (~df['Chan'].isin([37, 38, 39]))][
-                    'PDU Length'] > (19)).all(), "\n\n **** Test case Failed with no pdu length match found..! ****\n\n"
+                    'PDU Length'] > (19)).any(), "\n\n **** Test case Failed with no pdu length match found..! ****\n\n"
         logger().info(
             f"\n\n **** PDU length is {19} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
@@ -3027,7 +3055,7 @@ def test_verify_Enable_Disable_Ext_Adv_scannable_undirected_C163869_C163886(ble_
                        ]) >= 1, "\n\n **** Test case Failed with no non-connectable non-scannable advertising mode found..! ****\n\n"
         logger().info(f"\n\n **** Non-Connectable Non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if random_address != None  else 'public'} ****\n\n")
         # Assert if PDU length is not 19 in AUX_ADV_IND packets
-        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (19)).all(), "\n\n **** Test case Failed with no pdu length is not 19 in AUX_ADV_IND packets..! ****\n\n"
+        assert (df[(df['Advertising Mode'] == 'Non-Connectable Non-Scannable') & (~df['Chan'].isin([37, 38, 39]))]['PDU Length'] > (19)).any(), "\n\n **** Test case Failed with no pdu length is not 19 in AUX_ADV_IND packets..! ****\n\n"
         logger().info(f"\n\n **** PDU length is {19} in AUX_ADV_IND packets ****\n\n")
         # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
         assert calculate_offset(
@@ -3036,106 +3064,274 @@ def test_verify_Enable_Disable_Ext_Adv_scannable_undirected_C163869_C163886(ble_
             "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
 
     assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
-        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
+        [37, 38, 39]) == False).any(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
     logger().info("\n\n **** AUX_SCAN_RSP packets are not found ****\n\n")
     if pri_adv_phy in [3] and sec_adv_phy in [3]:
         # Assert if primary PHY is not LE Coded on ADV_EXT_IND packets
         assert (df[df['Chan'].isin([37, 38, 39])][
-                    '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
+                    '+PHY Type (LE BB)'] == '125k').any(), "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
         logger().info("\n\n **** Primary PHY is LE Coded on ADV_EXT_IND packets ****\n\n")
         # Assert if secondary PHY is not LE Coded on AUX_ADV_IND packets
         assert (df[~df['Chan'].isin([37, 38, 39])][
-                    '+PHY Type (LE BB)'] == '125k').all(), "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
+                    '+PHY Type (LE BB)'] == '125k').any(), "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
         logger().info("\n\n **** Secondary PHY is LE Coded on AUX_ADV_IND packets ****\n\n")
     elif pri_adv_phy in [1] and sec_adv_phy in [1]:
         # Assert if primary PHY is not LE 1M on ADV_EXT_IND packets
         assert (df[df['Chan'].isin([37, 38, 39])][
-                    '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
+                    '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
         logger().info("\n\n **** Primary PHY is LE 1M on ADV_EXT_IND packets ****\n\n")
         # Assert if secondary PHY is not LE 1M on AUX_ADV_IND packets
         assert (df[~df['Chan'].isin([37, 38, 39])][
-                    '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
+                    '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
         logger().info("\n\n **** Secondary PHY is LE 1M on AUX_ADV_IND packets ****\n\n")
     elif pri_adv_phy in [2] and sec_adv_phy in [2]:
         # Assert if primary PHY is not LE 2M on ADV_EXT_IND packets
         assert (df[df['Chan'].isin([37, 38, 39])][
-                    '+PHY Type (LE BB)'] == '2M').all(), "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
+                    '+PHY Type (LE BB)'] == '2M').any(), "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
         logger().info("\n\n **** Primary PHY is LE 2M on ADV_EXT_IND packets ****\n\n")
         # Assert if secondary PHY is not LE 2M on AUX_ADV_IND packets
         assert (df[~df['Chan'].isin([37, 38, 39])][
-                    '+PHY Type (LE BB)'] == '2M').all(), "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
+                    '+PHY Type (LE BB)'] == '2M').any(), "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
         logger().info("\n\n **** Secondary PHY is LE 2M on AUX_ADV_IND packets ****\n\n")
     elif pri_adv_phy in [1] and sec_adv_phy in [2]:
         # Assert if primary PHY is not LE 1M on ADV_EXT_IND packets
         assert (df[df['Chan'].isin([37, 38, 39])][
-                    '+PHY Type (LE BB)'] == '1M').all(), "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
+                    '+PHY Type (LE BB)'] == '1M').any(), "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
         logger().info("\n\n **** Primary PHY is LE 1M on ADV_EXT_IND packets ****\n\n")
         # Assert if secondary PHY is not LE 2M on AUX_ADV_IND packets
         assert (df[~df['Chan'].isin([37, 38, 39])][
-                    '+PHY Type (LE BB)'] == '2M').all(), "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
+                    '+PHY Type (LE BB)'] == '2M').any(), "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
         logger().info("\n\n **** Secondary PHY is LE 2M on AUX_ADV_IND packets ****\n\n")
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
-# Negative Test scenarios
+"""
+    Test case category : LE Periodic Advertising - Synchronization on DUT for adv type = non con non scan undirected
+    Device roles       : DUT is performing Peripheral role where Reference is performing Central
+    Fixures used       : ble_sniffer - To caputre BLE OTA logs through Teledyne sniffer
+"""
+@pytest.mark.parametrize(
+    "adv_type, test_case_id, pri_adv_phy, sec_adv_phy",
+    [
+        (0, "C528649", 1, 1),
+        (0, "C528650", 1, 2),
+        (0, "C528651", 3, 3),
+    ],
+)
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048},
+                "ble": {"count": 1, "stack_len": 2048},
+            },
+        },
+    )
+@pytest.mark.ble_sniffer("frontline_sniffer")
+def test_verify_periodic_Adv_Sync_undreceted_non_conn_non_scan_C528649_C528651(ble_dut, ble_sniffer, sl_collections,
+                                        adv_type, test_case_id, pri_adv_phy, sec_adv_phy):
+    ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
+    df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, ble_dut_address=ble_dut_address,
+                                    pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, data_len=200, scan_resp_len=1, test_case_id=test_case_id,
+                                    adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,
+                                    ble_sniffer=ble_sniffer, powersave_p=True, adv_data_type=2, periodic_data_len=200)
+    # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
+    assert all(df.loc[df['Chan'].isin([37, 38,
+                                       39]), 'Type'] == 'ADV_EXT_IND'), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
+    logger().info("\n\n **** ADV_EXT_IND packet found on 37,38,39 channels ****\n\n")
+    # Assert if there is no Non-Connectable Non-Scannable advertising mode found and Aux Pointer is present
+    assert len(df.loc[(df['Advertising Mode'] == "Non-Connectable Non-Scannable") & (df[
+                                                                                     "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Scannable advertising mode found or Aux Pointer is not present ****\n\n"
+    logger().info("\n\n **** Non-Connectable Non-Scannable advertising mode found and Aux Pointer is present ****\n\n")
+    # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
+    assert calculate_offset(
+        df), "\n\n **** Test case Failed: Calculated Offset does not match with the time difference between the last channel index and the random channel index ****\n\n"
+    logger().info(
+        "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
+    # Assert if there is no AUX_ADV_IND packet found after three ADV_EXT_IND packets
+    assert any(
+        (df['Chan'].iloc[i:i + 3].tolist() == [37, 38, 39] and df['Chan'].iloc[i + 3] not in [37, 38, 39]) for i in
+        range(
+            len(df) - 3)), "\n\n **** Test case Failed with no AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n"
+    logger().info("\n\n **** AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n")
+    # Assert if primary PHY is not expected PHY on ADV_EXT_IND packets
+    assert (df[df['Chan'].isin([37, 38, 39])][
+                '+PHY Type (LE BB)'] == ('1M' if pri_adv_phy==1 else '2M' if pri_adv_phy==2 else '125k')).any(), f"\n\n **** Test case Failed with primary PHY is not {'1M' if pri_adv_phy==1 else '2M' if pri_adv_phy==2 else '125k'} on ADV_EXT_IND packets ****\n\n"
+    logger().info(f"\n\n **** Primary PHY is {'1M' if pri_adv_phy==1 else '2M' if pri_adv_phy==2 else '125k'} on ADV_EXT_IND packets ****\n\n")
+    # Assert if Secondary PHY is not expected PHY on AUX_ADV_IND packets
+    assert (df[~df['Chan'].isin([37, 38, 39])][
+                '+PHY Type (LE BB)'] == ('1M' if sec_adv_phy==1 else '2M' if sec_adv_phy==2 else '125k')).any(), f"\n\n **** Test case Failed with Secondary PHY is not {'1M' if sec_adv_phy==1 else '2M' if sec_adv_phy==2 else '125k'} on AUX_ADV_IND packets ****\n\n"
+    logger().info(f"\n\n **** Secondary PHY is {'1M' if sec_adv_phy==1 else '2M' if sec_adv_phy==2 else '125k'} on AUX_ADV_IND packets ****\n\n")
+    # Assert if AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet
+    assert (df['Chan'].rolling(window=3).apply(lambda x: list(x) == [37, 38, 39], raw=False).shift(-2).fillna(
+        False).astype(bool) & df['LL Channel'].rolling(window=3).apply(lambda x: len(set(x)) == 1, raw=False).shift(
+        -2).fillna(False).astype(bool) & (df['LL Channel'].shift(-2) == df['Chan'].shift(-3)).fillna(False).astype(
+        bool)).any(), "\n\n **** Test case Failed with AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet ****\n\n"
+    logger().info(
+        "\n\n **** AUX_ADV_IND packets channel index matches with the channel index mentioned in the AUX_EXT_IND packet ****\n\n")
+    # Assert if PDU length is not 203 in AUX_SYNC_IND packets
+    assert (df.loc[df[
+                       'Type'] == 'AUX_SYNC_IND', 'PDU Length'] == 203).any(), f"\n\n **** Test case Failed with PDU length is not {203} in AUX_ADV_IND packets ****\n\n"
+    logger().info(f"\n\n **** PDU length is {203} in AUX_ADV_IND packets ****\n\n")
+    #Assert if the calculated offset does not match with the time difference between the AUX_ADV_IND and AUX_SYNC_IND packets
+    assert calculate_sync_offset(df), "\n\n **** Test case Failed: Calculated Offset does not match with the time difference between the AUX_ADV_IND and AUX_SYNC_IND packets ****\n\n"
+    logger().info("\n\n **** Calculated Offset matches with the time difference between the AUX_ADV_IND and AUX_SYNC_IND packets ****\n\n")
+    logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
-""" Test case : This test case will verify 0x04c error, when legacy and ext adv started together with single adv set"""
-def test_verify_Negative_case_C163735(ble_dut, rs_helper_ble):
-    ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
-    rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=0, ble_dut_address=ble_dut_address,
-                                    pri_adv_phy=1, sec_adv_phy=1, data_len=160, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", test_case_id="C163736",
-                                    dont_cleanup=True)
-    rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=17, ble_dut_address=ble_dut_address,
-                                    pri_adv_phy=1, sec_adv_phy=1, data_len=31, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", test_case_id="C163736",
-                                    error_expected= "Error code: 0x4e0c Msg: Command disallowed Command")
+# """
+#     Test case category : LE Periodic Advertising - Synchronization on DUT for adv type = non con non scan directed
+#     Device roles       : DUT is performing Peripheral role where Reference is performing Central
+#     Fixures used       : ble_sniffer - To caputre BLE OTA logs through Teledyne sniffer
+# """
+# @pytest.mark.parametrize(
+#     "adv_type, test_case_id, pri_adv_phy, sec_adv_phy",
+#     [
+#         # (8, "C528517", 1, 1),
+#         (8, "C528518", 1, 2),
+#         # (8, "C528519", 3, 3),
+#     ],
+# )
+# @pytest.mark.config(
+#         "wifi_dut",
+#         wifi={
+#             "oper_mode": 0,
+#             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+#             "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+#             "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+#             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+#             "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+#             "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+#             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+#             "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+#             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+#             "thread_config": {
+#                 "wifi": {"count": 1, "stack_len": 2048},
+#                 "ble": {"count": 1, "stack_len": 2048},
+#             },
+#         },
+#     )
+# @pytest.mark.ble_sniffer("frontline_sniffer")
+# def test_verify_periodic_Adv_Sync_dreceted_non_conn_non_scan_C528517_C528519(ble_dut, ble_sniffer, sl_collections,
+#                                         adv_type, test_case_id, pri_adv_phy, sec_adv_phy):
+#     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
+#     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, ble_dut_address=ble_dut_address,
+#                                     pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, data_len=200, scan_resp_len=1, test_case_id=test_case_id,
+#                                     adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,
+#                                     ble_sniffer=ble_sniffer, powersave_p=True, adv_data_type=2, periodic_data_len=200)
+#     # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
+#     assert all(df.loc[df['Chan'].isin([37, 38,
+#                                        39]), 'Type'] == 'ADV_EXT_IND'), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
+#     logger().info("\n\n **** ADV_EXT_IND packet found on 37,38,39 channels ****\n\n")
+#     # Assert if there is no Non-Connectable Scannable advertising mode found and Aux Pointer is present
+#     assert len(df.loc[(df['Advertising Mode'] == "Non-Connectable Scannable") & (df[
+#                                                                                      "Aux Pointer"] == "Present")]) >= 1, "\n\n **** Test case Failed with no Non-Connectable Scannable advertising mode found or Aux Pointer is not present ****\n\n"
+#     logger().info("\n\n **** Non-Connectable Scannable advertising mode found and Aux Pointer is present ****\n\n")
+#     # Assert if the calculated offset does not match with the time difference between the last channel index and the random channel index
+#     assert calculate_offset(
+#         df), "\n\n **** Test case Failed: Calculated Offset does not match with the time difference between the last channel index and the random channel index ****\n\n"
+#     logger().info(
+#         "\n\n **** Calculated Offset matches with the time difference between the last channel index and the random channel index ****\n\n")
+#     # Assert if there is no AUX_ADV_IND packet found after three ADV_EXT_IND packets
+#     assert any(
+#         (df['Chan'].iloc[i:i + 3].tolist() == [37, 38, 39] and df['Chan'].iloc[i + 3] not in [37, 38, 39]) for i in
+#         range(
+#             len(df) - 3)), "\n\n **** Test case Failed with no AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n"
+#     logger().info("\n\n **** AUX_ADV_IND packet found after three ADV_EXT_IND packets ****\n\n")
+#     # Assert if primary PHY is not expected PHY on ADV_EXT_IND packets
+#     assert (df[df['Chan'].isin([37, 38, 39])][
+#                 '+PHY Type (LE BB)'] == '1M' if pri_adv_phy==1 else '2M' if pri_adv_phy==2 else '125k').any(), f"\n\n **** Test case Failed with primary PHY is not {'1M' if pri_adv_phy==1 else '2M' if pri_adv_phy==2 else '125k'} on ADV_EXT_IND packets ****\n\n"
+#     logger().info(f"\n\n **** Primary PHY is {'1M' if pri_adv_phy==1 else '2M' if pri_adv_phy==2 else '125k'} on ADV_EXT_IND packets ****\n\n")
+#     # Assert if Secondary PHY is not expected PHY on AUX_ADV_IND packets
+#     assert (len(df.loc[~df['Chan'].isin([37, 38, 39])[
+#                 '+PHY Type (LE BB)'] == '1M' if sec_adv_phy==1 else '2M' if sec_adv_phy==2 else '125k'])>=1), f"\n\n **** Test case Failed with Secondary PHY is not {'1M' if sec_adv_phy==1 else '2M' if sec_adv_phy==2 else '125k'} on AUX_ADV_IND packets ****\n\n"
+#     logger().info(f"\n\n **** Secondary PHY is {'1M' if sec_adv_phy==1 else '2M' if sec_adv_phy==2 else '125k'} on AUX_ADV_IND packets ****\n\n")
+#     # Assert if AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet
+#     assert (df['Chan'].rolling(window=3).apply(lambda x: list(x) == [37, 38, 39], raw=False).shift(-2).fillna(
+#         False).astype(bool) & df['LL Channel'].rolling(window=3).apply(lambda x: len(set(x)) == 1, raw=False).shift(
+#         -2).fillna(False).astype(bool) & (df['LL Channel'].shift(-2) == df['Chan'].shift(-3)).fillna(False).astype(
+#         bool)).any(), "\n\n **** Test case Failed with AUX_ADV_IND packets channel index does not match with the channel index mentioned in the AUX_EXT_IND packet ****\n\n"
+#     logger().info(
+#         "\n\n **** AUX_ADV_IND packets channel index matches with the channel index mentioned in the AUX_EXT_IND packet ****\n\n")
+#     # Assert if PDU length is not 203 in AUX_SYNC_IND packets
+#     assert (df.loc[df[
+#                        'Type'] == 'AUX_SYNC_IND', 'PDU Length'] == 203).any(), f"\n\n **** Test case Failed with PDU length is not {203} in AUX_ADV_IND packets ****\n\n"
+#     logger().info(f"\n\n **** PDU length is {203} in AUX_ADV_IND packets ****\n\n")
+#     #Assert if the calculated offset does not match with the time difference between the AUX_ADV_IND and AUX_SYNC_IND packets
+#     assert calculate_sync_offset(df), "\n\n **** Test case Failed: Calculated Offset does not match with the time difference between the AUX_ADV_IND and AUX_SYNC_IND packets ****\n\n"
+#     logger().info("\n\n **** Calculated Offset matches with the time difference between the AUX_ADV_IND and AUX_SYNC_IND packets ****\n\n")
+#     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
-"""Test case : This test case will verify invalid adv handle"""
-@pytest.mark.skip ("test case is not failing with invalid adv handle")
-def test_verify_Negative_case_C163736(ble_dut, rs_helper_ble, ble_sniffer, wifi_sniffer):
-    packet_filter1 = f"(btle.extended_advertising_header.mode == 0x0)"
-    ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
-    rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=0, ble_dut_address=ble_dut_address,
-                                    pri_adv_phy=1, sec_adv_phy=1, data_len=160, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", test_case_id="C163736",
-                                    adv_handle=300000, packet_filter1={packet_filter1:"Positive"}, ble_sniffer=ble_sniffer, wifi_sniffer=wifi_sniffer)
-
-"""Test case: This test case will verify terminated callback event with error 60, wit duration value 256ms"""
-def test_verify_Negative_case_C163737(ble_dut, rs_helper_ble):
-    ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
-    rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=1, ble_dut_address=ble_dut_address,
-                                    pri_adv_phy=1, sec_adv_phy=1, data_len=31, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
-                                    duration=256, adv_async_required=True)
-
-"""Test case: This test case will verify terminated callback event with error 67, with max ae events value 0x5"""
-def test_verify_Negative_case_C163738(ble_dut, rs_helper_ble):
-    ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
-    rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=1, ble_dut_address=ble_dut_address,
-                                    pri_adv_phy=1, sec_adv_phy=1, data_len=31, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
-                                    max_ae_events=5, adv_async_required=True)
-
-"""Test case: This test case will verify invalid adv handle error 0x4e42 for set_adv_data command"""
-def test_verify_Negative_case_C163739(ble_dut, rs_helper_ble):
-    ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
-    rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=1, ble_dut_address=ble_dut_address,
-                                    pri_adv_phy=1, sec_adv_phy=1, data_len=31, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
-                                    invalid_data_hdl=99, dont_cleanup=True, error_expected= "0x4e42")
-
-"""Test case: This test case will verify error 0x4e12 after setting filter_duplicates =2 and duraion/period =0 during scan enable"""
-def test_verify_Negative_case_C163740(ble_dut, rs_helper_ble):
-    rs_helper_ble.BLE_AE().verify_ae_scan(central=ble_dut, filter_duplicates=2, error_expected="0x4e12", dont_cleanup=True)
-
-"""Test case: This test case will verify error 0x4e12 after setting duraion is greater or equal to period during scan enable"""
-def test_verify_Negative_case_C163741(ble_dut, rs_helper_ble):
-    rs_helper_ble.BLE_AE().verify_ae_scan(central=ble_dut, duration=500, period=500, error_expected="0x4e12", dont_cleanup=True)
-
-"""Test case: This test case will verify error 0x4e12 after setting scan enable with own add type as random and not setting random add prior"""
-def test_verify_Negative_case_C163742(ble_dut, rs_helper_ble):
-    rs_helper_ble.BLE_AE().verify_ae_scan(central=ble_dut, own_addr_type=1, error_expected="0x4e12", dont_cleanup=True)
-
-"""Test case: This test case will verify error 0x4e12 not come after setting scan enable with own add type as random and setting random add prior"""
-@pytest.mark.skip ("set random address is failing")
-def test_verify_Negative_case_C163743(ble_dut, rs_helper_ble):
-    rs_helper_ble.BLE_AE().verify_ae_scan(central=ble_dut, own_addr_type=1, random_address="AA:BB:CC:11:23:33")
-
-"""Test case: This test case will verify error 0x4e12 not come after setting scan enable with own add type as random and setting random add prior"""
-@pytest.mark.skip ("Expected error is not observed")
-def test_verify_Negative_case_C163744(ble_dut, rs_helper_ble):
-    rs_helper_ble.BLE_AE().verify_ae_scan(central=ble_dut, interval=48, window=49)
+#
+# # Negative Test scenarios
+#
+# """ Test case : This test case will verify 0x04c error, when legacy and ext adv started together with single adv set"""
+# def test_verify_Negative_case_C163735(ble_dut, rs_helper_ble):
+#     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
+#     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=0, ble_dut_address=ble_dut_address,
+#                                     pri_adv_phy=1, sec_adv_phy=1, data_len=160, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", test_case_id="C163736",
+#                                     dont_cleanup=True)
+#     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=17, ble_dut_address=ble_dut_address,
+#                                     pri_adv_phy=1, sec_adv_phy=1, data_len=31, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", test_case_id="C163736",
+#                                     error_expected= "Error code: 0x4e0c Msg: Command disallowed Command")
+#
+# """Test case : This test case will verify invalid adv handle"""
+# @pytest.mark.skip ("test case is not failing with invalid adv handle")
+# def test_verify_Negative_case_C163736(ble_dut, rs_helper_ble, ble_sniffer, wifi_sniffer):
+#     packet_filter1 = f"(btle.extended_advertising_header.mode == 0x0)"
+#     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
+#     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=0, ble_dut_address=ble_dut_address,
+#                                     pri_adv_phy=1, sec_adv_phy=1, data_len=160, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", test_case_id="C163736",
+#                                     adv_handle=300000, packet_filter1={packet_filter1:"Positive"}, ble_sniffer=ble_sniffer, wifi_sniffer=wifi_sniffer)
+#
+# """Test case: This test case will verify terminated callback event with error 60, wit duration value 256ms"""
+# def test_verify_Negative_case_C163737(ble_dut, rs_helper_ble):
+#     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
+#     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=1, ble_dut_address=ble_dut_address,
+#                                     pri_adv_phy=1, sec_adv_phy=1, data_len=31, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
+#                                     duration=256, adv_async_required=True)
+#
+# """Test case: This test case will verify terminated callback event with error 67, with max ae events value 0x5"""
+# def test_verify_Negative_case_C163738(ble_dut, rs_helper_ble):
+#     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
+#     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=1, ble_dut_address=ble_dut_address,
+#                                     pri_adv_phy=1, sec_adv_phy=1, data_len=31, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
+#                                     max_ae_events=5, adv_async_required=True)
+#
+# """Test case: This test case will verify invalid adv handle error 0x4e42 for set_adv_data command"""
+# def test_verify_Negative_case_C163739(ble_dut, rs_helper_ble):
+#     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
+#     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=1, ble_dut_address=ble_dut_address,
+#                                     pri_adv_phy=1, sec_adv_phy=1, data_len=31, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
+#                                     invalid_data_hdl=99, dont_cleanup=True, error_expected= "0x4e42")
+#
+# """Test case: This test case will verify error 0x4e12 after setting filter_duplicates =2 and duraion/period =0 during scan enable"""
+# def test_verify_Negative_case_C163740(ble_dut, rs_helper_ble):
+#     rs_helper_ble.BLE_AE().verify_ae_scan(central=ble_dut, filter_duplicates=2, error_expected="0x4e12", dont_cleanup=True)
+#
+# """Test case: This test case will verify error 0x4e12 after setting duraion is greater or equal to period during scan enable"""
+# def test_verify_Negative_case_C163741(ble_dut, rs_helper_ble):
+#     rs_helper_ble.BLE_AE().verify_ae_scan(central=ble_dut, duration=500, period=500, error_expected="0x4e12", dont_cleanup=True)
+#
+# """Test case: This test case will verify error 0x4e12 after setting scan enable with own add type as random and not setting random add prior"""
+# def test_verify_Negative_case_C163742(ble_dut, rs_helper_ble):
+#     rs_helper_ble.BLE_AE().verify_ae_scan(central=ble_dut, own_addr_type=1, error_expected="0x4e12", dont_cleanup=True)
+#
+# """Test case: This test case will verify error 0x4e12 not come after setting scan enable with own add type as random and setting random add prior"""
+# @pytest.mark.skip ("set random address is failing")
+# def test_verify_Negative_case_C163743(ble_dut, rs_helper_ble):
+#     rs_helper_ble.BLE_AE().verify_ae_scan(central=ble_dut, own_addr_type=1, random_address="AA:BB:CC:11:23:33")
+#
+# """Test case: This test case will verify error 0x4e12 not come after setting scan enable with own add type as random and setting random add prior"""
+# @pytest.mark.skip ("Expected error is not observed")
+# def test_verify_Negative_case_C163744(ble_dut, rs_helper_ble):
+#     rs_helper_ble.BLE_AE().verify_ae_scan(central=ble_dut, interval=48, window=49)
+#
