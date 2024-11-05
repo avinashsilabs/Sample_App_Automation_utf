@@ -27,7 +27,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xBLEFeatureBitMap,
     Si91xBLECustomFeatureBitMap,
     Si91xPowerSaveModes,
-    Si91xPowerSaveProcedureTypes
+    Si91xPowerSaveProcedureTypes, Si91xOperatingMode, Si91xJoinFeatureBitMap
 )
 from AWSIoTPythonSDK.core.protocol.internal.clients import ClientStatus
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
@@ -124,7 +124,7 @@ class AwsConnection(ThreadBase):
     """
 
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, sl_collections=None, test_name=None,
-                 aws_iot_client=None):
+                 aws_iot_client=None, messages=None, topic=None, qos=Si91xAwsQos.QOS1, port=8883):
         super().__init__()
         self.client_id = None
         self.wifi_dut = wifi_dut
@@ -133,10 +133,13 @@ class AwsConnection(ThreadBase):
         self.sl_collections = sl_collections
         self.test_name = test_name
         self.timeout = 120
-        self.topic = None
         self.aws_iot_client = aws_iot_client
+        self.messages = messages
+        self.topic = topic
+        self.qos = qos
+        self.port = port
 
-    @retry(Exception, delay=15, tries=1)
+    @retry(Exception, delay=25, tries=3)
     def connect_to_aws_server_from_dut(self, wifi_dut=None, client_id=None, iscleansession=True, keep_alive=1200,
                                        timeout=120, isWillMsgPresent=False, expected_status=SLStatus.SL_STATUS_OK,
                                        port=8883, aws_iot_mqtt_rx_buf_len=1024):
@@ -165,10 +168,10 @@ class AwsConnection(ThreadBase):
         self.client_id = self.test_name + '_client'
         self.topic = 'topic_' + self.test_name
         try:
-            messages = []
-            for i in range(10):
-                messages.append(text_generator(size=10))
-            logger().info(f"Messages are:{messages}")
+            if self.messages is None:
+                for i in range(10):
+                    self.messages.append(text_generator(size=10))
+                logger().info(f"Messages are:{self.messages}")
 
             self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
             self.wifi_dut.interfaces.wifi.aws_iot_mqtt_init(client_id=self.client_id)
@@ -177,23 +180,22 @@ class AwsConnection(ThreadBase):
 
             time.sleep(20)
             logger().info("Connecting to AWS server from DUT is successful")
-            self.subscribe_from_dut(self.wifi_dut, self.topic, qos=Si91xAwsQos.QOS1)
+            self.subscribe_from_dut(self.wifi_dut, self.topic, qos=self.qos)
             self.connect_to_aws_server_from_raspi(self.aws_iot_client)
-            self.subscribe_from_raspi(self.aws_iot_client, self.topic, qos=Si91xAwsQos.QOS1)
+            self.subscribe_from_raspi(self.aws_iot_client, self.topic, qos=self.qos)
 
-            for count, msg in enumerate(messages):
+            for count, msg in enumerate(self.messages):
                 logger().info(
-                    f"\nDUT is publishing message{count + 1} on topic:'{self.topic}' \nQOS:'{Si91xAwsQos.QOS1}'"
+                    f"\nDUT is publishing message{count + 1} on topic:'{self.topic}' \nQOS:'{self.qos}'"
                     f"\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
-                self.publish_from_dut(self.wifi_dut, self.topic, msg, qos=Si91xAwsQos.QOS1)
+                self.publish_from_dut(self.wifi_dut, self.topic, msg, qos=self.qos)
                 time.sleep(3)
-            self.validate_aws_messages_from_raspi(self.aws_iot_client, self.topic, Si91xAwsQos.QOS1, messages)
+            self.validate_aws_messages_from_raspi(self.aws_iot_client, self.topic, self.qos, self.messages)
 
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case {self.test_name} thread: {str(e)} ****\n\n")
             raise e
 
-   
     @retry(Exception, delay=15, tries=5)
     def subscribe_from_dut(self, wifi_dut, topic, qos=Si91xAwsQos.QOS0, timeout=120):
         """
@@ -205,16 +207,21 @@ class AwsConnection(ThreadBase):
         logger().info(f"DUT is Subscribing on topic '{topic}' and QOS:'{qos}'")
         wifi_dut.interfaces.wifi.aws_iot_mqtt_subscribe(topic_name=topic, qos=qos, timeout=timeout)
 
-    @retry(Exception, delay=15, tries=5)
-    def publish_from_dut(self, wifi_dut, topic, message, qos, timeout=120):
+    @retry(Exception, delay=15, tries=1)
+    def publish_from_dut(self, wifi_dut, topic, message, qos, timeout=120, negative_case=False):
         """
         @param wifi_dut: Fixture parameter to issue command in DUT.
         @param topic: Topic name to subscribe from DUT on AWS Server.
         @param message: Data to publish from DUT on subscribed topic.
         @param qos: QOS value to publish data on aws topic(0/1).
         @param timeout: Timeout value to wait until command to be executed successfully.
+        @param negative_case: Boolean Value(True/False).
         """
-        wifi_dut.interfaces.wifi.aws_iot_mqtt_publish(topic_name=topic, qos=qos, payload=message, timeout=timeout)
+        result = wifi_dut.interfaces.wifi.aws_iot_mqtt_publish(topic_name=topic, qos=qos, payload=message,
+                                                               timeout=timeout,
+                                                               negative_case=negative_case)
+        if negative_case:
+            assert result, "Publishing status from DUT on topic is failed"
 
     @retry(Exception, delay=10, tries=3)
     def connect_to_aws_server_from_raspi(self, aws_iot_client):
@@ -372,42 +379,31 @@ class mqtt_sniffer_validation:
         return mqtt_capture_list
 
 
-pytestmark = [
-    pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
-                              | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
-                                   | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-                                  | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
-                1),
-            "bt_features": Si91xBTFeatureBitMap.Default,
-            "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC |
-                            Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
-                            Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX
-                            | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE
-                            | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES
-                                       | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-                               | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "set_send_feature_frame": True,
-            "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
-            "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
-            "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
-            "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
-        }
-    ),
-    pytest.mark.start_state("wifi_access_point", wifi="ap_enabled"),
-
-]
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
@@ -464,6 +460,33 @@ def test_wifi_sdk_aws_connect_sub_publish_c19548(wifi_sniffer, wifi_access_point
             logger.info(f"Iteration '{iter_count + 1}' completed")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"channel": 2})
@@ -528,6 +551,33 @@ def test_wifi_sdk_aws_publish_message_in_thread1_and_receive_message_in_thread2_
                                                sniffer_filter)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"channel": 3})
@@ -603,6 +653,33 @@ def test_wifi_sdk_aws_tx_after_rejoin_qos0_C19555(switch, wifi_sniffer, wifi_acc
         sl_collections.exception_handling(wifi_dut, error)
 
 
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+
+
 @pytest.mark.config('wifi_access_point', wifi={"channel": 4})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -674,6 +751,33 @@ def test_wifi_sdk_aws_tx_after_rejoin_qos1_c19556(switch, wifi_sniffer, wifi_acc
                                                sniffer_filter)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"channel": 5})
@@ -771,6 +875,33 @@ def test_wifi_sdk_aws_check_rejoin_failure_functionality_of_dut_c19549(wifi_snif
         sl_collections.exception_handling(wifi_dut, error)
 
 
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+
+
 @pytest.mark.config('wifi_access_point', wifi={"channel": 6})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("test_run_time", [1800])
@@ -832,6 +963,33 @@ def test_wifi_sdk_aws_publish_a_message_on_the_topic_for_every_10_minutes_c19567
         sl_collections.exception_handling(wifi_dut, error)
 
 
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+
+
 # Jira: WIFI_BT_UTFHELP-3000 [aws_iot: Unable to publish message with size 1390 bytes]
 @pytest.mark.config('wifi_access_point', wifi={"channel": 7})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -842,7 +1000,7 @@ def test_wifi_sdk_aws_publish_data_with_different_length_c19553(wifi_sniffer, wi
                                                                 wifi_dut, logger, sl_collections, aws_iot_client,
                                                                 sniffer_filter):
     """
-    Publish data over subscribed topic with different lengths(1 byte, 10 bytes, 100 bytes, 512 bytes, 1000 bytes, 1390 bytes)
+    Publish data oversubscribed topic with different lengths(1 byte, 10 bytes, 100 bytes, 512 bytes, 1000 bytes, 1390 bytes)
     """
     client_id = 'client_c19553'
     topic = "topic_c19553"
@@ -890,6 +1048,33 @@ def test_wifi_sdk_aws_publish_data_with_different_length_c19553(wifi_sniffer, wi
                                                sniffer_filter)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"channel": 8})
@@ -955,6 +1140,33 @@ def test_wifi_sdk_aws_connect_disconnect_sequence_c19552(wifi_sniffer, wifi_acce
         sl_collections.exception_handling(wifi_dut, error)
 
 
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+
+
 @pytest.mark.config('wifi_access_point', wifi={"channel": 9})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -988,6 +1200,33 @@ def test_wifi_sdk_aws_connection_when_client_id_is_null_c19558(wifi_sniffer, wif
                                                sniffer_filter)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"channel": 10})
@@ -1051,6 +1290,33 @@ def test_wifi_sdk_aws_tcp_shutdown_c19546(wifi_sniffer, wifi_access_point, wifi_
         sl_collections.exception_handling(wifi_dut, error)
 
 
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+
+
 # Jira: WIFI_BT_UTFHELP-3100 [aws_iot: Unable to receive message with size more than 100 bytes]
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1105,6 +1371,33 @@ def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_different_lengths_
                                                sniffer_filter)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
@@ -1186,6 +1479,33 @@ def test_wifi_sdk_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(switch, 
         sl_collections.exception_handling(wifi_dut, error)
 
 
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+
+
 @pytest.mark.config('wifi_access_point', wifi={"channel": 5})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -1253,6 +1573,33 @@ def test_wifi_sdk_aws_receive_func_while_receiving_100_msgs_continuously_c19561(
                                                sniffer_filter)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"channel": 3})
@@ -1330,6 +1677,33 @@ def test_wifi_sdk_aws_receive_100_mqtt_messages_over_2_subscribed_topics_c19563(
                                                sniffer_filter)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"channel": 4})
@@ -1414,6 +1788,33 @@ def test_wifi_sdk_aws_data_integrity_check_after_sending_1mb_of_data_c19564(wifi
         sl_collections.exception_handling(wifi_dut, error)
 
 
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+
+
 @pytest.mark.config('wifi_access_point', wifi={"channel": 5})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("iterations", [1])
@@ -1496,6 +1897,33 @@ def test_wifi_sdk_aws_data_integrity_check_after_receiving_1mb_of_data_c19562(wi
         sl_collections.exception_handling(wifi_dut, error)
 
 
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+
+
 @pytest.mark.skip("Testcase is not present in master project")
 @pytest.mark.config('wifi_access_point', wifi={"channel": 6})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1555,6 +1983,33 @@ def test_wifi_sdk_aws_connect_after_wifi_reconnection_c4053(wifi_sniffer, wifi_a
                                                sniffer_filter)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
 
 
 @pytest.mark.skip("Testcase is not present in master project")
@@ -1782,29 +2237,66 @@ def test_wifi_sdk_aws_server_not_respond_c4062(wifi_sniffer, wifi_access_point, 
 #         sl_collections.exception_handling(wifi_dut, error)
 
 
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+
+
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_connect_sub_publish_c537615(wifi_sniffer, wifi_access_point, wifi_dut, logger,
-                                                  sniffer_filter, sl_collections, aws_iot_client, utf_constants):
+def test_wifi_sdk_aws_internet_connection_disconntion_c537615(wifi_sniffer, wifi_access_point, wifi_dut, logger,
+                                                              sniffer_filter, sl_collections, aws_iot_client,
+                                                              utf_constants):
     """
-    Connect to AWS MQTT server subscribe to topic and publish message on the same topic. Initiate disconnection and
-    check the connection stability.
+    QOS1: Verify MQTT functionality when internet cable unplugged from AP after successful connection with AWS server
+     and data transfer is happening.
     """
-    client_id = 'client_c19548'
-    topic = "topic_c19548"
+    client_id = 'client_c537615'
+    topic = "topic_c537615"
     iterations = utf_constants.get('iter_count')
+    messages = []
+    capture_filename = "test_wifi_sdk_c537615"
+    flag = False
+
+    # AP mac address is required to filter the sniffer packets
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {ap_bssid}')
+
+    for i in range(5):
+        messages.append(text_generator(size=10))
+    logger.info(f"Messages are:{messages}")
+    wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                  beacon_missed_count=40,
+                                                                  first_time_retry_enable=0)
+
     try:
         for iter_count in range(iterations):
             logger.info(f"Initiating aws test for iteration:{iter_count + 1}")
-            messages = []
-            for i in range(10):
-                messages.append(text_generator(size=10))
-            logger.info(f"Messages are:{messages}")
-
-            capture_filename = "test_wifi_sdk_C19548"
             channel = wifi_access_point.interfaces.wifi.channel
             wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
             wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
@@ -1813,14 +2305,13 @@ def test_wifi_sdk_aws_connect_sub_publish_c537615(wifi_sniffer, wifi_access_poin
                                                          associated=wifi_dut.interfaces.wifi.associated,
                                                          channel=wifi_access_point.interfaces.wifi.channel)
             dut_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
-            ap_bssid = wifi_access_point.interfaces.wifi.bssid
-            logger.info(f'AP BSSID = {ap_bssid}')
             logger.info(f"Device mac address: {dut_mac_address}")
 
             aws_obj = AwsConnection()
             logger.info("Initiating aws connect from DUT")
-            assert aws_obj.connect_to_aws_server_from_dut(wifi_dut, client_id), "Failed to connect aws server from DUT"
-            time.sleep(20)
+            assert aws_obj.connect_to_aws_server_from_dut(wifi_dut, client_id, keep_alive=2000), \
+                "Failed to connect aws server from DUT"
+            time.sleep(10)
             logger.info("Connecting to AWS server from DUT is successful")
             aws_obj.subscribe_from_dut(wifi_dut, topic, qos=Si91xAwsQos.QOS1)
             aws_obj.connect_to_aws_server_from_raspi(aws_iot_client)
@@ -1829,17 +2320,198 @@ def test_wifi_sdk_aws_connect_sub_publish_c537615(wifi_sniffer, wifi_access_poin
             for count, msg in enumerate(messages):
                 logger.info(f"\nDUT is publishing message{count + 1} on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS1}'"
                             f"\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
+
+                result = wifi_dut.interfaces.wifi.aws_iot_mqtt_publish(topic_name=topic, qos=Si91xAwsQos.QOS1,
+                                                                       payload=msg, timeout=10,
+                                                                       negative_case=True)
+                logger.info(f"result is {result}")
+                logger.info(f"result type is {type(result)}")
+                if result == -1:
+                    logger.info("\n\n *** DUT is not able to publish message as internet is unplugged *** \n\n")
+                    break
+                if not flag:
+                    logger.info(f"\n\n *** Unplugging internet cable from AP *** \n\n")
+                    wifi_access_point.interfaces.wifi.enable_internet_blocker(dut_mac_address)
+                    flag = True
+                    logger.info(f"\n\n Sleep for 50 second \n\n")
+                    time.sleep(50)
+                time.sleep(2)
+            logger.info(f"\n\n COUNT = {count+1}, len(messages) = {len(messages)}\n\n ")
+            if count+1 == len(messages):
+                logger.info("\n\n *** DUT is able to publish messages even after internet is unplugged *** \n\n")
+                assert False, "DUT is able to publish messages even after internet is unplugged"
+
+            logger.info("\n\n *** plugging internet cable from AP.... Now validating DUT is able to publish "
+                        "messages again or not *** \n\n")
+            wifi_access_point.interfaces.wifi.disable_internet_blocker(dut_mac_address)
+            logger.info(f"\n\n Sleep for 10 second \n\n")
+            time.sleep(10)
+
+            for count, msg in enumerate(messages):
+                logger.info(f"\nDUT is publishing message{count + 1} on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS1}'"
+                            f"\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
                 aws_obj.publish_from_dut(wifi_dut, topic, msg, qos=Si91xAwsQos.QOS1)
-                time.sleep(3)
-            aws_obj.validate_aws_messages_from_raspi(aws_iot_client, topic, Si91xAwsQos.QOS1, messages)
+                time.sleep(5)
+            time.sleep(10)
+            aws_obj.validate_aws_messages_from_raspi(aws_iot_client, topic, Si91xAwsQos.QOS1, messages, wait_time=20)
 
             logger.info("Stop Sniffer finally")
             wifi_sniffer.interfaces.capture.stop_capture()
             sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
                                                    sniffer_filter)
             logger.info(f"Iteration '{iter_count + 1}' completed")
-    except Exception as error:
-        sl_collections.exception_handling(wifi_dut, error)
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_access_point.interfaces.wifi.disable_internet_blocker(dut_mac_address)
+
+
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
+                             "disassociated"])
+def test_wifi_sdk_aws_internet_connection_disconnection_c537713(wifi_sniffer, wifi_access_point, wifi_dut, logger,
+                                                              sniffer_filter, sl_collections, aws_iot_client,
+                                                              utf_constants):
+    """
+    QOS0: Verify MQTT functionality when internet cable unplugged from AP after successful connection with AWS server
+    and data transfer is happening.
+    """
+    client_id = 'client_c537713'
+    topic = "topic_c537713"
+    iterations = utf_constants.get('iter_count')
+    messages = []
+    capture_filename = "test_wifi_sdk_c537713"
+    flag = False
+
+    # AP mac address is required to filter the sniffer packets
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger.info(f'AP BSSID = {ap_bssid}')
+
+    for i in range(5):
+        messages.append(text_generator(size=10))
+    logger.info(f"Messages are:{messages}")
+
+    try:
+        for iter_count in range(iterations):
+            logger.info(f"Initiating aws test for iteration:{iter_count + 1}")
+            channel = wifi_access_point.interfaces.wifi.channel
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+            result = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                         wifi_access_point=wifi_access_point,
+                                                         associated=wifi_dut.interfaces.wifi.associated,
+                                                         channel=wifi_access_point.interfaces.wifi.channel)
+            dut_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+            logger.info(f"Device mac address: {dut_mac_address}")
+
+            aws_obj = AwsConnection()
+
+            logger.info("Initiating aws connect from DUT")
+            aws_obj.connect_to_aws_server_from_dut(wifi_dut, client_id), "Failed to connect aws server from DUT"
+            time.sleep(20)
+            logger.info("Connecting to AWS server from DUT is successful")
+            aws_obj.subscribe_from_dut(wifi_dut, topic, qos=Si91xAwsQos.QOS0)
+            aws_obj.connect_to_aws_server_from_raspi(aws_iot_client)
+            aws_obj.subscribe_from_raspi(aws_iot_client, topic, qos=Si91xAwsQos.QOS0)
+
+            for count, msg in enumerate(messages):
+                logger.info(f"\nDUT is publishing message{count + 1} on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS0}'"
+                            f"\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
+
+                result = wifi_dut.interfaces.wifi.aws_iot_mqtt_publish(topic_name=topic, qos=Si91xAwsQos.QOS0,
+                                                                       payload=msg, timeout=10,
+                                                                       negative_case=True)
+                logger.info(f"result is {result}")
+                logger.info(f"result type is {type(result)}")
+                if result == -1:
+                    logger.info("\n\n *** DUT is not able to publish message as internet is unplugged *** \n\n")
+                    break
+                if not flag:
+                    logger.info(f"\n\n *** Unplugging internet cable from AP *** \n\n")
+                    wifi_access_point.interfaces.wifi.enable_internet_blocker(dut_mac_address)
+                    flag = True
+                    logger.info(f"\n\n Sleep for 50 second \n\n")
+                    time.sleep(50)
+                time.sleep(5)
+
+            logger.info("\n\n *** plugging internet cable from AP.... Now validating DUT is able to publish "
+                        "messages again or not *** \n\n")
+            wifi_access_point.interfaces.wifi.disable_internet_blocker(dut_mac_address)
+            time.sleep(10)
+
+            for count, msg in enumerate(messages):
+                logger.info(f"\nDUT is publishing message{count + 1} on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS0}'"
+                            f"\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
+                aws_obj.publish_from_dut(wifi_dut, topic, msg, qos=Si91xAwsQos.QOS0)
+                time.sleep(5)
+            aws_obj.validate_aws_messages_from_raspi(aws_iot_client, topic, Si91xAwsQos.QOS0, messages)
+
+            logger.info("Stop Sniffer finally")
+            wifi_sniffer.interfaces.capture.stop_capture()
+            sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                                   sniffer_filter)
+            logger.info(f"Iteration '{iter_count + 1}' completed")
+            wifi_dut.interfaces.wifi.leave()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_access_point.interfaces.wifi.disable_internet_blocker(dut_mac_address)
+
+
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
@@ -1880,6 +2552,33 @@ def test_wifi_sdk_aws_connect_will_message_negative_c537896(wifi_sniffer, wifi_a
         sl_collections.exception_handling(wifi_dut, error)
 
 
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+
+
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -1917,6 +2616,33 @@ def test_wifi_sdk_aws_change_port_number_negative_c537897(wifi_sniffer, wifi_acc
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
@@ -1966,6 +2692,33 @@ def test_wifi_sdk_aws_2_client_same_id_negative_c537898(wifi_sniffer, wifi_acces
         sl_collections.exception_handling(wifi_dut, error)
 
 
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+
+
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -2005,6 +2758,33 @@ def test_wifi_sdk_aws_connection_tcp_data_transfer_c537899(wifi_sniffer, wifi_ac
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
@@ -2067,3 +2847,196 @@ def test_wifi_sdk_aws_2000_bytes_rx_data_send_to_dut_c537910(wifi_sniffer, wifi_
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "region": 1,
+        "region_code": "korea"
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA3', "region": 'Korea', "channel": 13})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
+                             "disassociated"])
+def test_wifi_sdk_aws_change_port_number_443_c661500(wifi_sniffer, wifi_access_point, wifi_dut, logger,
+                                                     sl_collections, aws_iot_client, utf_constants):
+    """
+    Connect to AWS server with port 443 and check whether Tx functionality
+    """
+    iterations = utf_constants.get('iter_count')
+    topic = "topic_c661500"
+    test_name = "test_wifi_sdk_c661500"
+    messages = []
+    for i in range(10):
+        messages.append(text_generator(size=100))
+    logger.info(f"Messages are:{messages}")
+
+    try:
+        capture_filename = "test_wifi_sdk_c661500"
+        channel = wifi_access_point.interfaces.wifi.channel
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=0)
+        assert (len(scan_results) >= 1), "Scan failed"
+        logger.info(scan_results)
+
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+        sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                            wifi_access_point=wifi_access_point,
+                                            associated=wifi_dut.interfaces.wifi.associated,
+                                            channel=0,
+                                            power_save=False, skip_scan=False)
+
+        aws_obj = AwsConnection(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, test_name=test_name,
+                                aws_iot_client=aws_iot_client, messages=messages)
+
+        for i in range(iterations):
+            logger.info(f"Initiating aws test for iteration:{i + 1}")
+            aws_obj.start()
+            aws_obj.wait_for_exit()
+
+            logger.info("Initiating aws_iot_disconnect from DUT")
+            wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
+            time.sleep(20)
+            logger.info("\n")
+
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "region": 1,
+        "region_code": "korea"
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA3', "region": 'Korea', "channel": 13})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
+                             "disassociated"])
+def test_wifi_sdk_aws_change_port_number_443_c661501(wifi_sniffer, wifi_access_point, wifi_dut, logger,
+                                                     sl_collections, aws_iot_client, utf_constants):
+    """
+    Connect to AWS server with port 443 and check whether Rx functionality
+    """
+    iterations = utf_constants.get('iter_count')
+    topic = "topic_c661501"
+    test_name = "test_wifi_sdk_c661501"
+    client_id = 'client_c661501'
+    messages = []
+    for i in range(10):
+        messages.append(text_generator(size=100))
+    logger.info(f"Messages are:{messages}")
+
+    try:
+        capture_filename = "test_wifi_sdk_c661501"
+        channel = wifi_access_point.interfaces.wifi.channel
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=0)
+        assert (len(scan_results) >= 1), "Scan failed"
+        logger.info(scan_results)
+
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+        sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                            wifi_access_point=wifi_access_point,
+                                            associated=wifi_dut.interfaces.wifi.associated,
+                                            channel=wifi_access_point.interfaces.wifi.channel,
+                                            power_save=False, skip_scan=False)
+
+        aws_obj = AwsConnection(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, test_name=test_name,
+                                aws_iot_client=aws_iot_client, messages=messages)
+
+        for i in range(iterations):
+            logger.info(f"Initiating aws test for iteration:{i + 1}")
+            assert aws_obj.connect_to_aws_server_from_dut(wifi_dut, client_id, port=443), ("Failed to connect aws "
+                                                                                           "server from DUT")
+            logger.info("Connecting to AWS server from DUT is successful")
+            aws_obj.connect_to_aws_server_from_raspi(aws_iot_client)
+            aws_obj.subscribe_from_dut(wifi_dut, topic, qos=Si91xAwsQos.QOS1)
+            wifi_dut.interfaces.wifi.aws_iot_mqtt_autoreconnect_set_status()
+            time.sleep(5)
+
+            received_messages = []
+            for iter_count in range(iterations):
+                logger.info(f"Initiating aws test for iteration:{iter_count + 1}")
+                rc = 0
+                for i, msg in enumerate(messages):
+                    logger.info(
+                        f"\naws_iot_client publishing message{i + 1} on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS1}'"
+                        f"\nMessage{i + 1} with length:'{len(msg)} bytes'\nMessage{i + 1} is:'{msg}'")
+                    aws_obj.publish_from_raspi(aws_iot_client, topic, msg, qos=Si91xAwsQos.QOS1)
+                    recv_msg = aws_obj.receive_aws_messages_from_dut(wifi_dut)
+                    if recv_msg:
+                        rc += 1
+                        received_messages.append(recv_msg)
+                        logger.info(f"Received message{rc}: '{recv_msg}'")
+                count = len(received_messages)
+                if count < 100:
+                    logger.warning(
+                        f"******* Received '{count}' messages out of {len(messages)} published messages *******")
+                else:
+                    logger.info(
+                        f"************ Successfully received all {len(messages)} published messages ************\n")
+                logger.info(f"Iteration '{iter_count + 1}' completed")
+
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
