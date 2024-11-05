@@ -703,10 +703,10 @@ def test_wlan_standalone_udp_tx_with_416k_11n_C537720(firmware_loader, wifi_snif
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV |
-                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
-                              Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
         "config_features": 0,
         "bt_features": 0,
         "ble_features": 0,
