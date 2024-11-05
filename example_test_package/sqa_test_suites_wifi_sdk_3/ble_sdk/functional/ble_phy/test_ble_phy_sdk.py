@@ -97,7 +97,7 @@ def ble_connection(ble_dut, remote_wiseconnect3):
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
@@ -157,7 +157,7 @@ def test_ble_phy_change_tx_1_rx_1_lr_125_C19932(ble_dut, remote_wiseconnect3, sl
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
@@ -217,7 +217,7 @@ def test_ble_phy_change_tx_1_rx_2_lr_125_C19933(ble_dut, remote_wiseconnect3, sl
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
@@ -277,7 +277,7 @@ def test_ble_phy_change_tx_1_rx_lr_125_C19934(ble_dut, remote_wiseconnect3, sl_c
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
@@ -337,7 +337,7 @@ def test_ble_phy_change_tx_2_rx_1_lr_125_C19935(ble_dut, remote_wiseconnect3, sl
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
@@ -397,7 +397,7 @@ def test_ble_phy_change_tx_2_rx_2_lr_125_C19936(ble_dut, remote_wiseconnect3, sl
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
@@ -458,7 +458,7 @@ def test_ble_phy_change_tx_2_rx_1_lr_125_C19937(ble_dut, remote_wiseconnect3, sl
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
@@ -519,7 +519,7 @@ def test_ble_phy_change_tx_rx_1_lr_125_C19938(ble_dut, remote_wiseconnect3, sl_c
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
@@ -580,7 +580,7 @@ def test_ble_phy_change_tx_rx_2_lr_125_C19939(ble_dut, remote_wiseconnect3, sl_c
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
@@ -641,7 +641,7 @@ def test_ble_phy_change_tx_rx_lr_125_C19940(ble_dut, remote_wiseconnect3, sl_col
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
@@ -702,7 +702,7 @@ def test_ble_phy_change_tx_1_rx_lr_500_C19941(ble_dut, remote_wiseconnect3, sl_c
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
@@ -763,7 +763,7 @@ def test_ble_phy_change_tx_2_rx_lr_500_C19942(ble_dut, remote_wiseconnect3, sl_c
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
@@ -824,7 +824,7 @@ def test_ble_phy_change_tx_rx_1_lr_500_C19943(ble_dut, remote_wiseconnect3, sl_c
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
@@ -885,7 +885,7 @@ def test_ble_phy_change_tx_rx_2_lr_500_C19944(ble_dut, remote_wiseconnect3, sl_c
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
