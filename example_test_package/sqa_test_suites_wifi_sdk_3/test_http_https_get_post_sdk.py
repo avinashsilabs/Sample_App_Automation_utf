@@ -302,12 +302,9 @@ class WLanThread(ThreadBase):
                         filter_name="power_mgmt_bit")
 
                     time.sleep(5)
-                    logger().info("Stopping sniffer capture")
-                    self.wifi_sniffer.interfaces.capture.stop_capture()
                     assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=power_save_filter)[
                                'packet_count'] > 0, "Unable to find NULL-Data frame packets with power save bit = 1"
 
-                    self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
                     for i in range(0, 5):
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
                         self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
@@ -315,7 +312,7 @@ class WLanThread(ThreadBase):
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
                             self.http_server.interfaces.http,
-                            "cgi-bin/cgi_example.py",
+                            self.index_path,
                             post_data='hellotestingfrohttppostcontent',
                             server_port=443)
 
@@ -327,6 +324,7 @@ class WLanThread(ThreadBase):
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
                             self.http_server.interfaces.http,
                             self.index_path,
+                            higher_url_length=1,
                             server_port=443)
                         status_client, content_client = self.http_client.interfaces.http.http_get(
                             self.http_server.interfaces.http, self.index_path)
@@ -341,6 +339,7 @@ class WLanThread(ThreadBase):
                         logger().info(f"\n\n************* Put data using HTTP PUT request {i}*************\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_put(
                             self.http_server.interfaces.http,
+                            resource_path=self.index_path,
                             server_port=443)
 
                         logger().info(f"HTTP Put Status:{status_dut}")
@@ -376,12 +375,9 @@ class WLanThread(ThreadBase):
                         filter_name="power_mgmt_bit")
 
                     time.sleep(5)
-                    logger().info("Stopping sniffer capture")
-                    self.wifi_sniffer.interfaces.capture.stop_capture()
                     assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=power_save_filter)[
                                'packet_count'] > 0, "Unable to find NULL-Data frame packets with power save bit = 1"
 
-                    self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
                     for i in range(0, 5):
                         """ Verify DUT functionality with sequence HTTPS GET,PUT,POST"""
 
@@ -406,14 +402,15 @@ class WLanThread(ThreadBase):
                         logger().info(f"\n\n************* Put data using HTTP PUT request {i}*************\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_put(
                             self.http_server.interfaces.http,
-                            server_port=443)
+                            server_port=443,
+                            resource_path=self.index_path)
                         logger().info(status_dut)
                         logger().info(content_dut)
 
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
                             self.http_server.interfaces.http,
-                            "cgi-bin/cgi_example.py",
+                            self.index_path,
                             post_data='hellotestingfrohttppostcontent',
                             server_port=443)
 
@@ -454,13 +451,10 @@ class WLanThread(ThreadBase):
                         filter_name="power_mgmt_bit")
 
                     time.sleep(5)
-                    logger().info("Stopping sniffer capture")
-                    self.wifi_sniffer.interfaces.capture.stop_capture()
                     assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=power_save_filter)[
                                'packet_count'] > 0, "Unable to find NULL-Data frame packets with power save bit = 1"
 
-                    self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
-                    for i in range(0, 1):
+                    for i in range(0, 5):
                         """ Verify DUT functionality with sequence HTTPS GET,PUT,POST"""
 
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
@@ -484,7 +478,7 @@ class WLanThread(ThreadBase):
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
                             self.http_server.interfaces.http,
-                            "cgi-bin/cgi_example.py",
+                            self.index_path,
                             post_data='hellotestingfrohttppostcontent',
                             server_port=443)
 
@@ -494,7 +488,8 @@ class WLanThread(ThreadBase):
                         logger().info(f"\n\n************* Put data using HTTP PUT request {i}*************\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_put(
                             self.http_server.interfaces.http,
-                            server_port=443)
+                            server_port=443,
+                            resource_path=self.index_path)
                         logger().info(status_dut)
                         logger().info(content_dut)
 
@@ -533,13 +528,9 @@ class WLanThread(ThreadBase):
                         filter_name="power_mgmt_bit")
 
                     time.sleep(5)
-                    logger().info("Stopping sniffer capture")
-                    self.wifi_sniffer.interfaces.capture.stop_capture()
                     assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=power_save_filter)[
                                'packet_count'] > 0, "Unable to find NULL-Data frame packets with power save bit = 1"
-
-                    self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
-                    for i in range(0, 1):
+                    for i in range(0, 5):
                         """ Verify DUT functionality with sequence HTTPS PUT,POST,GET """
 
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
@@ -548,14 +539,15 @@ class WLanThread(ThreadBase):
                         logger().info(f"\n\n************* Put data using HTTP PUT request {i}*************\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_put(
                             self.http_server.interfaces.http,
-                            server_port=443)
+                            server_port=443,
+                            resource_path=self.index_path)
                         logger().info(status_dut)
                         logger().info(content_dut)
 
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
                             self.http_server.interfaces.http,
-                            "cgi-bin/cgi_example.py",
+                            self.index_path,
                             post_data='hellotestingfrohttppostcontent',
                             server_port=443)
 
@@ -576,19 +568,6 @@ class WLanThread(ThreadBase):
                         logger().info(status_dut)
                         logger().info(content_dut)
                         assert content_dut == content_client, "fetched data is not same as expected data"
-
-                        logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
-                        status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
-                            self.http_server.interfaces.http,
-                            self.index_path,
-                            post_data='hellotestingfrohttppostcontent',
-                            server_port=443)
-
-                        assert status_dut == SLStatus.SL_STATUS_OK, "failed to post data using http post request"
-                        logger().info(status_dut)
-                        logger().info(f"HTTP Put Status:{status_dut}")
-
-                        time.sleep(5)
                         self.wifi_dut.interfaces.wifi.http_client_deinit()
 
                     logger().info("Stopping sniffer capture")
@@ -619,37 +598,35 @@ class WLanThread(ThreadBase):
                         filter_name="power_mgmt_bit")
 
                     time.sleep(5)
-                    logger().info("Stopping sniffer capture")
-                    self.wifi_sniffer.interfaces.capture.stop_capture()
                     assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=power_save_filter)[
                                'packet_count'] > 0, "Unable to find NULL-Data frame packets with power save bit = 1"
 
                     self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
-                    for i in range(0, 1):
-                        """ Verify DUT functionality with sequence HTTPS POST, PUT, GET """
+                    for i in range(0, 5):
+                        """ Verify DUT functionality with sequence HTTPS POST, PUT, GET"""
 
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
                         self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
 
-                        time.sleep(20)
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
                             self.http_server.interfaces.http,
-                            "cgi-bin/cgi_example.py",
+                            self.index_path,
                             post_data='hellotestingfrohttppostcontent',
                             server_port=443)
-                        
+
                         assert status_dut == SLStatus.SL_STATUS_OK, "failed to post data using http post request"
                         logger().info(status_dut)
 
-                        time.sleep(20)
                         logger().info(f"\n\n************* Put data using HTTP PUT request {i}*************\n\n")
-                        post_data = 'hellotestingfrohttppostcontent'
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_put(
-                            self.http_server.interfaces.http, self.index_path)
+                            self.http_server.interfaces.http,
+                            server_port=443,
+                            resource_path=self.index_path)
                         logger().info(status_dut)
                         logger().info(content_dut)
-                        
+
+
                         logger().info(f"\n\n***Fetching the data on https using get method iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
                             self.http_server.interfaces.http,
@@ -657,10 +634,10 @@ class WLanThread(ThreadBase):
                             server_port=443)
                         status_client, content_client = self.http_client.interfaces.http.http_get(
                             self.http_server.interfaces.http, self.index_path)
-                        
+
                         assert not status_dut, "failed to fetch the https data"
                         assert status_client, "failed to load the https data"
-                        
+
                         logger().info(status_dut)
                         logger().info(content_dut)
                         assert content_dut == content_client, "fetched data is not same as expected data"
@@ -1971,7 +1948,6 @@ def test_wifi_sdk_http_get_with_url_length_greater_than_2048_with_longer_url_bit
 
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
-@pytest.mark.http_server("python_http_server")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
 @pytest.mark.config(
@@ -2007,7 +1983,6 @@ def test_wifi_sdk_https_post_get_put_c537883(http_server, wifi_dut, http_client,
 
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
-@pytest.mark.http_server("python_http_server")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
 @pytest.mark.config(
@@ -2043,7 +2018,6 @@ def test_wifi_sdk_https_post_get_put_c537902(http_server, wifi_dut, http_client,
 
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
-@pytest.mark.http_server("python_http_server")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
 @pytest.mark.config(
@@ -2079,7 +2053,6 @@ def test_wifi_sdk_https_post_get_put_c537903(http_server, wifi_dut, http_client,
 
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
-@pytest.mark.http_server("python_http_server")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
 @pytest.mark.config(
@@ -2115,7 +2088,6 @@ def test_wifi_sdk_https_post_get_put_c537904(http_server, wifi_dut, http_client,
 
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
-@pytest.mark.http_server("python_http_server")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
 @pytest.mark.config(
