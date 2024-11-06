@@ -15,6 +15,8 @@ import string
 from random import choices
 from utf.utils.iperf.iperf_utils import ping
 
+from test_sta_ble_provisioning_sdk import ProvisioningFunctionality
+
 """This function runs below test steps for DUT-Si91x
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
         2. Start the sniffer before connection
@@ -24,7 +26,7 @@ from utf.utils.iperf.iperf_utils import ping
         7. Initiates ble in DUT
         8. run ble in slave / master mode
         9. Analyzing all sniffer capture packets
-        
+
     setup requirement:
         1. soc board
         2. Raspberry PI4
@@ -1361,4 +1363,59 @@ def test_wifi_sdk_rejoin_11ax_ble_connect_slave_and_notification_enable_c198665(
     finally:
         logger().info('******* Turn on Access point **********')
         switch.interfaces.pdu_switch.turn_on(delay=60)
+        ble_client.interfaces.bluetooth.close()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}, "ble": {"count": 1, "stack_len": 3584}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+    }
+)
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+def test_wifi_sdk_11ax_ble_provisioning_c198666(
+        wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
+        ble_dut, utf_constants):
+    """ Verify the 11ax AP Connection with BLE_Provisioning application """
+
+    try:
+        test_name = request.node.name
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, ble_pairing=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            test_case=198666)
+
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.wifi_scan()
+        ble_obj.wifi_connect()
+        ble_obj.ble_remove_servie()
+        ble_obj.ble_disconnect()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
         ble_client.interfaces.bluetooth.close()
