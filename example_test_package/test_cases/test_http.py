@@ -47,3 +47,18 @@ def test_http_server_and_linux_client_get_with_config_ports(http_server, http_cl
         logger.info(status)
         logger.info(resp_content)
         http_server.interfaces.http.stop_server()
+
+@pytest.mark.http_server("python_http_server")
+@pytest.mark.parametrize("index_path, method, content", [
+    ("index.html", "POST", {"key": "test"}),
+    ("index.html", "POST", {"key": "test"}),
+    ("index.html", "PUT", {"key": "test"}),
+    ("index.html", "PUT", {"key": "test"}),
+    ("index.html", "GET", "")
+])
+def test_python_http_server(http_server,index_path,http_client, method, content, logger):
+    status, content = http_client.interfaces.http.http_request(
+        http_server.interfaces.http, method, index_path, content
+    )
+    logger.info(f"response code: {status}")
+    logger.info(f"response content: {content}")

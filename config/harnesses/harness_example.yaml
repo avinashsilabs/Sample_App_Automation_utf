@@ -1299,7 +1299,16 @@ devices:
     mock_bluetooth_sniffer:
         interfaces:   
             sniffer:
-                type: 'bluetooth.sniffer.mock.mock_sniffer'   
+                type: 'bluetooth.sniffer.mock.mock_sniffer'
+ 
+    # This represents the sdk_server configuration
+    tcp_server:
+        interfaces:
+            server:
+                type: "wifi.sdk_server.sdk_server_linux"
+                server_name: "TCP"
+                firmware_file_name: "SiWG917-B.2.13.2.0.0.2.1.rps"
+                server_binary_file_name: "tcp_server.bin"
  
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -1502,6 +1511,8 @@ defaults:
         script: ""
     
     plotter: 'power_meter_plotter'
+
+    sdk_server: 'tcp_server'
 
     net_perf:
         server_options:
