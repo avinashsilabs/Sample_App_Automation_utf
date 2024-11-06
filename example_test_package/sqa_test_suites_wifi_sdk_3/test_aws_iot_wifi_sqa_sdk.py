@@ -379,7 +379,7 @@ class mqtt_sniffer_validation:
         return mqtt_capture_list
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -462,7 +462,7 @@ def test_wifi_sdk_aws_connect_sub_publish_c19548(wifi_sniffer, wifi_access_point
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -553,7 +553,7 @@ def test_wifi_sdk_aws_publish_message_in_thread1_and_receive_message_in_thread2_
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -653,7 +653,7 @@ def test_wifi_sdk_aws_tx_after_rejoin_qos0_C19555(switch, wifi_sniffer, wifi_acc
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -753,7 +753,7 @@ def test_wifi_sdk_aws_tx_after_rejoin_qos1_c19556(switch, wifi_sniffer, wifi_acc
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -875,7 +875,7 @@ def test_wifi_sdk_aws_check_rejoin_failure_functionality_of_dut_c19549(wifi_snif
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -963,7 +963,7 @@ def test_wifi_sdk_aws_publish_a_message_on_the_topic_for_every_10_minutes_c19567
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -1050,7 +1050,7 @@ def test_wifi_sdk_aws_publish_data_with_different_length_c19553(wifi_sniffer, wi
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -1140,7 +1140,7 @@ def test_wifi_sdk_aws_connect_disconnect_sequence_c19552(wifi_sniffer, wifi_acce
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -1202,7 +1202,7 @@ def test_wifi_sdk_aws_connection_when_client_id_is_null_c19558(wifi_sniffer, wif
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -1290,7 +1290,7 @@ def test_wifi_sdk_aws_tcp_shutdown_c19546(wifi_sniffer, wifi_access_point, wifi_
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -1373,7 +1373,7 @@ def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_different_lengths_
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -1479,7 +1479,7 @@ def test_wifi_sdk_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(switch, 
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -1575,7 +1575,7 @@ def test_wifi_sdk_aws_receive_func_while_receiving_100_msgs_continuously_c19561(
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -1679,7 +1679,7 @@ def test_wifi_sdk_aws_receive_100_mqtt_messages_over_2_subscribed_topics_c19563(
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -1788,7 +1788,7 @@ def test_wifi_sdk_aws_data_integrity_check_after_sending_1mb_of_data_c19564(wifi
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -1897,7 +1897,7 @@ def test_wifi_sdk_aws_data_integrity_check_after_receiving_1mb_of_data_c19562(wi
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -1985,7 +1985,7 @@ def test_wifi_sdk_aws_connect_after_wifi_reconnection_c4053(wifi_sniffer, wifi_a
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -2237,7 +2237,7 @@ def test_wifi_sdk_aws_server_not_respond_c4062(wifi_sniffer, wifi_access_point, 
 #         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -2366,7 +2366,7 @@ def test_wifi_sdk_aws_internet_connection_disconntion_c537615(wifi_sniffer, wifi
         wifi_access_point.interfaces.wifi.disable_internet_blocker(dut_mac_address)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -2487,7 +2487,7 @@ def test_wifi_sdk_aws_internet_connection_disconnection_c537713(wifi_sniffer, wi
         wifi_access_point.interfaces.wifi.disable_internet_blocker(dut_mac_address)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -2552,7 +2552,7 @@ def test_wifi_sdk_aws_connect_will_message_negative_c537896(wifi_sniffer, wifi_a
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -2618,7 +2618,7 @@ def test_wifi_sdk_aws_change_port_number_negative_c537897(wifi_sniffer, wifi_acc
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -2692,7 +2692,7 @@ def test_wifi_sdk_aws_2_client_same_id_negative_c537898(wifi_sniffer, wifi_acces
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -2760,7 +2760,7 @@ def test_wifi_sdk_aws_connection_tcp_data_transfer_c537899(wifi_sniffer, wifi_ac
         sl_collections.exception_handling(wifi_dut, error)
 
 
-pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -2881,7 +2881,7 @@ def test_wifi_sdk_aws_2000_bytes_rx_data_send_to_dut_c537910(wifi_sniffer, wifi_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_change_port_number_443_c661500(wifi_sniffer, wifi_access_point, wifi_dut, logger,
+def test_wifi_sdk_aws_change_port_number_443_tx_c661500(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                      sl_collections, aws_iot_client, utf_constants):
     """
     Connect to AWS server with port 443 and check whether Tx functionality
@@ -2965,7 +2965,7 @@ def test_wifi_sdk_aws_change_port_number_443_c661500(wifi_sniffer, wifi_access_p
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-def test_wifi_sdk_aws_change_port_number_443_c661501(wifi_sniffer, wifi_access_point, wifi_dut, logger,
+def test_wifi_sdk_aws_change_port_number_443_rx_c661501(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                      sl_collections, aws_iot_client, utf_constants):
     """
     Connect to AWS server with port 443 and check whether Rx functionality
