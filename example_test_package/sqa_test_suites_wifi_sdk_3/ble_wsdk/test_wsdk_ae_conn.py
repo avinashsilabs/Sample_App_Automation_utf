@@ -180,12 +180,12 @@ def test_verify_Ext_legacy_connection_dut_as_slave_C528553_to_C528555(ble_dut, b
     # Assert if there is no SCAN_RSP packet found on 37, 38, 39 channels
     assert (df[df['Type'] == 'SCAN_RSP']['Chan'].isin(
         [37, 38,
-         39]) == True).any(), "\n\n **** Test case Failed with SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
+         39]) == True).all(), "\n\n **** Test case Failed with SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
     logger().info("\n\n **** SCAN_RSP packet found on 37,38,39 channels ****\n\n")
     # Assert if there is no CONNECT_IND packet found on 37, 38, 39 channels
     assert (df[df['Type'] == 'CONNECT_IND']['Chan'].isin(
         [37, 38,
-         39]) == True).any(), "\n\n **** Test case Failed with CONNECT_IND packet found on 37, 38, 39 channels ****\n\n"
+         39]) == True).all(), "\n\n **** Test case Failed with CONNECT_IND packet found on 37, 38, 39 channels ****\n\n"
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
 """
@@ -263,12 +263,12 @@ def test_verify_Ext_legacy_connection_dut_as_master_C528556(ble_dut, ble_sniffer
     # Assert if there is no SCAN_RSP packet found on 37, 38, 39 channels
     assert (df[df['Type'] == 'SCAN_RSP']['Chan'].isin(
         [37, 38,
-         39]) == True).any(), "\n\n **** Test case Failed with SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
+         39]) == True).all(), "\n\n **** Test case Failed with SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
     logger().info("\n\n **** SCAN_RSP packet found on 37,38,39 channels ****\n\n")
     # Assert if there is no CONNECT_IND packet found on 37, 38, 39 channels
     assert (df[df['Type'] == 'CONNECT_IND']['Chan'].isin(
         [37, 38,
-         39]) == True).any(), "\n\n **** Test case Failed with CONNECT_IND packet found on 37, 38, 39 channels ****\n\n"
+         39]) == True).all(), "\n\n **** Test case Failed with CONNECT_IND packet found on 37, 38, 39 channels ****\n\n"
     logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
 
 """
@@ -352,12 +352,12 @@ def test_verify_Ext_legacy_connection_with_random_addr_C528557_C528558_C528559(b
     # Assert if there is no SCAN_RSP packet found on 37, 38, 39 channels
     assert (df[df['Type'] == 'SCAN_RSP']['Chan'].isin(
         [37, 38,
-         39]) == True).any(), "\n\n **** Test case Failed with SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
+         39]) == True).all(), "\n\n **** Test case Failed with SCAN_RSP packet found on 37, 38, 39 channels ****\n\n"
     logger().info("\n\n **** SCAN_RSP packet found on 37,38,39 channels ****\n\n")
     # Assert if there is no CONNECT_IND packet found on 37, 38, 39 channels
     assert (df[df['Type'] == 'CONNECT_IND']['Chan'].isin(
         [37, 38,
-         39]) == True).any(), "\n\n **** Test case Failed with CONNECT_IND packet found on 37, 38, 39 channels ****\n\n"
+         39]) == True).all(), "\n\n **** Test case Failed with CONNECT_IND packet found on 37, 38, 39 channels ****\n\n"
     # Assert if there is no CONNECT_IND packet found with 1M PHY
     assert len(df.loc[(df['Type'] == "CONNECT_IND") & (df[
                                                            "+PHY Type (LE BB)"] == "1M")])>=1, "\n\n **** Test case Failed with no CONNECT_IND packet found with 1M PHY ****\n\n"
@@ -440,6 +440,8 @@ def test_verify_Ext_connection_dut_as_master_C528560_C528565(ble_dut, ble_sniffe
                        ]) >= 1, "\n\n **** Test case Failed with no connectable non-scannable advertising mode found..! ****\n\n"
         logger().info(
             f"\n\n **** Connectable non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if random_address != None  else 'public'} ****\n\n")
+    assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
+        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
     logger().info("\n\n **** AUX_SCAN_RSP packets are not found ****\n\n")
     if pri_adv_phy in [3] and sec_adv_phy in [3]:
         # Assert if primary PHY is not LE Coded on ADV_EXT_IND packets
@@ -562,6 +564,9 @@ def test_verify_Ext_connection_dut_as_Slave_C528652_C528657(ble_dut, ble_sniffer
                        ]) >= 1, "\n\n **** Test case Failed with no connectable non-scannable advertising mode found..! ****\n\n"
         logger().info(
             f"\n\n **** Connectable non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if random_address != None  else 'public'} ****\n\n")
+    assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
+        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
+    logger().info("\n\n **** AUX_SCAN_RSP packets are not found ****\n\n")
     if pri_adv_phy in [3] and sec_adv_phy in [3]:
         # Assert if primary PHY is not LE Coded on ADV_EXT_IND packets
         assert (df[df['Chan'].isin([37, 38, 39])][
@@ -704,6 +709,9 @@ def test_verify_Ext_connection_dut_as_Slave__directed_C528566_to_C528568(ble_dut
                        ]) >= 1, "\n\n **** Test case Failed with no connectable non-scannable advertising mode found..! ****\n\n"
         logger().info(
             f"\n\n **** Connectable non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if random_address != None  else 'public'} ****\n\n")
+    assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
+        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
+    logger().info("\n\n **** AUX_SCAN_RSP packets are not found ****\n\n")
     if pri_adv_phy in [3] and sec_adv_phy in [3]:
         # Assert if primary PHY is not LE Coded on ADV_EXT_IND packets
         assert (df[df['Chan'].isin([37, 38, 39])][
@@ -845,6 +853,9 @@ def test_verify_Ext_connection_with_initiating_filter_policy_C528569_to_C528574(
                        ]) >= 1, "\n\n **** Test case Failed with no connectable non-scannable advertising mode found..! ****\n\n"
         logger().info(
             f"\n\n **** Connectable non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if random_address != None  else 'public'} ****\n\n")
+    assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
+        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
+    logger().info("\n\n **** AUX_SCAN_RSP packets are not found ****\n\n")
     if pri_adv_phy in [3] and sec_adv_phy in [3]:
         # Assert if primary PHY is not LE Coded on ADV_EXT_IND packets
         assert (df[df['Chan'].isin([37, 38, 39])][
@@ -989,6 +1000,9 @@ def test_verify_Ext_connection_with_diff_min_max_interval_C528646_to_C528648_C53
                        ]) >= 1, "\n\n **** Test case Failed with no connectable non-scannable advertising mode found..! ****\n\n"
         logger().info(
             f"\n\n **** Connectable non-Scannable advertising mode found, Aux Pointer is present and is advertising with {'random' if random_address != None  else 'public'} ****\n\n")
+    assert (df[df['Type'] == 'AUX_SCAN_RSP']['Chan'].isin(
+        [37, 38, 39]) == False).all(), "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
+    logger().info("\n\n **** AUX_SCAN_RSP packets are not found ****\n\n")
     if pri_adv_phy in [3] and sec_adv_phy in [3]:
         # Assert if primary PHY is not LE Coded on ADV_EXT_IND packets
         assert (df[df['Chan'].isin([37, 38, 39])][
