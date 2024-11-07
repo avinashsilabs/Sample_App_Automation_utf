@@ -6,6 +6,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xBTFeatureBitMap, Si91xExtTCPIPFeatureBitMap,
     Si91xBLEFeatureBitMap,
     Si91xBLECustomFeatureBitMap, Si91xConfigFeatureBitMap, Si91xSHA)
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
 
 
@@ -123,6 +124,22 @@ class WLanThread(ThreadBase):
                 logger().info(f"Digest data of sha 1 mode : {final_digest_data} and"
                               f" Expected digest data of sha 1 mode :{expected_digest_data} are matched")
 
+            if self.test_case == 537621:
+                expected_digest_data = "8e959b75dae313da8cf4f72814fc143f8f7779c6eb9f7fa17299aeadb6889018501d289" \
+                                       "e4900f7e4331b99dec4b5433ac7d329eeb6dd26545e96e55b874be909"
+                logger().info(f"Expected digest data: {expected_digest_data}")
+                self.wifi_dut.interfaces.wifi.compute_sha_digest(
+                    sha_type=6, msg=input_message, expected_status=SLStatus.SL_STATUS_INVALID_SHA_MODE)
+                logger().info("Expected error and received error is matched successfully when SHA mode has given 6")
+
+            if self.test_case == 537622:
+                expected_digest_data = "8e959b75dae313da8cf4f72814fc143f8f7779c6eb9f7fa17299aeadb6889018501d289" \
+                                       "e4900f7e4331b99dec4b5433ac7d329eeb6dd26545e96e55b874be909"
+                logger().info(f"Expected digest data: {expected_digest_data}")
+                self.wifi_dut.interfaces.wifi.compute_sha_digest(
+                    sha_type=0, msg=input_message, expected_status=SLStatus.SL_STATUS_INVALID_SHA_MODE)
+                logger().info("Expected error and received error is matched successfully when SHA mode has given 0")
+
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case {self.test_case} thread: {str(e)} ****\n\n")
             raise e
@@ -192,6 +209,26 @@ def test_wifi_sdk_sha_mode_1_digest_length_20_c215178(wifi_dut, sl_collections):
     """Verify sha output with sha mode 1 digest length 20"""
     try:
         wlan_obj = WLanThread(wifi_dut=wifi_dut, test_case=215178)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+def test_wifi_sdk_sha_mode_6_digest_length_64_c537621(wifi_dut, sl_collections):
+    """Verify sha output with sha mode 6 digest length 64"""
+    try:
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, test_case=537621)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+def test_wifi_sdk_sha_mode_0_digest_length_64_c537622(wifi_dut, sl_collections):
+    """Verify sha output with sha mode 0 digest length 64"""
+    try:
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, test_case=537622)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as e:
