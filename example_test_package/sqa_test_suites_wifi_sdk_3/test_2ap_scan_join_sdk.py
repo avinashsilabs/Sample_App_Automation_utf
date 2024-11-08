@@ -329,7 +329,6 @@ def test_wifi_sdk_scan_and_connect_in_world_domain_c19075(wifi_dut, utf_constant
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
@@ -434,14 +433,6 @@ def test_wifi_sdk_scan_and_connect_in_world_domain_c19078(wifi_dut, utf_constant
              'channel': 1,
              'region': 'US'
         },
-
-        2: {
-             'ssid': 'JAPAN_TEST',
-             'security': 'WPA2',
-             'passphrase': '123123123',
-             'channel': 6,
-             'region': 'japan'
-        }
     }
 )
 @pytest.mark.config(
@@ -449,64 +440,89 @@ def test_wifi_sdk_scan_and_connect_in_world_domain_c19078(wifi_dut, utf_constant
     wifi=
     {
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Aggregation,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "region": 1,
-        "region_code":"worldwide"
+        "region_code": "japan",
+        "security": "WPA2", "ssid": "JAPAN_TEST", "passphrase": "Automation@123", "channel": 6
     }
 )
+@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "region": 1,
+        "region_code": "worldwide",
+    },
+)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_sdk_scan_and_connect_in_world_domain_c19076(wifi_dut, utf_constants, wifi_access_points, wifi_sniffer, request, sniffer_filter, sl_collections):
+def test_wifi_sdk_scan_and_connect_in_world_domain_c19076(wifi_access_points, wifi_dut, utf_constants, remote_wiseconnect3, wifi_sniffer, request, sniffer_filter, sl_collections):
     try:
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="JAPAN_TEST", security="wpa2", psk="Automation@123", channel=6,
+                                          dtim_beacon_count=1, beacon_interval=100)
+        time.sleep(5)
         test_name = request.node.name
         mode = "power_save_low_latency"
         ping_count = utf_constants.get("ping_count")
+
         logger().info("Enabling rejoin...")
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_points[0].interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        wifi_dut.interfaces.wifi.scan(ssid=wifi_access_points[1].interfaces.wifi.ssid, channel=1)
-        time.sleep(2)
-        wifi_dut.interfaces.wifi.scan(ssid=wifi_access_points[2].interfaces.wifi.ssid, channel=6)
-        time.sleep(2)
-        logger().info("Initiating scan...")
-        logger().info("enable the scan in dut on channel 0...")
-        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
-        wifi_dut.interfaces.wifi.join(ssid=wifi_access_points[0].interfaces.wifi.ssid,
-                                      security="wpa2",
-                                      passphrase=wifi_access_points[0].interfaces.wifi.passphrase,
-                                      channel=0, timeout=60)
-        time.sleep(20)
+
+        logger().info("Initiating scan from dut...")
+        scan_results = remote_wiseconnect3.interfaces.sapi.scan(channel=0, ssid=None)
+        assert (len(scan_results) >= 1), "Scan failed"
         logger().info(scan_results)
-        assert len(scan_results) >= 1, "scan results not found"
-        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        time.sleep(20)
+
+        remote_wiseconnect3.interfaces.sapi.join(ssid=wifi_access_points[0].interfaces.wifi.ssid, channel=13, timeout=60,
+                                                 security="wpa2", passphrase=wifi_access_points[0].interfaces.wifi.passphrase)
+        time.sleep(20)
+        dut_mac_address = remote_wiseconnect3.interfaces.sapi.get_mac_address()
         logger().info(f"Device mac address: {dut_mac_address}")
+
         ap_bssid = wifi_access_points[0].interfaces.wifi.bssid
         logger().info(f"AP MAC: {ap_bssid}")
-        ip_config = wifi_dut.interfaces.wifi.start_ip()
-        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+
+        ip_config = remote_wiseconnect3.interfaces.sapi.start_ip()
+        device_ip = remote_wiseconnect3.interfaces.sapi.get_device_ip(ip_config)
 
         logger().info(f"....Applying performance profile mode : {mode}")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode)
-        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        remote_wiseconnect3.interfaces.sapi.set_performance_profile(mode)
+        remote_wiseconnect3.interfaces.sapi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                                 psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
         logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
         status = ping(device_ip, ping_count)
         assert status is True, "DUT is not responding to ping request from third party device"
         logger().info(f"ping is successful")
         time.sleep(20)
-        wifi_dut.interfaces.wifi.leave()
+        remote_wiseconnect3.interfaces.sapi.leave()
         time.sleep(2)
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -525,7 +541,6 @@ def test_wifi_sdk_scan_and_connect_in_world_domain_c19076(wifi_dut, utf_constant
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
 
 @pytest.mark.config(
     "wifi_dut",

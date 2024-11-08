@@ -8,6 +8,7 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBit
     Si91xExtTCPIPFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xOperatingMode, Si91xPowerSaveModes, \
     Si91xPowerSaveProcedureTypes
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+from test_wlan_mbssid_sdk import WLanThread
 
 
 def logger():
@@ -54,11 +55,8 @@ class WifiJoinThread(ThreadBase):
 
     def run(self):
         try:
-
             logger().info(" ====== configuring the Sniffer with access point channel ====== ")
-            self.wifi_sniffer.interfaces.capture.configure_interface(
-                channel=self.wifi_access_point.interfaces.wifi.channel)
-
+            self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
             logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_case)
 
@@ -69,7 +67,6 @@ class WifiJoinThread(ThreadBase):
                                                                      associated=self.wifi_dut.interfaces.wifi.associated
                                                                      )
             if self.test_case_no == 477823:
-
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
                 protocols = ["TCP"]
@@ -1761,6 +1758,120 @@ def test_wifi_sdk_scan_with_high_beacon_length_c538006(wifi_access_point, wifi_d
                         if frame_length < 512:
                             return "Fail: Frame Length is less than 512 bytes"
                 logger().info(frame_length)
+
+    except Exception as e:
+        logger().error(f"Exception occurred: {e}")  # Log the exception
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Aggregation,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "japan",
+        "security": "WPA2", "ssid": "SILABS_AP", "passphrase": "Automation@123", "channel": 14
+    }
+)
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "region": 1,
+        "region_code": "japan",
+        "security": "WPA2", "ssid": "SILABS_AP", "passphrase": "Automation@123", "channel": 14
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C19073')
+def test_wifi_sdk_verify_11b_rates_channel14_c19073(wifi_dut, remote_wiseconnect3, sl_collections):
+
+    """ Verify whether module is using only 11b rates in channel 14 in JP region """
+
+    try:
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP", security="wpa2", psk="Automation@123", channel=14,
+                                          dtim_beacon_count=1, beacon_interval=100)
+        """ set data rate in b(11Mbps) mode and Verify """
+        remote_wiseconnect3.interfaces.sapi.set_transmit_rate(rate_protocol="802.11b", data_rate="11Mbps")
+
+        logger().info("Initiating scan from dut...")
+        scan_results = remote_wiseconnect3.interfaces.sapi.scan(channel=0, ssid=None, scan_bitmap_2_4=8192, scan_type=0,
+                                                                bg_scan_periodicity=10)
+        assert (len(scan_results) >= 1), "Scan failed"
+        logger().info(scan_results)
+        time.sleep(10)
+
+    except Exception as e:
+        logger().error(f"Exception occurred: {e}")  # Log the exception
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C653152')
+def test_wifi_sdk_scan_with_mbssid_extended_scan_c653152(wifi_access_point, wifi_dut, request, wifi_sniffer, sniffer_filter, sl_collections):
+
+    """Verified wherther DUT is able scan MBSSID AP,
+       when SL_WIFI_SCAN_TYPE_EXTENDED is enabled."""
+
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                          sniffer_filter=sniffer_filter, sl_collections=sl_collections)
+
+    try:
+        test_name = request.node.name
+        logger().info(f"configuring the Sniffer with the channel : {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        time.sleep(5)
+
+        wlan_obj.verfiy_T_and_NT_based_mbssid_in_dut_list(scan_type=True)
+
+        logger().info("Stopping sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
         logger().error(f"Exception occurred: {e}")  # Log the exception

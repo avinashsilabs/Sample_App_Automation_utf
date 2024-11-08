@@ -196,31 +196,14 @@ class WLanThread(ThreadBase):
                 vap_list = self.verfiy_T_and_NT_based_mbssid_in_dut_list()
                 self.validate_rssi_channel_security()
                 time.sleep(2)
-                self.wifi_sniffer.interfaces.capture.configure_interface(
-                    channel=self.wifi_access_point.interfaces.wifi.channel
-                )
-                self.wifi_sniffer.interfaces.capture.start_capture(
-                    capture_file=self.test_name
-                )
-                self.wifi_dut.interfaces.wifi.join(
-                    ssid=vap_list[0],
-                    passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0][
-                        "passphrase"
-                    ],
-                    security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
-                        "security"
-                    ].name.lower(),
-                )
+                self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
+                self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+                self.wifi_dut.interfaces.wifi.join(ssid=vap_list[0],
+                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0]["passphrase"],
+                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0]["security"].name.lower(),)
 
-                self.dut_addr = self.sl_collections.join_to_wifi_network(
-                    wifi_dut=self.wifi_dut,
-                    wifi_access_point=self.wifi_access_point,
-                    associated=False,
-                    ping_after_power_save=False,
-                    skip_scan=True,
-                    skip_connect=True,
-                    retry_count=3,
-                )
+                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,wifi_access_point=self.wifi_access_point,associated=False,
+                                                                         ping_after_power_save=False, skip_scan=True, skip_connect=True, retry_count=3,)
 
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
@@ -1084,13 +1067,20 @@ class WLanThread(ThreadBase):
                 count = count + 1
         return final_ssid_list
 
-    def find_ssid_list_from_dut_scan(self):
+    def find_ssid_list_from_dut_scan(self, scan_type=False):
         # collect all ssid from DUT scan list
         ssid_list = []
-        self.scan_list = self.wifi_dut.interfaces.wifi.scan()
-        logger().info(
-            f"\n\n *** Start to collect all available ssid in DUT scan list ***\n\n"
-        )
+        if scan_type:
+            self.scan_list = self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=0, scan_type=2, bg_scan_periodicity=10)
+            logger().info(
+                f"\n\n *** Start to collect all available ssid in DUT scan list ***\n\n"
+            )
+        else:
+            self.scan_list = self.wifi_dut.interfaces.wifi.scan()
+            logger().info(
+                f"\n\n *** Start to collect all available ssid in DUT scan list ***\n\n"
+            )
+
         for i in range(0, len(self.scan_list)):
             ssid_list.append(self.scan_list[i].ssid)
         return ssid_list
@@ -1106,10 +1096,10 @@ class WLanThread(ThreadBase):
         # Check if counter2 is a subset of counter1
         return all(counter2[element] <= counter1[element] for element in counter1)
 
-    def verfiy_T_and_NT_based_mbssid_in_dut_list(self):
+    def verfiy_T_and_NT_based_mbssid_in_dut_list(self, scan_type=False):
         # Validation for T and NT based MBSSID in DUT scan list & sniffer capture
         packet_filter2 = "                    SSID:"
-        ssid_list = self.find_ssid_list_from_dut_scan()
+        ssid_list = self.find_ssid_list_from_dut_scan(scan_type=scan_type)
         time.sleep(2)
         packet_filter1 = (
             self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -1317,6 +1307,7 @@ class WLanThread(ThreadBase):
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219284')
 def test_wifi_sdk_mbssid_c219284(
     wifi_sniffer,
     wifi_access_point,
@@ -1339,23 +1330,14 @@ def test_wifi_sdk_mbssid_c219284(
         wifi_access_point=wifi_access_point,
         wifi_sniffer=wifi_sniffer,
         ping_count=ping_count,
-        test_case_no=219284,
-        test_name=test_name,
-        sl_collections=sl_collections,
-    )
+        test_case_no=219284, test_name=test_name, sl_collections=sl_collections,)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
-        logger().info(
-            f"\n\n\n DUT MAC Address = {wlan_obj.dut_addr['dut_mac_address']}\n\n"
-        )
+        logger().info(f"\n\n\n DUT MAC Address = {wlan_obj.dut_addr['dut_mac_address']}\n\n")
         time.sleep(60)
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=wlan_obj.dut_addr["dut_mac_address"],
-            radio_ch=wifi_access_point.interfaces.wifi.channel,
-            filter_name="assoc_mbssid",
-        )
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.dut_addr["dut_mac_address"],radio_ch=wifi_access_point.interfaces.wifi.channel, filter_name="assoc_mbssid",)
 
         logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
 
@@ -1364,11 +1346,7 @@ def test_wifi_sdk_mbssid_c219284(
         wifi_dut.interfaces.wifi.leave()
 
         time.sleep(2)
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(
-            packet_filter1=packet_filter1, packet_filter2=packet_filter2
-        )[
-            "packet_count"
-        ], "Unable to find MBSSID bit enable in extended capability field in sniffer capture"
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1, packet_filter2=packet_filter2)["packet_count"], "Unable to find MBSSID bit enable in extended capability field in sniffer capture"
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -1396,6 +1374,7 @@ def test_wifi_sdk_mbssid_c219284(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219285')
 def test_wifi_sdk_mbssid_scan_all_vap_c219285(
     wifi_sniffer,
     wifi_access_point,
@@ -1458,6 +1437,7 @@ def test_wifi_sdk_mbssid_scan_all_vap_c219285(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219286')
 def test_wifi_sdk_mbssid_T_open_sec_c219286(
     wifi_sniffer,
     wifi_access_point,
@@ -1521,6 +1501,7 @@ def test_wifi_sdk_mbssid_T_open_sec_c219286(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219287')
 def test_wifi_sdk_mbssid_T_wpa2_psk_c219287(
     wifi_sniffer,
     wifi_access_point,
@@ -1616,6 +1597,7 @@ def test_wifi_sdk_mbssid_T_wpa2_psk_c219287(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219288')
 def test_wifi_sdk_mbssid_NT_wpa2_psk_c219288(
     wifi_sniffer,
     wifi_access_point,
@@ -1723,6 +1705,7 @@ def test_wifi_sdk_mbssid_NT_wpa2_psk_c219288(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219289')
 def test_wifi_sdk_mbssid_T_wpa3_c219289(
     wifi_sniffer,
     wifi_access_point,
@@ -1828,6 +1811,7 @@ def test_wifi_sdk_mbssid_T_wpa3_c219289(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219290')
 def test_wifi_sdk_mbssid_NT_wpa3_c219290(
     wifi_sniffer,
     wifi_access_point,
@@ -1915,6 +1899,7 @@ def test_wifi_sdk_mbssid_NT_wpa3_c219290(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C219291')
 def test_wifi_sdk_mbssid_T_wpa2_enterprise_c219291(
     wifi_dut,
     wifi_access_point,
@@ -2022,6 +2007,7 @@ def test_wifi_sdk_mbssid_T_wpa2_enterprise_c219291(
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
+@pytest.mark.test_src_map_id('C219292')
 def test_wifi_sdk_mbssid_NT_wpa2_enterprise_c219292(
     wifi_sniffer,
     wifi_access_point,
@@ -2088,6 +2074,7 @@ def test_wifi_sdk_mbssid_NT_wpa2_enterprise_c219292(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219293')
 def test_wifi_sdk_mbssid_rejoin_T_open_sec_c219293(
     wifi_sniffer,
     wifi_access_point,
@@ -2166,6 +2153,7 @@ def test_wifi_sdk_mbssid_rejoin_T_open_sec_c219293(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219294')
 def test_wifi_sdk_mbssid_rejoin_T_wpa2_c219294(
     wifi_sniffer,
     wifi_access_point,
@@ -2277,6 +2265,7 @@ def test_wifi_sdk_mbssid_rejoin_T_wpa2_c219294(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219295')
 def test_wifi_sdk_mbssid_rejoin_NT_wpa2_c219295(
     wifi_sniffer,
     wifi_access_point,
@@ -2362,6 +2351,7 @@ def test_wifi_sdk_mbssid_rejoin_NT_wpa2_c219295(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219296')
 def test_wifi_sdk_mbssid_rejoin_T_wpa3_c219296(
     wifi_sniffer,
     wifi_access_point,
@@ -2478,6 +2468,7 @@ def test_wifi_sdk_mbssid_rejoin_T_wpa3_c219296(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219297')
 def test_wifi_sdk_mbssid_rejoin_NT_wpa3_c219297(
     wifi_sniffer,
     wifi_access_point,
@@ -2551,6 +2542,7 @@ def test_wifi_sdk_mbssid_rejoin_NT_wpa3_c219297(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219298')
 def test_wifi_sdk_mbssid_c219298(
     wifi_sniffer,
     wifi_access_point,
@@ -2611,6 +2603,7 @@ def test_wifi_sdk_mbssid_c219298(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219299')
 def test_wifi_sdk_mbssid_negative_c219299(
     wifi_sniffer,
     wifi_access_point,
@@ -2702,6 +2695,7 @@ def test_wifi_sdk_mbssid_negative_c219299(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219300')
 def test_wifi_sdk_mbssid_connection_failure_c219300(
     wifi_sniffer, wifi_access_point, wifi_dut, request, sniffer_filter, sl_collections
 ):
@@ -2750,6 +2744,7 @@ def test_wifi_sdk_mbssid_connection_failure_c219300(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219301')
 def test_wifi_sdk_mbssid_c219301(
     wifi_sniffer,
     wifi_access_point,
@@ -2840,6 +2835,7 @@ def test_wifi_sdk_mbssid_c219301(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219302')
 def test_wifi_sdk_mbssid_c219302(
     wifi_sniffer,
     wifi_access_point,
@@ -2932,6 +2928,7 @@ def test_wifi_sdk_mbssid_c219302(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219319')
 def test_wifi_sdk_mbssid_c219319(
     wifi_sniffer,
     wifi_access_point,
@@ -3025,6 +3022,7 @@ def test_wifi_sdk_mbssid_c219319(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219320')
 def test_wifi_sdk_mbssid_c219320(
     wifi_sniffer,
     wifi_access_point,
@@ -3109,6 +3107,7 @@ def test_wifi_sdk_mbssid_c219320(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219321')
 def test_wifi_sdk_mbssid_c219321(
     wifi_sniffer,
     wifi_access_point,
@@ -3200,6 +3199,7 @@ def test_wifi_sdk_mbssid_c219321(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219307')
 def test_wifi_sdk_mbssid_T_profile_based_ap_open_sec_c219307(
     wifi_sniffer,
     wifi_access_point,
@@ -3297,6 +3297,7 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_open_sec_c219307(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219308')
 def test_wifi_sdk_mbssid_NT_profile_based_ap_open_sec_c219308(
     wifi_sniffer,
     wifi_access_point,
@@ -3377,6 +3378,7 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_open_sec_c219308(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219309')
 def test_wifi_sdk_mbssid_T_profile_based_ap_wpa2_sec_c219309(
     wifi_sniffer,
     wifi_access_point,
@@ -3489,6 +3491,7 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_wpa2_sec_c219309(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219310')
 def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa2_sec_c219310(
     wifi_sniffer,
     wifi_access_point,
@@ -3600,6 +3603,7 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa2_sec_c219310(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219311')
 def test_wifi_sdk_mbssid_T_profile_based_ap_wpa3_sec_c219311(
     wifi_sniffer,
     wifi_access_point,
@@ -3711,6 +3715,7 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_wpa3_sec_c219311(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219312')
 def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa3_sec_c219312(
     wifi_sniffer,
     wifi_access_point,
@@ -3808,6 +3813,7 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa3_sec_c219312(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C219315')
 def test_wifi_sdk_mbssid_T_NT_connect_disconnect_c219315(
     wifi_sniffer,
     wifi_access_point,
