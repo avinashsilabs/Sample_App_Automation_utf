@@ -2,6 +2,8 @@ from utf.utils.logger import get_logger
 import pytest
 import string
 import time
+from retry import retry
+from utf.utils.stopwatch import Stopwatch
 import ipaddress
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xTCPIPFeatureBitMap,
@@ -12,8 +14,11 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xConfigFeatureBitMap,
     Si91xPowerSaveProcedureTypes,
     Si91xOperatingMode,
-    Si91xExtCustomFeatureBitMap
+    Si91xExtCustomFeatureBitMap,
+    Si91xJoinFeatureBitMap,
+    Si91xMqttQos,
 )
+from utf.utils import print_dict
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.sl_status import SLStatus
@@ -22,26 +27,32 @@ from threading import Thread
 from utf.utf_config import UtfConfig
 
 
+
+def __print_throughput(iperf_throughput: dict):
+    if iperf_throughput is not None:
+        print_dict("##     ", iperf_throughput)
+
+
 def logger():
     return get_logger(__name__)
 
 
 """
      Setup Requirement:
-     
+
         1. DUT(Soc917)
         2. Raspberry PI4
         3. Access Point(Third Party AP's)
         4. Sniffer(NUC device)  
-        
+
      Test Steps:
-        
+
         1. Configure the DUT in 2G.
         2. Association of Third party AP's
         3. Configure the IPv6 addresses.
         4. Ping to the specified IPv6 address.
         5. Validate the Sniffer Checks.
-    
+
      Authors: 
       - Swathi Chinthala 
 """
@@ -57,14 +68,12 @@ def random_ipv6_addr(subnet):
 
 
 
-
 class IperfThraed(ThreadBase):
 
     def __init__(self, wifi_dut=None, wifi_access_point=None, sl_collections=None, test_name=None, wifi_client=None,
                  test_id=None,
                  traffic_type=None, protocol=None, net_perf_client=None, timeout=60,
                  device_ip=None, remote_ip=None, ip_version=4):
-
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -99,16 +108,19 @@ class IperfThraed(ThreadBase):
         self.run_traffic()
 
 
+
+
 class WLanConThread(ThreadBase):
     """
     Thread class for WLAN operations.
     """
-    client_info, dut_info = {"mac_address": None, "ip_address": None},{"mac_address": None, "ip_address": None}
+    client_info, dut_info = {"mac_address": None, "ip_address": None}, {"mac_address": None, "ip_address": None}
 
-    def __init__(self, wifi_dut=None, wifi_access_point=None, sl_collections=None, test_name=None, wifi_client=None,
-                 test_id=None, test_type=None, ping_count=10, remote_wiseconnect3=None,
-                 ipv6_addr_type="global", switch=None,
-                 set_power_save=False, traffic_type=None, protocol=None, net_perf_client=None, timeout=60):
+    def __init__(self, wifi_dut=None, wifi_access_point=None, sl_collections=None, test_name=None, wifi_clients=None,
+                 test_id=None, test_type=None, ping_count=10, remote_wiseconnect3=None, wifi_client=None,
+                 ipv6_addr_type="global", switch=None, listen_interval=False,
+                 set_power_save=False, traffic_type=None, protocol=None, net_perf_client=None, timeout=60,
+                 ping_from="remote", remote_type="raspi"):
 
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -117,6 +129,7 @@ class WLanConThread(ThreadBase):
         self.remote_wiseconnect3 = remote_wiseconnect3
         self.test_name = test_name
         self.wifi_client = wifi_client
+        self.wifi_clients = wifi_clients
         self.test_id = test_id
         self.ping_count = ping_count
         self.test_type = test_type
@@ -129,12 +142,15 @@ class WLanConThread(ThreadBase):
         self.ssid = "Concurent_AP"
         self.security = "WPA2"
         self.password = "Automation@123"
-        self.channel = "1"
-        self.dtim_count = "1"
+        self.channel = "11"
+        self.dtim_count = "3"
         self.beacon_interval = "100"
         self.no_of_clients = 1
         self.leave = False
         self.set_power_save = set_power_save
+        self.listen_interval = listen_interval
+        self.remote_type = remote_type
+        self.ping_from = ping_from
 
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
@@ -142,6 +158,10 @@ class WLanConThread(ThreadBase):
         self.remote_ipv6 = None
         self.remote_ipv4 = None
         self.dut_add_dict = None
+
+    def enable_listen_interval_based_power_save(self):
+        self.remote_wiseconnect3.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
+                                                                         Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
 
     def run_traffic(self, device_ip=None, remote_ip=None, ip_version=4):
 
@@ -157,6 +177,30 @@ class WLanConThread(ThreadBase):
             async_socket=0
         )
 
+    @staticmethod
+    def print_throughput(iperf_throughput: dict):
+        if iperf_throughput is not None:
+            print_dict("##     ", iperf_throughput)
+
+    def run_traffic_btwn_two_clients(self, net_perf_client, secondary_net_perf_client, server_ip, client_ip, protocol):
+        net_perf_client.interfaces.net_perf.init_server(host_ip=client_ip, device_ip=server_ip, protocol=protocol,
+                                                        host_role=IperfConstants.SERVER_MODE)
+        net_perf_client.interfaces.net_perf.start()
+        time.sleep(2)
+
+        # preparing iperf client with secondary raspi
+        secondary_net_perf_client.interfaces.net_perf.init_client(host_ip=client_ip, device_ip=server_ip,
+                                                                  protocol=protocol,
+                                                                  host_role=IperfConstants.CLIENT_MODE)
+        secondary_net_perf_client.interfaces.net_perf.start()
+
+        # waiting till time out for iperf client send data to iperf server
+        time.sleep(net_perf_client.interfaces.net_perf.client_timeout)
+        tp_server = net_perf_client.interfaces.net_perf.process_output()
+        secondary_net_perf_client.interfaces.net_perf.clean_files()
+        assert tp_server is not None
+        self.print_throughput(tp_server)
+
     def ping(self, ip_address=None, ping_from="remote", ping_count=10, ip_version="ipv4"):
         """
         Ping the given IP address.
@@ -169,7 +213,29 @@ class WLanConThread(ThreadBase):
             self.wifi_dut.interfaces.wifi.ping(server_ip=ip_address, ip_version=ip_version, ping_size=64,
                                                num_ping_attempts=10)
 
-    def join_to_sta(self):
+    def connect_disconnect_raspi_clients(self):
+            if self.clients_connected:
+                logger().info(
+                    f"********* Initiating 3rd party clients disconnect from DUT-AP' *********")
+                for client in self.wifi_clients:
+                    logger().info(f"len of wifi_clients: {len(self.wifi_clients)}")
+                    client.interfaces.wifi.leave()
+                self.clients_connected = False
+
+    @staticmethod
+    @retry(Exception, delay=15, tries=3)
+    def ping_from_wifi_client(wifi_client, dest_ip, ping_count=10):
+        logger().info(f"Initiating wlan ping from client '{wifi_client.name}' to destination_ip:'{dest_ip}'")
+        for count in range(3):
+            try:
+                rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute(f"sudo ping -c {ping_count} {dest_ip}")
+                assert rc == 0
+                logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+                return rc == 0
+            except:
+                time.sleep(10)
+
+    def assign_static_ip_to_ap(self):
         self.sl_collections.configure_dut_in_static_ip(self.wifi_dut, static_ip="192.168.100.76",
                                                        static_subnet="255.255.255.0",
                                                        static_gateway="192.168.100.76")
@@ -181,51 +247,73 @@ class WLanConThread(ThreadBase):
                                                            ipv6_gw_address=self.static_ipv6)
         self.dut_add_dict['dut_ap_ipv6'] = self.static_ipv6
 
+    def create_ap_connect_remote_clients(self, count=3):
+        self.assign_static_ip_to_ap()
         self.wifi_dut.interfaces.wifi.start_ap(ssid=self.ssid, security=self.security, psk=self.password,
                                                channel=self.channel,
                                                dtim_beacon_count=self.dtim_count,
                                                beacon_interval=self.beacon_interval)
-        self.remote_wiseconnect3.interfaces.wifi.join(ssid=ssid,
-                                                      security=self.security,
+
+        for i in range(len(self.wifi_clients)):
+            self.wifi_clients[i].interfaces.wifi.config['interface'] = "wlan0"
+            logger().info(f"RASPI-STA{i + 1}:'{self.wifi_clients[i].name}' is joining to DUT-AP")
+            self.wifi_clients[i].interfaces.wifi.join()
+            time.sleep(5)
+            # logger().info(f"********* Dut as AP IP **********: {self.ip_dict['dut_ip']}")
+            for retry_count in range(count):
+                try:
+                    logger().info(f"RASPI-STA{i + 1}:'{self.wifi_clients[i].name}' is successfully connected to DUT-AP")
+                    logger().info(f"Initiating wlan ping from client '{self.wifi_clients[i].name}' to DUT")
+                    self.dut_add_dict[f'client{i + 1}_ip'] = self.wifi_clients[i].interfaces.wifi.get_ip_address()
+                    logger().info(f"Client{i + 1}_ip: {self.dut_add_dict[f'client{i + 1}_ip']}")
+                    rc, stdout, stderr = self.wifi_clients[i].interfaces.wifi.shell.execute(
+                        f"sudo ping -c {self.ping_count} {self.dut_add_dict['dut_ap_ipv4']}")
+                    assert rc == 0, f"RASPI-STA{i + 1} failed to ping DUT"
+                    logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+                    connected = True
+                    break
+                except Exception as error:
+                    logger().info(f"RASPI-STA{i + 1} failed to ping DUT:\n{error}...retry count -> {count + 1}")
+                    time.sleep(10)
+            assert connected, f"RASPI-STA{i + 1} is disconnected from DUT-AP"
+        self.clients_connected = True
+
+    def join_to_remote_sdk_device(self):
+
+        self.assign_static_ip_to_ap()
+        self.wifi_dut.interfaces.wifi.start_ap(ssid=self.ssid, security=self.security, psk=self.password,
+                                               channel=self.channel,
+                                               dtim_beacon_count=self.dtim_count,
+                                               beacon_interval=self.beacon_interval)
+        if self.listen_interval:
+            self.enable_listen_interval_based_power_save()
+        self.remote_wiseconnect3.interfaces.wifi.join(ssid=self.ssid,
+                                                      security=self.security.lower(),
                                                       passphrase=self.password,
                                                       channel=self.channel, timeout=60)
         ip_config = self.remote_wiseconnect3.interfaces.wifi.start_ip(timeout=60, ip_version="ipv4")
         device_ipv4 = self.remote_wiseconnect3.interfaces.wifi.get_device_ip(ip_config)
 
         ip_config = self.remote_wiseconnect3.interfaces.wifi.start_ip(timeout=60, ip_version="ipv6")
-        device_ipv6 = self.remote_wiseconnect3.interfaces.wifi.get_device_ip(ip_config)
+        # device_ipv6 = self.remote_wiseconnect3.interfaces.wifi.get_device_ip(ip_config)
 
-        self.dut_add_dict['remote_sta_ipv6'] = device_ipv6
+        self.dut_add_dict['remote_sta_ipv6'] = ip_config[1]
         self.dut_add_dict['remote_sta_ipv4'] = device_ipv4
-        # if ipv6_type == 'global':
-        #     device_ip = ip_config[1]
-        # else:
-        #     device_ip = ip_config[0]
-        # self.remote_wiseconnect3.interfaces.wifi.start_ip(ip_version=ip_version, static_ip=static_ip,
-        #                                                   static_subnet=static_subnet,
-        #                                                   static_gateway=static_gateway, timeout=10)
-        # self.static_ipv6 = random_ipv6_addr("1280:2300:133c:1341::/64")
-        # ip_config = self.remote_wiseconnect3.interfaces.wifi.start_ip(timeout=30, ip_version="ipv6",
-        #                                                               static_ipv6_address=self.static_ipv6,
-        #                                                               ipv6_gw_address=self.static_ipv6)
-        # self.dut_add_dict['remote_sta_ipv6'] = self.static_ipv6
-        # self.dut_add_dict['remote_sta_ipv4'] = self.static_ip
 
-        self.remote_wiseconnect3.interfaces.wifi.ping(server_ip=self.dut_add_dict['dut_ap_ipv4'], num_ping_attempts=self.ping_count,
+        self.remote_wiseconnect3.interfaces.wifi.ping(server_ip=self.dut_add_dict['dut_ap_ipv4'],
+                                                      num_ping_attempts=self.ping_count,
                                                       ping_timeout=10, ip_version='ipv4', ping_size=64)
-        self.remote_wiseconnect3.interfaces.wifi.ping(server_ip=self.dut_add_dict['dut_ap_ipv6'], num_ping_attempts=self.ping_count,
+        self.remote_wiseconnect3.interfaces.wifi.ping(server_ip=self.dut_add_dict['dut_ap_ipv6'],
+                                                      num_ping_attempts=self.ping_count,
                                                       ping_timeout=10, ip_version='ipv6', ping_size=64)
 
         time.sleep(2)
-        if self.power_save and self.set_power_save:
+        if self.set_power_save:
             self.enable_power_save()
 
     def enable_power_save(self):
         if self.power_save:
-            self.wifi_dut.interfaces.wifi.set_performance_profile('power_save_low_latency')
-        else:
-            logger().info("skip power save mode configuration as in harness power_save flag is set to False")
-
+            self.remote_wiseconnect3.interfaces.wifi.set_performance_profile('power_save_low_latency')
 
     def join_to_ap(self):
         self.dut_add_dict = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
@@ -245,20 +333,23 @@ class WLanConThread(ThreadBase):
                       f"DUT IPV4 ADDRESS : {self.dut_add_dict['device_ip']}\nDUT IPV6 GLOBAL ADDRESS : {self.dut_add_dict['dut_sta_ipv6_global']}\n"
                       f"DUT IPV6 LINK LOCAL ADDRESS : {self.dut_add_dict['dut_sta_ipv6_link']}\n")
 
-        self.dut_add_dict['remote_ap_ipv6'] = self.wifi_client.interfaces.wifi.get_ip_address(version=6, addr_type=self.ipv6_addr_type)
+        self.dut_add_dict['remote_ap_ipv6'] = self.wifi_client.interfaces.wifi.get_ip_address(version=6,
+                                                                                              addr_type=self.ipv6_addr_type)
         logger().info(f"remote_ap_ipv6: {self.dut_add_dict['remote_ap_ipv6']}")
         self.dut_add_dict['remote_ap_ipv6'] = ipaddress.ip_address(self.dut_add_dict['remote_ap_ipv6'])
         self.dut_add_dict['remote_ap_ipv4'] = self.wifi_client.interfaces.wifi.get_ip_address(version=4)
-        logger().info(f"remote_ap_ipv4: {self.dut_add_dict['remote_ap_ipv4'] }")
-
-
+        logger().info(f"remote_ap_ipv4: {self.dut_add_dict['remote_ap_ipv4']}")
 
     def check_ping_from_remote_to_dut_sta(self):
         self.ping(ip_address=self.dut_add_dict['device_ip'], ping_from="remote", ping_count=self.ping_count,
                   ip_version="ipv4")
-        self.ping(ip_address=self.dut_add_dict['dut_sta_ipv6_global'], ping_from="remote", ping_count=self.ping_count,
+        if self.ipv6_addr_type == "link":
+            interface = self.wifi_client.interfaces.wifi.config["interface"]
+            dut_addr = f"{self.dut_add_dict['dut_sta_ipv6_link']}%{interface}"
+        else:
+            dut_addr = self.dut_add_dict['dut_sta_ipv6_global']
+        self.ping(ip_address=dut_addr, ping_from="remote", ping_count=self.ping_count,
                   ip_version="ipv6")
-
 
     def check_ping_from_dut_sta_to_remote(self):
         self.ping(ip_address=self.dut_add_dict['remote_ap_ipv4'], ping_from="dut", ping_count=self.ping_count,
@@ -272,7 +363,6 @@ class WLanConThread(ThreadBase):
         self.ping(ip_address=self.dut_add_dict['dut_sta_ipv6_global'], ping_from="remote", ping_count=self.ping_count,
                   ip_version="ipv6")
 
-
     def check_ping_from_dut_ap_to_remote(self):
         self.ping(ip_address=self.dut_add_dict['remote_sta_ipv4'], ping_from="dut", ping_count=self.ping_count,
                   ip_version="ipv4")
@@ -281,24 +371,36 @@ class WLanConThread(ThreadBase):
 
     def check_ping_from_remote_to_dut_ap(self):
         time.sleep(2)
-        self.remote_wiseconnect3.interfaces.wifi.ping(server_ip=static_gateway, num_ping_attempts=self.ping_count,
+        self.remote_wiseconnect3.interfaces.wifi.ping(server_ip=self.dut_add_dict['dut_ap_ipv4'], num_ping_attempts=self.ping_count,
                                                       ping_timeout=10, ip_version='ipv4', ping_size=64)
-        self.remote_wiseconnect3.interfaces.wifi.ping(server_ip=static_ipv6, num_ping_attempts=self.ping_count,
+        self.remote_wiseconnect3.interfaces.wifi.ping(server_ip=self.dut_add_dict['dut_ap_ipv6'], num_ping_attempts=self.ping_count,
                                                       ping_timeout=10, ip_version='ipv6', ping_size=64)
 
-
-
     def run(self):
+
         """
         Runs the thread.
         """
-        self.join_to_ap()
-        self.join_to_sta()
-        self.check_ping_from_remote_to_dut_sta()
+
+        if self.remote_type == "raspi":
+            self.join_to_ap()
+            self.create_ap_connect_remote_clients()
+
+            if self.ping_from == "dut":
+                self.check_ping_from_dut_sta_to_remote()
+            else:
+                self.check_ping_from_remote_to_dut_sta()
+        else:
+            self.join_to_ap()
+            self.join_to_remote_sdk_device()
+            if self.ping_from == "dut":
+                self.check_ping_from_dut_sta_to_remote()
+            else:
+                self.check_ping_from_remote_to_dut_sta()
 
 
-def wifi_dut_config(ext_custom_bit=0, thread_count=1):
-    return {
+def wifi_dut_marker(ext_custom_bit=0, thread_count=1, tcp_feat_bit=0, ext_tcp_feat_bit=0, ca_cert=None):
+    config = {
         "thread_config": {"wifi": {"count": thread_count, "stack_len": 4096}},
         "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
@@ -307,15 +409,19 @@ def wifi_dut_config(ext_custom_bit=0, thread_count=1):
                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.IPv6Mode
                           | Si91xTCPIPFeatureBitMap.DHCPv6Server
-                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server | tcp_feat_bit,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
                                | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | ext_custom_bit,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | ext_tcp_feat_bit,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
     }
+    if ca_cert:
+        config["ca_cert"] = ca_cert
+    return pytest.mark.config("wifi_dut", wifi=config)
+
 
 def remote_wiseconnect3_config():
     return {
@@ -323,37 +429,52 @@ def remote_wiseconnect3_config():
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Default,
-        "custom_features": Si91xCustomFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client
                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.IPv6Mode,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | ext_custom_bit,
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
-        "security": "WPA2", "ssid": "Concurent_AP", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA2", "ssid": "Concurent_AP", "passphrase": "Automation@123", "channel": 11
     }
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config())
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
-@pytest.mark.config("wifi_dut", wifi=remote_wiseconnect3_config())
 @pytest.mark.config(
-    "wifi_access_point", wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 1}
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        }
+    }
+)
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
+          "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_melco_sdk_ipv4_ipv6_assignment_C557352(wifi_dut, wifi_access_point, remote_wiseconnect3,
-                                                     wifi_sniffer, sl_collections, request,
-                                                     sniffer_filter, utf_constants,
+def test_wifi_melco_sdk_ipv4_ipv6_assignment_C557352(wifi_dut, wifi_access_point,
+                                                     wifi_sniffer,
+                                                     sl_collections, request,
+                                                     sniffer_filter,
+                                                     utf_constants,
+                                                     wifi_clients,
                                                      wifi_client):
     """
     Test Steps:
@@ -366,42 +487,64 @@ def test_wifi_melco_sdk_ipv4_ipv6_assignment_C557352(wifi_dut, wifi_access_point
     """
     test_name = request.node.name
     try:
+        wifi_clients = wifi_clients[:2]
         ping_count = utf_constants.get("ping_count")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wlan_obj = WLanConThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                  test_name=test_name, sl_collections=sl_collections, test_type="ping",
-                                 ping_count=ping_count, wifi_client=wifi_client, remote_wiseconnect3=remote_wiseconnect3
+                                 ping_count=ping_count, wifi_client=wifi_client,
+                                 wifi_clients=wifi_clients,
                                  )
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+
+        wlan_obj.connect_disconnect_raspi_clients()
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config())
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
-@pytest.mark.config("wifi_dut", wifi=remote_wiseconnect3_config())
+
 @pytest.mark.config(
-    "wifi_access_point", wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        }
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@wifi_dut_marker()
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
+          "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
-def test_wifi_melco_sdk_ipv4_tcp_tx_C557353(wifi_dut, wifi_access_point, remote_wiseconnect3,
-                                            wifi_sniffer, sl_collections,
+def test_wifi_melco_sdk_ipv4_tcp_tx_C557353(wifi_dut, wifi_access_point,
+                                            wifi_sniffer,
+                                            sl_collections,
                                             request,
-                                            sniffer_filter, utf_constants,
-                                            wifi_client, net_perf_client):
+                                            sniffer_filter,
+                                            utf_constants,
+                                            wifi_client, wifi_clients, net_perf_client):
     """
     Test Steps:
         1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
@@ -414,47 +557,168 @@ def test_wifi_melco_sdk_ipv4_tcp_tx_C557353(wifi_dut, wifi_access_point, remote_
     """
     test_name = request.node.name
     try:
+        wifi_clients = wifi_clients[:2]
         ping_count = utf_constants.get("ping_count")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
         wlan_obj = WLanConThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                 remote_wiseconnect3=remote_wiseconnect3,
                                  test_name=test_name, sl_collections=sl_collections, test_type="ping",
                                  ping_count=ping_count, wifi_client=wifi_client, protocol="TCP",
                                  traffic_type="TX",
                                  net_perf_client=net_perf_client,
+                                 wifi_clients=wifi_clients,
+                                 remote_type="raspi"
+
                                  )
         wlan_obj.join_to_ap()
-        wlan_obj.join_to_sta()
+        wlan_obj.create_ap_connect_remote_clients()
         wlan_obj.check_ping_from_remote_to_dut_sta()
-        wlan_obj.run_traffic(device_ip=wlan_obj.dut_add_dict['device_ip'], remote_ip=wlan_obj.dut_add_dict['remote_ap_ipv4'],
+        wlan_obj.run_traffic(device_ip=wlan_obj.dut_add_dict['device_ip'],
+                             remote_ip=wlan_obj.dut_add_dict['remote_ap_ipv4'],
                              ip_version=4)
-
+        wlan_obj.connect_disconnect_raspi_clients()
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config())
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
-@pytest.mark.config("wifi_dut", wifi=remote_wiseconnect3_config())
+
+
 @pytest.mark.config(
-    "wifi_access_point", wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        2: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        3: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        }
+    }
+)
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
+          "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_melco_sdk_ipv4_ipv6_ping_C557354(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
-                                               request, remote_wiseconnect3,
-                                               sniffer_filter, utf_constants,
-                                               wifi_client):
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+def test_wifi_melco_sdk_ipv4_tcp_tx_C557359(wifi_dut, wifi_access_point,
+                                            wifi_sniffer,
+                                            sl_collections,
+                                            request,
+                                            sniffer_filter,
+                                            utf_constants,
+                                            wifi_client, wifi_clients, net_perf_client):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure AP on WPA2 security
+        3. Join the access point and enable the dhcpv4 and dhcpv6
+        4. Enable wlan and bt power save mode in dut after the connection
+        5. Ping from remote to DUT IPV6 address
+        6. Run TCP TX on IPV4
+
+    """
+    test_name = request.node.name
+    try:
+        wifi_clients = wifi_clients[:4]
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wlan_obj = WLanConThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                 test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                                 ping_count=ping_count, wifi_client=wifi_client, protocol="TCP",
+                                 traffic_type="TX",
+                                 net_perf_client=net_perf_client,
+                                 wifi_clients=wifi_clients,
+                                 remote_type="raspi"
+
+                                 )
+        wlan_obj.join_to_ap()
+        wlan_obj.create_ap_connect_remote_clients()
+        wlan_obj.check_ping_from_remote_to_dut_sta()
+        logger().info("ping from STA1 TO STA2")
+        client2_ip = wlan_obj.dut_add_dict['client2_ip']
+        status = wlan_obj.ping_from_wifi_client(wifi_clients[0], client2_ip)
+        assert status, f"RASPI-STA1 failed to ping to RASPI-STA2"
+        wlan_obj.run_traffic(device_ip=wlan_obj.dut_add_dict['device_ip'],
+                             remote_ip=wlan_obj.dut_add_dict['remote_ap_ipv4'],
+                             ip_version=4)
+        wlan_obj.connect_disconnect_raspi_clients()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        }
+    }
+)
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.HTTPClient)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
+          "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.http_server("python_http_server")
+@pytest.mark.parametrize("index_path", {"index.html"})
+def test_wifi_melco_sdk_http_client_ipv4_ipv6_C557360(wifi_dut, wifi_access_point,
+                                                      wifi_sniffer,
+                                                      sl_collections, request,
+                                                      sniffer_filter,
+                                                      utf_constants,
+                                                      wifi_clients, http_server,
+                                                      wifi_client,
+                                                      http_client, index_path):
     """
     Test Steps:
         1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
@@ -466,6 +730,7 @@ def test_wifi_melco_sdk_ipv4_ipv6_ping_C557354(wifi_dut, wifi_access_point, wifi
     """
     test_name = request.node.name
     try:
+        wifi_clients = wifi_clients[:2]
         ping_count = utf_constants.get("ping_count")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel)
@@ -473,37 +738,96 @@ def test_wifi_melco_sdk_ipv4_ipv6_ping_C557354(wifi_dut, wifi_access_point, wifi
         wlan_obj = WLanConThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                  test_name=test_name, sl_collections=sl_collections, test_type="ping",
                                  ping_count=ping_count, wifi_client=wifi_client,
-                                 remote_wiseconnect3=remote_wiseconnect3,
-                                 set_power_save=True
+                                 wifi_clients=wifi_clients,
                                  )
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-        wlan_obj.check_ping_from_dut()
+        logger().info("ping from STA1 TO STA2")
+        client2_ip = wlan_obj.dut_add_dict['client2_ip']
+        status = wlan_obj.ping_from_wifi_client(wifi_clients[0], client2_ip)
+        assert status, f"RASPI-STA1 failed to ping to RASPI-STA2"
+        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.wifi.http_client_init()
+
+        status_dut, content_dut = wifi_dut.interfaces.http.http_post(
+            http_server.interfaces.http,
+            index_path,
+            post_data='hellotestingfrohttppostcontent',
+            server_port=80)
+
+        assert status_dut == SLStatus.SL_STATUS_OK, "failed to post data using http post request"
+        logger().info(status_dut)
+        time.sleep(5)
+
+        status_dut, content_dut = wifi_dut.interfaces.http.http_get(
+            http_server.interfaces.http,
+            index_path,
+            server_port=80)
+        status_client, content_client = http_client.interfaces.http.http_get(
+            http_server.interfaces.http, index_path)
+
+        assert not status_dut, "failed to fetch the https data"
+        assert status_client, "failed to load the https data"
+
+        logger().info(status_dut)
+        logger().info(content_dut)
+        assert content_dut == content_client, "fetched data is not same as expected data"
+
+        status_dut, content_dut = wifi_dut.interfaces.http.http_put(
+            http_server.interfaces.http,
+            server_port=80)
+        logger().info(f"HTTP Put Status:{status_dut}")
+        time.sleep(5)
+        wifi_dut.interfaces.wifi.http_client_deinit()
+        wlan_obj.connect_disconnect_raspi_clients()
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config())
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
-@pytest.mark.config("wifi_dut", wifi=remote_wiseconnect3_config())
 @pytest.mark.config(
-    "wifi_access_point", wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        }
+    }
+)
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+                 ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+                 )
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
+          "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_melco_sdk_ipv4_ipv6_ping_C557356(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
-                                               request, remote_wiseconnect3,
-                                               sniffer_filter, utf_constants,
-                                               wifi_client):
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.skip("https not working")
+def test_wifi_melco_sdk_https_client_ipv4_ipv6_C557361(wifi_dut, wifi_access_point,
+                                                       wifi_sniffer,
+                                                       sl_collections, request,
+                                                       sniffer_filter,
+                                                       utf_constants,
+                                                       wifi_clients, wifi_client, http_server,
+                                                       http_client, index_path):
     """
     Test Steps:
         1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
@@ -515,42 +839,121 @@ def test_wifi_melco_sdk_ipv4_ipv6_ping_C557356(wifi_dut, wifi_access_point, wifi
     """
     test_name = request.node.name
     try:
+        wifi_clients = wifi_clients[:2]
         ping_count = utf_constants.get("ping_count")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        wlan_obj = WLanConThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,remote_wiseconnect3=remote_wiseconnect3,
+        wlan_obj = WLanConThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                  test_name=test_name, sl_collections=sl_collections, test_type="ping",
                                  ping_count=ping_count, wifi_client=wifi_client,
-                                 set_power_save=True
+                                 wifi_clients=wifi_clients,
                                  )
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+        logger().info("ping from STA1 TO STA2")
+        client2_ip = wlan_obj.dut_add_dict['client2_ip']
+        status = wlan_obj.ping_from_wifi_client(wifi_clients[0], client2_ip)
+        assert status, f"RASPI-STA1 failed to ping to RASPI-STA2"
+        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+        server_ip = wlan_obj.dut_add_dict['remote_ap_ipv4']
+        wifi_dut.interfaces.wifi.http_client_init(https_enable=True)#, ip_version='ipv6')
+
+        status_dut, content_dut = wifi_dut.interfaces.http.http_post(
+            http_server.interfaces.http,
+            index_path,
+            # server_ip=server_ip,
+            post_data='hellotestingfrohttppostcontent',
+            server_port=443)
+
+        assert status_dut == SLStatus.SL_STATUS_OK, "failed to post data using http post request"
+        logger().info(status_dut)
+        time.sleep(5)
+
+        status_dut, content_dut = wifi_dut.interfaces.http.http_get(
+            http_server.interfaces.http,
+            index_path,
+            # server_ip=f'"{server_ip}"',
+            server_port=443)
+        status_client, content_client = http_client.interfaces.http.http_get(
+            http_server.interfaces.http, index_path)
+
+        assert not status_dut, "failed to fetch the https data"
+        assert status_client, "failed to load the https data"
+
+        logger().info(status_dut)
+        logger().info(content_dut)
+        assert content_dut == content_client, "fetched data is not same as expected data"
+
+        status_dut, content_dut = wifi_dut.interfaces.http.http_put(
+            http_server.interfaces.http, "cgi-bin/cgi_example.py",
+            put_data_length=10,
+            server_port=443)
+
+        logger().info(f"HTTP Put Status:{status_dut}")
+
+        time.sleep(5)
+        wifi_dut.interfaces.wifi.http_client_deinit()
+        wlan_obj.connect_disconnect_raspi_clients()
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config())
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
-@pytest.mark.config("wifi_dut", wifi=remote_wiseconnect3_config())
+
+
+
 @pytest.mark.config(
-    "wifi_access_point", wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        }
+    }
+)
+@wifi_dut_marker(ext_tcp_feat_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature, tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+                 ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
+          "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_melco_sdk_ipv4_ipv6_ping_STA_LI_powersave_C557357(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
-                                               request, remote_wiseconnect3,
-                                               sniffer_filter, utf_constants,
-                                               wifi_client):
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+@pytest.mark.config("secondary_net_perf_client", net_perf={"device": {"TCP": {"port": 5201, "data_len": 1460},
+                                                                      "UDP": {"port": 5202, "data_len": 1460}}})
+
+def test_wifi_melco_sdk_embedded_mqtt_ssl_ipv4_ipv6_C557363(wifi_dut, wifi_access_point,
+                                                      wifi_sniffer,
+                                                      sl_collections, request,
+                                                      sniffer_filter,
+                                                      utf_constants,
+                                                      wifi_clients,
+                                                      wifi_client,
+                                                      mqtt_server,
+                                                      mqtt_client,
+                                                      net_perf_client,
+                                                      secondary_net_perf_client,
+                                                      protocol
+                                                    ):
     """
     Test Steps:
         1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
@@ -562,21 +965,161 @@ def test_wifi_melco_sdk_ipv4_ipv6_ping_STA_LI_powersave_C557357(wifi_dut, wifi_a
     """
     test_name = request.node.name
     try:
+        mqtt_client.interfaces.mqtt.disable_certificate_verification = True
+        wifi_clients = wifi_clients[:2]
         ping_count = utf_constants.get("ping_count")
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+        topic = "test_topic_mqtt"
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        wlan_obj = WLanConThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,remote_wiseconnect3=remote_wiseconnect3,
+        wlan_obj = WLanConThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                  test_name=test_name, sl_collections=sl_collections, test_type="ping",
                                  ping_count=ping_count, wifi_client=wifi_client,
-                                 set_power_save=True
+                                 wifi_clients=wifi_clients,
                                  )
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+        # logger().info("ping from STA1 TO STA2")
+        # client2_ip = wlan_obj.dut_add_dict['client2_ip']
+        # status = wlan_obj.ping_from_wifi_client(wifi_clients[0], client2_ip)
+        # assert status, f"RASPI-STA1 failed to ping to RASPI-STA2"
+
+        server_ip = wlan_obj.dut_add_dict['client1_ip']
+        client_ip = wlan_obj.dut_add_dict['client2_ip']
+
+        iperf_thread = Thread(target=wlan_obj.run_traffic_btwn_two_clients,
+                              args=(net_perf_client, secondary_net_perf_client, server_ip, client_ip, protocol))
+        iperf_thread.start()
+
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client",
+                                                                        server_port=8883, qos=1,
+                                                                        is_connection_encrypted=True)
+        logger().info("DUT connects to MQTT server")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        logger().info("MQTT Client connects to MQTT server")
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(3)
+
+        logger().info("DUT subscribes to the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
+        logger().info("MQTT Client subscribes to the topic")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
+        time.sleep(3)
+        logger().info("DUT publishes message over the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=Si91xMqttQos.QOS1, timeout=30)
+        time.sleep(5)
+
+        msgs = []
+        sw = Stopwatch()
+        while sw.elapsed_sec < 10:
+            time.sleep(0.1)
+            msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+            if len(msgs) == 1:
+                break
+        assert len(msgs) == 1, "No message is received by mqtt-client"
+        assert msgs[0].topic == topic, "No message received by mqtt-client on subscribed topic"
+        assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
+        assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
+                                                    "message received is wrong"
+        logger().info("MQTT messages validated successfully\n\n")
+
+        logger().info("Unsubscribing from the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        iperf_thread.join()
+
+        wlan_obj.connect_disconnect_raspi_clients()
+
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        }
+    }
+)
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
+          "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.skip()
+def test_wifi_melco_sdk_ipv4_ipv6_ip_change_notificaton_C557364(wifi_dut, wifi_access_point,
+                                                     #wifi_sniffer,
+                                                     sl_collections, request,
+                                                     #sniffer_filter,
+                                                     utf_constants,
+                                                     wifi_clients,
+                                                     wifi_client):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure AP on WPA2 security
+        3. Join the access point and enable the dhcpv4 and dhcpv6
+        4 .Create DUT as AP and connect the client to the AP
+        5. Ping from remote to DUT IPV6 address
+
+    """
+    test_name = request.node.name
+    try:
+        wifi_clients = wifi_clients[:1]
+        ping_count = utf_constants.get("ping_count")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel)
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        import ipaddress
+
+        with wifi_access_point.interfaces.wifi._create_shell() as shell:
+            end_ip = wifi_access_point.interfaces.wifi._get_dhcp_end(shell)
+            ip = ipaddress.ip_address(end_ip)
+            ip = ip + 1
+        wlan_obj = WLanConThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                 test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                                 ping_count=ping_count, wifi_client=wifi_client,
+                                 wifi_clients=wifi_clients,
+                                 )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=ip,
+                                                         dhcp_end=ip+200,
+                                                         dhcp_lease=86400)
+        time.sleep(100)
+        wlan_obj.connect_disconnect_raspi_clients()
+        # wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
 
