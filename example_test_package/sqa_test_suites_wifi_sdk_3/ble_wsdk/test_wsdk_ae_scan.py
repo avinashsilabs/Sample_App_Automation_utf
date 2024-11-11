@@ -80,10 +80,10 @@ def calculate_offset(df):
     Fixures used: * ble_sniffer: To caputre BLE OTA logs through Teledyne sniffer
 """
 @pytest.mark.parametrize(
-    "scanning_phys, test_case_id,",
+    "scanning_phys, test_case_id, pri_adv_phy, sec_adv_phy",
     [
-        (1, "C528522"),
-        (4, "C528523"),
+        (1, "C528522", 1, 2),
+        (4, "C528523", 3, 3),
 
     ],
 )
@@ -128,16 +128,16 @@ def calculate_offset(df):
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 def test_EXT_Scan_with_Initiating_PHY_1M_and_LE_Coded_C528522_C528523(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
-                                                       test_case_id,scanning_phys):
+                                                       test_case_id,scanning_phys, pri_adv_phy, sec_adv_phy):
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=2, ble_dut_address=ble_dut_address,
                                    ble_sniffer=ble_sniffer, scanning_phys=scanning_phys,scan_interval_pri=256,scan_window_pri=80,
-                                   pri_adv_phy=1, sec_adv_phy=2, data_len=1, scan_resp_len=1,test_case_id=test_case_id,
+                                   pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, data_len=1, scan_resp_len=1,test_case_id=test_case_id,
                                    adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,
                                    central=remote_wiseconnect3, ble_client_address=ble_client_address, powersave_p=True)
 
-
+    assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin([37, 38, 39]))]) > 0, "\n\n **** Test case Failed with no AUX_SCAN_REQ packets found..! ****\n\n"
 """
     Test case category : BLE Advertising Extension 
     Device roles       : DUT is performing Central role with different scan Interval and Scan window
@@ -201,7 +201,10 @@ def test_EXT_Scan_Scan_test_cases_C538066_to_C538069(ble_dut, ble_sniffer, remot
                                    pri_adv_phy=1, sec_adv_phy=2, data_len=1, scan_resp_len=1,
                                    adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,scan_interval_pri=scan_interval_pri,scan_window_pri=scan_window_pri,
                                    central=remote_wiseconnect3, ble_client_address=ble_client_address, powersave_p=True)
-
+    assert len(df.loc[(df['Type'] == 'AUX_SCAN_RSP') & (~df['Chan'].isin(
+        [37, 38, 39]))]) > 0, "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
+    assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin(
+        [37, 38, 39]))]) > 0, "\n\n **** Test case Failed with no AUX_SCAN_REQ packets found..! ****\n\n"
 """
     Test case category : BLE Advertising Extension 
     Device roles       : DUT is performing Central role with different 
@@ -271,7 +274,8 @@ def test_EXT_Passive_Scan_test_for_diff_duty_cycles_with_diff_scan_int_scan_wind
                                    pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, data_len=1, scan_resp_len=1,
                                    adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,scan_interval_pri=scan_interval_pri,scan_window_pri=scan_window_pri,
                                    central=remote_wiseconnect3, ble_client_address=ble_client_address, powersave_p=True)
-
+    assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin(
+        [37, 38, 39]))]) == 0, "\n\n **** Test case Failed with no AUX_SCAN_REQ packets found..! ****\n\n"
 """
     Test case category : BLE Advertising Extension 
     Device roles       : DUT is performing Central role with different 
@@ -341,7 +345,8 @@ def test_EXT_Active_Scan_test_for_diff_duty_cycles_with_diff_scan_int_scan_windo
                                    pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, data_len=1, scan_resp_len=1,
                                    adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,scan_interval_pri=scan_interval_pri,scan_window_pri=scan_window_pri,
                                    central=remote_wiseconnect3, ble_client_address=ble_client_address, powersave_p=True)
-
+    assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin(
+        [37, 38, 39]))]) > 0, "\n\n **** Test case Failed with no AUX_SCAN_REQ packets found..! ****\n\n"
 
 """
     Test case category : BLE Advertising Extension 
@@ -406,7 +411,8 @@ def test_EXT_Passive_Scan_test_for_diff_duty_cycles_with_Scan_PHY_as_1M_LE_CODED
                                     pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, test_case_id=test_case_id,scan_type_sec=0,scan_type_pri=0,scan_interval_pri=256,scan_window_pri=80,
                                     adv_handle=0, adv_handle_s2=1, ble_sniffer=ble_sniffer,scan_interval_sec=256,scan_window_sec=80,
                                    ble_client_address=ble_client_address, central=remote_wiseconnect3, min_interval_s2=48, max_interval_s2=48, powersave_p=True)
-
+    assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin(
+        [37, 38, 39]))]) == 0, "\n\n **** Test case Failed with AUX_SCAN_REQ packets found..! ****\n\n"
 """
     Test case category : BLE Advertising Extension 
     Device roles       : DUT is performing Central role with Scanning PHY as 1M+LE_CODED and Two sets Active Scan
@@ -470,7 +476,8 @@ def test_EXT_Active_Scan_test_for_diff_duty_cycles_with_Scan_PHY_as_1M_LE_CODED_
                                     pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, test_case_id=test_case_id,scan_type_sec=1,scan_type_pri=1,scan_interval_pri=256,scan_window_pri=80,
                                     adv_handle=0, adv_handle_s2=1, ble_sniffer=ble_sniffer,scan_interval_sec=256,scan_window_sec=80,
                                    ble_client_address=ble_client_address, central=remote_wiseconnect3, min_interval_s2=48, max_interval_s2=48, powersave_p=True)
-
+    assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin(
+        [37, 38, 39]))]) > 0, "\n\n **** Test case Failed with no AUX_SCAN_REQ packets found..! ****\n\n"
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -519,7 +526,8 @@ def test_EXT_Scan_test_for_both_Scan_PHY_1M_LE_CODED_C528520(ble_dut, ble_sniffe
                                     pri_adv_phy=1, sec_adv_phy=3,scan_type_sec=1,scan_type_pri=1,scan_interval_pri=256,scan_window_pri=80,
                                     adv_handle=0, adv_handle_s2=1, ble_sniffer=ble_sniffer,scan_interval_sec=256,scan_window_sec=80,
                                    ble_client_address=ble_client_address, central=remote_wiseconnect3, min_interval_s2=48, max_interval_s2=48, powersave_p=True)
-
+    assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin(
+        [37, 38, 39]))]) > 0, "\n\n **** Test case Failed with no AUX_SCAN_REQ packets found..! ****\n\n"
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -568,7 +576,8 @@ def test_EXT_Scan_test_for_Low_High_scan_int_scan_win_with_Scan_PHY_as_1M_LE_COD
                                     pri_adv_phy=1, sec_adv_phy=3,scan_type_sec=1,scan_type_pri=1,scan_interval_pri=65535,scan_window_pri=65535,
                                     adv_handle=0, adv_handle_s2=1, ble_sniffer=ble_sniffer,scan_interval_sec=65535,scan_window_sec=65535,
                                    ble_client_address=ble_client_address, central=remote_wiseconnect3, min_interval_s2=48, max_interval_s2=48, powersave_p=True)
-
+    assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin(
+        [37, 38, 39]))]) > 0, "\n\n **** Test case Failed with no AUX_SCAN_REQ packets found..! ****\n\n"
 
 @pytest.mark.parametrize(
     " scanning_filter_policy, test_case_id,",
@@ -626,3 +635,5 @@ def test_EXT_Scan_test_for_Filter_policy_0x01_and_0x03_C528524_C528525(ble_dut, 
                                     adv_handle=0, adv_handle_s2=1, ble_sniffer=ble_sniffer,scan_interval_sec=256,scan_window_sec=80,scanning_filter_policy=scanning_filter_policy,
                                    ble_client_address=ble_client_address, central=remote_wiseconnect3, min_interval_s2=48, max_interval_s2=48, powersave_p=True)
 
+    assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin(
+        [37, 38, 39]))]) > 0, "\n\n **** Test case Failed with no AUX_SCAN_REQ packets found..! ****\n\n"
