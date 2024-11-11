@@ -985,7 +985,7 @@ def test_azure_mqtt_wrong_cert_C19530(wifi_access_point, wifi_dut, wifi_sniffer,
 
 
 
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4174")
+
 @wifi_dut_marker(ca_cert=[
                 "silabs_dgcert_ca.pem",
                 "SL_NET_SIGNING_CERTIFICATE",
