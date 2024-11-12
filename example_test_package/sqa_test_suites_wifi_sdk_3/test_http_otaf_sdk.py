@@ -87,10 +87,10 @@ class WifiJoin(ThreadBase):
             status = ping(host_ip, 10)
             assert status == 1, "failed to ping to server"
             if self.test_case_no == 19779:
-                with pytest.raises(WlanError) as exc_info:
-                    logger().info("Performing firmware upgrade....")
-                    self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip, host_name=host_ip)
-                assert exc_info.value.error_code == 0x10021, "observed wrong error code expected is 0x10021"
+                logger().info("Performing firmware upgrade....")
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip, host_name=host_ip,
+                                                               expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
+                return
             logger().info(f"Start sniffer capture on channel {self.wifi_access_point.interfaces.wifi.channel}")
             self.wifi_sniffer.interfaces.capture.configure_interface(
                 channel=self.wifi_access_point.interfaces.wifi.channel)
@@ -99,12 +99,11 @@ class WifiJoin(ThreadBase):
             fw_before_upgrade = self.wifi_dut.interfaces.wifi.version()
             logger().info(f" ***** FW before upgrade: {fw_before_upgrade} *****")
             if self.test_case_no == 19796:
-                with pytest.raises(WlanError) as exc_info:
-                    logger().info("performing fw upgrade on dut....")
-                    self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6.bin",
-                                                                   host_ip)
-                assert exc_info.value.error_code == 0x10021, "observed wrong error code expected is 0x10021"
-                self.get_firmware_status()
+                logger().info("performing fw upgrade on dut....")
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6.bin",
+                                                               host_ip,
+                                                               expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
+                return
 
             logger().info("join WIFI network...")
             self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
@@ -116,12 +115,11 @@ class WifiJoin(ThreadBase):
             logger().info(f" start firmware upgrade: {start_time}")
 
             if self.test_case_no == 19800:
-                with pytest.raises(WlanError) as exc_info:
-                    logger().info("performing fw upgrade on dut with empty rps file....")
-                    self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6_empty.rps",
-                                                                   host_ip)
-                assert exc_info.value.error_code == 0x1FFF9, "observed wrong error code expected is 0xFFF9"
-                self.get_firmware_status()
+                logger().info("performing fw upgrade on dut with empty rps file....")
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6_empty.rps",
+                                                               host_ip,
+                                                               expected_status=SLStatus.SL_STATUS_SI91X_HTTP_OTAF_NO_PACKET)
+                return
 
             if self.test_case_no == 19797:
                 logger().info("performing fw upgrade on dut by using corrupted rps file add lines at end ....")
@@ -183,13 +181,11 @@ class WifiJoin(ThreadBase):
                 return
 
             if self.test_case_no == 19799:
-                with pytest.raises(WlanError) as exc_info:
-                    logger().info("performing fw upgrade on dut by using .bin file....")
-                    self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6.bin",
-                                                                   host_ip)
-                assert exc_info.value.error_code == 0x1FF74, "observed wrong error code expected is 0x1FF74"
-                time.sleep(3)
-                self.get_firmware_status()
+                logger().info("performing fw upgrade on dut by using .bin file....")
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(0, host_ip, 80, "/SiWG917-B.2.10.1.0.0.6.bin",
+                                                               host_ip,
+                                                               expected_status=SLStatus.SL_STATUS_SI91X_FEATURE_NOT_ENABLED)
+                return
 
             if self.test_case_no == 498660:
                 logger().info("performing firmware upgrade....")

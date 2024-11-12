@@ -162,8 +162,8 @@ class WifiJoin(ThreadBase):
                 if self.test_case == '19775':
                     self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
                                                                    host_name=self.host_ip,
-                                                                   http_url='/SiWG917-B.2.9.0.0.20.bin')
-                    # expected_status=SLStatus.SL_STATUS_SI91X_WRONG_PACKET_INFO)
+                                                                   http_url='/SiWG917-B.2.9.0.0.20.bin',
+                                                                   expected_status=SLStatus.SL_STATUS_SI91X_CORRUPTED_RPS_HEADER)
                     logger().info("stop Sniffer capture...")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
                     return
@@ -172,7 +172,7 @@ class WifiJoin(ThreadBase):
                     self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
                                                                    host_name=self.host_ip,
                                                                    http_url='/RS9116.2.5.0.4_remove.xls',
-                                                                   expected_status=SLStatus.SL_STATUS_SI91X_HTTP_OTAF_INVALID_PACKET)
+                                                                   expected_status=SLStatus.SL_STATUS_SI91X_CORRUPTED_RPS_HEADER)
                     logger().info("stop Sniffer capture...")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
                     return
@@ -181,7 +181,7 @@ class WifiJoin(ThreadBase):
                     self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
                                                                    host_name=self.host_ip,
                                                                    http_url='/RS9116.2.5.0.4_empty.rps',
-                                                                   expected_status=SLStatus.SL_STATUS_SI91X_WRONG_PACKET_INFO)
+                                                                   expected_status=SLStatus.SL_STATUS_SI91X_CORRUPTED_RPS_HEADER)
                     logger().info("stop Sniffer capture...")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
                     return
@@ -233,7 +233,7 @@ class WifiJoin(ThreadBase):
                     logger().info(f"*** dut fw version after upgrade = {self.fw_version_after_upgrade} ***")
                     assert self.fw_version_before_upgrade != self.fw_version_after_upgrade, \
                         "Firmware after matched with the previous firmware"
-                    logger().info(f'*** Time required is {T.duration} ***')
+            logger().info(f'*** Time required is {T.duration} ***')
 
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
