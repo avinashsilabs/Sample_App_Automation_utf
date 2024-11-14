@@ -216,7 +216,10 @@ class TWT_AUTOCONFIG(ThreadBase):
                     contents.append(float(match.group(1)))
         return contents
 
-    def enable_twt(self):
+    def enable_twt(
+        self,
+        expected_status: SLStatus = SLStatus.SL_STATUS_OK,
+    ):
         logger().info(f"Enabling the target wake time")
         self.wifi_dut.interfaces.wifi.twt_auto_config(
             twt_enable=self.twt_params.twt_enable,
@@ -229,6 +232,7 @@ class TWT_AUTOCONFIG(ThreadBase):
             default_wake_interval_ms=self.twt_params.default_wake_interval_ms,
             default_minimum_wake_duration_ms=self.twt_params.default_minimum_wake_duration_ms,
             beacon_wake_up_count_after_sp=self.twt_params.beacon_wake_up_count_after_sp,
+            expected_status=expected_status,
         )
 
     def disable_twt(self):
@@ -281,6 +285,35 @@ class TWT_AUTOCONFIG(ThreadBase):
             associated=self.wifi_dut.interfaces.wifi.associated,
             power_save=False,
         )
+
+        if self.testcase_id == "538039":
+            self.twt_params.tx_latency = 50000
+            self.enable_twt()
+            self.wifi_dut.interfaces.wifi.set_performance_profile(
+                mode="power_save_low_latency"
+            )
+            logger().info(
+                f"\nPing to DUT IP Address: {self.device_info['device_ip']} with custom interval 60 seconds....\n"
+            )
+            start_time = time.time()
+            while (time.time() - start_time) < 80:
+                self.sl_collections.ping_with_custom_interval(
+                    device_ip=self.device_info["device_ip"], interval=60
+                )
+            logger().info(f"\n....Disabling TWT Session....\n")
+            self.disable_twt()
+            return
+        if self.testcase_id == "538040":
+            self.twt_params.rx_latency = 21600001
+            logger().info(f"\nSetting the RX_Latency to {self.twt_params.rx_latency}\n")
+            self.enable_twt(expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
+            return
+        if self.testcase_id == "538041":
+            self.twt_params.tx_latency = 21600001
+            logger().info(f"\nSetting the TX_Latency to {self.twt_params.rx_latency}\n")
+            self.enable_twt(expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
+            return
+
         self.socket_data_transfer_obj.start_remote_socket_server()
         self.socket_data_transfer_obj.open_and_set_socket_option(
             socket_domain="AF_INET",
@@ -619,6 +652,145 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_800ms_no_tw
             wifi_client=wifi_client,
             sniffer_capture="test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_800ms_no_twt_tx_latency_0_c510688",
             testcase_id="510688",
+        )
+        twt_autoconfig_obj.start()
+        twt_autoconfig_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_verify_weather_dut_is_able_to_configure_tx_latency_50sec_c538039(
+    wifi_dut,
+    remote_socket,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+):
+    """
+    Test Case ID: C538039
+
+    Objective:
+    Verify that the Device Under Test (DUT) is able to configure the TX latency to 50 seconds.
+
+    Steps:
+    1. Initialize the WiFi DUT, remote socket, WiFi access point, WiFi sniffer, and other required components.
+    2. Create an instance of the TWT_AUTOCONFIG class with the necessary parameters.
+    3. Start the TWT_AUTOCONFIG instance and wait for it to complete.
+    4. Handle any exceptions that occur during the test execution.
+
+    Expected Result:
+    The DUT should successfully configure the TX latency to 50 seconds without any errors.
+    """
+    try:
+        twt_autoconfig_obj = TWT_AUTOCONFIG(
+            wifi_dut=wifi_dut,
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            sl_collections=sl_collections,
+            remote_socket=remote_socket,
+            sniffer_filter=sniffer_filter,
+            wifi_client=wifi_client,
+            sniffer_capture="test_wifi_sdk_verify_weather_dut_is_able_to_configure_tx_latency_50sec_c538039",
+            testcase_id="538039",
+        )
+        twt_autoconfig_obj.start()
+        twt_autoconfig_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_verify_weather_dut_is_throwing_error_rx_latency_more_than_2160_secs_c538040(
+    wifi_dut,
+    remote_socket,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+):
+    """
+    Test Case ID: C538040
+
+    Objective:
+    Verify that the Device Under Test (DUT) throws an error when the RX latency is set to more than 2160 seconds.
+
+    Steps:
+    1. Initialize the WiFi DUT, remote socket, WiFi access point, WiFi sniffer, and other required components.
+    2. Create an instance of the TWT_AUTOCONFIG class with the necessary parameters.
+    3. Start the TWT_AUTOCONFIG instance and wait for it to complete.
+    4. Handle any exceptions that occur during the test execution.
+
+    Expected Result:
+    The DUT should throw an error indicating that the RX latency value is invalid when set to more than 2160 seconds.
+    """
+
+    try:
+        twt_autoconfig_obj = TWT_AUTOCONFIG(
+            wifi_dut=wifi_dut,
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            sl_collections=sl_collections,
+            remote_socket=remote_socket,
+            sniffer_filter=sniffer_filter,
+            wifi_client=wifi_client,
+            sniffer_capture="test_wifi_sdk_verify_weather_dut_is_throwing_error_rx_latency_more_than_2160_secs_c538040",
+            testcase_id="538040",
+        )
+        twt_autoconfig_obj.start()
+        twt_autoconfig_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_verify_weather_dut_is_throwing_error_tx_latency_more_than_2160_secs_c538041(
+    wifi_dut,
+    remote_socket,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+):
+    """
+    Test Case ID: C538040
+
+    Objective:
+    Verify that the Device Under Test (DUT) throws an error when the RX latency is set to more than 2160 seconds.
+
+    Steps:
+    1. Initialize the WiFi DUT, remote socket, WiFi access point, WiFi sniffer, and other required components.
+    2. Create an instance of the TWT_AUTOCONFIG class with the necessary parameters.
+    3. Start the TWT_AUTOCONFIG instance and wait for it to complete.
+    4. Handle any exceptions that occur during the test execution.
+
+    Expected Result:
+    The DUT should throw an error indicating that the RX latency value is invalid when set to more than 2160 seconds.
+    """
+    try:
+        twt_autoconfig_obj = TWT_AUTOCONFIG(
+            wifi_dut=wifi_dut,
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            sl_collections=sl_collections,
+            remote_socket=remote_socket,
+            sniffer_filter=sniffer_filter,
+            wifi_client=wifi_client,
+            sniffer_capture="test_wifi_sdk_verify_weather_dut_is_throwing_error_tx_latency_more_than_2160_secs_c538041",
+            testcase_id="538041",
         )
         twt_autoconfig_obj.start()
         twt_autoconfig_obj.wait_for_exit()

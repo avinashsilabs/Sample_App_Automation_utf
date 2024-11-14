@@ -199,8 +199,8 @@ class WLanThread(ThreadBase):
                 logger().info(sni_filter)
                 assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=sni_filter)[
                     'packet_count'], "Client Hello packet with SNI not found"
-			elif self.test_name == '19228':
-				self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
+            elif self.test_name == '19228':
+                self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
                 self.wifi_dut.interfaces.wifi.http_client_init()
             else:
                 self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
@@ -1447,7 +1447,7 @@ def test_wifi_sdk_http_abort_functionality_c19228(http_server, wifi_dut, http_cl
         httpget = HttpGet(wifi_dut, http_server)
         httpdeinit = HttpDeInit(wifi_dut)
         httpget.start()
-		httpdeinit.start()
+        httpdeinit.start()
         httpdeinit.wait_for_exit()
         logger().info("Called HTTP Abort")
         httpget.wait_for_exit()
