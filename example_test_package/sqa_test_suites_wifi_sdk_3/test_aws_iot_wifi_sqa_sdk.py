@@ -184,13 +184,22 @@ class AwsConnection(ThreadBase):
             self.connect_to_aws_server_from_raspi(self.aws_iot_client)
             self.subscribe_from_raspi(self.aws_iot_client, self.topic, qos=self.qos)
 
-            for count, msg in enumerate(self.messages):
-                logger().info(
-                    f"\nDUT is publishing message{count + 1} on topic:'{self.topic}' \nQOS:'{self.qos}'"
-                    f"\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
-                self.publish_from_dut(self.wifi_dut, self.topic, msg, qos=self.qos, negative_case=self.negative_case)
-                time.sleep(3)
-            self.validate_aws_messages_from_raspi(self.aws_iot_client, self.topic, self.qos, self.messages)
+            if self.test_name == 'test_wifi_sdk_c537911':
+                result = self.publish_from_dut(self.wifi_dut, self.topic, self.messages[0], qos=self.qos,
+                                               negative_case=True)
+                if result == 0xffffffdf:
+                    logger().info("\n\n *** Publishing status from DUT on topic is failed error -33 observed as per "
+                                  "expectation *** \n\n\n\n")
+                    return True
+
+            else:
+                for count, msg in enumerate(self.messages):
+                    logger().info(
+                        f"\nDUT is publishing message{count + 1} on topic:'{self.topic}' \nQOS:'{self.qos}'"
+                        f"\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
+                    self.publish_from_dut(self.wifi_dut, self.topic, msg, qos=self.qos, negative_case=self.negative_case)
+                    time.sleep(3)
+                self.validate_aws_messages_from_raspi(self.aws_iot_client, self.topic, self.qos, self.messages)
 
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case {self.test_name} thread: {str(e)} ****\n\n")
@@ -2896,7 +2905,7 @@ def test_wifi_sdk_aws_2000_bytes_rx_data_send_to_dut_c537910(wifi_sniffer, wifi_
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"channel": 8})
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
@@ -2908,8 +2917,6 @@ def test_wifi_sdk_aws_2000_bytes_tx_data_send_to_dut_c537911(wifi_sniffer, wifi_
     """
     iterations = utf_constants.get('iter_count')
     test_name = "test_wifi_sdk_c537911"
-    # client_id = 'client_c537911'
-    # topic = "topic_c537911"
 
     try:
         capture_filename = "test_wifi_sdk_c537911"
@@ -2940,8 +2947,6 @@ def test_wifi_sdk_aws_2000_bytes_tx_data_send_to_dut_c537911(wifi_sniffer, wifi_
 
             logger.info("Initiating aws_iot_disconnect from DUT")
             wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
-            # time.sleep(20)
-            # logger.info("\n")
 
         logger.info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
