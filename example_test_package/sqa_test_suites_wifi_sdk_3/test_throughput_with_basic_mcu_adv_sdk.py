@@ -209,7 +209,7 @@ class WifiJoinThread(ThreadBase):
         if self.test_case_no == 532958 or self.test_case_no == 532959 or self.test_case_no == 532956 or \
                 self.test_case_no == 532957:
             logger().info(f"BLE Data Transfer is going to start")
-            ble_data = ble_notify(self.wifi_dut)
+            ble_data = ble_notify(self.wifi_dut, self.ble_client_address)
             ble_data.start()
         time.sleep(2)
         self.wifi_dut.interfaces.wifi.switch_host_frequency()
@@ -364,6 +364,26 @@ class WifiJoinThread(ThreadBase):
         if self.ble_conn:
             self.bt_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
             time.sleep(2)
+
+        if self.ble_data_transfer:
+            data = "testwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdatatestwentybytesofdata"
+            logger().info(f"unsubcribing the ble notifications")
+            self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+            time.sleep(1)
+
+            logger().info("====================== Validate Data ===========================")
+            notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+            logger().info(f' *********************** Notification is {notifications} ***********************')
+            assert len(notifications) > 0, "received data is empty"
+            assert notifications[0] == data, "failed to fetch data"
+
+            logger().info("******************** ble_remove_service ***********************")
+            self.wifi_dut.interfaces.wifi.ble_remove_service()
+
+            logger().info("================== Disconnecting from DUT ========================")
+            self.ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+            self.ble_client.interfaces.bluetooth.close()
 
         self.wifi_dut.interfaces.wifi.leave()
         time.sleep(2)
