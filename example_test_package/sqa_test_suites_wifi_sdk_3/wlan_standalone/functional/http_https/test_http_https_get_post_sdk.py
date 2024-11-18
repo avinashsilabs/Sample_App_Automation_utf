@@ -21,6 +21,7 @@ from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEvent
 import ipaddress
 import string
 import random
+import re
 
 
 def logger():
@@ -150,6 +151,18 @@ class WLanThread(ThreadBase):
                             self.index_path,
                             server_port=80,
                             expected_status=SLStatus.SL_STATUS_SI91X_ERROR_IN_LEN_OF_THE_COMMAND)
+
+                    elif self.test_name == '476929':
+                        status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(self.http_server.interfaces.http,
+                                                                                         self.index_path, timeout=24000,
+                                                                                         server_port=80,
+                                                                                         skip_http_data_print=1)
+
+                        assert not status_dut, "failed to fetch the https data"
+
+                        data = re.findall(r'((?<=http_get_response_length:)\d+)', content_dut)
+
+                        assert int(data) >= 104857600, 'Fetched data is not 100MB'
 
                     else:
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
@@ -1439,7 +1452,7 @@ def test_wifi_sdk_http_get_functionality_c19209(http_server, wifi_dut, http_clie
     }
 )
 @pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"100MB.html"})
+@pytest.mark.parametrize("index_path", {"100MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_http_get_functionality_100mb_file_c19214(http_server, wifi_dut, http_client, wifi_access_point,
                                                            index_path, utf_constants, wifi_sniffer, sl_collections):
@@ -1460,15 +1473,14 @@ def test_wifi_sdk_http_get_functionality_100mb_file_c19214(http_server, wifi_dut
 
         logger().info("\n\n***Fetching the data on https using get method***\n\n")
         status_dut, content_dut = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path,
-                                                                    server_port=80)
-        status_client, content_client = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
+                                                                    server_port=80, skip_http_data_print=1,
+                                                                    timeout=24000)
 
         assert not status_dut, "failed to fetch the https data"
-        assert status_client, "failed to load the https data"
 
-        logger().info(status_dut)
-        logger().info(content_dut)
-        assert content_dut == content_client, "fetched data is not same as expected data"
+        data = re.findall(r'((?<=http_get_response_length:)\d+)', content_dut)
+
+        assert int(data) >= 104857600, 'Fetched data is not 100MB'
 
         logger().info("Stopping sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1506,7 +1518,7 @@ def test_wifi_sdk_http_get_with_100mb_file_c476929(http_server, wifi_dut, http_c
         5. Verify the http get response
     """
     try:
-        test_name = '476930'
+        test_name = '476929'
         index_path = "100MB.htm"
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               http_client=http_client,

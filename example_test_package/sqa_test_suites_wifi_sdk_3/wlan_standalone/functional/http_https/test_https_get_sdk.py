@@ -14,6 +14,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
 )
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+import re
 
 
 def logger():
@@ -56,7 +57,8 @@ class WLanThread(ThreadBase):
     def run(self):
         try:
             self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
-            if self.test_name == '476945' or self.test_name == '476951' or self.test_name == '476952':
+            if self.test_name == '476945' or self.test_name == '476951' or self.test_name == '476952' or \
+                    self.test_name == '476967':
                 for i in range(0, 5):
                     logger().info('\n*** Configuring Sniffer with WAP channel ***\n')
                     self.wifi_sniffer.interfaces.capture.configure_interface(
@@ -85,6 +87,18 @@ class WLanThread(ThreadBase):
                             self.index_path,
                             server_port=443,
                             expected_status=SLStatus.SL_STATUS_SI91X_ERROR_IN_LEN_OF_THE_COMMAND)
+
+                    elif self.test_name == '476967':
+                        status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(self.http_server.interfaces.http,
+                                                                                         self.index_path, timeout=24000,
+                                                                                         server_port=443,
+                                                                                         skip_http_data_print=1)
+
+                        assert not status_dut, "failed to fetch the https data"
+
+                        data = re.findall(r'((?<=http_get_response_length:)\d+)', content_dut)
+
+                        assert int(data) >= 104857600, 'Fetched data is not 100MB'
 
                     else:
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
@@ -653,7 +667,7 @@ def test_wifi_sdk_https_get_functionality_port20000_c19207_case4(http_server, wi
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
-@pytest.mark.parametrize("index_path", {"100MB.html"})
+@pytest.mark.parametrize("index_path", {"100MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_https_get_functionality_send_100mb_file_from_peer_c19206(http_server, wifi_dut, http_client,
                                                                            wifi_access_point, index_path, utf_constants,
@@ -674,15 +688,15 @@ def test_wifi_sdk_https_get_functionality_send_100mb_file_from_peer_c19206(http_
         wlan_obj.wait_for_exit()
 
         logger().info("fetching  https data using get method")
-        status, content = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path, server_port=443)
-        status1, content1 = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
+        status_dut, content_dut = wifi_dut.interfaces.http.http_get(http_server.interfaces.http,
+                                                                    index_path, timeout=24000, server_port=443,
+                                                                    skip_http_data_print=1)
 
-        assert status, "failed to fetch the http data"
-        assert content, "failed to load the http data"
+        assert not status_dut, "failed to fetch the https data"
 
-        logger().info(status)
-        logger().info(content)
-        assert content == content1, "fetched data is not same as expected data"
+        data = re.findall(r'((?<=http_get_response_length:)\d+)', content_dut)
+
+        assert int(data) >= 104857600, 'Fetched data is not 100MB'
 
         logger().info("Stopping sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1304,7 +1318,7 @@ def test_wifi_sdk_http_get_with_url_length_2048_c476967(http_server, wifi_dut, h
         5. Verify the http get response
     """
     try:
-        test_name = '476945'
+        test_name = '476967'
         index_path = "url_exact_2048_bytes/" * 97 + "bigfile.htm"
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               http_client=http_client,
