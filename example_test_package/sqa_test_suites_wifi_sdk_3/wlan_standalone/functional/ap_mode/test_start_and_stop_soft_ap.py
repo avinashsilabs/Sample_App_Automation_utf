@@ -134,7 +134,7 @@ class ApModeConnections(ThreadBase):
 
 class ConcurrentFun(ThreadBase):
     def __init__(self, wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point,
-                 sl_collections, utf_constants):
+                 sl_collections, utf_constants, ping=True):
 
 
         self.wifi_dut = wifi_dut
@@ -143,7 +143,7 @@ class ConcurrentFun(ThreadBase):
         self.wifi_access_point = wifi_access_point
         self.sl_collections = sl_collections
         self.utf_constants = utf_constants
-
+        self.ping = ping
 
     def run(self):
         self.ping_count = self.utf_constants.get("ping_count")
@@ -654,7 +654,7 @@ def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_different_dtim_intervals_concur
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191362.pcap")
         time.sleep(3)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                       utf_constants)
+                                       utf_constants, ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         logger().info(f"*********start the ap***********")
@@ -748,7 +748,7 @@ def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_different_beacon_intervals_conc
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191359.pcap")
         time.sleep(3)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants)
+                                 utf_constants, ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         logger().info(f"*********start the ap***********")
@@ -853,7 +853,7 @@ def test_wifi_sdk_dut_soft_start_and_stop_ap_in_multiple_iterations_C191363(wifi
                                               dtim_beacon_count=5,
                                               beacon_interval=100)
             conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                     utf_constants)
+                                     utf_constants, ping=False)
             conc_obj.start()
             conc_obj.wait_for_exit()
             logger().info(f"********Disconnection**********")
@@ -922,7 +922,7 @@ def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_invalid_beacon_interval_concurr
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191360.pcap")
         time.sleep(3)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants)
+                                 utf_constants,ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         logger().info(f"*********start the ap***********")
@@ -1317,7 +1317,7 @@ def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C191356(wifi_sn
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191356.pcap")
         time.sleep(3)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants)
+                                 utf_constants,ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         time.sleep(3)
@@ -1396,7 +1396,7 @@ def test_wifi_sdk_powersave_after_start_ap_concurrent_C191372(wifi_sniffer, wifi
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191372.pcap")
         time.sleep(3)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants)
+                                 utf_constants,ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         time.sleep(3)
@@ -1561,7 +1561,7 @@ def test_wifi_sdk_giving_soft_stop_ap_for_second_time_concurrent_C191365(wifi_sn
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191365.pcap")
         time.sleep(3)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants)
+                                 utf_constants,ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         time.sleep(3)
@@ -1638,7 +1638,7 @@ def test_wifi_sdk_restart_with_different_securities_concurrent_C191361(wifi_snif
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191361.pcap")
         time.sleep(3)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants)
+                                 utf_constants,ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         ap_dut_obj = ApModeConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
@@ -1774,7 +1774,7 @@ def test_wifi_sdk_start_ap_after_enabling_power_save_concurrent_C191373(wifi_sni
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191373.pcap")
         time.sleep(3)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants)
+                                 utf_constants,ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         time.sleep(3)
@@ -1849,9 +1849,9 @@ def test_wifi_sdk_restart_beacon_params_concurrent_C191358(wifi_sniffer, wifi_du
         time.sleep(3)
 
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants)
+                                 utf_constants,ping=False)
         conc_obj.start()
-        conc_obj.wait_foor_exit()
+        conc_obj.wait_for_exit()
         ap_dut_obj = ApModeConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                        utf_constants,
                                        ping=True, testcase_no=191361)
@@ -2013,12 +2013,12 @@ def test_wifi_sdk_enh_max_psp_after_stop_C191370(wifi_sniffer, wifi_dut, wifi_cl
         logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191370.pcap")
         time.sleep(3)
-        wifi_dut.interfaces.wifi.set_join_feature_bitmap(Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap =Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
         wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=1000)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants)
+                                 utf_constants, ping=False)
         conc_obj.start()
-        conc_obj.wait_foor_exit()
+        conc_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", psk="Automation@123",
                                           channel=8,
                                           dtim_beacon_count=5,
@@ -2094,10 +2094,10 @@ def test_wifi_sdk_enh_max_psp_after_stop_ap_dtim_based_concurrent_concurrent_C19
         logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191371.pcap")
         time.sleep(3)
-        wifi_dut.interfaces.wifi.set_join_feature_bitmap(Si91xJoinFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap =Si91xJoinFeatureBitMap.Default)
         wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=0)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants)
+                                 utf_constants, ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", psk="Automation@123",
