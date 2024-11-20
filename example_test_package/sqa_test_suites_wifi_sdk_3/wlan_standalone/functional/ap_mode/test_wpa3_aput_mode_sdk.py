@@ -1,3 +1,4 @@
+import re
 import time
 import pytest
 from utf.utils.time_measurer import TimeMeasurer
@@ -1619,3 +1620,104 @@ def test_wifi_sdk_min_and_max_keepalive_c537917(wifi_sniffer, wifi_dut, remote_w
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Aggregation,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+    },
+)
+def test_wifi_sdk_rejoin_functionality_c463734(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
+                                               sl_collections):
+    """Verify rejoin functionality with APUT WPA3 H2E mode"""
+    ssid = "Concurent_ap"
+    security = "open"
+    password = "Automation@Silabs"
+    channel = "1"
+    dtim_count = "1"
+    beacon_interval = 100
+    ht_caps = 1
+    keepalive_type = 0
+    static_ip = "192.168.100.77"
+    static_subnet = "255.255.255.0"
+    static_gateway = "192.168.100.76"
+    client_idle_timeout = 100
+    try:
+        aput_mac = wifi_dut.interfaces.wifi.get_mac_address()
+        sta_mac = remote_wiseconnect3.interfaces.sapi.get_mac_address()
+        logger().info(f"**** APUT MAC: {aput_mac} and STA MAC: {sta_mac}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="463734")
+        remote_wiseconnect3.interfaces.sapi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                            beacon_missed_count=40,
+                                                                            first_time_retry_enable=0)
+
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip=static_ip,
+                                                  static_subnet=static_subnet,
+                                                  static_gateway=static_gateway)
+        wifi_dut.interfaces.wifi.start_ap(ssid=ssid, security=security, channel=channel, psk=password,
+                                          dtim_beacon_count=dtim_count, beacon_interval=beacon_interval,
+                                          encryption=None, ht_caps=ht_caps, keepalive_type=keepalive_type,
+                                          client_idle_timeout=client_idle_timeout)
+        remote_wiseconnect3.interfaces.sapi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
+        )
+        remote_wiseconnect3.interfaces.sapi.scan(channel=None, ssid=None)
+        remote_wiseconnect3.interfaces.sapi.join(ssid=ssid, security=security, passphrase=password, channel=channel,
+                                                 timeout=60)
+        remote_wiseconnect3.interfaces.sapi.start_ip(static_gateway=static_gateway)
+        remote_wiseconnect3.interfaces.sapi.ping(server_ip=static_ip)
+
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+
+        time.sleep(10)
+
+        wifi_dut.interfaces.wifi.start_ap(ssid=ssid, security=security, channel=channel, psk=password,
+                                          dtim_beacon_count=dtim_count, beacon_interval=beacon_interval,
+                                          encryption=None, ht_caps=ht_caps, keepalive_type=keepalive_type,
+                                          client_idle_timeout=client_idle_timeout)
+        time.sleep(20)
+
+        remote_wiseconnect3.interfaces.sapi.ping(server_ip=static_ip)
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
