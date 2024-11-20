@@ -33,7 +33,7 @@ from AWSIoTPythonSDK.core.protocol.internal.clients import ClientStatus
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
 import uuid
 from utf_wiseconnect_3.tests.sl_status import SLStatus
-from test_http_https_get_post_sdk import ThreadSocketDataTransfer
+from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.http_https.test_http_https_get_post_sdk import ThreadSocketDataTransfer
 
 """The testcases added in this file run below test steps for DUT-RS9116
         1. Configuration of DUT in 2G/5G : BGN
@@ -2359,7 +2359,7 @@ def test_wifi_sdk_aws_internet_connection_disconntion_c537615(wifi_sniffer, wifi
                     break
                 if not flag:
                     logger.info(f"\n\n *** Unplugging internet cable from AP *** \n\n")
-                    wifi_access_point.interfaces.wifi.enable_internet_blocker(dut_mac_address)
+                    wifi_access_point.interfaces.wifi.enable_block_all_devices_internet_access()
                     flag = True
                     logger.info(f"\n\n Sleep for 50 second \n\n")
                     time.sleep(50)
@@ -2371,7 +2371,8 @@ def test_wifi_sdk_aws_internet_connection_disconntion_c537615(wifi_sniffer, wifi
 
             logger.info("\n\n *** plugging internet cable from AP.... Now validating DUT is able to publish "
                         "messages again or not *** \n\n")
-            wifi_access_point.interfaces.wifi.disable_internet_blocker(dut_mac_address)
+
+            wifi_access_point.interfaces.wifi.disable_block_all_devices_internet_access()
             logger.info(f"\n\n Sleep for 10 second \n\n")
             time.sleep(10)
 
@@ -2388,10 +2389,13 @@ def test_wifi_sdk_aws_internet_connection_disconntion_c537615(wifi_sniffer, wifi
             sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
                                                    sniffer_filter)
             logger.info(f"Iteration '{iter_count + 1}' completed")
+            # disconnect from the AP
+            wifi_dut.interfaces.wifi.leave()
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wifi_access_point.interfaces.wifi.disable_internet_blocker(dut_mac_address)
+        wifi_access_point.interfaces.wifi.disable_block_all_devices_internet_access()
 
 
 @pytest.mark.config(
@@ -2485,7 +2489,7 @@ def test_wifi_sdk_aws_internet_connection_disconnection_c537713(wifi_sniffer, wi
                     break
                 if not flag:
                     logger.info(f"\n\n *** Unplugging internet cable from AP *** \n\n")
-                    wifi_access_point.interfaces.wifi.enable_internet_blocker(dut_mac_address)
+                    wifi_access_point.interfaces.wifi.enable_block_all_devices_internet_access()
                     flag = True
                     logger.info(f"\n\n Sleep for 50 second \n\n")
                     time.sleep(50)
@@ -2498,8 +2502,8 @@ def test_wifi_sdk_aws_internet_connection_disconnection_c537713(wifi_sniffer, wi
 
             logger.info("\n\n *** plugging internet cable from AP.... Now validating DUT is able to publish "
                         "messages again or not *** \n\n")
-            wifi_access_point.interfaces.wifi.disable_internet_blocker(dut_mac_address)
-            time.sleep(10)
+            wifi_access_point.interfaces.wifi.disable_block_all_devices_internet_access()
+            time.sleep(30)
 
             for count, msg in enumerate(messages):
                 logger.info(f"\nDUT is publishing message{count + 1} on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS0}'"
@@ -2517,7 +2521,7 @@ def test_wifi_sdk_aws_internet_connection_disconnection_c537713(wifi_sniffer, wi
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wifi_access_point.interfaces.wifi.disable_internet_blocker(dut_mac_address)
+        wifi_access_point.interfaces.wifi.disable_block_all_devices_internet_access()
 
 
 @pytest.mark.config(
