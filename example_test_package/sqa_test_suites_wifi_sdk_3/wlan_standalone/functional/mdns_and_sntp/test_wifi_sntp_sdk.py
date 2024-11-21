@@ -6,6 +6,8 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xTCPIPFeatu
     Si91xCustomFeatureBitMap, Si91xOperatingMode, Si91xJoinFeatureBitMap, Si91xPowerSaveProcedureTypes
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+from utf.utils.stopwatch import Stopwatch
+from utf.utils.thread_base import ThreadBase
 import time
 
 power_save = True
@@ -27,6 +29,55 @@ setup requirement:
 
     Author: Shaik Abdul Azeez
 """
+
+
+class sntp_functionality(ThreadBase):
+    """Thread to verify SNTP functionality."""
+    def __init__(self, wifi_dut):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+
+    def start_smtp(self):
+        logger().info("**************** Creating SNTP Client Session in DUT ***************")
+        self.wifi_dut.interfaces.wifi.sntp_client_start()
+        time.sleep(10)  # Allow time for SNTP client to sync
+
+        logger().info("**************** Getting SNTP Time and DATE from DUT ***************")
+        sntp_time, sntp_date = self.wifi_dut.interfaces.wifi.sntp_get_time_data()
+        logger().info(f"**************** SNTP TIME **************** '{sntp_time}'")
+        logger().info(f"**************** SNTP DATE **************** '{sntp_date}'\n")
+
+    def run(self):
+        try:
+            logger().info("**************** Getting SNTP Server Information from DUT ***************")
+            ip_version, sntp_method, sntp_server_address = self.wifi_dut.interfaces.wifi.sntp_get_server_info()
+            logger().info(f"**************** SNTP SERVER IP VERSION: {ip_version}")
+            logger().info(f"**************** SNTP SERVER ADDRESS: {sntp_server_address}")
+            logger().info(f"**************** SNTP METHOD: {sntp_method}\n")
+
+        except Exception as ex:
+            logger().exception("Error in SNTP functionality thread.")
+            raise ex
+
+
+# Function to handle ping
+class ping_functionality(ThreadBase):
+    def __init__(self, wifi_dut, wifi_client):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_client = wifi_client
+
+    def run(self):
+        try:
+            ip_version = "ipv4"
+            host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+            logger().info(f"Remote device ip :{host_ip}")
+            logger().info(f"Initiate ping from DUT to third party wifi-client")
+            self.wifi_dut.interfaces.wifi.ping(server_ip=host_ip, ip_version=ip_version, ping_size=64, num_ping_attempts=20)
+
+        except Exception as ex:
+            logger().exception("Error in ping functionality thread.")
+            raise ex
 
 
 def delta_between_sntp_packet():
@@ -54,7 +105,7 @@ def delta_between_sntp_packet():
     return time_diff_list
 
 
-pytestmark = [pytest.mark.config(
+@pytest.mark.config(
     "wifi_dut",
     wifi=
     {
@@ -72,9 +123,6 @@ pytestmark = [pytest.mark.config(
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
     }
 )
-]
-
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_sntp_unicast_c19015(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
@@ -99,13 +147,13 @@ def test_wifi_sdk_sntp_unicast_c19015(wifi_sniffer, wifi_dut, wifi_access_point,
     time.sleep(10)
     logger().info("**************** Getting SNTP Time and DATE from DUT ***************")
     sntp_time, sntp_date = wifi_dut.interfaces.wifi.sntp_get_time_data()
-    logger().info(f">>>>>>>>>>>>>>> SNTP TIME ----> '{sntp_time}'")
-    logger().info(f">>>>>>>>>>>>>>> SNTP DATE ----> '{sntp_date}'\n")
+    logger().info(f"**************** SNTP TIME ----> '{sntp_time}'")
+    logger().info(f"**************** SNTP DATE ----> '{sntp_date}'\n")
     logger().info("**************** Getting SNTP Server Information from DUT ***************")
     ip_version, sntp_method, sntp_server_address = wifi_dut.interfaces.wifi.sntp_get_server_info()
-    logger().info(f">>>>>>>>>>>>>>> SNTP SERVER {ip_version}")
-    logger().info(f">>>>>>>>>>>>>>> SNTP SERVER ADDRESS: {sntp_server_address}")
-    logger().info(f">>>>>>>>>>>>>>> SNTP {sntp_method}\n")
+    logger().info(f"**************** SNTP SERVER {ip_version}")
+    logger().info(f"**************** SNTP SERVER ADDRESS: {sntp_server_address}")
+    logger().info(f"**************** SNTP {sntp_method}\n")
     logger().info("**************** Deleting SNTP Client Session in DUT ***************")
     wifi_dut.interfaces.wifi.sntp_client_stop()
 
@@ -125,6 +173,24 @@ def test_wifi_sdk_sntp_unicast_c19015(wifi_sniffer, wifi_dut, wifi_access_point,
             logger().info(f"************** SNTP response body received in the sniffer **************\n{ntp_pkt}")
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SNTPClient | Si91xTCPIPFeatureBitMap.DNSClient
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1, "security": 'OPEN'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
@@ -153,13 +219,13 @@ def test_wifi_sdk_sntp_keepalive_c19016(wifi_sniffer, wifi_dut, wifi_access_poin
     time.sleep(10)
     logger().info("**************** Getting SNTP Server Information from DUT ***************")
     ip_version, sntp_method, sntp_server_address = wifi_dut.interfaces.wifi.sntp_get_server_info()
-    logger().info(f">>>>>>>>>>>>>>> SNTP SERVER {ip_version}")
-    logger().info(f">>>>>>>>>>>>>>> SNTP SERVER ADDRESS: {sntp_server_address}")
-    logger().info(f">>>>>>>>>>>>>>> SNTP {sntp_method}\n")
+    logger().info(f"**************** SNTP SERVER {ip_version}")
+    logger().info(f"**************** SNTP SERVER ADDRESS: {sntp_server_address}")
+    logger().info(f"**************** SNTP {sntp_method}\n")
     logger().info("**************** Getting SNTP Time and DATE from DUT ***************")
     sntp_time, sntp_date = wifi_dut.interfaces.wifi.sntp_get_time_data()
-    logger().info(f">>>>>>>>>>>>>>> SNTP TIME ----> '{sntp_time}'")
-    logger().info(f">>>>>>>>>>>>>>> SNTP DATE ----> '{sntp_date}'\n")
+    logger().info(f"**************** SNTP TIME ----> '{sntp_time}'")
+    logger().info(f"**************** SNTP DATE ----> '{sntp_date}'\n")
     time.sleep(180)
     logger().info("**************** Deleting SNTP Client Session in DUT ***************")
     wifi_dut.interfaces.wifi.sntp_client_stop()
@@ -193,6 +259,24 @@ def test_wifi_sdk_sntp_keepalive_c19016(wifi_sniffer, wifi_dut, wifi_access_poin
         logger().info(is_between)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SNTPClient | Si91xTCPIPFeatureBitMap.DNSClient
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_sdk_sntp_ludp_coexit_c19017(wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request,
                                           sniffer_filter, sl_collections, remote_socket):
@@ -236,6 +320,24 @@ def test_wifi_sdk_sntp_ludp_coexit_c19017(wifi_sniffer, wifi_dut, wifi_client, w
         'Unable to find the power save sniffer packets'
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SNTPClient | Si91xTCPIPFeatureBitMap.DNSClient
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_sntp_client_functionality_c37580(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
@@ -270,13 +372,13 @@ def test_wifi_sdk_sntp_client_functionality_c37580(wifi_sniffer, wifi_dut, wifi_
     time.sleep(10)
     logger().info("**************** Getting SNTP Time and DATE from DUT ***************")
     sntp_time, sntp_date = wifi_dut.interfaces.wifi.sntp_get_time_data()
-    logger().info(f">>>>>>>>>>>>>>> SNTP TIME ----> '{sntp_time}'")
-    logger().info(f">>>>>>>>>>>>>>> SNTP DATE ----> '{sntp_date}'\n")
+    logger().info(f"**************** SNTP TIME ----> '{sntp_time}'")
+    logger().info(f"**************** SNTP DATE ----> '{sntp_date}'\n")
     logger().info("**************** Getting SNTP Server Information from DUT ***************")
     ip_version, sntp_method, sntp_server_address = wifi_dut.interfaces.wifi.sntp_get_server_info()
-    logger().info(f">>>>>>>>>>>>>>> SNTP SERVER {ip_version}")
-    logger().info(f">>>>>>>>>>>>>>> SNTP SERVER ADDRESS: {sntp_server_address}")
-    logger().info(f">>>>>>>>>>>>>>> SNTP {sntp_method}\n")
+    logger().info(f"**************** SNTP SERVER {ip_version}")
+    logger().info(f"**************** SNTP SERVER ADDRESS: {sntp_server_address}")
+    logger().info(f"**************** SNTP {sntp_method}\n")
     logger().info("**************** Deleting SNTP Client Session in DUT ***************")
     wifi_dut.interfaces.wifi.sntp_client_stop()
 
@@ -296,6 +398,24 @@ def test_wifi_sdk_sntp_client_functionality_c37580(wifi_sniffer, wifi_dut, wifi_
             logger().info(f"************** SNTP response body received in the sniffer **************\n{ntp_pkt}")
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SNTPClient | Si91xTCPIPFeatureBitMap.DNSClient
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_sntp_client_functionality_loop_c538048(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
@@ -323,13 +443,13 @@ def test_wifi_sdk_sntp_client_functionality_loop_c538048(wifi_sniffer, wifi_dut,
         time.sleep(10)
         logger().info("**************** Getting SNTP Time and DATE from DUT ***************")
         sntp_time, sntp_date = wifi_dut.interfaces.wifi.sntp_get_time_data()
-        logger().info(f">>>>>>>>>>>>>>> SNTP TIME ----> '{sntp_time}'")
-        logger().info(f">>>>>>>>>>>>>>> SNTP DATE ----> '{sntp_date}'\n")
+        logger().info(f">**************** SNTP TIME ----> '{sntp_time}'")
+        logger().info(f"**************** SNTP DATE ----> '{sntp_date}'\n")
         logger().info("**************** Getting SNTP Server Information from DUT ***************")
         ip_version, sntp_method, sntp_server_address = wifi_dut.interfaces.wifi.sntp_get_server_info()
-        logger().info(f">>>>>>>>>>>>>>> SNTP SERVER {ip_version}")
-        logger().info(f">>>>>>>>>>>>>>> SNTP SERVER ADDRESS: {sntp_server_address}")
-        logger().info(f">>>>>>>>>>>>>>> SNTP {sntp_method}\n")
+        logger().info(f"**************** SNTP SERVER {ip_version}")
+        logger().info(f"**************** SNTP SERVER ADDRESS: {sntp_server_address}")
+        logger().info(f"**************** SNTP {sntp_method}\n")
         logger().info("**************** Deleting SNTP Client Session in DUT ***************")
         wifi_dut.interfaces.wifi.sntp_client_stop()
         time.sleep(5)
@@ -349,3 +469,82 @@ def test_wifi_sdk_sntp_client_functionality_loop_c538048(wifi_sniffer, wifi_dut,
         if (ntp_pkt[2] == sntp_server_address) and (ntp_pkt[3] == dut_ip):
             logger().info(f"************** SNTP response body received in the sniffer **************\n{ntp_pkt}")
 
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SNTPClient | Si91xTCPIPFeatureBitMap.DNSClient
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_ping_and_sntp_functionality_threaded_c585584(wifi_access_point, wifi_dut, request, utf_constants, wifi_client,
+                                                           wifi_sniffer, sniffer_filter, sl_collections):
+    """Verify ping from DUT (ping Tx) in one thread and SNTP functionality in another thread."""
+
+    test_case = request.node.name
+    mode = "power_save_low_latency"
+    ping_count = utf_constants.get("ping_count")
+
+    try:
+        logger().info(" ====== configuring the Sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
+
+        sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point, power_save=True, retry_count=3,
+                                            mode=mode, associated=wifi_dut.interfaces.wifi.associated, ping_count=ping_count)
+
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+
+        # Create threads for SNTP and ping functionality
+        sntp_thread = sntp_functionality(wifi_dut)
+        ping_thread = ping_functionality(wifi_dut,wifi_client)
+        sntp_thread.start_smtp()
+
+        # Start threads
+        sntp_thread.start()
+        time.sleep(2)
+        ping_thread.start()
+        time.sleep(2)
+
+        # Wait for both threads to complete
+        sntp_thread.wait_for_exit()
+        time.sleep(2)
+        ping_thread.wait_for_exit()
+        time.sleep(2)
+
+        logger().info("**************** Deleting SNTP Client Session in DUT ***************")
+        wifi_dut.interfaces.wifi.sntp_client_stop()
+
+        logger().info("Disconnecting from AP...")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr, filter_name='power_mgmt_bit')
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
+            'Unable to find the power management save sniffer packets'
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
