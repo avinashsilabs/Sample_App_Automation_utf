@@ -8,7 +8,8 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBit
     Si91xExtTCPIPFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xOperatingMode, Si91xPowerSaveModes, \
     Si91xPowerSaveProcedureTypes
 from utf_wiseconnect_3.tests.sl_status import SLStatus
-from test_wlan_mbssid_sdk import WLanThread
+from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.mbssid.test_wlan_mbssid_sdk \
+    import WLanThread
 
 
 def logger():

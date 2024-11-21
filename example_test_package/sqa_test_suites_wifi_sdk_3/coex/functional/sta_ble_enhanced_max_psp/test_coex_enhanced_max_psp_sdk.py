@@ -1,7 +1,8 @@
 import re
 import time
 from utf.utils.time_measurer import TimeMeasurer
-from example_test_package.sqa_test_suites_wifi_sdk_3.test_wlan_data_rates_sdk import SocketDataTransfer
+from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.tcp_udp.test_wlan_data_rates_sdk \
+    import SocketDataTransfer
 import pytest as pytest
 from utf import UtfDatabaseProperties
 from utf.utils.iperf.iperf_utils import ping

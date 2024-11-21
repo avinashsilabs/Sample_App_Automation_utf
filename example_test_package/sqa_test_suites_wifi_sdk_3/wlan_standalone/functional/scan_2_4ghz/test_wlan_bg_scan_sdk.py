@@ -3,7 +3,8 @@ import time
 from utf.utils.time_measurer import TimeMeasurer
 import pytest as pytest
 from utf import UtfDatabaseProperties
-from test_wlan_data_rates_sdk import SocketDataTransfer
+from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.tcp_udp.test_wlan_data_rates_sdk \
+    import SocketDataTransfer
 import threading
 from threading import Thread, Event
 from utf.utils.thread_base import ThreadBase

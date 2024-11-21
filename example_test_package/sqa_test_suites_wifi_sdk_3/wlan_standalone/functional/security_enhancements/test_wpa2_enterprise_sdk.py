@@ -25,7 +25,8 @@ from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.interfaces.wifi import SecurityMode
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.utils.iperf.iperf_utils import get_host_ip, ping
-from test_wlan_sta_enterprise_sdk import SnifferValidationProcess
+from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.security_enhancements.\
+    test_wlan_sta_enterprise_sdk import SnifferValidationProcess
 
 
 def logger():

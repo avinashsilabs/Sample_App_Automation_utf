@@ -20,7 +20,8 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xConfigFeatureBitMap,
     Si91xJoinFeatureBitMap,
 )
-from test_wlan_data_rates_sdk import SocketDataTransfer
+from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.tcp_udp.test_wlan_data_rates_sdk \
+    import SocketDataTransfer
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from collections import Counter
 from utf.interfaces.iperf.iperf_constants import IperfConstants

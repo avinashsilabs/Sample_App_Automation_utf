@@ -14,8 +14,7 @@ from utf.utils.stopwatch import Stopwatch
 import string
 from random import choices
 from utf.utils.iperf.iperf_utils import ping
-
-from test_sta_ble_provisioning_sdk import ProvisioningFunctionality
+from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble_provisioning.test_sta_ble_provisioning_sdk import ProvisioningFunctionality
 
 """This function runs below test steps for DUT-Si91x
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
