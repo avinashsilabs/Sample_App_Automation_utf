@@ -9,6 +9,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xCustomFeatureBitMap,
     Si91xCoexMode
 )
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utils.thread_base import ThreadBase
 import ipaddress
 import random
@@ -204,7 +205,6 @@ def test_wifi_sdk_http_put_functionality_c19231(http_server, wifi_dut, sniffer_f
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -223,21 +223,21 @@ def test_wifi_sdk_http_put_functionality_c19231(http_server, wifi_dut, sniffer_f
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_http_get_after_put_functionality_c19232(http_server, wifi_dut, sniffer_filter, wifi_sniffer,
-                                                          wifi_access_point, index_path, sl_collections):
+                                                          wifi_access_point, index_path, sl_collections, http_client):
     """verify whether DUT is sending error (0x0015) to host when we issue http get command after http put create
     success"""
     try:
         test_name = '19231'
+
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, http_server=http_server,
                               test_name=test_name, sl_collections=sl_collections, sniffer_filter=sniffer_filter,
                               wifi_sniffer=wifi_sniffer)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-        wifi_dut.interfaces.http.http_put(http_server.interfaces.http, index_path)
-
-        wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path, server_port=80)
-
-        wifi_dut.interfaces.wifi.http_client_deinit()
+        wifi_dut.interfaces.http.http_client_request_init(http_server.interfaces.http, index_path)
+        wifi_dut.interfaces.http.http_client_send_request(http_method_type=3)
+        wifi_dut.interfaces.http.http_client_request_init(http_server.interfaces.http, index_path, http_method_type=0)
+        wifi_dut.interfaces.http.http_client_send_request(http_method_type=0, expected_status=SLStatus.SL_STATUS_SI91X_MEMORY_FAILED_FROM_MODULE)
 
         logger().info("Stopping sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -252,7 +252,6 @@ def test_wifi_sdk_http_get_after_put_functionality_c19232(http_server, wifi_dut,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -271,32 +270,30 @@ def test_wifi_sdk_http_get_after_put_functionality_c19232(http_server, wifi_dut,
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_http_post_after_put_functionality_c19233(http_server, wifi_dut, sniffer_filter, wifi_sniffer,
-                                                           wifi_access_point, index_path, sl_collections):
-    """	verify whether DUT is sending error (0x0015) to host when we issue http post command after http put create
+                                                           wifi_access_point, index_path, sl_collections, http_client):
+    """verify whether DUT is sending error (0x10015) to host when we issue http post command after http put create
     success"""
     try:
         test_name = '19231'
+
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, http_server=http_server,
                               test_name=test_name, sl_collections=sl_collections, sniffer_filter=sniffer_filter,
                               wifi_sniffer=wifi_sniffer)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-        wifi_dut.interfaces.http.http_put(http_server.interfaces.http, index_path)
+        wifi_dut.interfaces.http.http_client_request_init(http_server.interfaces.http, index_path)
+        wifi_dut.interfaces.http.http_client_send_request(http_method_type=3)
+        wifi_dut.interfaces.http.http_client_request_init(http_server.interfaces.http, index_path, http_method_type=1)
+        wifi_dut.interfaces.http.http_client_send_request(http_method_type=1, expected_status=SLStatus.SL_STATUS_SI91X_MEMORY_FAILED_FROM_MODULE)
 
-        wifi_dut.interfaces.http.http_post(http_server.interfaces.http, resource_path=index_path,
-                                           post_data=''.join(random.choices(
-                                               string.ascii_uppercase + string.digits,
-                                               k=30)), server_port=80)
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
         power_save_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wlan_obj.dut_addr['dut_mac_address'], da_addr=wlan_obj.ap_mac_address,
             filter_name="power_mgmt_bit")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=power_save_filter)[
                    'packet_count'] > 0, "Unable to find NULL-Data frame packets with power save bit = 1"
-        wifi_dut.interfaces.wifi.http_client_deinit()
-
-        logger().info("Stopping sniffer capture")
-        wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
