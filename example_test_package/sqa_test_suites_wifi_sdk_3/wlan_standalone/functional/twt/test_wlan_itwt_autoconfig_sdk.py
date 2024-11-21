@@ -265,9 +265,7 @@ class TWT_AUTOCONFIG(ThreadBase):
 
     def run(self):
 
-        self.remote_mac_address = self.wifi_client.interfaces.wifi.get_mac_address(
-            network_interface="eth1"
-        )
+        self.remote_mac_address = self.wifi_client.interfaces.wifi.get_mac_address()
         logger().info(
             f"\nThe remote device MAC Address is: {self.remote_mac_address}\n"
         )
@@ -285,6 +283,25 @@ class TWT_AUTOCONFIG(ThreadBase):
             associated=self.wifi_dut.interfaces.wifi.associated,
             power_save=False,
         )
+        if self.testcase_id == "538037":
+            self.twt_params.rx_latency = 60000
+            logger().info(
+                f"\nSetting the RX Latency to {self.twt_params.rx_latency} seconds...\n"
+            )
+            self.enable_twt()
+            time.sleep(60)
+            self.disable_twt()
+            return
+
+        if self.testcase_id == "538038":
+            self.twt_params.rx_latency = 0
+            logger().info(
+                f"\nSetting the RX Latency to {self.twt_params.rx_latency} seconds...\n"
+            )
+            self.enable_twt(expected_status=SLStatus.SL_STATUS_OK)
+            time.sleep(2)
+            self.disable_twt()
+            return
 
         if self.testcase_id == "538039":
             self.twt_params.tx_latency = 50000
@@ -652,6 +669,98 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_800ms_no_tw
             wifi_client=wifi_client,
             sniffer_capture="test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_800ms_no_twt_tx_latency_0_c510688",
             testcase_id="510688",
+        )
+        twt_autoconfig_obj.start()
+        twt_autoconfig_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_verify_weather_dut_is_able_to_wakeup_for_rx_latency_60_secs_c538037(
+    wifi_dut,
+    remote_socket,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+):
+    """
+    Test Case ID: C538037
+
+    Objective:
+    Verify that the Device Under Test (DUT) is able to wake up for RX latency of 60 seconds.
+
+    Steps:
+    1. Initialize the WiFi DUT, remote socket, WiFi access point, WiFi sniffer, and other required components.
+    2. Create an instance of the TWT_AUTOCONFIG class with the necessary parameters.
+    3. Start the TWT_AUTOCONFIG instance and wait for it to complete.
+    4. Handle any exceptions that occur during the test execution.
+
+    Expected Result:
+    The DUT should successfully wake up for RX latency of 60 seconds without any errors.
+    """
+    try:
+        twt_autoconfig_obj = TWT_AUTOCONFIG(
+            wifi_dut=wifi_dut,
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            sl_collections=sl_collections,
+            remote_socket=remote_socket,
+            sniffer_filter=sniffer_filter,
+            wifi_client=wifi_client,
+            sniffer_capture="test_wifi_sdk_verify_weather_dut_is_able_to_wakeup_for_rx_latency_60_secs_c538037",
+            testcase_id="538037",
+        )
+        twt_autoconfig_obj.start()
+        twt_autoconfig_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_verify_weather_dut_is_able_to_wakeup_for_rx_latency_0_secs_and_check_data_transfer_c538038(
+    wifi_dut,
+    remote_socket,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+):
+    """
+    Test Case ID: C538038
+
+    Objective:
+    Verify that the Device Under Test (DUT) is able to wake up for RX latency of 0 seconds and successfully transfer data.
+
+    Steps:
+    1. Initialize the WiFi DUT, remote socket, WiFi access point, WiFi sniffer, and other required components.
+    2. Create an instance of the TWT_AUTOCONFIG class with the necessary parameters.
+    3. Start the TWT_AUTOCONFIG instance and wait for it to complete.
+    4. Handle any exceptions that occur during the test execution.
+
+    Expected Result:
+    The DUT should successfully wake up for RX latency of 0 seconds and transfer data without any errors.
+    """
+    try:
+        twt_autoconfig_obj = TWT_AUTOCONFIG(
+            wifi_dut=wifi_dut,
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            sl_collections=sl_collections,
+            remote_socket=remote_socket,
+            sniffer_filter=sniffer_filter,
+            wifi_client=wifi_client,
+            sniffer_capture="test_wifi_sdk_verify_weather_dut_is_able_to_wakeup_for_rx_latency_0_secs_and_check_data_transfer_c538038",
+            testcase_id="538038",
         )
         twt_autoconfig_obj.start()
         twt_autoconfig_obj.wait_for_exit()
