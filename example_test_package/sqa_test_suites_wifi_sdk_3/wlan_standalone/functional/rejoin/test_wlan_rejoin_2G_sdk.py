@@ -1362,7 +1362,7 @@ def test_wifi_sdk_rejoin_infinite_retry_c19738(wifi_dut, wifi_access_point, wifi
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               test_name=test_name, test_case_no=19738, sl_collections=sl_collections,
                               switch=switch, wifi_client=wifi_client, net_perf_client=net_perf_client,
-                              protocol=protocol, sniffer_filter=sniffer_filter, data_transfer=False)
+                              protocol=protocol, data_transfer=False)
 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1877,7 +1877,7 @@ def test_wifi_sdk_rejoin_eap_tls_c19730(wifi_dut, wifi_access_point, wifi_sniffe
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, test_case_no=19730, sl_collections=sl_collections,
                           switch=switch, wifi_client=wifi_client, net_perf_client=net_perf_client,
-                          protocol=protocol, sniffer_filter=sniffer_filter, data_transfer=False)
+                          protocol=protocol, data_transfer=False)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1929,7 +1929,7 @@ def test_wifi_sdk_rejoin_eap_ttls_c19731(wifi_dut, wifi_access_point, wifi_sniff
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, test_case_no=19731, sl_collections=sl_collections,
                           switch=switch, wifi_client=wifi_client, net_perf_client=net_perf_client,
-                          protocol=protocol, sniffer_filter=sniffer_filter, data_transfer=False)
+                          protocol=protocol, data_transfer=False)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1982,7 +1982,7 @@ def test_wifi_sdk_rejoin_eap_peap_c19732(wifi_dut, wifi_access_point, wifi_sniff
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, test_case_no=19732, sl_collections=sl_collections,
                           switch=switch, wifi_client=wifi_client, net_perf_client=net_perf_client,
-                          protocol=protocol, sniffer_filter=sniffer_filter, data_transfer=False)
+                          protocol=protocol, data_transfer=False)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
