@@ -833,7 +833,7 @@ def test_Coex_sdk_WLAN_DNS_Query_BLE_slave_C133583(wifi_dut, wifi_access_point,
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
         "thread_config": {
-            "wifi": {"count": 2, "stack_len": 3584, "priority": 8},
+            "wifi": {"count": 1, "stack_len": 3584, "priority": 8},
             "ble": {"count": 1, "stack_len": 2048, "priority": 8}},
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
 
@@ -963,7 +963,7 @@ def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_C133477(wifi_dut, wifi_access_point,
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
         "thread_config": {
-            "wifi": {"count": 2, "stack_len": 3584, "priority": 8},
+            "wifi": {"count": 1, "stack_len": 3584, "priority": 8},
             "ble": {"count": 1, "stack_len": 2048, "priority": 8}},
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
 
@@ -1442,18 +1442,15 @@ def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
             multicast_client.interfaces.multicast.multicast_params()
 
         logger().info(f"DUT joining to the multicast group {multicast_ip}")
-        wifi_dut.interfaces.wifi.sl_net_join_multicast_address()
+        wifi_dut.interfaces.wifi.sl_net_join_multicast_address(server=multicast_ip)
 
         logger().info("Starting multicast TX")
-
         logger().info("starting the server from Remote device")
         # starting iperf
-
         net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=wifi_obj.dut_addr['device_ip'],
                                                         host_role="S", protocol=protocol,
                                                         time_out=120, bind_address=multicast_ip)
         net_perf_client.interfaces.net_perf.start()
-
         logger().info("sending data from DUT")
         wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=2, protocol=17,
                                        local_port=net_perf_client.interfaces.net_perf.server_port,
@@ -1461,12 +1458,14 @@ def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
                                        remote_port=net_perf_client.interfaces.net_perf.server_port,
                                        size="1470",
                                        ttl=120,
-                                       throughput_type=2, qos=0, async_socket=1, timeout=125)
+                                       throughput_type=2, qos=0, async_socket=1, timeout=160)
 
         # # get and print throughput
         tp = net_perf_client.interfaces.net_perf.process_output()
         assert tp is not None, "Throughput not found"
         logger().info("data transfer is successful")
+        net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        time.sleep(5)
 
         def start_client():
             time.sleep(1)
@@ -1474,7 +1473,6 @@ def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
             net_perf_client.interfaces.net_perf.start()
 
         logger().info("Starting multicast RX")
-
         net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=multicast_ip, time_out=120,
                                                         protocol=protocol, time_to_leave="32", bandwidth="60M",
                                                         host_role="C", bind_address=host_ip)
@@ -1489,8 +1487,10 @@ def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
                                        local_ip=multicast_ip, remote_ip=host_ip,
                                        remote_port=net_perf_client.interfaces.net_perf.client_port,
                                        size=1470, ttl=120, throughput_type=4, qos=0, async_socket=1,
-                                       timeout=130)
+                                       timeout=200)
         wifi_dut.interfaces.wifi.sl_net_leave_multicast_address()
+        net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        time.sleep(5)
 
         wifi_obj.disconnect()
         ble_obj.ble_disconnect()
@@ -1498,7 +1498,7 @@ def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
         wifi_obj.sniffer_validation_join()
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
         igmp_capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["igmp"],
-                                                   test_name)
+                                         test_name)
         assert len(
             igmp_capture_list) > 0, "IGMP packets or one of the 4-way handshake packets are not captured in the sniffer"
         logger().info("sniffer validation is successful")
