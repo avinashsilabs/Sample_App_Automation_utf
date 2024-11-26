@@ -181,6 +181,9 @@ class BleThread(ThreadBase):
             char_path=None, char_uid=None, data=None,
             data_length=20, data_duration=60, periodic_delay=1, service_uid=None,
             address=None,
+            service_uuid=None,
+            char_uuid=None,
+            characteristic=None
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -205,6 +208,9 @@ class BleThread(ThreadBase):
         self.write_handle = None
         self.ble_scan_filter_type = ble_scan_filter_type
         self.address = address
+        self.service_uuid = service_uuid
+        self.char_uuid = char_uuid
+        self.characteristic = characteristic
 
         if self.gatt:
             # Set up DUT for BLE advertising
@@ -240,7 +246,7 @@ class BleThread(ThreadBase):
                                         dev_state=self.dev_state,
                                         max_conn_interval=self.conn_interval,
                                         min_conn_interval=self.conn_interval,
-                                        timeout=20)
+                                        timeout=10)
 
     def ble_disconnect(self, disconnect_from="remote"):
 
@@ -256,6 +262,7 @@ class BleThread(ThreadBase):
             logger().info(f"Initiating BLE disconnection from DUT")
             self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
         self.ble_client.interfaces.bluetooth.close()
+        time.sleep(5)
 
     def add_characteristic(self, characteristic_uuid):
         logger().info(f"***** Configuring ble GATT characteristic {hex(characteristic_uuid)} in DUT *****")
@@ -357,12 +364,13 @@ class BleThread(ThreadBase):
                                                                          char_uid=self.char_uid)
         logger().info(f"self.char_path:{self.char_path}")
 
-    def service_discovery_on_dut(self, service_uuid=None,
-                                 char_uuid=None, characteristic=None):
+    def service_discovery_on_dut(self):
+
         self.write_handle = self.sl_collections.service_discovery_on_dut(ble_dut=self.wifi_dut,
                                                                          ble_client_address=self.ble_client_address,
-                                                                         service_uuid=service_uuid, char_uuid=char_uuid,
-                                                                         characteristic=characteristic)
+                                                                         service_uuid=self.service_uuid,
+                                                                         char_uuid=self.char_uuid,
+                                                                         characteristic=self.characteristic)
 
     def enable_notifications_from_dut(self):
         logger().info(f"****** enabling notifications on remote****************")
@@ -373,19 +381,20 @@ class BleThread(ThreadBase):
                                                             buffer_mode=1, buffer_count=2)
         sw = Stopwatch()
         count = 0
+        logger().info(f"Send notifications from DUT")
         while sw.elapsed_sec <= self.data_duration:
-            logger().info(f"Send notifications from DUT")
-            # self.wifi_dut.interfaces.wifi.ble_set_local_att_value(notify_data=data, val_handle=12)
-            # with self._lock:
             self.wifi_dut.interfaces.wifi.ble_notify_custom_value(self.ble_client_address, data=self.data,
                                                                   data_address=self.address)
             time.sleep(self.periodic_delay)
-            notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
-            assert len(notifications) > 0, "received data is empty"
-            logger().info(f"notifications received on remote :{notifications}")
-            logger().info(f"length of notifications received on remote :{len(notifications[count])}")
-            assert notifications[count] in self.data, "failed to fetch data"
             count += 1
+        time.sleep(10)
+        notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
+        assert len(notifications) > 0, "received data is empty"
+        logger().info(f"notifications received on remote :{notifications}")
+        assert len(notifications) == count, "number of notifications received are not matching with sent"
+        logger().info(f"length of notifications received on remote :{len(notifications)}")
+        assert notifications[0] in self.data, "failed to fetch data"
+        # assert notifications in self.data, "failed to fetch data"
 
         self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=self.char_path)
         self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=self.char_uid)
@@ -402,7 +411,7 @@ class BleThread(ThreadBase):
             logger().info(f"Enabling notification on dut")
             self.wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=self.ble_client_address,
                                                             handle=(self.write_handle + 1), enable_notify=1)
-            time.sleep(10)
+
             tw = Stopwatch()
             Data_received_on_dut = []
             while tw.elapsed_sec < self.data_duration:
@@ -410,10 +419,10 @@ class BleThread(ThreadBase):
                 for event in events:
                     if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
                         if "rsi_ble_on_gatt_write_event_gatt" in event.event_data:
-                            received_data = re.findall(r"att_length: 1, att_value: (.*)", event.event_data)
+                            received_data = re.findall(r"att_value: (.*)", event.event_data)
                             Data_received_on_dut = received_data + Data_received_on_dut
-                            received_data = ord(received_data[0])
-                            logger().info(f"received_data:{received_data}")
+                            # received_data = ord(received_data[0])
+                            logger().info(f"received_data:{Data_received_on_dut}")
             assert len(Data_received_on_dut) > 0, "Notifications not received on DUT"
             self.wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=self.ble_client_address,
                                                             handle=(self.write_handle + 1), enable_notify=0)
@@ -459,6 +468,11 @@ class BleThread(ThreadBase):
             self.enable_notifications_from_dut()
 
         if self.ble_test_type == "notify_rx":
+            self.enable_notifications_remote()
+
+        if self.ble_test_type == "connect_as_master_notify_rx":
+            self.ble_connect(role="master")
+            self.service_discovery_on_dut()
             self.enable_notifications_remote()
 
         if self.ble_test_type == "gatt_write_without_resp":
@@ -695,12 +709,7 @@ def test_sta_ble_sdk_ble_whitelist_UDP_TX_C535084(wifi_sniffer, wifi_access_poin
                     | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "custom_features": Si91xCustomFeatureBitMap.NWP120MHz
                     | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE
-                              | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1),
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "ble_features": Si91xBLEFeatureBitMap.Default
@@ -709,7 +718,7 @@ def test_sta_ble_sdk_ble_whitelist_UDP_TX_C535084(wifi_sniffer, wifi_access_poin
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
                           "ble": {"count": 1, "stack_len": 3584, "priority": 8}}
 
     }
@@ -727,9 +736,14 @@ def test_sta_ble_sdk_ble_whitelist_UDP_TX_C535084(wifi_sniffer, wifi_access_poin
     ],
 )
 
-def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
-                                                        request, utf_constants, sl_collections, wifi_client,
-                                                        sniffer_filter):
+def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut, ble_client,
+        request, utf_constants, sl_collections,
+        wifi_client,
+        sniffer_filter
+):
     ble_dut_addr = ""
     ble_obj = None
     try:
@@ -747,13 +761,16 @@ def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(wifi_sniffer, wifi_acces
             ping_count=ping_count,
             sniffer_filter=sniffer_filter,
             test_type=test_type,
-            scan_count=30
+            scan_count=70
         )
         service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
         char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
         # data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
         data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=240))
         index = 1
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
+
         ble_obj = BleThread(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
@@ -762,9 +779,12 @@ def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(wifi_sniffer, wifi_acces
             dev_state=8,
             char_path=None, char_uid=char_uid1, data=data,
             service_uid=service_uid,
-            data_length=240, data_duration=300,
-            periodic_delay=10,
-            ble_pairing=1
+            data_length=20, data_duration=120,
+            periodic_delay=0.5,
+            ble_pairing=1,
+            gatt=True,
+            address=address2,
+            conn_interval=45
         )
 
         # Create Custom services on DUT
@@ -776,6 +796,7 @@ def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(wifi_sniffer, wifi_acces
                                                        value_handler_num=index + 1)
         logger().info("Adding characteristic value attribute to the service")
         wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1, value_handler_num=index + 1)
+
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
@@ -787,15 +808,13 @@ def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(wifi_sniffer, wifi_acces
         wifi_obj.start()
         ble_obj.ble_connect(role="slave")
         ble_obj.service_discovery_on_remote()
-        events = wifi_dut.interfaces.wifi.get_async_events()
-        logger().info(f"events :{events}")
         ble_obj.start()
         ble_obj.wait_for_exit()
         wifi_obj.wait_for_exit()
         time.sleep(2)
-        logger().info("******************** ble_remove_service ***********************")
-        wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.memory_free(address2)
+        logger().info("******************** ble_remove_service ***********************")
         wifi_dut.interfaces.wifi.ble_remove_service(timeout=10)
         ble_obj.ble_disconnect()
         wifi_obj.sniffer_validation_scan()
@@ -824,11 +843,7 @@ def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(wifi_sniffer, wifi_acces
         "custom_features": Si91xCustomFeatureBitMap.NWP120MHz
                     | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE
-                              | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1),
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "ble_features": Si91xBLEFeatureBitMap.Default
@@ -837,8 +852,8 @@ def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(wifi_sniffer, wifi_acces
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                          "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
+                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}}
 
     }
 )
@@ -852,9 +867,12 @@ def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(wifi_sniffer, wifi_acces
         "disassociated",
     ],
 )
-def test_sta_ble_sdk_wlan_scan_ble_master_rx_C538010(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
-                                                        request, utf_constants, sl_collections, wifi_client,
-                                                        sniffer_filter):
+def test_sta_ble_sdk_wlan_scan_ble_master_rx_C538010(
+        wifi_sniffer,
+        wifi_access_point, wifi_dut, ble_client,
+        request, utf_constants, sl_collections, wifi_client,
+        sniffer_filter
+):
     ble_obj = None
     try:
         test_name = request.node.name
@@ -871,19 +889,21 @@ def test_sta_ble_sdk_wlan_scan_ble_master_rx_C538010(wifi_sniffer, wifi_access_p
             ping_count=ping_count,
             sniffer_filter=sniffer_filter,
             test_type=test_type,
-            scan_count=10
+            scan_count=100
         )
-
         ble_obj = BleThread(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
             sl_collections=sl_collections,
-            ble_test_type="notify_rx",
+            ble_test_type="connect_as_master_notify_rx",
             dev_state=8,
-            data_duration=30,
+            data_duration=120,
             service_class=["HeartRateService"],
             gatt=True,
-            ble_pairing=1
+            ble_pairing=1,
+            service_uuid=HeartRateService.UUID,
+            char_uuid=HeartRateMeasurementCharacterstic.HR_Measure_UUID,
+            characteristic=HeartRateMeasurementCharacterstic
         )
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -894,11 +914,6 @@ def test_sta_ble_sdk_wlan_scan_ble_master_rx_C538010(wifi_sniffer, wifi_access_p
         )
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_obj.start()
-        ble_obj.ble_connect(role="master")
-        ble_obj.service_discovery_on_dut(service_uuid=HeartRateService.UUID,
-                                         char_uuid=HeartRateMeasurementCharacterstic.HR_Measure_UUID,
-                                         characteristic=HeartRateMeasurementCharacterstic
-                                         )
         ble_obj.start()
         ble_obj.wait_for_exit()
         wifi_obj.wait_for_exit()
@@ -944,7 +959,7 @@ def test_sta_ble_sdk_wlan_scan_ble_master_rx_C538010(wifi_sniffer, wifi_access_p
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
                           "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
 
     }
@@ -1004,8 +1019,9 @@ def test_sta_ble_sdk_tcp_tx_ble_slave_C133549(wifi_sniffer, wifi_access_point, w
             char_path=None, char_uid=char_uid1, data=data,
             service_uid=service_uid,
             data_length=20, data_duration=60,
-            periodic_delay=10,
-            ble_pairing=1
+            periodic_delay=1,
+            ble_pairing=1,
+            gatt=True,
         )
         # Create Custom services on DUT
         # Create Custom services, attributes, values
@@ -1138,6 +1154,9 @@ def test_sta_ble_sdk_set_att_value_diff_length_tcp_tx_ble_slave_C133437(wifi_sni
             dev_state=8,
             service_class=["ImmediateAlertService"],
             gatt=True,
+            service_uuid=ImmediateAlertService.UUID,
+            char_uuid=ImmediateAlertLevelCharacteristic.LLA_UUID,
+            characteristic=ImmediateAlertLevelCharacteristic
         )
 
         logger().info("configuring the Sniffer with the channel")
@@ -1154,10 +1173,7 @@ def test_sta_ble_sdk_set_att_value_diff_length_tcp_tx_ble_slave_C133437(wifi_sni
         wifi_obj.set_power_save()
         wifi_obj.start()
         ble_obj.scan_and_connect_from_remote()
-        ble_obj.service_discovery_on_dut(service_uuid=ImmediateAlertService.UUID,
-                                         char_uuid=ImmediateAlertLevelCharacteristic.LLA_UUID,
-                                         characteristic=ImmediateAlertLevelCharacteristic
-                                         )
+        ble_obj.service_discovery_on_dut()
         # Configure Buffer Mode
         ble_obj.configure_buffer_mode(mode=0, count=2)
         notify_size_list = [1, 230]
@@ -1493,7 +1509,6 @@ def test_sta_ble_sdk_http_dwnld_ble_slave_dle_C537980(wifi_sniffer, wifi_access_
         "disassociated",
     ],
 )
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4431")
 def test_coex_sdk_httpget_url_2048_ble_smp_tx_C476959(http_server, wifi_dut, http_client,
                                                        wifi_access_point, wifi_sniffer,
                                                        sl_collections, sniffer_filter,
@@ -1694,6 +1709,9 @@ def test_coex_sdk_https_get_url_2048_ble_RX_C476960(http_server, wifi_dut, http_
             service_class=["HeartRateService"],
             gatt=True,
             ble_pairing=1,
+            service_uuid=HeartRateService.UUID,
+            char_uuid=HeartRateMeasurementCharacterstic.HR_Measure_UUID,
+            characteristic=HeartRateMeasurementCharacterstic
         )
         logger().info(f"iter count is configured as {iter_count}")
 
@@ -1703,10 +1721,7 @@ def test_coex_sdk_https_get_url_2048_ble_RX_C476960(http_server, wifi_dut, http_
             logger().info("Initiating stop scan from dut")
             wifi_dut.interfaces.wifi.ble_stop_scanning()
             ble_obj.connect_from_dut()
-            ble_obj.service_discovery_on_dut(service_uuid=HeartRateService.UUID,
-                                             char_uuid=HeartRateMeasurementCharacterstic.HR_Measure_UUID,
-                                             characteristic=HeartRateMeasurementCharacterstic
-                                            )
+            ble_obj.service_discovery_on_dut()
             ble_obj.start()
             wifi_obj.start()
             wifi_obj.wait_for_exit()
@@ -1856,10 +1871,6 @@ def test_coex_sdk_httpsget_url_1536_ble_smp_C476963(http_server, wifi_dut, http_
                                        ble_dut_address=ble_obj.ble_dut_address)
 
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-
-
-
-
 
 
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
