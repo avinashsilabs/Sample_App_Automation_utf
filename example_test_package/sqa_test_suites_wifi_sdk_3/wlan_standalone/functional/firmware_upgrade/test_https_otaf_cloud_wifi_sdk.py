@@ -148,8 +148,19 @@ class WifiJoin(ThreadBase):
     def fw_download_presigned_url(self, aws_s3, rps_path):
         long_file = "longerurltesting"
         long_url_name = []
-        for i in range(1, 43):
-            long_url_name.append(long_file+str(i))
+        if self.test_case == '500499':
+            for i in range(1, 77):
+                long_url_name.append(long_file + str(i))
+        if self.test_case == '500498':
+            for i in range(1, 80):
+                long_url_name.append(long_file + str(i))
+        if self.test_case == '510789':
+            for i in range(1, 49):
+                long_url_name.append(long_file+str(i))
+        elif self.test_case == '510788' or self.test_case == '500497':
+            for i in range(1, 25):
+                long_url_name.append(long_file+str(i))
+
         logger().info(f"long url name {long_url_name}")
         final_long_url_name = "".join(long_url_name)
         logger().info(f"final url name {final_long_url_name}")
@@ -157,22 +168,27 @@ class WifiJoin(ThreadBase):
         presigned_rps_path_aws = "PRESIGNED_URL/"+final_long_url_name+"/"+rps_path
         logger().info(f"PRESIGNED_RPS_PATH PATH {presigned_rps_path_aws}")
 
-        rps_path_final = "/app/manifest/" + rps_path
-        status = aws_s3.interfaces.s3.upload_file(rps_path_final, "httpotaf", presigned_rps_path_aws)
-        assert status is True, f"unable to upload"
-        logger().info(f"upload successful")
+        if self.test_case != '500499' and self.test_case != '500498':
+            rps_path_final = "/app/manifest/" + rps_path
+            status = aws_s3.interfaces.s3.upload_file(rps_path_final, "httpotaf", presigned_rps_path_aws)
+            assert status is True, f"unable to upload"
+            logger().info(f"upload successful")
 
-        logger().info(f"upload successful")
-        url = aws_s3.interfaces.s3.get_file_url("httpotaf", "us-east-2", presigned_rps_path_aws)
-        logger().info(f"****** aws url is :{url}")
+            logger().info(f"upload successful")
+            url = aws_s3.interfaces.s3.get_file_url("httpotaf", "us-east-2", presigned_rps_path_aws)
+            logger().info(f"****** aws url is :{url}")
 
-        logger().info("Removing https://httpotaf.s3.us-east-2.amazonaws.com/ as it is not required for long url")
-        self.new_url = url.replace("https://httpotaf.s3.us-east-2.amazonaws.com/", "")
-        logger().info(f"Final url to upload {self.new_url}")
+            logger().info("Removing https://httpotaf.s3.us-east-2.amazonaws.com/ as it is not required for long url")
+            self.new_url = url.replace("https://httpotaf.s3.us-east-2.amazonaws.com/", "")
+            logger().info(f"Final url to upload {self.new_url}")
 
-        #
-        p_s_url = aws_s3.interfaces.s3.create_presigned_url("httpotaf",self.new_url, 6000)
-        logger().info(f"**** PRESIGNED URL IS {p_s_url}")
+        if self.test_case == '500499' or self.test_case == '500498':
+            self.new_url = presigned_rps_path_aws
+            logger().info(f"Since 2048 legth not allowed to upload, simulated url of length more than 2048 to download {self.new_url}")
+
+        p_s_url = aws_s3.interfaces.s3.create_presigned_url("httpotaf", self.new_url, 6000)
+        logger().info(f" PRESIGNED URL IS {p_s_url}")
+        logger().info(f" length pre-signed url is {len(p_s_url)}")
         return p_s_url
 
 
@@ -208,8 +224,7 @@ class WifiJoin(ThreadBase):
             elif self.test_case == '500496' or self.test_case == '500495':
                 self.url = self.fw_download_from_aws_server_for_longer_url_length(aws_s3=self.aws_s3, rps_path=self.rps_path, url_len=self.url_len)
 
-            elif self.test_case == '500497':
-                logger().info("*** Executing presigned url Test case ****...")
+            elif self.test_case == '500497' or self.test_case == '510788' or self.test_case == '510789' or self.test_case == '500499' or self.test_case == '500498':
                 self.url = self.fw_download_presigned_url(aws_s3=self.aws_s3, rps_path=self.rps_path)
 
             else:
@@ -285,7 +300,7 @@ class WifiJoin(ThreadBase):
                     post_data='""',
                     http_url=self.new_url,
                     async_timeout=500)
-            if self.test_case == '500497':
+            if self.test_case == '500497' or self.test_case == '510789' or self.test_case == '500499':
                 logger().info("Removing https://httpotaf.s3.amazonaws.com/ as it is not required for long url")
                 self.new_url = self.url.replace("https://httpotaf.s3.amazonaws.com/", "")
                 logger().info(f"Final url to upload {self.new_url}")
@@ -302,6 +317,39 @@ class WifiJoin(ThreadBase):
                     http_url=self.new_url,
                     async_timeout=500,
                     expected_status=SLStatus.SL_STATUS_SI91X_ERROR_IN_LEN_OF_THE_COMMAND)
+            if self.test_case == '510788':
+                logger().info("Removing https://httpotaf.s3.amazonaws.com/ as it is not required for long url")
+                self.new_url = self.url.replace("https://httpotaf.s3.amazonaws.com/", "")
+                logger().info(f"Final url to upload {self.new_url}")
+                logger().info(f"**** length of url is {len(self.new_url)}")
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(
+                    flags=1,
+                    ip_address=self.host_ip,
+                    port=443,
+                    host_name=self.aws_host_name,
+                    extended_header='""',
+                    username='""',
+                    password='""',
+                    post_data='""',
+                    http_url=self.new_url,
+                    async_timeout=500)
+            if self.test_case == '500498':
+                logger().info("Removing https://httpotaf.s3.amazonaws.com/ as it is not required for long url")
+                self.new_url = self.url.replace("https://httpotaf.s3.amazonaws.com/", "")
+                logger().info(f"Final url to upload {self.new_url}")
+                logger().info(f"**** length of url is {len(self.new_url)}")
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(
+                    flags=1,
+                    ip_address=self.host_ip,
+                    port=443,
+                    host_name=self.aws_host_name,
+                    extended_header='""',
+                    username='""',
+                    password='""',
+                    post_data='""',
+                    http_url=self.new_url,
+                    async_timeout=500,
+                    expected_status=SLStatus.SL_STATUS_HAS_OVERFLOWED)
             if self.test_case == '652416' or self.test_case == '498663':
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
                     flags=1,
@@ -511,6 +559,69 @@ def test_wifi_sdk_https_fw_url_length_1080_c500497(aws_s3, wifi_sniffer, wifi_ac
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@wifi_dut_marker()
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_wifi_sdk_https_M4_fw_url_length_1500_disable_http_url_c510789(aws_s3, wifi_sniffer, wifi_access_point,
+                                                           wifi_dut, sl_collections, utf_constants):
+    """HTTP(S) OTAFÂ M4 update functionality with URL length is more than 1024 (i-e ~1500) and disable long http bit"""
+    rps_path = utf_constants.get("m4_rps_plain")
+    try:
+        test_case = '510789'
+
+        wlan_obj = WifiJoin(aws_s3=aws_s3, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
+                            rps_path=rps_path)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@wifi_dut_marker_http_longer_url()
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_wifi_sdk_https_fw_url_length_2048_enable_http_url_c500498(aws_s3, wifi_sniffer, wifi_access_point,
+                                                           wifi_dut, sl_collections, utf_constants):
+    """HTTP(S) OTAFÂ update functionality with URL length is more than 2048 (i-e ~2048) and enable long http bit"""
+    rps_path = utf_constants.get("rps_filename")
+    try:
+        test_case = '500498'
+
+        wlan_obj = WifiJoin(aws_s3=aws_s3, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
+                            rps_path=rps_path)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@wifi_dut_marker()
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_wifi_sdk_https_fw_url_length_2048_disable_http_url_c500499(aws_s3, wifi_sniffer, wifi_access_point,
+                                                           wifi_dut, sl_collections, utf_constants):
+    """HTTP(S) OTAFÂ update functionality with URL length is more than 2048 (i-e ~2048) and disable long http bit"""
+    rps_path = utf_constants.get("rps_filename")
+    try:
+        test_case = '500499'
+
+        wlan_obj = WifiJoin(aws_s3=aws_s3, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
+                            rps_path=rps_path)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 

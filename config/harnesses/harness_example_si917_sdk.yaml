@@ -799,7 +799,7 @@ devices:
                 type: 'aws_s3.boto3'
                 aws_access_key_id: "AKIAQRVCCU6GZ2FJ4QX7"
                 aws_secret_access_key: "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"
-                region: "us-east-2"
+                region_name: "us-east-2"
 
 
     50pa500_attenuator:
