@@ -5531,7 +5531,7 @@ def test_wifi_sdk_mqtt_wild_char_two_topic_dollar_c537977(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip("Wifi de-init API issue")
+# @pytest.mark.skip("Wifi de-init API issue")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -5553,7 +5553,7 @@ def test_wifi_sdk_mqtt_wild_char_two_topic_dollar_c537977(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_wifi_sdk_qos1_wifi_init_mqtt_connect_wifi_deinit_c586178(
+def test_wifi_sdk_qos1_wifi_init_mqtt_simultaneous_publish_subscribe_deinit_c586178(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter,
         utf_constants):
     """QOS1:Verify whether DUT is able to do simultaneous publish and subscribe from 2 different topics with MQTT over
@@ -5575,7 +5575,7 @@ def test_wifi_sdk_qos1_wifi_init_mqtt_connect_wifi_deinit_c586178(
         mqtt_tx_obj = mqtt_publish_message_tx(mqtt_client=mqtt_client, wifi_dut=wifi_dut, topic1=topic1, topic2=topic2,
                                               message=message, qos=1, utf_constants=utf_constants)
 
-        for count in range(0, 3):
+        for count in range(0, 4):
             wifi_obj.start()
             wifi_obj.wait_for_exit()
 
@@ -5625,10 +5625,18 @@ def test_wifi_sdk_qos1_wifi_init_mqtt_connect_wifi_deinit_c586178(
             wifi_dut.interfaces.wifi.leave()
             time.sleep(1)
             logger().info("....calling WLAN de-init API....")
-            wifi_dut.interfaces.wifi.deinit()
+            logger().info(
+                "...WLAN de-init is failing used reset now ,after the fix provided can be checked with deinit ...")
+            # wifi_dut.interfaces.wifi.deinit()
+            logger().info("WLAN deint is not working as expected hence changing to reset")
+            wifi_dut.interfaces.wifi.reset()
+            time.sleep(10)
 
             logger().info("....calling WLAN init API....")
-            wifi_dut.interfaces.wifi.init()
+            wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+            wifi_dut.interfaces.wifi.init(load_certificate=False)
+            wifi_dut.interfaces.wifi.initialize_thread()
+            wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
 
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
