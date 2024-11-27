@@ -230,7 +230,7 @@ class AwsConnection(ThreadBase):
                                                                timeout=timeout,
                                                                negative_case=negative_case)
         if negative_case:
-            assert result, "Publishing status from DUT on topic is failed"
+            return result
 
     @retry(Exception, delay=10, tries=3)
     def connect_to_aws_server_from_raspi(self, aws_iot_client):
@@ -364,6 +364,11 @@ class AwsConnection(ThreadBase):
             wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
             time.sleep(20)
             logger().info("\n")
+
+    def to_signed_32_bit(self, num):
+        if num >= 2 ** 31:
+            return num - 2 ** 32
+        return num
 
 
 class mqtt_sniffer_validation:
@@ -2838,9 +2843,14 @@ def test_wifi_sdk_aws_2000_bytes_rx_data_send_to_dut_c537910(wifi_sniffer, wifi_
     try:
         capture_filename = "test_wifi_sdk_537910"
         messages = []
-        for i in range(1):
+        for i in range(2):
             messages.append(text_generator(size=2000))
         logger.info(f"Messages are:{messages}")
+
+        messages1 = []
+        for i in range(2):
+            messages1.append(text_generator(size=100))
+        logger.info(f"Messages are:{messages1}")
 
         channel = wifi_access_point.interfaces.wifi.channel
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
@@ -2864,18 +2874,18 @@ def test_wifi_sdk_aws_2000_bytes_rx_data_send_to_dut_c537910(wifi_sniffer, wifi_
         aws_obj.connect_to_aws_server_from_raspi(aws_iot_client)
         aws_obj.subscribe_from_raspi(aws_iot_client, topic, qos=Si91xAwsQos.QOS1)
 
-        for count, msg in enumerate(messages):
+        for i in range(0, 1):
             send_count = 0
             send_count = send_count + 1
             logger.info(f"\naws_iot_client publishing message{send_count} on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS1}'"
-                        f"\nMessage{send_count} with length:'{len(msg)} bytes'\nMessage{send_count} is:'{msg}'")
-            aws_obj.publish_from_raspi(aws_iot_client, topic, msg, qos=Si91xAwsQos.QOS1)
-            recv_msg = aws_obj.receive_aws_messages_from_dut(wifi_dut, wait_time=10,
-                                                             expected_status=SLStatus.SL_STATUS_AWS_SEND_DATA_OVER_DEFAULT_LIMIT)
-            if recv_msg:
-                logger.info(f"Received message from DUT is '{recv_msg}'")
-            else:
-                logger.info("No message received from DUT")
+                        f"\nMessage{send_count} with length:'{len(messages[i])} bytes'\nMessage{send_count} is:'{messages[i]}'")
+            aws_obj.publish_from_raspi(aws_iot_client, topic, messages[i], qos=Si91xAwsQos.QOS1)
+            time.sleep(10)
+            error_code = aws_obj.publish_from_dut(wifi_dut, topic, messages1[i], qos=Si91xAwsQos.QOS1, negative_case=True)
+            assert error_code == 4294967264, f"Failed to Verify error -32= {error_code}"
+            signed_number = aws_obj.to_signed_32_bit(error_code)
+            logger.info(f"Verify error -32 observed when 2000bytes of RX data sent to DUT and publish from DUT side ={signed_number}")
+
 
         logger.info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
