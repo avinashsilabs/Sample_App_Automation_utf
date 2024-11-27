@@ -1015,6 +1015,378 @@ def test_wifi_sdk_device_as_ap_and_sta_c19318(sl_collections, wifi_access_point,
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
+# adding a skip marker as it is still in development
+@pytest.mark.skip(reason="Test case is still in development")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
+    },
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+               "ssid": "SILABS_AP_MODE",
+               "channel": 11,
+               "interface": "wlan0",
+         }
+    }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_device_as_ap_and_sta_concurrent_mode_C148577(sl_collections, wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, protocol, net_perf_client, utf_constants, sniffer_filter):
+    """Test Case Description:
+        1. Start sniffer capture on the configured AP channel.
+        2. Configure the module in concurrent mode and check for successful initialization.
+        3. Run the SSL server using the specified command.
+        4. Connect to the access point and verify successful authentication and association.
+        5. Configure the DUT to obtain an IP address via DHCP.
+        6. Start the access point and confirm it sends beacons and accepts connections from other stations.
+        7. Connect and disconnect 2nd and 3rd party stations to the access point without issues.
+        8. Load the SSL CA certificate.
+        9. Create a socket for SSL communication.
+        10. Bind the socket to an address.
+        11. Connect the socket to the SSL server.
+        12. Send data through the socket and confirm the number of bytes sent.
+        13. Close the client socket.
+        14. Disconnect from the access point.
+        15. Stop the sniffer.
+        16. Repeat steps 4 to 14.
+    """
+    try:
+        # Step 1: Start sniffer capture
+        wifi_sniffer.interfaces.capture.configure_interface(channel=11)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="test_concurrent_mode.pcap")
+        time.sleep(3)
+
+        # Step 2: Configure the module in concurrent mode
+        wifi_dut.interfaces.wifi.configure_mode(Si91xOperatingMode.ConcurrentMode)
+        assert wifi_dut.interfaces.wifi.is_mode_configured(Si91xOperatingMode.ConcurrentMode), "Failed to configure concurrent mode"
+
+        # Step 3: Run the SSL server
+        ssl_server_command = "start_ssl_server_command"
+        sl_collections.run_command(ssl_server_command)
+
+        # Step 4: Connect to the access point
+        wifi_dut.interfaces.wifi.join(ssid="Concurent_ap", security=SecurityMode.WPA2, passphrase="test1234")
+        assert wifi_dut.interfaces.wifi.is_connected(), "Failed to connect to the access point"
+
+        # Step 5: Configure the DUT to obtain an IP address via DHCP
+        wifi_dut.interfaces.wifi.obtain_ip_via_dhcp()
+        dut_ip = wifi_dut.interfaces.wifi.get_ip_address()
+        assert dut_ip, "Failed to obtain IP address via DHCP"
+
+        # Step 6: Start the access point
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", channel=11)
+        assert wifi_dut.interfaces.wifi.is_ap_started(), "Failed to start the access point"
+
+        # Step 7: Connect and disconnect 2nd and 3rd party stations
+        for _ in range(2):
+            wifi_clients.interfaces.wifi.join(ssid="SILABS_AP_MODE", security=SecurityMode.WPA2, passphrase="Automation@123")
+            time.sleep(5)
+            wifi_clients.interfaces.wifi.leave()
+            time.sleep(5)
+
+        # Step 8: Load the SSL CA certificate
+        wifi_dut.interfaces.ssl.load_ca_certificate("path_to_ca_certificate")
+
+        # Step 9: Create a socket for SSL communication
+        ssl_socket = wifi_dut.interfaces.ssl.create_socket()
+
+        # Step 10: Bind the socket to an address
+        wifi_dut.interfaces.ssl.bind_socket(ssl_socket, dut_ip, 443)
+
+        # Step 11: Connect the socket to the SSL server
+        wifi_dut.interfaces.ssl.connect_socket(ssl_socket, "ssl_server_ip", 443)
+
+        # Step 12: Send data through the socket
+        bytes_sent = wifi_dut.interfaces.ssl.send_data(ssl_socket, "Test data")
+        assert bytes_sent > 0, "Failed to send data through the socket"
+
+        # Step 13: Close the client socket
+        wifi_dut.interfaces.ssl.close_socket(ssl_socket)
+
+        # Step 14: Disconnect from the access point
+        wifi_dut.interfaces.wifi.leave()
+
+        # Step 15: Stop the sniffer
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        # Step 16: Repeat steps 4 to 14
+        for _ in range(2):
+            wifi_dut.interfaces.wifi.join(ssid="Concurent_ap", security=SecurityMode.WPA2, passphrase="test1234")
+            wifi_dut.interfaces.wifi.obtain_ip_via_dhcp()
+            wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", channel=11)
+            wifi_clients.interfaces.wifi.join(ssid="SILABS_AP_MODE", security=SecurityMode.WPA2, passphrase="Automation@123")
+            wifi_clients.interfaces.wifi.leave()
+            wifi_dut.interfaces.ssl.load_ca_certificate("path_to_ca_certificate")
+            ssl_socket = wifi_dut.interfaces.ssl.create_socket()
+            wifi_dut.interfaces.ssl.bind_socket(ssl_socket, dut_ip, 443)
+            wifi_dut.interfaces.ssl.connect_socket(ssl_socket, "ssl_server_ip", 443)
+            wifi_dut.interfaces.ssl.send_data(ssl_socket, "Test data")
+            wifi_dut.interfaces.ssl.close_socket(ssl_socket)
+            wifi_dut.interfaces.wifi.leave()
+            wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+# adding a skip marker as it is still in development
+@pytest.mark.skip(reason="Test case is still in development")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
+    },
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+               "ssid": "SILABS_AP_MODE",
+               "channel": 11,
+               "interface": "wlan0",
+         }
+    }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_concurrent_mode_https_download_C148584(sl_collections, wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, protocol, net_perf_client, utf_constants, sniffer_filter):
+    """Test Case Description:
+    1. Configure the module in concurrent mode and check for successful initialization.
+    2. Start the HTTPS server on AP B and ensure it runs without issues.
+    3. Start the access point and confirm successful initialization.
+    4. Connect to the access point and verify successful authentication and association.
+    5. Configure the DUT to obtain an IP address via DHCP.
+    6. Initiate an HTTPS download from the server and ensure it succeeds.
+    7. Attempt to connect to the access point from a 3rd party remote device with an incorrect PSK, and verify the connection fails.
+    8. Confirm that the HTTPS file download continues uninterrupted despite the 3rd party connection attempt, with the download remaining successful and the association failing.
+    """
+    try:
+        # Step 1: Configure the module in concurrent mode
+        wifi_dut.interfaces.wifi.configure_mode(Si91xOperatingMode.ConcurrentMode)
+        assert wifi_dut.interfaces.wifi.is_mode_configured(Si91xOperatingMode.ConcurrentMode), "Failed to configure concurrent mode"
+
+        # Step 2: Start the HTTPS server on AP B
+        https_server_command = "start_https_server_command"
+        sl_collections.run_command(https_server_command)
+        assert sl_collections.is_https_server_running(), "Failed to start HTTPS server"
+
+        # Step 3: Start the access point
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", channel=11)
+        assert wifi_dut.interfaces.wifi.is_ap_started(), "Failed to start the access point"
+
+        # Step 4: Connect to the access point
+        wifi_dut.interfaces.wifi.join(ssid="Concurent_ap", security=SecurityMode.WPA2, passphrase="test1234")
+        assert wifi_dut.interfaces.wifi.is_connected(), "Failed to connect to the access point"
+
+        # Step 5: Configure the DUT to obtain an IP address via DHCP
+        wifi_dut.interfaces.wifi.obtain_ip_via_dhcp()
+        dut_ip = wifi_dut.interfaces.wifi.get_ip_address()
+        assert dut_ip, "Failed to obtain IP address via DHCP"
+
+        # Step 6: Initiate an HTTPS download from the server
+        download_command = "https_download_command"
+        sl_collections.run_command(download_command)
+        assert sl_collections.is_download_successful(), "Failed to download file via HTTPS"
+
+        # Step 7: Attempt to connect to the access point from a 3rd party remote device with an incorrect PSK
+        wifi_clients.interfaces.wifi.join(ssid="SILABS_AP_MODE", security=SecurityMode.WPA2, passphrase="wrong_passphrase")
+        assert not wifi_clients.interfaces.wifi.is_connected(), "3rd party device should not connect with incorrect PSK"
+
+        # Step 8: Confirm that the HTTPS file download continues uninterrupted
+        assert sl_collections.is_download_successful(), "HTTPS download was interrupted by 3rd party connection attempt"
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+
+# adding a skip marker as it is still in development
+@pytest.mark.skip(reason="Test case is still in development")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
+    },
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+               "ssid": "SILABS_AP_MODE",
+               "security": "WPA2",
+               "passphrase": "Automation@123",
+               "channel": 11
+           }
+    }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_concurrent_mode_ssl_communication_C148586(sl_collections, wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, protocol, net_perf_client, utf_constants, sniffer_filter):
+    """Test Case Description:
+    1. Start sniffer capture on the configured AP channel.
+    2. Configure the module in concurrent mode and check for successful initialization.
+    3. Run the SSL server with the specified command and ensure it starts successfully.
+    4. Connect to the access point and verify successful authentication and association.
+    5. Configure the DUT to obtain an IP address via DHCP.
+    6. Start the access point and confirm successful initialization and beacon transmission.
+    7. Connect and disconnect 2nd and 3rd party stations to the access point without issues.
+    8. Load the SSL CA certificate.
+    9. Create a socket for SSL communication and confirm successful creation.
+    10. Bind the socket to an address and check for success.
+    11. Connect the socket to the SSL server and verify successful connection.
+    12. Send data through the socket and confirm the number of bytes sent.
+    13. Close the client socket.
+    14. Disconnect from the access point and ensure it succeeds.
+    15. Stop the sniffer.
+    16. Repeat steps 4 to 14.
+    """
+    try:
+        # Step 1: Start sniffer capture
+        wifi_sniffer.interfaces.capture.configure_interface(channel=11)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="test_concurrent_mode.pcap")
+        time.sleep(3)
+
+        # Step 2: Configure the module in concurrent mode
+        wifi_dut.interfaces.wifi.configure_mode(Si91xOperatingMode.ConcurrentMode)
+        assert wifi_dut.interfaces.wifi.is_mode_configured(Si91xOperatingMode.ConcurrentMode), "Failed to configure concurrent mode"
+
+        # Step 3: Run the SSL server
+        ssl_server_command = "start_ssl_server_command"
+        sl_collections.run_command(ssl_server_command)
+        assert sl_collections.is_ssl_server_running(), "Failed to start SSL server"
+
+        # Step 4: Connect to the access point
+        wifi_dut.interfaces.wifi.join(ssid="Concurent_ap", security=SecurityMode.WPA2, passphrase="test1234")
+        assert wifi_dut.interfaces.wifi.is_connected(), "Failed to connect to the access point"
+
+        # Step 5: Configure the DUT to obtain an IP address via DHCP
+        wifi_dut.interfaces.wifi.obtain_ip_via_dhcp()
+        dut_ip = wifi_dut.interfaces.wifi.get_ip_address()
+        assert dut_ip, "Failed to obtain IP address via DHCP"
+
+        # Step 6: Start the access point
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", channel=11)
+        assert wifi_dut.interfaces.wifi.is_ap_started(), "Failed to start the access point"
+
+        # Step 7: Connect and disconnect 2nd and 3rd party stations
+        for _ in range(2):
+            wifi_clients.interfaces.wifi.join(ssid="SILABS_AP_MODE", security=SecurityMode.WPA2, passphrase="Automation@123")
+            assert wifi_clients.interfaces.wifi.is_connected(), "Failed to connect 2nd/3rd party station"
+            wifi_clients.interfaces.wifi.leave()
+            assert not wifi_clients.interfaces.wifi.is_connected(), "Failed to disconnect 2nd/3rd party station"
+
+        # Step 8: Load the SSL CA certificate
+        wifi_dut.interfaces.ssl.load_ca_certificate("path_to_ca_certificate")
+
+        # Step 9: Create a socket for SSL communication
+        ssl_socket = wifi_dut.interfaces.ssl.create_socket()
+        assert ssl_socket, "Failed to create SSL socket"
+
+        # Step 10: Bind the socket to an address
+        wifi_dut.interfaces.ssl.bind_socket(ssl_socket, dut_ip, 443)
+        assert wifi_dut.interfaces.ssl.is_socket_bound(ssl_socket), "Failed to bind SSL socket"
+
+        # Step 11: Connect the socket to the SSL server
+        wifi_dut.interfaces.ssl.connect_socket(ssl_socket, "ssl_server_ip", 443)
+        assert wifi_dut.interfaces.ssl.is_socket_connected(ssl_socket), "Failed to connect SSL socket to server"
+
+        # Step 12: Send data through the socket
+        bytes_sent = wifi_dut.interfaces.ssl.send_data(ssl_socket, "Test data")
+        assert bytes_sent > 0, "Failed to send data through the socket"
+
+        # Step 13: Close the client socket
+        wifi_dut.interfaces.ssl.close_socket(ssl_socket)
+
+        # Step 14: Disconnect from the access point
+        wifi_dut.interfaces.wifi.leave()
+        assert not wifi_dut.interfaces.wifi.is_connected(), "Failed to disconnect from the access point"
+
+        # Step 15: Stop the sniffer
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        # Step 16: Repeat steps 4 to 14
+        for _ in range(2):
+            wifi_dut.interfaces.wifi.join(ssid="Concurent_ap", security=SecurityMode.WPA2, passphrase="test1234")
+            assert wifi_dut.interfaces.wifi.is_connected(), "Failed to connect to the access point"
+            wifi_dut.interfaces.wifi.obtain_ip_via_dhcp()
+            dut_ip = wifi_dut.interfaces.wifi.get_ip_address()
+            assert dut_ip, "Failed to obtain IP address via DHCP"
+            wifi_dut.interfaces.ssl.bind_socket(ssl_socket, dut_ip, 443)
+            wifi_dut.interfaces.ssl.connect_socket(ssl_socket, "ssl_server_ip", 443)
+            bytes_sent = wifi_dut.interfaces.ssl.send_data(ssl_socket, "Test data")
+            assert bytes_sent > 0, "Failed to send data through the socket"
+            wifi_dut.interfaces.ssl.close_socket(ssl_socket)
+            wifi_dut.interfaces.wifi.leave()
+            assert not wifi_dut.interfaces.wifi.is_connected(), "Failed to disconnect from the access point"
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
 
 
 @pytest.mark.config(
