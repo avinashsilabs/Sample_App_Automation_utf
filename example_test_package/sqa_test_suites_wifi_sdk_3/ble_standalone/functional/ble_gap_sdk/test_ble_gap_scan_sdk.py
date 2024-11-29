@@ -911,7 +911,7 @@ def test_ble_sdk_passive_scan_undirected_scannable_C663360(ble_dut, ble_client, 
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
 
-@pytest.mark.skip() #100 iteration testcase
+ #100 iteration testcase
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
@@ -960,6 +960,7 @@ def test_ble_sdk_directed_connectable_adv_passive_scan_C663362(ble_dut, ble_clie
                             logger().info(f" event data : {event.event_data}")
                 logger().info("stop scanning")
                 ble_dut.interfaces.bluetooth.ble_stop_scanning()
+                logger().info(f"scan iteration: {i}")
                 time.sleep(5)
 
             # Mapping Master and Slave Address for Adding devices for sniffer
