@@ -3,6 +3,7 @@ import time
 import re
 import random
 import string
+from utf.interfaces.socket import SOCKET_TYPE_TCP, SOCKET_TYPE_UDP
 
 from utf.utils.commander import device_info
 from utf.utils.stopwatch import Stopwatch
@@ -52,17 +53,20 @@ class SocketDataTransfer:
         self.server_ip = None
         self.server_port = None
         self.remote_socket = remote_socket
-        self.data_transfer_duration = 3600
+        self.data_transfer_duration = 60
 
-    def start_remote_socket_server(self):
+    def start_remote_socket_server(self, socket_type):
+        logger().info(f"The socket_ype is {socket_type}")
         self.server_ip = self.remote_socket.interfaces.socket.hostname_or_ip_address()
         self.server_port = self.remote_socket.interfaces.socket.server_port
         logger().info(
-            f"Starting TCP Server remotely at port number {self.server_port} with IP Address: {self.server_ip}"
+            f"Starting {'UDP_SERVER' if socket_type else 'TCP_SERVER'} remotely at port number {self.server_port} with IP Address: {self.server_ip}"
         )
-        self.remote_socket.interfaces.socket.start_server()
+        self.remote_socket.interfaces.socket.start_server(socket_type=socket_type)
 
-    def send_data_over_socket(self, wifi_dut, duration, sleep_time):
+    def send_data_over_socket(
+        self, wifi_dut, duration, sleep_time, socket_type=SOCKET_TYPE_TCP
+    ):
         self.remote_socket.interfaces.socket.time_limit = 3600
         sw = Stopwatch()
         while sw.elapsed_sec < duration:
@@ -73,9 +77,14 @@ class SocketDataTransfer:
                 wifi_dut.interfaces.wifi.bsdSocketSend(
                     socket_fd=self.sock_id, data=sent_data, higher_data_len=0
                 )
-                received_data = self.remote_socket.interfaces.socket.recv_data_tcp(
-                    len(sent_data)
+                received_data = (
+                    self.remote_socket.interfaces.socket.recv_data_tcp(len(sent_data))
+                    if socket_type == SOCKET_TYPE_TCP
+                    else self.remote_socket.interfaces.socket.recv_data_udp(
+                        len(sent_data)
+                    )[0]
                 )
+                logger().info(f"\nReceived Data: {received_data}\n")
                 assert (
                     sent_data == received_data
                 ), f"Data mismatch in sent and received data"
@@ -283,6 +292,46 @@ class TWT_AUTOCONFIG(ThreadBase):
             associated=self.wifi_dut.interfaces.wifi.associated,
             power_save=False,
         )
+        if self.testcase_id in ["510690", "510691", "510692"]:
+            self.twt_params.rx_latency = 55000
+            self.twt_params.default_wake_interval_ms = (
+                5024 if self.testcase_id == "510691" else 1024
+            )
+            logger().info(
+                f"\nSetting the RX Latency to {self.twt_params.rx_latency} seconds and Wakeup Interval to {self.twt_params.default_wake_interval_ms}...\n"
+            )
+            self.socket_data_transfer_obj.start_remote_socket_server(
+                socket_type=SOCKET_TYPE_UDP
+            )
+            self.socket_data_transfer_obj.open_and_set_socket_option(
+                socket_domain="AF_INET",
+                socket_type="SOCK_DGRAM",
+                socket_protocol="IPPROTO_UDP",
+                wifi_dut=self.wifi_dut,
+            )
+            self.enable_twt()
+            self.wifi_dut.interfaces.wifi.set_performance_profile(
+                mode="power_save_low_latency"
+            )
+            self.socket_data_transfer_obj.send_data_over_socket(
+                wifi_dut=self.wifi_dut,
+                duration=20,
+                sleep_time=0,
+                socket_type=SOCKET_TYPE_UDP,
+            )
+            self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=0)
+            return
+        if self.testcase_id in ["538035", "538036"]:
+            self.twt_params.device_average_throughput = 20000
+            self.twt_params.average_tx_throughput = (
+                5001 if self.testcase_id == "538035" else 4999
+            )
+            logger().info(
+                f"\ndevice_average_throughput: {self.twt_params.device_average_throughput} and average_tx_throughput: {self.twt_params.device_average_throughput}\n"
+            )
+            self.enable_twt()
+            return
+
         if self.testcase_id == "538037":
             self.twt_params.rx_latency = 60000
             logger().info(
@@ -331,7 +380,9 @@ class TWT_AUTOCONFIG(ThreadBase):
             self.enable_twt(expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
             return
 
-        self.socket_data_transfer_obj.start_remote_socket_server()
+        self.socket_data_transfer_obj.start_remote_socket_server(
+            socket_type=SOCKET_TYPE_TCP
+        )
         self.socket_data_transfer_obj.open_and_set_socket_option(
             socket_domain="AF_INET",
             socket_type="SOCK_STREAM",
@@ -355,7 +406,7 @@ class TWT_AUTOCONFIG(ThreadBase):
             self.twt_params.rx_latency = 55000
         if self.testcase_id == "510685":
             self.twt_params.rx_latency = 25000
-        if self.testcase_id == "510686":
+        if self.testcase_id in ["510686", "510689"]:
             self.twt_params.rx_latency = 5000
         self.enable_twt()
         self.wifi_dut.interfaces.wifi.set_performance_profile(
@@ -669,6 +720,304 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_800ms_no_tw
             wifi_client=wifi_client,
             sniffer_capture="test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_800ms_no_twt_tx_latency_0_c510688",
             testcase_id="510688",
+        )
+        twt_autoconfig_obj.start()
+        twt_autoconfig_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_verify_dut_behaviour_rx_latency_5_secs_listen_interval_700ms_no_twt_tx_latency_0_c510689(
+    wifi_dut,
+    remote_socket,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+):
+    """
+    Test case to verify the DUT behavior with the following conditions:
+    - RX Latency: 5 seconds
+    - Listen Interval: 700 ms
+    - No TWT
+    - TX Latency: 0
+
+    Args:
+        wifi_dut: The WiFi DUT (Device Under Test) interface.
+        remote_socket: The remote socket interface.
+        wifi_access_point: The WiFi access point interface.
+        wifi_sniffer: The WiFi sniffer interface.
+        sl_collections: The SL collections interface.
+        wifi_client: The WiFi client interface.
+        sniffer_filter: The sniffer filter interface.
+
+    Returns:
+        None
+    """
+    try:
+        logger().info(f"\n Execute M4 power save \n")
+        wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
+        for count in range(3):
+            wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=700)
+            twt_autoconfig_obj = TWT_AUTOCONFIG(
+                wifi_dut=wifi_dut,
+                wifi_sniffer=wifi_sniffer,
+                wifi_access_point=wifi_access_point,
+                sl_collections=sl_collections,
+                remote_socket=remote_socket,
+                sniffer_filter=sniffer_filter,
+                wifi_client=wifi_client,
+                sniffer_capture="test_wifi_sdk_verify_dut_behaviour_rx_latency_5_secs_listen_interval_700ms_no_twt_tx_latency_0_c510689",
+                testcase_id="510689",
+            )
+            twt_autoconfig_obj.start()
+            twt_autoconfig_obj.wait_for_exit()
+            wifi_dut.interfaces.wifi.disable_twt()
+            wifi_dut.interfaces.wifi.leave()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_1000ms_twt_interval_1024_c510690(
+    wifi_dut,
+    remote_socket,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+):
+    """
+    Test case to verify the DUT behavior with the following conditions:
+    - RX Latency: 55 seconds
+    - Listen Interval: 1000 ms
+    - TWT Interval: 1024 ms
+
+    Args:
+        wifi_dut: The WiFi DUT (Device Under Test) interface.
+        remote_socket: The remote socket interface.
+        wifi_access_point: The WiFi access point interface.
+        wifi_sniffer: The WiFi sniffer interface.
+        sl_collections: The SL collections interface.
+        wifi_client: The WiFi client interface.
+        sniffer_filter: The sniffer filter interface.
+
+    Returns:
+        None
+    """
+    try:
+        wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=1000)
+        twt_autoconfig_obj = TWT_AUTOCONFIG(
+            wifi_dut=wifi_dut,
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            sl_collections=sl_collections,
+            remote_socket=remote_socket,
+            sniffer_filter=sniffer_filter,
+            wifi_client=wifi_client,
+            sniffer_capture="test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_1000ms_twt_interval_1024_c510690",
+            testcase_id="510690",
+        )
+        twt_autoconfig_obj.start()
+        twt_autoconfig_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_1000ms_twt_interval_5024_ms_c510691(
+    wifi_dut,
+    remote_socket,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+):
+    """
+    Test case to verify the DUT behavior with the following conditions:
+    - RX Latency: 55 seconds
+    - Listen Interval: 1000 ms
+    - TWT Interval: 5024 ms
+
+    Args:
+        wifi_dut: The WiFi DUT (Device Under Test) interface.
+        remote_socket: The remote socket interface.
+        wifi_access_point: The WiFi access point interface.
+        wifi_sniffer: The WiFi sniffer interface.
+        sl_collections: The SL collections interface.
+        wifi_client: The WiFi client interface.
+        sniffer_filter: The sniffer filter interface.
+
+    Returns:
+        None
+    """
+    try:
+        wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=1000)
+        twt_autoconfig_obj = TWT_AUTOCONFIG(
+            wifi_dut=wifi_dut,
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            sl_collections=sl_collections,
+            remote_socket=remote_socket,
+            sniffer_filter=sniffer_filter,
+            wifi_client=wifi_client,
+            sniffer_capture="test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_1000ms_no_twt_twt_interval_5024_ms_c510691",
+            testcase_id="510691",
+        )
+        twt_autoconfig_obj.start()
+        twt_autoconfig_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_500ms_twt_interval_1024_ms_c510692(
+    wifi_dut,
+    remote_socket,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+):
+    """
+    Test case to verify the DUT behavior with the following conditions:
+    - RX Latency: 55 seconds
+    - Listen Interval: 500 ms
+    - TWT Interval: 1024 ms
+
+    Args:
+        wifi_dut: The WiFi DUT (Device Under Test) interface.
+        remote_socket: The remote socket interface.
+        wifi_access_point: The WiFi access point interface.
+        wifi_sniffer: The WiFi sniffer interface.
+        sl_collections: The SL collections interface.
+        wifi_client: The WiFi client interface.
+        sniffer_filter: The sniffer filter interface.
+
+    Returns:
+        None
+    """
+    try:
+        wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=500)
+        twt_autoconfig_obj = TWT_AUTOCONFIG(
+            wifi_dut=wifi_dut,
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            sl_collections=sl_collections,
+            remote_socket=remote_socket,
+            sniffer_filter=sniffer_filter,
+            wifi_client=wifi_client,
+            sniffer_capture="test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_500ms_no_twt_twt_interval_1024_ms_c510692",
+            testcase_id="510692",
+        )
+        twt_autoconfig_obj.start()
+        twt_autoconfig_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_check_dut_able_to_send_twt_req_when_average_tx_throughput_greater_than_device_average_throughput_c538035(
+    wifi_dut,
+    remote_socket,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+):
+    """
+    Test case to verify that the DUT is able to send TWT request when the average TX throughput is greater than or equal to the device average throughput.
+
+    Args:
+        wifi_dut: The WiFi DUT (Device Under Test) interface.
+        remote_socket: The remote socket interface.
+        wifi_access_point: The WiFi access point interface.
+        wifi_sniffer: The WiFi sniffer interface.
+        sl_collections: The SL collections interface.
+        wifi_client: The WiFi client interface.
+        sniffer_filter: The sniffer filter interface.
+
+    Returns:
+        None
+    """
+    try:
+        twt_autoconfig_obj = TWT_AUTOCONFIG(
+            wifi_dut=wifi_dut,
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            sl_collections=sl_collections,
+            remote_socket=remote_socket,
+            sniffer_filter=sniffer_filter,
+            wifi_client=wifi_client,
+            sniffer_capture="test_wifi_sdk_check_dut_able_to_send_twt_req_when_average_tx_throughput_greater_than_device_average_throughput_c538035",
+            testcase_id="538035",
+        )
+        twt_autoconfig_obj.start()
+        twt_autoconfig_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+def test_wifi_sdk_check_dut_able_to_send_twt_req_when_average_tx_throughput_less_than_device_average_throughput_c538036(
+    wifi_dut,
+    remote_socket,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+):
+    """
+    Test case to verify that the DUT is able to send TWT request when the average TX throughput is less than or equal to the device average throughput.
+
+    Args:
+        wifi_dut: The WiFi DUT (Device Under Test) interface.
+        remote_socket: The remote socket interface.
+        wifi_access_point: The WiFi access point interface.
+        wifi_sniffer: The WiFi sniffer interface.
+        sl_collections: The SL collections interface.
+        wifi_client: The WiFi client interface.
+        sniffer_filter: The sniffer filter interface.
+
+    Returns:
+        None
+    """
+    try:
+        twt_autoconfig_obj = TWT_AUTOCONFIG(
+            wifi_dut=wifi_dut,
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            sl_collections=sl_collections,
+            remote_socket=remote_socket,
+            sniffer_filter=sniffer_filter,
+            wifi_client=wifi_client,
+            sniffer_capture="test_wifi_sdk_check_dut_able_to_send_twt_req_when_average_tx_throughput_less_than_device_average_throughput_c538036",
+            testcase_id="538036",
         )
         twt_autoconfig_obj.start()
         twt_autoconfig_obj.wait_for_exit()
