@@ -409,3 +409,243 @@ def test_wifi_sdk_ap_mode_scan_for_5mins_c535824(wifi_dut, wifi_access_point, wi
 
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "band": 0,
+        "boot_option": 49,
+        "security": "WPA2", "ssid": "917_AP_MODE", "passphrase": "Automation@123", "channel": 11,
+        "region": 1,
+        "region_code": Si91xRegionCode.US
+    }
+)
+@pytest.mark.config("wifi_client", wifi={"country": "US", "channel": "11"})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'bgnax', "security": 'WPA2', "channel": 11, "region": 'US'})
+def test_wifi_sdk_ap_mode_scan_with_ADV_SCAN_TYPE_C688243(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer,
+                                                    sl_collections, sniffer_filter):
+    """ Scan for available APs in the vicinity after Soft AP Started for 5 minutes in loop """
+    try:
+        logger().info("********** Configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=11)
+        logger().info("******* Start capturing with Sniffer by giving the test case name as filename *******")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C688243.pcap")
+        sl_collections.configure_dut_in_static_ip(wifi_dut,
+                                                       static_ip="192.168.100.76",
+                                                       static_subnet="255.255.255.0",
+                                                       static_gateway="192.168.100.76")
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="917_AP_MODE", security="WPA2", psk="Automation@123",
+                                               channel="11")
+        time.sleep(10)
+        logger().info("******************* Scanning on AP interface after bringing up DUT as AP ***************")
+        try:
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid="917_AP_MODE", scan_type=8, interface="ap", expected_status = "0x22")
+            logger().info(f"scan results: {scan_results}  ")
+        except Exception as e:
+                logger().info(f"scan should fail as expected successfully")
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "band": 0,
+        "boot_option": 49,
+        "security": "WPA2", "ssid": "917_AP_MODE", "passphrase": "Automation@123", "channel": 11,
+        "region": 1,
+        "region_code": Si91xRegionCode.US
+    }
+)
+@pytest.mark.config("wifi_client", wifi={"country": "US", "channel": "11"})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'bgnax', "security": 'WPA2', "channel": 11, "region": 'US'})
+def test_wifi_sdk_ap_mode_scan_with_PASSIVE_SCAN_TYPE_C688244(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer,
+                                                    sl_collections, sniffer_filter):
+    """ Scan for available APs in the vicinity after Soft AP Started for 5 minutes in loop """
+    logger().info("********** Configuring the sniffer with access point channel **********")
+    wifi_sniffer.interfaces.capture.configure_interface(channel=11)
+    logger().info("******* Start capturing with Sniffer by giving the test case name as filename *******")
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C688244.pcap")
+    sl_collections.configure_dut_in_static_ip(wifi_dut,
+                                                 static_ip="192.168.100.76",
+                                                 static_subnet="255.255.255.0",
+                                                 static_gateway="192.168.100.76")
+    logger().info(" ********** Starting DUT as an AP ********* ")
+    wifi_dut.interfaces.wifi.start_ap(ssid="917_AP_MODE", security="WPA2", psk="Automation@123",
+                                           channel="11")
+    time.sleep(10)
+    logger().info("******************* Scanning on AP interface after bringing up DUT as AP ***************")
+    try:
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid="917_AP_MODE", scan_type=8, interface="ap",
+                                                     expected_status="0x10003")
+        logger().info(f"scan results: {scan_results}  ")
+    except Exception as e:
+        logger().info(f"scan should fail as expected successfully")
+
+    logger().info("Stop sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+    wifi_dut.interfaces.wifi.stop_ap()
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "band": 0,
+        "boot_option": 49,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11,
+        "region": 1,
+        "region_code": Si91xRegionCode.US
+    }
+)
+@pytest.mark.config("wifi_client", wifi={"country": "US", "channel": "11"})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 11, "region": 'US'})
+def test_wifi_sdk_ap_mode_verify_DUT_able_to_send_stats_responce_or_not_C689175(wifi_dut, wifi_access_point, utf_constants, wifi_client, wifi_sniffer,
+                                                    sl_collections, sniffer_filter):
+    """ verify DUT is able to send stats-responce or not while disconnecting STA from DUT """
+    try:
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", psk="Automation@123", channel=11,
+                                          dtim_beacon_count=1,
+                                          beacon_interval=100)
+        channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface='ap')
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=channel)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C689175.pcap")
+        time.sleep(3)
+        logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
+        wifi_client.interfaces.wifi.join(ssid="SILABS_AP_MODE", security="WPA2", passphrase="Automation@123")
+        time.sleep(10)
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f"********* Dut IP **********: {dut_ip}")
+        rasp_mac_address = wifi_client.interfaces.wifi.get_mac_address()
+        logger().info(f"raspi_mac: {rasp_mac_address}")
+        client_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Client_ip: {client_ip}")
+        time.sleep(30)
+        logger().info(f"Initiating wlan ping from RASPI_STA")
+        rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute(
+            f"sudo ping -c {10} {dut_ip}")
+        assert rc == 0, f"RASPI-STA failed to ping DUT"
+        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"*********{dut_mac_address}**********")
+        logger().info(f'RASPI-STA Disconnecting from DUT-AP')
+        wifi_client.interfaces.wifi.disconnect_ap_client(client_mac=rasp_mac_address)
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "band": 0,
+        "boot_option": 49,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11,
+        "region": 1,
+        "region_code": Si91xRegionCode.US
+    }
+)
+@pytest.mark.config("wifi_client", wifi={"country": "US", "channel": "11"})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 11, "region": 'US'})
+def test_wifi_sdk_ap_mode_verify_DUT_able_to_send_probe_responce_or_not_when_STA_is_in_other_channel_C689553(wifi_dut, wifi_access_point, utf_constants, wifi_client, wifi_sniffer,
+                                                    sl_collections, sniffer_filter):
+    """ verify DUT able to send probe-responce or not when STAis configured in different channel of DUT """
+    try:
+        logger().info("********** Configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=1)
+        logger().info("******* Start capturing with Sniffer by giving the test case name as filename *******")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_689553.pcap")
+        sl_collections.configure_dut_in_static_ip(wifi_dut,
+                                                       static_ip="192.168.100.76",
+                                                       static_subnet="255.255.255.0",
+                                                       static_gateway="192.168.100.76")
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", psk="Automation@123",
+                                               channel=11)
+        time.sleep(10)
+        logger().info("******************* Scanning on Raspi after bringing up DUT as AP ***************")
+        wifi_client.interfaces.wifi.scan()
+        time.sleep(10)
+        logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
+        wifi_client.interfaces.wifi.join(ssid="SILABS_AP_MODE", security="WPA2", passphrase="Automation@123",
+                                              channel=1)
+        time.sleep(10)
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f"********* Dut IP **********: {dut_ip}")
+        client_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Client_ip: {client_ip}")
+        time.sleep(20)
+        logger().info(f"Initiating wlan ping from RASPI_STA")
+        rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute(
+            f"sudo ping -c {10} {dut_ip}")
+        assert rc == 0, f"RASPI-STA failed to ping DUT"
+        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+        time.sleep(5)
+
+        dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"*********{dut_ap_mac_address}**********")
+        rasp_mac_address = wifi_client.interfaces.wifi.get_mac_address()
+        logger().info(f"raspi_mac: {rasp_mac_address}")
+
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_ap_mac_address, filter_name="probe_response")
+
+        try:
+            wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'DUT should not respond probe responce as expected'
+        except:
+            logger().info(f"DUT wont send probe responce in other than DUT configured channel")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
