@@ -1431,7 +1431,7 @@ def test_wifi_sdk_conn_to_AP_in_korea_reg_C477823(wifi_dut, wifi_access_point, w
         "region_code": "china"
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'China'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'China', "channel": 13})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_sdk_scan_all_channels_in_China_region_c662088(wifi_sniffer, wifi_dut, wifi_access_point, request,
                                                             sniffer_filter, sl_collections):
@@ -1493,11 +1493,12 @@ def test_wifi_sdk_scan_type_extended_enabled_in_China_region_c662089(wifi_sniffe
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{channel}")
         time.sleep(2)
-        logger().info("Initiating scan from dut...")
-        scan_results = wifi_dut.interfaces.wifi.scan(channel=channel, ssid=None, scan_bitmap_2_4=0, scan_type=2)
-        time.sleep(10)
-        assert (len(scan_results) >= 1), "Scan failed"
-        logger().info(scan_results)
+        for _ in range(3):
+            logger().info("Initiating scan from dut...")
+            scan_results = wifi_dut.interfaces.wifi.scan(channel=channel, ssid=None, scan_bitmap_2_4=0, scan_type=2)
+            time.sleep(10)
+            assert (len(scan_results) > 11), "Scan failed"
+            logger().info(scan_results)
 
         wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as e:
@@ -1543,7 +1544,7 @@ def test_wifi_sdk_scan_connect_type_extended_enabled_in_China_region_c662090(wif
         logger().info("Initiating scan from dut...")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=channel, ssid=None, scan_bitmap_2_4=0, scan_type=2)
         time.sleep(10)
-        assert (len(scan_results) >= 1), "Scan failed"
+        assert (len(scan_results) >= 11), "Scan failed"
         logger().info(scan_results)
 
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1588,7 +1589,7 @@ def test_wifi_sdk_scan_type_extended_enabled_c653150(wifi_sniffer, wifi_dut, wif
         logger().info("Initiating scan from dut...")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=channel, ssid=None, scan_bitmap_2_4=0, scan_type=2)
         time.sleep(10)
-        assert (len(scan_results) >= 1), "Scan failed"
+        assert (len(scan_results) > 11), "Scan failed"
         logger().info(scan_results)
 
         wifi_sniffer.interfaces.capture.stop_capture()

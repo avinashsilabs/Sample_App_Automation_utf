@@ -150,33 +150,6 @@ class WLanTwTThread(ThreadBase):
                                                                      power_save=self.power_save,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated)
 
-            if self.before_join:
-                while True:
-                    events = self.wifi_dut.interfaces.wifi.get_async_events()
-                    twt_setup_success_event = [event for event in events if
-                                               event.event_type == AsyncEventIdentifiers.WIFI_TWT_RESPONSE_EVENT]
-                    if len(twt_setup_success_event):
-                        break
-                    self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
-                                                          twt_flow_id=self.twt_flow_id,
-                                                          wake_duration=self.wake_duration,
-                                                          wake_duration_unit=self.wake_duration_unit,
-                                                          wake_duration_tol=self.wake_duration_tol,
-                                                          wake_int_exp=self.wake_int_exp,
-                                                          wake_int_exp_tol=self.wake_int_exp_tol,
-                                                          wake_int_mantissa=self.wake_int_mantissa,
-                                                          wake_int_mantissa_tol=self.wake_int_mantissa_tol,
-                                                          implicit_twt=self.implicit_twt,
-                                                          un_announced_twt=self.un_announced_twt,
-                                                          triggered_twt=self.triggered_twt,
-                                                          twt_channel=self.twt_channel,
-                                                          twt_protection=self.twt_protection,
-                                                          restrict_tx_outside_tsp=self.restrict_tx_outside_tsp,
-                                                          twt_retry_limit=self.twt_retry_limit,
-                                                          twt_retry_interval=self.twt_retry_interval,
-                                                          req_type=self.req_type,
-                                                          negotiation_type=self.negotiation_type)
-
             if self.test_case == '113739':
                 try:
                     self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
