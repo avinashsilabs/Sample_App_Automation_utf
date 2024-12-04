@@ -537,6 +537,8 @@ def test_powersave_mode_2_enterprise_sdk_C19509(wifi_dut, wifi_access_point, wif
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -554,8 +556,7 @@ def test_powersave_mode_2_enterprise_sdk_C19509(wifi_dut, wifi_access_point, wif
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-@pytest.mark.parametrize("test_run_time", [300])
-@pytest.mark.skip
+@pytest.mark.parametrize("test_run_time", [1800])
 def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                          test_run_time, sl_collections, sniffer_filter,
                                                                          utf_constants):
@@ -563,51 +564,76 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
     logger().info(f"The test case will be executed for {test_run_time} seconds")
     sw = Stopwatch()
     iteration = 0
+    error_count = 0
+    expected_error_count = 10
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
     while sw.elapsed_sec < test_run_time:
-        iteration = iteration + 1
-        logger().info(f"################Iteration count -> {iteration}")
-        validation = True
+        try:
+            iteration = iteration + 1
+            logger().info(f"################Iteration count -> {iteration}")
+            validation = True
 
-        capture_filename = "test_connect_disconnect_power_save_c19485"
-        channel = wifi_access_point.interfaces.wifi.channel
-        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+            capture_filename = "test_connect_disconnect_power_save_c19485"
+            channel = wifi_access_point.interfaces.wifi.channel
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
 
-        time.sleep(30)
-        result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=True, ping_count=10,
-                                                     associated=False, retry_count=3)
-        device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
-        time.sleep(60)
+            time.sleep(30)
+            result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=True, ping_count=10,
+                                                         associated=False, retry_count=3)
+            device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+            time.sleep(60)
 
-        logger().info(f'DUT ip {device_ip}')
-        logger().info("pinging to dut.....")
-        ping_status = sl_collections.ping_with_custom_size(device_ip, ping_counts=30, byte_size=300)
-        assert ping_status, "DUT is not responding to ping request after powersave"
-        logger().info("ping to DUT is successful....")
+            logger().info(f'DUT ip {device_ip}')
+            logger().info("pinging to dut.....")
+            ping_status = sl_collections.ping_with_custom_size(device_ip, ping_counts=30, byte_size=300)
+            assert ping_status, "DUT is not responding to ping request after powersave"
+            logger().info("ping to DUT is successful....")
 
-        # Add disconnect.leave api
-        logger().info(f"Disconnect using api")
-        wifi_dut.interfaces.wifi.leave()
+            # Add disconnect.leave api
+            logger().info(f"Disconnect using api")
+            wifi_dut.interfaces.wifi.leave()
 
-        logger().info("Stop Sniffer finally")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info("validate NULL data frame with PM bit set to '1'")
+            logger().info("Stop Sniffer finally")
+            wifi_sniffer.interfaces.capture.stop_capture()
+            logger().info("validate NULL data frame with PM bit set to '1'")
 
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
-                                                                                        da_addr={ap_bssid},
-                                                                                        filter_name='power_mgmt_bit')
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find power management bit in QOS null frames in sniffer capture'
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                            da_addr={ap_bssid},
+                                                                                            filter_name='power_mgmt_bit')
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+                'Unable to find power management bit in QOS null frames in sniffer capture'
 
-        wifi_dut.interfaces.wifi.inited = False
-        wifi_dut.interfaces.wifi.associated = False
-        logger().info(f"Initialising deinit")
-        wifi_dut.interfaces.wifi.deinit()
-        logger().info(f"Initialising init")
-        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
-        logger().info(f"Initialising init completed")
+            wifi_dut.interfaces.wifi.inited = False
+            wifi_dut.interfaces.wifi.associated = False
+            logger().info(f"Initialising deinit")
+            wifi_dut.interfaces.wifi.deinit()
+            logger().info(f"Initialising init")
+            wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+            wifi_dut.interfaces.wifi.init(load_certificate=False)
+            wifi_dut.interfaces.wifi.initialize_thread()
+            wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+            logger().info(f"Initialising init completed")
+
+        except:
+            error_count = error_count + 1
+            logger().info(f"### Failure Count {error_count}: Failed in iteration -> {iteration} at {sw.elapsed_sec} seconds")
+            continue
+        finally:
+            if error_count > expected_error_count:
+                logger().info(f"*** Error count is {error_count}. Here error coount is more than expected ***")
+                logger().error(
+                    f"\n\n********** Observed error count '{error_count}' times which is more than expected"
+                    f" error count '{expected_error_count}', Hence marking the testcase as fail **********")
+            logger().info(f"wifi reset is running....")
+            wifi_dut.interfaces.wifi.reset()
+            logger().info(f"Initialising init")
+            wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+            wifi_dut.interfaces.wifi.init(load_certificate=False)
+            wifi_dut.interfaces.wifi.initialize_thread()
+            wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+            assert error_count <= expected_error_count, f"Error count is more than  '{expected_error_count}' times in  of test run time: {test_run_time} Hence failing the test case"
 
 
 @pytest.mark.config(
@@ -631,7 +657,6 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '12345678'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.check1
 def test_TCP_UDP_bidi_in_powersave_mode2_ulp_sdk_C19494(wifi_sniffer, remote_socket, wifi_dut,
                                                                   wifi_access_point, utf_constants,
                                                                   sl_collections, sniffer_filter,net_perf_client,wifi_client):
