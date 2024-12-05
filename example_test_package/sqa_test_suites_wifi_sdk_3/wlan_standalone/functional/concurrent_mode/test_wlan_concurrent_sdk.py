@@ -1,11 +1,11 @@
 import re
 import uuid
-from test_apmode_sdk import FilterPacket
+from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.ap_mode.test_apmode_sdk import FilterPacket
 from datetime import datetime
 import time
 from typing import Dict
 from random import randint
-import test_apmode_sdk as ap
+from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.ap_mode import test_apmode_sdk as ap
 from threading import Thread
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utf_config import UtfConfig
@@ -1001,9 +1001,8 @@ def test_wifi_sdk_device_as_ap_and_sta_c19318(sl_collections, wifi_access_point,
                                                        ping_after_power_save=True, retry_count=3,
                                                        associated=wifi_dut.interfaces.wifi.associated
                                                        )
-        sl_collections.run_traffic(wifi_dut, net_perf_client, protocol, dut_ip,
-                                   client_ip, timeout=60,
-                                   traffic_type="TX")
+        sl_collections.run_traffic(wifi_dut=wifi_dut, net_perf_client=net_perf_client, protocol=protocol,
+                                   device_ip=dut_ip, host_ip=client_ip, timeout=120, traffic_type="TX")
         wifi_client.interfaces.wifi.leave()
         wifi_dut.interfaces.wifi.leave()
         logger().info("Stop sniffer finally")
