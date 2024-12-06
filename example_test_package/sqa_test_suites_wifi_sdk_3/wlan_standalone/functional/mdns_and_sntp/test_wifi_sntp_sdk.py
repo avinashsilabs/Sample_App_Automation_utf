@@ -8,6 +8,7 @@ from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utils.stopwatch import Stopwatch
 from utf.utils.thread_base import ThreadBase
+from utf.utils.stopwatch import Stopwatch
 import time
 
 power_save = True
@@ -543,6 +544,83 @@ def test_wifi_sdk_ping_and_sntp_functionality_threaded_c585584(wifi_access_point
 
         filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr, filter_name='power_mgmt_bit')
 
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
+            'Unable to find the power management save sniffer packets'
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SNTPClient | Si91xTCPIPFeatureBitMap.DNSClient
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_verify_sntp_time_and_date_every_second_c192280(wifi_access_point, wifi_dut, request, utf_constants,
+                                                                 wifi_client,
+                                                                 wifi_sniffer, sniffer_filter, sl_collections):
+    """Verify SNTP time and date every second for a set duration."""
+
+    test_case = request.node.name
+    mode = "power_save_low_latency"
+    ping_count = utf_constants.get("ping_count")
+    duration = 60  # Duration in seconds to verify SNTP data
+
+    try:
+        logger().info(" ====== configuring the Sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
+
+        sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point, power_save=True,
+                                            retry_count=3,
+                                            mode=mode, associated=wifi_dut.interfaces.wifi.associated,
+                                            ping_count=ping_count)
+
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+
+        # Loop to verify SNTP time and date every second
+        end_time = 60
+        sw = Stopwatch()
+        while sw.elapsed_sec < end_time:
+            logger().info("**************** Creating SNTP Client Session in DUT ***************")
+            wifi_dut.interfaces.wifi.sntp_client_start()
+            time.sleep(10)
+            logger().info("**************** Getting SNTP Time and DATE from DUT ***************")
+            sntp_time, sntp_date = wifi_dut.interfaces.wifi.sntp_get_time_data()
+            logger().info(f"**************** SNTP TIME ----> '{sntp_time}'")
+            logger().info(f"**************** SNTP DATE ----> '{sntp_date}'\n")
+            time.sleep(5)
+            logger().info("**************** Deleting SNTP Client Session in DUT ***************")
+            wifi_dut.interfaces.wifi.sntp_client_stop()
+
+        logger().info("Disconnecting from AP...")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr, filter_name='power_mgmt_bit')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
             'Unable to find the power management save sniffer packets'
 
