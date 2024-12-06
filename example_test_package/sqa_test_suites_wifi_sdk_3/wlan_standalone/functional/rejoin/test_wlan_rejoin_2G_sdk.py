@@ -2419,3 +2419,66 @@ def test_wifi_sdk_rejoin_roaming_c19726(wifi_access_points, wifi_dut, switches, 
         logger().info("pdu switch state for AP1: " + str(state))
         assert state == 'false', 'Please check PDU outlet manually'
         wifi_dut.interfaces.wifi.leave()
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+def test_wifi_sdk_wlan_stats_c19177(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants, request,
+                                    sl_collections, sniffer_filter, net_perf_client, protocol, wifi_client):
+    """
+    Verify whether the device is able to get the Wireless Statistics in Station Mode once the rejoin Process is
+    completed
+    """
+    test_name = request.node.name
+    time_period = utf_constants.get("time_period")
+
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
+                          wifi_sniffer=wifi_sniffer, time_period=time_period, test_name=test_name, test_case_no=19742,
+                          sl_collections=sl_collections, switch=switch, data_transfer=False, protocol=protocol,
+                          net_perf_client=net_perf_client)
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        logger().info("Stop sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="test_rejoin_wlan_stats")
+        logger().info("\n\n ****** Access point is going to turn off  ******")
+        wlan_obj.socket_data_transfer_recovery_in_rejoin(data_transfer=True, bsdSetSocketOpt=False)
+        logger().info("Stop sniffer capture")
+
+        wifi_dut.interfaces.wifi.get_wifi_operational_stats(timeout=15)
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.
+                                                                                        dut_addr['dut_mac_address'],
+                                                                                        filter_name='probe_request')
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find Broadcast Probe request packet'
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
