@@ -1485,4 +1485,122 @@ def test_ble_sdk_enable_slave_connection_in_client_role_C19877(wifi_dut, ble_cli
         ble_client2.interfaces.bluetooth.close()
 
 
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_gatt_primary_services_C667632(wifi_dut, ble_client, sl_collections):
+    """
+    1.initialize the ble in dut
+    2.Advertise on remote
+    3.Scan and advertise from dut
+    4.Connect and check stability for 60secs
+    5.fetch the profiles from dut
+    6.Disconnect the dut
 
+    """
+    try:
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
+        assert bt_dut_address is not None, "gatt init failed in DUT"
+        wifi_dut.interfaces.wifi.bt_set_local_name("BLE_AUTOMATION")
+        status = wifi_dut.interfaces.wifi.bt_get_local_name()
+        logger().info(f" ======= Getting the local name : {status}")
+        bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(
+            bt_dut_address=bt_dut_address,
+        )
+        assert bt_client_address is not None, "init failed for rpi"
+        # Start scanning and connect to ble client
+        wifi_dut.interfaces.wifi.ble_start_scanning(
+            ble_client_address=bt_client_address, timeout=30
+        )
+        logger().info("Set DUT in advertise mode")
+        wifi_dut.interfaces.wifi.ble_start_advertising()
+        enable_wifi_ps = wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        assert enable_wifi_ps == 0, 'failed to enable wlan power save'
+        enable_bt_ps = wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps == 0, 'failed to enable bt power save'
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        timeout = 60
+        logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+        wifi_dut.interfaces.wifi.ble_connect(
+            ble_remote_dev_address=bt_client_address,
+            timeout=timeout,
+        )
+        time.sleep(60)
+        logger().info("verifying dut state after the conn......")
+        state = wifi_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        assert state_int == 9, "Device isn't in connected & advertising state "
+        logger().info(f"get all profiles")
+        uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
+        logger().info(f"*****primary uuids: {uuids}**********")
+        wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+        logger().info(" Issued BLE disconnect ")
+        time.sleep(5)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        wifi_dut.interfaces.wifi.ble_stop_advertising()
+
+
+
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_gatt_secondary_services_C667633(wifi_dut, ble_client, sl_collections):
+    """
+       1.initialize the ble in dut
+       2.Advertise on remote and add the service on remote
+       3.Scan and advertise from dut
+       4.Connect and check stability for 60secs
+       5.fetch the profiles from dut
+       6.Disconnect the dut
+
+       """
+    try:
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
+        assert bt_dut_address is not None, "gatt init failed in DUT"
+        wifi_dut.interfaces.wifi.bt_set_local_name("BLE_AUTOMATION")
+        status = wifi_dut.interfaces.wifi.bt_get_local_name()
+        logger().info(f" ======= Getting the local name : {status}")
+        bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(
+            bt_dut_address=bt_dut_address, service_classes=["HeartRateService"]
+        )
+        assert bt_client_address is not None, "init failed for rpi"
+        wifi_dut.interfaces.wifi.ble_start_scanning(
+            ble_client_address=bt_client_address, timeout=30
+        )
+        logger().info("Set DUT in advertise mode")
+        wifi_dut.interfaces.wifi.ble_start_advertising()
+        enable_wifi_ps = wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+        assert enable_wifi_ps == 0, 'failed to enable wlan power save'
+        enable_bt_ps = wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        assert enable_bt_ps == 0, 'failed to enable bt power save'
+        time.sleep(10)
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        timeout = 60
+        logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+        wifi_dut.interfaces.wifi.ble_connect(
+            ble_remote_dev_address=bt_client_address,
+            timeout=timeout,
+        )
+        time.sleep(60)
+        logger().info("verifying dut state after the conn......")
+        state = wifi_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        assert state_int == 9, "Device isn't in connected state"
+        logger().info(f"get all profiles")
+        uuids = wifi_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
+        assert HeartRateService.UUID.lower() in uuids is not None, "Could not fetch the heartrate profile"
+        wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
+        logger().info(" Issued BLE disconnect ")
+        time.sleep(5)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        wifi_dut.interfaces.wifi.ble_stop_advertising()
