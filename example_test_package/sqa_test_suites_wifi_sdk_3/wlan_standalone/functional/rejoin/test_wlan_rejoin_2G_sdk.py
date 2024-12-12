@@ -1,8 +1,11 @@
 import re
 import time
 from utf.utils.time_measurer import TimeMeasurer
+from random import randint
 import pytest as pytest
-from utf import UtfDatabaseProperties
+import re
+from datetime import datetime
+import datetime
 from utf.utils.iperf.iperf_utils import ping
 from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.tcp_udp.test_wlan_data_rates_sdk \
     import SocketDataTransfer
@@ -178,6 +181,17 @@ class WLanThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                          beacon_missed_count=40,
                                                                          first_time_retry_enable=0)
+
+            elif self.test_case_no == 641349:
+                """Enabling Rejoin with beacon missed count 20 and max retry count 4"""
+                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=5, scan_interval=1,
+                                                                              beacon_missed_count=20,
+                                                                              first_time_retry_enable=1)
+            elif self.test_case_no == 641350:
+                """Enabling Rejoin with beacon missed count 20 and max retry count 4"""
+                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=5, scan_interval=1,
+                                                                              beacon_missed_count=90,
+                                                                              first_time_retry_enable=1)
 
             elif self.test_case_no == 19743:
                 "Set region code EU"
@@ -363,6 +377,99 @@ class WLanThread(ThreadBase):
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case {self.test_case_no} thread: {str(e)} ****\n\n")
             raise e
+
+    def parse_time(self, line):
+        result = re.search('2024(.*)IST', line)
+        time_stamp = result.group(1).strip()
+        size = len(time_stamp)
+        mod_time_stamp1 = time_stamp[:size - 3]
+        return mod_time_stamp1
+
+    def beacon_miss_count(self):
+        '''This function is used to validate beacon miss count, After turn off AP, DUT should send unicast probe request
+        find out the time difference between last beacon and first unicast probe request and last beacon and first
+        broadcast probe request
+        '''
+        flag_fail_unicast = True
+        flag_fail_broadcast = True
+        if self.test_case_no == 641349:
+            lower_limit_uni = 2.0
+            upper_limit_uni = 3.0
+            lower_limit_brod = 4.0
+            upper_limit_brod = 5.0
+        else:
+            lower_limit_uni = 7.0
+            upper_limit_uni = 8.0
+            lower_limit_brod = 9.0
+            upper_limit_brod = 10.0
+        # Open the file and process each line
+        filter_file = open(f'./reports/filter2_file.txt', 'r')
+        lines = filter_file.readlines()
+
+        last_beacon_time = None
+        first_unicast_probe_time = None
+        first_broadcast_probe_time = None
+
+        for i, line in enumerate(lines):
+            line = line.strip()
+
+            # Check for arrival time first
+            if 'Arrival Time:' in line:
+                current_arrival_time = self.parse_time(line)
+
+            # Check for beacon frame
+            if 'Type/Subtype: Beacon frame (0x0008)' in line:
+                if current_arrival_time:
+                    last_beacon_time = current_arrival_time
+
+            # Check for probe request (unicast or broadcast)
+            elif 'Type/Subtype: Probe Request (0x0004)' in line:
+                destination_match = None
+                for j in range(i, i + 20):  # Scan the next few lines for destination address
+                    if 'Destination address:' in lines[j]:
+                        destination_match = re.search(r'Destination address: ([0-9a-fA-F:]{17})', lines[j])
+                        break
+
+                if destination_match and current_arrival_time:
+                    destination_address = destination_match.group(1)
+
+                    # Check for unicast
+                    if not destination_address.startswith('ff:ff:ff:ff:ff:ff'):
+                        if first_unicast_probe_time is None:
+                            first_unicast_probe_time = current_arrival_time
+
+                    # Check for broadcast after unicast is found
+                    elif first_unicast_probe_time and destination_address.startswith('ff:ff:ff:ff:ff:ff'):
+                        if first_broadcast_probe_time is None:
+                            first_broadcast_probe_time = current_arrival_time
+
+        time_diff_beacon_first_uni_prob_req = datetime.datetime.strptime(first_unicast_probe_time,
+                                                                         '%H:%M:%S.%f') - datetime.datetime.strptime(
+            last_beacon_time, '%H:%M:%S.%f')
+        diff_unicast_probe = str(time_diff_beacon_first_uni_prob_req)[6:14]
+        if lower_limit_uni <= float(diff_unicast_probe) <= upper_limit_uni:
+            logger().info(
+                f"Time difference (unicast probe - last beacon) is within range: {diff_unicast_probe} seconds")
+        else:
+            logger().info(f"Time difference (unicast probe - last beacon) out of range: {diff_unicast_probe} seconds")
+            flag_fail_unicast = False
+
+        time_diff_beacon_first_broadcast_prob_req = datetime.datetime.strptime(first_broadcast_probe_time,
+                                                                               '%H:%M:%S.%f') - datetime.datetime.strptime(
+            last_beacon_time, '%H:%M:%S.%f')
+        diff_broadcast_probe = str(time_diff_beacon_first_broadcast_prob_req)[6:14]
+        if lower_limit_brod <= float(diff_broadcast_probe) <= upper_limit_brod:
+            logger().info(
+                f"Time difference (unicast probe - last beacon) is within range: {diff_broadcast_probe} seconds")
+        else:
+            logger().info(f"Time difference (unicast probe - last beacon) out of range: {diff_broadcast_probe} seconds")
+            flag_fail_broadcast = False
+
+        filter_file.close()
+        if flag_fail_unicast == True and flag_fail_broadcast == True:
+            assert True
+        else:
+            assert False
 
     def socket_data_transfer_recovery_in_rejoin(self, option_name=None, option_val=None, bsdSetSocketOpt=True,
                                                 data_transfer=False):
@@ -2476,6 +2583,140 @@ def test_wifi_sdk_wlan_stats_c19177(wifi_sniffer, wifi_access_point, wifi_dut, s
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find Broadcast Probe request packet'
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+def test_wifi_sdk_beacon_miss_count_stats_20_c641349(wifi_sniffer, wifi_access_point, wifi_dut, switch,
+                                                     request, sl_collections,
+                                                     sniffer_filter):
+    """
+    Validated beacon_missed_count values less than 40(Configure 10 or 20 or 30) and check whether DUT is sending
+    probe requests after 40 beacons miss or not
+    """
+    test_name = request.node.name
+    packet_filter2 = "Arrival Time:"
+
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                          wifi_sniffer=wifi_sniffer, test_name=test_name, test_case_no=641349,
+                          sl_collections=sl_collections, switch=switch, data_transfer=False)
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="test_rejoin_beacon_miss_count")
+
+        logger().info("\n\n ****** Access point is going to turn off  ******")
+        switch.interfaces.pdu_switch.turn_off(delay=10)
+        logger().info("Stop sniffer capture")
+        time.sleep(15)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+
+        packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_bssid,
+                                                                                        da_addr=wlan_obj.dut_addr[
+                                                                                            'dut_mac_address'],
+                                                                                        filter_name='beacon_probe_req_count_packt')
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5,
+                                                                  packet_filter2=packet_filter2)['packet_count'], \
+            'Unable to find Broadcast Probe request packet'
+
+        wlan_obj.beacon_miss_count()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+def test_wifi_sdk_beacon_miss_count_stats_90_c641350(wifi_sniffer, wifi_access_point, wifi_dut, switch,
+                                                     request, sl_collections,
+                                                     sniffer_filter):
+    """
+    Validated beacon_missed_count values less than 70 or 90 and check whether DUT is sending probe requests after
+    70 or 90 beacons miss or not
+    """
+    test_name = request.node.name
+    packet_filter2 = "Arrival Time:"
+
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                          wifi_sniffer=wifi_sniffer, test_name=test_name, test_case_no=641350,
+                          sl_collections=sl_collections, switch=switch, data_transfer=False)
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="test_rejoin_beacon_miss_count")
+
+        logger().info("\n\n ****** Access point is going to turn off  ******")
+        switch.interfaces.pdu_switch.turn_off(delay=10)
+        logger().info("Stop sniffer capture")
+        time.sleep(15)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info('******* Turn on Access point **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+
+        packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_bssid,
+                                                                                        da_addr=wlan_obj.dut_addr[
+                                                                                            'dut_mac_address'],
+                                                                                        filter_name='beacon_probe_req_count_packt')
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5,
+                                                                  packet_filter2=packet_filter2)['packet_count'], \
+            'Unable to find Broadcast Probe request packet'
+
+        wlan_obj.beacon_miss_count()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
