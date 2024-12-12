@@ -260,7 +260,7 @@ class WifiJoin(ThreadBase):
             self.fw_version_before_upgrade = self.wifi_dut.interfaces.wifi.version()
             logger().info(f"*** DUT firmware version before upgrade = {self.fw_version_before_upgrade} ***")
 
-            if self.test_case == '19769' or self.test_case == '498662' or self.test_case == '687579':
+            if self.test_case == '19769' or self.test_case == '498662' or self.test_case == '687579' or self.test_case == '687580':
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
                     flags=1,
                     ip_address=self.host_ip,
@@ -622,6 +622,111 @@ def test_wifi_sdk_https_fw_url_length_2048_disable_http_url_c500499(aws_s3, wifi
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.Aggregation |
+                    Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.HTTPLongerURL,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
+                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL |
+                          Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_SSL_16K_RECORD |
+                              Si91xExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ca_cert": ["combined_cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw", "clear_certs"])
+def test_wifi_sdk_https_fw_upgrade_using_aws_server_combined_root_ca_c687580(aws_s3, wifi_sniffer, wifi_access_point,
+                                                           wifi_dut, sl_collections, utf_constants):
+    """This Test case is validating Firmware upgrade using aws server"""
+    rps_path = utf_constants.get("rps_filename")
+    try:
+        test_case = '687580'
+
+        wlan_obj = WifiJoin(aws_s3=aws_s3, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
+                            rps_path=rps_path)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.Aggregation |
+                    Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.HTTPLongerURL,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
+                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL |
+                          Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_SSL_16K_RECORD |
+                              Si91xExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ca_cert": ["intermediate-root-ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw","clear_certs"])
+def test_wifi_sdk_https_fw_upgrade_using_aws_server_intermediate_root_ca_c687579(aws_s3, wifi_sniffer, wifi_access_point,
+                                                           wifi_dut, sl_collections, utf_constants):
+    """This Test case is validating Firmware upgrade using aws server"""
+    rps_path = utf_constants.get("rps_filename")
+    try:
+        test_case = '687579'
+
+        wlan_obj = WifiJoin(aws_s3=aws_s3, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
+                            rps_path=rps_path)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+
+
+
+
+
 
 
 

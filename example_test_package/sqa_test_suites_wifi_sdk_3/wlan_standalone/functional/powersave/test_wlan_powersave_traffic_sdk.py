@@ -167,7 +167,7 @@ class UDPDataTransfer(ThreadBase):
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_power_mode_switching_before_assoc_C19500(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
-                                                  sniffer_filter):
+                                                  sniffer_filter,sl_collections):
     """
     Power Save Mode switching before association
     """
