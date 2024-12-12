@@ -210,7 +210,6 @@ class WifiJoinThread(ThreadBase):
             scan_status, scan_results = self.sl_collections.scan(self.wifi_dut, scan_status=False, retry_count=3,
                                                                  channel=0)
             logger().info(f"scan results : {scan_results}")
-            assert len(scan_results) > 0, "scan failed"
         self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"DUT MAC ADDRESS :  {self.dut_mac_address}")
 

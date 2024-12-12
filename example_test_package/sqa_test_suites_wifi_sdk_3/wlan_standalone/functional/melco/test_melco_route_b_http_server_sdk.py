@@ -150,13 +150,14 @@ class ConcurrentMode:
                                  security="WPA2", psk="Automation@123"):
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
-        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
-        wifi_dut.interfaces.wifi.http_server_start()
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid=ssid, security=security, psk=psk,
                                           channel=ap_channel,
                                           dtim_beacon_count="1", beacon_interval="100")
         time.sleep(30)
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+
         dut_as_ap_ip = self.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
         wiseconnect_web.interfaces.wiseconnect_ui.connect(ip_address=dut_as_ap_ip, web_ui_port=80,
                                                           ssid=wifi_access_point.interfaces.wifi.ssid,
@@ -184,13 +185,14 @@ class ConcurrentMode:
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
         channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface="client")
-        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
-        wifi_dut.interfaces.wifi.http_server_start()
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid=ssid, security=security, psk=psk,
                                           channel=channel,
                                           dtim_beacon_count="1", beacon_interval="100")
         time.sleep(30)
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+
         dut_as_ap_ip = self.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
 
         wiseconnect_web.interfaces.wiseconnect_ui.connect(ip_address=dut_as_ap_ip, web_ui_port=80,
@@ -318,8 +320,10 @@ def wifi_dut_marker(ext_custom_bit=0, thread_count=1, tcp_feat_bit=0, ext_tcp_fe
 @wifi_dut_marker()
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
-def test_melco_sdk_HTTP_server_C557318(sl_collections, wifi_dut, wifi_client, channel, wifi_sniffer,
-                                       sniffer_filter, http_client, request):
+def test_melco_sdk_HTTP_server_C557318(sl_collections, wifi_dut, wifi_client, channel,
+                                       wifi_sniffer,
+                                       sniffer_filter,
+                                       http_client, request):
     """
     Verify the HTTP Webpage on 3rd party STA which is connected to APUT.
     """
@@ -334,12 +338,13 @@ def test_melco_sdk_HTTP_server_C557318(sl_collections, wifi_dut, wifi_client, ch
 
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
-        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
-        wifi_dut.interfaces.wifi.http_server_start()
+
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C557318", security="WPA2", psk="Automation@123", channel=channel,
                                           dtim_beacon_count="1", beacon_interval="100")
         time.sleep(30)
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
         dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
 
         url = f'http://{dut_as_ap_ip}/login'
@@ -353,8 +358,8 @@ def test_melco_sdk_HTTP_server_C557318(sl_collections, wifi_dut, wifi_client, ch
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        sniff_obj.sniffer_validation_beacon(wifi_sniffer, sniffer_filter, dut_ap_mac_address, channel,
-                                  expected_beacons=True)
+        sniff_obj.sniffer_validation_beacon(wifi_sniffer, sniffer_filter, dut_ap_mac_address,
+                                            channel, expected_beacons=True)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
@@ -393,13 +398,15 @@ def test_melco_sdk_HTTP_server_stop_beacon_C557319(sl_collections, wifi_dut, wif
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
                                                   static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
-        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6,
-                                                  send_large_data=1, data=webpage)
-        wifi_dut.interfaces.wifi.http_server_start()
+
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C557319", security="WPA2", psk="Automation@123",
                                           channel=channel,
                                           dtim_beacon_count="1", beacon_interval="100", beacon_stop=1)
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6,
+                                                  send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+
         time.sleep(10)
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -467,12 +474,13 @@ def test_melco_sdk_HTTP_server_connect_reconnec_C687978(sl_collections, wifi_dut
 
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
-        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
-        wifi_dut.interfaces.wifi.http_server_start()
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C687978", security="WPA2", psk="Automation@123", channel=channel,
                                           dtim_beacon_count="1", beacon_interval="100", beacon_stop=1)
         time.sleep(30)
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+
         for count in range(0, iter_count):
             dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
 
@@ -529,12 +537,14 @@ def test_melco_sdk_HTTP_server_start_stop_ap_C557320(sl_collections, wifi_dut, w
 
             sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
                                                       static_gateway="192.168.100.76")
-            wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
-            wifi_dut.interfaces.wifi.http_server_start()
             logger().info(" ********** Starting DUT as an AP ********* ")
-            wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C557320", security="WPA2", psk="Automation@123", channel=channel,
+            wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C557320", security="WPA2", psk="Automation@123",
+                                              channel=channel,
                                               dtim_beacon_count="1", beacon_interval="100")
             time.sleep(30)
+            wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+            wifi_dut.interfaces.wifi.http_server_start()
+
             dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
 
             url = f'http://{dut_as_ap_ip}/login'
@@ -594,12 +604,13 @@ def test_melco_sdk_HTTP_server_conc_http_webpage_C557321(sl_collections, wifi_du
 
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
-        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
-        wifi_dut.interfaces.wifi.http_server_start()
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C557321", security="WPA2", psk="Automation@123", channel=channel,
                                           dtim_beacon_count="1", beacon_interval="100")
         time.sleep(30)
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+
         dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
 
         wiseconnect_web.interfaces.wiseconnect_ui.connect(ip_address=dut_as_ap_ip, web_ui_port=80,
@@ -662,12 +673,13 @@ def test_melco_sdk_HTTP_server_conc_STA_11ax_disable_C557322(sl_collections, wif
 
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
-        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
-        wifi_dut.interfaces.wifi.http_server_start()
-        logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C557322", security="WPA2", psk="Automation@123", channel=channel,
                                           dtim_beacon_count="1", beacon_interval="100")
         time.sleep(30)
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+        logger().info(" ********** Starting DUT as an AP ********* ")
+
         dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
 
         wiseconnect_web.interfaces.wiseconnect_ui.connect(ip_address=dut_as_ap_ip, web_ui_port=80,
@@ -845,13 +857,14 @@ def test_melco_sdk_HTTP_server_melco_ap_power_cycle_C557325(sl_collections, wifi
 
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
-        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
-        wifi_dut.interfaces.wifi.http_server_start()
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C557325", security="WPA2", psk="Automation@123",
                                           channel=ap_channel,
                                           dtim_beacon_count="1", beacon_interval="100")
         time.sleep(30)
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+
         dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
 
         wiseconnect_web.interfaces.wiseconnect_ui.connect(ip_address=dut_as_ap_ip, web_ui_port=80,
@@ -875,12 +888,13 @@ def test_melco_sdk_HTTP_server_melco_ap_power_cycle_C557325(sl_collections, wifi
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
         channel = wifi_dut.interfaces.wifi.get_channel_info(interface="client")
-        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
-        wifi_dut.interfaces.wifi.http_server_start()
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C557325", security="WPA2", psk="Automation@123",
                                           channel=wifi_access_point.interfaces.channel,
                                           dtim_beacon_count="1", beacon_interval="100")
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+
         time.sleep(30)
         wifi_client[0].interfaces.wifi.channel = wifi_access_point.interfaces.channel
         dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
@@ -944,13 +958,14 @@ def test_melco_sdk_HTTP_server_melco_psk_change_C557326(sl_collections, wifi_dut
 
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
-        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
-        wifi_dut.interfaces.wifi.http_server_start()
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C557326", security="WPA2", psk="Automation@123",
                                           channel=ap_channel,
                                           dtim_beacon_count="1", beacon_interval="100")
         time.sleep(30)
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+
         dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
 
         wiseconnect_web.interfaces.wiseconnect_ui.connect(ip_address=dut_as_ap_ip, web_ui_port=80,
@@ -974,13 +989,14 @@ def test_melco_sdk_HTTP_server_melco_psk_change_C557326(sl_collections, wifi_dut
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
         channel = wifi_dut.interfaces.wifi.get_channel_info(interface="client")
-        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
-        wifi_dut.interfaces.wifi.http_server_start()
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C557326", security="WPA2", psk="Automation@123",
                                           channel=wifi_access_point.interfaces.channel,
                                           dtim_beacon_count="1", beacon_interval="100")
         time.sleep(30)
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+
         wifi_client[0].interfaces.wifi.channel = wifi_access_point.interfaces.channel
         dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
 
@@ -1095,12 +1111,13 @@ def test_melco_sdk_HTTP_server_incorrect_ssid_C557330(sl_collections, wifi_dut, 
 
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
-        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
-        wifi_dut.interfaces.wifi.http_server_start()
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C557330", security="WPA2", psk="Automation@123", channel=channel,
                                           dtim_beacon_count="1", beacon_interval="100")
         time.sleep(30)
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+
         dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
 
         wiseconnect_web.interfaces.wiseconnect_ui.connect(ip_address=dut_as_ap_ip, web_ui_port=80,
@@ -1170,12 +1187,13 @@ def test_melco_sdk_HTTP_server_tcp_tx_C557328(sl_collections, wifi_dut, wifi_cli
 
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
-        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
-        wifi_dut.interfaces.wifi.http_server_start()
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C557328", security="WPA2", psk="Automation@123", channel=channel,
                                           dtim_beacon_count="1", beacon_interval="100")
         time.sleep(30)
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+
         dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
 
         wiseconnect_web.interfaces.wiseconnect_ui.connect(ip_address=dut_as_ap_ip, web_ui_port=80,
