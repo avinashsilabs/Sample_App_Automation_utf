@@ -14,8 +14,7 @@ from utf.utils.stopwatch import Stopwatch
 import string
 from random import choices
 from utf.utils.iperf.iperf_utils import ping
-from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble_provisioning.test_sta_ble_provisioning_sdk import \
-    ProvisioningFunctionality
+from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble_provisioning.test_sta_ble_provisioning_sdk import ProvisioningFunctionality
 
 """This function runs below test steps for DUT-Si91x
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -381,11 +380,11 @@ class BleThreadFunctionality(ThreadBase):
             logger().info(f"Advertising the DUT")
             if self.test_case == 198669 or self.test_case == 198674 or self.test_case == 198672 or self.test_case == 198665:
                 self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
-                self.ble_client_address = self.sl_collections.scan_and_connect_from_remote(
-                    wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_dut_address=self.ble_dut_address,
-                    ble_pairing=self.ble_pairing)
+                self.sl_collections.scan_and_connect_from_remote(wifi_dut=self.wifi_dut, ble_client=self.ble_client,
+                                                                 ble_dut_address=self.ble_dut_address,
+                                                                 ble_pairing=self.ble_pairing)
             if self.test_case == 198673 or self.test_case == 198667:
-                self.ble_client_address = self.sl_collections.ble_connection(
+                self.sl_collections.ble_connection(
                     wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_dut_address=self.ble_dut_address,
                     timeout=20, mode='master')
             servs, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
@@ -402,20 +401,12 @@ class BleThreadFunctionality(ThreadBase):
             self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
             self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(
                 char_path=char_path, char_uid=char_uid)
-            time.sleep(5)
             if self.test_case == 198669 or self.test_case == 198674 or self.test_case == 198673 or self.test_case == 198672 or self.test_case == 198667:
                 data = "testwentybytesofdata"
                 sw = Stopwatch()
-                count = 0
                 while sw.elapsed_sec < 60:
-                    self.wifi_dut.interfaces.wifi.ble_notify_custom_value(
-                        data=data, ble_remote_dev_address=self.ble_client_address)
+                    self.wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
                     time.sleep(5)
-                    logger().info("******************** Validate Data ********************")
-                    notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-                    logger().info(f' *********************** Notification is {notifications} ***********************')
-                    assert notifications[count] == data, "Data Mismatched"
-                    count += 1
             if self.test_case == 198665:
                 sw = Stopwatch()
                 data = "testwentybytesofdata"
@@ -443,6 +434,12 @@ class BleThreadFunctionality(ThreadBase):
             logger().info("********* Unsubscribing to Notifications **********")
             self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
             self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+
+            logger().info("******************** Validate Data ********************")
+            notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+            logger().info(f' *********************** Notification is {notifications} ***********************')
+            assert len(notifications) > 0, "received data is empty"
+            assert notifications[0] == data, "failed to fetch data"
 
             logger().info("******************** ble_remove_service ***********************")
             self.wifi_dut.interfaces.wifi.ble_remove_service()
@@ -503,7 +500,7 @@ class BleThreadFunctionality(ThreadBase):
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
@@ -519,6 +516,7 @@ class BleThreadFunctionality(ThreadBase):
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C198664')
 def test_wifi_sdk_wlan_connect_11ax_ble_connect_with_diff_int_c198664(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, wifi_client, sniffer_filter):
     """Verify the WLAN connection with 11ax mode and BLE Connection as Slave using different BLE connection intervals"""
@@ -562,7 +560,7 @@ def test_wifi_sdk_wlan_connect_11ax_ble_connect_with_diff_int_c198664(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
@@ -581,6 +579,7 @@ def test_wifi_sdk_wlan_connect_11ax_ble_connect_with_diff_int_c198664(
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos", [('0xc8', 0)])
+@pytest.mark.test_src_map_id('C198668')
 def test_wifi_sdk_wlan_tcp_rx_with_11ax_ble_connect_slave_smp_enable_c198668(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, protocol, net_perf_client, traffic, qos):
@@ -625,7 +624,7 @@ def test_wifi_sdk_wlan_tcp_rx_with_11ax_ble_connect_slave_smp_enable_c198668(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
@@ -644,6 +643,7 @@ def test_wifi_sdk_wlan_tcp_rx_with_11ax_ble_connect_slave_smp_enable_c198668(
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("traffic, qos", [('0xc8', 0)])
+@pytest.mark.test_src_map_id('C198670')
 def test_wifi_sdk_wlan_udp_rx_with_11ax_ble_connect_master_c198670(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, protocol, net_perf_client, traffic, qos):
@@ -704,6 +704,7 @@ def test_wifi_sdk_wlan_udp_rx_with_11ax_ble_connect_master_c198670(
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C198671')
 def test_wifi_sdk_wlan_ssl_tx_with_11ax_ble_connect_master_c198671(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, ssl_server):
@@ -751,7 +752,7 @@ def test_wifi_sdk_wlan_ssl_tx_with_11ax_ble_connect_master_c198671(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
@@ -770,6 +771,7 @@ def test_wifi_sdk_wlan_ssl_tx_with_11ax_ble_connect_master_c198671(
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos", [('0xc8', 0)])
+@pytest.mark.test_src_map_id('C198678')
 def test_wifi_sdk_wlan_tcp_tx_with_11ax_ble_connect_and_disconnect_slave_c198678(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, protocol, net_perf_client, traffic, qos, utf_constants):
@@ -814,7 +816,7 @@ def test_wifi_sdk_wlan_tcp_tx_with_11ax_ble_connect_and_disconnect_slave_c198678
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
@@ -830,6 +832,7 @@ def test_wifi_sdk_wlan_tcp_tx_with_11ax_ble_connect_and_disconnect_slave_c198678
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C198661')
 def test_wifi_sdk_wlan_connection_with_11ax_ble_slave_c198661(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut):
@@ -873,7 +876,7 @@ def test_wifi_sdk_wlan_connection_with_11ax_ble_slave_c198661(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
@@ -889,6 +892,7 @@ def test_wifi_sdk_wlan_connection_with_11ax_ble_slave_c198661(
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C198662')
 def test_wifi_sdk_wlan_connection_with_11ax_ble_master_c198662(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut):
@@ -932,7 +936,7 @@ def test_wifi_sdk_wlan_connection_with_11ax_ble_master_c198662(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
@@ -948,6 +952,7 @@ def test_wifi_sdk_wlan_connection_with_11ax_ble_master_c198662(
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C198663')
 def test_wifi_sdk_wlan_connection_with_11ax_ping_traffic_ble_master_c198663(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut):
@@ -992,7 +997,7 @@ def test_wifi_sdk_wlan_connection_with_11ax_ping_traffic_ble_master_c198663(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
@@ -1011,6 +1016,7 @@ def test_wifi_sdk_wlan_connection_with_11ax_ping_traffic_ble_master_c198663(
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("traffic, qos", [('0xc8', 0)])
+@pytest.mark.test_src_map_id('C198669')
 def test_wifi_sdk_wlan_udp_tx_with_11ax_ble_connect_slave_notification_c198669(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, protocol, net_perf_client, traffic, qos):
@@ -1072,6 +1078,7 @@ def test_wifi_sdk_wlan_udp_tx_with_11ax_ble_connect_slave_notification_c198669(
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C198674')
 def test_wifi_sdk_http_download_with_11ax_ble_connect_slave_notification_c198674(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, http_server, index_path, utf_constants):
@@ -1133,6 +1140,7 @@ def test_wifi_sdk_http_download_with_11ax_ble_connect_slave_notification_c198674
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C198673')
 def test_wifi_sdk_http_download_with_11ax_ble_connect_master_notification_c198673(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, http_server, index_path, utf_constants):
@@ -1201,6 +1209,7 @@ def test_wifi_sdk_http_download_with_11ax_ble_connect_master_notification_c19867
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C198672')
 def test_wifi_sdk_wlan_ssl_rx_with_11ax_ble_connect_slave_and_notification_enable_c198672(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, ssl_server):
@@ -1245,7 +1254,7 @@ def test_wifi_sdk_wlan_ssl_rx_with_11ax_ble_connect_slave_and_notification_enabl
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient  | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
@@ -1264,6 +1273,7 @@ def test_wifi_sdk_wlan_ssl_rx_with_11ax_ble_connect_slave_and_notification_enabl
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos", [('0xc8', 0)])
+@pytest.mark.test_src_map_id('C198667')
 def test_wifi_sdk_wlan_tcp_tx_with_11ax_ble_connect_master_notification_c198667(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, protocol, net_perf_client, traffic, qos):
@@ -1315,7 +1325,7 @@ def test_wifi_sdk_wlan_tcp_tx_with_11ax_ble_connect_master_notification_c198667(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
@@ -1331,6 +1341,7 @@ def test_wifi_sdk_wlan_tcp_tx_with_11ax_ble_connect_master_notification_c198667(
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C198665')
 def test_wifi_sdk_rejoin_11ax_ble_connect_slave_and_notification_enable_c198665(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, switch):
@@ -1389,6 +1400,7 @@ def test_wifi_sdk_rejoin_11ax_ble_connect_slave_and_notification_enable_c198665(
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C198666')
 def test_wifi_sdk_11ax_ble_provisioning_c198666(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants):
