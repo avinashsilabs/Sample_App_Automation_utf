@@ -2,6 +2,8 @@
 Column1,Column2,Column3
 Column1,Column2,Column3
 Column1,Column2,Column3
+Column1,Column2,Column3
+Column1,Column2,Column3
 ,,
 beacon,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 8)
 No_beacon,(wlan.sa == {{ sa_addr }}), and !(wlan.fc.type_subtype == 8)
@@ -145,7 +147,7 @@ dhcp_ack,((wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }})), and (dhcp.
 dhcp_4_way_handshake_packets,(wlan.sa == {{ sa_addr }} or wlan.da == {{ da_addr }}) or (wlan.ta == {{ ta_addr }} or wlan.ra == {{ ra_addr }}), and (dhcp.option.dhcp == 5) or (dhcp.option.dhcp == 1) or (dhcp.option.dhcp == 2) or (dhcp.option.dhcp == 3)
 tcp_syn_with_syn_ack_with_ack,(wlan.da == {{ da_addr }} or wlan.sa == {{ sa_addr }} or wlan.ta == {{ ta_addr }}), and tcp.flags == 0x002 or tcp.flags == 0x012 or tcp.flags == 0x010
 wpa3_h2e_mode,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 0) and (wlan.rsnx.sae_hash_to_element == 1)
-hidden_ssid_scan,(wlan.sa == {{ sa_addr }}),and (wlan.ssid == "") and (wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.fc.type_subtype == 4)
+hidden_ssid_scan,(wlan.sa == {{ sa_addr }})," and (wlan.ssid == """") and (wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.fc.type_subtype == 4)"
 wpa3_enh_mode,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 1)
 dhcp,(wlan.addr == {{ sa_addr }}), and dhcp
 apmode_association_id,(wlan.sa == {{ sa_addr }}), and (wlan.fixed.aid=={{association_id}})
@@ -188,3 +190,4 @@ aput_wpa3_alone, (wlan.sa == {{ sa_addr }} and (wlan.fc.type_subtype == 8)), and
 aput_wpa3_mixed, (wlan.sa == {{ sa_addr }} and (wlan.fc.type_subtype == 8)), and (wlan.rsn.capabilities.mfpr == False and wlan.rsn.capabilities.mfpc == True)
 aput_wpa3_null_function, (wlan.sa == {{ sa_addr }} and wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 0x24 and wlan.fc.retry == 0)
 http_sni, (ip.src == {{ sa_addr }} and ip.dst == {{ da_addr }}), and (tls.handshake.extension.type == 0)
+beacon_probe_req_count_packt,(wlan.ta == {{ sa_addr }} or  wlan.sa == {{ da_addr }} or wlan.da == ff:ff:ff:ff:ff:ff), and wlan.ssid == {{wlan_ssid}}

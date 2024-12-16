@@ -1369,9 +1369,22 @@ class WLanThread(ThreadBase):
         # Initialize flag to count matches
         flag = 0
 
-        # Iterate over each VAP configuration
+        # Find matches
+        matching_cells = []
+        for key, ssid in ssid_dict.items():
+            for cell in self.scan_list:
+                if cell.ssid == ssid:
+                    matching_cells.append(cell)
+                    break  # Exit loop once a match is found
+
+        # Print the matching cells
+        logger().info("Matching Cells:")
+        for match in matching_cells:
+            logger().info(match)
+
+        # # Iterate over each VAP configuration
         for vap_key, sec_num, vap_name in vap_configs:
-            for scan_item in self.scan_list:
+            for scan_item in matching_cells:
                 if scan_item.ssid == ssid_dict[vap_key]:
                     if (
                         scan_item.rf_channel == channel_dict[ssid_dict[vap_key]]
@@ -3027,6 +3040,9 @@ def test_wifi_sdk_mbssid_c219302(
     wifi={
         "standard": "gnbax",
         "security": "WPA2",
+        "ssid": "Mbssid_ap",
+        "passphrase": "123456789",
+        "channel": 3,
         "guest_networks": [
             {
                 "index": "1",
@@ -3094,7 +3110,7 @@ def test_wifi_sdk_mbssid_c219319(
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
 
-    """	Verify whether DUT is able to scan all VAP's info when enabled MBSSID feature in AP and  each VAP different  
+    """	Verify whether DUT is able to scan all VAP's info when enabled MBSSID feature in AP and each VAP different  
     security(TX based Vap - WPA2 Personal & NT based VAP - WPA3 security """
     wlan_obj = WLanThread(
         wifi_dut=wifi_dut,
@@ -3121,6 +3137,9 @@ def test_wifi_sdk_mbssid_c219319(
     wifi={
         "standard": "gnbax",
         "security": "WPA3",
+        "ssid": "Mbssid_ap",
+        "passphrase": "123456789",
+        "channel": 3,
         "guest_networks": [
             {
                 "index": "1",
@@ -3215,6 +3234,8 @@ def test_wifi_sdk_mbssid_c219320(
     wifi={
         "standard": "gnbax",
         "security": "Open",
+        "ssid": "Mbssid_ap",
+        "channel": 3,
         "guest_networks": [
             {
                 "index": "1",
@@ -3918,6 +3939,9 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa3_sec_c219312(
     wifi={
         "standard": "gnbax",
         "security": "WPA2",
+        "ssid": "Mbssid_ap",
+        "passphrase": "123456789",
+        "channel": 3,
         "guest_networks": [
             {
                 "index": "1",
