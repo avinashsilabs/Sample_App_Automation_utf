@@ -165,9 +165,22 @@ def rs_helper(request):
     yield RSHelperCommands.create_instance()
 
 
-@pytest.fixture()
-def sl_collections(request):
-    yield SLCollections.create_instance()
+@pytest.fixture(autouse=True)
+def sl_collections(request, wiseconnect_duts):
+    """
+    Pytest fixture to create an instance of SLCollections.
+
+    This fixture is automatically used by pytest and provides an instance of SLCollections
+    for the test cases. It uses the request and wiseconnect_duts fixtures to create the instance.
+
+    Args:
+        request: FixtureRequest object that provides information about the requesting test case.
+        wiseconnect_duts: List of Device objects representing the wiseconnect devices under test.
+
+    Yields:
+        SLCollections: An instance of SLCollections created with the provided request and wiseconnect_duts.
+    """
+    yield SLCollections.create_instance(request, wiseconnect_duts)
 
 
 @pytest.fixture()
