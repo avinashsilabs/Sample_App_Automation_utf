@@ -1127,12 +1127,14 @@ def test_wifisdk_DUTAP_open_10_TCP_client_sockets_send_tx_C19473( wifi_dut, wifi
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.AccessPoint,
-        "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity |Si91xFeatureBitMap.WPSSupportDisabled,
+        "coex_mode": Si91xCoexMode.WLANBLE,
+        "features": Si91xFeatureBitMap.OpenMode,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": 0,
         "custom_features": 0,
-        "ext_custom_features": 0,
+        "bt_features": 0,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ble_features": 0,
         "band": 0,
         "boot_option": 49,
         "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "12345678"
@@ -1154,10 +1156,16 @@ def test_wifisdk_DUTAP_open_10_TCP_client_sockets_send_tx_C19473( wifi_dut, wifi
 def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_access_point, wifi_clients, wifi_sniffer, sl_collections, wifi_dut, utf_constants, remote_socket_factory):
     '''Checking maximum socket limit(11) on the Dut in ap mode connection'''
     try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{19472}.pcap")
+        time.sleep(3)
         socket_limit = 11
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
                                                   static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.set_socket_config(total_sockets=10, total_tcp_sockets=10, tcp_rx_only_sockets=10)
         dut_add_dict = sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
                                                                   channel=11, ssid="SILABS_AP_MODE",
                                                                   security="WPA2",
@@ -1209,6 +1217,8 @@ def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_a
         remote_socket_factory.interfaces.socket.close_all()
         remote_socket_factory.interfaces.socket.sockets = []
     finally:
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
         wifi_dut.interfaces.wifi.stop_ap()
 
 
