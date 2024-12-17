@@ -100,3 +100,6 @@ def test_wiseconnect_3_get_async_messages_with_threads(wifi_dut, wifi_access_poi
     with ThreadA(wifi_dut, wifi_access_point), ThreadC(wifi_dut):
             time.sleep(5)
     time.sleep(2)
+
+def test_wiseconnect_3_ncp(wifi_dut):
+    wifi_dut.interfaces.wifi.scan(ssid=None)

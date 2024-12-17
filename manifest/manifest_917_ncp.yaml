@@ -1,6 +1,6 @@
 firmware:
-  rs911x: &firmware_file_anchor RS9116W.2.11.0.6.rps
-  efx32: '917_ncp/generic_test_agent_without_aws.hex'
+  rs911x: &firmware_file_anchor SiWG917-B.2.13.3.0.0.7.rps
+  efx32: '917_ncp/test_agent_ncp_aws_3.4.0_rc2_8_11_24.hex'
 
 firmware_version_file: *firmware_file_anchor
 # List of devices to be reset when needed
