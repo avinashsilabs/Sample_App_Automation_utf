@@ -1310,6 +1310,15 @@ devices:
                 firmware_file_name: "SiWG917-B.2.13.2.0.0.2.1.rps"
                 server_binary_file_name: "tcp_server.bin"
  
+    # This represents the service_discovery configuration
+    avahi_daemon_linux:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            sd:
+                type: "service_discovery.avahi_daemon_linux"
+                shell: 'linux_shell'
+ 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1513,6 +1522,8 @@ defaults:
     plotter: 'power_meter_plotter'
 
     sdk_server: 'tcp_server'
+    
+    service_discovery: 'avahi_daemon_linux'
 
     net_perf:
         server_options:
