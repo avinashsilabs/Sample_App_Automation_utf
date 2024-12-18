@@ -237,7 +237,7 @@ devices:
                 # 'UART' USB connector on the 9116 board.
                 port: 'auto'
                 vid: 0x0403
-                pid: 0x6001
+                pid: 0x6015
 
             wifi:
                 # the wifi interface type for the 9116 must be either
