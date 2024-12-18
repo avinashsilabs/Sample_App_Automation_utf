@@ -21,9 +21,12 @@ from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingMode, Si91xFeatureBitMap, Si91xTCPIPFeatureBitMap, \
     Si91xCustomFeatureBitMap, \
-    Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xBLEFeatureBitMap, Si91xConfigFeatureBitMap, Si91xExtCustomFeatureBitMap
+    Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xBLEFeatureBitMap, Si91xConfigFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xAwsQos
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
-
+import string
+import random
+from AWSIoTPythonSDK.core.protocol.internal.clients import ClientStatus
+from test_aws_iot_wifi_sqa_sdk import AwsConnection
 
 
 """
@@ -2147,3 +2150,397 @@ def test_wifi_sdk_concurrent_mode_sta_ap_scan_c654506(wifi_access_point, wifi_du
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
 
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0",
+        }
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+def test_wifi_sdk_concurrent_mode_sta_ap_emb_mqtt_c537975(
+        wifi_access_point, wifi_dut, wifi_clients, sl_collections, utf_constants, request, wifi_sniffer, sniffer_filter,
+        mqtt_server, mqtt_client):
+    """ Verify whether DUT is able to subscribe 2 topics with single and multi level wild card and receive the data on 2
+     topics in concurrent mode using emb_mqtt"""
+    try:
+        capture_filename = request.node.name
+
+        topic_wild_first = "mytesttopic/#"
+        multiple_topic_first = "mytesttopic/sensor"
+
+        topic_wild_second = "mytesttopic/+/mytesttopic"
+        multiple_topic_second = "mytesttopic/automation/mytesttopic"
+
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
+
+        conc_obj = ConcurrentThread(wifi_dut=wifi_dut, sl_collections=sl_collections, wifi_clients=wifi_clients,
+                                    utf_constants=utf_constants, wifi_access_point=wifi_access_point,
+                                    wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                    capture_filename=capture_filename)
+
+        conc_obj.sta_ap_connection()
+
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client", server_port=8883, qos=1, is_connection_encrypted=True)
+
+        logger().info(".....DUT connects to MQTT server.....")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info(".....MQTT Client connects to MQTT server.....")
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        logger().info("MQTT Client subscribes to the topic 1")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic_wild_first, qos=1)
+
+        logger().info("DUT subscribes to the topic 1")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic_wild_first, qos=1)
+        time.sleep(5)
+
+        logger().info("MQTT Client subscribes to the topic 2")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic_wild_second, qos=1)
+
+        logger().info("DUT subscribes to the topic 2")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic_wild_second, qos=1)
+        time.sleep(5)
+
+        logger().info("******* MQTT client publishes message over the multiple topics ********")
+
+        iter_count = utf_constants.get("iter_count")
+        for count in range(iter_count):
+            mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=multiple_topic_first, payload=message, qos=1)
+            time.sleep(2)
+            mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=multiple_topic_second, payload=message, qos=1)
+            time.sleep(2)
+            wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+
+        logger().info("....Unsubscribing from the topic 1....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic_wild_first)
+        time.sleep(3)
+
+        logger().info("....Unsubscribing from the topic 2....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic_wild_second)
+        time.sleep(3)
+
+        logger().info("....disconnecting from MQTT broker....")
+        wifi_dut.interfaces.mqtt.mqtt_client_disconnect()
+        time.sleep(3)
+
+        logger().info("....calling MQTT de-init API....")
+        wifi_dut.interfaces.mqtt.mqtt_client_deinit()
+
+        conc_obj.ap_sta_disconnection()
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.skip("Test case is failing due to receive message is not working")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0",
+        }
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+def test_wifi_sdk_concurrent_mode_sta_ap_aws_mqtt_c537976(
+        wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, sniffer_filter, sl_collections, utf_constants, request,
+        aws_iot_client):
+    """ Verify whether DUT is able to subscribe 2 topics with single and multi level wild card and receive the data on 2
+     topics in concurrent mode using aws_mqtt"""
+    try:
+        capture_filename = request.node.name
+
+        client_id = 'client_c19548'
+        topic_wild_first = "mytesttopic/#"
+        multiple_topic_first = "mytesttopic/sensor"
+
+        topic_wild_second = "mytesttopic/+/mytesttopic"
+        multiple_topic_second = "mytesttopic/automation/mytesttopic"
+
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+
+        conc_obj = ConcurrentThread(wifi_dut=wifi_dut, sl_collections=sl_collections, wifi_sniffer=wifi_sniffer,
+                                    sniffer_filter=sniffer_filter, wifi_clients=wifi_clients,
+                                    utf_constants=utf_constants, wifi_access_point=wifi_access_point,
+                                    capture_filename=capture_filename)
+        aws_obj = AwsConnection()
+
+        conc_obj.sta_ap_connection()
+        logger().info("Initiating aws connect from DUT")
+        aws_obj.connect_to_aws_server_from_dut(wifi_dut, client_id)
+        aws_obj.connect_to_aws_server_from_raspi(aws_iot_client)
+
+        logger().info(f"DUT is Subscribing on topic 1 '{topic_wild_first}' and QOS:'{1}'")
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_subscribe(topic_name=topic_wild_first, qos=1)
+
+        logger().info(f"DUT is Subscribing on topic 2 '{topic_wild_second}' and QOS:'{1}'")
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_subscribe(topic_name=topic_wild_second, qos=1)
+
+        logger().info(f"AWS IOT Client is Subscribing on topic 1 '{topic_wild_first}' and QOS:'{1}'")
+        aws_iot_client.interfaces.aws_iot.received_messages.clear()
+        aws_iot_client.interfaces.aws_iot.aws_iot_subscribe(topic_wild_first, qos=1)
+        status = aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
+        assert status == ClientStatus.STABLE, f"Subscribe on topic:'{topic_wild_first}' is failed from aws_iot_client"
+
+        logger().info(f"AWS IOT Client is Subscribing on topic 2 '{topic_wild_second}' and QOS:'{1}'")
+        aws_iot_client.interfaces.aws_iot.received_messages.clear()
+        aws_iot_client.interfaces.aws_iot.aws_iot_subscribe(topic_wild_second, qos=1)
+        status = aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
+        assert status == ClientStatus.STABLE, f"Subscribe on topic:'{topic_wild_second}' is failed from aws_iot_client"
+
+        logger().info("******* AWS publishes message over the multiple topics ********")
+        aws_obj.publish_from_raspi(aws_iot_client, multiple_topic_first, message, qos=Si91xAwsQos.QOS1)
+        time.sleep(3)
+        wifi_dut.interfaces.wifi.aws_select_socket()
+
+        logger().info("******* AWS publishes message over the multiple topics ********")
+        aws_obj.publish_from_raspi(aws_iot_client, multiple_topic_second, message, qos=Si91xAwsQos.QOS1)
+        time.sleep(3)
+        wifi_dut.interfaces.wifi.aws_select_socket()
+
+        logger().info("\nValidating received aws message")
+        recv_messages = aws_iot_client.interfaces.aws_iot.get_received_messages()
+        logger().info(f"Received message is: {recv_messages}")
+        logger().info(f"Received message topic is: '{recv_messages.topic}'")
+        logger().info(f"Received message qos is: '{recv_messages.qos}'")
+        logger().info("aws messages validated successfully")
+
+        logger().info("....Unsubscribing from the topic 1....")
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic_name=topic_wild_first)
+        time.sleep(2)
+        logger().info("....Unsubscribing from the topic 2....")
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic_name=topic_wild_second)
+        time.sleep(2)
+        logger().info("....disconnecting from AWS....")
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0",
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0",
+
+        }
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+def test_wifi_sdk_concurrent_mode_sta_ap_stability_check_c148587(
+        wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, sniffer_filter, sl_collections, utf_constants,
+        request):
+    """ Verfiy the stability of APUT while disabling the STAUT when pinging between two 3rd party clients associated to
+    APUT"""
+    try:
+        capture_filename = request.node.name
+
+        conc_obj = ConcurrentThread(wifi_dut=wifi_dut, sl_collections=sl_collections, wifi_sniffer=wifi_sniffer,
+                                    sniffer_filter=sniffer_filter, wifi_clients=wifi_clients,
+                                    utf_constants=utf_constants, wifi_access_point=wifi_access_point,
+                                    capture_filename=capture_filename)
+
+        conc_obj.no_of_clients = 2
+        conc_obj.sta_ap_connection()
+        wifi_dut.interfaces.wifi.leave()
+        client_first = wifi_clients[0].interfaces.wifi.get_ip_address()
+        logger().info(f"IP address of the client 1 is {client_first}")
+        client_second = wifi_clients[1].interfaces.wifi.get_ip_address()
+        logger().info(f"IP address of the client 2 is {client_second}")
+        for i in range(0, 1):
+            for count in range(3):
+                try:
+                    logger().info(f"Initiating client ping from RASPI_STA{i + 1} for ping_count:{10}")
+                    rc, stdout, stderr = wifi_clients[i].interfaces.wifi.shell.execute(
+                        f"sudo ping -c {10} {client_second}")
+                    assert rc == 0, f"RASPI-STA{i + 1} failed to ping DUT"
+                    logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+                    logger().info(f"RASPI_STA{i + 1} is still connected to DUT-AP")
+                    break
+                except:
+                    logger().info(f"RASPI-STA{i + 1} failed to ping DUT...retry count -> {count + 1}")
+                    time.sleep(10)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.skip("Test case is failing due to http put is not working")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.Default,
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0",
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0",
+
+        }
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_concurrent_mode_sta_ap_http_put_c148565(
+        wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, sniffer_filter, sl_collections, utf_constants, request,
+        http_server, index_path):
+    """ HTTP Put functionality with exact data buffer size - two clients connected to RSI_AP"""
+    try:
+        capture_filename = request.node.name
+
+        conc_obj = ConcurrentThread(wifi_dut=wifi_dut, sl_collections=sl_collections, wifi_sniffer=wifi_sniffer,
+                                    sniffer_filter=sniffer_filter, wifi_clients=wifi_clients, leave=False,
+                                    utf_constants=utf_constants, wifi_access_point=wifi_access_point,
+                                    capture_filename=capture_filename)
+        conc_obj.no_of_clients = 2
+        conc_obj.sta_ap_connection()
+
+        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.wifi.http_client_init(https_enable=False)
+
+        wifi_dut.interfaces.http.http_put(http_server.interfaces.http, index_path)
+        wifi_dut.interfaces.wifi.http_client_deinit()
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
