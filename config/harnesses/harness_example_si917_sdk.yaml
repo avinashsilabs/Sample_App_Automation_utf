@@ -887,6 +887,18 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
 
+    raspi_iperf2:
+        interfaces:
+            net_perf:
+                type: 'iperf'
+                # to zip all the iperf output files
+                zip_results: 'Y'
+                host:
+                    TCP:
+                        port: 5201
+                    UDP:
+                        port: 5202
+
     sniffer_filter:
         interfaces:
             ws_sniffer_filter:
@@ -1160,8 +1172,8 @@ defaults:
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
         baud: 115200
-        data_chunk_read_elapsed_time: 0.9
-        data_chunk_read_dealy: 0.03
+        data_chunk_read_elapsed_time: 5
+        data_chunk_read_dealy: 0.05
 
     ble_vulnerability_sniffer: 'ble_sweyntooth'
     bt_vulnerability_sniffer: 'bt_braktooth'
