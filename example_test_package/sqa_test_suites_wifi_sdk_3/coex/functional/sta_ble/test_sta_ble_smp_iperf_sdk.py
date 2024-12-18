@@ -678,7 +678,7 @@ def test_Coex_sdk_SMP_PAIR_REQ_DUT_UDP_TX_C133441(
         wifi_obj.wait_for_exit()
         logger().info("Checking connection stability for 60 seconds")
         time.sleep(60)
-        ble_obj.ble_disconnect()
+        ble_obj.ble_disconnect(disconnect_from="dut")
         wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("sniffer validation is successful")
@@ -877,7 +877,6 @@ def test_Coex_sdk_SMP_WLAN_connection_data_C133565(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4365")
 def test_Coex_sdk_SMP_slave_io_display_TCP_TX_C535082(
     wifi_sniffer,
     wifi_access_point,
@@ -943,7 +942,7 @@ def test_Coex_sdk_SMP_slave_io_display_TCP_TX_C535082(
             timeout=120
         )
         wifi_obj.join_to_ap()
-        #wifi_obj.start()
+        wifi_obj.start()
         time.sleep(5)
         ble_obj.advertise_dut()
         ble_obj.check_scan_functionality_of_dut()
@@ -951,7 +950,7 @@ def test_Coex_sdk_SMP_slave_io_display_TCP_TX_C535082(
         ble_obj.start()
         ble_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.ble_scanning=True
-        #wifi_obj.wait_for_exit()
+        wifi_obj.wait_for_exit()
         logger().info("Checking connection stability for 60 seconds")
         time.sleep(60)
         wifi_dut.interfaces.wifi.ble_stop_scanning()
@@ -984,8 +983,7 @@ def test_Coex_sdk_SMP_slave_io_display_TCP_TX_C535082(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4365")
-def test_Coex_sdk_SMP_slave_io_display_UDP_TX_C535083(
+def test_Coex_sdk_SMP_slave_io_no_input_no_output_UDP_RX_C535083(
     wifi_sniffer,
     wifi_access_point,
     wifi_dut,
@@ -1027,7 +1025,7 @@ def test_Coex_sdk_SMP_slave_io_display_UDP_TX_C535083(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
             sl_collections=sl_collections,
-            ble_test_type="slave",
+            ble_test_type="scan_and_connect_from_remote",
             ble_pairing=1,
             capability=3,
             dev_state=10
@@ -1050,11 +1048,16 @@ def test_Coex_sdk_SMP_slave_io_display_UDP_TX_C535083(
         )
         wifi_obj.join_to_ap()
         wifi_obj.start()
+        ble_obj.advertise_dut()
+        ble_obj.check_scan_functionality_of_dut()
+        ble_client.interfaces.bluetooth.close()
         ble_obj.start()
         ble_obj.wait_for_exit()
         wifi_obj.wait_for_exit()
         logger().info("Checking connection stability for 60 seconds")
         time.sleep(60)
+        logger().info("stop scanning")
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
         ble_obj.ble_disconnect()
         wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()

@@ -1208,6 +1208,7 @@ def test_sta_ble_sdk_set_att_value_diff_length_tcp_tx_ble_slave_C133437(wifi_sni
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default
                     | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
                               | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
@@ -1237,8 +1238,7 @@ def test_sta_ble_sdk_set_att_value_diff_length_tcp_tx_ble_slave_C133437(wifi_sni
         "disassociated",
     ],
 )
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4429,WIFI_BT_UTFHELP-4431")
-def test_sta_ble_sdk_http_dwnld_ble_slave_dle_C537979(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
+def test_sta_ble_sdk_http_dle_ble_periodic_tx_C537979(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                      request, utf_constants, sl_collections, wifi_client,
                                                      sniffer_filter, http_server, index_path):
     ble_dut_addr = ""
@@ -1342,6 +1342,7 @@ def test_sta_ble_sdk_http_dwnld_ble_slave_dle_C537979(wifi_sniffer, wifi_access_
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default
                     | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
                               | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
@@ -1373,8 +1374,7 @@ def test_sta_ble_sdk_http_dwnld_ble_slave_dle_C537979(wifi_sniffer, wifi_access_
         "disassociated",
     ],
 )
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4429,WIFI_BT_UTFHELP-4431")
-def test_sta_ble_sdk_http_dwnld_ble_slave_dle_C537980(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
+def test_sta_ble_sdk_http_dl_ble_periodic_tx_dle_C537980(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                      request, utf_constants, sl_collections, wifi_client,
                                                      sniffer_filter, http_server, index_path):
     ble_dut_addr = ""
@@ -1413,7 +1413,7 @@ def test_sta_ble_sdk_http_dwnld_ble_slave_dle_C537980(wifi_sniffer, wifi_access_
             char_path=None, char_uid=char_uid1, data=data,
             service_uid=service_uid,
             data_length=240, data_duration=300,
-            periodic_delay=10,
+            periodic_delay=30,
             address=address1,
         )
 
