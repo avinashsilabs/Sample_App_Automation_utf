@@ -34,6 +34,9 @@ setup requirement:
 
 
 class FilterPacket:
+    def __init__(self):
+        pass
+
     def sequence_list(self):
         packet_filter_seq_no = '= Sequence number:'
         filter_file = open(f'./reports/filter2_file.txt', 'r')
@@ -49,9 +52,10 @@ class FilterPacket:
 
 
 class ApModeConnections(ThreadBase):
-    def __init__(self, wifi_dut, wifi_clients, wifi_sniffer,
-                 sl_collections, utf_constants, testcase_no=None,
+    def __init__(self, wifi_dut, wifi_clients, wifi_sniffer, sl_collections, utf_constants, testcase_no=None,
                  dtim_period=None, beacon=None, ping=True):
+        super().__init__()
+        self.ping_count = None
         self.wifi_dut = wifi_dut
         self.wifi_clients = wifi_clients
         self.wifi_sniffer = wifi_sniffer
@@ -71,7 +75,7 @@ class ApModeConnections(ThreadBase):
             191344: {
                 "dtim_count": "4",
                 "beacon_interval": "100",
-                "no_of_clients": 1
+                "no_of_clients": 2
             },
             191358: {
                 "dtim_count": "5",
@@ -110,17 +114,17 @@ class ApModeConnections(ThreadBase):
             logger().info(f"RASPI-STA{i + 1}:'{self.wifi_clients[i].name}' is joining to DUT-AP")
             self.wifi_clients[i].interfaces.wifi.join()
             time.sleep(5)
-        self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address(2)
-        logger().info(f"*********{self.dut_mac_address}**********")
-        self.dut_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ipconfig)
-        logger().info(f"*********Device ip : {self.dut_ip}**********")
+        dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"*********{dut_mac_address}**********")
+        dut_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ipconfig)
+        logger().info(f"*********Device ip : {dut_ip}**********")
 
-        if self.ping == True:
+        if self.ping:
             for i in range(testcases[self.testcase_no]["no_of_clients"]):
                 for count in range(3):
                     try:
                         rc, stdout, stderr = self.wifi_clients[i].interfaces.wifi.shell.execute(
-                            f"sudo ping -c {self.ping_count} {self.dut_ip}")
+                            f"sudo ping -c {self.ping_count} {dut_ip}")
                         assert rc == 0, f"STA1 failed to ping STA2"
                         logger().info(f"\n{stdout}\n")
                         logger().info(f"Ping successful from wifi client 1(STA1) to dut")
@@ -133,10 +137,12 @@ class ApModeConnections(ThreadBase):
 
 
 class ConcurrentFun(ThreadBase):
-    def __init__(self, wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point,
-                 sl_collections, utf_constants, ping=True):
+    def __init__(self, wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections, utf_constants,
+                 ping=True):
 
-
+        super().__init__()
+        self.device_ip = None
+        self.ping_count = None
         self.wifi_dut = wifi_dut
         self.wifi_clients = wifi_clients
         self.wifi_sniffer = wifi_sniffer
@@ -155,8 +161,8 @@ class ConcurrentFun(ThreadBase):
         ip_config = self.wifi_dut.interfaces.wifi.start_ip(timeout=30, ip_version='ipv4')
         self.device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
         logger().info(f"*************device ip : {self.device_ip}*****************")
-        self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"*********{self.dut_mac_address}**********")
+        dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"*********{dut_mac_address}**********")
         status = ping(self.device_ip, 10)
         assert status, f"failed ping to dut"
         if self.ping is True:
@@ -204,7 +210,7 @@ class ConcurrentFun(ThreadBase):
 def test_wifi_sdk_dut_soft_stop_ap_functionality_after_enabling_start_ap_C191344(wifi_sniffer, wifi_dut, wifi_clients,
                                                                                  utf_constants, sl_collections,
                                                                                  sniffer_filter, channel):
-    """Verify whether DUT is able stop AP after enabling start AP"""
+    """Verify whether DUT is able to stop AP after enabling start AP"""
     try:
         logger().info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -223,12 +229,12 @@ def test_wifi_sdk_dut_soft_stop_ap_functionality_after_enabling_start_ap_C191344
         time.sleep(5)
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info(f"Checking deauthentication in sniffer")
+        logger().info(f"Checking de-authentication in sniffer")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
-            filter_name='deauthentication')
+            filter_name='de-authentication')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  deauthentication in Sniffer'
+            'Unable to find  de-authentication in Sniffer'
         for i in range(0, 2):
             logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
             wifi_clients[i].interfaces.wifi.leave()
@@ -297,12 +303,12 @@ def test_wifi_sdk_dut_able_restart_to_with_different_beacon_intervals_C191345(wi
         time.sleep(10)
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info(f"Checking deauthentication in sniffer")
+        logger().info(f"Checking de-authentication in sniffer")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
-            filter_name='deauthentication')
+            filter_name='de-authentication')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  deauthentication in Sniffer'
+            'Unable to find  de-authentication in Sniffer'
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             wlan_addr=ap_dut_obj.dut_mac_address, radio_ch=channel, beacon=300,
             filter_name='beacon_ap_mode_beacon_interval')
@@ -319,7 +325,6 @@ def test_wifi_sdk_dut_able_restart_to_with_different_beacon_intervals_C191345(wi
         logger().info(f"Clean up activity")
         logger().info(f"stop the AP as ap start initiated")
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
-
 
 
 @pytest.mark.config(
@@ -379,12 +384,12 @@ def test_dut_able_restart_with_invalid_beacon_interval_C191347(wifi_sniffer, wif
         for i in range(0, 2):
             logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
             wifi_clients[i].interfaces.wifi.leave()
-        logger().info(f"Checking deauthentication in sniffer")
+        logger().info(f"Checking de-authentication in sniffer")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
             filter_name='deauthentication')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  deauthentication in Sniffer'
+            'Unable to find  de-authentication in Sniffer'
         logger().info(" ********** restarting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", psk="Automation@123",
                                           channel=channel,
@@ -457,12 +462,12 @@ def test_wifi_sdk_dut_able_to_restart_with_different_dtim_intervals_C191349(wifi
                                           beacon_interval=100)
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info(f"Checking deauthentication in sniffer")
+        logger().info(f"Checking de-authentication in sniffer")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
-            filter_name='deauthentication')
+            filter_name='de-authentication')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  deauthentication in Sniffer'
+            'Unable to find  de-authentication in Sniffer'
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             wlan_addr=ap_dut_obj.dut_mac_address, radio_ch=channel, dtim_period=5,
             filter_name='beacon_ap_mode_dtim_period')
@@ -516,7 +521,7 @@ def test_wifi_sdk_dut_able_to_restart_with_different_dtim_intervals_C191349(wifi
 )
 @pytest.mark.parametrize("channel", [8])
 def test_wifi_sdk_dut_soft_start_and_stop_ap_in_multiple_iterations_C191351(wifi_sniffer, wifi_dut, wifi_clients,
-                                                                           channel):
+                                                                            channel):
     """Verify the DUT behavior while doing start and stop AP in multiple iterations"""
     try:
         logger().info("********** configuring the sniffer with access point channel **********")
@@ -573,7 +578,7 @@ def test_wifi_sdk_dut_soft_start_and_stop_ap_in_multiple_iterations_C191351(wifi
 )
 @pytest.mark.parametrize("channel", [8])
 def test_wifi_sdk_giving_soft_stop_ap_for_second_time_C191355(wifi_sniffer, wifi_dut,
-                                                             sl_collections,  channel):
+                                                              sl_collections, channel):
     """Check DUT is throwing error or not while giving stop AP API for the second time without giving START AP"""
     try:
         logger().info("********** configuring the sniffer with access point channel **********")
@@ -654,7 +659,7 @@ def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_different_dtim_intervals_concur
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191362.pcap")
         time.sleep(3)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                       utf_constants, ping=False)
+                                 utf_constants, ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         logger().info(f"*********start the ap***********")
@@ -675,12 +680,12 @@ def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_different_dtim_intervals_concur
         logger().info(f"ap_bssid : {ap_mac_address}")
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info(f"Checking deauthentication in sniffer")
+        logger().info(f"Checking de-authentication in sniffer")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=dut_mac_address,
-            filter_name='deauthentication')
+            filter_name='de-authentication')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  deauthentication in Sniffer'
+            'Unable to find  de-authentication in Sniffer'
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             wlan_addr=ap_mac_address, radio_ch=channel, dtim_period=5,
             filter_name='beacon_ap_mode_dtim_period')
@@ -775,12 +780,12 @@ def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_different_beacon_intervals_conc
             filter_name='beacon_ap_mode_dtim_interval')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find  beacon_ap_mode_dtim_interval in Sniffer'
-        logger().info(f"Checking deauthentication in sniffer")
+        logger().info(f"Checking de-authentication in sniffer")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=dut_mac_address,
-            filter_name='deauthentication')
+            filter_name='de-authentication')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  deauthentication in Sniffer'
+            'Unable to find  de-authentication in Sniffer'
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -831,7 +836,8 @@ def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_different_beacon_intervals_conc
 def test_wifi_sdk_dut_soft_start_and_stop_ap_in_multiple_iterations_C191363(wifi_sniffer, wifi_dut, wifi_clients,
                                                                             utf_constants, sl_collections,
                                                                             channel, wifi_access_point):
-    """Verify the DUT behavior while doing start and stop AP along with STA connect & disconnect in multiple iterations in concurrent mode"""
+    """Verify the DUT behavior while doing start and stop AP along with STA connect & disconnect in multiple iterations
+     in concurrent mode"""
     try:
         logger().info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -913,7 +919,8 @@ def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_invalid_beacon_interval_concurr
                                                                                             sl_collections,
                                                                                             sniffer_filter, channel,
                                                                                             wifi_access_point):
-    """Verify whether DUT is able throw error or not when we are trying to bringing up the AP with invalid Beacon interval in concurrent mode"""
+    """Verify whether DUT is able throw error or not when we are trying to bringing up the AP with invalid Beacon
+    interval in concurrent mode"""
     try:
         logger().info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -922,7 +929,7 @@ def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_invalid_beacon_interval_concurr
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191360.pcap")
         time.sleep(3)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants,ping=False)
+                                 utf_constants, ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         logger().info(f"*********start the ap***********")
@@ -934,12 +941,12 @@ def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_invalid_beacon_interval_concurr
         logger().info(f"*********{dut_mac_address}**********")
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info(f"Checking deauthentication in sniffer")
+        logger().info(f"Checking de-authentication in sniffer")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=dut_mac_address,
-            filter_name='deauthentication')
+            filter_name='de-authentication')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  deauthentication in Sniffer'
+            'Unable to find  de-authentication in Sniffer'
 
     except Exception as Err:
         if "0x10062" in str(Err):
@@ -1019,12 +1026,12 @@ def test_wifi_sdk_dut_restart_start_ap_beacon_params_C191346(wifi_sniffer, wifi_
             filter_name='rsi_apmode')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find  rsi_apmode in Sniffer'
-        logger().info(f"Checking deauthentication in sniffer")
+        logger().info(f"Checking de-authentication in sniffer")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
-            filter_name='deauthentication')
+            filter_name='de-authentication')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  deauthentication in Sniffer'
+            'Unable to find  de-authentication in Sniffer'
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address, filter_name='beacon')
         result = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
@@ -1088,14 +1095,13 @@ def test_wifi_sdk_dut_restart_start_ap_beacon_params_C191346(wifi_sniffer, wifi_
         beacon_reset = 0
         seq = 1
         while seq < len(beacon_seq):
-            if (beacon_seq[seq - 1] < beacon_seq[seq]):
+            if beacon_seq[seq - 1] < beacon_seq[seq]:
                 beacon_reset = 1
             else:
                 beacon_reset = 0
             seq += 1
         assert beacon_reset, f"beacon sequence number is not set to 0 after ap restart"
         logger().info(f"beacon sequence number reset to 0")
-
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -1122,7 +1128,7 @@ def test_wifi_sdk_dut_restart_start_ap_beacon_params_C191346(wifi_sniffer, wifi_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["reset"])
 def test_wifi_sdk_giving_soft_stop_ap_without_start_ap_C191354(wifi_sniffer, wifi_dut,
-                                                               sl_collections,  channel):
+                                                               sl_collections, channel):
     """Check DUT is throwing error or not while giving stop AP API without giving START AP"""
     try:
         logger().info("********** configuring the sniffer with access point channel **********")
@@ -1202,12 +1208,12 @@ def test_wifi_sdk_dut_able_to_restart_with_different_securities_C191348(wifi_sni
         logger().info(f"packet_filter1: {packet_filter1}")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Sniffer: Unable to find beacon_ap_mode_beacon_interval packet in sniffer'
-        logger().info(f"Checking deauthentication in sniffer")
+        logger().info(f"Checking de-authentication in sniffer")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
-            filter_name='deauthentication')
+            filter_name='de-authentication')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  deauthentication in Sniffer'
+            'Unable to find  de-authentication in Sniffer'
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
             filter_name='rsi_apmode')
@@ -1224,9 +1230,9 @@ def test_wifi_sdk_dut_able_to_restart_with_different_securities_C191348(wifi_sni
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
             filter_name='No_beacon')
-        Validate_no_beacon = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+        validate_no_beacon = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count']
-        assert Validate_no_beacon == False, f"found beacon frame after stoping the ap"
+        assert validate_no_beacon == False, f"found beacon frame after stoping the ap"
         logger().info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=channel)
@@ -1317,7 +1323,7 @@ def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C191356(wifi_sn
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191356.pcap")
         time.sleep(3)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants,ping=False)
+                                 utf_constants, ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         time.sleep(3)
@@ -1333,12 +1339,12 @@ def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C191356(wifi_sn
         time.sleep(15)
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info(f"Checking deauthentication in sniffer")
+        logger().info(f"Checking de-authentication in sniffer")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=dut_mac_address,
-            filter_name='deauthentication')
+            filter_name='de-authentication')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  deauthentication in Sniffer'
+            'Unable to find  de-authentication in Sniffer'
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -1387,7 +1393,8 @@ def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C191356(wifi_sn
 def test_wifi_sdk_powersave_after_start_ap_concurrent_C191372(wifi_sniffer, wifi_dut, wifi_clients,
                                                               utf_constants, sl_collections, sniffer_filter, channel,
                                                               wifi_access_point):
-    """Verify whether DUT is able to throwing error or not when we are giving PS command when both STA and AP are in up state"""
+    """Verify whether DUT is able to throwing error or not when we are giving PS command when both STA and AP are
+    in up state"""
     try:
         logger().info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -1396,7 +1403,7 @@ def test_wifi_sdk_powersave_after_start_ap_concurrent_C191372(wifi_sniffer, wifi
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191372.pcap")
         time.sleep(3)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants,ping=False)
+                                 utf_constants, ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         time.sleep(3)
@@ -1495,12 +1502,12 @@ def test_wifi_sdk_dut_soft_start_and_stop_ap_STAs_connected_in_multiple_iteratio
         logger().info(f"*********{dut_mac_address}**********")
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info(f"Checking deauthentication in sniffer")
+        logger().info(f"Checking de-authentication in sniffer")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=dut_mac_address,
-            filter_name='deauthentication')
+            filter_name='de-authentication')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  deauthentication in Sniffer'
+            'Unable to find  de-authentication in Sniffer'
         for i in range(0, 2):
             logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
             wifi_clients[i].interfaces.wifi.leave()
@@ -1561,7 +1568,7 @@ def test_wifi_sdk_giving_soft_stop_ap_for_second_time_concurrent_C191365(wifi_sn
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191365.pcap")
         time.sleep(3)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants,ping=False)
+                                 utf_constants, ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         time.sleep(3)
@@ -1638,7 +1645,7 @@ def test_wifi_sdk_restart_with_different_securities_concurrent_C191361(wifi_snif
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191361.pcap")
         time.sleep(3)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants,ping=False)
+                                 utf_constants, ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         ap_dut_obj = ApModeConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
@@ -1659,12 +1666,12 @@ def test_wifi_sdk_restart_with_different_securities_concurrent_C191361(wifi_snif
         logger().info(f"packet_filter1: {packet_filter1}")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Sniffer: Unable to find beacon_ap_mode_beacon_interval packet in sniffer'
-        logger().info(f"Checking deauthentication in sniffer")
+        logger().info(f"Checking de-authentication in sniffer")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
-            filter_name='deauthentication')
+            filter_name='de-authentication')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  deauthentication in Sniffer'
+            'Unable to find  de-authentication in Sniffer'
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
             filter_name='rsi_apmode')
@@ -1681,9 +1688,9 @@ def test_wifi_sdk_restart_with_different_securities_concurrent_C191361(wifi_snif
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
             filter_name='No_beacon')
-        Validate_no_beacon = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+        validate_no_beacon = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count']
-        assert Validate_no_beacon == False, f"found beacon frame after stoping the ap"
+        assert validate_no_beacon == False, f"found beacon frame after stoping the ap"
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=channel)
         logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
@@ -1774,7 +1781,7 @@ def test_wifi_sdk_start_ap_after_enabling_power_save_concurrent_C191373(wifi_sni
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191373.pcap")
         time.sleep(3)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants,ping=False)
+                                 utf_constants, ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         time.sleep(3)
@@ -1849,7 +1856,7 @@ def test_wifi_sdk_restart_beacon_params_concurrent_C191358(wifi_sniffer, wifi_du
         time.sleep(3)
 
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
-                                 utf_constants,ping=False)
+                                 utf_constants, ping=False)
         conc_obj.start()
         conc_obj.wait_for_exit()
         ap_dut_obj = ApModeConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
@@ -1886,9 +1893,9 @@ def test_wifi_sdk_restart_beacon_params_concurrent_C191358(wifi_sniffer, wifi_du
             'Unable to find  rsi_apmode in Sniffer'
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
-            filter_name='deauthentication')
+            filter_name='de-authentication')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-            'Unable to find  deauthentication in Sniffer'
+            'Unable to find  de-authentication in Sniffer'
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP bssid {ap_bssid}")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -1909,9 +1916,9 @@ def test_wifi_sdk_restart_beacon_params_concurrent_C191358(wifi_sniffer, wifi_du
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
             filter_name='No_beacon')
-        Validate_no_beacon = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+        validate_no_beacon = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count']
-        assert Validate_no_beacon == False, f"found beacon frame after stoping the ap"
+        assert validate_no_beacon == False, f"found beacon frame after stoping the ap"
         logger().info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=channel)
@@ -1947,7 +1954,7 @@ def test_wifi_sdk_restart_beacon_params_concurrent_C191358(wifi_sniffer, wifi_du
         beacon_reset = 0
         seq = 1
         while seq < len(beacon_seq):
-            if (beacon_seq[seq - 1] < beacon_seq[seq]):
+            if beacon_seq[seq - 1] < beacon_seq[seq]:
                 beacon_reset = 1
             else:
                 beacon_reset = 0
@@ -1972,7 +1979,8 @@ def test_wifi_sdk_restart_beacon_params_concurrent_C191358(wifi_sniffer, wifi_du
         "features": Si91xFeatureBitMap.WPSSupportDisabled,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
@@ -2004,7 +2012,8 @@ def test_wifi_sdk_restart_beacon_params_concurrent_C191358(wifi_sniffer, wifi_du
 def test_wifi_sdk_enh_max_psp_after_stop_C191370(wifi_sniffer, wifi_dut, wifi_clients,
                                                  utf_constants, sl_collections, channel,
                                                  wifi_access_point):
-    """Check whether RSI_STA is going to ENH_MAX_PSP_GPIO based power save or not when give power save after we stop AP(Listen Interval)"""
+    """Check whether RSI_STA is going to ENH_MAX_PSP_GPIO based power save or not when give power save after we
+    stop AP(Listen Interval)"""
     try:
         validation = True
         logger().info("********** configuring the sniffer with access point channel **********")
@@ -2013,7 +2022,8 @@ def test_wifi_sdk_enh_max_psp_after_stop_C191370(wifi_sniffer, wifi_dut, wifi_cl
         logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191370.pcap")
         time.sleep(3)
-        wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap =Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
         wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=1000)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
                                  utf_constants, ping=False)
@@ -2086,7 +2096,8 @@ def test_wifi_sdk_enh_max_psp_after_stop_ap_dtim_based_concurrent_concurrent_C19
                                                                                      utf_constants, sl_collections,
                                                                                      sniffer_filter, channel,
                                                                                      wifi_access_point):
-    """Check whether RSI_STA is going to ENH_MAX_PSP_GPIO based power save or not when give power save after we stop AP(DTIM Based)"""
+    """Check whether RSI_STA is going to ENH_MAX_PSP_GPIO based power save or not when give power save after we
+    stop AP(DTIM Based)"""
     try:
         logger().info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -2094,7 +2105,7 @@ def test_wifi_sdk_enh_max_psp_after_stop_ap_dtim_based_concurrent_concurrent_C19
         logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C191371.pcap")
         time.sleep(3)
-        wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap =Si91xJoinFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=Si91xJoinFeatureBitMap.Default)
         wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=0)
         conc_obj = ConcurrentFun(wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections,
                                  utf_constants, ping=False)
@@ -2137,12 +2148,12 @@ def test_wifi_sdk_enh_max_psp_after_stop_ap_dtim_based_concurrent_concurrent_C19
 @pytest.mark.config(
     "wifi_client",
     wifi={
-                "security": "WPA2",
-                "ssid": "SILABS_AP_MODE",
-                "passphrase": "Automation@Silabs",
-                "channel": 1,
-                "interface": "wlan0",
-         }
+        "security": "WPA2",
+        "ssid": "SILABS_AP_MODE",
+        "passphrase": "Automation@Silabs",
+        "channel": 1,
+        "interface": "wlan0",
+    }
 )
 @pytest.mark.config(
     'wifi_access_point',
@@ -2154,9 +2165,9 @@ def test_wifi_sdk_enh_max_psp_after_stop_ap_dtim_based_concurrent_concurrent_C19
     }
 )
 def test_wifi_sdk_sta_ap_conn_disconn_concurrent_mode_C191357(wifi_sniffer, wifi_dut, wifi_clients,
-                                                 utf_constants, sl_collections, sniffer_filter, channel,
-                                                 wifi_access_point):
-    """Do start and Stop AP along with RSI_STA connect & disconnectin concurrent mode"""
+                                                              utf_constants, sl_collections, sniffer_filter, channel,
+                                                              wifi_access_point):
+    """Do start and Stop AP along with RSI_STA connect & disconnection concurrent mode"""
     try:
         iter_count = utf_constants.get("iter_count")
         logger().info("********** configuring the sniffer with access point channel **********")
