@@ -5,7 +5,7 @@ test_sequence:
     test_function: test_device_as_sta_and_ap_c_19314
     test_id: test_device_as_sta_and_ap_c_19314::1
     test_module: >-
-      sqa_test_suites/wlan_standalone/functional/dut_concurrent_mode/test_wlan_concurrent_mode.py
+      sqa_test_suites/wlan_standalone/functional/concurrent_mode/test_wlan_concurrent_mode.py
     test_markers:
       - pytest.mark.wifi_client('raspi_wifi',)
       - >-
@@ -48,7 +48,7 @@ test_sequence:
     test_function: test_device_as_sta_and_ap_c_19315
     test_id: test_device_as_sta_and_ap_c_19315::1
     test_module: >-
-      sqa_test_suites/wlan_standalone/functional/dut_concurrent_mode/test_wlan_concurrent_mode.py
+      sqa_test_suites/wlan_standalone/functional/concurrent_mode/test_wlan_concurrent_mode.py
     test_markers:
       - pytest.mark.wifi_client('raspi_wifi',)
       - >-
@@ -91,7 +91,7 @@ test_sequence:
     test_function: test_device_as_sta_and_ap_c_19324
     test_id: test_device_as_sta_and_ap_c_19324::1
     test_module: >-
-      sqa_test_suites/wlan_standalone/functional/dut_concurrent_mode/test_wlan_concurrent_mode.py
+      sqa_test_suites/wlan_standalone/functional/concurrent_mode/test_wlan_concurrent_mode.py
     test_markers:
       - pytest.mark.wifi_client('raspi_wifi',)
       - >-
@@ -133,7 +133,7 @@ test_sequence:
     test_function: test_device_as_ap_and_sta_c_19313
     test_id: test_device_as_ap_and_sta_c_19313[TCP]::1
     test_module: >-
-      sqa_test_suites/wlan_standalone/functional/dut_concurrent_mode/test_wlan_concurrent_mode.py
+      sqa_test_suites/wlan_standalone/functional/concurrent_mode/test_wlan_concurrent_mode.py
     test_markers:
       - pytest.mark.wifi_client('raspi_wifi',)
       - >-
@@ -178,7 +178,7 @@ test_sequence:
     test_function: test_device_as_sta_and_ap_c_19322
     test_id: test_device_as_sta_and_ap_c_19322[TCP]::1
     test_module: >-
-      sqa_test_suites/wlan_standalone/functional/dut_concurrent_mode/test_wlan_concurrent_mode.py
+      sqa_test_suites/wlan_standalone/functional/concurrent_mode/test_wlan_concurrent_mode.py
     test_markers:
       - pytest.mark.wifi_client('raspi_wifi',)
       - >-
@@ -224,7 +224,7 @@ test_sequence:
     test_function: test_device_as_sta_and_ap_c_19312
     test_id: test_device_as_sta_and_ap_c_19312[TCP]::1
     test_module: >-
-      sqa_test_suites/wlan_standalone/functional/dut_concurrent_mode/test_wlan_concurrent_mode.py
+      sqa_test_suites/wlan_standalone/functional/concurrent_mode/test_wlan_concurrent_mode.py
     test_markers:
       - pytest.mark.wifi_client('raspi_wifi',)
       - >-
@@ -270,7 +270,7 @@ test_sequence:
     test_function: test_device_as_sta_and_ap_c_19319
     test_id: test_device_as_sta_and_ap_c_19319::1
     test_module: >-
-      sqa_test_suites/wlan_standalone/functional/dut_concurrent_mode/test_wlan_concurrent_mode.py
+      sqa_test_suites/wlan_standalone/functional/concurrent_mode/test_wlan_concurrent_mode.py
     test_markers:
       - pytest.mark.wifi_client('raspi_wifi',)
       - >-
@@ -312,7 +312,7 @@ test_sequence:
     test_function: test_device_as_sta_and_ap_c_19318
     test_id: test_device_as_sta_and_ap_c_19318[TCP]::1
     test_module: >-
-      sqa_test_suites/wlan_standalone/functional/dut_concurrent_mode/test_wlan_concurrent_mode.py
+      sqa_test_suites/wlan_standalone/functional/concurrent_mode/test_wlan_concurrent_mode.py
     test_markers:
       - pytest.mark.wifi_client('raspi_wifi',)
       - >-
@@ -357,7 +357,7 @@ test_sequence:
     test_function: test_device_as_sta_and_ap_c_19320
     test_id: test_device_as_sta_and_ap_c_19320[TCP]::1
     test_module: >-
-      sqa_test_suites/wlan_standalone/functional/dut_concurrent_mode/test_wlan_concurrent_mode.py
+      sqa_test_suites/wlan_standalone/functional/concurrent_mode/test_wlan_concurrent_mode.py
     test_markers:
       - pytest.mark.wifi_client('raspi_wifi',)
       - >-
@@ -402,7 +402,7 @@ test_sequence:
     test_function: test_rejoin_failure_indication_to_host_c19317
     test_id: test_rejoin_failure_indication_to_host_c19317::1
     test_module: >-
-      sqa_test_suites/wlan_standalone/functional/dut_concurrent_mode/test_wlan_concurrent_mode.py
+      sqa_test_suites/wlan_standalone/functional/concurrent_mode/test_wlan_concurrent_mode.py
     test_markers:
       - pytest.mark.wifi_client('raspi_wifi',)
       - >-
