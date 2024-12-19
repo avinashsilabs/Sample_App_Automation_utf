@@ -191,7 +191,7 @@ class ThreadHttpOtaf(ThreadBase):
             self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
                                                            host_name=self.host_ip, timeout=150)
             self.wifi_dut.interfaces.wifi.reset()
-            time.sleep(15)
+            time.sleep(30)
 
             self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
             self.wifi_dut.interfaces.wifi.init(load_certificate=False)

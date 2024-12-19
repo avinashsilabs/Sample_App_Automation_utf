@@ -87,7 +87,7 @@ class WifiJoin(ThreadBase):
 
     def get_firmware_status(self):
         self.wifi_dut.interfaces.wifi.reset()
-        time.sleep(15)
+        time.sleep(30)
         logger().info("Initialising DUT after the reset....")
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
         self.wifi_dut.interfaces.wifi.init(load_certificate=False)

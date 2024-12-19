@@ -61,7 +61,7 @@ class WifiJoin(ThreadBase):
 
     def get_firmware_status(self):
         self.wifi_dut.interfaces.wifi.reset()
-        time.sleep(15)
+        time.sleep(30)
         logger().info("Initialising DUT after the reset....")
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
         self.wifi_dut.interfaces.wifi.init(load_certificate=False)
@@ -629,7 +629,7 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_c19784(http_server, wifi_
         wifi_sniffer.interfaces.capture.stop_capture()
 
         wifi_dut.interfaces.wifi.reset()
-        time.sleep(15)
+        time.sleep(30)
         logger().info("Initialising DUT after the reset....")
         wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
         wifi_dut.interfaces.wifi.init(load_certificate=False)

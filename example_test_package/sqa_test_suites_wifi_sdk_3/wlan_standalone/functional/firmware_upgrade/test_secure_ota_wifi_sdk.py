@@ -170,7 +170,7 @@ class WifiJoin(ThreadBase):
                     logger().info(f'*** Firmware upgrade time: {t.duration} ***')
                     # self.wifi_dut.interfaces.wifi.reset()
                     self.wifi_dut.interfaces.wifi.deinit()
-                    time.sleep(15)
+                    time.sleep(30)
                     self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
                     self.wifi_dut.interfaces.wifi.init(load_certificate=False)
                     self.wifi_dut.interfaces.wifi.initialize_thread()
@@ -188,7 +188,7 @@ class WifiJoin(ThreadBase):
                     self.wifi_dut.interfaces.wifi.close()
                     # self.wifi_dut.interfaces.wifi.reset()
                     self.wifi_dut.interfaces.wifi.deinit()
-                    time.sleep(15)
+                    time.sleep(30)
                     self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
                     self.wifi_dut.interfaces.wifi.init(load_certificate=False)
                     self.wifi_dut.interfaces.wifi.initialize_thread()
@@ -273,12 +273,12 @@ class WifiJoin(ThreadBase):
                     timeout=150)
                 logger().info("The M4 application will load after a reset...")
                 self.wifi_dut.interfaces.wifi.reset()
-                time.sleep(15)
+                time.sleep(30)
 
             if self.test_case == '510702':
                 logger().info("The M4 application will load after a reset...")
                 self.wifi_dut.interfaces.wifi.reset()
-                time.sleep(15)
+                time.sleep(30)
 
             if self.test_case == '510708':
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(

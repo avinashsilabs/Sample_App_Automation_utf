@@ -368,12 +368,12 @@ class WifiJoin(ThreadBase):
 
             if self.test_case == '498662' or self.test_case == '498663':
                 self.wifi_dut.interfaces.wifi.reset()
-                time.sleep(15)
+                time.sleep(30)
 
             if self.test_case != '498662' and self.test_case != '498663':
                 # self.wifi_dut.interfaces.wifi.deinit()
                 self.wifi_dut.interfaces.wifi.reset()
-                time.sleep(15)
+                time.sleep(30)
                 self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
                 self.wifi_dut.interfaces.wifi.init(load_certificate=False)
                 self.wifi_dut.interfaces.wifi.initialize_thread()

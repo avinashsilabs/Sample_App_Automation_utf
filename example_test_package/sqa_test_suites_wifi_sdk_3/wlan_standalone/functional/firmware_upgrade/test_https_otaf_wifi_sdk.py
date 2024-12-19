@@ -222,7 +222,7 @@ class WifiJoin(ThreadBase):
                 logger().info("stop Sniffer capture...")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
                 self.wifi_dut.interfaces.wifi.reset()
-                time.sleep(15)
+                time.sleep(30)
 
                 if self.test_case != '498661':
                     self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
