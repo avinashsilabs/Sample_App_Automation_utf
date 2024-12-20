@@ -275,6 +275,7 @@ class WifiJoinThread(ThreadBase):
 
                         # open socket and listen for data
                         timeout = 40
+                        self.wifi_dut.interfaces.wifi.set_socket_config()
                         self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
                                                             local_port=self.net_perf_client.interfaces.net_perf.client_port,
                                                             local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,

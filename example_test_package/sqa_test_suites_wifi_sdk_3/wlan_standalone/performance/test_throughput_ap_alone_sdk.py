@@ -114,6 +114,7 @@ class WifiJoinThread(ThreadBase):
             traffic_types = ["RX"]
             for protocol in protocols:
                 for traffic_type in traffic_types:
+                    self.wifi_dut.interfaces.wifi.set_socket_config()
                     self.sl_collections.run_traffic(
                         wifi_dut=self.wifi_dut,
                         net_perf_client=self.net_perf_client,

@@ -73,10 +73,7 @@ class WifiJoinThread(ThreadBase):
         self.ssl_server = ssl_server
 
     def run(self):
-        logger().info("starting the sniffer again")
-        self.wifi_sniffer.interfaces.capture.configure_interface(
-            channel=self.wifi_access_point.interfaces.wifi.channel)
-        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
+        logger().info("Test Execution Started")
         time.sleep(2)
 
         WifiJoinThread.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
@@ -172,7 +169,7 @@ class WifiJoinThread(ThreadBase):
                 time.sleep(5)
                 if self.test_case_no == 537885:
                     time.sleep(25)
-                self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                # self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
                 logger().info("Successfully closed opened socket in the DUT")
                 self.ssl_server.interfaces.ssl.stop_server()
                 time.sleep(5)
@@ -195,7 +192,7 @@ class http_download(WifiJoinThread):
             http_server=self.http_server,
             index_path=self.index_path,
             device_ip=WifiJoinThread.dut_addr['device_ip'],
-            https=self.https,
+            https=0,
             server_port=5002
         )
 

@@ -63,7 +63,8 @@ class WLanThread(ThreadBase):
 
     def __init__(self, wifi_dut=None, wifi_access_point=None, sl_collections=None, test_name=None, ssl_server=None,
                  wifi_client=None, test_id=None, test_type=None, ping_from="remote", ping_count=10, addr_type="global",
-                 traffic_type=None, protocol=None, net_perf_client=None, timeout=60, data_transfer=None):
+                 traffic_type=None, protocol=None, net_perf_client=None, timeout=60, data_transfer=None,
+                 test_case_no=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -85,6 +86,7 @@ class WLanThread(ThreadBase):
         # self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         # logger().info(f"in harness power_save flag set to be : {self.power_save}")
         self.remote_ip = None
+        self.test_case_no = test_case_no
 
     def ping_async(self):
         time.sleep(10)
@@ -116,6 +118,8 @@ class WLanThread(ThreadBase):
         self.remote_ip = self.wifi_client.interfaces.wifi.get_ip_address(version=6, addr_type=self.addr_type)
         self.remote_ip = ipaddress.ip_address(self.remote_ip)
         logger().info(f"Remote device ip:{self.remote_ip}")
+        if self.test_case_no == 119376:
+            self.wifi_dut.interfaces.wifi.set_socket_config()
 
     def run_traffic(self, protocol="TCP", traffic_type="TX", ip_version=6):
 
@@ -363,6 +367,7 @@ def test_sdk_WLAN_IPV6_TCP_RX_C119376(
                               ping_count=ping_count, wifi_client=wifi_client,
                               protocol=protocol,
                               net_perf_client=net_perf_client,
+                              test_case_no='119376',
                               traffic_type="RX")
         wlan_obj.join_to_ap()
         wlan_obj.start()

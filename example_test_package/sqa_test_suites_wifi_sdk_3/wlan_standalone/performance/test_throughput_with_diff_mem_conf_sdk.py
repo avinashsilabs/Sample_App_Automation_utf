@@ -275,6 +275,7 @@ class WifiJoinThread(ThreadBase):
 
                         # open socket and listen for data
                         timeout = 40
+                        self.wifi_dut.interfaces.wifi.set_socket_config()
                         self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
                                                             local_port=self.net_perf_client.interfaces.net_perf.client_port,
                                                             local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
@@ -1464,7 +1465,7 @@ def test_wlan_ble_conn_with_data_trans_ssl_rx_ax_C532961(firmware_loader, wifi_s
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'n'})
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config(
     "wifi_dut",
@@ -1502,7 +1503,7 @@ def test_wlan_ble_conn_with_data_trans_ssl_tx_11n_C537876(firmware_loader, wifi_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'n'})
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config(
     "wifi_dut",
@@ -1560,7 +1561,7 @@ def test_wlan_ble_conn_with_data_trans_ssl_rx_11n_C537877(firmware_loader, wifi_
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
-def test_wlan_ble_conn_with_ssl_tx_ax_C300001(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
+def test_wlan_ble_conn_with_ssl_tx_ax_C695593(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
                                                           wifi_dut, utf_constants, request, sl_collections, ble_client,
                                                           bt_dut, ssl_server):
     ping_count = utf_constants.get("ping_count")
@@ -1599,7 +1600,7 @@ def test_wlan_ble_conn_with_ssl_tx_ax_C300001(firmware_loader, wifi_sniffer, wif
 
     }
 )
-def test_wlan_ble_conn_with_ssl_rx_ax_C300002(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
+def test_wlan_ble_conn_with_ssl_rx_ax_C695594(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
                                                           wifi_dut, utf_constants, request, sl_collections, ble_client,
                                                           bt_dut, ssl_server):
     ping_count = utf_constants.get("ping_count")
@@ -1637,7 +1638,7 @@ def test_wlan_ble_conn_with_ssl_rx_ax_C300002(firmware_loader, wifi_sniffer, wif
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
-def test_wlan_ble_conn_with_ssl_tx_11n_C300003(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
+def test_wlan_ble_conn_with_ssl_tx_11n_C695595(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
                                                           wifi_dut, utf_constants, request, sl_collections, ble_client,
                                                           bt_dut, ssl_server):
     ping_count = utf_constants.get("ping_count")
@@ -1676,7 +1677,7 @@ def test_wlan_ble_conn_with_ssl_tx_11n_C300003(firmware_loader, wifi_sniffer, wi
 
     }
 )
-def test_wlan_ble_conn_with_ssl_rx_11n_C300004(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
+def test_wlan_ble_conn_with_ssl_rx_11n_C695596(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
                                                           wifi_dut, utf_constants, request, sl_collections, ble_client,
                                                           bt_dut, ssl_server):
     ping_count = utf_constants.get("ping_count")
