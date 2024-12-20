@@ -1474,10 +1474,10 @@ test_sequence:
       - wlan_standalone
     test_case_name: test_mdns_neg_multicast_socket_in_open_state_C19008
   - id: ae71b65dc81c4b63746f83a5ae67529134cd9355
-    test_src_map_id: TC19015::1
-    test_case_id: test_sntp_unicast_TC19015
-    test_function: test_sntp_unicast_TC19015
-    test_id: test_sntp_unicast_TC19015::1
+    test_src_map_id: C19015::1
+    test_case_id: test_sntp_unicast_c19015
+    test_function: test_sntp_unicast_c19015
+    test_id: test_sntp_unicast_c19015::1
     test_module: sqa_test_suites/wlan_standalone/functional/mdns_and_sntp/test_wifi_sntp.py
     test_markers:
       - >-
@@ -1496,7 +1496,7 @@ test_sequence:
     version: 0
     enabled: true
     labels:
-      - TC19015
+      - C19015
       - functional
       - mdns_and_sntp
       - sntp
@@ -1504,12 +1504,12 @@ test_sequence:
       - unicast
       - wifi_sntp
       - wlan_standalone
-    test_case_name: test_sntp_unicast_TC19015
+    test_case_name: test_sntp_unicast_c19015
   - id: 75de8b2c1cc935bcf21bea5888452f73afc3266e
     test_src_map_id: TC19016::1
-    test_case_id: test_sntp_keepalive_TC19016[30-600]
-    test_function: test_sntp_keepalive_TC19016
-    test_id: test_sntp_keepalive_TC19016[30-600]::1
+    test_case_id: test_sntp_keepalive_c19016[30-600]
+    test_function: test_sntp_keepalive_c19016
+    test_id: test_sntp_keepalive_c19016[30-600]::1
     test_module: sqa_test_suites/wlan_standalone/functional/mdns_and_sntp/test_wifi_sntp.py
     test_markers:
       - >-
@@ -1540,12 +1540,12 @@ test_sequence:
       - sqa_test_suites
       - wifi_sntp
       - wlan_standalone
-    test_case_name: test_sntp_keepalive_TC19016[30-600]
+    test_case_name: test_sntp_keepalive_c19016[30-600]
   - id: e88297f5ce72aaa212021ce26d4b387f31640611
-    test_src_map_id: TC19017::1
-    test_case_id: test_sntp_ludp_coexit_TC19017
-    test_function: test_sntp_ludp_coexit_TC19017
-    test_id: test_sntp_ludp_coexit_TC19017::1
+    test_src_map_id: C19017::1
+    test_case_id: test_sntp_ludp_coexit_c19017
+    test_function: test_sntp_ludp_coexit_c19017
+    test_id: test_sntp_ludp_coexit_c19017::1
     test_module: sqa_test_suites/wlan_standalone/functional/mdns_and_sntp/test_wifi_sntp.py
     test_markers:
       - >-
@@ -1573,7 +1573,7 @@ test_sequence:
       - sqa_test_suites
       - wifi_sntp
       - wlan_standalone
-    test_case_name: test_sntp_ludp_coexit_TC19017
+    test_case_name: test_sntp_ludp_coexit_C19017
   - id: 39dfeb20a3c2200b6c18d87b02404f00c470a023
     test_src_map_id: C19065::1
     test_case_id: test_same_2aps_same_security_c19065
