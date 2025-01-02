@@ -169,7 +169,8 @@ class WLanThread(ThreadBase):
                         self.wifi_dut.interfaces.wifi.http_put(server=None, resource_path="cgi-bin/cgi_example.py",
                                                                server_ip=f'"{remote_ip}"', server_port=80)
                         self.wifi_dut.interfaces.wifi.http_get(self.http_server.interfaces.http,
-                                                               'index.html',
+                                                               ("url_greater_than_1024_and_less_than_2048/" * 27 +
+                                                                "LONG_PATH.htm"),
                                                                server_port=80, server_ip=f'"{remote_ip}"')
                         time.sleep(5)
 
@@ -1537,7 +1538,7 @@ def test_wifi_sdk_http_get_functionality_c19209(http_server, wifi_dut, http_clie
     }
 )
 @pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"100MB.html"})
+@pytest.mark.parametrize("index_path", {"100MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_http_get_functionality_100mb_file_c19214(http_server, wifi_dut, http_client, wifi_access_point,
                                                            index_path, utf_constants, wifi_sniffer, sl_collections):
@@ -1563,7 +1564,7 @@ def test_wifi_sdk_http_get_functionality_100mb_file_c19214(http_server, wifi_dut
 
         assert not status_dut, "failed to fetch the https data"
 
-        data = re.findall(r'((?<=http_get_response_length:)\d+)', content_dut)
+        data = re.findall(b'((?<=http_get_response_length:)\d+)', content_dut)
 
         assert int(data) >= 104857600, 'Fetched data is not 100MB'
 
@@ -1604,7 +1605,7 @@ def test_wifi_sdk_http_get_with_100mb_file_c476929(http_server, wifi_dut, http_c
     """
     try:
         test_name = '476929'
-        index_path = "100MB.html"
+        index_path = "100MB.htm"
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               http_client=http_client,
                               test_name=test_name, sl_collections=sl_collections, http_server=http_server,
@@ -1723,10 +1724,9 @@ def test_wifi_sdk_http_get_with_url_length_1140_with_wpa3_security_c476931(http_
     }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
-@pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 def test_wifi_sdk_http_get_multiple_times_with_long_http_url_bit_enable_eap_security_c476932(http_server, wifi_dut,
-                                                                                             http_client, index_path,
+                                                                                             http_client,
                                                                                              wifi_access_point,
                                                                                              wifi_sniffer,
                                                                                              radius_server,
@@ -1742,6 +1742,7 @@ def test_wifi_sdk_http_get_multiple_times_with_long_http_url_bit_enable_eap_secu
     """
     try:
         test_name = '476932'
+        index_path = "url_greater_than_1024_and_less_than_2048/" * 27 + "LONG_PATH.htm"
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               http_client=http_client,
                               test_name=test_name, sl_collections=sl_collections, http_server=http_server,
@@ -2822,7 +2823,6 @@ def test_wifi_sdk_https_put_get_post_in_sequence_c476956(http_server, wifi_dut, 
 
 @pytest.mark.config("wifi_access_point", wifi={"passphrase": '12345678', "ipv6_state": "0", "security": "Open",
                                                "wan_ipv6_address": WLanThread().random_ipv6_addr("2401:4900:1cb3::/48")})
-@pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.config(
     "wifi_dut",
@@ -2842,12 +2842,13 @@ def test_wifi_sdk_https_put_get_post_in_sequence_c476956(http_server, wifi_dut, 
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_http_put_get_post_in_sequence_ipv6_stateless_c476954(http_server, wifi_dut, http_client, index_path,
+def test_wifi_sdk_http_put_get_post_in_sequence_ipv6_stateless_c476954(http_server, wifi_dut, http_client,
                                                                        wifi_access_point, wifi_sniffer, sl_collections,
                                                                        sniffer_filter, wifi_client):
     """Verify HTTP PUT,GET,POST with HTTP longer URL support BIT enable"""
     try:
         test_name = '476954'
+        index_path = "url_greater_than_1024_and_less_than_2048/" * 27 + "LONG_PATH.htm"
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               test_name=test_name, sl_collections=sl_collections, http_server=http_server,
                               http_client=http_client, sniffer_filter=sniffer_filter, index_path=index_path,

@@ -195,7 +195,7 @@ devices:
                 protected_management_frame: 'Disable'
                 #ipv6 configuration
                 connection_type: 'STATIC_IPV6'
-                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1bcz"
+                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1bc"
                 wan_ipv6_gateway: "2401:4900:1cb3:3444::1"
                 wan_prefix_length: "64"
                 ipv6_state: "1" #0= "stateless" 1="stateful"
