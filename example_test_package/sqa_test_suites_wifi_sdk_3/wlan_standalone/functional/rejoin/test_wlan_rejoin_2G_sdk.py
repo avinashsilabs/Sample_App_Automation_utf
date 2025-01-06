@@ -95,7 +95,7 @@ class WLanThread(ThreadBase):
         self.switch = switch
         self.rejoin_event = None
         self.dut_addr = None
-        self.host_ip=None
+        self.host_ip = None
         self.socket_id = None
         self.wifi_client = wifi_client
         self.net_perf_client = net_perf_client
@@ -107,18 +107,18 @@ class WLanThread(ThreadBase):
             if self.test_case_no == 19721:
                 """ Enabling Rejoin """
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
-                                                                         beacon_missed_count=40,
-                                                                         first_time_retry_enable=0)
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=0)
             elif self.test_case_no == 19735:
                 """ Enabling Rejoin with retry bit enable"""
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
-                                                                         beacon_missed_count=40,
-                                                                         first_time_retry_enable=1)
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=1)
             elif self.test_case_no == 19736:
                 """ Enabling Rejoin with reset beacon missed counter"""
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
-                                                                         beacon_missed_count=100,
-                                                                         first_time_retry_enable=0)
+                                                                              beacon_missed_count=100,
+                                                                              first_time_retry_enable=0)
 
             elif self.test_case_no == 19737:
                 """Enabling Rejoin with scan interval 1 second"""
@@ -160,17 +160,13 @@ class WLanThread(ThreadBase):
                                                                               adv_passive_channel_time=20)
 
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
-                                                beacon_missed_count=40, first_time_retry_enable=0)
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=0)
 
             elif self.test_case_no == 19740:
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=4, scan_interval=6,
-                                                                         beacon_missed_count=200,
-                                                                         first_time_retry_enable=1)
-            elif self.test_case_no == 19741:
-                """ Enabling Rejoin """
-                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
-                                                                         beacon_missed_count=40,
-                                                                         first_time_retry_enable=0)
+                                                                              beacon_missed_count=200,
+                                                                              first_time_retry_enable=1)
 
             elif self.test_case_no == 19742:
                 "Set region code US"
@@ -179,8 +175,8 @@ class WLanThread(ThreadBase):
                 time.sleep(5)
 
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
-                                                                         beacon_missed_count=40,
-                                                                         first_time_retry_enable=0)
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=0)
 
             elif self.test_case_no == 641349:
                 """Enabling Rejoin with beacon missed count 20 and max retry count 4"""
@@ -223,35 +219,18 @@ class WLanThread(ThreadBase):
                 self.wifi_access_point.interfaces.wifi.passphrase = "12345679"
                 self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point, expected_status=
                 SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION or SLStatus.SL_STATUS_SI91X_REJOIN_FAILURE)
+
             elif self.test_case_no == 19741:
-                dut_add_dict = {}
-                logger().info("Initiating wlan Scan from DUT")
-                scan_results = self.wifi_dut.interfaces.wifi.scan(ssid=self.wifi_access_point.interfaces.wifi.ssid)
-                logger().info(scan_results)
-                assert len(scan_results) > 0, "scan_list not found"
-                self.wifi_dut.interfaces.wifi.join(self.wifi_access_point.interfaces.wifi.ssid)
-
-                ip_status, ip_config = self.sl_collections.configure_ip(self.wifi_dut)
-                logger().info(f"\n ***ip_status={ip_status},  ip_config={ip_config}*** \n")
-
-                # we fetch the ip address and mac_address
-                device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-                logger().info(f"DUT ip: {device_ip}")
-                dut_add_dict['device_ip'] = device_ip
-                dut_add_dict['dut_mac_address'] = self.wifi_dut.interfaces.wifi.get_mac_address()
-                logger().info(
-                    f"DUT MAC ADDRESS :  {dut_add_dict['dut_mac_address']} DUT IP ADDRESS : {dut_add_dict['device_ip']}")
-
-                # ping to DUT before power_save
-                status = self.sl_collections.ping(device_ip=dut_add_dict['device_ip'], ping_count=10)
-                assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
-
-                logger().info(f"....Applying performance profile mode")
-                self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-                self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                              psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-
-                self.dut_addr = dut_add_dict
+                """ Enabling Rejoin """
+                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=0)
+                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                         ping_after_power_save=False,
+                                                                         channel=self.wifi_access_point.interfaces.wifi.channel)
+                logger().info("DUT successfully connected with AP")
 
             elif self.test_case_no == 19729:
                 """ Enabling Rejoin for security mode change"""
@@ -273,9 +252,9 @@ class WLanThread(ThreadBase):
 
                 logger().info("Setting Rejoin Parameters in DUT")
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0,
-                                                                         scan_interval=4,
-                                                                         beacon_missed_count=40,
-                                                                         first_time_retry_enable=0)
+                                                                              scan_interval=4,
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=0)
 
                 logger().info("DUT Joining to AP in EAP-TLS mode")
                 self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
@@ -290,9 +269,9 @@ class WLanThread(ThreadBase):
 
                 logger().info("Setting Rejoin Parameters in DUT")
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0,
-                                                                         scan_interval=4,
-                                                                         beacon_missed_count=40,
-                                                                         first_time_retry_enable=0)
+                                                                              scan_interval=4,
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=0)
 
                 logger().info("DUT Joining to AP in EAP-TTLS mode")
                 self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
@@ -300,16 +279,17 @@ class WLanThread(ThreadBase):
                                                                         eap_type="ttls", ping_after_power_save=True)
                 time.sleep(5)
                 self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET,
-                                                             option_val=SocketOptions.TCP_MAX_RETRY, data_transfer=False)
+                                                             option_val=SocketOptions.TCP_MAX_RETRY,
+                                                             data_transfer=False)
 
             elif self.test_case_no == 19732:
                 self.wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
 
                 logger().info("Setting Rejoin Parameters in DUT")
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0,
-                                                                         scan_interval=4,
-                                                                         beacon_missed_count=40,
-                                                                         first_time_retry_enable=0)
+                                                                              scan_interval=4,
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=0)
 
                 logger().info("DUT Joining to AP in EAP-PEAP mode")
                 self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
@@ -754,8 +734,9 @@ def test_wifi_sdk_rejoin_c19721(switch, wifi_sniffer, wifi_access_point, wifi_du
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_rejoin_max_retry_failure_c19722(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
-                                sl_collections, sniffer_filter):
+def test_wifi_sdk_rejoin_max_retry_failure_c19722(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
+                                                  request,
+                                                  sl_collections, sniffer_filter):
     """Do scan, Join after rejoin failure and validate Rejoin max retry"""
     test_name = request.node.name
     max_retry_attempts = 4
@@ -820,7 +801,7 @@ def test_wifi_sdk_rejoin_max_retry_failure_c19722(switch, wifi_sniffer, wifi_acc
 def test_wifi_sdk_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_dut, switch,
                                                   request, sl_collections, sniffer_filter):
     test_name = request.node.name
-    dut_add_dict ={}
+    dut_add_dict = {}
     channel_list_2g = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     probe_check_dict = {}
     probe_not_captured_channel_list = []
@@ -919,7 +900,7 @@ def test_wifi_sdk_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_poin
 def test_wifi_sdk_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point, wifi_dut, switch,
                                                  request, sl_collections, sniffer_filter):
     test_name = request.node.name
-    dut_add_dict ={}
+    dut_add_dict = {}
     channel_list_2g = [1, 6, 11]
     probe_check_dict = {}
     probe_not_captured_channel_list = []
@@ -1117,7 +1098,7 @@ def test_wifi_sdk_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_du
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
 
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter\
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter \
             (sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name="probe_request")
 
         packet_count = int(
@@ -1219,8 +1200,9 @@ def test_wifi_sdk_rejoin_psk_change_c19734(switch, wifi_sniffer, wifi_access_poi
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_rejoin_with_disconnect_c19735(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
-                                           sl_collections, sniffer_filter):
+def test_wifi_sdk_rejoin_with_disconnect_c19735(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
+                                                request,
+                                                sl_collections, sniffer_filter):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
 
@@ -1645,7 +1627,7 @@ def test_wifi_sdk_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wif
 
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter\
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter \
             (sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name="probe_request")
 
         logger().info("\n\n ****** Access point is going to turn off  ******")
@@ -2030,7 +2012,8 @@ def test_wifi_sdk_rejoin_eap_tls_c19730(wifi_dut, wifi_access_point, wifi_sniffe
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 def test_wifi_sdk_rejoin_eap_ttls_c19731(wifi_dut, wifi_access_point, wifi_sniffer, radius_server, request,
-                                        sl_collections, switch, wifi_client, net_perf_client, protocol, sniffer_filter):
+                                         sl_collections, switch, wifi_client, net_perf_client, protocol,
+                                         sniffer_filter):
     """Verify rejoin functionality in EAP-TTLS mode"""
     test_name = request.node.name
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
@@ -2083,7 +2066,8 @@ def test_wifi_sdk_rejoin_eap_ttls_c19731(wifi_dut, wifi_access_point, wifi_sniff
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 def test_wifi_sdk_rejoin_eap_peap_c19732(wifi_dut, wifi_access_point, wifi_sniffer, radius_server, request,
-                                        sl_collections, switch, wifi_client, net_perf_client, protocol, sniffer_filter):
+                                         sl_collections, switch, wifi_client, net_perf_client, protocol,
+                                         sniffer_filter):
     """Verify rejoin functionality in EAP-, PEAP mode"""
     test_name = request.node.name
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
@@ -2115,7 +2099,7 @@ def test_wifi_sdk_rejoin_eap_peap_c19732(wifi_dut, wifi_access_point, wifi_sniff
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "tx_wait_time": 16000,
-        }
+    }
 )
 @pytest.mark.config(
     "wifi_access_points",
@@ -2203,12 +2187,12 @@ def test_wifi_sdk_rejoin_roaming_c19728(wifi_access_points, wifi_dut, switches, 
         ping(dut_ip, ping_count)
 
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
-                                                                            sta_mac_address=ap_bssid_1,
-                                                                            filter_name='assoc_req_resp')
+                                                                                        sta_mac_address=ap_bssid_1,
+                                                                                        filter_name='assoc_req_resp')
 
         packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
-                                                                            sta_mac_address=ap_bssid_1,
-                                                                            filter_name='power_mgmt_bit')
+                                                                                        sta_mac_address=ap_bssid_1,
+                                                                                        filter_name='power_mgmt_bit')
 
         wifi_sniffer.interfaces.capture.stop_capture()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
@@ -2264,7 +2248,7 @@ def test_wifi_sdk_rejoin_roaming_c19728(wifi_access_points, wifi_dut, switches, 
         time.sleep(10)
 
         packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_bssid_0,
-                                                                            filter_name='deauthentication')
+                                                                                        filter_name='deauthentication')
 
         wifi_sniffer.interfaces.capture.stop_capture()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)[
@@ -2328,7 +2312,7 @@ def test_wifi_sdk_rejoin_roaming_c19728(wifi_access_points, wifi_dut, switches, 
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "tx_wait_time": 16000,
-        }
+    }
 )
 @pytest.mark.config(
     "wifi_access_points",
@@ -2419,12 +2403,12 @@ def test_wifi_sdk_rejoin_roaming_c19726(wifi_access_points, wifi_dut, switches, 
         ping(dut_ip, ping_count)
 
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
-                                                                            sta_mac_address=ap_bssid_1,
-                                                                            filter_name='assoc_req_resp')
+                                                                                        sta_mac_address=ap_bssid_1,
+                                                                                        filter_name='assoc_req_resp')
 
         packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
-                                                                            sta_mac_address=ap_bssid_1,
-                                                                            filter_name='power_mgmt_bit')
+                                                                                        sta_mac_address=ap_bssid_1,
+                                                                                        filter_name='power_mgmt_bit')
 
         wifi_sniffer.interfaces.capture.stop_capture()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
@@ -2479,7 +2463,7 @@ def test_wifi_sdk_rejoin_roaming_c19726(wifi_access_points, wifi_dut, switches, 
         wifi_access_points[0].interfaces.wifi.stop_ap()
         time.sleep(10)
         packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_bssid_0,
-                                                                            filter_name='deauthentication')
+                                                                                        filter_name='deauthentication')
 
         wifi_sniffer.interfaces.capture.stop_capture()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)[
