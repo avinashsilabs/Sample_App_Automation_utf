@@ -4,9 +4,7 @@ from utf.interfaces.bluetooth import BLEDeviceState
 from utf.interfaces.wifi import WlanError
 from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect.devices.rs911x import RS9116CoexMode
-from utf.interfaces.bluetooth.nrf_blatann import (
-    NRFBLEIoCapabilities
-)
+from utf.interfaces.bluetooth.nrf_blatann import NRFBLEIoCapabilities
 import threading
 
 
@@ -18,7 +16,7 @@ import threading
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-@pytest.mark.test_src_map_id('SM07362')
+@pytest.mark.test_src_map_id("SM07362")
 def test_nrf_ble_advertisement(ble_dut, nrf_ble_client):
     # Set up DUT for BLE advertising
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
@@ -26,7 +24,9 @@ def test_nrf_ble_advertisement(ble_dut, nrf_ble_client):
     ble_dut.interfaces.bluetooth.ble_start_advertising()
 
     scan_timeout = 10
-    nrf_ble_client.interfaces.bluetooth.set_default_scan_params(timeout_seconds=scan_timeout)
+    nrf_ble_client.interfaces.bluetooth.set_default_scan_params(
+        timeout_seconds=scan_timeout
+    )
 
     # Begin Scanning for BLE devices
     device_found = False
@@ -34,8 +34,11 @@ def test_nrf_ble_advertisement(ble_dut, nrf_ble_client):
     sw = Stopwatch()
     while sw.elapsed_sec < scan_timeout:
         found_devices = nrf_ble_client.interfaces.bluetooth.get_devices()
-        if bt_dut_address in found_devices and \
-                found_devices[bt_dut_address] == ble_dut.interfaces.bluetooth.ble_advertising_data:
+        if (
+            bt_dut_address in found_devices
+            and found_devices[bt_dut_address]
+            == ble_dut.interfaces.bluetooth.ble_advertising_data
+        ):
             device_found = True
             break
 
@@ -64,13 +67,13 @@ def test_nrf_ble_advertisement(ble_dut, nrf_ble_client):
 
 
 @pytest.mark.config(
-    'ble_dut',
+    "ble_dut",
     wifi={
-        'oper_mode': 0,
-        'coex_mode': RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
+        "oper_mode": 0,
+        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-@pytest.mark.test_src_map_id('SM07369')
+@pytest.mark.test_src_map_id("SM07369")
 def test_nrf_ble_scanning(ble_dut, nrf_ble_client):
     # Start DUT
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
@@ -101,7 +104,9 @@ def test_nrf_ble_scanning(ble_dut, nrf_ble_client):
     assert state_int == BLEDeviceState.Connected
 
     # Disconnect
-    ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
+    ble_dut.interfaces.bluetooth.ble_disconnect(
+        ble_remote_dev_address=bt_client_address
+    )
 
     # Get the state of the dut
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
@@ -116,10 +121,14 @@ def test_nrf_ble_scanning(ble_dut, nrf_ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
-@pytest.mark.test_src_map_id('SM07381')
+@pytest.mark.test_src_map_id("SM07381")
 def test_nrf_ble_gatt_server_slave(ble_dut, nrf_ble_client):
-    service_uid = nrf_ble_client.interfaces.bluetooth.get_blatann_uuid('6e') #TODO : This has to be replaced either with 0x006E or 110
-    char_uid = nrf_ble_client.interfaces.bluetooth.get_blatann_uuid('6f') #TODO : This has to be replaced either with 0x006F or 111
+    service_uid = nrf_ble_client.interfaces.bluetooth.get_blatann_uuid(
+        "6e"
+    )  # TODO : This has to be replaced either with 0x006E or 110
+    char_uid = nrf_ble_client.interfaces.bluetooth.get_blatann_uuid(
+        "6f"
+    )  # TODO : This has to be replaced either with 0x006F or 111
     data1 = "LzY0"
     data2 = "K09x"
     data3 = "Mx3Y"
@@ -138,7 +147,9 @@ def test_nrf_ble_gatt_server_slave(ble_dut, nrf_ble_client):
     ble_dut.interfaces.bluetooth.ble_start_advertising()
 
     scan_timeout = 10
-    nrf_ble_client.interfaces.bluetooth.set_default_scan_params(timeout_seconds=scan_timeout)
+    nrf_ble_client.interfaces.bluetooth.set_default_scan_params(
+        timeout_seconds=scan_timeout
+    )
 
     # Begin Scanning for BLE devices
     device_found = False
@@ -146,8 +157,11 @@ def test_nrf_ble_gatt_server_slave(ble_dut, nrf_ble_client):
     sw = Stopwatch()
     while sw.elapsed_sec < scan_timeout:
         found_devices = nrf_ble_client.interfaces.bluetooth.get_devices()
-        if bt_dut_address in found_devices and \
-                found_devices[bt_dut_address] == ble_dut.interfaces.bluetooth.ble_advertising_data:
+        if (
+            bt_dut_address in found_devices
+            and found_devices[bt_dut_address]
+            == ble_dut.interfaces.bluetooth.ble_advertising_data
+        ):
             device_found = True
             break
 
@@ -166,9 +180,7 @@ def test_nrf_ble_gatt_server_slave(ble_dut, nrf_ble_client):
     # wait for 10 seconds to complete service discovery
     time.sleep(10)
 
-    nrf_ble_client.interfaces.bluetooth.find_service(
-        service_uuid=service_uid
-    )
+    nrf_ble_client.interfaces.bluetooth.find_service(service_uuid=service_uid)
 
     nrf_ble_client.interfaces.bluetooth.find_characteristic(
         characteristic_uuid=char_uid
@@ -233,7 +245,7 @@ def test_nrf_ble_gatt_server_slave(ble_dut, nrf_ble_client):
     nrf_ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 
-@pytest.mark.test_src_map_id('SM24449')
+@pytest.mark.test_src_map_id("SM24449")
 def test_central_without_passcode_pairing(ble_client, nrf_ble_client):
     ble_client_address = nrf_ble_client.interfaces.bluetooth.get_ble_address()
     assert ble_client_address is not None
@@ -245,13 +257,18 @@ def test_central_without_passcode_pairing(ble_client, nrf_ble_client):
     time.sleep(1)
 
     scan_timeout = 30
-    nrf_ble_client.interfaces.bluetooth.set_default_scan_params(timeout_seconds=scan_timeout)
+    nrf_ble_client.interfaces.bluetooth.set_default_scan_params(
+        timeout_seconds=scan_timeout
+    )
 
     # Begin Scanning for BLE devices
     nrf_ble_client.interfaces.bluetooth.start_scanning()  # this is not async
     found_devices = nrf_ble_client.interfaces.bluetooth.get_devices()
-    assert str(bt_dut_address) in found_devices and \
-           found_devices[str(bt_dut_address)] == ble_client.interfaces.bluetooth.ble_advertising_data
+    assert (
+        str(bt_dut_address) in found_devices
+        and found_devices[str(bt_dut_address)]
+        == ble_client.interfaces.bluetooth.ble_advertising_data
+    )
 
     nrf_ble_client.interfaces.bluetooth.stop_scanning()
 
@@ -261,19 +278,27 @@ def test_central_without_passcode_pairing(ble_client, nrf_ble_client):
     try:
         nrf_ble_client.interfaces.bluetooth.connect(bt_dut_address)
         time.sleep(2)
-        connection_status = nrf_ble_client.interfaces.bluetooth.get_peer_connection_status(bt_dut_address)
+        connection_status = (
+            nrf_ble_client.interfaces.bluetooth.get_peer_connection_status(
+                bt_dut_address
+            )
+        )
         assert connection_status
         nrf_ble_client.interfaces.bluetooth.set_peer_security_params(bt_dut_address)
 
         nrf_ble_client.interfaces.bluetooth.pair(bt_dut_address)
-        security_level = nrf_ble_client.interfaces.bluetooth.get_peer_connection_security_status(bt_dut_address)
+        security_level = (
+            nrf_ble_client.interfaces.bluetooth.get_peer_connection_security_status(
+                bt_dut_address
+            )
+        )
         assert security_level.value == 2
     finally:
         if connection_status:
             nrf_ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 
-@pytest.mark.test_src_map_id('SM54282')
+@pytest.mark.test_src_map_id("SM54282")
 def test_central_with_passcode_pairing(ble_client, nrf_ble_client):
     pass_key = 432156
 
@@ -287,13 +312,18 @@ def test_central_with_passcode_pairing(ble_client, nrf_ble_client):
     time.sleep(1)
 
     scan_timeout = 30
-    nrf_ble_client.interfaces.bluetooth.set_default_scan_params(timeout_seconds=scan_timeout)
+    nrf_ble_client.interfaces.bluetooth.set_default_scan_params(
+        timeout_seconds=scan_timeout
+    )
 
     # Begin Scanning for BLE devices
     nrf_ble_client.interfaces.bluetooth.start_scanning()  # this is not async
     found_devices = nrf_ble_client.interfaces.bluetooth.get_devices()
-    assert str(bt_dut_address) in found_devices and \
-           found_devices[str(bt_dut_address)] == ble_client.interfaces.bluetooth.ble_advertising_data
+    assert (
+        str(bt_dut_address) in found_devices
+        and found_devices[str(bt_dut_address)]
+        == ble_client.interfaces.bluetooth.ble_advertising_data
+    )
 
     nrf_ble_client.interfaces.bluetooth.stop_scanning()
 
@@ -304,29 +334,42 @@ def test_central_with_passcode_pairing(ble_client, nrf_ble_client):
     try:
         nrf_ble_client.interfaces.bluetooth.connect(bt_dut_address)
         time.sleep(2)
-        connection_status = nrf_ble_client.interfaces.bluetooth.get_peer_connection_status(bt_dut_address)
+        connection_status = (
+            nrf_ble_client.interfaces.bluetooth.get_peer_connection_status(
+                bt_dut_address
+            )
+        )
         assert connection_status
 
         # nrf_ble_client.interfaces.bluetooth.register_peer_passkey_display(confirm=True) # this can be used with DisplayYesNo capability
-        nrf_ble_client.interfaces.bluetooth.register_peer_passkey_entry(pass_key=pass_key)
+        nrf_ble_client.interfaces.bluetooth.register_peer_passkey_entry(
+            pass_key=pass_key
+        )
         nrf_ble_client.interfaces.bluetooth.register_peer_on_security_level_changed()  # only for information
 
         # Making lesc_pairing false will change security to MITM (3)
-        nrf_ble_client.interfaces.bluetooth.set_peer_security_params(bt_dut_address, passcode_pairing=True,
-                                                                     io_capabilities=NRFBLEIoCapabilities.KEYBOARD_ONLY,
-                                                                     lesc_pairing=True,
-                                                                     long_term_bonding=True)
+        nrf_ble_client.interfaces.bluetooth.set_peer_security_params(
+            bt_dut_address,
+            passcode_pairing=True,
+            io_capabilities=NRFBLEIoCapabilities.KEYBOARD_ONLY,
+            lesc_pairing=True,
+            long_term_bonding=True,
+        )
 
         nrf_ble_client.interfaces.bluetooth.pair(bt_dut_address)
 
-        security_level = nrf_ble_client.interfaces.bluetooth.get_peer_connection_security_status(bt_dut_address)
+        security_level = (
+            nrf_ble_client.interfaces.bluetooth.get_peer_connection_security_status(
+                bt_dut_address
+            )
+        )
         assert security_level.value == 4  # LESC_MITM
     finally:
         if connection_status:
             nrf_ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 
-@pytest.mark.test_src_map_id('SM03839')
+@pytest.mark.test_src_map_id("SM03839")
 def test_peripheral_without_passcode_pairing(ble_client, nrf_ble_client):
     nrf_ble_client.interfaces.bluetooth.set_security_params()
 
@@ -336,7 +379,9 @@ def test_peripheral_without_passcode_pairing(ble_client, nrf_ble_client):
     )
     assert ble_client_address is not None
 
-    bt_dut_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_client_address)
+    bt_dut_address = ble_client.interfaces.bluetooth.start_smp_scan(
+        bt_dut_address=ble_client_address
+    )
     assert bt_dut_address is not None
 
     time.sleep(1)
@@ -346,9 +391,9 @@ def test_peripheral_without_passcode_pairing(ble_client, nrf_ble_client):
     while sw.elapsed_sec < 30:
         found_devices = ble_client.interfaces.bluetooth.get_devices()
         if (
-                ble_client_address in found_devices
-                and found_devices[ble_client_address]
-                == nrf_ble_client.interfaces.bluetooth.ble_advertising_data
+            ble_client_address in found_devices
+            and found_devices[ble_client_address]
+            == nrf_ble_client.interfaces.bluetooth.ble_advertising_data
         ):
             device_found = True
             break
@@ -364,19 +409,26 @@ def test_peripheral_without_passcode_pairing(ble_client, nrf_ble_client):
 
         assert nrf_ble_client.interfaces.bluetooth.get_connection_status(bt_dut_address)
 
-        security_level = nrf_ble_client.interfaces.bluetooth.get_connection_security_status(bt_dut_address)
+        security_level = (
+            nrf_ble_client.interfaces.bluetooth.get_connection_security_status(
+                bt_dut_address
+            )
+        )
         assert security_level.value == 2
     finally:
         if connected:
             ble_client.interfaces.bluetooth.disconnect(ble_client_address)
 
 
-@pytest.mark.test_src_map_id('SM54975')
+@pytest.mark.test_src_map_id("SM54975")
 def test_peripheral_with_passcode_pairing(ble_client, nrf_ble_client):
     pass_key = 432561
-    nrf_ble_client.interfaces.bluetooth.set_security_params(passcode_pairing=True,
-                                                            io_capabilities=NRFBLEIoCapabilities.KEYBOARD_ONLY,
-                                                            long_term_bonding=True, lesc_pairing=True)
+    nrf_ble_client.interfaces.bluetooth.set_security_params(
+        passcode_pairing=True,
+        io_capabilities=NRFBLEIoCapabilities.KEYBOARD_ONLY,
+        long_term_bonding=True,
+        lesc_pairing=True,
+    )
 
     # nrf_ble_client.interfaces.bluetooth.register_passkey_display(confirm=True) # this can be used with DisplayYesNo capability
     nrf_ble_client.interfaces.bluetooth.register_passkey_entry(pass_key=pass_key)
@@ -391,8 +443,9 @@ def test_peripheral_with_passcode_pairing(ble_client, nrf_ble_client):
     )
     assert ble_client_address is not None
 
-    bt_dut_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_client_address,
-                                                                    capability="KeyboardOnly", pin_code=pass_key)
+    bt_dut_address = ble_client.interfaces.bluetooth.start_smp_scan(
+        bt_dut_address=ble_client_address, capability="KeyboardOnly", pin_code=pass_key
+    )
     assert bt_dut_address is not None
 
     time.sleep(1)
@@ -402,9 +455,9 @@ def test_peripheral_with_passcode_pairing(ble_client, nrf_ble_client):
     while sw.elapsed_sec < 30:
         found_devices = ble_client.interfaces.bluetooth.get_devices()
         if (
-                ble_client_address in found_devices
-                and found_devices[ble_client_address]
-                == nrf_ble_client.interfaces.bluetooth.ble_advertising_data
+            ble_client_address in found_devices
+            and found_devices[ble_client_address]
+            == nrf_ble_client.interfaces.bluetooth.ble_advertising_data
         ):
             device_found = True
             break
@@ -420,7 +473,11 @@ def test_peripheral_with_passcode_pairing(ble_client, nrf_ble_client):
 
         assert nrf_ble_client.interfaces.bluetooth.get_connection_status(bt_dut_address)
 
-        security_level = nrf_ble_client.interfaces.bluetooth.get_connection_security_status(bt_dut_address)
+        security_level = (
+            nrf_ble_client.interfaces.bluetooth.get_connection_security_status(
+                bt_dut_address
+            )
+        )
         assert security_level.value == 4
     finally:
         if connected:
@@ -547,3 +604,105 @@ def test_nrf_ble_client_adv_with_keyboardonly_and_ble_client_scan_connect_with_d
     finally:
         if connected:
             ble_client.interfaces.bluetooth.disconnect(ble_client_address)
+
+
+
+def test_nrf_custom_service_and_characteristic_addition(
+    ble_client, nrf_ble_client, logger
+):
+    custom_service = nrf_ble_client.interfaces.bluetooth.add_custom_service(uuid=0x1AA1)
+    logger.info(custom_service)
+    characteristic_properties = {
+        "read": True,  # Set to True if you want this characteristic to be readable
+        "write": False,  # Set to True if you want this characteristic to be writable
+    }
+
+    initial_value = b"initial_value"
+    # Add the characteristic
+    custom_characteristic = (
+        nrf_ble_client.interfaces.bluetooth.add_custom_characteristic(
+            uuid=0x1BB1,
+            service=custom_service,
+            properties=characteristic_properties,
+            initial_value=initial_value,
+        )
+    )
+    logger.info(custom_characteristic)
+    descriptor_properties = {
+        "read": True,  # Mark the descriptor as readable
+        "write": False,  # Mark it as not writable (can be True if you need it)
+    }
+
+    # Initial value of the descriptor
+    descriptor_initial_value = b"Characteristic Descriptor"
+
+    # Add the custom descriptor
+    desc = nrf_ble_client.interfaces.bluetooth.add_custom_descriptor(
+        uuid=0x1BB1,  # UUID of the descriptor
+        characteristic=custom_characteristic,  # The characteristic to add the descriptor to
+        properties=descriptor_properties,  # The properties passed as a dictionary
+        initial_value=descriptor_initial_value,  # Initial value of the descriptor
+    )
+    logger.info(desc)
+    ble_client_address = nrf_ble_client.interfaces.bluetooth.get_ble_address()
+    assert ble_client_address is not None
+
+    bt_dut_address = ble_client.interfaces.bluetooth.start_smp_adv(
+        bt_dut_address=ble_client_address
+    )
+    assert bt_dut_address is not None
+    time.sleep(1)
+
+    scan_timeout = 30
+    nrf_ble_client.interfaces.bluetooth.set_default_scan_params(
+        timeout_seconds=scan_timeout
+    )
+
+    # Begin Scanning for BLE devices
+    nrf_ble_client.interfaces.bluetooth.start_scanning()  # this is not async
+    found_devices = nrf_ble_client.interfaces.bluetooth.get_devices()
+    assert (
+        str(bt_dut_address) in found_devices
+        and found_devices[str(bt_dut_address)]
+        == ble_client.interfaces.bluetooth.ble_advertising_data
+    )
+
+    nrf_ble_client.interfaces.bluetooth.stop_scanning()
+
+    # Discovery complete, go to a longer connection interval
+    nrf_ble_client.interfaces.bluetooth.set_connection_parameters(100, 120, 6000)
+    connection_status = False
+    try:
+        nrf_ble_client.interfaces.bluetooth.connect(bt_dut_address)
+        time.sleep(2)
+        connection_status = (
+            nrf_ble_client.interfaces.bluetooth.get_peer_connection_status(
+                bt_dut_address
+            )
+        )
+        assert connection_status
+        (
+            servs,
+            chars,
+        ) = (
+            ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+        )
+        time.sleep(5)
+        logger.info(f"{servs} {chars}")
+        assert len(servs) > 0, "no services fetched"
+        assert len(chars) > 0, "fetched characters are empty"
+        service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+        char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
+        (
+            char_path,
+            char_props,
+        ) = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(
+            services=servs, service_uid=service_uid, char_uid=char_uid
+        )
+        time.sleep(5)
+        logger.info(f"{char_props}")
+        assert char_path, "characters are empty"
+        assert len(char_props) > 0, "length of characters is 0"
+    finally:
+        if connection_status:
+            nrf_ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
