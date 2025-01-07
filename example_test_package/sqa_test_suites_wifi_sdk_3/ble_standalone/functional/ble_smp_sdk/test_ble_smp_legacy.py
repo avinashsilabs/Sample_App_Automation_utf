@@ -711,136 +711,126 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664308(w
         sl_collections.exception_handling(wifi_dut, error)
         time.sleep(3)
 
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_smp_legacy_pairing_dut_as_slave_using_random_C664315(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+    """Verify the Legacy pairing for DisplayOnly IOCap with DUT & DisplayOnly on dongle, dut as slave """
+    try:
+        ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer,check_error=False, passkey_state=0, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664315", smp_sc=0, smp_mtim=1, smp_io_capability=0, cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_ONLY, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True, gatt_init=True, random_addr_on_dut=True)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
 
-# @pytest.mark.ble_sniffer("frontline_sniffer")
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-# def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664315(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
-#     """Verify the Legacy pairing for DisplayOnly IOCap with DUT & DisplayOnly on dongle, dut as slave """
-#     try:
-#         ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer,check_error=False, passkey_state=0, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664315", smp_sc=0, smp_mtim=1, smp_io_capability=0, cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_ONLY, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True, gatt_init=True, random_addr_on_dut=True)
-#         ble_obj.start()
-#         ble_obj.wait_for_exit()
-#
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut, error)
-#         time.sleep(3)
-#
-#
-# @pytest.mark.ble_sniffer("frontline_sniffer")
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-# def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664291(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
-#     """Verify the Legacy pairing for Display yes or no IOCap with dongle & DisplayOnly on dut, dut as slave """
-#     try:
-#         ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664291", smp_sc=0, smp_mtim=1, smp_io_capability=0, cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_connect_to_dut=True, link_key=False, lesc_disabled=True, gatt_init=True)
-#         ble_obj.start()
-#         ble_obj.wait_for_exit()
-#
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut, error)
-#         time.sleep(3)
-#
-# @pytest.mark.ble_sniffer("frontline_sniffer")
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-# def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664293(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
-#     """Verify the Legacy pairing for No input No output with dongle & DisplayOnly on dut, dut as slave """
-#     try:
-#         ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, passkey_state=0,  sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664293", smp_sc=0, smp_mtim=1, smp_io_capability=0, cap_on_dongle = NRFBLEIoCapabilities.NONE, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True, gatt_init=True)
-#         ble_obj.start()
-#         ble_obj.wait_for_exit()
-#
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut, error)
-#         time.sleep(3)
-#
-#
-# @pytest.mark.ble_sniffer("frontline_sniffer")
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-# def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664295(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
-#     """Verify the Legacy pairing for DisplayOnly IOCap with dongle & Display yes or no , dut as slave """
-#     try:
-#         ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664295", smp_sc=0, smp_mtim=1, smp_io_capability=1, cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_ONLY, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True)
-#         ble_obj.start()
-#         ble_obj.wait_for_exit()
-#
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut, error)
-#         time.sleep(3)
-#
-#
-# @pytest.mark.ble_sniffer("frontline_sniffer")
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-# def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664296(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
-#     """Verify the Legacy pairing for Display Yes/No IOCap On dongle & dongle, dut as slave """
-#     try:
-#         ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664296", smp_sc=0, smp_mtim=1, smp_io_capability=1, cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True, gatt_init=True)
-#         ble_obj.start()
-#         ble_obj.wait_for_exit()
-#
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut, error)
-#         time.sleep(3)
-#
-# @pytest.mark.ble_sniffer("frontline_sniffer")
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-# def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664298(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
-#     """Verify the Legacy pairing for No input no output on dongle & Display Yes/No IOCap on dut, dut as slave """
-#     try:
-#         ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664298", smp_sc=0, smp_mtim=1, smp_io_capability=1, cap_on_dongle = NRFBLEIoCapabilities.NONE, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True, gatt_init=True)
-#         ble_obj.start()
-#         ble_obj.wait_for_exit()
-#
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut, error)
-#         time.sleep(3)
-#
-#
-# @pytest.mark.ble_sniffer("frontline_sniffer")
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-# def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664305(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
-#     """Verify the Legacy pairing for Display Only on dongle & no input no output on  DUT as slave """
-#     try:
-#         ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, passkey_state=0,  sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664305", smp_sc=0, smp_mtim=1, smp_io_capability=3, cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_ONLY, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True, gatt_init=True)
-#         ble_obj.start()
-#         ble_obj.wait_for_exit()
-#
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut, error)
-#         time.sleep(3)
-#
-#
-# @pytest.mark.ble_sniffer("frontline_sniffer")
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-# def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using__C664306(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
-#     """Verify the Legacy pairing for Display Yes/No IOCap on dongle, dut as slave """
-#     try:
-#         ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, passkey_state=0,  sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664306", smp_sc=0, smp_mtim=1, smp_io_capability=3, cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True, gatt_init=True)
-#         ble_obj.start()
-#         ble_obj.wait_for_exit()
-#
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut, error)
-#         time.sleep(3)
-#
-# @pytest.mark.ble_sniffer("frontline_sniffer")
-# def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664308(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
-#     """Verify the Legacy pairing for No input No output on both side , dut as slave """
-#     try:
-#         ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, sniffer_check=False, layer_name="SMP", capture_filename="frontline_capture_C664308", smp_sc=0, smp_mtim=1, smp_io_capability=3, cap_on_dongle = NRFBLEIoCapabilities.NONE, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True, gatt_init=True)
-#         ble_obj.start()
-#         ble_obj.wait_for_exit()
-#
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut, error)
-#         time.sleep(3)
-#
-# @pytest.mark.ble_sniffer("frontline_sniffer")
-# def test_ble_smp_anthencation_legacy_pairing_C557262(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
-#     """Verify the Legacy pairing for Display Yes/No IOCap with DUT as Central """
-#     try:
-#         ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C557262", smp_sc=0, smp_mtim=0, smp_io_capability=1, passkey_state=0, cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_connect_to_dut=True,  mtim_disabled=True, link_key=False, gatt_init=True)
-#         ble_obj.start()
-#         ble_obj.wait_for_exit()
-#
-#     except Exception as error:
-#         sl_collections.exception_handling(wifi_dut, error)
-#         time.sleep(3)
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+        time.sleep(3)
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664316(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+    """Verify the Legacy pairing for Display yes or no IOCap with dongle & DisplayOnly on dut, dut as slave """
+    try:
+        ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664316", smp_sc=0, smp_mtim=1, smp_io_capability=0, cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True, gatt_init=True, random_addr_on_dut=True)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+        time.sleep(3)
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664318(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+    """Verify the Legacy pairing for No input No output with dongle & DisplayOnly on dut, dut as slave """
+    try:
+        ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, passkey_state=0,  sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664318", smp_sc=0, smp_mtim=1, smp_io_capability=0, cap_on_dongle = NRFBLEIoCapabilities.NONE, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True, gatt_init=True, random_addr_on_dut=True)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+        time.sleep(3)
+
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664320(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+    """Verify the Legacy pairing for DisplayOnly IOCap with dongle & Display yes or no , dut as slave """
+    try:
+        ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664320", smp_sc=0, smp_mtim=1, smp_io_capability=1, cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_ONLY, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True, random_addr_on_dut=True)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+        time.sleep(3)
+
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664321(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+    """Verify the Legacy pairing for Display Yes/No IOCap On dongle & dongle, dut as slave """
+    try:
+        ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664321", smp_sc=0, smp_mtim=1, smp_io_capability=1, cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True, gatt_init=True, random_addr_on_dut=True)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+        time.sleep(3)
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664323(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+    """Verify the Legacy pairing for No input no output on dongle & Display Yes/No IOCap on dut, dut as slave """
+    try:
+        ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664323", smp_sc=0, smp_mtim=1, smp_io_capability=1, cap_on_dongle = NRFBLEIoCapabilities.NONE, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True, gatt_init=True, random_addr_on_dut=True)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+        time.sleep(3)
+
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664330(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+    """Verify the Legacy pairing for Display Only on dongle & no input no output on  DUT as slave """
+    try:
+        ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, passkey_state=0,  sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664330", smp_sc=0, smp_mtim=1, smp_io_capability=3, cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_ONLY, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True, gatt_init=True, random_addr_on_dut=True)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+        time.sleep(3)
+
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664331(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+    """Verify the Legacy pairing for No input No output on dut side & display yes or no on remote , dut as slave """
+    try:
+        ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664331", smp_sc=0, smp_mtim=1, smp_io_capability=3, cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_dongle_as_master=True, link_key=False, lesc_disabled=True, gatt_init=True, random_addr_on_dut=True)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+        time.sleep(3)
+
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664333(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+    """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as slave """
+    try:
+        ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C664333", smp_sc=0, smp_mtim=1, smp_io_capability=3, passkey_state=0, cap_on_dongle = NRFBLEIoCapabilities.NONE, nrf_dongle_as_master=True,  lesc_disabled=True, link_key=False, gatt_init=True, random_addr_on_dut=True)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+        time.sleep(3)
+
+
+
+
