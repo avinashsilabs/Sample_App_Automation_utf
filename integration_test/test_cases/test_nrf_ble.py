@@ -7,6 +7,7 @@ from utf_wiseconnect.devices.rs911x import RS9116CoexMode
 from utf.interfaces.bluetooth.nrf_blatann import (
     NRFBLEIoCapabilities
 )
+import threading
 
 
 # Non-secure connection support without data transfer, nrf_ble_client as central
@@ -417,6 +418,128 @@ def test_peripheral_with_passcode_pairing(ble_client, nrf_ble_client):
         time.sleep(1)
         assert connected
 
+        assert nrf_ble_client.interfaces.bluetooth.get_connection_status(bt_dut_address)
+
+        security_level = nrf_ble_client.interfaces.bluetooth.get_connection_security_status(bt_dut_address)
+        assert security_level.value == 4
+    finally:
+        if connected:
+            ble_client.interfaces.bluetooth.disconnect(ble_client_address)
+
+def test_nrf_ble_client_adv_with_displayonly_and_ble_client_scan_connect_with_keyboardonly(ble_client, nrf_ble_client):
+    nrf_ble_client.interfaces.bluetooth.set_security_params(passcode_pairing=True,
+                                                            io_capabilities=NRFBLEIoCapabilities.DISPLAY_ONLY,
+                                                            long_term_bonding=True, lesc_pairing=True)
+
+    nrf_ble_client.interfaces.bluetooth.register_on_connect()
+    nrf_ble_client.interfaces.bluetooth.register_on_disconnect()
+    nrf_ble_client.interfaces.bluetooth.register_on_client_pairing_complete()
+    nrf_ble_client.interfaces.bluetooth.register_passkey_display()
+
+    # Start ble client
+    ble_client_address = nrf_ble_client.interfaces.bluetooth.start_advertising(
+        timeout_sec=0, auto_restart=True
+    )
+    assert ble_client_address is not None
+
+    bt_dut_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_client_address,
+                                                                    capability="KeyboardOnly", pin_code=-8)
+    assert bt_dut_address is not None
+
+    time.sleep(1)
+
+    device_found = False
+    sw = Stopwatch()
+    while sw.elapsed_sec < 30:
+        found_devices = ble_client.interfaces.bluetooth.get_devices()
+        if (
+                ble_client_address in found_devices
+                and found_devices[ble_client_address]
+                == nrf_ble_client.interfaces.bluetooth.ble_advertising_data
+        ):
+            device_found = True
+            break
+
+    ble_client.interfaces.bluetooth.stop_scanning()
+    assert device_found
+
+    connected = False
+    try:
+        def connect():
+            time.sleep(1)
+            connected = ble_client.interfaces.bluetooth.pair_and_connect(ble_client_address)
+            
+        time.sleep(3)  # Give it time to connect
+
+        # Create and start the connect thread
+        connect_thread = threading.Thread(target=connect)
+        connect_thread.start()
+        time.sleep(10)
+
+        ble_client.interfaces.bluetooth.set_pin(nrf_ble_client.interfaces.bluetooth.get_passkey())
+        time.sleep(10)
+        assert nrf_ble_client.interfaces.bluetooth.get_connection_status(bt_dut_address)
+
+        security_level = nrf_ble_client.interfaces.bluetooth.get_connection_security_status(bt_dut_address)
+        assert security_level.value == 4
+    finally:
+        if connected:
+            ble_client.interfaces.bluetooth.disconnect(ble_client_address)
+
+
+def test_nrf_ble_client_adv_with_keyboardonly_and_ble_client_scan_connect_with_displayonly(ble_client, nrf_ble_client):
+    nrf_ble_client.interfaces.bluetooth.set_security_params(passcode_pairing=True,
+                                                            io_capabilities=NRFBLEIoCapabilities.KEYBOARD_ONLY,
+                                                            long_term_bonding=True, lesc_pairing=True)
+
+    nrf_ble_client.interfaces.bluetooth.register_on_connect()
+    nrf_ble_client.interfaces.bluetooth.register_on_disconnect()
+    nrf_ble_client.interfaces.bluetooth.register_on_client_pairing_complete()
+    nrf_ble_client.interfaces.bluetooth.register_passkey_display()
+    nrf_ble_client.interfaces.bluetooth.register_dynamic_passkey_entry()
+
+    # Start ble client
+    ble_client_address = nrf_ble_client.interfaces.bluetooth.start_advertising(
+        timeout_sec=0, auto_restart=True
+    )
+    assert ble_client_address is not None
+
+    bt_dut_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_client_address,
+                                                                    capability="DisplayOnly", pin_code=-8)
+    assert bt_dut_address is not None
+
+    time.sleep(1)
+
+    device_found = False
+    sw = Stopwatch()
+    while sw.elapsed_sec < 30:
+        found_devices = ble_client.interfaces.bluetooth.get_devices()
+        if (
+                ble_client_address in found_devices
+                and found_devices[ble_client_address]
+                == nrf_ble_client.interfaces.bluetooth.ble_advertising_data
+        ):
+            device_found = True
+            break
+
+    ble_client.interfaces.bluetooth.stop_scanning()
+    assert device_found
+
+    connected = False
+    try:
+        def connect():
+            time.sleep(1)
+            connected = ble_client.interfaces.bluetooth.pair_and_connect(ble_client_address)
+            
+        time.sleep(3)  # Give it time to connect
+
+        # Create and start the connect thread
+        connect_thread = threading.Thread(target=connect)
+        connect_thread.start()
+        time.sleep(10)
+
+        nrf_ble_client.interfaces.bluetooth.set_passkey(ble_client.interfaces.bluetooth.get_passkey())
+        time.sleep(20)
         assert nrf_ble_client.interfaces.bluetooth.get_connection_status(bt_dut_address)
 
         security_level = nrf_ble_client.interfaces.bluetooth.get_connection_security_status(bt_dut_address)
