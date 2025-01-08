@@ -63,7 +63,7 @@ pipeline {
                     python3 -m pip install --upgrade pip
                     pip3 install setuptools==57.5.0
                     pip3 install wheel $PIP_OPTIONS
-                    pip3 install -r requirements.txt $PIP_OPTIONS
+                    pip3 install -r host-requirements.txt $PIP_OPTIONS
                 """
                 dir('utf_core') {
                     sh """
