@@ -245,3 +245,4 @@ def test_wifi_sdk_query_webpage_http_server_c641388(
     except Exception as e:
         logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
         raise e
+
