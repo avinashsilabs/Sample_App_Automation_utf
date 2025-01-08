@@ -1457,7 +1457,7 @@ def test_wifi_sdk_dutap_europe_region_unsupported_channel_c477827(wifi_dut, wifi
                                           ht_caps=0)
 
     except Exception as Err:
-        if "0x1000A" in str(Err):
+        if "0x1000A" in str(Err) or "0x1000a" in str(Err):
             logger().info(f"expected error code: {Err}")
         else:
             raise Err
@@ -2427,7 +2427,7 @@ def test_wifi_sdk_dut_as_ap_japan_region_unsupported_channel_c19457(wifi_dut, wi
         logger().info("Found the desired error code 0x1000A, marking the test case passed")
 
     except Exception as Err:
-        if "0x1000A" in str(Err):
+        if "0x1000A" in str(Err) or "0x1000a" in str(Err):
             logger().info(f"expected error code: {Err}")
         else:
             raise Err
