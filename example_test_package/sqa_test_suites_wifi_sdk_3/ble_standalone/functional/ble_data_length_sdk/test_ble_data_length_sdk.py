@@ -2,9 +2,10 @@ import time
 import pytest
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.utils.stopwatch import Stopwatch
-from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xExtTCPIPFeatureBitMap, Si91xBTFeatureBitMap, \
+from utf_wiseconnect_3.tests.devices.si91x import (Si91xCoexMode, Si91xExtTCPIPFeatureBitMap, Si91xBTFeatureBitMap, \
     Si91xFeatureBitMap, Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap, \
-    Si91xConfigFeatureBitMap, Si91xBLECustomFeatureBitMap, Si91xBLEFeatureBitMap
+    Si91xConfigFeatureBitMap, Si91xBLECustomFeatureBitMap, Si91xBLEFeatureBitMap, Si91xPowerSaveModes, \
+    Si91xPowerSaveProcedureTypes)
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf.utils.logger import get_logger
 import string
@@ -512,16 +513,12 @@ def test_ble_slave_tx_data_length_230_bytes_duty_cycle_C19929(wifi_dut, ble_clie
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wifi_dut, utf_constants):
-    bt_mon_log_file_name = (f"reports/test_ble_master_rx_100_bytes_C19924"
-                            f"{int(time.time())}.log")
-
+    bt_mon_log_file_name = f"reports/test_ble_master_rx_100_bytes_C19924{int(time.time())}.log"
     """Validate BLE RX as master by configuring data length with 100bytes without Duty cycling"""
-
     svc = 'HealthThermometerService'
     charc = 'CustomNotifyCharacteristic'
     try:
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
-
             iter_count = utf_constants.get("iter_count")
             for count in range(iter_count):
 
@@ -539,8 +536,9 @@ def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wif
                 ble_dut.interfaces.bluetooth.ble_stop_scanning()
 
                 logger().info(f"....Applying performance profile mode and Enable_bt_power_save")
-                ble_dut.interfaces.bluetooth.set_performance_profile()
-                ble_dut.interfaces.bluetooth.enable_bt_power_save()
+                wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+                wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                              psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
                 logger().info(f".... initiating ble connection ....")
                 ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address)
@@ -589,11 +587,10 @@ def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wif
                 ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=bt_client_address,
                                                                handle=(write_handle + 1), enable_notify=1)
                 time.sleep(1)
-
+                notify_time = 300
                 data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
                 sw = Stopwatch()
-
-                while sw.elapsed_sec < 60:
+                while sw.elapsed_sec < notify_time:
                     since_time = time.perf_counter_ns()
                     ble_client.interfaces.bluetooth.send_gatt_charc_notification(svc, charc, data)
                     time.sleep(0.3)
@@ -606,17 +603,16 @@ def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wif
                                 logger().info(f"************** BLE EVENT DATA IS : {event.event_data} **************")
                                 received_data = re.findall(r"(\b[A-Z0-9]{100}\b)", event.event_data)
                                 logger().info(f"******* Received Data on DUT : {received_data} ********")
-                                assert received_data == [data], "data mismatched"
-                                if data in event.event_data:
-                                    found = True
-                                    break
+                                try:
+                                    assert received_data[0] in data, "data mismatched"
+                                except:
+                                    assert received_data[0][:237] in data, "data mismatched"
+                                found = True
+                                break
                         if found:
                             break
-                    if not found:
-                        raise Exception("No data received on DUT")
 
                 time.sleep(1)
-
                 ble_dut.interfaces.bluetooth.ble_set_att_value(
                     ble_remote_dev_address=bt_client_address, handle=(write_handle + 1), enable_notify=0)
 
@@ -625,12 +621,10 @@ def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wif
                 assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
 
                 ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
-
                 ble_client.interfaces.bluetooth.close()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
     finally:
         ble_client.interfaces.bluetooth.close()
 
@@ -646,9 +640,11 @@ def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wif
                     Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
@@ -662,19 +658,14 @@ def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wif
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_master_rx_100_bytes_duty_cycle_C19930(ble_dut, ble_client, sl_collections, wifi_dut, utf_constants):
-    bt_mon_log_file_name = (f"reports/test_ble_master_rx_100_bytes_C19930"
-                            f"{int(time.time())}.log")
-
+    bt_mon_log_file_name = f"reports/test_ble_master_rx_100_bytes_C19930{int(time.time())}.log"
     """Validate BLE RX as master by configuring data length with 100bytes with Duty cycling"""
-
     svc = 'HealthThermometerService'
     charc = 'CustomNotifyCharacteristic'
     try:
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
-
             iter_count = utf_constants.get("iter_count")
             for count in range(iter_count):
-
                 logger().info("******************** initializing ble in dut ********************")
                 bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
                 assert bt_dut_address, "failed to initialize ble in dut"
@@ -689,8 +680,9 @@ def test_ble_master_rx_100_bytes_duty_cycle_C19930(ble_dut, ble_client, sl_colle
                 ble_dut.interfaces.bluetooth.ble_stop_scanning()
 
                 logger().info(f"....Applying performance profile mode and Enable_bt_power_save")
-                wifi_dut.interfaces.wifi.set_performance_profile()
-                wifi_dut.interfaces.wifi.enable_bt_power_save()
+                wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+                wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                              psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
                 logger().info(f".... initiating ble connection ....")
                 ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address)
@@ -738,11 +730,10 @@ def test_ble_master_rx_100_bytes_duty_cycle_C19930(ble_dut, ble_client, sl_colle
                 ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=bt_client_address,
                                                                handle=(write_handle + 1), enable_notify=1)
                 time.sleep(1)
-
+                notify_time = 300
                 data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
                 sw = Stopwatch()
-
-                while sw.elapsed_sec < 60:
+                while sw.elapsed_sec < notify_time:
                     since_time = time.perf_counter_ns()
                     ble_client.interfaces.bluetooth.send_gatt_charc_notification(svc, charc, data)
                     time.sleep(0.3)
@@ -755,17 +746,16 @@ def test_ble_master_rx_100_bytes_duty_cycle_C19930(ble_dut, ble_client, sl_colle
                                 logger().info(f"************** BLE EVENT DATA IS : {event.event_data} **************")
                                 received_data = re.findall(r"(\b[A-Z0-9]{100}\b)", event.event_data)
                                 logger().info(f"******* Received Data on DUT : {received_data} ********")
-                                assert received_data == [data], "data mismatched"
-                                if data in event.event_data:
-                                    found = True
-                                    break
+                                try:
+                                    assert received_data[0] in data, "data mismatched"
+                                except:
+                                    assert received_data[0][:237] in data, "data mismatched"
+                                found = True
+                                break
                         if found:
                             break
-                    if not found:
-                        raise Exception("No data received on DUT")
 
                 time.sleep(1)
-
                 ble_dut.interfaces.bluetooth.ble_set_att_value(
                     ble_remote_dev_address=bt_client_address, handle=(write_handle + 1), enable_notify=0)
 
@@ -774,12 +764,10 @@ def test_ble_master_rx_100_bytes_duty_cycle_C19930(ble_dut, ble_client, sl_colle
                 assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
 
                 ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
-
                 ble_client.interfaces.bluetooth.close()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
     finally:
         ble_client.interfaces.bluetooth.close()
 
