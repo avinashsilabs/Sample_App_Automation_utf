@@ -1752,7 +1752,6 @@ def test_wifi_sdk_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point,
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'No packet found for pwmt bit disable'
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1776,7 +1775,7 @@ def test_wifi_sdk_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "Open", "ipv6_state": "1",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "beacon_interval": 100,
+                               "beacon_interval": 100,
                                "dtim": 3})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_wifi_sdk_max_psp_enable_ps2_ulp_ipv6_c535826(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections):
@@ -1892,10 +1891,10 @@ def test_wifi_sdk_max_psp_enable_ps2_ulp_ipv6_c535826(wifi_sniffer, wifi_access_
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "Open", "ipv6_state": "1",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "beacon_interval": 100,
+                               "beacon_interval": 100,
                                "dtim": 3})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_sdk_max_psp_dtim_3_enable_ps2_ulp_ipv6_c535826(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections):
+def test_wifi_sdk_max_psp_dtim_enable_ps2_ulp_ipv6_c535827(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections):
     """Verify whether RSI_STA is wake up and receive data based on DTIM beacon when enable power save2 with ULP and
     IPV6 enabled """
     validation = True

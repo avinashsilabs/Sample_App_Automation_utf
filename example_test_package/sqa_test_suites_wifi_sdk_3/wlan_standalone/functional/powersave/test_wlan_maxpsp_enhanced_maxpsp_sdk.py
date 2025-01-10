@@ -622,6 +622,40 @@ class WLanThread(ThreadBase):
                 logger().info("\n\n Time sleep for 2 minutes \n\n")
                 time.sleep(120)
 
+            if self.test_case_no == 19167:
+                listen_interval = 1000
+                host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+                logger().info(f"Remote device ip :{host_ip}")
+                self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
+                                                                      Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+                self.wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
+                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated
+                                                                         , ping_after_power_save=False,
+                                                                         mode='power_save',
+                                                                         num_of_dtim_skip=0, listen_interval=600)
+
+                status = ping(self.dut_addr['device_ip'], 60, size="300")
+                assert status == 1, "Ping failed"
+
+            if self.test_case_no == 19174:
+                listen_interval = 5000
+                host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+                logger().info(f"Remote device ip :{host_ip}")
+                self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
+                                                                      Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+                self.wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
+                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated
+                                                                         , ping_after_power_save=False,
+                                                                         mode='power_save',
+                                                                         num_of_dtim_skip=0, listen_interval=700)
+                time.sleep(20)
+                status = ping(self.dut_addr['device_ip'], 60, size="300")
+                assert status == 1, "Ping failed"
+
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case {self.test_case_no} thread: {str(e)} ****\n\n")
             raise e
@@ -2803,5 +2837,195 @@ def test_wifi_sdk_enhanced_max_psp_dtim_c19706(wifi_sniffer, wifi_access_point, 
         time.sleep(10)
         wifi_sniffer.interfaces.capture.stop_capture()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count']
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+def test_wifi_sdk_maxpsp_listen_interval_11ms_c19167(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
+                                                     sl_collections, request, wifi_client):
+    test_name = request.node.name
+    test_case_no = 19167
+
+    '''Verify the power save functionality with the Power Save listen interval set to 600ms.'''
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
+    time.sleep(5)
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                          test_name=test_name, sl_collections=sl_collections,
+                          test_case_no=test_case_no, wifi_client=wifi_client)
+
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        time.sleep(5)
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.
+                                                                                        dut_addr['dut_mac_address'],
+                                                                                        da_addr=ap_bssid,
+                                                                                        filter_name='power_mgmt_bit')
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
+            'Unable to find PM bit 1 in packets'
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+def test_wifi_sdk_maxpsp_multiple_listen_interval_c19174(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
+                                                         sl_collections, request, wifi_client):
+    test_name = request.node.name
+    test_case_no = 19174
+
+    '''Verify the Power Save functionality at different Power Save Listen Intervals'''
+
+    ap_bssid = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f'AP BSSID = {ap_bssid}')
+
+    time.sleep(5)
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                          test_name=test_name, sl_collections=sl_collections,
+                          test_case_no=test_case_no, wifi_client=wifi_client)
+
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        time.sleep(5)
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.
+                                                                                        dut_addr['dut_mac_address'],
+                                                                                        da_addr=ap_bssid,
+                                                                                        filter_name='power_mgmt_bit')
+        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.
+                                                                                        dut_addr['dut_mac_address'],
+                                                                                        da_addr=ap_bssid,
+                                                                                        filter_name='power_mgmt_bit_disable')
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find PM bit 1 in packets'
+
+        # set the device out of power save mode
+        logger().info('\n\n *** Set the device out of power save mode for listen interval = 700*** \n\n')
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="outofpower_savemode_700")
+        wifi_dut.interfaces.wifi.set_performance_profile()
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveDisabled)
+        time.sleep(100)
+
+        status = ping(wlan_obj.dut_addr['device_ip'], 10, size="300")
+        assert status == 1, "Ping failed"
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count'], \
+            'Unable to find PM bit 0 in packets'
+
+        # set the device power save mode for listen interval 1000
+        logger().info('\n\n *** Set the device for power save mode for listen interval = 1000*** \n\n')
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="power_savemode_1000")
+
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save', listen_interval=1000)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        time.sleep(20)
+        status = ping(wlan_obj.dut_addr['device_ip'], 10, size="300")
+        assert status == 1, "Ping failed"
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find PM bit 1 in packets'
+
+        # set the device out of power save mode
+        logger().info('\n\n *** Set the device out of power save mode for listen interval=1000 *** \n\n')
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="outofpower_savemode_1000")
+
+        wifi_dut.interfaces.wifi.set_performance_profile()
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveDisabled)
+        time.sleep(100)
+
+        status = ping(wlan_obj.dut_addr['device_ip'], 10, size="300")
+        assert status == 1, "Ping failed"
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count'], \
+            'Unable to find PM bit 0 in packets'
+
+        # set the device power save mode for listen interval 2000
+        logger().info('\n\n *** Set the device for power save mode for listen interval = 2000*** \n\n')
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="power_savemode_2000")
+
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save', listen_interval=2000)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        time.sleep(20)
+        status = ping(wlan_obj.dut_addr['device_ip'], 10, size="300")
+        assert status == 1, "Ping failed"
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find PM bit 1 in packets'
+
+        # set the device out of power save mode
+        logger().info('\n\n *** Set the device out of power save mode for listen interval=2000 *** \n\n')
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="outofpower_savemode_2000")
+
+        wifi_dut.interfaces.wifi.set_performance_profile()
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveDisabled)
+        time.sleep(100)
+
+        status = ping(wlan_obj.dut_addr['device_ip'], 10, size="300")
+        assert status == 1, "Ping failed"
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count'], \
+            'Unable to find PM bit 0 in packets'
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
