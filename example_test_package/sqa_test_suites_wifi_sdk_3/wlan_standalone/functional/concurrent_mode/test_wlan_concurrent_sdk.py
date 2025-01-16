@@ -26,7 +26,7 @@ from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEvent
 import string
 import random
 from AWSIoTPythonSDK.core.protocol.internal.clients import ClientStatus
-from test_aws_iot_wifi_sqa_sdk import AwsConnection
+from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.cloud_connectivity.test_aws_iot_wifi_sqa_sdk import AwsConnection
 
 
 """
