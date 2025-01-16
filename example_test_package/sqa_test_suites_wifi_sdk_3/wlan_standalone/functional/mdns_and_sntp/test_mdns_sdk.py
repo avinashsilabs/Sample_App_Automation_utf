@@ -112,7 +112,7 @@ def test_wifi_sdk_mdns_neg_without_sel_feature_C19006(wifi_sniffer, wifi_access_
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPServer | Si91xTCPIPFeatureBitMap.mDNS,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.mDNS,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "bt_features": 0,
@@ -148,6 +148,10 @@ def test_wifi_sdk_mdns_neg_port_already_in_use_C19007(wifi_sniffer, wifi_access_
         wifi_dut.interfaces.wifi.mdns_register_service(expected_status=SLStatus.SL_STATUS_SI91X_PORT_UNAVAILABLE)
 
         logger().info("******* DUT sent error code 0x1bb23 when port is not available which is expected *******")
+
+        wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
+        logger().info("Successfully closed opened socket in the DUT")
+
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
 
