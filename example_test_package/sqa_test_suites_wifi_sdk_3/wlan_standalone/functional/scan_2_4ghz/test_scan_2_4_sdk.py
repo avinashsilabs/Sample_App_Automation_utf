@@ -1075,14 +1075,24 @@ def test_wifi_sdk_scan_all_channels_in_korea_region_c477822(wifi_sniffer, wifi_d
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'Korea'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_wifi_sdk_scan_in_korea_region_for_channel_14_c477824(wifi_dut, sl_collections):
+def test_wifi_sdk_scan_in_korea_region_for_channel_14_c477824(wifi_access_point, wifi_dut, wifi_sniffer, request, sl_collections):
     """Verify Whether DUT is throwing error or not when scan in 14 channel and DUT is configured in Korea Region"""
     try:
-        scan_results, status = wifi_dut.interfaces.wifi.scan(channel=14, ssid=None,
-                                                             expected_status=SLStatus.SL_STATUS_SI91X_INVALID_CHANNEL)
-        time.sleep(10)
-        logger.info('**** Getting 0x1000A error code, which is expected ****')
-        logger().info(scan_results)
+        test_name = request.node.name
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
+        time.sleep(2)
+
+        logger().info("Initiating scan from dut...")
+        wifi_dut.interfaces.wifi.scan(ssid=None, channel=14, scan_bitmap_2_4=16384, scan_type=0,
+                                      expected_status=SLStatus.SL_STATUS_SI91X_INVALID_CHANNEL)
+        logger().info(f"\n\n Observed the expected error code: 0x1000A (SL_STATUS_SI91X_INVALID_CHANNEL) \n\n")
+        time.sleep(20)
+
+        logger().info(" ====== Going to stop the sniffer capture ====== ")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 

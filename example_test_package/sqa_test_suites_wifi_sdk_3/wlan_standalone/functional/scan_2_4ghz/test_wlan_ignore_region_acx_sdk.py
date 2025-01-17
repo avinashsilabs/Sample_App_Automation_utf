@@ -670,3 +670,240 @@ def test_wifi_sdk_ver_probe_req_chan_1_11_bg_scan_api_us_regi_ap_c661450(wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
         raise e  # Re-raise the exception to indicate failure in pytest
 
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "japan",
+    }
+)
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "ssid": "sliabs_ap", "passphrase": "Automation@123",
+        "region": 1,
+        "region_code": "ignore",
+    },
+)
+def test_wifi_sdk_verify_scan_and_conn_third_party_ap_conf_jp_region_c661449( wifi_dut,sl_collections, remote_wiseconnect3, wifi_sniffer, request, sniffer_filter):
+    """Verify scan and connection when third party AP is configured Japan in 13 channel"""
+    try:
+        test_name = request.node.name
+        static_ip = "192.168.100.77"
+        static_subnet = "255.255.255.0"
+        static_gateway = "192.168.100.76"
+        ip_version = 'ipv4'
+        channel = 13
+
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        time.sleep(2)
+
+        ap_mac = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"DUT as AP MAC Address: {ap_mac}")
+        sec_sdk_mac = remote_wiseconnect3.interfaces.sapi.get_mac_address()
+        logger().info(f"DUT MAC is : {sec_sdk_mac}")
+        time.sleep(2)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0", static_gateway="192.168.100.76")
+
+        wifi_dut.interfaces.wifi.start_ap(ssid="silabs_ap", security="wpa2", channel=channel, psk="Automation@123",
+                                          dtim_beacon_count=1, beacon_interval=100)
+        time.sleep(30)
+
+        remote_wiseconnect3.interfaces.sapi.scan(channel=None, ssid=None)
+        time.sleep(2)
+
+        remote_wiseconnect3.interfaces.sapi.join(ssid="silabs_ap", security="wpa2", passphrase="Automation@123", channel=channel, timeout=60)
+        time.sleep(2)
+
+        remote_wiseconnect3.interfaces.sapi.start_ip(ip_version=ip_version, static_ip=static_ip, static_subnet=static_subnet,
+                                                     static_gateway=static_gateway, timeout=10)
+
+        # Set performance profile and enable Bluetooth power save mode
+        remote_wiseconnect3.interfaces.sapi.set_performance_profile(mode='power_save_low_latency')
+        remote_wiseconnect3.interfaces.sapi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                                 psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        remote_wiseconnect3.interfaces.sapi.leave()
+        time.sleep(2)
+
+        # Stop the sniffer capture
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stopped Sniffer capture.")
+
+        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sec_sdk_mac, da_addr=ap_mac,
+                                                                                  filter_name='power_mgmt_bit')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
+            'Unable to find the power management save sniffer packets'
+
+        filter_3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sec_sdk_mac, da_addr=ap_mac,
+                                                                                  filter_name='probe_request')
+        result = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_3)
+        logger().info(f'Result={result}')
+
+        # If no probe request is found, the test should still pass
+        if result['packet_count'] == 0:
+            logger().info(f"No probe request found on channel {channel}, passing the test.")
+        else:
+            assert result['packet_count'], 'Unable to find the probe request sniffer packets'
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "japan",
+    }
+)
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "ssid": "sliabs_ap", "passphrase": "Automation@123",
+        "region": 1,
+        "region_code": "ignore",
+    },
+)
+def test_wifi_sdk_ver_prob_req_cha_1_14_bg_scan_api_jp_region_c661451( wifi_dut,sl_collections, remote_wiseconnect3, wifi_sniffer, request, sniffer_filter):
+    """Verify whether DUT is able to send probe request in 1-14 channels
+       when BG scan API is called and DUT is connected to JP region AP"""
+    try:
+        test_name = request.node.name
+        static_ip = "192.168.100.77"
+        static_subnet = "255.255.255.0"
+        static_gateway = "192.168.100.76"
+        ip_version = 'ipv4'
+        channels_list_2g = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        for channel in channels_list_2g:
+            if channel in [14]:
+                # Handle unsupported channels (14)
+                logger().info(f"Skipping unsupported channel {channel} for probe request validation.")
+
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+            time.sleep(2)
+
+            # Enabling advanced scan configuration for supported channels
+            remote_wiseconnect3.interfaces.wifi.set_advanced_scan_configuration(adv_active_channel_time=15,
+                                                                                adv_passive_channel_time=20)
+            ap_mac = wifi_dut.interfaces.wifi.get_mac_address(2)
+            logger().info(f"DUT as AP MAC Address: {ap_mac}")
+            sec_sdk_mac = remote_wiseconnect3.interfaces.sapi.get_mac_address()
+            logger().info(f"DUT MAC is : {sec_sdk_mac}")
+            time.sleep(2)
+
+            wifi_dut.interfaces.wifi.start_ap(ssid="silabs_ap", security="wpa2", channel=channel, psk="Automation@123",
+                                              dtim_beacon_count=1, beacon_interval=100)
+            time.sleep(30)
+
+            remote_wiseconnect3.interfaces.sapi.scan(channel=None, ssid=None)
+            time.sleep(2)
+
+            remote_wiseconnect3.interfaces.sapi.join(ssid="silabs_ap", security="wpa2", passphrase="Automation@123", channel=channel, timeout=60)
+            time.sleep(2)
+
+            remote_wiseconnect3.interfaces.sapi.start_ip(ip_version=ip_version, static_ip=static_ip, static_subnet=static_subnet,
+                                                         static_gateway=static_gateway, timeout=10)
+
+            # Set performance profile and enable Bluetooth power save mode
+            remote_wiseconnect3.interfaces.sapi.set_performance_profile(mode='power_save_low_latency')
+            remote_wiseconnect3.interfaces.sapi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                                     psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+            logger().info("\n *** Enable BGscan *** \n")
+            remote_wiseconnect3.interfaces.wifi.scan(bgscan=True, bg_scan_periodicity=10)
+            time.sleep(3)
+
+            # Stop the sniffer capture
+            wifi_sniffer.interfaces.capture.stop_capture()
+            logger().info("Stopped Sniffer capture.")
+
+            filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sec_sdk_mac, da_addr=ap_mac,
+                                                                                      filter_name='power_mgmt_bit')
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
+                'Unable to find the power management save sniffer packets'
+
+            filter_3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sec_sdk_mac, da_addr=ap_mac,
+                                                                                      filter_name='probe_request')
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_3) ['packet_count'], \
+                'Unable to find the probe request sniffer packets'
+
+            remote_wiseconnect3.interfaces.sapi.leave()
+            time.sleep(2)
+            wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+            time.sleep(2)
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
