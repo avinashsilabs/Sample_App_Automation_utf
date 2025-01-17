@@ -1,11 +1,14 @@
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.utils import print_dict
-from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, Si91xExtTCPIPFeatureBitMap
+from utf_wiseconnect_3.tests.devices.si91x import (Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, Si91xExtTCPIPFeatureBitMap,
+                                                   Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xOperatingMode)
 import time
 import pytest
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping, ping_qos
 from utf.utils.thread_base import ThreadBase
+import threading
+from threading import Thread
 
 """This function runs below test steps :
         1. Configuration of DUT in 2G
@@ -395,6 +398,163 @@ def test_tcp_data_rx_with_BE_BK_VI_VO_c22115(wifi_sniffer, net_perf_client, wifi
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter7)[
             'packet_count']
         assert snif_pkt_count, "qos_categories packets are not captured in the sniffer"
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disable_external_stack"])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "ssid": 'WSDK-AUTOMATION', "passphrase": '12345678', "security": 'open'})
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.TCPIPBypass | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid |
+                          Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8}}
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=["init", "net_init_client"])
+def test_wifi_sdk_tcp_tx_in_tcp_ip_bypass_mode_c539021(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
+                                                       wifi_client, protocol, sniffer_filter, sl_collections):
+    """Verify TCP Tx data transfer ( TCP socket create->connect->close) in loop with TCP/IP bypass mode"""
+    capture_filename = '539021'
+    transfer_type = 1
+    throughput_type = 1
+    size = 1460
+    try:
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+        logger().info(f"***** Start get IP address ******")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.join(enable_lwip=1, security='open', ssid='WSDK-AUTOMATION', passphrase='12345678')
+        time.sleep(2)
+        logger().info("**** Started ip_config in TCP/IP bypass mode ****")
+        wifi_dut.interfaces.wifi.start_ip_lwip()
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.sl_net_up(mode='client')
+
+        result = wifi_dut.interfaces.wifi.display_device_ip_lwip()
+        time.sleep(2)
+        dut_ip = wifi_dut.interfaces.wifi.get_device_ip(device_ip=result)
+
+        timeout = 60
+
+        for _ in range(3):
+            net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=dut_ip, protocol=protocol)
+            net_perf_client.interfaces.net_perf.start()
+            logger().info("sending data from DUT")
+            wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=6,
+                                           local_port=net_perf_client.interfaces.net_perf.server_port, local_ip=dut_ip,
+                                           remote_ip=host_ip, remote_port=net_perf_client.interfaces.net_perf.server_port,
+                                           size=size, ttl=timeout, throughput_type=throughput_type, timeout=timeout + 2,
+                                           qos=0, host_tcp_ip_stack_enable=1)
+            # get and print throughput
+            tp = net_perf_client.interfaces.net_perf.process_output()
+            assert tp is not None, "Throughput not found"
+
+            time.sleep(5)
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "ssid": 'WSDK-AUTOMATION', "passphrase": '12345678', "security": 'open'})
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.TCPIPBypass | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid |
+                          Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=["init", "net_init_client"])
+def test_wifi_sdk_tcp_rx_in_tcp_ip_bypass_mode_c539022(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
+                                                       wifi_client, protocol, sniffer_filter, sl_collections,
+                                                       remote_socket_factory):
+    capture_filename = '539022'
+    transfer_type = 1
+    throughput_type = 3
+    size = 1460
+    try:
+        # dut_mac = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+        logger().info(f"***** Start get IP address ******")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        # wifi_dut.interfaces.wifi.sl_net_init(mode='client')
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.join(enable_lwip=1, security='open', ssid='WSDK-AUTOMATION', passphrase='12345678')
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.start_ip_lwip()
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.sl_net_up(mode='client')
+
+        result = wifi_dut.interfaces.wifi.display_device_ip_lwip()
+        time.sleep(2)
+        dut_ip = wifi_dut.interfaces.wifi.get_device_ip(device_ip=result)
+
+        timeout = 60
+
+        for _ in range(3):
+            net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=dut_ip, protocol=protocol)
+
+            def start_client():
+                time.sleep(1)
+                logger().info(f"***** start listening  ******")
+                net_perf_client.interfaces.net_perf.start()
+            client_thread1 = Thread(target=start_client, args=(), )
+            client_thread1.start()
+            # net_perf_client.interfaces.net_perf.start()
+            logger().info("sending data from DUT")
+            wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=6,
+                                           local_port=net_perf_client.interfaces.net_perf.server_port, local_ip=dut_ip,
+                                           remote_ip=host_ip, remote_port=net_perf_client.interfaces.net_perf.client_port,
+                                           size=size, ttl=timeout, throughput_type=throughput_type, timeout=timeout + 2,
+                                           qos=0, host_tcp_ip_stack_enable=1, async_socket=1)
+            client_thread1.join()
+            # get and print throughput
+            tp = net_perf_client.interfaces.net_perf.process_output()
+            assert tp is not None, "Throughput not found"
+
+            time.sleep(5)
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
