@@ -1458,7 +1458,7 @@ def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
                                        remote_port=net_perf_client.interfaces.net_perf.server_port,
                                        size="1470",
                                        ttl=120,
-                                       throughput_type=2, qos=0, async_socket=1, timeout=160)
+                                       throughput_type=2, qos=0, async_socket=1, timeout=150)
 
         # # get and print throughput
         tp = net_perf_client.interfaces.net_perf.process_output()
@@ -1487,8 +1487,8 @@ def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
                                        local_ip=multicast_ip, remote_ip=host_ip,
                                        remote_port=net_perf_client.interfaces.net_perf.client_port,
                                        size=1470, ttl=120, throughput_type=4, qos=0, async_socket=1,
-                                       timeout=200)
-        wifi_dut.interfaces.wifi.sl_net_leave_multicast_address()
+                                       timeout=150)
+        wifi_dut.interfaces.wifi.sl_net_leave_multicast_address(server=multicast_ip)
         net_perf_client.interfaces.net_perf.iperf_process.stop(5)
         time.sleep(5)
 
@@ -1496,11 +1496,16 @@ def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
         ble_obj.ble_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
-        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        igmp_capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["igmp"],
-                                         test_name)
-        assert len(
-            igmp_capture_list) > 0, "IGMP packets or one of the 4-way handshake packets are not captured in the sniffer"
+
+        packet_filter = f"wlan.sa == {wifi_obj.dut_addr['dut_mac_address']} and wlan.da == {multicast_mac}  && wlan.fc.type_subtype == 0x0028"
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+            'Sniffer: Multicast packets are not captured'
+
+        # decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        # igmp_capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["udp"],
+        #                                  test_name)
+        # assert len(
+        #     igmp_capture_list) > 0, "IGMP packets or one of the 4-way handshake packets are not captured in the sniffer"
         logger().info("sniffer validation is successful")
 
     except Exception as Ex:
@@ -2556,7 +2561,8 @@ def test_Coex_sdk_https_otaf_ble_slave_C551662(
             periodic_delay=1,
             ble_pairing=1,
             address=address2,
-            conn_interval=45
+            conn_interval=45,
+            gatt=True
         )
 
         logger().info("Creating new custom gatt service in DUT")
