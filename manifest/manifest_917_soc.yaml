@@ -83,6 +83,11 @@ firmware_applications:
         device_subtype: 'efr32'
         filename: 'test_agent_soc_rcf2_daf57c7579_ipv6.rps'
 
+    test_lwip_stack:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_soc_lwip_stack.rps'
+
     test_azure:
       - device_type: 'efx32'
         device_subtype: 'efr32'

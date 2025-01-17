@@ -13,7 +13,8 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xCustomFeatureBitMap,
     SocketOptions,
     Si91xOperatingMode,
-    Si91xCustomSyncSockOptParms
+    Si91xCustomSyncSockOptParms,
+    Si91xJoinFeatureBitMap
 )
 from threading import Thread
 import threading
@@ -26,6 +27,7 @@ import random
 import string
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+from utf_wiseconnect_3.tests.bsd_errors import BSDErrnoStatus
 
 """The testcases added in this file run below test steps for DUT(Soc917)
         1. Configuration of DUT in 2G/5G : BGN
@@ -175,6 +177,53 @@ class WifiJoinThread(ThreadBase):
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
             raise e
+
+    def tcp_server_single_socket(self, port=5001, keepalive_time=60, server_ip=None, data_length=1000):
+        logger().info(f"\n Starting the Remote Socket Server \n")
+        self.remote_socket.interfaces.socket.start_server(port=port)
+        socket_id = self.wifi_dut.interfaces.wifi.socket()
+        logger().info(f"Socket open successfully : {socket_id}")
+        self.wifi_dut.interfaces.wifi.bind(
+            socket_fd=socket_id, device_ip=self.dut_addr['device_ip'], server_port=port, timeout=5,
+            asynch=0)
+        logger().info(f"Setting the socket option SO_KEEPALIVE with {keepalive_time} seconds")
+        self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(
+            socket_fd=socket_id, option_name="SO_KEEPALIVE", option_val=keepalive_time
+        )
+        logger().info("DUT is connecting to server socket")
+        for count in range(3):
+            connect_status = False
+            try:
+                self.wifi_dut.interfaces.wifi.bsdSocketConnect(
+                    socket_fd=socket_id, server_ip=server_ip, server_port=port)
+                connect_status = True
+                break
+            except:
+                logger().info(f"Socket connection failed in DUT...retry_count:{count + 1}")
+                assert connect_status, "Socket connection failed in DUT"
+        logger().info("*********** Socket connection is successful ************")
+        sent_data = "".join(
+            random.choices(string.ascii_uppercase + string.digits, k=data_length)
+        )
+        try:
+            self.wifi_dut.interfaces.wifi.bsdSocketSend(
+                socket_fd=socket_id, data=sent_data, higher_data_len=1
+            )
+            received_data = (
+                self.remote_socket.interfaces.socket.recv_data_tcp(len(sent_data))
+            )
+            logger().info(f"\nReceived Data: {received_data}\n")
+            assert (
+                    sent_data == received_data
+            ), f"Data mismatch in sent and received data"
+        except Exception as e:
+            logger().info(
+                f"Socket Data Transfer Failed Within Duration"
+            )
+        time.sleep(keepalive_time * 1.3)
+        self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=socket_id)
+        logger().info(f"Stopping the Remote Socket Server")
+        self.remote_socket.interfaces.socket.stop()
 
     def tcp_multiple_socket_dut_client(self):
         no_of_pkts = 100
@@ -914,6 +963,115 @@ def test_wifi_sdk_socket_tcp_Data_Transfer_mss_c19356(wifi_access_point, wifi_du
                                                sniffer_filter)
         logger().info("********** Validating MSS value in sniffer packets **********")
         packet_filter = f"(wlan.addr == {dut_mac_address}) && (tcp.options.mss_val == 1460)"
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)[
+            'packet_count'], "Unable to find configured MSS value in sniffer packets"
+    except Exception as e:
+        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP
+                           | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
+@pytest.mark.config("net_perf_client",
+                    net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_tcp_TX_with_message_size_greater_size_than_tcp_window_size_c19357(wifi_access_point, wifi_dut, sl_collections, wifi_sniffer,
+                                                      sniffer_filter, protocol, net_perf_client,
+                                                      wifi_client):
+    """
+        Verify TCP data transmission when the message size is greater than the TCP window size.
+
+        This test case performs the following steps:
+        1. Configures the WiFi sniffer to capture packets on the specified channel.
+        2. Starts the WiFi sniffer to capture packets.
+        3. Initializes and starts a WiFi join thread to connect the DUT to the access point.
+        4. Retrieves the device IP and MAC address of the DUT and the BSSID of the access point.
+        5. Initializes and starts a net performance client in server mode with a specified MSS value.
+        6. Creates a TCP socket on the DUT and binds it to the device IP and server port.
+        7. Sets the socket option for MSS on the DUT.
+        8. Connects the DUT socket to the server.
+        9. Sends multiple packets from the DUT to the server.
+        10. Processes the output from the net performance client to verify throughput.
+        11. Closes the socket on the DUT.
+        12. Stops the WiFi sniffer and validates the captured packets for the configured MSS value.
+
+        Args:
+            wifi_access_point: The WiFi access point object.
+            wifi_dut: The WiFi device under test (DUT) object.
+            sl_collections: The SL collections object for handling exceptions.
+            wifi_sniffer: The WiFi sniffer object for capturing packets.
+            sniffer_filter: The filter to apply on the sniffer.
+            protocol: The protocol to use for the net performance client (e.g., TCP).
+            net_perf_client: The net performance client object.
+            wifi_client: The WiFi client object.
+
+        Raises:
+            Exception: If any step in the test case fails.
+        """
+    try:
+        tcp_window_size = 1000
+        tcp_message_size = 1460
+        capture_filename = "test_wifi_sdk_tcp_TX_with_message_size_greater_size_than_tcp_window_size_c19357"
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        wifi_thread = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     sl_collections=sl_collections)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        device_ip, dut_mac_address = wifi_thread.dut_addr['device_ip'], wifi_thread.dut_addr['dut_mac_address']
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f'AP BSSID = {ap_bssid}')
+
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Remote device ip :{host_ip}")
+        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol,
+                                                        mss_value=tcp_window_size, time_out=500)
+        net_perf_client.interfaces.net_perf.start()
+        server_port = net_perf_client.interfaces.net_perf.server_port
+        sock = wifi_dut.interfaces.wifi.socket()
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=server_port, timeout=20)
+        wifi_dut.interfaces.wifi.bsdSetSocketOptAsync(sock, option_name=Si91xCustomSyncSockOptParms.SL_SI91X_SO_MSS,
+                                                      cert_index=tcp_message_size)
+        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=host_ip, server_port=server_port)
+
+        tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=tcp_message_size))
+        logger().info(f"*********** Sending packet with size --> {len(tx_buffer)} bytes ***********")
+        status, data = wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=tx_buffer, higher_data_len=1, timeout=60, expected_status=BSDErrnoStatus.EMSGSIZE)
+        tp = net_perf_client.interfaces.net_perf.process_output()
+        assert tp is not None, "Throughput not found"
+        net_perf_client.interfaces.net_perf.close_files()
+        net_perf_client.interfaces.net_perf.iperf_process.stop(10)
+        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+        logger().info(f"Successfully closed socket_id '{sock}' in the DUT")
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                               sniffer_filter)
+        logger().info("********** Validating MSS value in sniffer packets **********")
+        packet_filter = f"(wlan.addr == {dut_mac_address}) && (tcp.options.mss_val == {tcp_window_size})"
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)[
             'packet_count'], "Unable to find configured MSS value in sniffer packets"
     except Exception as e:
@@ -2241,3 +2399,262 @@ def test_wifi_socket_limit_C19359(wifi_sniffer, wifi_dut, wifi_access_point, req
                                                sniffer_filter)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_TOTAL_SOCKETS_1,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'open', "passphrase": 12345678})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_verify_keep_alive_functionality_with_LI_500_900_1000ms_c586158(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket,
+        wifi_client):
+    """
+        Verify the keep-alive functionality of the WiFi SDK with different listen intervals (500ms, 700ms, 1000ms).
+
+        This test performs the following steps:
+        1. Configure the WiFi DUT (Device Under Test) with different listen intervals.
+        2. Start a remote socket server.
+        3. Connect the WiFi DUT to the access point.
+        4. Verify the keep-alive functionality by sending and receiving data.
+        5. Capture and validate the network traffic using a WiFi sniffer.
+
+        Args:
+            wifi_sniffer: The WiFi sniffer interface for capturing network traffic.
+            wifi_dut: The WiFi Device Under Test (DUT) interface.
+            wifi_access_point: The WiFi access point interface.
+            request: The pytest request object.
+            sl_collections: The collection of SL (Silicon Labs) interfaces.
+            sniffer_filter: The sniffer filter interface for filtering captured packets.
+            remote_socket: The remote socket interface for server-client communication.
+            wifi_client: The WiFi client interface.
+
+        Raises:
+            Exception: If any step in the test fails.
+        """
+    try:
+        port = 5001
+        keepalive_time = 60
+        listen_intervals = [500, 700, 1000]
+        test_name = request.node.name
+        server_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"SERVER-IP: {server_ip}")
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        for listen_interval in listen_intervals:
+            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+            logger().info(f"\n Starting the Remote Socket Server \n")
+            remote_socket.interfaces.socket.start_server(port=port)
+            wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+                join_feature_bitmap=Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+            wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
+            wifi_thread = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                         sl_collections=sl_collections, test_name=test_name, sniffer_filter=sniffer_filter,
+                                         wifi_client=wifi_client, remote_socket=remote_socket)
+            wifi_thread.start()
+            wifi_thread.wait_for_exit()
+            wifi_thread.tcp_server_single_socket(port=port, server_ip=server_ip, keepalive_time=keepalive_time, data_length=1000)
+            wifi_sniffer.interfaces.capture.stop_capture()
+            wifi_dut.interfaces.wifi.leave()
+            sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, wifi_thread.dut_addr['dut_mac_address'], ap_bssid,
+                                              sniffer_filter)
+            logger().info(f"Starting the Keep Alive Validation with duration {keepalive_time} seconds")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(
+                packet_filter1='tcp.analysis.keep_alive'), f"Keep alive packets not found in sniffer packets"
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'open', "passphrase": 12345678})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_verify_keep_alive_functionality_with_different_dtim_c586159(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket,
+        wifi_client):
+    """
+        Verify the keep-alive functionality of the WiFi SDK with different DTIM intervals.
+
+        This test case configures the WiFi DUT (Device Under Test) to operate as a WiFi client with specific features and
+        TCP/IP configurations. It then verifies the keep-alive functionality by setting different DTIM (Delivery Traffic
+        Indication Message) intervals and checking the behavior of the DUT.
+
+        Steps:
+        1. Configure the WiFi DUT with the specified features and TCP/IP configurations.
+        2. Initialize the WiFi DUT and connect it to the access point with the specified security settings.
+        3. Start the WiFi sniffer to capture network traffic.
+        4. Set different DTIM intervals and verify the keep-alive functionality for each interval.
+        5. Capture and validate the network traffic to ensure the keep-alive functionality is working as expected.
+
+        Args:
+            wifi_sniffer: The WiFi sniffer interface to capture network traffic.
+            wifi_dut: The WiFi DUT (Device Under Test) interface.
+            wifi_access_point: The WiFi access point interface.
+            request: The pytest request object.
+            sl_collections: The SL collections interface for handling exceptions.
+            sniffer_filter: The sniffer filter interface for filtering captured packets.
+            remote_socket: The remote socket interface for communication.
+            wifi_client: The WiFi client interface.
+
+        Raises:
+            Exception: If any step in the test case fails.
+        """
+    try:
+        port = 5001
+        keepalive_time = 60
+        dtim_intervals = [1, 3, 5]
+        test_name = request.node.name
+        server_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"SERVER-IP: {server_ip}")
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        for dtim_interval in dtim_intervals:
+            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+            logger().info(f"\n Setting the DTIM value as {dtim_interval} \n")
+            wifi_access_point.interfaces.wifi.start_ap(dtim=dtim_interval)
+            wifi_thread = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                         sl_collections=sl_collections, test_name=test_name, sniffer_filter=sniffer_filter,
+                                         wifi_client=wifi_client, remote_socket=remote_socket)
+            wifi_thread.start()
+            wifi_thread.wait_for_exit()
+            wifi_thread.tcp_server_single_socket(port=port, server_ip=server_ip, keepalive_time=keepalive_time,
+                                                 data_length=1000)
+            wifi_sniffer.interfaces.capture.stop_capture()
+            wifi_dut.interfaces.wifi.leave()
+            sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, wifi_thread.dut_addr['dut_mac_address'], ap_bssid,
+                                               sniffer_filter)
+            dtim_packet_filter = f'wlan.tim.dtim_period == {dtim_interval} && wlan.addr == {ap_bssid}'
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=dtim_packet_filter), f"Configured DTIM value: {dtim_interval} not found in sniffer packets"
+            logger().info(f"Starting the Keep Alive Validation with duration {keepalive_time} seconds")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(
+                packet_filter1='tcp.analysis.keep_alive'), f"Keep alive packets not found in sniffer packets"
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+
+@pytest.mark.skip()
+@pytest.mark.firmware_app("test_lwip_stack")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.TCPIPBypass | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid |
+                          Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8}}
+    }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.start_state("wifi_dut", wifi=["init", "net_init_client"])
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_verify_tcp_server_functionality_with_tcp_ip_bypass_mode_c585534(firmware_loader, wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections,
+                                                net_perf_client, wifi_client, protocol):
+    """
+        Verify the TCP server functionality with TCP/IP bypass mode.
+
+        This test case performs the following steps:
+        1. Configure the WiFi DUT (Device Under Test) to operate in TCP/IP bypass mode.
+        2. Connect the WiFi DUT to the access point.
+        3. Start the WiFi sniffer to capture network traffic.
+        4. Initialize and start the iperf server on the remote client.
+        5. Start the iperf client on the WiFi DUT to send data to the iperf server.
+        6. Capture and validate the network traffic to ensure the TCP server functionality is working as expected.
+
+        Args:
+            wifi_sniffer: The WiFi sniffer interface to capture network traffic.
+            wifi_dut: The WiFi DUT interface to configure and control the DUT.
+            wifi_access_point: The WiFi access point interface to configure and control the access point.
+            request: The pytest request object to get test metadata.
+            sl_collections: The SL collections interface for exception handling and validation.
+            sniffer_filter: The sniffer filter interface to configure packet filters.
+            net_perf_client: The net_perf client interface to initialize and start the iperf server.
+            wifi_client: The WiFi client interface to get the IP address of the remote client.
+            protocol: The protocol to be used for the iperf test (TCP in this case).
+
+        Raises:
+            Exception: If any step in the test case fails.
+        """
+    try:
+        transfer_type = 1
+        throughput_type = 3
+        size = 1460
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        wifi_dut.interfaces.wifi.join(enable_lwip=1, security=wifi_access_point.interfaces.wifi.security, ssid=wifi_access_point.interfaces.wifi.ssid, passphrase=wifi_access_point.interfaces.wifi.passphrase)
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.start_ip_lwip()
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.sl_net_up(mode='client')
+
+        result = wifi_dut.interfaces.wifi.display_device_ip_lwip()
+        time.sleep(2)
+        dut_ip = wifi_dut.interfaces.wifi.get_device_ip(device_ip=result)
+        timeout = 60
+
+        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=dut_ip, protocol=protocol)
+        net_perf_client.interfaces.net_perf.start()
+        logger().info("\n Start Receiving Data from Iperf Client \n")
+        wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=6,
+                                           local_port=5201, local_ip=dut_ip,
+                                           remote_ip=host_ip,
+                                           remote_port=5201,
+                                           size=size, ttl=timeout, throughput_type=throughput_type, timeout=timeout + 2,
+                                           qos=0, host_tcp_ip_stack_enable=1)
+
+        tp = net_perf_client.interfaces.net_perf.process_output()
+        assert tp is not None, "Throughput not found"
+        time.sleep(5)
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
