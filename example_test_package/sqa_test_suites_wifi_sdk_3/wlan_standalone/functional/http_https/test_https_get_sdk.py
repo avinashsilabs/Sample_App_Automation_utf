@@ -78,14 +78,14 @@ class WLanThread(ThreadBase):
                         self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
                     logger().info("\n\n***Fetching the data on https using get method***\n\n")
                     if self.test_name == '476951':
-                        status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
+                        self.wifi_dut.interfaces.wifi.http_get(
                             self.http_server.interfaces.http,
                             self.index_path,
                             server_port=443,
                             expected_status=SLStatus.SL_STATUS_HAS_OVERFLOWED)
 
                     elif self.test_name == '476952':
-                        status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
+                        self.wifi_dut.interfaces.wifi.http_get(
                             self.http_server.interfaces.http,
                             self.index_path,
                             server_port=443,
@@ -253,7 +253,7 @@ class HttpDeInit(ThreadBase):
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -308,7 +308,7 @@ def test_wifi_sdk_https_get_functionality_c19209(http_server, wifi_dut, http_cli
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -355,7 +355,7 @@ def test_wifi_sdk_https_get_functionality_feature_not_enabled_dut_c19204(http_se
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
@@ -405,7 +405,7 @@ def test_wifi_sdk_https_get_functionality_not_loading_cert_c19203(http_server, w
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -451,7 +451,7 @@ def test_wifi_sdk_https_get_with_wrong_certificate_c19211(http_server, wifi_dut,
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -502,7 +502,7 @@ def test_wifi_sdk_https_get_functionality_port10_c19207_case1(http_server, wifi_
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -553,7 +553,7 @@ def test_wifi_sdk_https_get_functionality_port200_c19207_case2(http_server, wifi
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -605,7 +605,7 @@ def test_wifi_sdk_https_get_functionality_port2000_c19207_case3(http_server, wif
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -769,7 +769,7 @@ def test_wifi_sdk_https_get_functionality_different_urls_c19205(http_server, wif
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
@@ -818,7 +818,7 @@ def test_wifi_sdk_http_get_when_httpserver_does_not_ssl_handshake_c19210(wifi_sn
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -852,7 +852,7 @@ def test_wifi_sdk_http_get_functionality_non_existing_server_c19212(http_server,
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode,
@@ -911,7 +911,7 @@ def test_wifi_sdk_http_get_with_host_name_c19216(http_server, wifi_sniffer, http
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -959,7 +959,7 @@ def test_wifi_sdk_https_get_functionality_with_long_http_url_bit_disable_without
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
@@ -1005,7 +1005,7 @@ def test_wifi_sdk_http_get_functionality_multiple_times_with_long_http_url_bit_e
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
@@ -1051,7 +1051,7 @@ def test_wifi_sdk_https_get_functionality_multiple_times_with_long_http_url_bit_
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
@@ -1085,7 +1085,7 @@ def test_wifi_sdk_https_get_functionality_with_url_len_around_800_c476947(http_s
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
@@ -1119,7 +1119,7 @@ def test_wifi_sdk_https_get_functionality_with_url_len_exact_1024_c476948(http_s
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
@@ -1153,7 +1153,7 @@ def test_wifi_sdk_https_get_functionality_with_url_len_1140_c476949(http_server,
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
@@ -1187,7 +1187,7 @@ def test_wifi_sdk_https_get_functionality_with_url_len_2048_c476950(http_server,
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
@@ -1222,7 +1222,7 @@ def test_wifi_sdk_https_get_with_url_length_greater_than_2048_c476951(http_serve
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -1261,7 +1261,7 @@ def test_wifi_sdk_https_get_functionality_with_url_len_2048_with_longer_url_bit_
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -1299,7 +1299,7 @@ def test_wifi_sdk_https_get_functionality_with_url_len_with_longer_url_bit_disab
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
@@ -1339,7 +1339,7 @@ def test_wifi_sdk_https_get_100_mb_with_url_length_2048_c476967(http_server, wif
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -1381,7 +1381,7 @@ def test_wifi_sdk_https_get_sni_functionality_c537610(http_server, wifi_dut, htt
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -1438,7 +1438,7 @@ def test_wifi_sdk_https_get_with_different_url_length_c19205(http_server, wifi_d
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 3, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 3, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
