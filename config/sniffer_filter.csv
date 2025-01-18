@@ -192,3 +192,4 @@ aput_wpa3_null_function, (wlan.sa == {{ sa_addr }} and wlan.da == {{ da_addr }})
 aput_beacon_standard, (wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 8)) and (wlan_radio.phy == 4)
 http_sni, (ip.src == {{ sa_addr }} and ip.dst == {{ da_addr }}), and (tls.handshake.extension.type == 0)
 beacon_probe_req_count_packt,(wlan.ta == {{ sa_addr }} or  wlan.sa == {{ da_addr }} or wlan.da == ff:ff:ff:ff:ff:ff), and wlan.ssid == {{wlan_ssid}}
+ns_all_fs,(wlan.addr == {{ sa_addr }}), && icmpv6.nd.ns.target_address == ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
