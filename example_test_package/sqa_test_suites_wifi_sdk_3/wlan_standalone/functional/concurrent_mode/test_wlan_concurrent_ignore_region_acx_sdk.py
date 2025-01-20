@@ -7,6 +7,7 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBit
 from utf.utils.thread_base import ThreadBase
 from utf.utf_config import UtfConfig
 import time
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 
 
 def logger():
@@ -103,11 +104,18 @@ class WifiThread(ThreadBase):
         """
         Run the test case.
         """
-        if self.test_type in [661457, 661458, 661460, 661459]:
+        if self.test_type in [661457, 661458, 661460]:
             self.dut_addr = self.sl_collections.join_to_wifi_network(
                 wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point, power_save=False,
                 associated=self.wifi_dut.interfaces.wifi.associated, retry_count=3, ping_before_power_save=False,
                 ping_after_power_save=False, ping_count=self.ping_count, ip_version=self.ip_version)
+
+        if self.test_type == 661459:
+            self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+
+            self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point,
+                                                  expected_status=SLStatus.SL_STATUS_SI91X_NO_AP_FOUND)
+            logger().info("connection will fail and getting error code 0x10003 which is expected")
 
     def ap_mode_connection(self):
         logger().info(".... Configuring the DUT in AP mode ....")
@@ -342,11 +350,23 @@ def test_wifi_sdk_first_ap_conn_and_stamode_later_c661458(
         "region_code": "ignore"
     }
 )
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma123",
+            "passphrase": "thisistestnetwork",
+            "channel": 11,
+        },
+    }
+)
 @pytest.mark.config("wifi_access_point",
-                    wifi={"security": "WPA3", "passphrase": "thisistestnetwork", "ssid": "sharma123", "channel": 11})
+                    wifi={"security": "WPA3", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_sta_conn_with_bg_scan_c661460(
-        wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants):
+        wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
+        wifi_clients):
     """Verify STAUT connection when BG scan is enabled"""
 
     try:
@@ -362,7 +382,7 @@ def test_wifi_sdk_sta_conn_with_bg_scan_c661460(
 
         wifi_obj = WifiThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               testcase=test_name, wifi_client=wifi_client, sl_collections=sl_collections,
-                              sniffer_filter=sniffer_filter, utf_constants=utf_constants,
+                              sniffer_filter=sniffer_filter, utf_constants=utf_constants, wifi_clients=wifi_clients,
                               ping_count=ping_count, test_type=661460)
 
         logger().info(f"**** enabling the BG scan params ****")
@@ -377,14 +397,25 @@ def test_wifi_sdk_sta_conn_with_bg_scan_c661460(
         wifi_dut.interfaces.wifi.scan(bgscan=True, bg_scan_periodicity=10)
         wifi_obj.wlan_leave()
 
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wifi_obj.dut_addr['dut_mac_address'], filter_name="probe_request")
+
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find probe request frames in sniffer"
+
+        wifi_obj.ap_mode_connection()
+
         logger().info(".... stop the sniffer ....")
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
 
-@pytest.mark.skip("need to check the test case for for ignore region channel 13")
+@pytest.mark.skip("need to check the test case for ignore region channel 13")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -418,8 +449,8 @@ def test_wifi_sdk_sta_conn_with_bg_scan_c661460(
     }
 )
 @pytest.mark.config("wifi_access_point",
-                    wifi={"security": "WPA3", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 13})
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+                    wifi={"security": "WPA3", "passphrase": "thisisatestnetwork", "ssid": "sharma1234",
+                          "region": 'China', "channel": 13})
 def test_wifi_sdk_aput_conn_when_staut_connected_ch13_c661459(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -441,14 +472,14 @@ def test_wifi_sdk_aput_conn_when_staut_connected_ch13_c661459(
                               sniffer_filter=sniffer_filter, utf_constants=utf_constants, wifi_clients=wifi_clients,
                               ping_count=ping_count, test_type=661459)
 
+        wifi_obj.ap_mode_connection()
         wifi_obj.start()
         wifi_obj.wait_for_exit()
-        wifi_obj.ping(ping_from="remote", ping_count=60)
-        wifi_obj.ap_mode_connection()
-        wifi_obj.wlan_leave()
 
         logger().info(".... stop the sniffer ....")
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
