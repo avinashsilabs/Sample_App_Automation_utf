@@ -414,6 +414,7 @@ class WifiJoinThread(ThreadBase):
             traffic_types = ["RX"]
             for protocol in protocols:
                 for traffic_type in traffic_types:
+                    self.wifi_dut.interfaces.wifi.set_socket_config()
                     self.sl_collections.run_traffic(
                         wifi_dut=self.wifi_dut,
                         net_perf_client=self.net_perf_client,
@@ -454,7 +455,7 @@ class ble_notify(WifiJoinThread):
         sw = Stopwatch()
         while sw.elapsed_sec < 35:
             self.wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data, ble_remote_dev_address=self.ble_client_address)
-            time.sleep(3)
+            time.sleep(0.5)
 
 
 pytestmark = [pytest.mark.firmware_app("test_480K_M4SS_192K")]
@@ -798,8 +799,8 @@ def test_wlan_ble_connected_udp_rx_c20745(firmware_loader, wifi_sniffer, wifi_ac
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
-
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                  "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
 def test_wlan_ble_conn_with_data_trans_tcp_tx_c20764(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
@@ -838,8 +839,8 @@ def test_wlan_ble_conn_with_data_trans_tcp_tx_c20764(firmware_loader, wifi_sniff
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
-
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                  "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
 def test_wlan_ble_conn_with_data_trans_tcp_rx_c20765(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
@@ -878,8 +879,8 @@ def test_wlan_ble_conn_with_data_trans_tcp_rx_c20765(firmware_loader, wifi_sniff
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
-
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                  "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
 def test_wlan_ble_conn_with_data_trans_udp_tx_c20762(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
@@ -918,8 +919,8 @@ def test_wlan_ble_conn_with_data_trans_udp_tx_c20762(firmware_loader, wifi_sniff
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
-
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                  "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
 def test_wlan_ble_conn_with_data_trans_udp_rx_c20763(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
@@ -1364,8 +1365,8 @@ def test_wlan_ble_connected_udp_rx_with_11n_C537849(firmware_loader, wifi_sniffe
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
-
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                  "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
 def test_wlan_ble_conn_with_data_trans_tcp_tx_11n_C537854(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
@@ -1405,8 +1406,8 @@ def test_wlan_ble_conn_with_data_trans_tcp_tx_11n_C537854(firmware_loader, wifi_
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
-
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                  "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
 def test_wlan_ble_conn_with_data_trans_tcp_rx_11n_C537855(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
@@ -1446,8 +1447,8 @@ def test_wlan_ble_conn_with_data_trans_tcp_rx_11n_C537855(firmware_loader, wifi_
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
-
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                  "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
 def test_wlan_ble_conn_with_data_trans_udp_tx_11n_C537852(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
@@ -1487,8 +1488,8 @@ def test_wlan_ble_conn_with_data_trans_udp_tx_11n_C537852(firmware_loader, wifi_
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
-
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                  "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
 def test_wlan_ble_conn_with_data_trans_udp_rx_11n_C537853(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
