@@ -1,6 +1,9 @@
 import re
 import pytest
 import time
+from utf.interfaces.bluetooth.nrf_blatann import (
+    NRFBLEIoCapabilities, NRFBLEPeerDevAddrTypes
+)
 import os
 import datetime
 import threading
@@ -240,8 +243,13 @@ class BLEFunc(ThreadBase):
             logger().info("\n\n======= start nRF dongle ========")
             ble_client_address = self.nrf_ble_client.interfaces.bluetooth.get_ble_address()
             assert ble_client_address is not None
-            logger().info(f"**********Initiating connection from dongle****************")
-            self.nrf_ble_client.interfaces.bluetooth.connect(ble_dut_address)
+            if self.random_addr_on_dut:
+                self.nrf_ble_client.interfaces.bluetooth.connect(ble_dut_address, 30,
+                                                                 NRFBLEPeerDevAddrTypes.RANDOM_PRIVATE_NON_RESOLVABLE)
+                time.sleep(2)
+            else:
+                logger().info(f"**********Initiating connection from dongle****************")
+                self.nrf_ble_client.interfaces.bluetooth.connect(ble_dut_address)
             time.sleep(2)
             connection_status = self.nrf_ble_client.interfaces.bluetooth.get_peer_connection_status(ble_dut_address)
             logger().info(f"\n\nConnection status: {connection_status}")
@@ -830,7 +838,4 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664333(w
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
         time.sleep(3)
-
-
-
 

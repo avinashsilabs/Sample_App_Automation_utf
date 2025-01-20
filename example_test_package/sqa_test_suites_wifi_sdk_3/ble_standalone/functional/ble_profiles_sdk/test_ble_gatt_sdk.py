@@ -212,7 +212,7 @@ class BleFunctionality(ThreadBase):
         count = 0
         while sw.elapsed_sec < 600:
             data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
-            self.wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
+            self.wifi_dut.interfaces.wifi.ble_notify_custom_value(ble_remote_dev_address=self.ble_client_address, data=data)
             time.sleep(15)
             logger().info("******************** Validate Data ********************")
             notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
