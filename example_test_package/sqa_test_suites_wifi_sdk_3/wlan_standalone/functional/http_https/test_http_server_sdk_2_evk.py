@@ -1,7 +1,6 @@
 import time
 import pytest
 
-from tcmgr.python.lib.urllib3.util import current_time
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xCoexMode, Si91xTCPIPFeatureBitMap, Si91xJoinFeatureBitMap, Si91xOperatingMode, Si91xExtTCPIPFeatureBitMap, Si91xFeatureBitMap,
     Si91xConfigFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap,
@@ -26,7 +25,7 @@ setup requirement:
         4. Access Point(Third Party AP's)
         5. NUC Wifi Sniffer 
 
-Author : Saurabh Sharma
+Author : Vasavi Kalla
 
 """
 
