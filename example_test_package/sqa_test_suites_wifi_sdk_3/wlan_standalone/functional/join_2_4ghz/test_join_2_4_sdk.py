@@ -68,6 +68,27 @@ class WLanJoinThread(ThreadBase):
                 logger().info(
                     f"Dut Tried to connect to ap with wrong password, observed error code 0x10008 which is expected")
 
+            if '694554' in self.test_case:
+                self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+
+                self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point,
+                                                      pmk_enable=self.pmk_enable,
+                                                      expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
+                logger().info(
+                    f"\n Observed 0x10008 error on connecting DUT with wrong PSK, which is expected \n")
+
+                self.wifi_access_point.interfaces.wifi.passphrase = 'test12345678'
+
+                self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut,
+                                                                     wifi_access_point=self.wifi_access_point,
+                                                                     power_save=self.power_save,
+                                                                     ping_after_power_save=True, retry_count=3,
+                                                                     associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                     pmk_enable=self.pmk_enable)
+                time.sleep(2)
+                logger().info("disconnecting to ap.....")
+                self.wifi_dut.interfaces.wifi.leave()
+
             elif '19717' in self.test_case:
                 self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
 
@@ -1456,3 +1477,63 @@ def test_wifi_sdk_dut_conn_with_third_party_ap_using_sl_wifi_api_c686553(wifi_ac
 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+         "oper_mode": Si91xOperatingMode.WiFiClient,
+         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+         "features": Si91xFeatureBitMap.Default,
+         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+         "bt_features": 0,
+         "ble_features": 0,
+         "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"ssid": 'sta_mode_ssid', "passphrase": 'test12345678', "security": 'WPA2'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_verify_connectivity_with_correct_psk_after_wrong_psk_c694554(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                               utf_constants, request, sl_collections, sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+        5. Verify error SI91X_DEAUTHENTICATION on connecting wrong PSK
+        6. Try with correct PSK
+        7. Connection should be a success
+  """
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+    try:
+        test_case = request.node.name
+        ping_count = utf_constants.get("ping_count")
+
+        logger().info("Configuring the Sniffer with access point channel.")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("Starting capture with Sniffer, using test case name as filename.")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
+
+        wrong_psk = '12345678'
+        logger().info(f"\n Changing the PSK to {wrong_psk}\n")
+        wifi_access_point.interfaces.wifi.passphrase = wrong_psk
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case=test_case,
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        logger().info("Stopping sniffer...")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
