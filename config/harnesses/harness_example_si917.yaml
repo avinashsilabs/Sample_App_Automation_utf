@@ -1205,5 +1205,7 @@ constants:
         value: 2
     time_period:
         value: 30
+    websocket_long_run_test_time_duration:
+        value: 1800
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
