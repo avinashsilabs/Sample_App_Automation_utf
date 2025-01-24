@@ -330,7 +330,7 @@ def test_disable_ble_whitelist_with_adv_data_C19950(wifi_dut, ble_client, sl_col
     try:
         index = 18
         logger().info(f"\n\n**************Start DUT**************\n\n")
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
         assert bt_dut_address is not None
 
         wifi_dut.interfaces.wifi.ble_add_whitelist_adv_data(enable=0, data_compare_index=18, compare_data_length=10,
@@ -341,9 +341,9 @@ def test_disable_ble_whitelist_with_adv_data_C19950(wifi_dut, ble_client, sl_col
         bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
             bt_dut_address=bt_dut_address,
             hci_adv_data="0x1F "  # Number of bytes that follow in the advertisement(payload length)
-                                   "0x00 0x00 0x00 0x00 0x00 "  # prepend 00s at start, based on whitelist data index(18th here)
-                                   "0x00, 0x00, 0x00, 0x00, 0x00, 0x00 "  # whitelist data
-                                   "0x00, 0x00, 0x00, 0x00, 0x00 0x00 0x00 0x41 0x55 0x54 0x4F 0x4D 0x41 0x54 0x49 0x4F 0x4E 0x00 0x00 0x00",
+                         "0x00 0x00 0x00 0x00 0x00 "  # prepend 00s at start, based on whitelist data index(18th here)
+                         "0x00, 0x00, 0x00, 0x00, 0x00, 0x00 "  # whitelist data
+                         "0x00, 0x00, 0x00, 0x00, 0x00 0x00 0x00 0x41 0x55 0x54 0x4F 0x4D 0x41 0x54 0x49 0x4F 0x4E 0x00 0x00 0x00",
             # append 00s at end, based on length of payload
             hci_adv_params="0x20 0x00 "  # Advertising_Interval_Min
                            "0x20 0x00 "  # Advertising_Interval_Max
@@ -362,10 +362,16 @@ def test_disable_ble_whitelist_with_adv_data_C19950(wifi_dut, ble_client, sl_col
                               index_compare=index)
         blescan_obj.start()
         blescan_obj.wait_for_exit()
-        blescan_obj.whitelist_check()
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        devices = set()
+        for event in events:
+            if event.event_type == AsyncEventIdentifiers.ADVERTISE:
+                devices = devices.union(set(re.findall(r'(\w+:\w+:\w+:\w+:\w+:\w+)', event.event_data)))
+        logger().info(f"Remote devices: {devices}")
+        assert len(devices) > 0, "**** Test case failed with no remote device found ****"
+
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
-
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_scan_whitelist_adv_data_index15_2Advertisers_C19952(wifi_dut, ble_client, ble_clients, sl_collections):

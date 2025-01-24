@@ -73,6 +73,7 @@ class BleFunctionality(ThreadBase):
             logger().info(f"Check the dut is listed...{found_devices}")
             assert self.wifi_dut.interfaces.wifi.ble_address in found_devices
             self.ble_client.interfaces.bluetooth.close()
+            time.sleep(5)
         else:
             logger().info(f"Advertising the Remote BLE device")
             ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(

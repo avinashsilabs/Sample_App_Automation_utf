@@ -98,6 +98,35 @@ class connectasmaster:
         self.ble_capability = ble_capability
         self.set_smp = set_smp
 
+    def ble_gatt_connect(self):
+        logger().info("Initialising BLE")
+        if self.ble_capability is None:
+            logger().info("default capability.....")
+            self.ble_dut_address = self.ble_dut.interfaces.wifi.ble_gatt_start(set_smp=self.set_smp)
+        else:
+            logger().info("selected capability.....")
+            self.ble_dut_address = self.ble_dut.interfaces.wifi.ble_gatt_start(set_smp=self.set_smp)
+            self.ble_dut.interfaces.bluetooth.ble_set_cap_data(remote_addr_type=0, smp_io_cap=self.ble_capability,
+                                                          smp_auth_req_bonding=1,
+                                                          smp_auth_req_mitm=1,
+                                                          smp_auth_req_sc=1, smp_max_enc_key_size=16,
+                                                          smp_local_oob_data_flag_not_present=0,
+                                                          smp_enc_key=1, smp_id_key=1,
+                                                          smp_sign_key=1)
+        assert self.ble_dut_address, "failed to initiate ble in dut"
+
+        logger().info(f"Initiating connection.......")
+        self.sl_collections.ble_connection(wifi_dut=self.ble_dut,
+                                           ble_client=self.ble_client,
+                                           ble_dut_address=self.ble_dut_address,
+                                           mode="master")
+        time.sleep(20)
+        logger().info(f"\n\n ***** Successfully connected with Remote *****\n\n")
+        logger().info("Checking connection status of BLE")
+        state = self.ble_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        logger().info(f"state_int==============>>,  {state_int}")
+
     def ble_connect(self):
         logger().info("Initialising BLE")
         if self.ble_capability is None:
@@ -425,7 +454,7 @@ def test_ble_sdk_io_cap_displayonly_C19855(ble_dut, ble_client, sl_collections):
     try:
         logger().info("start ble connection......")
         ble_obj = connectasmaster(ble_dut, ble_client, sl_collections, ble_capability=0, set_smp=1)
-        ble_dut_address = ble_obj.ble_connect()
+        ble_dut_address = ble_obj.ble_gatt_connect()
         logger().info(f"BLE DUT address: {ble_dut_address} ......")
 
         logger().info("enabling the power save modes ")
@@ -455,7 +484,7 @@ def test_ble_sdk_io_cap_display_yesno_C19856(ble_dut, ble_client, sl_collections
     try:
         logger().info("start ble connection......")
         ble_obj = connectasmaster(ble_dut, ble_client, sl_collections, ble_capability=1, set_smp=1)
-        ble_dut_address = ble_obj.ble_connect()
+        ble_dut_address = ble_obj.ble_gatt_connect()
         logger().info(f"BLE DUT address: {ble_dut_address} ......")
 
         logger().info("enabling the power save modes ")
@@ -485,7 +514,7 @@ def test_ble_sdk_io_cap_keyboard_only_C19857(ble_dut, ble_client, sl_collections
     try:
         logger().info("start ble connection......")
         ble_obj = connectasmaster(ble_dut, ble_client, sl_collections, ble_capability=2, set_smp=1)
-        ble_dut_address = ble_obj.ble_connect()
+        ble_dut_address = ble_obj.ble_gatt_connect()
         logger().info(f"BLE DUT address: {ble_dut_address} ......")
 
         logger().info("enabling the power save modes ")
@@ -515,7 +544,7 @@ def test_ble_sdk_io_cap_no_input_output_C19858(ble_dut, ble_client, sl_collectio
     try:
         logger().info("start ble connection......")
         ble_obj = connectasmaster(ble_dut, ble_client, sl_collections, ble_capability=3, set_smp=1)
-        ble_dut_address = ble_obj.ble_connect()
+        ble_dut_address = ble_obj.ble_gatt_connect()
         logger().info(f"BLE DUT address: {ble_dut_address} ......")
 
         logger().info("enabling the power save modes ")
@@ -538,13 +567,13 @@ def test_ble_sdk_io_cap_no_input_output_C19858(ble_dut, ble_client, sl_collectio
 """============================ Ble-gap dut scan for adv types ============================================="""
 
 
+@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_sdk_directed_connectable_adv_C19802(ble_dut, ble_client, bt_logs, sl_collections):
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_directed_connectable_adv_C19802(ble_dut, sl_collections, ble_sniffer):
     """
     Verify BLE Directed connectable advertisement
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     :param bt_logs: BT logs
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
@@ -552,40 +581,53 @@ def test_ble_sdk_directed_connectable_adv_C19802(ble_dut, ble_client, bt_logs, s
     try:
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=f"reports/test_ble_sdk_directed_connectable_adv_C19802.logs_{int(time.time())}"):
+            logger().info("Initializing BLE sniffer")
+            ble_sniffer.interfaces.sniffer.init_sniffer()
+            ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_sdk_directed_connectable_adv_C19802")
             logger().info("Initializing BLE")
             ble_dut_address = ble_dut.interfaces.wifi.ble_start()
             assert ble_dut_address, "Unable to fetch bluetooth address from DUT"
             logger().info(f"bt_dut_address : {ble_dut_address}")
             logger().info("Initiating scan from remote BLE device")
 
-            ble_client.interfaces.bluetooth.hci_tool_manager.start_lescan()
-            ble_client_address = get_ble_client_addr(ble_client)
-            logger().info(f"BLE_CLIENT_ADDR : {ble_client_address}")
-
             logger().info("Advertising the DUT in Connectable directed ADV mode")
-            ble_dut.interfaces.wifi.ble_start_advertising(ble_adv_type=129, ble_dir_addr=ble_client_address,
+            ble_dut.interfaces.wifi.ble_start_advertising(ble_adv_type=129,
                                                           ble_advertising_data="SI917")
-            device_found = check_for_devices_in_scanned_results(ble_interface=ble_client.interfaces.bluetooth,
-                                                                bt_dut_address=ble_dut_address,
-                                                                adv_data=ble_dut.interfaces.wifi.ble_advertising_data)
+
             logger().info("Enabling Wlan and BLE power save ")
             if power_save:
                 ble_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
                 ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                              psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
 
-            logger().info(
-                f"Getting Remote BLE characteristics by passing address {ble_dut.interfaces.wifi.ble_address} from BTmon logs")
-            bt_logs.device_characteristics(ble_dut.interfaces.wifi.ble_address)
-            logger().info(f"fetched data from bt mon {bt_logs.device_adv_type}")
-            assert "Connectable directed - ADV_DIRECT_IND (0x01)" in bt_logs.device_adv_type, "Expected adv type not found in bt mon logs"
-            logger().info(f"Verified that DUT in {bt_logs.device_adv_type} mode")
-            ble_client.interfaces.bluetooth.close()
+            ble_dut_address_hex = re.split(":", ble_dut_address)
+            master_address = "0x"
+            for hex_data_part in ble_dut_address_hex:
+                master_address = master_address + hex_data_part
+            ble_sniffer.interfaces.sniffer.select_bt_devices([master_address])
+            ble_sniffer.interfaces.sniffer.stop_capture()
+            captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+            time.sleep(20)
+            exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
+            for captured_file in captured_files:
+                captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+                file_size = os.path.getsize(captured_file)
+                assert file_size > 0
+            exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(exported_csv_file)
+            assert file_size > 0
+            sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+            assert sniffer_data_df is not None
             time.sleep(5)
-
+            assert len(sniffer_data_df.loc[sniffer_data_df['Chan'].isin([37, 38,
+                                               39]), 'Type'] == 'ADV_DIRECT_IND')>= 1, "\n\n **** Test case Failed no ADV_DIRECT_IND packet found on 37, 38, 39 channels ****\n\n"
+            state = ble_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            logger().info(f"state_int==============>>,  {state_int}")
+            if state_int == 1:
+                ble_dut.interfaces.wifi.ble_stop_advertising()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
-
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])

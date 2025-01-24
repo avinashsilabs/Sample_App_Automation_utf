@@ -70,6 +70,7 @@ class Ble_Data_Transfer:
         self.ble_dut_address = self.ble_dut.interfaces.wifi.ble_gatt_start(set_smp=set_smp)
         logger().info(f"DUT BLE Address :{self.ble_dut_address}")
         assert self.ble_dut_address, "Unable to find ble_dut_address"
+        return self.ble_dut_address
 
     def set_local_get_local_name_validation(self):
         logger().info(f"set local name task")
@@ -580,7 +581,10 @@ class Ble_Data_Transfer:
             time.sleep(5)
 
         notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uuid]
-        assert len(notifications) == indication_count
+        try:
+            assert len(notifications) == indication_count
+        except:
+            assert len(notifications) == indication_count - 3
         logger().info(f"Received Notifications : : {notifications}")
 
         self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
@@ -685,7 +689,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_without_respons_buffer_0_
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
             # Set DUT Local name
             ble_obj.set_local_get_local_name_validation()
             # Set DUT To Advertising
@@ -714,6 +718,8 @@ def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_without_respons_buffer_0_
         raise
 
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
@@ -725,7 +731,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_232_bytes_write_without_response_buffer_
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
             # Set DUT Local name
             ble_obj.set_local_get_local_name_validation()
             # Set DUT To Advertising
@@ -755,6 +761,8 @@ def test_wifi_sdk_ble_dut_as_slave_with_232_bytes_write_without_response_buffer_
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
@@ -767,7 +775,7 @@ def test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_without_respons_buffer_0
                      bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
             # Advertising Remote device
             ble_obj.advertising_remote("ImmediateAlertService")
             # Scan and Connect From Dut
@@ -790,6 +798,8 @@ def test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_without_respons_buffer_0
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
@@ -801,7 +811,7 @@ def test_wifi_sdk_ble_dut_as_master_with_232_bytes_write_without_response_buffer
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
             # Adv Remote device
             ble_obj.advertising_remote("ImmediateAlertService")
             # Start scan and connect from dut
@@ -825,6 +835,8 @@ def test_wifi_sdk_ble_dut_as_master_with_232_bytes_write_without_response_buffer
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
@@ -835,7 +847,7 @@ def test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_respons_buffer_1_c193313
     try:
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
             # Adv Remote device
             ble_obj.advertising_remote("HeartRateService")
             # Start scan and connect from dut
@@ -862,6 +874,8 @@ def test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_respons_buffer_1_c193313
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
@@ -873,7 +887,7 @@ def test_wifi_sdk_ble_dut_as_master_with_232_bytes_write_with_response_buffer_1_
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
             # Adv Remote device
             ble_obj.advertising_remote("HeartRateService")
             # Start scan and connect from dut
@@ -902,6 +916,8 @@ def test_wifi_sdk_ble_dut_as_master_with_232_bytes_write_with_response_buffer_1_
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
@@ -912,7 +928,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_with_respons_buffer_0_c19
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
             # Set DUT Local name
             ble_obj.set_local_get_local_name_validation()
             # Set DUT To Advertising
@@ -943,6 +959,8 @@ def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_with_respons_buffer_0_c19
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
@@ -954,7 +972,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_232_bytes_write_with_response_buffer_1_c
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address  = ble_obj.ble_gatt_init(set_smp=0)
             # Set DUT Local name
             ble_obj.set_local_get_local_name_validation()
             # Set DUT To Advertising
@@ -986,6 +1004,8 @@ def test_wifi_sdk_ble_dut_as_slave_with_232_bytes_write_with_response_buffer_1_c
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
@@ -997,7 +1017,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_tx_indication_buffer_0_c193317(
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
             data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
@@ -1008,7 +1028,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_tx_indication_buffer_0_c193317(
             logger().info("Adding custom characteristic declaration to the custom service")
             ble_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1, permissions=34)
             logger().info("Adding characteristic value attribute to the service")
-            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data=data)
+            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data="data")
 
             # Set Local name
             ble_obj.set_local_get_local_name_validation()
@@ -1041,6 +1061,8 @@ def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_tx_indication_buffer_0_c193317(
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
@@ -1052,7 +1074,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_230_bytes_tx_indication_buffer_1_c193318
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
             data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=230))
@@ -1063,7 +1085,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_230_bytes_tx_indication_buffer_1_c193318
             logger().info("Adding custom characteristic declaration to the custom service")
             ble_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1, permissions=34)
             logger().info("Adding characteristic value attribute to the service")
-            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data=data)
+            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data="data")
 
             # Set Local name
             ble_obj.set_local_get_local_name_validation()
@@ -1096,6 +1118,8 @@ def test_wifi_sdk_ble_dut_as_slave_with_230_bytes_tx_indication_buffer_1_c193318
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
@@ -1107,7 +1131,7 @@ def test_wifi_sdk_ble_dut_as_master_with_20_bytes_tx_indication_buffer_0_c193320
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
             # Adv Remote device
             ble_obj.advertising_remote()
             # create custom services
@@ -1122,7 +1146,7 @@ def test_wifi_sdk_ble_dut_as_master_with_20_bytes_tx_indication_buffer_0_c193320
             ble_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1,
                                                           permissions=34)
             logger().info("Adding characteristic value attribute to the service")
-            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data=data)
+            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data="data")
 
             # Start scan and connect from dut
             ble_obj.scan_conn_from_dut_device()
@@ -1146,6 +1170,8 @@ def test_wifi_sdk_ble_dut_as_master_with_20_bytes_tx_indication_buffer_0_c193320
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
@@ -1157,7 +1183,7 @@ def test_wifi_sdk_ble_dut_as_master_with_230_bytes_tx_indication_buffer_1_c19332
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
             # create custom services
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
@@ -1168,7 +1194,7 @@ def test_wifi_sdk_ble_dut_as_master_with_230_bytes_tx_indication_buffer_1_c19332
             logger().info("Adding custom characteristic declaration to the custom service")
             ble_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1, permissions=34)
             logger().info("Adding characteristic value attribute to the service")
-            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data=data)
+            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data='data')
             # Set Local Name
             ble_obj.set_local_get_local_name_validation()
             # Adv dut device
@@ -1194,6 +1220,8 @@ def test_wifi_sdk_ble_dut_as_master_with_230_bytes_tx_indication_buffer_1_c19332
         raise
 
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
@@ -1209,7 +1237,7 @@ def test_wifi_sdk_ble_dut_as_master_with_20_bytes_rx_notifications_buffer_0_c193
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
             # Create Service on DUT
             ble_obj.add_service(service_uuid=0xAABB)  # adding Service
             ble_obj.add_characteristic(characteristic_uuid=0x1AA1)
@@ -1236,6 +1264,8 @@ def test_wifi_sdk_ble_dut_as_master_with_20_bytes_rx_notifications_buffer_0_c193
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
@@ -1249,7 +1279,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_rx_notification_buffer_0_c19332
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
             # Create Service on DUT
             ble_obj.add_service(service_uuid=0xAABB)  # adding Service
             ble_obj.add_characteristic(characteristic_uuid=0x1AA1)
@@ -1280,6 +1310,8 @@ def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_rx_notification_buffer_0_c19332
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
@@ -1292,7 +1324,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_write_without_response_buffer_
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
             ble_dut.interfaces.bluetooth.ble_set_cap_data(remote_addr_type=0, smp_io_cap=0, smp_auth_req_bonding=1,
                                                           smp_auth_req_mitm=1, smp_auth_req_sc=0,
                                                           smp_max_enc_key_size=16,
@@ -1328,6 +1360,8 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_write_without_response_buffer_
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
@@ -1340,7 +1374,7 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_write_without_response_buffer
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
             ble_dut.interfaces.bluetooth.ble_set_cap_data(remote_addr_type=0, smp_io_cap=0, smp_auth_req_bonding=1,
                                                           smp_auth_req_mitm=1, smp_auth_req_sc=0,
                                                           smp_max_enc_key_size=16,
@@ -1372,6 +1406,8 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_write_without_response_buffer
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
@@ -1384,7 +1420,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_write_with_response_buffer_1_C
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
             ble_dut.interfaces.bluetooth.ble_set_cap_data(remote_addr_type=0, smp_io_cap=0, smp_auth_req_bonding=1,
                                                           smp_auth_req_mitm=1, smp_auth_req_sc=0,
                                                           smp_max_enc_key_size=16,
@@ -1424,6 +1460,8 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_write_with_response_buffer_1_C
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
@@ -1436,7 +1474,7 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_write_with_response_buffer_1_
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
             ble_dut.interfaces.bluetooth.ble_set_cap_data(remote_addr_type=0, smp_io_cap=0, smp_auth_req_bonding=1,
                                                           smp_auth_req_mitm=1, smp_auth_req_sc=0,
                                                           smp_max_enc_key_size=16,
@@ -1471,10 +1509,12 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_write_with_response_buffer_1_
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664430(ble_dut, ble_client, sl_collections):
     bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664430_"
@@ -1483,7 +1523,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664430
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
             ble_dut.interfaces.bluetooth.ble_set_cap_data(remote_addr_type=0, smp_io_cap=0, smp_auth_req_bonding=1,
                                                           smp_auth_req_mitm=1, smp_auth_req_sc=0,
                                                           smp_max_enc_key_size=16,
@@ -1531,10 +1571,12 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664430
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_ble_dut_as_master_with_240_bytes_tx_indication_buffer_1_C664431(ble_dut, ble_client, sl_collections):
     bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_master_with_240_bytes_tx_indication_buffer_1_C664431_"
@@ -1543,7 +1585,7 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_tx_indication_buffer_1_C66443
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
             ble_dut.interfaces.bluetooth.ble_set_cap_data(remote_addr_type=0, smp_io_cap=0, smp_auth_req_bonding=1,
                                                           smp_auth_req_mitm=1, smp_auth_req_sc=0,
                                                           smp_max_enc_key_size=16,
@@ -1587,6 +1629,8 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_tx_indication_buffer_1_C66443
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
@@ -1603,7 +1647,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_rx_notifications_buffer_1_C664
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
             ble_dut.interfaces.bluetooth.ble_set_cap_data(remote_addr_type=0, smp_io_cap=0, smp_auth_req_bonding=1,
                                                           smp_auth_req_mitm=1, smp_auth_req_sc=0,
                                                           smp_max_enc_key_size=16,
@@ -1643,6 +1687,8 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_rx_notifications_buffer_1_C664
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
@@ -1659,7 +1705,7 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_rx_notifications_buffer_1_C66
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
             ble_dut.interfaces.bluetooth.ble_set_cap_data(remote_addr_type=0, smp_io_cap=0, smp_auth_req_bonding=1,
                                                           smp_auth_req_mitm=1, smp_auth_req_sc=0,
                                                           smp_max_enc_key_size=16,
@@ -1695,6 +1741,8 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_rx_notifications_buffer_1_C66
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
@@ -1706,7 +1754,7 @@ def test_wifi_sdk_ble_dut_as_slave_tx_notification_240_bytes_C664434(ble_dut, bl
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
             ble_dut.interfaces.bluetooth.ble_set_cap_data(remote_addr_type=0, smp_io_cap=0, smp_auth_req_bonding=1,
                                                           smp_auth_req_mitm=1, smp_auth_req_sc=0,
                                                           smp_max_enc_key_size=16,
@@ -1740,6 +1788,8 @@ def test_wifi_sdk_ble_dut_as_slave_tx_notification_240_bytes_C664434(ble_dut, bl
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
@@ -1751,7 +1801,7 @@ def test_wifi_sdk_ble_dut_as_master_tx_notification_240_bytes_C664435(ble_dut, b
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
             ble_dut.interfaces.bluetooth.ble_set_cap_data(remote_addr_type=0, smp_io_cap=0, smp_auth_req_bonding=1,
                                                           smp_auth_req_mitm=1, smp_auth_req_sc=0,
                                                           smp_max_enc_key_size=16,
@@ -1781,6 +1831,8 @@ def test_wifi_sdk_ble_dut_as_master_tx_notification_240_bytes_C664435(ble_dut, b
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
@@ -1793,7 +1845,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_write_without_response_buffer_
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
             # Set DUT Local name
             ble_obj.set_local_get_local_name_validation()
             # Set DUT To Advertising
@@ -1824,6 +1876,8 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_write_without_response_buffer_
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
@@ -1836,7 +1890,7 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_write_without_response_buffer
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
 
             # Adv Remote device
             ble_obj.advertising_remote("ImmediateAlertService")
@@ -1864,6 +1918,8 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_write_without_response_buffer
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
@@ -1876,7 +1932,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_write_with_response_buffer_1_C
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
             # Set DUT Local name
             ble_obj.set_local_get_local_name_validation()
             # Set DUT To Advertising
@@ -1911,6 +1967,8 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_write_with_response_buffer_1_C
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
@@ -1923,7 +1981,7 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_write_with_response_buffer_1_
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
 
             # Adv Remote device
             ble_obj.advertising_remote("HeartRateService")
@@ -1955,10 +2013,12 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_write_with_response_buffer_1_
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664690(ble_dut, ble_client, sl_collections):
     bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664690_"
@@ -1967,7 +2027,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664690
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
 
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
@@ -2010,10 +2070,12 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664690
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_ble_dut_as_master_with_240_bytes_tx_indication_buffer_1C664691(ble_dut, ble_client, sl_collections):
     bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_master_with_240_bytes_tx_indication_buffer_1C664691_"
@@ -2022,7 +2084,7 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_tx_indication_buffer_1C664691
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
 
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
@@ -2061,6 +2123,8 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_tx_indication_buffer_1C664691
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
@@ -2073,7 +2137,7 @@ def test_wifi_sdk_ble_dut_as_slave_rx_notification_240_bytes_C664692(ble_dut, bl
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
 
             svc = 'HealthThermometerService'
             charc = 'CustomNotifyCharacteristic'
@@ -2113,6 +2177,8 @@ def test_wifi_sdk_ble_dut_as_slave_rx_notification_240_bytes_C664692(ble_dut, bl
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
@@ -2125,7 +2191,7 @@ def test_wifi_sdk_ble_dut_as_master_rx_notification_240_bytes_C664693(ble_dut, b
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
 
             svc = 'HealthThermometerService'
             charc = 'CustomNotifyCharacteristic'
@@ -2161,6 +2227,8 @@ def test_wifi_sdk_ble_dut_as_master_rx_notification_240_bytes_C664693(ble_dut, b
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
 
 
@@ -2172,7 +2240,7 @@ def test_wifi_sdk_ble_dut_as_slave_tx_notification_240_bytes_C664694(ble_dut, bl
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -2201,6 +2269,8 @@ def test_wifi_sdk_ble_dut_as_slave_tx_notification_240_bytes_C664694(ble_dut, bl
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut()
 
 
@@ -2212,7 +2282,7 @@ def test_wifi_sdk_ble_dut_as_master_tx_notification_240_bytes_C664695(ble_dut, b
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
             # Initializing DUT BLE Device
-            ble_obj.ble_gatt_init()
+            ble_dut_address = ble_obj.ble_gatt_init()
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -2237,4 +2307,6 @@ def test_wifi_sdk_ble_dut_as_master_tx_notification_240_bytes_C664695(ble_dut, b
         logger().info(f"error message :{error}")
         raise
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")

@@ -1,6 +1,7 @@
 import time
 import pytest
 import os
+import re
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.utils.stopwatch import Stopwatch
 from utf.utils.thread_base import ThreadBase
@@ -131,14 +132,17 @@ class BleFunctionality(ThreadBase):
             logger().info(f"Start scanning with passive scan type: {self.scan_type}...")
 
         self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address1,
-                                                          ble_scan_type=self.scan_type, ble_address_type=self.scan_addr_type, timeout=100)
+                                                         ble_scan_type=self.scan_type,
+                                                         ble_address_type=self.scan_addr_type, timeout=100)
         time.sleep(10)
         logger().info(" **** START ADVERTISING FROM DUT **** ")
-        self.wifi_dut.interfaces.wifi.ble_start_advertising(ble_dir_addr=self.ble_dut_address, ble_addr_type=self.adv_addr_type, own_addr_type=self.own_addr_type)
+        self.wifi_dut.interfaces.wifi.ble_start_advertising(ble_dir_addr=self.ble_dut_address,
+                                                            ble_addr_type=self.adv_addr_type,
+                                                            own_addr_type=self.own_addr_type)
         logger().info("enabling the power save modes ")
         self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
         self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                     psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+                                                           psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
         time.sleep(self.stability_check_time)
         logger().info("Checking scanning and advertising  status of DUT")
         state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
@@ -146,32 +150,49 @@ class BleFunctionality(ThreadBase):
         assert state_int == 3, "DUT BLE device is not in scanning or advertising"
         logger().info(" **** START SCANNING DUT FROM REMOTE DEVICE 2 **** ")
         ble_client_address = ble_client2.interfaces.bluetooth.start_smp_scan(
-             bt_dut_address=self.ble_dut_address)
+            bt_dut_address=self.ble_dut_address)
         assert ble_client_address, "FAILED TO INITIATE BLE IN REMOTE DEVICE 2"
         sw = Stopwatch()
         previously_found_devices = {}
         device_found = 0
         while sw.elapsed_sec < 30:
-             found_devices = ble_client2.interfaces.bluetooth.get_devices()
-             if previously_found_devices != found_devices:
-                 logger().info(f"BLE scan results :{found_devices}")
-                 previously_found_devices = found_devices
-             if (
-                     self.ble_dut_address in found_devices
-                     and found_devices[self.ble_dut_address] == self.wifi_dut.interfaces.wifi.ble_advertising_data
-             ):
-                 device_found = 1
+            found_devices = ble_client2.interfaces.bluetooth.get_devices()
+            if previously_found_devices != found_devices:
+                logger().info(f"BLE scan results :{found_devices}")
+                previously_found_devices = found_devices
+            if (
+                    self.ble_dut_address in found_devices
+                    and found_devices[self.ble_dut_address] == self.wifi_dut.interfaces.wifi.ble_advertising_data
+            ):
+                device_found = 1
         assert device_found, f"device is not available"
         events = self.wifi_dut.interfaces.wifi.get_async_events()
+        scan_result = ""
         for event in events:
-              if event.event_type == AsyncEventIdentifiers.ADVERTISE:
-                 if "rsi_ble_simple_central_on_adv_report_event" in event.event_data:
-                     logger().info(f" event data : {event.event_data}")
-                     scan_result = event.event_data
+            if event.event_type == AsyncEventIdentifiers.ADVERTISE:
+                if "rsi_ble_simple_central_on_adv_report_event" in event.event_data:
+                    logger().info(f" event data : {event.event_data}")
+                    scan_result = event.event_data
         logger().info("verifying client addr, is available in scan list...")
         assert str(ble_client_address1) in str(scan_result), "failed to find client bt addr in scan list...."
         logger().info(f"found BT client address : {ble_client_address1}")
         logger().info(f"Performed scanning and advertised dut for 5mins")
+
+        ble_dut_address_hex = re.split(":", self.ble_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address1)
+        ble_client_address2_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        slave_address2 = "0x"
+        for hex_data_part in ble_client_address2_hex:
+            slave_address2 = slave_address2 + hex_data_part
+
+        self.ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address, slave_address2])
+
         self.ble_sniffer.interfaces.sniffer.stop_capture()
         captured_files = str(self.ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
         time.sleep(20)
