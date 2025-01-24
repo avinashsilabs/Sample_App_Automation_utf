@@ -367,3 +367,57 @@ def test_wifi_sdk_https_otaf_after_rejoin_failure_and_measure_time_c584245(http_
         logger().info('******* Turn on Access point Finally **********')
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@wifi_dut_marker()
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_wifi_sdk_https_otaf_after_rejoin_failure_and_measure_time_c584246(http_server, wifi_client, wifi_sniffer,
+                                                                           wifi_access_point, wifi_dut, switch,
+                                                                           sl_collections):
+    """Verify the HTTPS OTAF M4 firmware upgrade functionality by loading certificate into index 1 after rejoin
+    failure"""
+    try:
+        test_case = '584245'
+        logger().info(" **** configuring the sniffer with access point channel **** ")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
+        fwup_obj = ThreadHttpOtaf(http_server=http_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+                                  wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
+                                  sl_collections=sl_collections, cert_index=1)
+
+        ap_obj = APController(switch=switch, wifi_access_point=wifi_access_point, wifi_dut=wifi_dut,
+                              sl_collections=sl_collections)
+
+        fwup_obj.load_certs_to_index()
+        fwup_obj.join_to_ap()
+        fwup_obj.http_server_start()
+        logger().info("starting fwup thread to do firmware update")
+        try:
+            fwup_obj.start()
+            time.sleep(15)
+            logger().info("starting ap controller thread to turn off AP ,check for rejoin event and turn on AP")
+            ap_obj.start()
+            ap_obj.wait_for_exit()
+            fwup_obj.wait_for_exit()
+        except:
+            pass
+        logger().info("Again connecting and doing firmware upgrade after rejoin failure")
+        fwup_obj.join_to_ap()
+        fwup_obj.http_server_start()
+        logger().info("starting fwup thread to do firmware update")
+        fwup_obj.firmware_upgrade_after_rejoin()
+
+        logger().info("stop Sniffer capture...")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+
