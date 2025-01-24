@@ -810,3 +810,51 @@ def test_wifi_sdk_legacy_dhcp_request_failure_c683174(wifi_sniffer, wifi_access_
     finally:
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2", dhcp_end="192.168.50.254")
         time.sleep(60)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
+def test_wifi_sdk_verify_config_ip_and_get_ip_address_api_c693569(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+                                                                  utf_constants, sl_collections):
+    """Verify sl_net_configure_ip and sl_net_get_ip_address APIs"""
+    try:
+        static_ip = UtfConfig.instance().defaults["wifi"].get("static_ip", None)
+        logger().info(f"in harness static_ip flag set to be : {static_ip}")
+
+        static_subnet = UtfConfig.instance().defaults["wifi"].get("static_subnet", None)
+        logger().info(f"in harness static_subnet flag set to be : {static_subnet}")
+
+        static_gateway = UtfConfig.instance().defaults["wifi"].get("static_gateway", None)
+        logger().info(f"in harness static_gateway flag set to be : {static_gateway}")
+
+        ip_version = 'ipv4'
+        logger().info(f"=======>>>>>Verifying Static IP<<<<<<<======")
+        sl_collections.scan(wifi_dut=wifi_dut)
+        sl_collections.connect(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point)
+        wifi_dut.interfaces.wifi.start_ip(ip_version=ip_version, static_ip=static_ip, static_subnet=static_subnet,
+                                          static_gateway=static_gateway, timeout=10)
+
+        get_ip = wifi_dut.interfaces.wifi.get_ip_address()
+        logger().info(f"GET_IP: {get_ip}")
+        time.sleep(30)
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)

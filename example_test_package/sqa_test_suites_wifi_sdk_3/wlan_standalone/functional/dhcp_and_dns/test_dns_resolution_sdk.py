@@ -8,6 +8,7 @@ from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utf_config import UtfConfig
+from utf.utils.stopwatch import Stopwatch
 from utf.utils.iperf.iperf_utils import ping
 
 
@@ -69,52 +70,52 @@ class WifiJoinThread(ThreadBase):
 
             if self.test_case_no == 19300:
                 logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
-                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="NULL")
-                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="NULL", timeout=50)
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4", timeout=50)
 
             if self.test_case_no == 19302:
                 logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
-                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
-                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10", timeout=50)
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4", timeout=50)
 
             if self.test_case_no == 19303:
                 logger().info("=======DNS address command is given when only primary DNS server ip address is given statically ========")
-                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="NULL")
-                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000, ip_version="ipv4")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="NULL", timeout=50)
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000, ip_version="ipv4", timeout=50)
 
             if self.test_case_no == 19304:
                 logger().info("=======DNS address command is given when only secondary DNS server ip address is given statically ========")
-                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="NULL",secondary_dns_server_address="10.8.4.10")
-                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="NULL",secondary_dns_server_address="10.8.4.10", timeout=50)
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4", timeout=50)
 
             if self.test_case_no == 19310:
                 logger().info("==DNS address command is given 'twice' with the different DNS server IP addresses ==")
-                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
-                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10", timeout=50)
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4", timeout=50)
 
-                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
-                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10", timeout=50)
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4", timeout=50)
 
             if self.test_case_no == 19311:
                 logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
-                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="NULL",secondary_dns_server_address="NULL")
-                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="NULL",secondary_dns_server_address="NULL", timeout=50)
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4", timeout=50)
 
             if self.test_case_no == 551125:
                 logger().info(f"\n==========>>>>>> Verifying DNS functionality for 30 minutes <<<<<<===========\n")
                 start_time = time.time()
                 while (time.time() - start_time) < 1800:
                     logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
-                    self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
-                    self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
+                    self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10", timeout=50)
+                    self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4", timeout=50)
 
             if self.test_case_no == 553434:
                 logger().info(f"\n==========>>>>>> Verifying DNS functionality for 24 hours <<<<<<===========\n")
                 start_time = time.time()
                 while (time.time() - start_time) < 86400:
                     logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
-                    self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10")
-                    self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4")
+                    self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10", timeout=50)
+                    self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4", timeout=50)
 
             if self.test_case_no == 19302 or self.test_case_no == 19303 or self.test_case_no == 19304 or self.test_case_no == 19310\
                     or self.test_case_no == 551125 or self.test_case_no == 553434 or self.test_case_no == 19311:
@@ -176,15 +177,53 @@ class WifiJoinThread(ThreadBase):
 class DnsFunctionalityThread(ThreadBase):
     """Thread to verify DNS functionality."""
 
-    def __init__(self, wifi_dut):
+    def __init__(self, wifi_dut, wifi_access_point, test_case_no):
         super().__init__()
         self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.test_case_no = test_case_no
 
     def run(self):
         try:
-            logger().info("Starting DNS functionality verification...")
-            self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11", secondary_dns_server_address="10.8.4.10")
-            self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000, ip_version="ipv4")
+            if self.test_case_no == 553435:
+                logger().info("Starting DNS functionality verification...")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11", secondary_dns_server_address="10.8.4.10", timeout=50)
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000, ip_version="ipv4", timeout=50)
+
+            if self.test_case_no == 551127:
+
+                logger().info("Starting DNS functionality verification...")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11", secondary_dns_server_address="10.8.4.10", timeout=50)
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000, ip_version="ipv4", timeout=50)
+
+                logger().info(f"\n\n *** Unplugging internet cable from AP *** \n\n")
+                self.wifi_access_point.interfaces.wifi.enable_block_all_devices_internet_access()
+                time.sleep(120)
+
+                sw = Stopwatch()
+                end_time = 1800
+                while sw.elapsed_sec <= end_time:
+                    # Negative test for DNS address setting
+                    result_set_dns_address = self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",
+                                                                                           secondary_dns_server_address="10.8.4.10", timeout=50)
+                    # Negative test for DNS query
+                    result_dns_get = self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,
+                                                                           ip_version="ipv4", negative_flag=True, timeout=50)
+                    # Corrected condition for result validation
+                    logger().info(f"result_set_dns_address = {result_set_dns_address}, Result_dns_get={result_dns_get}")
+                    time.sleep(5)
+
+                # Unblocking internet access
+                self.wifi_access_point.interfaces.wifi.disable_block_all_devices_internet_access()
+                logger().info(f"\n\n Sleeping for 121 seconds before re-test \n\n")
+                time.sleep(120)
+
+                # Restore DNS settings
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",
+                                                              secondary_dns_server_address="10.8.4.10", timeout=50)
+                # Re-test DNS query
+                self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,
+                                                      ip_version="ipv4", timeout=50)
         except Exception as ex:
             logger().exception("Error in DNS functionality thread.")
             raise
@@ -207,29 +246,24 @@ class WLANDisconnectionThread(ThreadBase):
             raise
 
 
-
-pytestmark = [
-    pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-            "oper_mode": Si91xOperatingMode.WiFiClient,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
-            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
-            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "bt_features": 0,
-            "ble_features": 0,
-            "ble_custom_ext_features": 0,
-        }
-    )
-]
-
-
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -257,6 +291,24 @@ def test_wifi_sdk_when_both_pri_sec_ips_are_statically_c19302(wifi_sniffer, wifi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -284,6 +336,24 @@ def test_wifi_sdk_when_only_primary_ip_statically_c19303(wifi_sniffer, wifi_acce
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -311,6 +381,24 @@ def test_wifi_sdk_when_only_secondary_ip_statically_c19304(wifi_sniffer, wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -335,6 +423,24 @@ def test_wifi_sdk_when_both_pri_sec_set_to_0_statically_c19305(wifi_sniffer, wif
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -359,6 +465,24 @@ def test_wifi_sdk_when_both_pri_sec_ip_with_wrong_dns_server_ips_c19306(wifi_sni
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -423,6 +547,24 @@ def test_wifi_sdk_when_both_pri_sec_dut_static_ip_with_wrong_gateway_c19307(wifi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -448,6 +590,24 @@ def test_wifi_sdk_when_pri_sec_with_same_dns_server_ips_c19308(wifi_sniffer, wif
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -474,6 +634,24 @@ def test_wifi_sdk_when_pri_sec_set_twice_with_same_dns_server_ips_c19309(wifi_sn
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -502,6 +680,24 @@ def test_wifi_sdk_when_both_pri_sec_twice_diff_dns_server_ips_c19310(wifi_sniffe
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN', "dhcp_dns1":'8.8.8.8'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -529,6 +725,24 @@ def test_wifi_sdk_when_only_pri_dns_server_ip_assign_through_dhcp_c19300(wifi_sn
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN', "dhcp_dns1":'8.8.8.8', "dhcp_dns2":'8.8.4.4'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -555,6 +769,24 @@ def test_wifi_sdk_when_two_dns_server_ips_assign_through_dhcp_c19301_c19311(wifi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -580,6 +812,24 @@ def test_wifi_sdk_dns_functionality_for_30_minutes_c551125(wifi_sniffer, wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -605,6 +855,24 @@ def test_wifi_sdk_dns_functionality_for_24_hours_c553434(wifi_sniffer, wifi_acce
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
@@ -633,7 +901,7 @@ def test_wifi_sdk_verify_dns_and_wlan_disconnection_c553435(wifi_sniffer, wifi_a
         da_addr = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP MAC: {da_addr}")
 
-        dns_thread = DnsFunctionalityThread(wifi_dut=wifi_dut)
+        dns_thread = DnsFunctionalityThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, test_case_no=553435)
         disconnection_thread = WLANDisconnectionThread(wifi_dut=wifi_dut)
 
         # Start both threads
@@ -663,3 +931,70 @@ def test_wifi_sdk_verify_dns_and_wlan_disconnection_c553435(wifi_sniffer, wifi_a
 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_ap_no_internet_for_30mins_recon_check_behavior_c551127(wifi_sniffer, wifi_access_point, wifi_dut,
+                                                                          sl_collections,
+                                                                          request, utf_constants, sniffer_filter):
+    """Verify DNS functionality when AP doesn't have internet for 30 minutes,
+       After 30 minutes connect internet cable and check behavior."""
+
+    try:
+        test_case = request.node.name
+        mode = "power_save_low_latency"
+        ping_count = utf_constants.get("ping_count")
+
+        logger().info(" ====== configuring the Sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
+
+        sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point, power_save=True,
+                                            mode=mode, ping_after_power_save=True, retry_count=3,
+                                            associated=wifi_dut.interfaces.wifi.associated, ping_count=ping_count)
+
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        dns_thread = DnsFunctionalityThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, test_case_no=551127)
+
+        # Start thread
+        dns_thread.start()
+
+        # Wait for thread to complete
+        dns_thread.wait_for_exit()
+
+        logger().info("Disconnecting WLAN...")
+        wifi_dut.interfaces.wifi.leave()
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+    finally:
+        wifi_access_point.interfaces.wifi.disable_block_all_devices_internet_access()
+        logger().info(f"\n\n Sleeping for 120 seconds before re-test \n\n")
+        time.sleep(120)
