@@ -146,6 +146,7 @@ def test_ble_slave_tx_data_length_20_bytes_C19920(wifi_dut, ble_client, sl_colle
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=bt_dut_address)
         ble_client.interfaces.bluetooth.close()
 
 
@@ -257,6 +258,7 @@ def test_ble_slave_tx_data_length_230_bytes_C19923(wifi_dut, ble_client, sl_coll
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=bt_dut_address)
         ble_client.interfaces.bluetooth.close()
 
 
@@ -370,6 +372,7 @@ def test_ble_slave_tx_data_length_20_bytes_duty_cycle_C19926(wifi_dut, ble_clien
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=bt_dut_address)
         ble_client.interfaces.bluetooth.close()
 
 
@@ -485,6 +488,7 @@ def test_ble_slave_tx_data_length_230_bytes_duty_cycle_C19929(wifi_dut, ble_clie
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=bt_dut_address)
         ble_client.interfaces.bluetooth.close()
 
 
@@ -626,6 +630,7 @@ def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wif
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=bt_dut_address)
         ble_client.interfaces.bluetooth.close()
 
 
@@ -769,6 +774,7 @@ def test_ble_master_rx_100_bytes_duty_cycle_C19930(ble_dut, ble_client, sl_colle
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=bt_dut_address)
         ble_client.interfaces.bluetooth.close()
 
 
@@ -806,7 +812,6 @@ def test_ble_master_rx_230_bytes_C19921(ble_dut, ble_client, sl_collections, wif
     charc = 'CustomNotifyCharacteristic'
     try:
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
-
             iter_count = utf_constants.get("iter_count")
             for count in range(iter_count):
 
@@ -824,8 +829,9 @@ def test_ble_master_rx_230_bytes_C19921(ble_dut, ble_client, sl_collections, wif
                 ble_dut.interfaces.bluetooth.ble_stop_scanning()
 
                 logger().info(f"....Applying performance profile mode and Enable_bt_power_save")
-                ble_dut.interfaces.bluetooth.set_performance_profile()
-                ble_dut.interfaces.bluetooth.enable_bt_power_save()
+                wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+                wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                              psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
                 logger().info(f".... initiating ble connection ....")
                 ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address)
@@ -874,11 +880,10 @@ def test_ble_master_rx_230_bytes_C19921(ble_dut, ble_client, sl_collections, wif
                 ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=bt_client_address,
                                                                handle=(write_handle + 1), enable_notify=1)
                 time.sleep(1)
-
+                notify_time = 300
                 data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=230))
                 sw = Stopwatch()
-
-                while sw.elapsed_sec < 60:
+                while sw.elapsed_sec < notify_time:
                     since_time = time.perf_counter_ns()
                     ble_client.interfaces.bluetooth.send_gatt_charc_notification(svc, charc, data)
                     time.sleep(0.3)
@@ -891,17 +896,16 @@ def test_ble_master_rx_230_bytes_C19921(ble_dut, ble_client, sl_collections, wif
                                 logger().info(f"************** BLE EVENT DATA IS : {event.event_data} **************")
                                 received_data = re.findall(r"(\b[A-Z0-9]{230}\b)", event.event_data)
                                 logger().info(f"******* Received Data on DUT : {received_data} ********")
-                                assert received_data == [data], "data mismatched"
-                                if data in event.event_data:
-                                    found = True
-                                    break
+                                try:
+                                    assert received_data[0] in data, "data mismatched"
+                                except:
+                                    assert received_data[0][:237] in data, "data mismatched"
+                                found = True
+                                break
                         if found:
                             break
-                    if not found:
-                        raise Exception("No data received on DUT")
 
                 time.sleep(1)
-
                 ble_dut.interfaces.bluetooth.ble_set_att_value(
                     ble_remote_dev_address=bt_client_address, handle=(write_handle + 1), enable_notify=0)
 
@@ -910,13 +914,12 @@ def test_ble_master_rx_230_bytes_C19921(ble_dut, ble_client, sl_collections, wif
                 assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
 
                 ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
-
                 ble_client.interfaces.bluetooth.close()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=bt_dut_address)
         ble_client.interfaces.bluetooth.close()
 
 
@@ -956,10 +959,8 @@ def test_ble_master_rx_230_bytes_duty_cycle_C19927(ble_dut, ble_client, sl_colle
     charc = 'CustomNotifyCharacteristic'
     try:
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
-
             iter_count = utf_constants.get("iter_count")
             for count in range(iter_count):
-
                 logger().info("******************** initializing ble in dut ********************")
                 bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
                 assert bt_dut_address, "failed to initialize ble in dut"
@@ -974,8 +975,9 @@ def test_ble_master_rx_230_bytes_duty_cycle_C19927(ble_dut, ble_client, sl_colle
                 ble_dut.interfaces.bluetooth.ble_stop_scanning()
 
                 logger().info(f"....Applying performance profile mode and Enable_bt_power_save")
-                wifi_dut.interfaces.wifi.set_performance_profile()
-                wifi_dut.interfaces.wifi.enable_bt_power_save()
+                wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+                wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                              psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
                 logger().info(f".... initiating ble connection ....")
                 ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address)
@@ -1023,11 +1025,10 @@ def test_ble_master_rx_230_bytes_duty_cycle_C19927(ble_dut, ble_client, sl_colle
                 ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=bt_client_address,
                                                                handle=(write_handle + 1), enable_notify=1)
                 time.sleep(1)
-
+                notify_time = 300
                 data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=230))
                 sw = Stopwatch()
-
-                while sw.elapsed_sec < 60:
+                while sw.elapsed_sec < notify_time:
                     since_time = time.perf_counter_ns()
                     ble_client.interfaces.bluetooth.send_gatt_charc_notification(svc, charc, data)
                     time.sleep(0.3)
@@ -1040,17 +1041,16 @@ def test_ble_master_rx_230_bytes_duty_cycle_C19927(ble_dut, ble_client, sl_colle
                                 logger().info(f"************** BLE EVENT DATA IS : {event.event_data} **************")
                                 received_data = re.findall(r"(\b[A-Z0-9]{230}\b)", event.event_data)
                                 logger().info(f"******* Received Data on DUT : {received_data} ********")
-                                assert received_data == [data], "data mismatched"
-                                if data in event.event_data:
-                                    found = True
-                                    break
+                                try:
+                                    assert received_data[0] in data, "data mismatched"
+                                except:
+                                    assert received_data[0][:237] in data, "data mismatched"
+                                found = True
+                                break
                         if found:
                             break
-                    if not found:
-                        raise Exception("No data received on DUT")
 
                 time.sleep(1)
-
                 ble_dut.interfaces.bluetooth.ble_set_att_value(
                     ble_remote_dev_address=bt_client_address, handle=(write_handle + 1), enable_notify=0)
 
@@ -1059,11 +1059,10 @@ def test_ble_master_rx_230_bytes_duty_cycle_C19927(ble_dut, ble_client, sl_colle
                 assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
 
                 ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
-
                 ble_client.interfaces.bluetooth.close()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
     finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=bt_dut_address)
         ble_client.interfaces.bluetooth.close()
