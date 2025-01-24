@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 from typing import Dict
 import pytest
+import re
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xTCPIPFeatureBitMap,
     Si91xExtTCPIPFeatureBitMap,
@@ -11,6 +12,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xConfigFeatureBitMap,
     Si91xCustomFeatureBitMap,
     Si91xExtCustomFeatureBitMap,
+    MulticastParams
 )
 from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
@@ -39,13 +41,13 @@ def logger():
     return get_logger(__name__)
 
 
-def extract_recieved_packets(data):
-    total_received_packets = 0
-    pattern = r"Total received packets: (\d+)"
+def extract_achieved_throughput(data):
+    total_achieved_throughput = 0
+    pattern = r"Throughput achieved @ (\d+.\d+)"
     match = re.search(pattern, data)
     if match:
-        total_received_packets = int(match.group(1))
-    return total_received_packets
+        total_achieved_throughput = float(match.group(1))
+    return total_achieved_throughput
 
 
 class WifiJoin(ThreadBase):
@@ -193,7 +195,7 @@ def test_wifi_sdk_receive_data_over_udp_socket_using_multicast_address_TC19369(
     5. Join the multicast group on the DUT.
     6. Initialize and start the net performance client.
     7. Start listening for multicast data on the DUT.
-    8. Verify the received packets based on the multicast filter configuration.
+    8. Verify the achieved throughput based on the multicast filter configuration.
     9. Leave the multicast group on the DUT.
     10. Stop the sniffer capture and validate the IGMP packets.
 
@@ -444,7 +446,7 @@ def test_wifi_sdk_receive_data_over_multicast_address_which_is_removed_from_mult
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19372(
+def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_SET_ALL_BIT_TC19372(
     wifi_sniffer,
     wifi_access_point,
     wifi_dut,
@@ -466,7 +468,7 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19
     5. Join the multicast group on the DUT.
     6. Initialize and start the net performance client.
     7. Start listening for multicast data on the DUT.
-    8. Verify the received packets based on the multicast filter configuration.
+    8. Verify the achieved throughput based on the multicast filter configuration.
     9. Leave the multicast group on the DUT.
     10. Stop the sniffer capture and validate the IGMP packets.
 
@@ -555,11 +557,12 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19
             throughput_type=4,
             qos=0,
             async_socket=1,
+            timeout=300,
         )
-        received_packets = extract_recieved_packets(data)
+        throughput = extract_achieved_throughput(data)
         assert (
-            received_packets > 0
-        ), "DUT not received data when multicast filter is set to all"
+            throughput > 0
+        ), "DUT not achieved throughput when multicast filter is set to all"
 
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
         wifi_dut.interfaces.wifi.sl_net_leave_multicast_address(server=multicast_ip)
@@ -588,7 +591,7 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19373(
+def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_CLEAR_ALL_BIT_TC19373(
     wifi_sniffer,
     wifi_access_point,
     wifi_dut,
@@ -610,7 +613,7 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19
     5. Join the multicast group on the DUT.
     6. Initialize and start the net performance client.
     7. Start listening for multicast data on the DUT.
-    8. Verify the received packets based on the multicast filter configuration.
+    8. Verify the achieved throughput based on the multicast filter configuration.
     9. Leave the multicast group on the DUT.
     10. Stop the sniffer capture and validate the IGMP packets.
 
@@ -700,11 +703,12 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19
             throughput_type=4,
             qos=0,
             async_socket=1,
+            timeout=300,
         )
-        received_packets = extract_recieved_packets(data)
+        throughput = extract_achieved_throughput(data)
         assert (
-            received_packets == 0
-        ), "DUT received data when multicast filter is cleared"
+            throughput == 0
+        ), "DUT achieved throughput when multicast filter is cleared"
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
         wifi_dut.interfaces.wifi.sl_net_leave_multicast_address(server=multicast_ip)
         logger().info("Stop Sniffer finally")
@@ -732,7 +736,7 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19374(
+def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_CLEAR_BIT_TC19374(
     wifi_sniffer,
     wifi_access_point,
     wifi_dut,
@@ -754,7 +758,7 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19
     5. Join the multicast group on the DUT.
     6. Initialize and start the net performance client.
     7. Start listening for multicast data on the DUT.
-    8. Verify the received packets based on the multicast filter configuration.
+    8. Verify the achieved throughput based on the multicast filter configuration.
     9. Leave the multicast group on the DUT.
     10. Stop the sniffer capture and validate the IGMP packets.
 
@@ -844,13 +848,14 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19
                 throughput_type=4,
                 qos=0,
                 async_socket=1,
+                timeout=300,
             )
-            packets = extract_recieved_packets(data)
+            throughput = extract_achieved_throughput(data)
             if count == 1:
                 assert (
-                    packets == 0
-                ), "DUT received data when multicast filter is cleared"
-            logger().info(f"\nReceived Packets Info: {packets}\n")
+                    throughput == 0
+                ), "DUT achieved throughput when multicast filter is cleared"
+            logger().info(f"\nachieved throughput Info: {throughput}\n")
 
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
         wifi_dut.interfaces.wifi.sl_net_leave_multicast_address(server=multicast_ip)
@@ -900,7 +905,7 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19
     5. Join the multicast group on the DUT.
     6. Initialize and start the net performance client.
     7. Start listening for multicast data on the DUT.
-    8. Verify the received packets based on the multicast filter configuration.
+    8. Verify the achieved throughput based on the multicast filter configuration.
     9. Leave the multicast group on the DUT.
     10. Stop the sniffer capture and validate the IGMP packets.
 
@@ -999,17 +1004,18 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19
                 throughput_type=4,
                 qos=0,
                 async_socket=1,
+                timeout=300,
             )
-            packets = extract_recieved_packets(data)
+            throughput = extract_achieved_throughput(data)
             if count == 0:
                 assert (
-                    packets == 0
-                ), "DUT received data when multicast filter is cleared"
+                    throughput == 0
+                ), "DUT achieved throughput when multicast filter is cleared"
             else:
                 assert (
-                    packets > 0
-                ), "DUT not received data when multicast filter is added"
-            logger().info(f"The packets received are {packets}")
+                    throughput > 0
+                ), "DUT not achieved throughput when multicast filter is added"
+            logger().info(f"The achieved throughput are {throughput}")
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
         wifi_dut.interfaces.wifi.sl_net_leave_multicast_address(server=multicast_ip)
         logger().info("Stop Sniffer finally")
