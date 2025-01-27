@@ -30,7 +30,7 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingM
 def logger():
     return get_logger(__name__)
 
-"""Test Author = Jyothi Nagireddy
+"""Test Author = Jyothi Nagireddy & Vasavi Kalla
 
         1. Start the sniffer before connection
         2. Required A7 EVK(DUT) board 
@@ -44,6 +44,45 @@ setup requirement:
         3. Access Point(Third Party AP's)
 """
 
+class IperfThread(ThreadBase):
+
+    def __init__(self, wifi_dut=None, wifi_access_point=None, sl_collections=None, test_name=None, wifi_client=None,
+        test_id=None, traffic_type=None, protocol=None, net_perf_client=None, timeout=60,
+        device_ip=None, remote_ip=None, ip_version=4, async_socket=0):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.sl_collections = sl_collections
+        self.test_name = test_name
+        self.wifi_client = wifi_client
+        self.test_id = test_id
+        self.traffic_type = traffic_type
+        self.net_perf_client = net_perf_client
+        self.protocol = protocol
+        self.timeout = timeout
+        self.ip_version = ip_version
+        self.device_ip = device_ip
+        self.remote_ip = remote_ip
+        self.async_socket = async_socket
+
+    def run_traffic(self):
+        logger().info(f"initiating traffic in {self.protocol} with type {self.traffic_type}")
+        self.sl_collections.run_traffic(
+            wifi_dut=self.wifi_dut,
+            net_perf_client=self.net_perf_client,
+            protocol=self.protocol,
+            device_ip=self.device_ip,
+            host_ip=self.remote_ip,
+            timeout=self.timeout,
+            traffic_type=self.traffic_type,
+            ip_version=self.ip_version,
+            buffer_size_tcp=1380,
+            buffer_size_udp=1390,
+            async_socket=self.async_socket
+        )
+
+    def run(self):
+        self.run_traffic()
 
 class data_transfer:
     def __init__(self):
@@ -145,43 +184,6 @@ class Disconnection(ThreadBase):
 
     def run(self):
         self.wifi_clients[0].interfaces.wifi.leave()
-
-class ApmodeConnection(ThreadBase):
-    def __init__(self, wifi_dut, wifi_clients):
-        self.wifi_dut = wifi_dut
-        self.wifi_clients = wifi_clients
-
-    def  connect_clients_to_dut_as_ap(self, dut_ip=None):
-        ip_dict = {}
-        connected = False
-        for i in range(len(self.wifi_clients)):
-            logger().info(f"RASPI-STA{i + 1}:'{self.wifi_clients[i].name}' is joining to DUT-AP")
-            self.wifi_clients[i].interfaces.wifi.join()
-            time.sleep(5)
-            if dut_ip is None:
-                ip_dict['dut_ip'] = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-            else:
-                ip_dict['dut_ip'] = dut_ip
-            logger().info(f"********* Dut IP **********: {ip_dict['dut_ip']}")
-            for retry_count in range(4):
-                try:
-                    logger().info(f"RASPI-STA{i + 1}:'{self.wifi_clients[i].name}' is successfully connected to DUT-AP")
-                    logger().info(f"Initiating wlan ping from client '{self.wifi_clients[i].name}' to DUT")
-                    ip_dict[f'client{i + 1}_ip'] = self.wifi_clients[i].interfaces.wifi.get_ip_address()
-                    logger().info(f"Client{i + 1}_ip: {ip_dict[f'client{i + 1}_ip']}")
-                    ip_dict[f'rasp_mac_address_{i+1}'] = self.wifi_clients[i].interfaces.wifi.get_mac_address()
-                    logger().info(f"raspi_mac: {ip_dict[f'rasp_mac_address{i+1}']}")
-                    rc, stdout, stderr = self.wifi_clients[i].interfaces.wifi.shell.execute(
-                        f"sudo ping -c {10} {ip_dict['dut_ip']}")
-                    assert rc == 0, f"RASPI-STA{i + 1} failed to ping DUT"
-                    logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
-                    connected = True
-                    break
-                except Exception as error:
-                    logger().info(f"RASPI-STA{i + 1} failed to ping DUT:\n{error}...retry count -> {retry_count+1}")
-                    time.sleep(10)
-            assert connected, f"RASPI-STA{i + 1} is disconnected from DUT-AP"
-        return ip_dict
 
 class MultiSocketsConnectionTx(ThreadBase):
     def __init__(self, wifi_dut, wifi_client, remote_socket_factory, utf_constants, host_ip=None, dut_ip=None, socket_count=None, dut_socket_close=False, remote_close=False):
@@ -2369,3 +2371,749 @@ def test_wifi_sdk_DUTAP_wlan_disconnect_while_sending_data_C551124(wifi_sniffer,
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
         time.sleep(10)
+
+
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.NWP160MHz,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,"channel": 11
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+def test_verify_one_TCP_TX_and_UDP_TX_using_multithread_C689592(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
+    """ Verify  one TCP TX and UDP TX simultaneously using multi thread sockets.
+         steps:
+              1:set_socket_config as per testrail
+              2:DUT as AP should bring up and connect to client
+              3:start 2 threads parallel for TCP & UDP
+              4:run traffic using iperf in both threads parallel
+              5:close all sockets and terminate threads.
+            """
+    test_name = request.node.name
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{689592}.pcap")
+        time.sleep(3)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.set_socket_config(total_sockets=2, total_tcp_sockets=2, tcp_tx_only_sockets=1,
+                                                   tcp_rx_only_sockets=1)
+        dut_addr_dict = sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
+                                                                  channel=11, ssid="SILABS_AP_MODE",
+                                                                  security="WPA2",
+                                                                  password="Automation@123",
+                                                                  dtim_count=1,
+                                                                  beacon_interval=100,
+                                                                  ping_count=10,
+                                                                  no_of_clients=1, leave=False
+                                                                  )
+
+        tcp_tx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 test_name=test_name, wifi_client=wifi_clients[0],
+                                 traffic_type="TX", protocol="TCP", net_perf_client=net_perf_clients[0], timeout=60,
+                                 device_ip=dut_addr_dict['dut_ip'], remote_ip=dut_addr_dict['client_ip'],
+                                 ip_version=4, async_socket=0,
+                                 )
+        udp_tx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 test_name=test_name, wifi_client=wifi_clients[0],
+                                 traffic_type="TX", protocol="UDP", net_perf_client=net_perf_clients[1], timeout=60,
+                                 device_ip=dut_addr_dict['dut_ip'], remote_ip=dut_addr_dict['client_ip'],
+                                 ip_version=4, async_socket=0,
+                                 )
+        tcp_tx_obj.start()
+        udp_tx_obj.start()
+        time.sleep(5)
+
+        tcp_tx_obj.wait_for_exit()
+        udp_tx_obj.wait_for_exit()
+        time.sleep(5)
+        logger().info(f"TCP_TX & UDP_TX ran successfully")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        time.sleep(10)
+    finally:
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.NWP160MHz,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,"channel": 11
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+def test_verify_one_TCP_TX_and_UDP_RX_using_multithread_C689593(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
+    """ Verify  one TCP TX and UDP RX simultaneously using multi thread sockets
+        steps:
+          1:set_socket_config as per testrail
+          2:DUT as AP should bring up and connect to client
+          3:start 2 threads parallel
+          4:run traffic using iperf in both threads parallel
+          5:close all sockets and terminate threads.
+        """
+    test_name = request.node.name
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{689593}.pcap")
+        time.sleep(3)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.set_socket_config(total_sockets=2, total_tcp_sockets=1, tcp_rx_only_sockets=0, total_udp_sockets=1, tcp_tx_only_sockets=1,
+                                                   tcp_rx_high_performance_sockets=0, udp_rx_only_sockets=1)
+        dut_addr_dict = sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
+                                                                  channel=11, ssid="SILABS_AP_MODE",
+                                                                  security="WPA2",
+                                                                  password="Automation@123",
+                                                                  dtim_count=1,
+                                                                  beacon_interval=100,
+                                                                  ping_count=10,
+                                                                  no_of_clients=1, leave=False
+                                                                  )
+
+        tcp_tx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 test_name=test_name, wifi_client=wifi_clients[0],
+                                 traffic_type="TX", protocol="TCP", net_perf_client=net_perf_clients[0], timeout=60,
+                                 device_ip=dut_addr_dict['dut_ip'], remote_ip=dut_addr_dict['client_ip'],
+                                 ip_version=4, async_socket=1,
+                                 )
+        udp_rx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 test_name=test_name, wifi_client=wifi_clients[0],
+                                 traffic_type="RX", protocol="UDP", net_perf_client=net_perf_clients[1], timeout=60,
+                                 device_ip=dut_addr_dict['dut_ip'], remote_ip=dut_addr_dict['client_ip'],
+                                 ip_version=4, async_socket=1,
+                                 )
+        tcp_tx_obj.start()
+        udp_rx_obj.start()
+        time.sleep(5)
+
+        tcp_tx_obj.wait_for_exit()
+        udp_rx_obj.wait_for_exit()
+        time.sleep(3)
+        logger().info(f"TCP_TX & UDP_RX ran completed")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        time.sleep(10)
+    finally:
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.stop_ap()
+
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.NWP160MHz,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,"channel": 11
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'ASUS_AP',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+def test_verify_one_TCP_TX_and_TCP_RX_using_multithread_C689594(wifi_dut, wifi_clients, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants, request, channel):
+    """ Verify  one TCP TX and TCP RX simultaneously using multi thread sockets
+        steps:
+          1:set_socket_config as per testrail
+          2:DUT as AP should bring up and connect to client
+          3:start 2 threads parallel
+          4:run traffic using iperf in both threads parallel
+          5:close all sockets and terminate threads
+    """
+    test_name = request.node.name
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{689594}.pcap")
+        time.sleep(3)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.set_socket_config(total_sockets=2, total_tcp_sockets=2, tcp_tx_only_sockets=1,
+                                                   tcp_rx_only_sockets=1)
+        dut_addr_dict = sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
+                                                                  channel=11, ssid="SILABS_AP_MODE",
+                                                                  security="WPA2",
+                                                                  password="Automation@123",
+                                                                  dtim_count=1,
+                                                                  beacon_interval=100,
+                                                                  ping_count=10,
+                                                                  no_of_clients=1, leave=False
+                                                                  )
+
+        tcp_tx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                               test_name=test_name, wifi_client=wifi_clients[0],
+                               traffic_type="TX", protocol="TCP", net_perf_client=net_perf_clients[0], timeout=60,
+                               device_ip=dut_addr_dict['dut_ip'], remote_ip=dut_addr_dict['client_ip'],
+                               ip_version=4,async_socket=1,
+                               )
+        tcp_rx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                               test_name=test_name, wifi_client=wifi_clients[0],
+                               traffic_type="RX", protocol="TCP", net_perf_client=net_perf_clients[1], timeout=60,
+                               device_ip=dut_addr_dict['dut_ip'], remote_ip=dut_addr_dict['client_ip'],
+                               ip_version=4, async_socket=1,
+                               )
+        tcp_tx_obj.start()
+        tcp_rx_obj.start()
+        time.sleep(5)
+
+        tcp_tx_obj.wait_for_exit()
+        tcp_rx_obj.wait_for_exit()
+        time.sleep(3)
+        logger().info(f"TCP_tx & tcp_Rx traffic ran successfully")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        time.sleep(10)
+    finally:
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.stop_ap()
+
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 3, "stack_len": 2048, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.NWP160MHz,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,"channel": 11
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+def test_verify_one_TCP_RX_and_UDP_TX_using_multithread_C689595(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
+    """ Verify  one TCP RX and UDP TX simultaneously using multi thread sockets
+        steps:
+          1:set_socket_config as per testrail
+          2:DUT as AP should bring up and connect to client
+          3:start 2 threads parallel
+          4:run traffic using iperf in both threads parallel
+          5:close all sockets and terminate threads.
+        """
+    test_name = request.node.name
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{689595}.pcap")
+        time.sleep(3)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.set_socket_config(total_sockets=2, total_tcp_sockets=1, total_udp_sockets=1, udp_tx_only_sockets=1,
+                                                   tcp_rx_only_sockets=1)
+        dut_addr_dict = sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
+                                                                  channel=11, ssid="SILABS_AP_MODE",
+                                                                  security="WPA2",
+                                                                  password="Automation@123",
+                                                                  dtim_count=1,
+                                                                  beacon_interval=100,
+                                                                  ping_count=10,
+                                                                  no_of_clients=1, leave=False
+                                                                  )
+
+        tcp_rx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 test_name=test_name, wifi_client=wifi_clients[0],
+                                 traffic_type="RX", protocol="TCP", net_perf_client=net_perf_clients[0], timeout=60,
+                                 device_ip=dut_addr_dict['dut_ip'], remote_ip=dut_addr_dict['client_ip'],
+                                 ip_version=4, async_socket=1,
+                                 )
+        udp_tx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 test_name=test_name, wifi_client=wifi_clients[0],
+                                 traffic_type="TX", protocol="UDP", net_perf_client=net_perf_clients[1], timeout=60,
+                                 device_ip=dut_addr_dict['dut_ip'], remote_ip=dut_addr_dict['client_ip'],
+                                 ip_version=4, async_socket=0,
+                                 )
+        tcp_rx_obj.start()
+        udp_tx_obj.start()
+        time.sleep(5)
+
+        tcp_rx_obj.wait_for_exit()
+        udp_tx_obj.wait_for_exit()
+        logger().info(f"TCP_RX & UDP_RX ran completed")
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.stop_ap()
+
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 3, "stack_len": 2048, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.NWP160MHz,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,"channel": 11
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+def test_verify_one_TCP_RX_and_UDP_RX_using_multithread_C689596(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
+    """ Verify  one TCP RX and UDP RX simultaneously using multi thread sockets
+        steps:
+          1:set_socket_config as per testrail
+          2:DUT as AP should bring up and connect to client
+          3:start 2 threads parallel
+          4:run traffic using iperf in both threads parallel
+          5:repeat steps 3&4 in loop for 3 times
+          6:close all sockets and terminate threads.
+        """
+    iter_count = utf_constants.get('iter_count')
+    test_name = request.node.name
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{689596}.pcap")
+        time.sleep(3)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.set_socket_config(total_sockets=2, total_udp_sockets=1, udp_rx_only_sockets=1)
+        dut_addr_dict = sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
+                                                                  channel=11, ssid="SILABS_AP_MODE",
+                                                                  security="WPA2",
+                                                                  password="Automation@123",
+                                                                  dtim_count=1,
+                                                                  beacon_interval=100,
+                                                                  ping_count=10,
+                                                                  no_of_clients=1, leave=False
+                                                                  )
+
+        tcp_rx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 test_name=test_name, wifi_client=wifi_clients[0],
+                                 traffic_type="RX", protocol="TCP", net_perf_client=net_perf_clients[0], timeout=60,
+                                 device_ip=dut_addr_dict['dut_ip'], remote_ip=dut_addr_dict['client_ip'],
+                                 ip_version=4, async_socket=1,
+                                 )
+        udp_rx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 test_name=test_name, wifi_client=wifi_clients[0],
+                                 traffic_type="RX", protocol="UDP", net_perf_client=net_perf_clients[1], timeout=60,
+                                 device_ip=dut_addr_dict['dut_ip'], remote_ip=dut_addr_dict['client_ip'],
+                                 ip_version=4, async_socket=1,
+                                 )
+        tcp_rx_obj.start()
+        udp_rx_obj.start()
+        time.sleep(5)
+
+        tcp_rx_obj.wait_for_exit()
+        udp_rx_obj.wait_for_exit()
+        logger().info(f"TCP_RX & UDP_RX ran completed")
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.stop_ap()
+
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.NWP160MHz,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,"channel": 11
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+def test_verify_one_UDP_TX_and_UDP_RX_using_multithread_C689600(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
+    """Verify  one UDP TX and UDP RX simultaneously using multi thread sockets
+        steps:
+          1:set_socket_config as per testrail
+          2:DUT as AP should bring up and connect to client
+          3:start 2 threads parallel
+          4:run traffic using iperf in both threads parallel
+          5:repeat steps 3&4 in loop for 3 times
+          6:close all sockets and terminate threads.
+        """
+    test_name = request.node.name
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{689600}.pcap")
+        time.sleep(3)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.set_socket_config(total_sockets=2, total_udp_sockets=2, total_tcp_sockets=0, udp_tx_only_sockets=1, tcp_rx_only_sockets=0,
+                                                   tcp_rx_high_performance_sockets=0, udp_rx_only_sockets=1)
+        dut_addr_dict= sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
+                                                  channel=11, ssid="SILABS_AP_MODE",
+                                                  security="WPA2",
+                                                  password="Automation@123",
+                                                  dtim_count=1,
+                                                  beacon_interval=100,
+                                                  ping_count=10,
+                                                  no_of_clients=1, leave=False
+                                                  )
+
+        udp_tx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 test_name=test_name, wifi_client=wifi_clients[0],
+                                 traffic_type="TX", protocol="UDP", net_perf_client=net_perf_clients[0], timeout=60,
+                                 device_ip=dut_addr_dict['dut_ip'], remote_ip=dut_addr_dict['client_ip'],
+                                 ip_version=4, async_socket=0,
+                                 )
+        udp_rx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 test_name=test_name, wifi_client=wifi_clients[0],
+                                 traffic_type="RX", protocol="UDP", net_perf_client=net_perf_clients[1], timeout=60,
+                                 device_ip=dut_addr_dict['dut_ip'], remote_ip=dut_addr_dict['client_ip'],
+                                 ip_version=4, async_socket=1,
+                                 )
+        udp_tx_obj.start()
+        udp_rx_obj.start()
+        time.sleep(5)
+
+        udp_tx_obj.wait_for_exit()
+        udp_rx_obj.wait_for_exit()
+        logger().info(f"UDP_TX & UDP_RX traffic run is completed")
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.stop_ap()
+
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.NWP160MHz,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,"channel": 11
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+def test_verify_one_UDP_RX_and_UDP_TX_using_multithread_C689597(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
+    """ Verify  one UDP RX and UDP TX simultaneously using multi thread sockets
+        steps:
+          1:set_socket_config as per testrail
+          2:DUT as AP should bring up and connect to client
+          3:start 2 threads parallel
+          4:run traffic using iperf in both threads parallel
+          5:repeat steps 3&4 in loop for 3 times
+          6:close all sockets and terminate threads.
+        """
+    test_name = request.node.name
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{689597}.pcap")
+        time.sleep(3)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.set_socket_config(total_sockets=2, total_udp_sockets=2, total_tcp_sockets=0, tcp_rx_high_performance_sockets=0,udp_tx_only_sockets=1, tcp_rx_only_sockets=0,
+                                                   udp_rx_only_sockets=1)
+        dut_addr_dict = sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
+                                                                  channel=11, ssid="SILABS_AP_MODE",
+                                                                  security="WPA2",
+                                                                  password="Automation@123",
+                                                                  dtim_count=1,
+                                                                  beacon_interval=100,
+                                                                  ping_count=10,
+                                                                  no_of_clients=1, leave=False
+                                                                  )
+
+        udp_tx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 test_name=test_name, wifi_client=wifi_clients[0],
+                                 traffic_type="RX", protocol="UDP", net_perf_client=net_perf_clients[0], timeout=60,
+                                 device_ip=dut_addr_dict['dut_ip'], remote_ip=dut_addr_dict['client_ip'],
+                                 ip_version=4, async_socket=0,
+                                 )
+        udp_rx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 test_name=test_name, wifi_client=wifi_clients[0],
+                                 traffic_type="TX", protocol="UDP", net_perf_client=net_perf_clients[1], timeout=60,
+                                 device_ip=dut_addr_dict['dut_ip'], remote_ip=dut_addr_dict['client_ip'],
+                                 ip_version=4, async_socket=1,
+                                 )
+        udp_rx_obj.start()
+        udp_tx_obj.start()
+        time.sleep(5)
+
+        udp_rx_obj.wait_for_exit()
+        udp_tx_obj.wait_for_exit()
+        logger().info(f"UDP_RX & UDP_TX run completed")
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.stop_ap()
+
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.NWP160MHz,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,"channel": 11
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+def test_verify_one_UDP_RX_and_TCP_RX_using_multithread_C689599(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
+    """ Verify  one UDP RX and TCP RX simultaneously using multi thread sockets
+        steps:
+          1:set_socket_config as per testrail
+          2:DUT as AP should bring up and connect to raspi as client
+          3:start 2 threads parallel for TCP and UDP
+          4:run traffic using iperf in both threads parallel
+          5:close all sockets and terminate threads.
+        """
+    test_name = request.node.name
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{689599}.pcap")
+        time.sleep(3)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.set_socket_config(total_sockets=2, total_tcp_sockets=1, total_udp_sockets=1,
+                                                   udp_rx_only_sockets=1,
+                                                   tcp_rx_only_sockets=1)
+        dut_addr_dict = sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
+                                                                  channel=11, ssid="SILABS_AP_MODE",
+                                                                  security="WPA2",
+                                                                  password="Automation@123",
+                                                                  dtim_count=1,
+                                                                  beacon_interval=100,
+                                                                  ping_count=10,
+                                                                  no_of_clients=1, leave=False
+                                                                  )
+
+        udp_rx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 test_name=test_name, wifi_client=wifi_clients[0],
+                                 traffic_type="RX", protocol="UDP", net_perf_client=net_perf_clients[0], timeout=60,
+                                 device_ip= dut_addr_dict['dut_ip'],remote_ip=dut_addr_dict['client_ip'],
+                                 ip_version=4, async_socket=1,
+                                 )
+        tcp_rx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 test_name=test_name, wifi_client=wifi_clients[0],
+                                 traffic_type="RX", protocol="TCP", net_perf_client=net_perf_clients[1], timeout=60,
+                                 device_ip=dut_addr_dict['dut_ip'], remote_ip=dut_addr_dict['client_ip'],
+                                 ip_version=4, async_socket=1,
+                                 )
+        udp_rx_obj.start()
+        tcp_rx_obj.start()
+        time.sleep(5)
+
+        udp_rx_obj.wait_for_exit()
+        tcp_rx_obj.wait_for_exit()
+        logger().info(f"UDP_rx & TCP_RX run successfully in multithreads")
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.stop_ap()
