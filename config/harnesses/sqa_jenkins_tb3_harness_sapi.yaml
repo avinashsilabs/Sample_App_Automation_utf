@@ -300,7 +300,7 @@ devices:
                 ssid: 'Jenkins-TB3'
                 passphrase: '12345678'
                 supports: 'wifi_ap'
-                channel: 1
+                channel: 9 #1
 
 
     # This represents another access point configuration.
@@ -312,7 +312,7 @@ devices:
                 admin_password: 'Jenkins@123'
                 ssh_port: 22
                 ssid: "Jenkins-TB3"
-                channel: 11
+                channel: 9 #9  #11
                 protected_management_frame: 'Disable'
                 #ipv6 configuration
                 connection_type: 'STATIC_IPV6'
@@ -331,6 +331,31 @@ devices:
                 radius_ip: "10.207.18.120"
                 radius_port: "1812"
                 ap_test_ip: '192.168.50.1' #AP LOGIN IP (TEST IP)
+                guest_networks:
+                    - band : "2g"
+                      index: "1"
+                      ssid: "ASUS_B0_2G_Guest"
+                      security: WPA2
+                    - band : "2g"
+                      index: "2"
+                      ssid: "ASUS_B0_5G_Guest2"
+                      security: WPA2
+                    - band : "2g"
+                      index: "3"
+                      ssid: "ASUS_B0_5G_Guest3"
+                      security: WPA2
+                    - band : "5g"
+                      index: "1"
+                      ssid: "ASUS_B0_5G_Guest"
+                      security: WPA2
+                    - band : "5g"
+                      index: "2"
+                      ssid: "ASUS_B0_5G_Guest2"
+                      security: WPA2
+                    - band : "5g"
+                      index: "3"
+                      ssid: "ASUS_B0_5G_Guest3"
+                      security: WPA2
 
     # This represents another access point configuration.
     asus_rt_ac68u_ap:
@@ -343,7 +368,7 @@ devices:
                 ssh_port: 22
                 web_ui_port: 8443
                 ssid: "rt_ac68u"
-                channel: 1
+                channel: 9 #1
                 protected_management_frame: 'Disable'
                 skip_assertion_failure: True
                 # radius server configuration
@@ -358,7 +383,7 @@ devices:
                 admin_password: 'admin@123456'
                 ssh_port: 22
                 ssid: "ASUS_53UAX"
-                channel: 1
+                channel: 9 #1
                 protected_management_frame: 'Disable'
                 skip_assertion_failure: True
                 # radius server configuration
@@ -371,7 +396,7 @@ devices:
                 type: 'wifi.access_points.static'
                 ssid: "Savage-Test"
                 security: 'WPA2'
-                channel: 11
+                channel: 9 #9   #11
                 passphrase: 'F6E49FCE'
                 switch_config: 'pdu_switch'
             pdu_switch:
@@ -394,7 +419,7 @@ devices:
                 type: 'wifi.access_points.static'
                 ssid: "Savage-Test"
                 security: 'WPA2'
-                channel: 11
+                channel: 9   #11
                 passphrase: 'F6E49FCE'
                 switch_config: 'pdu_switch'
             pdu_switch:
@@ -417,7 +442,7 @@ devices:
                 type: 'wifi.access_points.static'
                 ssid: "Savage-Test"
                 security: 'WPA2'
-                channel: 11
+                channel: 9 #9  #11
                 passphrase: 'F6E49FCE'
                 switch_config: 'pdu_switch'
             pdu_switch:
@@ -490,7 +515,7 @@ devices:
         interfaces:
             multicast:
                 type: 'multicast.multicast_socket'
-                ip_version: 0
+                ip_version: 4
                 multicast_ip: '239.0.0.1'
                 multicast_ip2: '239.0.0.1'
                 dut_local_socket: 5001
@@ -507,7 +532,7 @@ devices:
         interfaces:
             socket:
                 type: 'socket.ip_socket'
-                ip_version: 0
+                ip_version: 4
                 dut_local_socket: 5001
                 destination_socket: 5001
                 server_ip: '192.168.100.50'
@@ -521,7 +546,7 @@ devices:
         interfaces:
             socket:
                 type: 'socket.ip_remote_socket'
-                ip_version: 0
+                ip_version: 4
                 dut_local_socket: 5001
                 destination_socket: 5001
                 server_ip: '192.168.100.50'
@@ -670,7 +695,7 @@ devices:
                 shell: 'linux_shell'
                 server_listen_address: '0:0:0:0:0:0:0:0'
                 port: 1883
-                interface: 'wlan0'
+                interface: 'eth1'
                 tls_enabled: false
                 ip_version: 6
     
@@ -968,7 +993,7 @@ devices:
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
                 client_limit: 1
-                ip_version: 4   #0
+                ip_version: 4
                 buffer_length: 1300
                 no_of_pkts: 1000
                 time: 30
@@ -982,7 +1007,7 @@ devices:
                 type: 'ssl.server.static'
                 hostname: '192.168.1.6'
                 port: 5001
-                ip_version: 0
+                ip_version: 4
                 buffer_length: 1300
                 no_of_pkts: 500
                 time: 30
@@ -1000,7 +1025,7 @@ devices:
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
                 client_limit: 1
-                ip_version: 0
+                ip_version: 4
                 buffer_length: 1470
                 no_of_pkts: 500
                 time: 30
@@ -1038,6 +1063,7 @@ devices:
                 host_ip: "10.207.18.173"
                 host_username: "pi"
                 host_password: "raspberry"
+
 
     static_iperf:
         interfaces:
@@ -1117,6 +1143,16 @@ devices:
                 type: 'openssl.server'
             client:
                 type: 'openssl.client'
+
+    nrf_52840_ble_client:
+        interfaces:
+            bluetooth:
+                type: 'bluetooth.nrf_blatann'
+                serial: serial
+                vid: 0x1915
+                pid: 0xC00A
+                serial_number: 'CA8B51D6DB51' # configure nrf52840 dongle serial number
+                port: 'auto'
 
     nrf_52840_sniffer:
         interfaces:
@@ -1230,6 +1266,23 @@ devices:
                 type: sniffer_filter
                 src_dir: 'utf_wiseconnect'
 
+    # This represents the frontline sniffer configuration
+    frontline_sniffer:
+        interfaces:
+            wcf_file_transfer_service:
+                type: 'rem_mgmt.win_wcf'
+                wsdl: 'http://10.207.22.26:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
+                timeout: 120000
+            sniffer:
+                type: 'bluetooth.sniffer.frontline.teledyne_lecroy_wireless_protocol_suite'
+                file_transfer_service: 'wcf_file_transfer_service'
+                host_ip: '10.207.22.26'
+                port: 22901
+                max_to_read: 1000
+                remote_capture_file_path: 'C:\\Users\\Public\\Documents\\WPS_Captures'
+                personality_key: 'X500'
+                wps_server_path: 'C:\\Program Files (x86)\\Teledyne LeCroy Wireless\\Wireless Protocol Suite 3.10\\Executables\\Core'
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1282,11 +1335,17 @@ defaults:
     power_meters:
         - 'nrf_ppk2_device'
 
+    nrf_ble_client: 'nrf_52840_ble_client'
+
+    nrf_ble_clients:
+        - 'nrf_52840_ble_client'
+
     ble_client: 'raspi_ble_client'
 
     ble_clients:
-        - 'secondary_raspi_ble_client'
         - 'raspi_ble_client'
+        - 'secondary_raspi_ble_client'
+       # - 'raspi_ble_client'
 
     bt_client: 'raspi_bt_client'
 
@@ -1325,7 +1384,7 @@ defaults:
     wifi:
         ssid: "Jenkins-TB3"
         security: WPA2
-        channel: 11
+        channel: 9 #9  #11
         band: 0 #0 for 2.4Ghz & 1 for 5Ghz
         passphrase: 'thisisatestnetwork'
         server_ip: '192.168.0.1'
@@ -1357,7 +1416,7 @@ defaults:
         band: '2.4'
         ssid: 'TESTTESTTEST'
         passphrase: 'thisisatestnetwork'
-        channel: 1
+        channel: 9 #1
         capture_screenshot: false
         screenshot_file_name: 'wiseconnect_screenshot'
 
@@ -1383,7 +1442,7 @@ defaults:
     iop_sockets:
         server_ip: '192.168.50.125'
         server_port: '6001'
-        att_channel: 1
+        att_channel: 9 #1
         db_value: 2
         att_enable: true
 
@@ -1497,7 +1556,7 @@ start_state:
     wifi_access_point:
         wifi: 'ap_enabled'
     wifi_dut:
-#        device: 'reset'
+        device: 'reset'
         wifi: 'init'
 
 #end_state:
@@ -1511,8 +1570,10 @@ constants:
         value: 10
     iter_count:
         value: 5
+    test_duration:
+        value: 180
     upgrade_fw:
-        value: "/RS9116W.2.9.1.12.rps"
+        value: "/RS9116W.2.9.2.9.rps"
     board_version:
         value: "1.4Q7"
     min_conn_interval:
@@ -1524,4 +1585,4 @@ constants:
     hostname:
         value: 'rs9116test'    
 
-recovery_error_codes: ['0xffffffe2', '0xffffffd5', '0xffffffeb', '0xffffffff', '0xffffffe7']
+recovery_error_codes: ['0xffffffe2', '0xffffffd5']

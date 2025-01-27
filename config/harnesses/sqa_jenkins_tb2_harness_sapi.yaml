@@ -292,13 +292,13 @@ devices:
                 # The test system will communicate with the device via the ip address specified below
                 # to configure the device with the desired settings
                 type: 'wifi.access_points.dlink810'
-                ip_address: '10.207.18.57'
-                web_ui_port: 8080
-                admin_password: 'test123'
+                ip_address: '192.168.0.1'
+                web_ui_port: 80
+                admin_password: '12345678'
                 skip_assertion_failure : True
                 security: WPA
-                ssid: 'Jenkins-TB2'
-                passphrase: '12345678'
+                ssid: 'Dlink-10-207-18-11'
+                passphrase: 'thisisatestnetwork11'
                 supports: 'wifi_ap'
                 channel: 1
 
@@ -332,6 +332,31 @@ devices:
                 radius_ip: "10.207.18.108"
                 radius_port: "1812"
                 ap_test_ip: '192.168.50.1' #AP LOGIN IP (TEST IP)
+                guest_networks:
+                    - band : "2g"
+                      index: "1"
+                      ssid: "ASUS_B0_2G_Guest"
+                      security: WPA2
+                    - band : "2g"
+                      index: "2"
+                      ssid: "ASUS_B0_5G_Guest2"
+                      security: WPA2
+                    - band : "2g"
+                      index: "3"
+                      ssid: "ASUS_B0_5G_Guest3"
+                      security: WPA2
+                    - band : "5g"
+                      index: "1"
+                      ssid: "ASUS_B0_5G_Guest"
+                      security: WPA2
+                    - band : "5g"
+                      index: "2"
+                      ssid: "ASUS_B0_5G_Guest2"
+                      security: WPA2
+                    - band : "5g"
+                      index: "3"
+                      ssid: "ASUS_B0_5G_Guest3"
+                      security: WPA2
 
     # This represents another access point configuration.
     asus_rt_ac68u_ap:
@@ -446,7 +471,7 @@ devices:
             tc:
                 type: 'traffic_controller.tc_cli'
                 shell: 'linux_shell'
-                interface: 'eth1'
+                interface: 'eth0'
             wifi:
                 # The 'wifi.access_points.linux' device type represents a linux-based access point
                 # running hostapd to create a soft AP
@@ -477,8 +502,8 @@ devices:
                 interface: 'wlan0'
                 standard: 'n'
                 ip_address: '10.207.18.130'
-                
-                
+
+
     raspi_wifi_ssh1:
         interfaces:
             linux_shell:
@@ -496,7 +521,7 @@ devices:
                 interface: 'wlan0'
                 standard: 'n'
                 ip_address: '10.207.18.130'
-                
+
 
 
     raspi_wifi_ssh2:
@@ -530,7 +555,7 @@ devices:
         interfaces:
             multicast:
                 type: 'multicast.multicast_socket'
-                ip_version: 0
+                ip_version: 4
                 multicast_ip: '239.0.0.1'
                 multicast_ip2: '239.0.0.1'
                 dut_local_socket: 5001
@@ -547,7 +572,7 @@ devices:
         interfaces:
             socket:
                 type: 'socket.ip_socket'
-                ip_version: 0
+                ip_version: 4
                 dut_local_socket: 5001
                 destination_socket: 5001
                 server_ip: '192.168.100.50'
@@ -561,7 +586,7 @@ devices:
         interfaces:
             socket:
                 type: 'socket.ip_remote_socket'
-                ip_version: 0
+                ip_version: 4
                 dut_local_socket: 5001
                 destination_socket: 5001
                 server_ip: '192.168.100.50'
@@ -660,7 +685,6 @@ devices:
                 image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
                 username: pi
                 password: 'raspberry'
-                skip_rabbitmq_check: True
             shell:
                 type: 'rpc.rpc_client'
                 # the 'forward_to' property specifies the destination device and interface on the server
@@ -688,10 +712,9 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '10.207.18.138'  #configure secondary Rpi rd_2 IP address
-                image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
-                skip_rabbitmq_check: True
             shell:
                 type: 'rpc.rpc_client'
                 # the 'forward_to' property specifies the destination device and interface on the server
@@ -719,10 +742,9 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '10.207.18.130'  #configure secondary Rpi rd_3 IP address
-                image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2022_09_14'
                 username: pi
                 password: 'raspberry'
-                skip_rabbitmq_check: True
             shell:
                 type: 'rpc.rpc_client'
                 # the 'forward_to' property specifies the destination device and interface on the server
@@ -1070,7 +1092,7 @@ devices:
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
                 client_limit: 1
-                ip_version: 4   #0
+                ip_version: 4
                 buffer_length: 1300
                 no_of_pkts: 1000
                 time: 30
@@ -1084,7 +1106,7 @@ devices:
                 type: 'ssl.server.static'
                 hostname: '192.168.1.6'
                 port: 5001
-                ip_version: 0
+                ip_version: 4
                 buffer_length: 1300
                 no_of_pkts: 500
                 time: 30
@@ -1102,7 +1124,7 @@ devices:
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
                 client_limit: 1
-                ip_version: 0
+                ip_version: 4
                 buffer_length: 1470
                 no_of_pkts: 500
                 time: 30
@@ -1140,6 +1162,7 @@ devices:
                 host_ip: "10.207.18.130"
                 host_username: "pi"
                 host_password: "raspberry"
+
 
     static_iperf:
         interfaces:
@@ -1219,6 +1242,16 @@ devices:
                 type: 'openssl.server'
             client:
                 type: 'openssl.client'
+
+    nrf_52840_ble_client:
+        interfaces:
+            bluetooth:
+                type: 'bluetooth.nrf_blatann'
+                serial: serial
+                vid: 0x1915
+                pid: 0xC00A
+                serial_number: 'CA8B51D6DB51' # configure nrf52840 dongle serial number
+                port: 'auto'
 
     nrf_52840_sniffer:
         interfaces:
@@ -1332,6 +1365,23 @@ devices:
                 type: sniffer_filter
                 src_dir: 'utf_wiseconnect'
 
+    # This represents the frontline sniffer configuration
+    frontline_sniffer:
+        interfaces:
+            wcf_file_transfer_service:
+                type: 'rem_mgmt.win_wcf'
+                wsdl: 'http://10.207.22.26:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
+                timeout: 120000
+            sniffer:
+                type: 'bluetooth.sniffer.frontline.teledyne_lecroy_wireless_protocol_suite'
+                file_transfer_service: 'wcf_file_transfer_service'
+                host_ip: '10.207.22.26'
+                port: 22901
+                max_to_read: 1000
+                remote_capture_file_path: 'C:\\Users\\Public\\Documents\\WPS_Captures'
+                personality_key: 'X500'
+                wps_server_path: 'C:\\Program Files (x86)\\Teledyne LeCroy Wireless\\Wireless Protocol Suite 3.10\\Executables\\Core'
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1370,7 +1420,7 @@ defaults:
         - 'raspi_wifi_ssh'
         - 'raspi_wifi_ssh1'
         - 'raspi_wifi_ssh2'
-        
+
     wifi_sniffer: 'airpcap'
 
     openssl: 'openssl_socket'
@@ -1386,10 +1436,14 @@ defaults:
     power_meters:
         - 'nrf_ppk2_device'
 
-    ble_client: 'raspi_ble_client'
+    nrf_ble_client: 'nrf_52840_ble_client'
 
-    ble_clients:
-        - 'raspi_ble_client'
+    nrf_ble_clients:
+        - 'nrf_52840_ble_client'
+
+    ble_client: 'secondary_raspi_ble_client'  #'raspi_ble_client'
+
+    ble_clients: # -'raspi_ble_client'
         - 'secondary_raspi_ble_client'
         - 'tertiary_raspi_ble_client'
         - 'quarter_raspi_ble_client'
@@ -1431,7 +1485,7 @@ defaults:
     wifi:
         ssid: "Jenkins-TB2"
         security: WPA2
-        channel: 11
+        channel: 1
         band: 0 #0 for 2.4Ghz & 1 for 5Ghz
         passphrase: 'thisisatestnetwork'
         server_ip: '192.168.0.1'
@@ -1603,7 +1657,7 @@ start_state:
     wifi_access_point:
         wifi: 'ap_enabled'
     wifi_dut:
-#        device: 'reset'
+#         device: 'reset'
          wifi: 'init'
 
 #end_state:
@@ -1618,7 +1672,7 @@ constants:
     iter_count:
         value: 5
     upgrade_fw:
-        value: "/RS9116W.2.9.1.12.rps"
+        value: "/RS9116W.2.10.1.3.rps"
     board_version:
         value: "1.4Q7"
     min_conn_interval:
@@ -1630,4 +1684,4 @@ constants:
     hostname:
         value: 'rs9116test'    
 
-recovery_error_codes: ['0xffffffe2', '0xffffffd5', '0xffffffeb', '0xffffffff', '0xffffffe7']
+recovery_error_codes: ['0xffffffe2', '0xffffffd5']

@@ -44,7 +44,9 @@ ENV PYTHONPATH=$UTF_CORE_PATH:$UTF_EXTENSIONS_PATH
 ENV TESTS_DIR=example_test_package
 
 # Copy tests, integration tests, config, firmware and startup script
-
+COPY host-requirements.txt /app/host-requirements.txt
+COPY target-install.sh /app/target-install.sh
+RUN /app/target-install.sh
 COPY .vscode/ ./.vscode/
 COPY common/ ./common/
 COPY executor/docker_startup.sh .
