@@ -102,7 +102,7 @@ class WLanJoinThread(ThreadBase):
 
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, ping_count=None, test_case=None,
                  sl_collections=None, sniffer_filter=None, power_save=None, ap_mac_address=None,
-                 http_server=None, capture_filename=None, wifi_client=None, switch=None):
+                 http_server=None, capture_filename=None, wifi_client=None, switch=None, resource_name=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -118,6 +118,7 @@ class WLanJoinThread(ThreadBase):
         self.capture_filename = capture_filename
         self.wifi_client = wifi_client
         self.switch = switch
+        self.resource_name = resource_name
 
     def run(self):
         try:
@@ -141,7 +142,7 @@ class WLanJoinThread(ThreadBase):
                                                                          channel=self.wifi_access_point.interfaces.wifi.channel,
                                                                          retry_count=3)
             else:
-                if self.test_case != "687276" and self.test_case != '688067':
+                if self.test_case != "687276" and self.test_case != '688067' and self.test_case != '688068':
                     self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                              wifi_access_point=self.wifi_access_point,
                                                                              associated=self.wifi_dut.interfaces.wifi.associated,
@@ -182,20 +183,19 @@ class WLanJoinThread(ThreadBase):
                     # assert ws_handler.message_received == data
                 self.wifi_dut.interfaces.wifi.websocket_close()
                 self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-                time.sleep(5)
-                self.wifi_dut.interfaces.wifi.leave()
-                self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
-                    filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)['packet_count'] > 0, \
-                    "Unable to find NULL-Data frame packets with power save bit = 1"
-                return
-            elif self.test_case == '19340':
-                self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, "example.com",
-                                                             "/websocket",
+
+            elif self.test_case == '19340' or self.test_case == '687501':
+                host_name = "example.com"
+                resource_name = "/websocket"
+                if self.test_case == '687501':
+                    host_name = text_generator(size=50)
+                    resource_name = self.resource_name
+
+                self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, host_name,
+                                                             resource_name,
                                                              80, 5001)
                 self.wifi_dut.interfaces.wifi.websocket_connect()
                 time.sleep(0.1)
@@ -214,17 +214,10 @@ class WLanJoinThread(ThreadBase):
                     # assert ws_handler.message_received == data
                 self.wifi_dut.interfaces.wifi.websocket_close()
                 self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-                time.sleep(5)
-                self.wifi_dut.interfaces.wifi.leave()
-                self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
-                    filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)['packet_count'] > 0, \
-                    "Unable to find NULL-Data frame packets with power save bit = 1"
-                return
+
             elif self.test_case == '688069':
                 self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, "example.com",
                                                              "/websocket",
@@ -243,17 +236,52 @@ class WLanJoinThread(ThreadBase):
                     # assert ws_handler.message_received == data
                 self.wifi_dut.interfaces.wifi.websocket_close()
                 self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-                time.sleep(5)
+
+            elif self.test_case == '688097':
+                self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, server_port=80,
+                                                             client_port=5001, host_name_null=1, resource_name_null=1)
+                self.wifi_dut.interfaces.wifi.websocket_connect()
+                time.sleep(0.1)
+                assert ws_handler.client_connected
+                iter_count = 10
+                for i in range(iter_count):
+                    data = text_generator(size=50)
+                    self.wifi_dut.interfaces.wifi.websocket_send(
+                        opcode=Si91xWebSocketParms.SL_WEBSOCKET_OPCODE_TEXT | Si91xWebSocketParms.SL_WEBSOCKET_FIN_BIT,
+                        higher_data_len=0, data=data)
+                    time.sleep(2)
+                    logger().info(f"data received on websocket server ->{ws_handler.message_received}")
+                    # assert ws_handler.message_received == data
+                self.wifi_dut.interfaces.wifi.websocket_close()
+                self.wifi_dut.interfaces.wifi.websocket_deinit()
                 self.wifi_dut.interfaces.wifi.leave()
-                self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
-                    filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)['packet_count'] > 0, \
-                    "Unable to find NULL-Data frame packets with power save bit = 1"
-                return
+                logger().info("Stopping sniffer capture")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+
+            elif self.test_case == '688098':
+                self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, server_port=80,
+                                                             client_port=5001, host_name='""', resource_name='""')
+                self.wifi_dut.interfaces.wifi.websocket_connect()
+                time.sleep(0.1)
+                assert ws_handler.client_connected
+                iter_count = 10
+                for i in range(iter_count):
+                    data = text_generator(size=50)
+                    self.wifi_dut.interfaces.wifi.websocket_send(
+                        opcode=Si91xWebSocketParms.SL_WEBSOCKET_OPCODE_TEXT | Si91xWebSocketParms.SL_WEBSOCKET_FIN_BIT,
+                        higher_data_len=0, data=data)
+                    time.sleep(2)
+                    logger().info(f"data received on websocket server ->{ws_handler.message_received}")
+                    # assert ws_handler.message_received == data
+                self.wifi_dut.interfaces.wifi.websocket_close()
+                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.leave()
+                logger().info("Stopping sniffer capture")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+
             elif self.test_case == '19343':
                 self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, "example.com",
                                                              "/websocket",
@@ -275,18 +303,9 @@ class WLanJoinThread(ThreadBase):
                     # assert ws_handler.message_received == data
                 self.wifi_dut.interfaces.wifi.websocket_close()
                 self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-                time.sleep(5)
-                self.wifi_dut.interfaces.wifi.leave()
-                self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
-                    filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)['packet_count'] > 0, \
-                    "Unable to find NULL-Data frame packets with power save bit = 1"
-                return
-
 
             elif self.test_case == '19346':
                 max_web_sockets = 2
@@ -329,50 +348,38 @@ class WLanJoinThread(ThreadBase):
                         instance = 1
                     self.wifi_dut.interfaces.wifi.websocket_close(instance=instance)
                     self.wifi_dut.interfaces.wifi.websocket_deinit(instance=instance)
+                self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-                time.sleep(5)
-                self.wifi_dut.interfaces.wifi.leave()
-                self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
-                    filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)['packet_count'] > 0, \
-                    "Unable to find NULL-Data frame packets with power save bit = 1"
-                return
 
-
-            elif self.test_case == '19341' or self.test_case == '687497':
-                if self.test_case == '19341':
-                    host_name = "example.com"
-                else:
+            elif self.test_case == '19341' or self.test_case == '687497' or self.test_case == '687498':
+                host_name = "example.com"
+                resource_name = "/websocket"
+                if self.test_case == '687498':
+                    resource_name = self.resource_name
+                if self.test_case == '687497':
                     host_name = text_generator(size=50)
                 self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, host_name,
-                                                             "/websocket",
+                                                             resource_name,
                                                              80, 5001)
                 self.wifi_dut.interfaces.wifi.websocket_connect()
                 time.sleep(0.1)
                 assert ws_handler.client_connected
-                data = text_generator(size=50)
-                logger().info("send_data_over_websocket")
-                self.wifi_dut.interfaces.wifi.websocket_send(
-                    opcode=Si91xWebSocketParms.SL_WEBSOCKET_OPCODE_TEXT | Si91xWebSocketParms.SL_WEBSOCKET_FIN_BIT,
-                    higher_data_len=0, data=data)
-                time.sleep(2)
-                logger().info(f"data received on websocket server ->{ws_handler.message_received}")
-                assert ws_handler.message_received == data, "Data sent by dut and received on the server is not matched"
+                for count in range(0, 10):
+                    data = text_generator(size=50)
+                    logger().info("send_data_over_websocket")
+                    self.wifi_dut.interfaces.wifi.websocket_send(
+                        opcode=Si91xWebSocketParms.SL_WEBSOCKET_OPCODE_TEXT | Si91xWebSocketParms.SL_WEBSOCKET_FIN_BIT,
+                        higher_data_len=0, data=data)
+                    time.sleep(2)
+                    logger().info(f"data received on websocket server ->{ws_handler.message_received}")
+                    assert ws_handler.message_received == data, "Data sent by dut and received on the server is not " \
+                                                                "matched "
                 self.wifi_dut.interfaces.wifi.websocket_close()
                 self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-                time.sleep(5)
-                self.wifi_dut.interfaces.wifi.leave()
-                self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
-                    filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)['packet_count'] > 0, \
-                    "Unable to find NULL-Data frame packets with power save bit = 1"
                 if self.test_case == '19341':
                     opcode_8 = 0
                     dut_ip, dut_mac_address = self.dut_addr['device_ip'], self.dut_addr['dut_mac_address']
@@ -393,7 +400,7 @@ class WLanJoinThread(ThreadBase):
                                 opcode_8 = opcode_8 + 1
                     assert opcode_8 != 0, "4-way handshake is not captured or DUT doesn't send opcode-8 frame to " \
                                           "close the websocket connection "
-                return
+
             elif self.test_case == '19342':
                 self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, "example.com",
                                                              "/websocket",
@@ -408,23 +415,16 @@ class WLanJoinThread(ThreadBase):
                     higher_data_len=0, data=data)
                 time.sleep(2)
                 logger().info(f"data received on websocket server ->{ws_handler.message_received}")
-                assert ws_handler.message_received == data
+                assert ws_handler.message_received == data, "Data sent by DUT and received on websocket server are " \
+                                                            "not same "
                 self.wifi_dut.interfaces.wifi.websocket_send(
                     opcode=Si91xWebSocketParms.SL_WEBSOCKET_OPCODE_CLOSE | Si91xWebSocketParms.SL_WEBSOCKET_FIN_BIT,
                     higher_data_len=0, data=data)
                 self.wifi_dut.interfaces.wifi.websocket_close()
                 self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-                time.sleep(5)
-                self.wifi_dut.interfaces.wifi.leave()
-                self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
-                    filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)['packet_count'] > 0, \
-                    "Unable to find NULL-Data frame packets with power save bit = 1"
-
                 opcode_8 = 0
                 dut_ip, dut_mac_address = self.dut_addr['device_ip'], self.dut_addr['dut_mac_address']
                 decryption_key = f"{self.wifi_access_point.interfaces.wifi.passphrase}:{self.wifi_access_point.interfaces.wifi.ssid}"
@@ -444,7 +444,7 @@ class WLanJoinThread(ThreadBase):
                             opcode_8 = opcode_8 + 1
                 assert opcode_8 != 0, "4-way handshake is not captured or DUT doesn't send opcode-8 frame to close " \
                                       "the websocket connection "
-                return
+
 
             elif self.test_case == '687979':
                 self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, "example.com",
@@ -495,17 +495,10 @@ class WLanJoinThread(ThreadBase):
 
                 # self.wifi_dut.interfaces.wifi.websocket_close()
                 # self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-                time.sleep(5)
-                self.wifi_dut.interfaces.wifi.leave()
-                self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
-                    filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)['packet_count'] > 0, \
-                    "Unable to find NULL-Data frame packets with power save bit = 1"
-                return
+
             elif self.test_case == '19345':
                 self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, "example.com",
                                                              "/websocket",
@@ -526,16 +519,9 @@ class WLanJoinThread(ThreadBase):
                                                              higher_data_len=0, data=data)
                 self.wifi_dut.interfaces.wifi.websocket_close()
                 self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-                time.sleep(5)
-                self.wifi_dut.interfaces.wifi.leave()
-                self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
-                    filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)['packet_count'] > 0, \
-                    "Unable to find NULL-Data frame packets with power save bit = 1"
                 opcode_9 = 0
                 dut_ip, dut_mac_address = self.dut_addr['device_ip'], self.dut_addr['dut_mac_address']
                 decryption_key = f"{self.wifi_access_point.interfaces.wifi.passphrase}:{self.wifi_access_point.interfaces.wifi.ssid}"
@@ -555,7 +541,7 @@ class WLanJoinThread(ThreadBase):
                             opcode_9 = opcode_9 + 1
                 assert opcode_9 != 0, "4-way handshake is not captured or DUT doesn't send opcode-9 frame->websocket " \
                                       "ping "
-                return
+
             elif self.test_case == '687274':
                 invalid_server = "192.168.30.50"
                 self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, "example.com",
@@ -567,17 +553,10 @@ class WLanJoinThread(ThreadBase):
                 logger().info(
                     f"Websocket connection is failed with the error {SLStatus.SL_WEBSOCKET_ERR_SOCKET_CONNECT}(-3) "
                     f"when server is not responding which is expected")
+                self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-                time.sleep(5)
-                self.wifi_dut.interfaces.wifi.leave()
-                self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
-                    filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)['packet_count'] > 0, \
-                    "Unable to find NULL-Data frame packets with power save bit = 1"
-                return
+
             elif self.test_case == '687499':
                 host_name = text_generator(size=52)
                 self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, host_name,
@@ -587,18 +566,9 @@ class WLanJoinThread(ThreadBase):
                 logger().info(
                     f"websocket init is failed with the error {SLStatus.SL_WEBSOCKET_ERR_INVALID_PARAMETER}(-8) when "
                     f"host_name given is more than 52 bytes which is expected")
-
+                self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-                time.sleep(5)
-                self.wifi_dut.interfaces.wifi.leave()
-                self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
-                    filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)['packet_count'] > 0, \
-                    "Unable to find NULL-Data frame packets with power save bit = 1"
-                return
 
             elif self.test_case == '687500':
                 resource_name = text_generator(size=52)
@@ -609,18 +579,9 @@ class WLanJoinThread(ThreadBase):
                 logger().info(
                     f"websocket init is failed with the error {SLStatus.SL_WEBSOCKET_ERR_INVALID_PARAMETER}(-8) when "
                     f"resource name given is more than 52 bytes which is expected")
-
-                logger().info("Stopping sniffer capture")
-                self.wifi_sniffer.interfaces.capture.stop_capture()
-                time.sleep(5)
                 self.wifi_dut.interfaces.wifi.leave()
-                self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
-                    filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)['packet_count'] > 0, \
-                    "Unable to find NULL-Data frame packets with power save bit = 1"
-                return
+                logger().info("Stopping sniffer capture")
+
             elif self.test_case == '687276':
                 host_name = "example.com"
                 for count in range(0, 10):
@@ -655,13 +616,7 @@ class WLanJoinThread(ThreadBase):
                     self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-                self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
-                    filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)['packet_count'] > 0, \
-                    "Unable to find NULL-Data frame packets with power save bit = 1"
-                return
+
             elif self.test_case == '687275' or self.test_case == '37479':
                 host_name = "example.com"
                 for count in range(0, 10):
@@ -689,17 +644,9 @@ class WLanJoinThread(ThreadBase):
                     self.wifi_dut.interfaces.wifi.websocket_close()
                     self.wifi_dut.interfaces.wifi.websocket_deinit()
                     time.sleep(1)
+                self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-                time.sleep(5)
-                self.wifi_dut.interfaces.wifi.leave()
-                self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
-                    filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)['packet_count'] > 0, \
-                    "Unable to find NULL-Data frame packets with power save bit = 1"
-                return
 
             elif self.test_case == '688067':
                 def ap_switch(switch, ap_turn_off_time, start_delay):
@@ -768,12 +715,79 @@ class WLanJoinThread(ThreadBase):
                 self.wifi_sniffer.interfaces.capture.stop_capture()
                 time.sleep(5)
                 # self.wifi_dut.interfaces.wifi.leave()
-                self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
-                    filter_name="power_mgmt_bit")
-                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=self.power_save_filter)['packet_count'] > 0, \
-                    "Unable to find NULL-Data frame packets with power save bit = 1"
+
+            elif self.test_case == '688068':
+                def ap_switch(switch, ap_turn_off_time, start_delay):
+                    time.sleep(start_delay)
+                    logger().info(f"Turn off AP for {ap_turn_off_time} seconds")
+                    switch.interfaces.pdu_switch.turn_off(delay=10)
+                    time.sleep(ap_turn_off_time)
+                    logger().info(f"Turn on AP")
+                    switch.interfaces.pdu_switch.turn_on(delay=60)
+
+                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0,
+                                                                              scan_interval=6,
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=0)
+
+                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                         channel=self.wifi_access_point.interfaces.wifi.channel,
+                                                                         retry_count=3)
+
+                # self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http,
+                #                                              server_ip="10.207.18.111", host_name="example.com",
+                #                                              resource_name="/myresource",
+                #                                              server_port=8080, client_port=5001)
+                self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http,
+                                                             host_name="example.com",
+                                                             resource_name="/websocket",
+                                                             server_port=80, client_port=5001)
+                self.wifi_dut.interfaces.wifi.websocket_connect(timeout=120)
+                time.sleep(0.1)
+                ap_turn_off_time = 10
+                start_delay = 30
+                thread = Thread(target=ap_switch, args=(self.switch, ap_turn_off_time, start_delay), )
+                thread.start()
+                sw = Stopwatch()
+                end_time = 400
+                remote_terminate = 0
+                while sw.elapsed_sec < end_time:
+                    try:
+                        if remote_terminate:
+                            break
+                        data = text_generator(size=50)
+                        logger().info("send_data_over_websocket")
+                        self.wifi_dut.interfaces.wifi.websocket_send(
+                            opcode=Si91xWebSocketParms.SL_WEBSOCKET_OPCODE_TEXT | Si91xWebSocketParms.SL_WEBSOCKET_FIN_BIT,
+                            higher_data_len=0, data=data)
+
+                    except:
+                        logger().info(f"Unable to send data over Websocket as AP is turned off. wait for 20 sec")
+                        time.sleep(20)
+                        events = self.wifi_dut.interfaces.wifi.get_async_events()
+                        for event in events:
+                            if event.event_type == AsyncEventIdentifiers.WEBSOCKET_REMOTE_TERMINATE_EVENT:
+                                remote_terminate = 1
+                try:
+                    assert remote_terminate == 0, "Remote terminate event received while DUT is sending data over " \
+                                                  "websocket which is " \
+                                                  "not expected "
+                finally:
+                    # self.wifi_dut.interfaces.wifi.websocket_close()
+                    # self.wifi_dut.interfaces.wifi.websocket_deinit()
+                    logger().info("Stopping sniffer capture")
+                    self.wifi_sniffer.interfaces.capture.stop_capture()
+                    # self.wifi_dut.interfaces.wifi.leave()
+
+            self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
+                filter_name="power_mgmt_bit")
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
+                packet_filter1=self.power_save_filter)['packet_count'] > 0, \
+                "Unable to find NULL-Data frame packets with power save bit = 1"
+            return
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
             raise e
@@ -1055,6 +1069,46 @@ def test_wifi_sdk_websocket_connectivity_neg_c687500(wifi_dut, wifi_access_point
 
 @wifi_dut_marker()
 @pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config("http_server", auto_start=False)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_websocket_functionality_max_hostname_resourcename_max_data_length_c687501(wifi_dut, wifi_access_point,
+                                                                                            wifi_sniffer, http_server,
+                                                                                            utf_constants,
+                                                                                            request, sl_collections,
+                                                                                            sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+        5. Verify websocket functionality when resource name given is more than 51 bytes
+    """
+    capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+    resource_name = "/" + text_generator(size=49)
+    http_server.interfaces.http.start_server(port=80, websocket_resource=resource_name)
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='687501',
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
+                                  http_server=http_server, capture_filename=capture_filename,
+                                  resource_name=resource_name)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_websocket_max_hostname_c687497(wifi_dut, wifi_access_point, wifi_sniffer, http_server, utf_constants,
@@ -1080,6 +1134,43 @@ def test_wifi_sdk_websocket_max_hostname_c687497(wifi_dut, wifi_access_point, wi
                                   sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='687497',
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
                                   http_server=http_server, capture_filename=capture_filename)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config("http_server", auto_start=False)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_websocket_max_resource_c687498(wifi_dut, wifi_access_point, wifi_sniffer, http_server, utf_constants,
+                                                 request, sl_collections, sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+        5. Verify websocket connectivity when maximum resource length is given(50 bytes)
+    """
+    capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+    resource_name = "/" + text_generator(size=49)
+    http_server.interfaces.http.start_server(port=80, websocket_resource=resource_name)
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='687498',
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
+                                  http_server=http_server, capture_filename=capture_filename,
+                                  resource_name=resource_name)
 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1455,6 +1546,123 @@ def test_wifi_sdk_websocket_data_transfer_while_rejoin_688067(switch, wifi_dut, 
                                   sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='688067',
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
                                   http_server=http_server, capture_filename=capture_filename, switch=switch)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_websocket_data_transfer_while_rejoin_688068(switch, wifi_dut, wifi_access_point, wifi_sniffer,
+                                                              http_server,
+                                                              utf_constants,
+                                                              request, sl_collections, sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+        5. Verify websocket data transfer functionality after rejoin process is successful
+    """
+    capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='688068',
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
+                                  http_server=http_server, capture_filename=capture_filename, switch=switch)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config("http_server", auto_start=False)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_websocket_functionality_hostname_resourcename_NULL_c688097(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                                             http_server,
+                                                                             utf_constants,
+                                                                             request, sl_collections, sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+        5. Verify websocket functionality when hostname and resourcename provided are NULL
+    """
+    capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+    resource_name = "/"
+    http_server.interfaces.http.start_server(port=80, websocket_resource=resource_name)
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='688097',
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
+                                  http_server=http_server, capture_filename=capture_filename,
+                                  resource_name=resource_name)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config("http_server", auto_start=False)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_websocket_functionality_hostname_resourcename_empty_string_c688098(wifi_dut, wifi_access_point,
+                                                                                     wifi_sniffer,
+                                                                                     http_server,
+                                                                                     utf_constants,
+                                                                                     request, sl_collections,
+                                                                                     sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+        5. Verify Websocket functionality when hostname and resource name provided are empty string
+    """
+    capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+    resource_name = "/"
+    http_server.interfaces.http.start_server(port=80, websocket_resource=resource_name)
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='688098',
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
+                                  http_server=http_server, capture_filename=capture_filename,
+                                  resource_name=resource_name)
 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
