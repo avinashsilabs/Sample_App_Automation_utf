@@ -1035,7 +1035,7 @@ class WLanThread(ThreadBase):
                     self.sl_collections.ping(self.dut_addr["device_ip"], ping_count=120)
 
                     packet_filter1 = (self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter
-                                      (sa_addr=ap_bssid, hidden_ssid='""',
+                                      (sa_addr=ap_bssid,
                                        filter_name="hidden_ssid"))
 
                     logger().info("Stop Sniffer finally")

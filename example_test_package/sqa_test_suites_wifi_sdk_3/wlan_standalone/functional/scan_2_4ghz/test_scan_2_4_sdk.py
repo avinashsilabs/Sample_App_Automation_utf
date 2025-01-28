@@ -289,7 +289,7 @@ def test_wifi_sdk_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wifi_a
 
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
                                                                                         da_addr=da_addr,
-                                                                                        filter_name="hidden_ssid_scan")
+                                                                                        filter_name="hidden_ssid_probe_req")
         logger().info("Setting DUT in wlan power save...")
         wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
         logger().info("Enabling rejoin...")
@@ -847,7 +847,7 @@ def test_wifi_sdk_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_acces
 
             wifi_sniffer.interfaces.capture.stop_capture()
             packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
-                                                                                            filter_name="hidden_ssid_scan")
+                                                                                            filter_name="hidden_ssid_probe_req")
             logger().info(f"Validate Probe req(Broadcast)")
             output = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count']
             if bool(output) is False:

@@ -2360,7 +2360,7 @@ def test_wifi_sdk_beacon_stop_functionality_c563999(wifi_sniffer, wifi_dut,
          }
 )
 def test_wifi_sdk_sta_association_to_ap_hidden_ssid_c586186(wifi_sniffer, wifi_dut,
-                                                    sl_collections, wifi_client):
+                                                    sl_collections, wifi_client, sniffer_filter):
     """Check the 3rd party STA Association to APUT with Hidden SSID Mode (OPEN SECURITY)"""
     try:
         packet_filter2 = "    Type/Subtype: Beacon (0x0008)"
@@ -2378,7 +2378,7 @@ def test_wifi_sdk_sta_association_to_ap_hidden_ssid_c586186(wifi_sniffer, wifi_d
                                           dtim_beacon_count=1,
                                           beacon_interval=100)
         logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
-        wifi_client.interfaces.wifi.join(ssid="SILABS_C535822", security=SecurityMode.Open)
+        wifi_client.interfaces.wifi.join(ssid="SILABS_C535822", security=SecurityMode.Open, scan_ssid = 1)
         time.sleep(10)
         dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
         logger().info(f"********* Dut IP **********: {dut_ip}")
@@ -2396,9 +2396,10 @@ def test_wifi_sdk_sta_association_to_ap_hidden_ssid_c586186(wifi_sniffer, wifi_d
         logger().info(f"*********{dut_mac_address}**********")
         logger().info(f'RASPI-STA Disconnecting from DUT-AP')
         wifi_client.interfaces.wifi.leave()
-        packet_filter1 = f'(wlan.addr == {dut_mac_address}) && (wlan.fc.type_subtype==8)'
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address, filter_name='hidden_ssid')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
                                                                   packet_filter2=packet_filter2), "not found beacon from DUT "
         logger().info('********** Validating Beacon interval **********')

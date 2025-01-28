@@ -34,7 +34,7 @@ probe_request_HT,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and 
 probe_request_HE,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 4) and (wlan.tag.number == 35)
 probe_response,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{da_addr}}), and (wlan.fc.type_subtype == 5)
 probe_req_response,(wlan.addr == {{ sa_addr }} or wlan.addr == {{da_addr}}), and ((wlan.fc.type_subtype == 4) or (wlan.fc.type_subtype == 5))
-hidden_ssid,(wlan.sa == {{ sa_addr }} and wlan.ssid == {{hidden_ssid}}), and (wlan.fc.type_subtype == 0x0008)
+hidden_ssid,(wlan.sa == {{ sa_addr }} and wlan.ssid == ""), and (wlan.fc.type_subtype == 0x0008)
 rts,(wlan.addr == {{ wlan_addr }}), and (wlan.fc.type_subtype == 27)
 cts,(wlan.addr == {{ wlan_addr }}), and (wlan.fc.type_subtype == 28)
 disassociation,(wlan.da == {{ da_addr }}), and (wlan.fc.type_subtype == 10)
@@ -147,7 +147,7 @@ dhcp_ack,((wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }})), and (dhcp.
 dhcp_4_way_handshake_packets,(wlan.sa == {{ sa_addr }} or wlan.da == {{ da_addr }}) or (wlan.ta == {{ ta_addr }} or wlan.ra == {{ ra_addr }}), and (dhcp.option.dhcp == 5) or (dhcp.option.dhcp == 1) or (dhcp.option.dhcp == 2) or (dhcp.option.dhcp == 3)
 tcp_syn_with_syn_ack_with_ack,(wlan.da == {{ da_addr }} or wlan.sa == {{ sa_addr }} or wlan.ta == {{ ta_addr }}), and tcp.flags == 0x002 or tcp.flags == 0x012 or tcp.flags == 0x010
 wpa3_h2e_mode,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 0) and (wlan.rsnx.sae_hash_to_element == 1)
-hidden_ssid_scan,(wlan.sa == {{ sa_addr }})," and (wlan.ssid == """") and (wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.fc.type_subtype == 4)"
+hidden_ssid_probe_req,(wlan.sa == {{ sa_addr }}), and (wlan.ssid == "") and (wlan.da == ff:ff:ff:ff:ff:ff) and (wlan.fc.type_subtype == 4)
 wpa3_enh_mode,(wlan.sa == {{ sa_addr }}), and (wlan.fc.type_subtype == 1)
 dhcp,(wlan.addr == {{ sa_addr }}), and dhcp
 apmode_association_id,(wlan.sa == {{ sa_addr }}), and (wlan.fixed.aid=={{association_id}})
