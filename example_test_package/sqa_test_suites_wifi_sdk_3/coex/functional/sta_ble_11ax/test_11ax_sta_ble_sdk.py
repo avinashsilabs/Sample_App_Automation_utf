@@ -14,7 +14,8 @@ from utf.utils.stopwatch import Stopwatch
 import string
 from random import choices
 from utf.utils.iperf.iperf_utils import ping
-from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble_provisioning.test_sta_ble_provisioning_sdk import ProvisioningFunctionality
+from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble_provisioning.test_sta_ble_provisioning_sdk import \
+    ProvisioningFunctionality
 
 """This function runs below test steps for DUT-Si91x
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -380,11 +381,11 @@ class BleThreadFunctionality(ThreadBase):
             logger().info(f"Advertising the DUT")
             if self.test_case == 198669 or self.test_case == 198674 or self.test_case == 198672 or self.test_case == 198665:
                 self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
-                self.sl_collections.scan_and_connect_from_remote(wifi_dut=self.wifi_dut, ble_client=self.ble_client,
-                                                                 ble_dut_address=self.ble_dut_address,
-                                                                 ble_pairing=self.ble_pairing)
+                self.ble_client_address = self.sl_collections.scan_and_connect_from_remote(
+                    wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_dut_address=self.ble_dut_address,
+                    ble_pairing=self.ble_pairing)
             if self.test_case == 198673 or self.test_case == 198667:
-                self.sl_collections.ble_connection(
+                self.ble_client_address = self.sl_collections.ble_connection(
                     wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_dut_address=self.ble_dut_address,
                     timeout=20, mode='master')
             servs, chars = self.ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
@@ -401,23 +402,33 @@ class BleThreadFunctionality(ThreadBase):
             self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
             self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(
                 char_path=char_path, char_uid=char_uid)
+            time.sleep(5)
             if self.test_case == 198669 or self.test_case == 198674 or self.test_case == 198673 or self.test_case == 198672 or self.test_case == 198667:
                 data = "testwentybytesofdata"
                 sw = Stopwatch()
+                count = 0
                 while sw.elapsed_sec < 60:
-                    self.wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
+                    self.wifi_dut.interfaces.wifi.ble_notify_custom_value(
+                        data=data, ble_remote_dev_address=self.ble_client_address)
                     time.sleep(5)
+                    logger().info("******************** Validate Data ********************")
+                    notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+                    logger().info(f' *********************** Notification is {notifications} ***********************')
+                    assert notifications[count] == data, "Data Mismatched"
+                    count += 1
             if self.test_case == 198665:
                 sw = Stopwatch()
                 data = "testwentybytesofdata"
                 check_flag = False
                 while sw.elapsed_sec < 120:
                     logger().info("DUT Sending Notification")
-                    self.wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
+                    self.wifi_dut.interfaces.wifi.ble_notify_custom_value(
+                        data=data, ble_remote_dev_address=self.ble_client_address)
                     time.sleep(2)
                     while sw.elapsed_sec < 30:
                         logger().info("DUT Sending Notification")
-                        self.wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data)
+                        self.wifi_dut.interfaces.wifi.ble_notify_custom_value(
+                            data=data, ble_remote_dev_address=self.ble_client_address)
                         time.sleep(2)
                     if check_flag is not True:
                         logger().info('***** Turn off Access point *****')
@@ -434,12 +445,6 @@ class BleThreadFunctionality(ThreadBase):
             logger().info("********* Unsubscribing to Notifications **********")
             self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
             self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-
-            logger().info("******************** Validate Data ********************")
-            notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-            logger().info(f' *********************** Notification is {notifications} ***********************')
-            assert len(notifications) > 0, "received data is empty"
-            assert notifications[0] == data, "failed to fetch data"
 
             logger().info("******************** ble_remove_service ***********************")
             self.wifi_dut.interfaces.wifi.ble_remove_service()
