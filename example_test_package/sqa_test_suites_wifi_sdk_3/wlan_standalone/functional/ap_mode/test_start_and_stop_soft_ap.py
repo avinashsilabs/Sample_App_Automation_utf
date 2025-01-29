@@ -52,8 +52,8 @@ class FilterPacket:
 
 
 class ApModeConnections(ThreadBase):
-    def __init__(self, wifi_dut, wifi_clients, wifi_sniffer, sl_collections, utf_constants, testcase_no=None,
-                 dtim_period=None, beacon=None, ping=True):
+    def __init__(self, wifi_dut, wifi_clients, wifi_sniffer, sl_collections, utf_constants, testcase_no=None, test_type=None,
+	             dtim_period=None, beacon=None, ping=True):
         super().__init__()
         self.ping_count = None
         self.wifi_dut = wifi_dut
@@ -70,6 +70,7 @@ class ApModeConnections(ThreadBase):
         self.password = "Automation@123"
         self.channel = "8"
         self.dut_mac_address = None
+        self.test_type = test_type
 
     def run(self):
         testcases = {
@@ -138,19 +139,32 @@ class ApModeConnections(ThreadBase):
 
 
 class ConcurrentFun(ThreadBase):
-    def __init__(self, wifi_dut, wifi_clients, wifi_sniffer, wifi_access_point, sl_collections, utf_constants,
-                 ping=True):
+    def __init__(self, wifi_dut=None, wifi_clients=None, wifi_sniffer=None, wifi_access_point=None,
+                 sl_collections=None, utf_constants=None, wifi_client=None, ping_count=None, test_type=None, ping=True):
 
         super().__init__()
         self.device_ip = None
-        self.ping_count = None
+        self.ping = ping
         self.wifi_dut = wifi_dut
         self.wifi_clients = wifi_clients
         self.wifi_sniffer = wifi_sniffer
         self.wifi_access_point = wifi_access_point
         self.sl_collections = sl_collections
         self.utf_constants = utf_constants
-        self.ping = ping
+        self.ping_count = ping_count
+        self.wifi_client = wifi_client
+        self.dut_mac_address = None
+        self.dut_addr = None
+        self.host_ip = None
+        self.test_type = test_type
+        self.channel = 11
+        self.ssid = 'SILABS_AP_MODE'
+        self.password = 'Automation@123'
+        self.beacon_interval = 100
+        self.dtim_count = 3
+        self.security = "WPA2"
+        self.dut_add_dict = {}
+
 
     def run(self):
         self.ping_count = self.utf_constants.get("ping_count")
@@ -172,6 +186,147 @@ class ConcurrentFun(ThreadBase):
                     f"sudo ping -c {self.ping_count} {self.device_ip}")
                 assert rc == 0, f"{self.wifi_clients[i + 1]} failed to ping DUT"
                 logger().info(f"\n{stdout}\n")
+
+    def concurrent_connections(self):
+        if self.test_type == 641351:
+            for i in range(0, 3):
+                self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+                logger().info(f"******** HOST IP {self.host_ip} *******")
+                logger().info(f"Start the AP")
+                self.ap_mode_connection()
+                logger().info(f"stop the AP")
+                self.wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+                logger().info(f"STA is UP")
+                self.sta_mode_connection()
+                logger().info(f"Start the AP")
+                self.ap_mode_connection()
+                logger().info(f"Stop the AP")
+                self.wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+                logger().info(f"....STA is down....")
+                self.wifi_dut.interfaces.wifi.leave()
+
+        if self.test_type == 641352:
+            logger().info(f"STA is UP")
+            self.sta_mode_connection()
+            logger().info(f"....STA is down....")
+            self.wifi_dut.interfaces.wifi.leave()
+            logger().info(f"Start the AP")
+            self.ap_mode_connection()
+            logger().info(f"STA is UP")
+            self.sta_mode_connection()
+            logger().info(f"....STA is down....")
+            self.wifi_dut.interfaces.wifi.leave()
+            logger().info(f"Stop the AP")
+            self.wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+
+        if self.test_type == 585985:
+            logger().info(f"STA UP")
+            self.sta_mode_connection()
+            logger().info(f"AP UP")
+            self.ap_mode_connection_data_rate()
+            logger().info(f"....STA is down....")
+            self.wifi_dut.interfaces.wifi.leave()
+
+
+    def ap_mode_connection(self):
+        self.ping_count = self.utf_constants.get("ping_count")
+        self.sl_collections.configure_dut_in_static_ip(self.wifi_dut, static_ip="192.168.100.76",
+                                                       static_subnet="255.255.255.0",
+                                                       static_gateway="192.168.100.76")
+
+        self.wifi_dut.interfaces.wifi.start_ap(ssid=self.ssid, security=self.security, psk=self.password,
+                                               channel=self.channel, dtim_beacon_count=self.dtim_count,
+                                               beacon_interval=self.beacon_interval)
+
+        for i in range(0, 1):
+            connected = False
+            self.wifi_clients[i].interfaces.wifi.config['interface'] = "wlan0"
+            logger().info(f"RASPI-STA{i + 1}:'{self.wifi_clients[i].name}' is joining to DUT-AP")
+            self.wifi_clients[i].interfaces.wifi.join()
+            time.sleep(5)
+            self.dut_add_dict['dut_ip'] = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+            logger().info(f"********* Dut IP **********: {self.dut_add_dict['dut_ip']}")
+            for count in range(3):
+                try:
+                    logger().info(f"RASPI-STA{i + 1}:'{self.wifi_clients[i].name}' is successfully connected to DUT-AP")
+                    logger().info(f"Initiating wlan ping from client '{self.wifi_clients[i].name}' to DUT")
+                    self.dut_add_dict['rasp_mac_address'] = self.wifi_clients[i].interfaces.wifi.get_mac_address()
+                    logger().info(f"raspi_mac: {self.dut_add_dict['rasp_mac_address']}")
+                    self.dut_add_dict['client_ip'] = self.wifi_clients[i].interfaces.wifi.get_ip_address()
+                    logger().info(f"Client_ip: {self.dut_add_dict['client_ip']}")
+                    rc, stdout, stderr = self.wifi_clients[i].interfaces.wifi.shell.execute(
+                        f"sudo ping -c {self.ping_count} {self.dut_add_dict['dut_ip']}")
+                    assert rc == 0, f"RASPI-STA{i + 1} failed to ping DUT"
+                    logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+                    connected = True
+                    break
+                except:
+                    logger().info(f"RASPI-STA{i + 1} failed to ping DUT...retry count -> {count + 1}")
+                    time.sleep(10)
+            assert connected, f"RASPI-STA{i + 1} is disconnected from DUT-AP"
+
+        self.wifi_client_leave()
+    def sta_mode_connection(self):
+        self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                 wifi_access_point=self.wifi_access_point,
+                                                                 power_save=False,
+                                                                 ping_before_power_save=True, retry_count=3,
+                                                                 associated=self.wifi_dut.interfaces.wifi.associated)
+
+    def ap_mode_connection_data_rate(self):
+        rate_protocol = ["802.11g", "802.11n", "802.11b"]
+        data_rate = ["48Mbps", "65Mbps", "11Mbps"]
+        for i in range(len(rate_protocol)):
+            self.ping_count = self.utf_constants.get("ping_count")
+            self.sl_collections.configure_dut_in_static_ip(self.wifi_dut, static_ip="192.168.100.76",
+                                                           static_subnet="255.255.255.0",
+                                                           static_gateway="192.168.100.76")
+
+            self.wifi_dut.interfaces.wifi.set_transmit_rate(rate_protocol=rate_protocol[i], data_rate=data_rate[i], interface="ap")
+
+            self.wifi_dut.interfaces.wifi.start_ap(ssid=self.ssid, security=self.security, psk=self.password,
+                                                   channel=self.channel, dtim_beacon_count=self.dtim_count,
+                                                   beacon_interval=self.beacon_interval)
+
+            for i in range(0, 1):
+                connected = False
+                self.wifi_clients[i].interfaces.wifi.config['interface'] = "wlan0"
+                logger().info(f"RASPI-STA{i + 1}:'{self.wifi_clients[i].name}' is joining to DUT-AP")
+                self.wifi_clients[i].interfaces.wifi.join()
+                time.sleep(5)
+                self.dut_add_dict['dut_ip'] = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+                logger().info(f"********* Dut IP **********: {self.dut_add_dict['dut_ip']}")
+                for count in range(3):
+                    try:
+                        logger().info(f"RASPI-STA{i + 1}:'{self.wifi_clients[i].name}' is successfully connected to DUT-AP")
+                        logger().info(f"Initiating wlan ping from client '{self.wifi_clients[i].name}' to DUT")
+                        self.dut_add_dict['rasp_mac_address'] = self.wifi_clients[i].interfaces.wifi.get_mac_address()
+                        logger().info(f"raspi_mac: {self.dut_add_dict['rasp_mac_address']}")
+                        self.dut_add_dict['client_ip'] = self.wifi_clients[i].interfaces.wifi.get_ip_address()
+                        logger().info(f"Client_ip: {self.dut_add_dict['client_ip']}")
+                        rc, stdout, stderr = self.wifi_clients[i].interfaces.wifi.shell.execute(
+                            f"sudo ping -c {self.ping_count} {self.dut_add_dict['dut_ip']}")
+                        assert rc == 0, f"RASPI-STA{i + 1} failed to ping DUT"
+                        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+                        connected = True
+                        break
+                    except:
+                        logger().info(f"RASPI-STA{i + 1} failed to ping DUT...retry count -> {count + 1}")
+                        time.sleep(10)
+                assert connected, f"RASPI-STA{i + 1} is disconnected from DUT-AP"
+
+            self.wifi_client_leave()
+            logger().info(f"stop the AP")
+            self.wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+
+
+    def wifi_client_leave(self):
+        for i in range(0, 1):
+            logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
+            self.wifi_clients[i].interfaces.wifi.leave()
+
+
+
 
 
 @pytest.mark.config(
@@ -523,7 +678,7 @@ def test_wifi_sdk_dut_able_to_restart_with_different_dtim_intervals_C191349(wifi
 )
 @pytest.mark.parametrize("channel", [8])
 def test_wifi_sdk_dut_soft_start_and_stop_ap_in_multiple_iterations_C191351(wifi_sniffer, wifi_dut, wifi_clients,
-                                                                            channel):
+                                                                            channel, sl_collections):
     """Verify the DUT behavior while doing start and stop AP in multiple iterations"""
     try:
         logger().info("********** configuring the sniffer with access point channel **********")
@@ -2210,3 +2365,181 @@ def test_wifi_sdk_sta_ap_conn_disconn_concurrent_mode_C191357(wifi_sniffer, wifi
         wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    },
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
+            "channel": 11
+        },
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C641351(
+        wifi_sniffer, wifi_dut, wifi_clients, utf_constants, sl_collections, wifi_client, wifi_access_point):
+    """Do start AP --> Stop AP -->Start STA --> Start AP -->Stop AP --> Stop STA in concurrent mode"""
+    try:
+        conc_obj = ConcurrentFun(wifi_dut=wifi_dut, wifi_clients=wifi_clients, wifi_sniffer=wifi_sniffer,
+                                 wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 utf_constants=utf_constants, wifi_client=wifi_client, test_type=641351)
+        conc_obj.concurrent_connections()
+        time.sleep(2)
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+    },
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C641352(
+        wifi_sniffer, wifi_dut, wifi_clients, utf_constants, sl_collections, wifi_client, wifi_access_point):
+    """Do start STA --> Stop STA -->Start AP -->Stop AP in concurrent mode"""
+    try:
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C641352")
+        time.sleep(3)
+        conc_obj = ConcurrentFun(wifi_dut=wifi_dut, wifi_clients=wifi_clients, wifi_sniffer=wifi_sniffer,
+                                 wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 utf_constants=utf_constants, wifi_client=wifi_client, test_type=641352)
+        conc_obj.concurrent_connections()
+        time.sleep(3)
+
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        logger().info(f"Clean up activity")
+        wifi_dut.interfaces.wifi.stop_ap()
+
+@pytest.mark.skip("Need to check the steps")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 8
+    },
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'WPA2',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C585985(
+        wifi_sniffer, wifi_dut, wifi_clients, utf_constants, sl_collections, wifi_client, wifi_access_point):
+    """Verify whether DUT(APUT) is able to restart with different data rates in concurrent mode"""
+    """STAUT STARTS-->connected to 3rd party AP-->set APUT data rate--> APUT start-->connect raspi to APUT 
+    -->do ping from RASPI to APUT--> check Data rate--> AP STOP ->set APUT data rate-->AP START -->connect Raspi to APUT 
+    -->ping from RASPI to APUT--> check Data rate--> AP STOP--> STAUT STOPS """
+    try:
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C585985")
+        time.sleep(3)
+        conc_obj = ConcurrentFun(wifi_dut=wifi_dut, wifi_clients=wifi_clients, wifi_sniffer=wifi_sniffer,
+                                 wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                 utf_constants=utf_constants, wifi_client=wifi_client, test_type=585985)
+
+        conc_obj.concurrent_connections()
+
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        logger().info(f"Clean up activity")
+        wifi_dut.interfaces.wifi.stop_ap()
