@@ -1,0 +1,1982 @@
+root_path: example_test_package
+test_sequence:
+  - id: >-
+      e63f70f667f913761acc842f28fd37abdcd265aeee53bac14c7f0dd698519e78f7ca73cc7c4c4b32d5d69d8f110db3c0309ec80701da5e77c076cebc4b8c4f3a
+    test_src_map_id: C19465::1
+    test_case_id: test_DUTAP_Validate_UDP_Rx_data_C19465[11-UDP]
+    test_function: test_DUTAP_Validate_UDP_Rx_data_C19465
+    test_id: test_DUTAP_Validate_UDP_Rx_data_C19465[11-UDP]::1
+    test_module: >-
+      sqa_test_suites/wlan_standalone/functional/ap_mode/test_ap_mode_network_stack_l1_and_l2.py
+    test_markers:
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'server_socket_limit': 5,'security':
+        'WPA2','ssid': 'RS9116_AP','passphrase': '12345678'})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'RS9116_AP','passphrase': '12345678','interface': 'wlan0','channel':
+        11})
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
+      - pytest.mark.end_state('wifi_dut',wifi=['disassociated'])
+    test_params:
+      - name: channel
+        value: 11
+      - name: protocol
+        value: UDP
+    version: 0
+    enabled: true
+    labels:
+      - C19465
+      - DUTAP
+      - Rx
+      - UDP
+      - Validate
+      - ap_mode
+      - ap_mode_network_stack_l1_and_l2
+      - data
+      - functional
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUTAP_Validate_UDP_Rx_data_C19465[11-UDP]
+  - id: >-
+      5b3c6603c70d9f16d24c43b04b77666d410422c83f7fce4fcce979bba8a57395b406c678a5b74165128ccd81ced494215fe94cfcf4447c38769493e58bc29f74
+    test_src_map_id: C19462::1
+    test_case_id: test_DUTAP_Validate_TCP_Tx_data_C19462[11-TCP]
+    test_function: test_DUTAP_Validate_TCP_Tx_data_C19462
+    test_id: test_DUTAP_Validate_TCP_Tx_data_C19462[11-TCP]::1
+    test_module: >-
+      sqa_test_suites/wlan_standalone/functional/ap_mode/test_ap_mode_network_stack_l1_and_l2.py
+    test_markers:
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'client_socket_limit': 10,'security':
+        'WPA2','ssid': 'RS9116_AP','passphrase': '12345678'})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'RS9116_AP','passphrase': '12345678','interface': 'wlan0','channel':
+        11})
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - pytest.mark.end_state('wifi_dut',wifi=['disassociated'])
+    test_params:
+      - name: channel
+        value: 11
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C19462
+      - DUTAP
+      - TCP
+      - Tx
+      - Validate
+      - ap_mode
+      - ap_mode_network_stack_l1_and_l2
+      - data
+      - functional
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUTAP_Validate_TCP_Tx_data_C19462[11-TCP]
+  - id: >-
+      74b38c4419f849b637e5fb49839389586bc333db0db7e654333cda17796381db95eb7a48cb892c25b6a332d79049fb2f9208aad0d08000ac4be400a0c64dc8c2
+    test_src_map_id: C19463::1
+    test_case_id: test_DUTAP_Validate_UDP_Tx_data_C19463[11-UDP]
+    test_function: test_DUTAP_Validate_UDP_Tx_data_C19463
+    test_id: test_DUTAP_Validate_UDP_Tx_data_C19463[11-UDP]::1
+    test_module: >-
+      sqa_test_suites/wlan_standalone/functional/ap_mode/test_ap_mode_network_stack_l1_and_l2.py
+    test_markers:
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'client_socket_limit': 10,'security':
+        'WPA2','ssid': 'RS9116_AP','passphrase': '12345678'})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'RS9116_AP','passphrase': '12345678','interface': 'wlan0','channel':
+        11})
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - pytest.mark.end_state('wifi_dut',wifi=['disassociated'])
+    test_params:
+      - name: channel
+        value: 11
+      - name: protocol
+        value: UDP
+    version: 0
+    enabled: true
+    labels:
+      - C19463
+      - DUTAP
+      - Tx
+      - UDP
+      - Validate
+      - ap_mode
+      - ap_mode_network_stack_l1_and_l2
+      - data
+      - functional
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUTAP_Validate_UDP_Tx_data_C19463[11-UDP]
+  - id: >-
+      c8f027f7263607254085e99d9090012ed427f3a7a19e453a46920a3e5a03d54290b84214962bffd29623f152278593eb4da6027c085f1bf068fec18d3e2724c3
+    test_src_map_id: C19480::1
+    test_case_id: test_DUTAP_TCP_Socket_Create_Transfer_Terminate_30min_C19480[11]
+    test_function: test_DUTAP_TCP_Socket_Create_Transfer_Terminate_30min_C19480
+    test_id: test_DUTAP_TCP_Socket_Create_Transfer_Terminate_30min_C19480[11]::1
+    test_module: >-
+      sqa_test_suites/wlan_standalone/functional/ap_mode/test_ap_mode_network_stack_l1_and_l2.py
+    test_markers:
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'client_socket_limit':
+        10,'server_socket_limit': 0,'security': 'WPA2','ssid':
+        'RS9116_AP','passphrase': '12345678'})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'RS9116_AP','passphrase': '12345678','interface': 'wlan0','channel':
+        11})
+      - pytest.mark.end_state('wifi_dut',wifi=['disassociated'])
+    test_params:
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - C19480
+      - Create
+      - DUTAP
+      - Socket
+      - TCP
+      - Terminate
+      - Transfer
+      - ap_mode
+      - ap_mode_network_stack_l1_and_l2
+      - functional
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUTAP_TCP_Socket_Create_Transfer_Terminate_30min_C19480[11]
+  - id: >-
+      76743a951a57775a32b75f5d07c6aea868b8cc65bea0af9aa4a945593b68b7f1cc10e10fcd44b87dcc9db6961faa686f21966b7137caf8e788281e79e898ccca
+    test_src_map_id: C19481::1
+    test_case_id: test_DUTAP_UDP_Socket_Create_Transfer_Terminate_30min_C19481[11]
+    test_function: test_DUTAP_UDP_Socket_Create_Transfer_Terminate_30min_C19481
+    test_id: test_DUTAP_UDP_Socket_Create_Transfer_Terminate_30min_C19481[11]::1
+    test_module: >-
+      sqa_test_suites/wlan_standalone/functional/ap_mode/test_ap_mode_network_stack_l1_and_l2.py
+    test_markers:
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'client_socket_limit':
+        10,'server_socket_limit': 0,'security': 'WPA2','ssid':
+        'RS9116_AP','passphrase': '12345678'})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'RS9116_AP','passphrase': '12345678','interface': 'wlan0','channel':
+        11})
+      - pytest.mark.end_state('wifi_dut',wifi=['disassociated'])
+    test_params:
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - C19481
+      - Create
+      - DUTAP
+      - Socket
+      - Terminate
+      - Transfer
+      - UDP
+      - ap_mode
+      - ap_mode_network_stack_l1_and_l2
+      - functional
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUTAP_UDP_Socket_Create_Transfer_Terminate_30min_C19481[11]
+  - id: >-
+      97dcf8be5c2b0ad087b566fe86ae1e8d61820a0c8f49a17bab16175587ec98a1074861887018d5272461fc95a25a66770c8dce3e0bb32e6ffec37eb504606eaa
+    test_src_map_id: C19466::1
+    test_case_id: test_DUTAP_tcp_remote_termiate_C19466[TCP-11]
+    test_function: test_DUTAP_tcp_remote_termiate_C19466
+    test_id: test_DUTAP_tcp_remote_termiate_C19466[TCP-11]::1
+    test_module: >-
+      sqa_test_suites/wlan_standalone/functional/ap_mode/test_ap_mode_network_stack_l1_and_l2.py
+    test_markers:
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.WLANOnly,'features':
+        RS9116FeatureBitMap.Default,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'client_socket_limit': 10,'security':
+        'WPA2','ssid': 'RS9116_AP','passphrase': '12345678'})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'RS9116_AP','passphrase': '12345678','interface': 'wlan0','channel':
+        11})
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - pytest.mark.end_state('wifi_dut',wifi=['close_sockets','disassociated'])
+    test_params:
+      - name: protocol
+        value: TCP
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - C19466
+      - DUTAP
+      - ap_mode
+      - ap_mode_network_stack_l1_and_l2
+      - functional
+      - remote
+      - sqa_test_suites
+      - tcp
+      - termiate
+      - wlan_standalone
+    test_case_name: test_DUTAP_tcp_remote_termiate_C19466[TCP-11]
+  - id: >-
+      ef6700dedcd4a636ea9457e0303fa6d7df3c2dea96864a75d5865f47949bacf46b763b10b2217a8dcf39b3e62d60f60e5684e2e28a036216aa5477a8e795143a
+    test_src_map_id: C19482::1
+    test_case_id: test_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C19482[11]
+    test_function: test_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C19482
+    test_id: >-
+      test_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C19482[11]::1
+    test_module: >-
+      sqa_test_suites/wlan_standalone/functional/ap_mode/test_ap_mode_network_stack_l1_and_l2.py
+    test_markers:
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.WLANOnly,'features':
+        RS9116FeatureBitMap.Default,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'client_socket_limit': 4,'security':
+        'WPA2','ssid': 'RS9116_AP','passphrase': '12345678'})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'RS9116_AP','passphrase': '12345678','interface': 'wlan0','channel':
+        11})
+      - pytest.mark.end_state('wifi_dut',wifi=['close_sockets','disassociated'])
+    test_params:
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - C19482
+      - DUTAP
+      - ap_mode
+      - ap_mode_network_stack_l1_and_l2
+      - data
+      - functional
+      - remote
+      - sending
+      - sqa_test_suites
+      - tcp
+      - terminate
+      - wlan_standalone
+    test_case_name: test_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C19482[11]
+  - id: >-
+      68e9c817126056dfea7ac7d0c3f60acfbaff6f5da0e9321ab998824403efff63bf3f4f3b07885a6be739483374287f5f6cdfc9380c004ff6dce38912a85d59be
+    test_src_map_id: C19473::1
+    test_case_id: test_DUTAP_open_10_client_sockets_send_tx_C19473[11]
+    test_function: test_DUTAP_open_10_client_sockets_send_tx_C19473
+    test_id: test_DUTAP_open_10_client_sockets_send_tx_C19473[11]::1
+    test_module: >-
+      sqa_test_suites/wlan_standalone/functional/ap_mode/test_ap_mode_network_stack_l1_and_l2.py
+    test_markers:
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.WLANOnly,'features':
+        RS9116FeatureBitMap.Default,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'client_socket_limit': 10,'security':
+        'WPA2','ssid': 'RS9116_AP','passphrase': '12345678'})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'RS9116_AP','passphrase': '12345678','interface': 'wlan0','channel':
+        11})
+      - pytest.mark.end_state('wifi_dut',wifi=['close_sockets','disassociated'])
+    test_params:
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - C19473
+      - DUTAP
+      - ap_mode
+      - ap_mode_network_stack_l1_and_l2
+      - client
+      - functional
+      - open
+      - send
+      - sockets
+      - sqa_test_suites
+      - tx
+      - wlan_standalone
+    test_case_name: test_DUTAP_open_10_client_sockets_send_tx_C19473[11]
+  - id: >-
+      6f3eb0846ab8fd4f9fc25e776431df63e4b89e6c73ae4f8b1f2e91504939767a04dccd1b38efc6d78c9bf4ce841c0be7d7f0297aec2ee02493d1daa7face33e2
+    test_src_map_id: C19472::1
+    test_case_id: test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472[11]
+    test_function: test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472
+    test_id: >-
+      test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472[11]::1
+    test_module: >-
+      sqa_test_suites/wlan_standalone/functional/ap_mode/test_ap_mode_network_stack_l1_and_l2.py
+    test_markers:
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.WLANOnly,'features':
+        RS9116FeatureBitMap.Default,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'client_socket_limit': 10,'security':
+        'WPA2','ssid': 'RS9116_AP','passphrase': '12345678'})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'RS9116_AP','passphrase': '12345678','interface': 'wlan0','channel':
+        11})
+      - pytest.mark.end_state('wifi_dut',wifi=['close_sockets','disassociated'])
+    test_params:
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - C19472
+      - DUTAP
+      - LTCP
+      - ap_mode
+      - ap_mode_network_stack_l1_and_l2
+      - connection
+      - functional
+      - limit
+      - max
+      - socket
+      - sockets
+      - sqa_test_suites
+      - when
+      - wlan_standalone
+    test_case_name: test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472[11]
+  - id: >-
+      f8821aa6e357859c1784406547dca3e92e04b401da96689825e9ee64bc8473765784efa69e20bf6b29add710de37968b8baefc4a2e3af2692e22e02d65bb1b56
+    test_src_map_id: C19455::1
+    test_case_id: test_dut_ap_mode_tx_rules_EUregion_C19455[13]
+    test_function: test_dut_ap_mode_tx_rules_EUregion_C19455
+    test_id: test_dut_ap_mode_tx_rules_EUregion_C19455[13]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19455','passphrase': '12345678','region_config': 0,'beacon':
+        100,'region_code_ap': 'EU'})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19455','passphrase': '12345678','country': 'GE','channel':
+        '13','interface': 'wlan0'},1: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19455','passphrase': '12345678','country': 'GE','channel':
+        '13','interface': 'wlan0'},2: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19455','passphrase': '12345678','country': 'GE','channel':
+        '13','interface': 'wlan0'},3: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19455','passphrase': '12345678','country': 'GE','channel':
+        '13','interface': 'wlan0'}})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 13
+    version: 0
+    enabled: true
+    labels:
+      - C19455
+      - EUregion
+      - ap
+      - ap_mode
+      - apmode
+      - dut
+      - functional
+      - mode
+      - rules
+      - sqa_test_suites
+      - tx
+      - wlan_standalone
+    test_case_name: test_dut_ap_mode_tx_rules_EUregion_C19455[13]
+  - id: >-
+      5ec526f771135d735d6db897555d1ffd435d54d5de11eaaadb74921ff8608fb2104505a90f392711497d6dc68482c4d288319725f076a334c0e4c1b71d08fe66
+    test_src_map_id: C19456::1
+    test_case_id: test_dut_ap_mode_tx_rules_JPregion_C19456[13]
+    test_function: test_dut_ap_mode_tx_rules_JPregion_C19456
+    test_id: test_dut_ap_mode_tx_rules_JPregion_C19456[13]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19456','passphrase': '12345678','region_config': 0,'beacon':
+        100,'region_code_ap': 'JP'})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19456','passphrase': '12345678','country': 'JP','channel':
+        13,'interface': 'wlan0'},1: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19456','passphrase': '12345678','country': 'JP','channel':
+        13,'interface': 'wlan0'},2: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19456','passphrase': '12345678','country': 'JP','channel':
+        13,'interface': 'wlan0'},3: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19456','passphrase': '12345678','country': 'JP','channel':
+        13,'interface': 'wlan0'}})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 13
+    version: 0
+    enabled: true
+    labels:
+      - C19456
+      - JPregion
+      - ap
+      - ap_mode
+      - apmode
+      - dut
+      - functional
+      - mode
+      - rules
+      - sqa_test_suites
+      - tx
+      - wlan_standalone
+    test_case_name: test_dut_ap_mode_tx_rules_JPregion_C19456[13]
+  - id: >-
+      d348cb729b4c4dbd27839ab709506f9e736f174b39d85b8a09af863571fd46264d8f7863c8a3148adccfe89c47bb258be21400e3536721493a92032b91257ff3
+    test_src_map_id: C19454::1
+    test_case_id: test_dut_ap_mode_tx_rules_USregion_C19454[11]
+    test_function: test_dut_ap_mode_tx_rules_USregion_C19454
+    test_id: test_dut_ap_mode_tx_rules_USregion_C19454[11]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19454','passphrase': '12345678','region_config': 0,'beacon':
+        100,'region_code_ap': 'US'})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19454','passphrase': '12345678','country': 'US','interface':
+        'wlan0','channel': 11},1: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19454','passphrase': '12345678','country': 'US','interface':
+        'wlan0','channel': 11},2: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19454','passphrase': '12345678','country': 'US','interface':
+        'wlan0','channel': 11},3: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19454','passphrase': '12345678','country': 'US','interface':
+        'wlan0','channel': 11}})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - C19454
+      - USregion
+      - ap
+      - ap_mode
+      - apmode
+      - dut
+      - functional
+      - mode
+      - rules
+      - sqa_test_suites
+      - tx
+      - wlan_standalone
+    test_case_name: test_dut_ap_mode_tx_rules_USregion_C19454[11]
+  - id: >-
+      5e345c23080d4f77e7e229666bc07e43ed5c700311b0866de0f7a284d22026561f6f5e5699e5770560d8ef05e848591f934dba9794f7b166fc180c4982d4b2ab
+    test_src_map_id: C19434::1
+    test_case_id: test_dut_ap_in_5GHz_various_channels_C19434[36-TCP]
+    test_function: test_dut_ap_in_5GHz_various_channels_C19434
+    test_id: test_dut_ap_in_5GHz_various_channels_C19434[36-TCP]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.FiveGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19434','passphrase': '12345678','beacon':
+        100,'region_code_ap': 'US'})
+      - pytest.mark.wifi_5g()
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19434','passphrase': '12345678','interface': 'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
+    test_params:
+      - name: channel
+        value: 36
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C19434
+      - ap
+      - ap_mode
+      - apmode
+      - channels
+      - dut
+      - functional
+      - sqa_test_suites
+      - various
+      - wlan_standalone
+    test_case_name: test_dut_ap_in_5GHz_various_channels_C19434[36-TCP]
+  - id: >-
+      945e9c0771f0b3609ab41702f9cdee900718a5512ccfee06091ecddeb7a8175513cd8d1b11a094e9789730ac3208db750a25a2b464031d4a84a5ec61865adcb9
+    test_src_map_id: C19434::2
+    test_case_id: test_dut_ap_in_5GHz_various_channels_C19434[40-TCP]
+    test_function: test_dut_ap_in_5GHz_various_channels_C19434
+    test_id: test_dut_ap_in_5GHz_various_channels_C19434[40-TCP]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.FiveGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19434','passphrase': '12345678','beacon':
+        100,'region_code_ap': 'US'})
+      - pytest.mark.wifi_5g()
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19434','passphrase': '12345678','interface': 'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
+    test_params:
+      - name: channel
+        value: 40
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C19434
+      - ap
+      - ap_mode
+      - apmode
+      - channels
+      - dut
+      - functional
+      - sqa_test_suites
+      - various
+      - wlan_standalone
+    test_case_name: test_dut_ap_in_5GHz_various_channels_C19434[40-TCP]
+  - id: >-
+      2a600f2f3a70ce2688e15720457b8ee352a981ee6a8faf52fc331ad8e7942288a332c76544bc1fabc9c1fd21fe6b5d419d6e5b0d23ea003e0f7c60b14ebc4c43
+    test_src_map_id: C19434::3
+    test_case_id: test_dut_ap_in_5GHz_various_channels_C19434[48-TCP]
+    test_function: test_dut_ap_in_5GHz_various_channels_C19434
+    test_id: test_dut_ap_in_5GHz_various_channels_C19434[48-TCP]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.FiveGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19434','passphrase': '12345678','beacon':
+        100,'region_code_ap': 'US'})
+      - pytest.mark.wifi_5g()
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19434','passphrase': '12345678','interface': 'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
+    test_params:
+      - name: channel
+        value: 48
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C19434
+      - ap
+      - ap_mode
+      - apmode
+      - channels
+      - dut
+      - functional
+      - sqa_test_suites
+      - various
+      - wlan_standalone
+    test_case_name: test_dut_ap_in_5GHz_various_channels_C19434[48-TCP]
+  - id: >-
+      34d09c3c5af75786295af2613fee6280e8d1b94ad7576db1e642aef4aaa62d9e44b00249dbd540e12c045538fbcf319ef9d0663b528ec39602c0e70a0e500a69
+    test_src_map_id: C19434::4
+    test_case_id: test_dut_ap_in_5GHz_various_channels_C19434[149-TCP]
+    test_function: test_dut_ap_in_5GHz_various_channels_C19434
+    test_id: test_dut_ap_in_5GHz_various_channels_C19434[149-TCP]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.FiveGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19434','passphrase': '12345678','beacon':
+        100,'region_code_ap': 'US'})
+      - pytest.mark.wifi_5g()
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19434','passphrase': '12345678','interface': 'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
+    test_params:
+      - name: channel
+        value: 149
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C19434
+      - ap
+      - ap_mode
+      - apmode
+      - channels
+      - dut
+      - functional
+      - sqa_test_suites
+      - various
+      - wlan_standalone
+    test_case_name: test_dut_ap_in_5GHz_various_channels_C19434[149-TCP]
+  - id: >-
+      3a1306a9fd74815db8210d283b6b8c961e5d0463315e01b6215f13db2df17208a28f18d70cb883e6444decc5f275d07bcff4b13657d92d4d3865ef5674b26a5c
+    test_src_map_id: C19434::5
+    test_case_id: test_dut_ap_in_5GHz_various_channels_C19434[165-TCP]
+    test_function: test_dut_ap_in_5GHz_various_channels_C19434
+    test_id: test_dut_ap_in_5GHz_various_channels_C19434[165-TCP]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.FiveGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19434','passphrase': '12345678','beacon':
+        100,'region_code_ap': 'US'})
+      - pytest.mark.wifi_5g()
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19434','passphrase': '12345678','interface': 'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''C''})'
+    test_params:
+      - name: channel
+        value: 165
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C19434
+      - ap
+      - ap_mode
+      - apmode
+      - channels
+      - dut
+      - functional
+      - sqa_test_suites
+      - various
+      - wlan_standalone
+    test_case_name: test_dut_ap_in_5GHz_various_channels_C19434[165-TCP]
+  - id: >-
+      a54e1230d1ff65e71e4da11474ece334ddb0f80a916432f85b3e191f9a8795f9a0a7f6cbb1874e9260adcbdb5c6b53b796a51c8ab0c31738ba75cc1e5dd913de
+    test_src_map_id: C19444::1
+    test_case_id: test_DUTAP_various_DTIM_C19444[11-1]
+    test_function: test_DUTAP_various_DTIM_C19444
+    test_id: test_DUTAP_various_DTIM_C19444[11-1]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19444','passphrase': '12345678','beacon': 100})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19444','passphrase': '12345678','channel': 11,'interface':
+        'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 11
+      - name: dtim_period
+        value: 1
+    version: 0
+    enabled: true
+    labels:
+      - C19444
+      - DTIM
+      - DUTAP
+      - ap_mode
+      - apmode
+      - functional
+      - sqa_test_suites
+      - various
+      - wlan_standalone
+    test_case_name: test_DUTAP_various_DTIM_C19444[11-1]
+  - id: >-
+      749a6d9ef5068e891ea4de891995c404913922a554d7476aee8d212693030d387973ccd17b042059a9537933929d007e6b07180576ba4142798cf41a38854a39
+    test_src_map_id: C19444::2
+    test_case_id: test_DUTAP_various_DTIM_C19444[11-2]
+    test_function: test_DUTAP_various_DTIM_C19444
+    test_id: test_DUTAP_various_DTIM_C19444[11-2]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19444','passphrase': '12345678','beacon': 100})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19444','passphrase': '12345678','channel': 11,'interface':
+        'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 11
+      - name: dtim_period
+        value: 2
+    version: 0
+    enabled: true
+    labels:
+      - C19444
+      - DTIM
+      - DUTAP
+      - ap_mode
+      - apmode
+      - functional
+      - sqa_test_suites
+      - various
+      - wlan_standalone
+    test_case_name: test_DUTAP_various_DTIM_C19444[11-2]
+  - id: >-
+      0390fd32748813bf6e448efdc7e3be050ce4c4e716b302eed58949fc916b15710793e2a01074d8035f86c32574628bb9005e6caab6806e2bff19c4782b143cbe
+    test_src_map_id: C19444::3
+    test_case_id: test_DUTAP_various_DTIM_C19444[11-3]
+    test_function: test_DUTAP_various_DTIM_C19444
+    test_id: test_DUTAP_various_DTIM_C19444[11-3]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19444','passphrase': '12345678','beacon': 100})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19444','passphrase': '12345678','channel': 11,'interface':
+        'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 11
+      - name: dtim_period
+        value: 3
+    version: 0
+    enabled: true
+    labels:
+      - C19444
+      - DTIM
+      - DUTAP
+      - ap_mode
+      - apmode
+      - functional
+      - sqa_test_suites
+      - various
+      - wlan_standalone
+    test_case_name: test_DUTAP_various_DTIM_C19444[11-3]
+  - id: >-
+      d11fc3c41d18cca87b292644d6210b95a26b0358145608b83778bd1e5352c6cd67dd1022b2bbb5bd951769b8f1d5e68bd0c04180e606b93c39042c4f696508e4
+    test_src_map_id: C19444::4
+    test_case_id: test_DUTAP_various_DTIM_C19444[11-6]
+    test_function: test_DUTAP_various_DTIM_C19444
+    test_id: test_DUTAP_various_DTIM_C19444[11-6]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19444','passphrase': '12345678','beacon': 100})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19444','passphrase': '12345678','channel': 11,'interface':
+        'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 11
+      - name: dtim_period
+        value: 6
+    version: 0
+    enabled: true
+    labels:
+      - C19444
+      - DTIM
+      - DUTAP
+      - ap_mode
+      - apmode
+      - functional
+      - sqa_test_suites
+      - various
+      - wlan_standalone
+    test_case_name: test_DUTAP_various_DTIM_C19444[11-6]
+  - id: >-
+      aa80cdfad4bf2f8c921650118756fd53ae01ec5b51c78b2751aee815c492250d40578534f237af094c2503ffdfb1cc952952fc4b3a84cddd8347189c6fdbb945
+    test_src_map_id: C19444::5
+    test_case_id: test_DUTAP_various_DTIM_C19444[11-10]
+    test_function: test_DUTAP_various_DTIM_C19444
+    test_id: test_DUTAP_various_DTIM_C19444[11-10]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19444','passphrase': '12345678','beacon': 100})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19444','passphrase': '12345678','channel': 11,'interface':
+        'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 11
+      - name: dtim_period
+        value: 10
+    version: 0
+    enabled: true
+    labels:
+      - C19444
+      - DTIM
+      - DUTAP
+      - ap_mode
+      - apmode
+      - functional
+      - sqa_test_suites
+      - various
+      - wlan_standalone
+    test_case_name: test_DUTAP_various_DTIM_C19444[11-10]
+  - id: >-
+      9d1944c6d932cec8f4f94e639e67c42ac47f093331993a9174e76e658505c6045596b8f16238cd0a438a2cf6e0e386e6155ce760e59795b616431f3b2e9cb71f
+    test_src_map_id: C19443::1
+    test_case_id: test_DUTAP_diff_beacon_intervals_C19443[11-100]
+    test_function: test_DUTAP_diff_beacon_intervals_C19443
+    test_id: test_DUTAP_diff_beacon_intervals_C19443[11-100]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19443','passphrase': '12345678'})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19443','passphrase': '12345678','channel': 11,'interface':
+        'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 11
+      - name: beacon
+        value: 100
+    version: 0
+    enabled: true
+    labels:
+      - C19443
+      - DUTAP
+      - ap_mode
+      - apmode
+      - beacon
+      - diff
+      - functional
+      - intervals
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUTAP_diff_beacon_intervals_C19443[11-100]
+  - id: >-
+      ad0f18541912be6a91dc19b86bc3c7f0b9e11026fc6f9c7a04ba5d742207f6bfbec3540ef2b37a2918a357f5c9925c23470ab3c05d318094a720bc2e580421cb
+    test_src_map_id: C19443::2
+    test_case_id: test_DUTAP_diff_beacon_intervals_C19443[11-200]
+    test_function: test_DUTAP_diff_beacon_intervals_C19443
+    test_id: test_DUTAP_diff_beacon_intervals_C19443[11-200]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19443','passphrase': '12345678'})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19443','passphrase': '12345678','channel': 11,'interface':
+        'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 11
+      - name: beacon
+        value: 200
+    version: 0
+    enabled: true
+    labels:
+      - C19443
+      - DUTAP
+      - ap_mode
+      - apmode
+      - beacon
+      - diff
+      - functional
+      - intervals
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUTAP_diff_beacon_intervals_C19443[11-200]
+  - id: >-
+      0cf65a3362670fea99110795d7c14757b5c54323a8ff548e74f13b2cb8f6be249f7185a0425b0ed5ec7f9a6e0f2615d2cbefccbbc58703e25b24dc46b62af91e
+    test_src_map_id: C19443::3
+    test_case_id: test_DUTAP_diff_beacon_intervals_C19443[11-600]
+    test_function: test_DUTAP_diff_beacon_intervals_C19443
+    test_id: test_DUTAP_diff_beacon_intervals_C19443[11-600]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19443','passphrase': '12345678'})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19443','passphrase': '12345678','channel': 11,'interface':
+        'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 11
+      - name: beacon
+        value: 600
+    version: 0
+    enabled: true
+    labels:
+      - C19443
+      - DUTAP
+      - ap_mode
+      - apmode
+      - beacon
+      - diff
+      - functional
+      - intervals
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUTAP_diff_beacon_intervals_C19443[11-600]
+  - id: >-
+      1254d65b423ad0773c93a3b24efd9abb1e0cc69c88a74feb0da0b0429d92a6deb1d40f8131d899966e94b0f67e05dc6a09bd37cbe6372ff84a7a9d5ac6d4da87
+    test_src_map_id: C19443::4
+    test_case_id: test_DUTAP_diff_beacon_intervals_C19443[11-1000]
+    test_function: test_DUTAP_diff_beacon_intervals_C19443
+    test_id: test_DUTAP_diff_beacon_intervals_C19443[11-1000]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19443','passphrase': '12345678'})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19443','passphrase': '12345678','channel': 11,'interface':
+        'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 11
+      - name: beacon
+        value: 1000
+    version: 0
+    enabled: true
+    labels:
+      - C19443
+      - DUTAP
+      - ap_mode
+      - apmode
+      - beacon
+      - diff
+      - functional
+      - intervals
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUTAP_diff_beacon_intervals_C19443[11-1000]
+  - id: >-
+      20eddc68418660ffe28b5e4d5cf6a7cf11245fc2942654cb8c69edd9840f8c27925e7539f3d52edb2d83716f8112882d0a052ddf4db8669da25823578c4abfac
+    test_src_map_id: C19435::1
+    test_case_id: test_DUTAP_errorneous_band_config_C19435
+    test_function: test_DUTAP_errorneous_band_config_C19435
+    test_id: test_DUTAP_errorneous_band_config_C19435::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.FiveGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19435','passphrase': '12345678','beacon': 100})
+      - pytest.mark.wifi_5g()
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19435','passphrase': '12345678','interface': 'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C19435
+      - DUTAP
+      - ap_mode
+      - apmode
+      - band
+      - config
+      - errorneous
+      - functional
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUTAP_errorneous_band_config_C19435
+  - id: >-
+      3a33bd75c63d168383ae73bc429370dd6989179739cc4733e33495a2a0ea96d21a604e2c6bbc301ea4aa759d045c3eb667a73178688d40905f9b1aebd8d3f01c
+    test_src_map_id: C19432::1
+    test_case_id: test_DUPAP_multiclient_connect_disconnect_C19432[11]
+    test_function: test_DUPAP_multiclient_connect_disconnect_C19432
+    test_id: test_DUPAP_multiclient_connect_disconnect_C19432[11]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19432','passphrase': '12345678'})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19432','passphrase': '12345678','channel': 11,'interface':
+        'wlan0'},1: {'security': 'WPA2','ssid': 'SILABS_AP_C19432','passphrase':
+        '12345678','channel': 11,'interface': 'wlan0'},2: {'security':
+        'WPA2','ssid': 'SILABS_AP_C19432','passphrase': '12345678','channel':
+        11,'interface': 'wlan0'},3: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19432','passphrase': '12345678','channel': 11,'interface':
+        'wlan0'}})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - pytest.mark.end_state('wifi_dut',wifi=['disassociated'])
+    test_params:
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - C19432
+      - DUPAP
+      - ap_mode
+      - apmode
+      - connect
+      - disconnect
+      - functional
+      - multiclient
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUPAP_multiclient_connect_disconnect_C19432[11]
+  - id: >-
+      95439c9c002a4dcef52fddc206f541b213b205f1e57252387af0258828c77597bf9ddb1139f6053b8945b6f4d57a480cb765ec8bd8eaa3382717d686a016a9ee
+    test_src_map_id: C19442::1
+    test_case_id: test_DUTAP_Max_STAs_Connect_and_Ping_C19430_C19442[11]
+    test_function: test_DUTAP_Max_STAs_Connect_and_Ping_C19430_C19442
+    test_id: test_DUTAP_Max_STAs_Connect_and_Ping_C19430_C19442[11]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19430_C19442','passphrase': '12345678','region_config':
+        0,'beacon': 100,'region_code_ap': 'US'})
+      - >-
+        pytest.mark.config('wifi_clients',wifi={0: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19430_C19442','passphrase': '12345678','channel':
+        11,'interface': 'wlan0'},1: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19430_C19442','passphrase': '12345678','channel':
+        11,'interface': 'wlan0'},2: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19430_C19442','passphrase': '12345678','channel':
+        11,'interface': 'wlan0'},3: {'security': 'WPA2','ssid':
+        'SILABS_AP_C19430_C19442','passphrase': '12345678','channel':
+        11,'interface': 'wlan0'}})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - pytest.mark.end_state('wifi_dut',wifi=['disassociated'])
+    test_params:
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - C19430
+      - C19442
+      - Connect
+      - DUTAP
+      - Max
+      - Ping
+      - STAs
+      - ap_mode
+      - apmode
+      - functional
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUTAP_Max_STAs_Connect_and_Ping_C19430_C19442[11]
+  - id: >-
+      0aefca894d2b20b447bd7ef3d442cf1244500745e60462f58c8c5db76dd2f54e42c4858f805641489b6fe18b08e685a7fd3d6ad742ae78b4c3912c400b2d6620
+    test_src_map_id: C19436::1
+    test_case_id: test_DUTAP_verify_beacon_format_C19436[10]
+    test_function: test_DUTAP_verify_beacon_format_C19436
+    test_id: test_DUTAP_verify_beacon_format_C19436[10]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19436','passphrase': '12345678','beacon': 100})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19436','passphrase': '12345678','channel': 10,'interface':
+        'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - pytest.mark.end_state('wifi_dut',wifi=['disassociated'])
+    test_params:
+      - name: channel
+        value: 10
+    version: 0
+    enabled: true
+    labels:
+      - C19436
+      - DUTAP
+      - ap_mode
+      - apmode
+      - beacon
+      - format
+      - functional
+      - sqa_test_suites
+      - verify
+      - wlan_standalone
+    test_case_name: test_DUTAP_verify_beacon_format_C19436[10]
+  - id: >-
+      58c19dfd08daadc7d7a7e37cb945e27e990d80e44b859f787b1e22efdb1166230a863b092909f1942cd0c4e729be37daecf77945cef80bbff6adb52549dc9adf
+    test_src_map_id: C19437::1
+    test_case_id: test_apmode_connectivity_with_wrong_psk_Cli_C19437[10]
+    test_function: test_apmode_connectivity_with_wrong_psk_Cli_C19437
+    test_id: test_apmode_connectivity_with_wrong_psk_Cli_C19437[10]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19437','passphrase': '12345678','region_config': 0,'beacon':
+        100,'region_code_ap': 'US '})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19437','passphrase': '123456789','interface':
+        'wlan0','channel': 10})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 10
+    version: 0
+    enabled: true
+    labels:
+      - C19437
+      - Cli
+      - ap_mode
+      - apmode
+      - connectivity
+      - functional
+      - psk
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_apmode_connectivity_with_wrong_psk_Cli_C19437[10]
+  - id: >-
+      dd0552dce8b74036f5d99c72950692b4cc6f33d369f3b0f357935546168466d7f7af671998a263d23bfb74cd4206234d54391359a270f7188c3157a1d1c1d8af
+    test_src_map_id: C19441::1
+    test_case_id: test_DUT_APMode_fixed_data_rate_C19441[TCP-10]
+    test_function: test_DUT_APMode_fixed_data_rate_C19441
+    test_id: test_DUT_APMode_fixed_data_rate_C19441[TCP-10]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP','passphrase': '12345678','region_config': 0,'beacon':
+        100,'region_code_ap': 'US ','data_rates': RS9116DataRate.Mbps_54})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP','passphrase': '12345678','interface': 'wlan0','channel':
+        10})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: protocol
+        value: TCP
+      - name: channel
+        value: 10
+    version: 0
+    enabled: true
+    labels:
+      - APMode
+      - C19441
+      - DUT
+      - ap_mode
+      - apmode
+      - data
+      - fixed
+      - functional
+      - rate
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUT_APMode_fixed_data_rate_C19441[TCP-10]
+  - id: >-
+      d679299a94e6299afb22e1d4a6f5643912d602d03b071823941a30924909a59e5658ae81db46a26be52fd096c84e001ef86674e04d7366a7ffb81485c7cecdfc
+    test_src_map_id: C19446::1
+    test_case_id: test_DUT_APMode_11n_htcaps_support_C19446[TCP-11]
+    test_function: test_DUT_APMode_11n_htcaps_support_C19446
+    test_id: test_DUT_APMode_11n_htcaps_support_C19446[TCP-11]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19446','passphrase': '12345678','region_config': 0,'beacon':
+        100,'dtim': 4,'region_code_ap': 'US '})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19446','passphrase': '12345678','channel': 11,'interface':
+        'wlan0'})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: protocol
+        value: TCP
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - APMode
+      - C19446
+      - DUT
+      - ap_mode
+      - apmode
+      - functional
+      - htcaps
+      - sqa_test_suites
+      - support
+      - wlan_standalone
+    test_case_name: test_DUT_APMode_11n_htcaps_support_C19446[TCP-11]
+  - id: >-
+      c4ba535e33e11c581c15a4f9df6a3816bfa82f9b26095f7d88a089d78a5724741ee0121f6ae23642e7b95ccedafa5bdcf62d3c4121d60cd5c73d71c9475a4c6a
+    test_src_map_id: C19447::1
+    test_case_id: test_DUTAP_TCP_Tx_Rx_C19447[100-TCP-11]
+    test_function: test_DUTAP_TCP_Tx_Rx_C19447
+    test_id: test_DUTAP_TCP_Tx_Rx_C19447[100-TCP-11]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19447','passphrase': '12345678','dtim': 4,'region_code_ap':
+        'US '})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19447','passphrase': '12345678','interface':
+        'wlan0','channel': 11})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+    test_params:
+      - name: beacon
+        value: 100
+      - name: protocol
+        value: TCP
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - C19447
+      - DUTAP
+      - Rx
+      - TCP
+      - Tx
+      - ap_mode
+      - apmode
+      - functional
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUTAP_TCP_Tx_Rx_C19447[100-TCP-11]
+  - id: >-
+      8f557dcf838180cc17c50c507b9d8ba23481a89355b4c0e793b28d4c4258782bb32e219e90800ae24fce1169b39ae1f37d6d9aabc52b946aeac43452e205a0ed
+    test_src_map_id: C19447::2
+    test_case_id: test_DUTAP_TCP_Tx_Rx_C19447[200-TCP-11]
+    test_function: test_DUTAP_TCP_Tx_Rx_C19447
+    test_id: test_DUTAP_TCP_Tx_Rx_C19447[200-TCP-11]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19447','passphrase': '12345678','dtim': 4,'region_code_ap':
+        'US '})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19447','passphrase': '12345678','interface':
+        'wlan0','channel': 11})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+    test_params:
+      - name: beacon
+        value: 200
+      - name: protocol
+        value: TCP
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - C19447
+      - DUTAP
+      - Rx
+      - TCP
+      - Tx
+      - ap_mode
+      - apmode
+      - functional
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUTAP_TCP_Tx_Rx_C19447[200-TCP-11]
+  - id: >-
+      066eedb5bddc4f277d2c77ff4a9f746a91ab26a2009f32fbd172c45fd4ed575f7b8f5ad3a1fbceeef20c9d1fbbdf70fffd84b341d8716a63dac4173d41982765
+    test_src_map_id: C19447::3
+    test_case_id: test_DUTAP_TCP_Tx_Rx_C19447[300-TCP-11]
+    test_function: test_DUTAP_TCP_Tx_Rx_C19447
+    test_id: test_DUTAP_TCP_Tx_Rx_C19447[300-TCP-11]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19447','passphrase': '12345678','dtim': 4,'region_code_ap':
+        'US '})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19447','passphrase': '12345678','interface':
+        'wlan0','channel': 11})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+    test_params:
+      - name: beacon
+        value: 300
+      - name: protocol
+        value: TCP
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - C19447
+      - DUTAP
+      - Rx
+      - TCP
+      - Tx
+      - ap_mode
+      - apmode
+      - functional
+      - sqa_test_suites
+      - wlan_standalone
+    test_case_name: test_DUTAP_TCP_Tx_Rx_C19447[300-TCP-11]
+  - id: >-
+      e5d350c0087abd630effd3be503a86f8a9cc448f36c5ae0baec79b3a0752758dd80c6223eb84835c0061a6b46098e0da9d84ddad0fc473d301d4e1156ebf31b2
+    test_src_map_id: C19448::1
+    test_case_id: test_DUT_APMode_11d_support_C19448
+    test_function: test_DUT_APMode_11d_support_C19448
+    test_id: test_DUT_APMode_11d_support_C19448::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'security': 'WPA2','ssid':
+        'SILABS_AP_C19447','passphrase': '12345678','dtim': 4})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19448','passphrase': '12345678','interface': 'wlan0'})
+      - pytest.mark.wifi_dualband()
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - APMode
+      - C19448
+      - DUT
+      - ap_mode
+      - apmode
+      - functional
+      - sqa_test_suites
+      - support
+      - wlan_standalone
+    test_case_name: test_DUT_APMode_11d_support_C19448
+  - id: >-
+      fa84f7b521c12594c4a9dea9222857d25dc427d41e536d438441adddf997e81d782ad6374730beae79563365634d808d617cf8adcc5e6c41309a94e9d5ed0d1a
+    test_src_map_id: C19457::1
+    test_case_id: test_DUTAP_JPregion_unsupported_channel_C19457
+    test_function: test_DUTAP_JPregion_unsupported_channel_C19457
+    test_id: test_DUTAP_JPregion_unsupported_channel_C19457::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.FiveGHz,'security': 'WPA2','ssid':
+        'RS9116_AP_C19457','passphrase': '12345678','region_config': 0,'beacon':
+        100,'region_code_ap': 'JP ','channel': 149})
+      - pytest.mark.wifi_dualband()
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C19457
+      - DUTAP
+      - JPregion
+      - ap_mode
+      - apmode
+      - channel
+      - functional
+      - sqa_test_suites
+      - unsupported
+      - wlan_standalone
+    test_case_name: test_DUTAP_JPregion_unsupported_channel_C19457
+  - id: >-
+      845db6812332851331474512c85ee1a550f3d9c2556a55b6512301e36407cc94f8944c7bfcd02c77eafb653c5d1cf72dcaf34a5dd17a718f0ebf58582b060a23
+    test_src_map_id: C19458::1
+    test_case_id: test_DUTAP_USregion_unsupported_channel_C19458
+    test_function: test_DUTAP_USregion_unsupported_channel_C19458
+    test_id: test_DUTAP_USregion_unsupported_channel_C19458::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'RS9116_AP','passphrase': '12345678','region_config': 0,'beacon':
+        100,'region_code_ap': 'US ','channel': 14})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C19458
+      - DUTAP
+      - USregion
+      - ap_mode
+      - apmode
+      - channel
+      - functional
+      - sqa_test_suites
+      - unsupported
+      - wlan_standalone
+    test_case_name: test_DUTAP_USregion_unsupported_channel_C19458
+  - id: >-
+      1b6427317cecb315566f518652018bb33e21bf31863188788dde663468bb3f5b071107cc27dd684e01b47d9b03a70d39d44e43399660656dec62fd022378646c
+    test_src_map_id: C19449::1
+    test_case_id: test_DUT_soft_reset_sta_to_ap_C19449[11]
+    test_function: test_DUT_soft_reset_sta_to_ap_C19449
+    test_id: test_DUT_soft_reset_sta_to_ap_C19449[11]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.WiFiClient,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19449','passphrase': 'test1234','channel': 11})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19449','passphrase': 'test1234','channel': 11,'interface':
+        'wlan0'})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'ssid':
+        'external_ap','security': 'WPA2','passphrase': 'test1234','channel':
+        11})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - C19449
+      - DUT
+      - ap
+      - ap_mode
+      - apmode
+      - functional
+      - reset
+      - soft
+      - sqa_test_suites
+      - sta
+      - wlan_standalone
+    test_case_name: test_DUT_soft_reset_sta_to_ap_C19449[11]
+  - id: >-
+      7526f27220fca3d8108f82c87b123e3cd4cc604d48ec44077fd4fea2eaf28479af760250c4fb478b6844093cd146c8964d29ea6db1383d99419e8d72a6143236
+    test_src_map_id: C19450::1
+    test_case_id: test_DUT_AP_Mode_soft_reset_ap_to_sta_C19450[11]
+    test_function: test_DUT_AP_Mode_soft_reset_ap_to_sta_C19450
+    test_id: test_DUT_AP_Mode_soft_reset_ap_to_sta_C19450[11]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19450','passphrase': '12345678','region_config': 0,'beacon':
+        100,'dtim': 4,'region_code_ap': 'US '})
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'ssid':
+        'external_ap','security': 'WPA2','passphrase': 'test1234','channel':
+        11})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19450','passphrase': '12345678','interface':
+        'wlan0','channel': 11})
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - AP
+      - C19450
+      - DUT
+      - Mode
+      - ap
+      - ap_mode
+      - apmode
+      - functional
+      - reset
+      - soft
+      - sqa_test_suites
+      - sta
+      - wlan_standalone
+    test_case_name: test_DUT_AP_Mode_soft_reset_ap_to_sta_C19450[11]
+  - id: >-
+      c723240eed255e2bf0147615d01b7595309f90e9b1fca036f29229c9f0e68f5c37980fbb2fac34761cc70fb1bf344de2ec4d4f35204f1c90cd40581cfc4443a0
+    test_src_map_id: C19451::1
+    test_case_id: test_DUT_AP_Mode_store_config_C19451[11]
+    test_function: test_DUT_AP_Mode_store_config_C19451
+    test_id: test_DUT_AP_Mode_store_config_C19451[11]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'Open','ssid':
+        'SILABS_AP_C19451','region_config': 0,'beacon': 100,'region_code_ap':
+        'US '})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'ssid':
+        'SILABS_AP_C19451','interface': 'wlan0','channel': 3})
+      - pytest.mark.store_config()
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - AP
+      - C19451
+      - DUT
+      - Mode
+      - ap_mode
+      - apmode
+      - config
+      - functional
+      - sqa_test_suites
+      - store
+      - wlan_standalone
+    test_case_name: test_DUT_AP_Mode_store_config_C19451[11]
+  - id: >-
+      f29ca4d9a7cc6dae28887b1f6c8972d4fe4ad4cc6d4f7855bec5cb9a02acda7767236f034c174a210a23346cdb4d87fd0c568b36ab62679fd8ff0faed51384a3
+    test_src_map_id: C19452::1
+    test_case_id: test_DUT_AP_Mode_store_config_wpa2_C19452[11]
+    test_function: test_DUT_AP_Mode_store_config_wpa2_C19452
+    test_id: test_DUT_AP_Mode_store_config_wpa2_C19452[11]::1
+    test_module: sqa_test_suites/wlan_standalone/functional/ap_mode/test_apmode.py
+    test_markers:
+      - pytest.mark.firmware_app('test_ap_ht_caps',)
+      - pytest.mark.wifi_client('raspi_wifi',)
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode':
+        RS9116OperatingMode.AccessPoint,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.PSKSecurity,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.DHCPv4Server,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'band':
+        RS9116Band.TwoPointFourGHz,'security': 'WPA2','ssid':
+        'SILABS_AP_C19452','passphrase': '12345678','region_config': 0,'beacon':
+        100,'region_code_ap': 'US '})
+      - >-
+        pytest.mark.config('wifi_client',wifi={'security': 'WPA2','ssid':
+        'SILABS_AP_C19452','passphrase': '12345678','interface':
+        'wlan0','channel': 11})
+      - pytest.mark.store_config()
+      - pytest.mark.start_state('wifi_dut',wifi=['reset','init'])
+    test_params:
+      - name: channel
+        value: 11
+    version: 0
+    enabled: true
+    labels:
+      - AP
+      - C19452
+      - DUT
+      - Mode
+      - ap_mode
+      - apmode
+      - config
+      - functional
+      - sqa_test_suites
+      - store
+      - wlan_standalone
+      - wpa2
+    test_case_name: test_DUT_AP_Mode_store_config_wpa2_C19452[11]

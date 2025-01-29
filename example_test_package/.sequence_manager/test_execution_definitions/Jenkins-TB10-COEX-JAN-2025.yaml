@@ -1,0 +1,1806 @@
+root_path: example_test_package
+test_sequence:
+  - id: >-
+      3ebad03c7943234e5fed9acefc022065c7b37e2cba1a1c3842fd074643906a838c0f0c262f95bd099922b161a686d5136014a767fb58313f4b771850e9d01270
+    test_src_map_id: C20088::1
+    test_case_id: test_bt_coex_mode_C20088
+    test_function: test_bt_coex_mode_C20088
+    test_id: test_bt_coex_mode_C20088::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20088
+      - bt
+      - coex
+      - functional
+      - mode
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_bt_coex_mode_C20088
+  - id: >-
+      bcfeb7a19f97ce108af4fefe36fc0d9deeabae85f6dd4de85575e26e911107c6676a19299cb00043ecfa2b32e177ac6674af0918919a249914252b6dd38679cb
+    test_src_map_id: C20089::1
+    test_case_id: test_bt_coex_mode_as_slave_C20089
+    test_function: test_bt_coex_mode_as_slave_C20089
+    test_id: test_bt_coex_mode_as_slave_C20089::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20089
+      - bt
+      - coex
+      - functional
+      - mode
+      - slave
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_bt_coex_mode_as_slave_C20089
+  - id: >-
+      da1e1933b65a03a62b97344f2abb2d1222b43d239a19f3abfac64fecda7ccfdbfd6b8e833f4487097c01af4c5356e4dcadb886332ed85f21e88a7f4d6bb3ec57
+    test_src_map_id: C20090::1
+    test_case_id: test_bt_coex_mode_C20090
+    test_function: test_bt_coex_mode_C20090
+    test_id: test_bt_coex_mode_C20090::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20090
+      - bt
+      - coex
+      - functional
+      - mode
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_bt_coex_mode_C20090
+  - id: >-
+      65b5637c3a30215aa04383d9a083d89426032d12a8b14558816227bc4b03ed55084ac33eb908d7057ca7a449a4ab14ebaf34b58d93b65a3652f32a5a23b5b52f
+    test_src_map_id: C20091::1
+    test_case_id: test_bt_coex_mode_C20091
+    test_function: test_bt_coex_mode_C20091
+    test_id: test_bt_coex_mode_C20091::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20091
+      - bt
+      - coex
+      - functional
+      - mode
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_bt_coex_mode_C20091
+  - id: >-
+      1438a2bf2fb91494e6e25f599f74879a3f8c0673ec2e911c5cb849e106ad11beed49e630ea7b596f3fe728e54b9663b738f74f012a143fb1ffe6a2e565067098
+    test_src_map_id: C20092::1
+    test_case_id: test_bt_spp_data_transfer_RX_slave_C20092
+    test_function: test_bt_spp_data_transfer_RX_slave_C20092
+    test_id: test_bt_spp_data_transfer_RX_slave_C20092::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20092
+      - RX
+      - bt
+      - coex
+      - data
+      - functional
+      - slave
+      - spp
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+      - transfer
+    test_case_name: test_bt_spp_data_transfer_RX_slave_C20092
+  - id: >-
+      262a5e912deefecc6c1d41c0347fb207c5b07a7511df97d33eba50cb16763b555a34b5fba8be02afe8c7c49856d08361849ac262743696123f1c1c72b5e1ab3a
+    test_src_map_id: C20093::1
+    test_case_id: test_bt_spp_data_transfer_TX_slave_C20093
+    test_function: test_bt_spp_data_transfer_TX_slave_C20093
+    test_id: test_bt_spp_data_transfer_TX_slave_C20093::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20093
+      - TX
+      - bt
+      - coex
+      - data
+      - functional
+      - slave
+      - spp
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+      - transfer
+    test_case_name: test_bt_spp_data_transfer_TX_slave_C20093
+  - id: >-
+      84baceaecb809e89d52cacca5c5f96ed8f842a924729ce217aa946f805ec310f108d424a1580567dfbd36c75b86941c1ab8ffbcdee28e3ded682ef231d942070
+    test_src_map_id: C20094::1
+    test_case_id: test_bt_spp_data_transfer_TX_master_C20094
+    test_function: test_bt_spp_data_transfer_TX_master_C20094
+    test_id: test_bt_spp_data_transfer_TX_master_C20094::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20094
+      - TX
+      - bt
+      - coex
+      - data
+      - functional
+      - master
+      - spp
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+      - transfer
+    test_case_name: test_bt_spp_data_transfer_TX_master_C20094
+  - id: >-
+      87b79ff2fffc3c3a662046ec637c7d49795979613691c34a1abec03f5725d5e333851575517c56f9679513a5e8fceed989471f6f002d51111927f1d2ffc11122
+    test_src_map_id: C20095::1
+    test_case_id: test_bt_spp_data_transfer_RX_master_C20095
+    test_function: test_bt_spp_data_transfer_RX_master_C20095
+    test_id: test_bt_spp_data_transfer_RX_master_C20095::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20095
+      - RX
+      - bt
+      - coex
+      - data
+      - functional
+      - master
+      - spp
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+      - transfer
+    test_case_name: test_bt_spp_data_transfer_RX_master_C20095
+  - id: >-
+      67ca54926b79332c578d47b15a3ede89a34a0a3ae273c893117c04c47798d1b59004d06df1d7585819906d065dca15b9e370115679c75690afcb608c8fad01a7
+    test_src_map_id: C20097::1
+    test_case_id: test_SPP_data_transfer_by_disconnecting_from_RD_C20097
+    test_function: test_SPP_data_transfer_by_disconnecting_from_RD_C20097
+    test_id: test_SPP_data_transfer_by_disconnecting_from_RD_C20097::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20097
+      - RD
+      - SPP
+      - coex
+      - data
+      - disconnecting
+      - functional
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+      - transfer
+    test_case_name: test_SPP_data_transfer_by_disconnecting_from_RD_C20097
+  - id: >-
+      46f4b0d8145c1f1bf4c01f89af821001dab68e94c4c494087cfdbbff2ed0afa374abc514f3990d423c7b1a288b0bbd0bc7459acd3e4663f96542f1132fe6cf7b
+    test_src_map_id: C20100::1
+    test_case_id: test_bt_coex_eap_C20100[TCP]
+    test_function: test_bt_coex_eap_C20100
+    test_id: test_bt_coex_eap_C20100[TCP]::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_access_point',wifi={'security':
+        'WPA2Enterprise','passphrase': '12345678'})
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 2,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation|RS9116FeatureBitMap.OpenMode,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose|RS9116CertificateType.EAPClientCertificate,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid|RS9116CustomFeatureBitMap.DualBandRoamingAndVcafd,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection,'band': 0})
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','clear_certs'])
+    test_params:
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C20100
+      - bt
+      - coex
+      - eap
+      - functional
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_bt_coex_eap_C20100[TCP]
+  - id: >-
+      ea9a26c21c4b4ea504e60a35a028ab2f4e32fcc064eb7a2b211ae6f6f643ba598b9ec96bfe12e47e8e3a0f0e2df86c7cb7bf40b5a92003e30eca03594a16ec4d
+    test_src_map_id: C20101::1
+    test_case_id: test_bt_coex_inquiry_C20101
+    test_function: test_bt_coex_inquiry_C20101
+    test_id: test_bt_coex_inquiry_C20101::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20101
+      - bt
+      - coex
+      - functional
+      - inquiry
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_bt_coex_inquiry_C20101
+  - id: >-
+      2a4e074bd7c1e05508bbb1140b1366ff68bc89d55fc5cf98b3efea0d88b28c81984a0b0ee57b3ba4cc9676760f68d878af81d2afd364c36f0377902ade29ca7c
+    test_src_map_id: C20102::1
+    test_case_id: test_bt_coex_noremote_C20102
+    test_function: test_bt_coex_noremote_C20102
+    test_id: test_bt_coex_noremote_C20102::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20102
+      - bt
+      - coex
+      - functional
+      - noremote
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_bt_coex_noremote_C20102
+  - id: >-
+      d6eca794ea7fcd3706a51a7788dd630acd4473031cd88a936a133377c71fcf0a969219e2682ace7fecf1401637f2f094325e5b8f4c03acdebd14dee58eb21a42
+    test_src_map_id: C20103::1
+    test_case_id: test_bt_coex_cancel_inquiry_C20103
+    test_function: test_bt_coex_cancel_inquiry_C20103
+    test_id: test_bt_coex_cancel_inquiry_C20103::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20103
+      - bt
+      - cancel
+      - coex
+      - functional
+      - inquiry
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_bt_coex_cancel_inquiry_C20103
+  - id: >-
+      1c40b88b5e69ca850e25e5aaf8d1331e255e0cb3fca9b0da58e36d46faa73bb632a898417f0425ca68cf2ff3753dd30c116ffae463e9e6e8c264362d75e11ace
+    test_src_map_id: C20104::1
+    test_case_id: test_bt_coex_wrong_pin_C20104
+    test_function: test_bt_coex_wrong_pin_C20104
+    test_id: test_bt_coex_wrong_pin_C20104::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20104
+      - bt
+      - coex
+      - functional
+      - pin
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_bt_coex_wrong_pin_C20104
+  - id: >-
+      f4d26a14cb77dfc9c2f61c5e18fe97b55cbf8e38588bd977e01d149dbf4e8ab14b2337eaeaa5d984662f29937a75da38b2968529e5ecc8fdc1073a5228afe220
+    test_src_map_id: C20105::1
+    test_case_id: test_bt_coex_without_pin_C20105
+    test_function: test_bt_coex_without_pin_C20105
+    test_id: test_bt_coex_without_pin_C20105::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20105
+      - bt
+      - coex
+      - functional
+      - pin
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_bt_coex_without_pin_C20105
+  - id: >-
+      075b5f2584e52ad173bab9525e7b8d69db74ccde3fc44557fb6082c7cfc07dc871dbe41623005962c4d0c8cfad2579a8cdd194935434fc0824d43bc5caf4ed77
+    test_src_map_id: C20106::1
+    test_case_id: test_bt_coex_without_pin_C20106
+    test_function: test_bt_coex_without_pin_C20106
+    test_id: test_bt_coex_without_pin_C20106::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20106
+      - bt
+      - coex
+      - functional
+      - pin
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_bt_coex_without_pin_C20106
+  - id: >-
+      a738918c2d700544012e5244f51ecaba1c1fd902070f4f769970c262ec4ce5f1f017f3fb91270b6fdf0c3f44d26f7d034e88f8db9b878ac83d2aedb6a0362f93
+    test_src_map_id: C20107::1
+    test_case_id: test_bt_spp_remote_unpair_C20107
+    test_function: test_bt_spp_remote_unpair_C20107
+    test_id: test_bt_spp_remote_unpair_C20107::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20107
+      - bt
+      - coex
+      - functional
+      - remote
+      - spp
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+      - unpair
+    test_case_name: test_bt_spp_remote_unpair_C20107
+  - id: >-
+      9f7bec50ae0bacd0ab61a7c18f355898ec81908a62f3c1d529c04f0236edcd6f485d92922ab4b1ceb4f4799867f3bec43c5cfaeb05138c58ee68a1bf56de5c59
+    test_src_map_id: C20108::1
+    test_case_id: test_bt_coex_unbond_C20108
+    test_function: test_bt_coex_unbond_C20108
+    test_id: test_bt_coex_unbond_C20108::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20108
+      - bt
+      - coex
+      - functional
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+      - unbond
+    test_case_name: test_bt_coex_unbond_C20108
+  - id: >-
+      d400338086d2e3e4d3eb1ce6cef95382237b912588362b1dbd6a7fb1ae0b84e315deb167dcc8d18d2cccb93576ebd5b4348ca2eabc66286b06072e4ab0a69f28
+    test_src_map_id: C20109::1
+    test_case_id: test_bt_coex_rssi_C20109
+    test_function: test_bt_coex_rssi_C20109
+    test_id: test_bt_coex_rssi_C20109::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20109
+      - bt
+      - coex
+      - functional
+      - rssi
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_bt_coex_rssi_C20109
+  - id: >-
+      effe2f9257ea799a3756c49b7f4da51d9b381a0d1224e0163e3c97e879f2ce7bb0c9f1d63850b8e1b6d19b229da07a7d6dd02720286014b70e477263784b817a
+    test_src_map_id: C20110::1
+    test_case_id: test_bt_coex_BD_C20110
+    test_function: test_bt_coex_BD_C20110
+    test_id: test_bt_coex_BD_C20110::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - BD
+      - C20110
+      - bt
+      - coex
+      - functional
+      - sqa_test_suites
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_bt_coex_BD_C20110
+  - id: >-
+      32884561930413b092226c01bfe8adb52697c3b52f7616aa31718f2a101ced0bfbc6174bde46dc73747da7fe49f1a6c58a5443909098997cbc74f5c9291cc3f4
+    test_src_map_id: C20111::1
+    test_case_id: test_sta_bt_C20111
+    test_function: test_sta_bt_C20111
+    test_id: test_sta_bt_C20111::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - pytest.mark.start_state('wifi_sniffer',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20111
+      - bt
+      - coex
+      - functional
+      - sqa_test_suites
+      - sta
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_sta_bt_C20111
+  - id: >-
+      9c35b3e75d1d7d979e6b30cdf18428bce85a5a3bc57064dfd73adeb685a528a7cd78f6b6b029e56f5f83d98effa20523e774a22fd30544b0809c08311a9c7fcb
+    test_src_map_id: C20114::1
+    test_case_id: test_sta_bt_C20114
+    test_function: test_sta_bt_C20114
+    test_id: test_sta_bt_C20114::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - pytest.mark.start_state('wifi_sniffer',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20114
+      - bt
+      - coex
+      - functional
+      - sqa_test_suites
+      - sta
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_sta_bt_C20114
+  - id: >-
+      e6f256119fd8d9c86578ee8322a5e030ab4ecf774aa254349ae6b3f5ca31d20b1413388ecdaf05571dac7e4458bb022c3f727b0c7630a47f373c9c4f9c29643c
+    test_src_map_id: C20115::1
+    test_case_id: test_sta_bt_C20115
+    test_function: test_sta_bt_C20115
+    test_id: test_sta_bt_C20115::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.BTFeatureBitmapValid|RS9116ExtCustomFeatureBitMap.Default|RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3|RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature256kBMemoryMode|RS9116ExtCustomFeatureBitMap.Feature320kBMemoryMode|RS9116ExtCustomFeatureBitMap.FeatureLowPower,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - pytest.mark.start_state('wifi_dut',wifi='init')
+      - pytest.mark.start_state('wifi_sniffer',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20115
+      - bt
+      - coex
+      - functional
+      - sqa_test_suites
+      - sta
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_sta_bt_C20115
+  - id: >-
+      757bf369e9972b4fca0e986c90314beb0b33e2eca3c5f145a2c3d2230ce3d71f709dd69bdf61ea1b77b25084bc90e3f6a6721581ce19ca7870debbd0ce50383c
+    test_src_map_id: C20116::1
+    test_case_id: test_sta_bt_C20116
+    test_function: test_sta_bt_C20116
+    test_id: test_sta_bt_C20116::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20116
+      - bt
+      - coex
+      - functional
+      - sqa_test_suites
+      - sta
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_sta_bt_C20116
+  - id: >-
+      3df6b5467ec352ea7f10d04d6e854de1cc240b775f71d67c8e41febd49fcdb268a025e832423703879201c46e0b399b0e65c2a113b2f51d1c44eb0f29528e2e2
+    test_src_map_id: C20117::1
+    test_case_id: test_sta_bt_C20117
+    test_function: test_sta_bt_C20117
+    test_id: test_sta_bt_C20117::1
+    test_module: sqa_test_suites/coex/functional/sta_bt/test_sta_bt_coex.py
+    test_markers:
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.RFTypeSelection})
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20117
+      - bt
+      - coex
+      - functional
+      - sqa_test_suites
+      - sta
+      - sta_bt
+      - sta_bt_coex
+    test_case_name: test_sta_bt_C20117
+  - id: >-
+      b454da8263866ea282e7edd124fbd26c7d1fce1b0cac881ffdff5378b09bce2eec85b68da0baceb7d73f57120cd463ca76073636554ca06483285f02f45e791e
+    test_src_map_id: C20075::1
+    test_case_id: test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075[TCP]
+    test_function: test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075
+    test_id: test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075[TCP]::1
+    test_module: >-
+      sqa_test_suites/coex/functional/sta_bt_ble/test_sta_bt_ble_dual_mode_with_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params:
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C20075
+      - ble
+      - bt
+      - coex
+      - connection
+      - functional
+      - slave
+      - sqa_test_suites
+      - sta
+      - sta_bt_ble
+      - sta_bt_ble_dual_mode_with_whitelist
+    test_case_name: test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075[TCP]
+  - id: >-
+      20a9ca7403671785907da7ce084f5b0e29573754c9a445e3b7e61168db0d31cce3a98c57ccce263d999b2cd1c8ffbd71c875d8124a6e8ebdfdf542e4775c4aee
+    test_src_map_id: C20076::1
+    test_case_id: test_sta_bt_ble_connection_with_bt_ble_as_master_C20076[UDP]
+    test_function: test_sta_bt_ble_connection_with_bt_ble_as_master_C20076
+    test_id: test_sta_bt_ble_connection_with_bt_ble_as_master_C20076[UDP]::1
+    test_module: >-
+      sqa_test_suites/coex/functional/sta_bt_ble/test_sta_bt_ble_dual_mode_with_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params:
+      - name: protocol
+        value: UDP
+    version: 0
+    enabled: true
+    labels:
+      - C20076
+      - ble
+      - bt
+      - coex
+      - connection
+      - functional
+      - master
+      - sqa_test_suites
+      - sta
+      - sta_bt_ble
+      - sta_bt_ble_dual_mode_with_whitelist
+    test_case_name: test_sta_bt_ble_connection_with_bt_ble_as_master_C20076[UDP]
+  - id: >-
+      cedcfa5706709027b438f3d1e1652d4f7443a524f6658c51c6017bdb9d6d934d632f6160a7d403b23091159a7faa1dcff96787de15b6718e888393b2e8507dc6
+    test_src_map_id: C20077::1
+    test_case_id: test_sta_bt_ble_connection_with_ble_as_dual_role_C20077[TCP]
+    test_function: test_sta_bt_ble_connection_with_ble_as_dual_role_C20077
+    test_id: test_sta_bt_ble_connection_with_ble_as_dual_role_C20077[TCP]::1
+    test_module: >-
+      sqa_test_suites/coex/functional/sta_bt_ble/test_sta_bt_ble_dual_mode_with_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params:
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C20077
+      - ble
+      - bt
+      - coex
+      - connection
+      - dual
+      - functional
+      - role
+      - sqa_test_suites
+      - sta
+      - sta_bt_ble
+      - sta_bt_ble_dual_mode_with_whitelist
+    test_case_name: test_sta_bt_ble_connection_with_ble_as_dual_role_C20077[TCP]
+  - id: >-
+      695257e915b22a1951ba9564620c02302e8939c51d41ca953f0f4c6f2a28c7f58c128a1ad031910c6b5682c818b4c708687eb1186056f9d226a0acda66462cc1
+    test_src_map_id: C20078::1
+    test_case_id: test_sta_bt_ble_connection_stability_C20078[TCP]
+    test_function: test_sta_bt_ble_connection_stability_C20078
+    test_id: test_sta_bt_ble_connection_stability_C20078[TCP]::1
+    test_module: >-
+      sqa_test_suites/coex/functional/sta_bt_ble/test_sta_bt_ble_dual_mode_with_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params:
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C20078
+      - ble
+      - bt
+      - coex
+      - connection
+      - functional
+      - sqa_test_suites
+      - sta
+      - sta_bt_ble
+      - sta_bt_ble_dual_mode_with_whitelist
+      - stability
+    test_case_name: test_sta_bt_ble_connection_stability_C20078[TCP]
+  - id: >-
+      73defd44608fa49b36cf9b79062ee58ea0e4139ab82ca00dd44bfe3666e559dcbbfcd33f4fb982f6d732ff4d72013d2d04068a74a112d6ac675b79d25680c02d
+    test_src_map_id: C20079::1
+    test_case_id: test_sta_bt_ble_connection_with_http_download_C20079[100MB.html]
+    test_function: test_sta_bt_ble_connection_with_http_download_C20079
+    test_id: test_sta_bt_ble_connection_with_http_download_C20079[100MB.html]::1
+    test_module: >-
+      sqa_test_suites/coex/functional/sta_bt_ble/test_sta_bt_ble_dual_mode_with_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
+        'ca-chain.cert.pem'})
+      - pytest.mark.bt_classic()
+      - pytest.mark.http_server('raspi_lighttpd_tls',)
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params:
+      - name: index_path
+        value: 100MB.html
+    version: 0
+    enabled: true
+    labels:
+      - C20079
+      - ble
+      - bt
+      - coex
+      - connection
+      - download
+      - functional
+      - http
+      - sqa_test_suites
+      - sta
+      - sta_bt_ble
+      - sta_bt_ble_dual_mode_with_whitelist
+    test_case_name: test_sta_bt_ble_connection_with_http_download_C20079[100MB.html]
+  - id: >-
+      650cf62493ae8792d58dbbde340c1ec458f1110ebc25860c30e112da32919e98b8a88d999ab1fdea8a0c1731f20b56d2374a90036c6d41cd0e7c884c64422a20
+    test_src_map_id: C20080::1
+    test_case_id: test_sta_bt_ble_connection_with_dual_mode_functionality_C20080[TCP]
+    test_function: test_sta_bt_ble_connection_with_dual_mode_functionality_C20080
+    test_id: test_sta_bt_ble_connection_with_dual_mode_functionality_C20080[TCP]::1
+    test_module: >-
+      sqa_test_suites/coex/functional/sta_bt_ble/test_sta_bt_ble_dual_mode_with_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params:
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C20080
+      - ble
+      - bt
+      - coex
+      - connection
+      - dual
+      - functional
+      - functionality
+      - mode
+      - sqa_test_suites
+      - sta
+      - sta_bt_ble
+      - sta_bt_ble_dual_mode_with_whitelist
+    test_case_name: test_sta_bt_ble_connection_with_dual_mode_functionality_C20080[TCP]
+  - id: >-
+      993a77680adc8ff4c8ced07bb4788f63658287ce6c0f7fb30b95c62732ac5e07fba630044ddac610830ff772b041ce442051b4b5180052b010c14661ef8c79dc
+    test_src_map_id: C20081::1
+    test_case_id: test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081[TCP]
+    test_function: test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081
+    test_id: test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081[TCP]::1
+    test_module: >-
+      sqa_test_suites/coex/functional/sta_bt_ble/test_sta_bt_ble_dual_mode_with_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params:
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C20081
+      - ble
+      - bt
+      - coex
+      - connect
+      - connection
+      - disconnect
+      - functional
+      - sqa_test_suites
+      - sta
+      - sta_bt_ble
+      - sta_bt_ble_dual_mode_with_whitelist
+    test_case_name: test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081[TCP]
+  - id: >-
+      d22936b17e6321eea8ff459b7c654a303fb287ec3d3e43af1b5829c3f1553ef5dc70ec2e32d3daafe26d03d41c743101ddce07e9c55b57254af6af70d64348e2
+    test_src_map_id: C20082::1
+    test_case_id: test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082[1MB.htm]
+    test_function: test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082
+    test_id: test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082[1MB.htm]::1
+    test_module: >-
+      sqa_test_suites/coex/functional/sta_bt_ble/test_sta_bt_ble_dual_mode_with_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
+        'ca-chain.cert.pem'})
+      - pytest.mark.bt_classic()
+      - pytest.mark.http_server('raspi_lighttpd_tls',)
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params:
+      - name: index_path
+        value: 1MB.htm
+    version: 0
+    enabled: true
+    labels:
+      - C20082
+      - ble
+      - bt
+      - coex
+      - connect
+      - connection
+      - disconnect
+      - functional
+      - sqa_test_suites
+      - sta
+      - sta_bt_ble
+      - sta_bt_ble_dual_mode_with_whitelist
+    test_case_name: test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082[1MB.htm]
+  - id: >-
+      8951a3d15e24443a9dd72e9ab231c81a7cc0275264583f5d5eacc64491a78acb555ec335b9cdfecebd3db1c6c0145dcd06281552b82c7cbe3a7178f117d9d7de
+    test_src_map_id: C20083::1
+    test_case_id: test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083[1MB.htm]
+    test_function: test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083
+    test_id: test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083[1MB.htm]::1
+    test_module: >-
+      sqa_test_suites/coex/functional/sta_bt_ble/test_sta_bt_ble_dual_mode_with_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default|RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid|RS9116TCPIPFeatureBitMap.Ping|RS9116TCPIPFeatureBitMap.SSL|RS9116TCPIPFeatureBitMap.DNSClient|RS9116TCPIPFeatureBitMap.HTTPClient|RS9116TCPIPFeatureBitMap.DHCPv4Client,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'ca_cert':
+        'ca-chain.cert.pem'})
+      - pytest.mark.bt_classic()
+      - pytest.mark.http_server('raspi_lighttpd_tls',)
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params:
+      - name: index_path
+        value: 1MB.htm
+    version: 0
+    enabled: true
+    labels:
+      - C20083
+      - ble
+      - bt
+      - coex
+      - connect
+      - connection
+      - disconnect
+      - functional
+      - sqa_test_suites
+      - sta
+      - sta_bt_ble
+      - sta_bt_ble_dual_mode_with_whitelist
+    test_case_name: test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083[1MB.htm]
+  - id: >-
+      582c238c832798b899605e06eb41139741b28a27236d250c3b266e83a5df7f6c68a53b7a42a18b2193c06765781553e5abe50777a5407dfd5a600b14a6a247ad
+    test_src_map_id: C20084::1
+    test_case_id: test_sta_bt_ble_connection_with_powersave_mode2_C20084[TCP]
+    test_function: test_sta_bt_ble_connection_with_powersave_mode2_C20084
+    test_id: test_sta_bt_ble_connection_with_powersave_mode2_C20084[TCP]::1
+    test_module: >-
+      sqa_test_suites/coex/functional/sta_bt_ble/test_sta_bt_ble_dual_mode_with_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params:
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C20084
+      - ble
+      - bt
+      - coex
+      - connection
+      - functional
+      - mode2
+      - powersave
+      - sqa_test_suites
+      - sta
+      - sta_bt_ble
+      - sta_bt_ble_dual_mode_with_whitelist
+    test_case_name: test_sta_bt_ble_connection_with_powersave_mode2_C20084[TCP]
+  - id: >-
+      5eee6b3dfee59c9f9eb1bc6d631acd72703c16954e68b53ad2f5f2b9d60c362a00aba123f269c6c36bed6f73d0517caa9e3e067779719fed80690b8be736835c
+    test_src_map_id: C20085::1
+    test_case_id: test_sta_bt_ble_connection_with_bg_scan_C20085[UDP]
+    test_function: test_sta_bt_ble_connection_with_bg_scan_C20085
+    test_id: test_sta_bt_ble_connection_with_bg_scan_C20085[UDP]::1
+    test_module: >-
+      sqa_test_suites/coex/functional/sta_bt_ble/test_sta_bt_ble_dual_mode_with_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - pytest.mark.start_state('wifi_sniffer',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params:
+      - name: protocol
+        value: UDP
+    version: 0
+    enabled: true
+    labels:
+      - C20085
+      - bg
+      - ble
+      - bt
+      - coex
+      - connection
+      - functional
+      - scan
+      - sqa_test_suites
+      - sta
+      - sta_bt_ble
+      - sta_bt_ble_dual_mode_with_whitelist
+    test_case_name: test_sta_bt_ble_connection_with_bg_scan_C20085[UDP]
+  - id: >-
+      6556ba2ebe936f6f5c3245895cb369d4351aa859d976fcb6ff3d1b05b362fa2acbabf17307cc4d41b07359faea3d651f9cbbb8527a3d6a0f07044e30d48eecfa
+    test_src_map_id: C20086::1
+    test_case_id: test_sta_bt_ble_connection_with_sta_scan_mode_C20086[test_C20086-TCP]
+    test_function: test_sta_bt_ble_connection_with_sta_scan_mode_C20086
+    test_id: test_sta_bt_ble_connection_with_sta_scan_mode_C20086[test_C20086-TCP]::1
+    test_module: >-
+      sqa_test_suites/coex/functional/sta_bt_ble/test_sta_bt_ble_dual_mode_with_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - 'pytest.mark.config(''wifi_access_point'',wifi={''ssid'': ''test_C20086''})'
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.EnahanceMaxPsp|RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params:
+      - name: ssid
+        value: test_C20086
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C20086
+      - ble
+      - bt
+      - coex
+      - connection
+      - functional
+      - mode
+      - scan
+      - sqa_test_suites
+      - sta
+      - sta_bt_ble
+      - sta_bt_ble_dual_mode_with_whitelist
+    test_case_name: test_sta_bt_ble_connection_with_sta_scan_mode_C20086[test_C20086-TCP]
+  - id: >-
+      47082ad9acf9cbbd59b8c38124924628587163bb89576852ce8748ea1d241c8d56ea26412697f88068369fb543de58fc5718ba5ec9d1364e0d7c790db39e577d
+    test_src_map_id: C20087::1
+    test_case_id: test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087[TCP]
+    test_function: test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087
+    test_id: test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087[TCP]::1
+    test_module: >-
+      sqa_test_suites/coex/functional/sta_bt_ble/test_sta_bt_ble_dual_mode_with_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params:
+      - name: protocol
+        value: TCP
+    version: 0
+    enabled: true
+    labels:
+      - C20087
+      - ble
+      - bt
+      - coex
+      - connection
+      - deep
+      - functional
+      - functionality
+      - sleep
+      - sqa_test_suites
+      - sta
+      - sta_bt_ble
+      - sta_bt_ble_dual_mode_with_whitelist
+    test_case_name: test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087[TCP]
+  - id: >-
+      aa3576cec984fae61fb5b46db8fa4c36a03be97876a3324d60410760359b0fe0629560d4de8305f4f7f059c2839e1be7461c25ac78e3845b05a2fec2b43a02cf
+    test_src_map_id: C19993::1
+    test_case_id: test_bt_ble_connection_with_bt_ble_as_slave_C19993
+    test_function: test_bt_ble_connection_with_bt_ble_as_slave_C19993
+    test_id: test_bt_ble_connection_with_bt_ble_as_slave_C19993::1
+    test_module: sqa_test_suites/bt_classic/functional/bt_ble/test_bt_ble_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C19993
+      - ble
+      - bt
+      - bt_ble
+      - bt_ble_whitelist
+      - bt_classic
+      - connection
+      - functional
+      - slave
+      - sqa_test_suites
+    test_case_name: test_bt_ble_connection_with_bt_ble_as_slave_C19993
+  - id: >-
+      ae782496481dcae25a49e698e7a87e2afd472444da6d0fc15c150ca08f1f9933de2f44fcb6b85f773e84d199199f596dc71d740e5ba67b46e505240b164e2563
+    test_src_map_id: C19995::1
+    test_case_id: test_bt_ble_connection_with_ble_as_dual_role_C19995
+    test_function: test_bt_ble_connection_with_ble_as_dual_role_C19995
+    test_id: test_bt_ble_connection_with_ble_as_dual_role_C19995::1
+    test_module: sqa_test_suites/bt_classic/functional/bt_ble/test_bt_ble_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C19995
+      - ble
+      - bt
+      - bt_ble
+      - bt_ble_whitelist
+      - bt_classic
+      - connection
+      - dual
+      - functional
+      - role
+      - sqa_test_suites
+    test_case_name: test_bt_ble_connection_with_ble_as_dual_role_C19995
+  - id: >-
+      a02a8017e957179f24f87a594999f6071df1191508682854f21bab529c4f61abe2f02338f44d1f7b2dee5225545bea5ff81335855bdf5e38391b787068c176ae
+    test_src_map_id: C19996::1
+    test_case_id: test_bt_ble_connection_stability_C19996
+    test_function: test_bt_ble_connection_stability_C19996
+    test_id: test_bt_ble_connection_stability_C19996::1
+    test_module: sqa_test_suites/bt_classic/functional/bt_ble/test_bt_ble_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C19996
+      - ble
+      - bt
+      - bt_ble
+      - bt_ble_whitelist
+      - bt_classic
+      - connection
+      - functional
+      - sqa_test_suites
+      - stability
+    test_case_name: test_bt_ble_connection_stability_C19996
+  - id: >-
+      e01ee36e221993d6ce859d1b101098e63a452d08dfeccce9a02a7fbcd92199838e76b393d36efd6066926922f2346f489e7d584acdaf97edb45bf6f0c74709c9
+    test_src_map_id: C19997::1
+    test_case_id: test_BT_SPP_Tx_Rx_BLE_connectivity_C19997
+    test_function: test_BT_SPP_Tx_Rx_BLE_connectivity_C19997
+    test_id: test_BT_SPP_Tx_Rx_BLE_connectivity_C19997::1
+    test_module: sqa_test_suites/bt_classic/functional/bt_ble/test_bt_ble_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake|RS9116FeatureBitMap.Aggregation,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - BLE
+      - BT
+      - C19997
+      - Rx
+      - SPP
+      - Tx
+      - bt_ble
+      - bt_ble_whitelist
+      - bt_classic
+      - connectivity
+      - functional
+      - sqa_test_suites
+    test_case_name: test_BT_SPP_Tx_Rx_BLE_connectivity_C19997
+  - id: >-
+      e722e29801508aadb893a855889ef45f158e74b6113a6f3334fa14ad2812dd6383899549b111532163651e863435fe232a6a07aabafc5f07482811b5efa26e43
+    test_src_map_id: C19998::1
+    test_case_id: test_bt_ble_connection_with_dual_mode_functionality_C19998
+    test_function: test_bt_ble_connection_with_dual_mode_functionality_C19998
+    test_id: test_bt_ble_connection_with_dual_mode_functionality_C19998::1
+    test_module: sqa_test_suites/bt_classic/functional/bt_ble/test_bt_ble_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C19998
+      - ble
+      - bt
+      - bt_ble
+      - bt_ble_whitelist
+      - bt_classic
+      - connection
+      - dual
+      - functional
+      - functionality
+      - mode
+      - sqa_test_suites
+    test_case_name: test_bt_ble_connection_with_dual_mode_functionality_C19998
+  - id: >-
+      089dcad0a6566365c20c3bf81e65c873e47f2779b9571aa8de70773744c1f6bef96fa7f1ca70a90f6a6c7f4e8968bea2bee6add4b6bb559df22cde700f48eca3
+    test_src_map_id: C19999::1
+    test_case_id: test_BT_connect_and_disconnect_BLE_is_in_connection_C19999
+    test_function: test_BT_connect_and_disconnect_BLE_is_in_connection_C19999
+    test_id: test_BT_connect_and_disconnect_BLE_is_in_connection_C19999::1
+    test_module: sqa_test_suites/bt_classic/functional/bt_ble/test_bt_ble_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - BLE
+      - BT
+      - C19999
+      - bt_ble
+      - bt_ble_whitelist
+      - bt_classic
+      - connect
+      - connection
+      - disconnect
+      - functional
+      - is
+      - sqa_test_suites
+    test_case_name: test_BT_connect_and_disconnect_BLE_is_in_connection_C19999
+  - id: >-
+      5a706207fecd5d9f252017147d25f1e12b0acbd693a605920453a8b6935076438abcb663c0027982cb98e27b304143d55bf79654653d49dbb1b23465e5921b9a
+    test_src_map_id: C20000::1
+    test_case_id: test_bt_ble_connection_with_ble_connect_disconnect_C20000
+    test_function: test_bt_ble_connection_with_ble_connect_disconnect_C20000
+    test_id: test_bt_ble_connection_with_ble_connect_disconnect_C20000::1
+    test_module: sqa_test_suites/bt_classic/functional/bt_ble/test_bt_ble_whitelist.py
+    test_markers:
+      - pytest.mark.firmware_app('test_coex_custom',)
+      - pytest.mark.ble_client('secondary_raspi_ble_client',)
+      - pytest.mark.bt_client('raspi_bt_client',)
+      - pytest.mark.start_state('wifi_dut',wifi=['init'])
+      - >-
+        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
+        RS9116CoexMode.DualBluetoothBLE|RS9116CoexMode.WLAN,'features':
+        RS9116FeatureBitMap.ULPGPIOHandshake,'tcpip_features':
+        RS9116TCPIPFeatureBitMap.Default,'ext_tcpip_features':
+        RS9116ExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'custom_features':
+        RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_custom_features':
+        RS9116ExtCustomFeatureBitMap.Default,'bt_features':
+        RS9116BTFeatureBitMap.Default,'config_features':
+        RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0})
+      - pytest.mark.bt_classic()
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['bt_powersave_disable','disassociated','ble_stop_adv','ble_stop_scan'])
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C20000
+      - ble
+      - bt
+      - bt_ble
+      - bt_ble_whitelist
+      - bt_classic
+      - connect
+      - connection
+      - disconnect
+      - functional
+      - sqa_test_suites
+    test_case_name: test_bt_ble_connection_with_ble_connect_disconnect_C20000

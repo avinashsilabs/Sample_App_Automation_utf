@@ -292,13 +292,13 @@ devices:
                 # The test system will communicate with the device via the ip address specified below
                 # to configure the device with the desired settings
                 type: 'wifi.access_points.dlink810'
-                ip_address: '10.207.18.57'
-                web_ui_port: 8080
-                admin_password: 'test123'
+                ip_address: '192.168.0.1'
+                web_ui_port: 80
+                admin_password: '12345678'
                 skip_assertion_failure : True
                 security: WPA
                 ssid: 'Jenkins-TB6'
-                passphrase: '12345678'
+                passphrase: 'thisisatestnetwork11'
                 supports: 'wifi_ap'
                 channel: 1
 
@@ -331,6 +331,31 @@ devices:
                 radius_ip: "10.207.18.166"
                 radius_port: "1812"
                 ap_test_ip: '192.168.50.1' #AP LOGIN IP (TEST IP)
+                guest_networks:
+                    - band : "2g"
+                      index: "1"
+                      ssid: "ASUS_B0_2G_Guest"
+                      security: WPA2
+                    - band : "2g"
+                      index: "2"
+                      ssid: "ASUS_B0_5G_Guest2"
+                      security: WPA2
+                    - band : "2g"
+                      index: "3"
+                      ssid: "ASUS_B0_5G_Guest3"
+                      security: WPA2
+                    - band : "5g"
+                      index: "1"
+                      ssid: "ASUS_B0_5G_Guest"
+                      security: WPA2
+                    - band : "5g"
+                      index: "2"
+                      ssid: "ASUS_B0_5G_Guest2"
+                      security: WPA2
+                    - band : "5g"
+                      index: "3"
+                      ssid: "ASUS_B0_5G_Guest3"
+                      security: WPA2
 
     # This represents another access point configuration.
     asus_rt_ac68u_ap:
@@ -349,6 +374,7 @@ devices:
                 # radius server configuration
                 radius_ip: "192.168.1.231"
                 radius_port: "1812"
+    
     # This represents another access point configuration.
     asus_rt_ax53u_ap:
         interfaces:
@@ -365,6 +391,17 @@ devices:
                 radius_ip: "192.168.50.231"
                 radius_port: "1812"
 
+    # This represents another access point configuration.
+    linksys_e7350_ap:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.linksys_e7350'
+                ip_address: '192.168.1.1'
+                web_ui_port: 8080
+                admin_password: 'password'
+                ssid: "TEST_LINKSYS"
+                security: WPA2
+    
     switched_ap:
         interfaces:
             wifi:
@@ -377,11 +414,11 @@ devices:
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
-                hostname: '10.207.18.167'
+                hostname: '10.207.18.139'
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
-                outlet: 3
+                outlet: 8
                 # use_persistent_state: true will set a persistent state, that the outlet will revert
                 # to after reboot or power cycle
                 # use_persistent_state: false will set a transient state only, and the outlet will revert
@@ -445,7 +482,7 @@ devices:
             tc:
                 type: 'traffic_controller.tc_cli'
                 shell: 'linux_shell'
-                interface: 'eth0'
+                interface: 'eth2'
             wifi:
                 # The 'wifi.access_points.linux' device type represents a linux-based access point
                 # running hostapd to create a soft AP
@@ -454,7 +491,7 @@ devices:
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
                 supports: [ 'wifi_ap', 'wifi_client' ]
-                interface: 'wlan0'
+                interface: 'eth2'
                 standard: 'n'
                 ip_address: '192.168.0.1'
                 region: 'Japan'
@@ -473,7 +510,7 @@ devices:
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
                 supports: [ 'wifi_ap', 'wifi_client' ]
-                interface: 'wlan0'
+                interface: 'eth2'
                 standard: 'n'
                 ip_address: '10.207.18.173'
 
@@ -490,7 +527,7 @@ devices:
         interfaces:
             multicast:
                 type: 'multicast.multicast_socket'
-                ip_version: 0
+                ip_version: 4
                 multicast_ip: '239.0.0.1'
                 multicast_ip2: '239.0.0.1'
                 dut_local_socket: 5001
@@ -501,13 +538,13 @@ devices:
                 no_of_pkts: 500
                 multicast_ip_mac_map: '01:00:5e:7f:ff:fa'
                 multicast_ip2_mac_map1: '01:00:5e:7f:ff:fa'
-                interface: 'eth1'
+                interface: 'eth2'
 
     raspi_ip_socket:
         interfaces:
             socket:
                 type: 'socket.ip_socket'
-                ip_version: 0
+                ip_version: 4
                 dut_local_socket: 5001
                 destination_socket: 5001
                 server_ip: '192.168.100.50'
@@ -515,13 +552,13 @@ devices:
                 buffer_length: 1470
                 no_of_pkts: 500
                 socket_type: 0   #0- TCP, 1 - UDP
-                interface: 'eth0'
+                interface: 'eth2'
 
     raspi_ip_remote_socket:
         interfaces:
             socket:
                 type: 'socket.ip_remote_socket'
-                ip_version: 0
+                ip_version: 4
                 dut_local_socket: 5001
                 destination_socket: 5001
                 server_ip: '192.168.100.50'
@@ -529,8 +566,8 @@ devices:
                 buffer_length: 1470
                 no_of_pkts: 500
                 socket_type: 0   #0- TCP, 1 - UDP
-                interface: 'eth0'
-                primary_interface: 'eth0'
+                interface: 'eth2'
+                primary_interface: 'eth2'
                 primary_port: 5001
 
     raspi_bt_client:
@@ -545,7 +582,7 @@ devices:
         interfaces:
             socket:
                 type: 'socket.ip_socket_factory'
-                interface: 'eth1' #test line interface 192.168.x.x
+                interface: 'eth2' #test line interface 192.168.x.x
 
     # this configuration entry represents a secondary raspberry pi device that we will connect
     # to through via RPC
@@ -602,14 +639,14 @@ devices:
                             shell: 'linux_shell'
                             server_listen_address: '0.0.0.0'
                             port: 1883
-                            interface: 'wlan0'
+                            interface: 'eth2'
                             tls_enabled: false
                         wifi:
                             # The 'wifi.access_points.linux' device type represents a linux-based access point
                             # running hostapd to create a soft AP
                             type: 'wifi.access_points.linux'
                             shell: 'linux_shell'
-                            interface: 'wlan0'
+                            interface: 'eth2'
             defaults: { }
 
     secondary_raspi_ble_client:
@@ -656,7 +693,7 @@ devices:
                 # (optional) port on which the broker is listening (defaults to 1883)
                 port: 1883
                 # (required) network interface to which the broker is bound
-                interface: 'wlan0'
+                interface: 'eth2'
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
 
@@ -670,7 +707,7 @@ devices:
                 shell: 'linux_shell'
                 server_listen_address: '0:0:0:0:0:0:0:0'
                 port: 1883
-                interface: 'wlan0'
+                interface: 'eth2'
                 tls_enabled: false
                 ip_version: 6
     
@@ -687,7 +724,7 @@ devices:
                 # (optional) port on which the broker is listening (defaults to 1883)
                 port: 1883
                 # (required) network interface to which the broker is bound
-                interface: 'wlan0'
+                interface: 'eth2'
                 # (optional) username and password credentials for authentication to the broker
                 #            Defaults to authentication disabled
                 username: 'testuser'
@@ -704,7 +741,7 @@ devices:
                 shell: 'linux_shell'
                 server_listen_address: '0:0:0:0:0:0:0:0'
                 port: 1883
-                interface: 'wlan0'
+                interface: 'eth2'
                 username: 'testuser'
                 password: 'testpassword'
                 tls_enabled: false
@@ -721,7 +758,7 @@ devices:
                 server_listen_address: '0.0.0.0'
                 # port must be set to 8883 for TLS to be enabled
                 port: 8883
-                interface: 'wlan0'
+                interface: 'eth2'
                 username: 'testuser'
                 password: 'testpassword'
                 tls_enabled: true
@@ -741,7 +778,7 @@ devices:
                 shell: 'linux_shell'
                 server_listen_address: '0:0:0:0:0:0:0:0'
                 port: 8883
-                interface: 'wlan0'
+                interface: 'eth2'
                 username: 'testuser'
                 password: 'testpassword'
                 tls_enabled: true
@@ -760,7 +797,7 @@ devices:
                 server_listen_address: '0.0.0.0'
                 # port must be set to 8883 for TLS to be enabled
                 port: 8883
-                interface: 'eth0'
+                interface: 'eth2'
                 username: 'testuser'
                 password: 'testpassword'
                 tls_enabled: true
@@ -796,7 +833,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 80
-                interface: 'wlan0'
+                interface: 'eth2'
 
     raspi_lighttpd_tls:
         interfaces:
@@ -806,7 +843,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 443
-                interface: 'wlan0'
+                interface: 'eth2'
                 tls_enabled: true
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
@@ -820,7 +857,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 443
-                interface: 'eth0'
+                interface: 'eth2'
                 tls_enabled: true
                 tls_key: 'server-key.pem'
                 tls_certificate: 'server-cert.pem'
@@ -834,7 +871,7 @@ devices:
                 type: 'http.server.python_http'
                 shell: 'linux_shell'
                 port: 80
-                interface: 'wlan0'
+                interface: 'eth2'
 
     raspi_http_client:
         interfaces:
@@ -963,12 +1000,12 @@ devices:
                 type: 'ssl.server.ssl_linux'
                 shell: 'linux_shell'
                 port: 5001
-                interface: 'eth0'
+                interface: 'eth2'
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
                 client_limit: 1
-                ip_version: 0
+                ip_version: 4
                 buffer_length: 1300
                 no_of_pkts: 1000
                 time: 30
@@ -982,7 +1019,7 @@ devices:
                 type: 'ssl.server.static'
                 hostname: '192.168.1.6'
                 port: 5001
-                ip_version: 0
+                ip_version: 4
                 buffer_length: 1300
                 no_of_pkts: 500
                 time: 30
@@ -995,12 +1032,12 @@ devices:
                 type: 'ssl.client.ssl_client'
                 shell: 'linux_shell'
                 port: 5001
-                interface: 'eth0'
+                interface: 'eth2'
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
                 client_limit: 1
-                ip_version: 0
+                ip_version: 4
                 buffer_length: 1470
                 no_of_pkts: 500
                 time: 30
@@ -1038,6 +1075,7 @@ devices:
                 host_ip: "192.168.0.152"
                 host_username: "pi"
                 host_password: "raspberry"
+
 
     static_iperf:
         interfaces:
@@ -1117,6 +1155,16 @@ devices:
                 type: 'openssl.server'
             client:
                 type: 'openssl.client'
+
+    nrf_52840_ble_client:
+        interfaces:
+            bluetooth:
+                type: 'bluetooth.nrf_blatann'
+                serial: serial
+                vid: 0x1915
+                pid: 0xC00A
+                serial_number: 'CA8B51D6DB51' # configure nrf52840 dongle serial number
+                port: 'auto'
 
     nrf_52840_sniffer:
         interfaces:
@@ -1230,6 +1278,38 @@ devices:
                 type: sniffer_filter
                 src_dir: 'utf_wiseconnect'
 
+    # This represents the frontline sniffer configuration
+    frontline_sniffer:
+        interfaces:
+            wcf_file_transfer_service:
+                type: 'rem_mgmt.win_wcf'
+                wsdl: 'http://10.207.22.26:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
+                timeout: 120000
+            sniffer:
+                type: 'bluetooth.sniffer.frontline.teledyne_lecroy_wireless_protocol_suite'
+                file_transfer_service: 'wcf_file_transfer_service'
+                host_ip: '10.207.22.26'
+                port: 22901
+                max_to_read: 1000
+                remote_capture_file_path: 'C:\\FTScapture'
+                personality_key: 'X500'
+                wps_server_path: 'C:\\Program Files (x86)\\Teledyne LeCroy Wireless\\Wireless Protocol Suite 3.10\\Executables\\Core'
+
+    # This represents the mock for frontline sniffer configuration
+    mock_bluetooth_sniffer:
+        interfaces:   
+            sniffer:
+                type: 'bluetooth.sniffer.mock.mock_sniffer'
+ 
+    # This represents the sdk_server configuration
+    tcp_server:
+        interfaces:
+            server:
+                type: "wifi.sdk_server.sdk_server_linux"
+                server_name: "TCP"
+                firmware_file_name: "SiWG917-B.2.13.2.0.0.2.1.rps"
+                server_binary_file_name: "tcp_server.bin"
+ 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1252,6 +1332,8 @@ defaults:
 
     # To connect the multiple access points
     wifi_access_points:
+        - 'asus_rt_ax3000_ap'
+        - 'asus_rt_ax53u_ap'
         - 'raspi_wifi'
         - 'static_ap'
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
@@ -1282,6 +1364,11 @@ defaults:
     power_meters:
         - 'nrf_ppk2_device'
 
+    nrf_ble_client: 'nrf_52840_ble_client'
+
+    nrf_ble_clients:
+        - 'nrf_52840_ble_client'
+
     ble_client: 'raspi_ble_client'
 
     ble_clients:
@@ -1295,6 +1382,10 @@ defaults:
     mqtt_client: 'raspi_wifi'
 
     http_server: 'raspi_lighttpd'
+
+    http_servers:
+        - 'raspi_lighttpd_tls'
+        - 'python_http_server'
 
     http_client: 'raspi_http_client'
 
@@ -1327,7 +1418,7 @@ defaults:
         security: WPA2
         channel: 0
         band: 0 #0 for 2.4Ghz & 1 for 5Ghz
-        passphrase: 'thisisatestnetwork'
+        passphrase: '12345678'
         server_ip: '192.168.0.1'
         static_ip: '192.168.50.199'
         static_subnet: '255.255.255.0'
@@ -1381,8 +1472,8 @@ defaults:
         bt_pin_code: "4321"
 
     iop_sockets:
-        server_ip: '10.207.18.168'
-        server_port: '7002'
+        server_ip: '10.207.18.104'
+        server_port: '7006'
         att_channel: 1
         db_value: 2
         att_enable: true
@@ -1422,6 +1513,8 @@ defaults:
         script: ""
     
     plotter: 'power_meter_plotter'
+
+    sdk_server: 'tcp_server'
 
     net_perf:
         server_options:
@@ -1512,7 +1605,7 @@ constants:
     iter_count:
         value: 5
     upgrade_fw:
-        value: "/RS9116W.2.9.1.12.rps"
+        value: "/RS9116W.2.11.0.0.4.rps"
     board_version:
         value: "1.4Q7"
     min_conn_interval:
@@ -1524,4 +1617,4 @@ constants:
     hostname:
         value: 'rs9116test'    
 
-recovery_error_codes: ['0xffffffe2', '0xffffffd5', '0xffffffeb', '0xffffffff', '0xffffffe7']
+recovery_error_codes: ['0xffffffe2', '0xffffffd5']
