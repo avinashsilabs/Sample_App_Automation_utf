@@ -29,6 +29,7 @@ import string
 from utf.utils.logger import get_logger
 from random import randint
 from test_sta_ble_sdk import BleThreadFunctionality, SnifferValidationProcess, ScanTime_JoinTime, WifiJoinThread
+from test_sta_ble_multi_raspi_sdk import BleDualRoleThreadFunctionality
 
 
 
@@ -245,7 +246,7 @@ pytestmark = [
                                | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
                 "wifi": {"count": 1, "stack_len": 3584},
-                "ble": {"count": 1, "stack_len": 2048},
+                "ble": {"count": 1, "stack_len": 3584},
 
             # "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
             },
@@ -325,11 +326,12 @@ def test_Coex_sdk_ssl_tx_cipher_C575153(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+
 
 
 
@@ -408,11 +410,12 @@ def test_Coex_sdk_ssl_tx_cipher_C575154(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 
@@ -488,11 +491,12 @@ def test_Coex_sdk_ssl_tx_cipher_C575155(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 
@@ -507,11 +511,12 @@ def test_Coex_sdk_ssl_tx_cipher_C575155(
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256']])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
-def test_Coex_sdk_ssl_tx_cipher_C575156(
+@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4365")
+def test_Coex_sdk_ssl_tx_cipher_dual_role_C575156(
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
-        ble_client,
+        ble_clients,
         request,
         utf_constants,
         sl_collections,
@@ -551,16 +556,17 @@ def test_Coex_sdk_ssl_tx_cipher_C575156(
                                       server_cert=cert[1], server_key=cert[2],
                                       mode="TX", test_run_time=duration)
         ssl_obj.set_cipher(ca_cert=cert[0])
-        ble_obj = BleThreadFunctionality(
+        ble_obj = BleDualRoleThreadFunctionality(
             wifi_dut=wifi_dut,
-            ble_client=ble_client,
+            ble_clients=ble_clients,
             sl_collections=sl_collections,
-            ble_test_type="slave",
+            ble_test_type="slave_and_master",
+            testcase=test_name,
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
         ssl_obj.ssl_connection_tx_rx()
-        ble_obj.ble_disconnect()
+        ble_obj.dual_role_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         ssl_obj.sniffer_validation_ssl()
         logger().info("sniffer validation is successful")
@@ -568,11 +574,12 @@ def test_Coex_sdk_ssl_tx_cipher_C575156(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_clients[0].interfaces.bluetooth.close()
+        ble_clients[1].interfaces.bluetooth.close()
         if ble_obj is not None:
-            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                       ble_client_address=ble_obj.ble_client_address,
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
+                                       ble_client_address=ble_obj.ble_clients_address[0],
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 
@@ -584,7 +591,7 @@ def test_Coex_sdk_ssl_tx_cipher_C575156(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
-@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256']])
+@pytest.mark.parametrize("cipher_list", [['TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256']])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
 def test_Coex_sdk_ssl_tx_cipher_C575157(
         wifi_sniffer,
@@ -623,7 +630,6 @@ def test_Coex_sdk_ssl_tx_cipher_C575157(
         logger().info(
             "start capturing with Sniffer by giving the test case name as filename"
         )
-
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         ssl_obj = wifi_ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
                                       cipher_list, sniffer_filter=sniffer_filter,
@@ -648,9 +654,11 @@ def test_Coex_sdk_ssl_tx_cipher_C575157(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+
 

@@ -359,6 +359,7 @@ def test_Coex_sdk_read_char_uuid_wlan_conn_C133434(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -497,6 +498,7 @@ def test_Coex_sdk_BLE_services_wlan_connected_C133446(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -605,6 +607,7 @@ def test_Coex_sdk_supported_profiles_wlan_conneced_C133557(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -720,6 +723,7 @@ def test_Coex_sdk_supported_particular_profile_wlan_conneced_C133558(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -848,6 +852,7 @@ def test_Coex_sdk_BLE_link_loss_TCP_TX_C133439(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -968,11 +973,12 @@ def test_Coex_sdk_BLE_query_att_desc_remote_while_TCP_TX_C133435(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+
 
 
 @pytest.mark.config(
@@ -1084,6 +1090,7 @@ def test_Coex_sdk_BLE_query_att_desc_value_remote_while_TCP_TX_C133436(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -1208,6 +1215,7 @@ def test_Coex_sdk_BLE_link_loss_master_TCP_TX_C133561(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,

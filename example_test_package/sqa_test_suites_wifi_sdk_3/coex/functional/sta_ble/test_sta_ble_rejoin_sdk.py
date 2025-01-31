@@ -28,6 +28,7 @@ from test_sta_ble_sdk import BleThreadFunctionality, WifiJoinThread
 def logger():
     return get_logger(__name__)
 
+ble_obj = None
 
 """
     setup requirement:
@@ -88,7 +89,6 @@ def logger():
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_adv",
     ],
 )
 def test_Coex_sdk_rejoin_fun_ble_slave_C133464(
@@ -181,6 +181,12 @@ def test_Coex_sdk_rejoin_fun_ble_slave_C133464(
     finally:
         logger().info("******* Turn on Access point Finally **********")
         switch.interfaces.pdu_switch.turn_on(delay=60)
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 
 @pytest.mark.config(
@@ -221,7 +227,6 @@ def test_Coex_sdk_rejoin_fun_ble_slave_C133464(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_adv",
     ],
 )
 def test_Coex_sdk_rejoin_ap_deauth_ble_slave_C133465(
@@ -348,6 +353,13 @@ def test_Coex_sdk_rejoin_ap_deauth_ble_slave_C133465(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -386,8 +398,6 @@ def test_Coex_sdk_rejoin_ap_deauth_ble_slave_C133465(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_scan",
-        "ble_stop_adv",
     ],
 )
 def test_Coex_sdk_rejoin_fun_ble_slave_bypass_C133500(
@@ -478,6 +488,11 @@ def test_Coex_sdk_rejoin_fun_ble_slave_bypass_C133500(
     finally:
         logger().info("******* Turn on Access point Finally **********")
         switch.interfaces.pdu_switch.turn_on(delay=60)
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 @pytest.mark.config(
@@ -517,8 +532,6 @@ def test_Coex_sdk_rejoin_fun_ble_slave_bypass_C133500(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_scan",
-        "ble_stop_adv",
     ],
 )
 def test_Coex_sdk_rejoin_ap_deauth_ble_slave_bypass_C133501(
@@ -644,6 +657,11 @@ def test_Coex_sdk_rejoin_ap_deauth_ble_slave_bypass_C133501(
         ble_obj.ble_disconnect()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 @pytest.mark.config(
@@ -687,8 +705,7 @@ def test_Coex_sdk_rejoin_ap_deauth_ble_slave_bypass_C133501(
     wifi=[
         "bt_powersave_disable",
         "wifi_powersave_disable",
-        "disassociated",
-        "ble_stop_adv",
+        "disassociated"
     ],
 )
 def test_Coex_sdk_BLE_ADV_STA_Disconn_C133553(
@@ -774,6 +791,11 @@ def test_Coex_sdk_BLE_ADV_STA_Disconn_C133553(
     finally:
         logger().info("******* Turn on Access point Finally **********")
         switch.interfaces.pdu_switch.turn_on(delay=60)
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 @pytest.mark.config(
@@ -818,7 +840,6 @@ def test_Coex_sdk_BLE_ADV_STA_Disconn_C133553(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_adv",
     ],
 )
 def test_Coex_sdk_TCP_while_rejoin_BLE_slave_C133471(
@@ -927,6 +948,11 @@ def test_Coex_sdk_TCP_while_rejoin_BLE_slave_C133471(
     finally:
         logger().info("******* Turn on Access point Finally **********")
         switch.interfaces.pdu_switch.turn_on(delay=60)
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 @pytest.mark.config(
@@ -970,8 +996,7 @@ def test_Coex_sdk_TCP_while_rejoin_BLE_slave_C133471(
     wifi=[
         "bt_powersave_disable",
         "wifi_powersave_disable",
-        "disassociated",
-        "ble_stop_adv",
+        "disassociated"
     ],
 )
 def test_Coex_sdk_UDP_while_rejoin_BLE_slave_C133472(
@@ -1079,3 +1104,8 @@ def test_Coex_sdk_UDP_while_rejoin_BLE_slave_C133472(
     finally:
         logger().info("******* Turn on Access point Finally **********")
         switch.interfaces.pdu_switch.turn_on(delay=60)
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)

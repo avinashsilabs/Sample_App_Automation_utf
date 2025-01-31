@@ -175,7 +175,7 @@ class BleThread(ThreadBase):
             ble_scan_filter_type=0,
             ble_pairing=0,
             dev_state=8,
-            gatt=False,
+            gatt=True,
             service_class=None,
             conn_interval=200,
             char_path=None, char_uid=None, data=None,
@@ -578,11 +578,14 @@ def test_sta_ble_sdk_ble_conn_wlan_conn_dhcp_C540347(wifi_sniffer, wifi_access_p
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+
+
 
 
 
@@ -692,11 +695,12 @@ def test_sta_ble_sdk_ble_whitelist_UDP_TX_C535084(wifi_sniffer, wifi_access_poin
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 
@@ -823,12 +827,12 @@ def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 
@@ -927,11 +931,12 @@ def test_sta_ble_sdk_wlan_scan_ble_master_rx_C538010(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 
@@ -1066,11 +1071,12 @@ def test_sta_ble_sdk_tcp_tx_ble_slave_C133549(wifi_sniffer, wifi_access_point, w
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 
@@ -1194,12 +1200,12 @@ def test_sta_ble_sdk_set_att_value_diff_length_tcp_tx_ble_slave_C133437(wifi_sni
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1279,6 +1285,8 @@ def test_sta_ble_sdk_http_dle_ble_periodic_tx_C537979(wifi_sniffer, wifi_access_
             data_length=20, data_duration=300,
             periodic_delay=10,
             address=address1,
+            ble_pairing=1,
+            gatt=True
         )
 
         # Create Custom services on DUT
@@ -1326,7 +1334,9 @@ def test_sta_ble_sdk_http_dle_ble_periodic_tx_C537979(wifi_sniffer, wifi_access_
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -1415,6 +1425,8 @@ def test_sta_ble_sdk_http_dl_ble_periodic_tx_dle_C537980(wifi_sniffer, wifi_acce
             data_length=240, data_duration=300,
             periodic_delay=30,
             address=address1,
+            ble_pairing=1,
+            gatt=True
         )
 
         # Create Custom services on DUT
@@ -1462,11 +1474,12 @@ def test_sta_ble_sdk_http_dl_ble_periodic_tx_dle_C537980(wifi_sniffer, wifi_acce
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-
         http_server.interfaces.http.stop_server()
 
 
@@ -1521,6 +1534,10 @@ def test_coex_sdk_httpget_url_2048_ble_smp_tx_C476959(http_server, wifi_dut, htt
 
         address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(index_path) + 1)
         wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(index_path), write_content=index_path)
+
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
+
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         iter_count = utf_constants.get("iter_count")
@@ -1609,11 +1626,12 @@ def test_coex_sdk_httpget_url_2048_ble_smp_tx_C476959(http_server, wifi_dut, htt
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 
@@ -1739,13 +1757,13 @@ def test_coex_sdk_https_get_url_2048_ble_RX_C476960(http_server, wifi_dut, http_
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 
@@ -1863,14 +1881,13 @@ def test_coex_sdk_httpsget_url_1536_ble_smp_C476963(http_server, wifi_dut, http_
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
@@ -2008,9 +2025,9 @@ def test_coex_sdk_httpget_url_1536_ble_smp_tx_C476964(http_server, wifi_dut, htt
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-

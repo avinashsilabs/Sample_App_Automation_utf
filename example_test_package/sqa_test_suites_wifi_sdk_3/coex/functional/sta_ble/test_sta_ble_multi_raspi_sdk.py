@@ -66,7 +66,7 @@ class BleDualRoleThreadFunctionality(ThreadBase):
         ble_test_type=None,
         sl_collections=None,
         testcase=None,
-        gatt=False,
+        gatt=True,
         ble_pairing=0,
         max_conn_interval=160,
         min_conn_interval=160
@@ -253,8 +253,6 @@ pytestmark = [
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_adv",
-        "ble_stop_scan",
     ],
 )
 def test_Coex_sdk_ble_adv_scan_wlan_conn_C133444(
@@ -278,58 +276,73 @@ def test_Coex_sdk_ble_adv_scan_wlan_conn_C133444(
         5. Initiate ping from the dut
 
     """
-    test_name = request.node.name
-    ping_count = utf_constants.get("ping_count")
-    test_type = "ping"
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-    )
-    logger().info(
-        "start capturing with Sniffer by giving the test case name as filename"
-    )
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-    wifi_obj = WifiJoinThread(
-        wifi_sniffer=wifi_sniffer,
-        wifi_dut=wifi_dut,
-        wifi_access_point=wifi_access_point,
-        testcase=test_name,
-        wifi_client=wifi_client,
-        sl_collections=sl_collections,
-        ping_count=ping_count,
-        sniffer_filter=sniffer_filter,
-        test_type=test_type,
-    )
-    wifi_obj.join_to_ap(skip_power_save=True)
-    ble_obj = BleThreadFunctionality(
-        wifi_dut=wifi_dut,
-        ble_client=ble_client,
-        sl_collections=sl_collections,
-        ble_test_type="advertise",
-    )
-    ble_obj.start()
-    ble_obj.wait_for_exit()
-    ble_client.interfaces.bluetooth.stop_scanning()
-    ble_client.interfaces.bluetooth.close()
-    sl_collections.check_ble_scan_functionality(
-        wifi_dut=wifi_dut,
-        ble_client=ble_client,
-        ble_address=ble_obj.ble_dut_address,
-        timeout=60,
-    )
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+        wifi_obj.join_to_ap(skip_power_save=True)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="advertise",
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_client.interfaces.bluetooth.stop_scanning()
+        ble_client.interfaces.bluetooth.close()
+        sl_collections.check_ble_scan_functionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            ble_address=ble_obj.ble_dut_address,
+            timeout=60,
+        )
 
-    wifi_obj.set_power_save()
-    wifi_obj.start()
-    wifi_obj.wait_for_exit()
-    wifi_dut.interfaces.wifi.ble_stop_scanning()
-    wifi_dut.interfaces.wifi.ble_stop_advertising()
-    ble_client.interfaces.bluetooth.stop_advertising()
-    wifi_obj.disconnect()
-    wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_obj.sniffer_validation_join()
-    logger().info("sniffer validation is successful")
+        wifi_obj.set_power_save()
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        wifi_dut.interfaces.wifi.ble_stop_advertising()
+        ble_client.interfaces.bluetooth.stop_advertising()
+        wifi_obj.disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+
+
 
 
 @pytest.mark.config(
@@ -343,8 +356,6 @@ def test_Coex_sdk_ble_adv_scan_wlan_conn_C133444(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_adv",
-        "ble_stop_scan",
     ],
 )
 def test_Coex_sdk_ble_scan_adv_wlan_conn_C133569(
@@ -368,58 +379,71 @@ def test_Coex_sdk_ble_scan_adv_wlan_conn_C133569(
         5. Initiate ping from the dut
 
     """
-    test_name = request.node.name
-    ping_count = utf_constants.get("ping_count")
-    test_type = "ping"
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-    )
-    logger().info(
-        "start capturing with Sniffer by giving the test case name as filename"
-    )
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-    wifi_obj = WifiJoinThread(
-        wifi_sniffer=wifi_sniffer,
-        wifi_dut=wifi_dut,
-        wifi_access_point=wifi_access_point,
-        testcase=test_name,
-        wifi_client=wifi_client,
-        sl_collections=sl_collections,
-        ping_count=ping_count,
-        sniffer_filter=sniffer_filter,
-        test_type=test_type,
-    )
-    wifi_obj.join_to_ap(skip_power_save=True)
-    ble_obj = BleThreadFunctionality(
-        wifi_dut=wifi_dut,
-        ble_client=ble_client,
-        sl_collections=sl_collections,
-        ble_test_type="advertise",
-    )
-    ble_obj.start()
-    ble_obj.wait_for_exit()
-    ble_client.interfaces.bluetooth.stop_scanning()
-    ble_client.interfaces.bluetooth.close()
-    sl_collections.check_ble_scan_functionality(
-        wifi_dut=wifi_dut,
-        ble_client=ble_client,
-        ble_address=ble_obj.ble_dut_address,
-        timeout=60,
-    )
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+        wifi_obj.join_to_ap(skip_power_save=True)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="advertise",
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_client.interfaces.bluetooth.stop_scanning()
+        ble_client.interfaces.bluetooth.close()
+        sl_collections.check_ble_scan_functionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            ble_address=ble_obj.ble_dut_address,
+            timeout=60,
+        )
 
-    wifi_obj.set_power_save()
-    wifi_obj.start()
-    wifi_obj.wait_for_exit()
-    wifi_dut.interfaces.wifi.ble_stop_scanning()
-    wifi_dut.interfaces.wifi.ble_stop_advertising()
-    ble_client.interfaces.bluetooth.stop_advertising()
-    wifi_obj.disconnect()
-    wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_obj.sniffer_validation_join()
-    logger().info("sniffer validation is successful")
+        wifi_obj.set_power_save()
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        wifi_dut.interfaces.wifi.ble_stop_advertising()
+        ble_client.interfaces.bluetooth.stop_advertising()
+        wifi_obj.disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
 
 
 @pytest.mark.config(
@@ -433,8 +457,6 @@ def test_Coex_sdk_ble_scan_adv_wlan_conn_C133569(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_scan",
-        "ble_stop_adv",
     ],
 )
 def test_Coex_sdk_fun_ble_master_slave_wlan_ping_C133507(
@@ -458,51 +480,65 @@ def test_Coex_sdk_fun_ble_master_slave_wlan_ping_C133507(
         6. Initiate ping with size 300
 
     """
-    assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
-    test_name = request.node.name
-    ping_count = utf_constants.get("ping_count")
-    test_type = "ping"
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-    )
-    logger().info(
-        "start capturing with Sniffer by giving the test case name as filename"
-    )
+    try:
+        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-    wifi_obj = WifiJoinThread(
-        wifi_sniffer=wifi_sniffer,
-        wifi_dut=wifi_dut,
-        wifi_access_point=wifi_access_point,
-        testcase=test_name,
-        wifi_client=wifi_client,
-        sl_collections=sl_collections,
-        ping_count=ping_count,
-        sniffer_filter=sniffer_filter,
-        test_type=test_type,
-    )
-    wifi_obj.join_to_ap(skip_power_save=True)
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+        wifi_obj.join_to_ap(skip_power_save=True)
 
-    ble_obj = BleDualRoleThreadFunctionality(
-        wifi_dut=wifi_dut,
-        ble_clients=ble_clients,
-        sl_collections=sl_collections,
-        ble_test_type="master_and_slave",
-        testcase=test_name,
-    )
-    ble_obj.start()
-    ble_obj.wait_for_exit()
-    wifi_obj.set_power_save()
-    wifi_obj.start()
-    wifi_obj.wait_for_exit()
-    time.sleep(60)
-    ble_obj.dual_role_disconnect()
-    wifi_obj.disconnect()
-    wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_obj.sniffer_validation_join()
-    logger().info("sniffer validation is successful")
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="master_and_slave",
+            testcase=test_name,
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj.set_power_save()
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        time.sleep(60)
+        ble_obj.dual_role_disconnect()
+        wifi_obj.disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        for ble_client in ble_clients:
+            ble_client.interfaces.bluetooth.close()
+        if ble_obj:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
+                                       ble_client_address=ble_obj.ble_clients_address[0],
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
 
 
 @pytest.mark.config(
@@ -516,7 +552,6 @@ def test_Coex_sdk_fun_ble_master_slave_wlan_ping_C133507(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_scan",
     ],
 )
 def test_Coex_sdk_fun_ble_slave_master_wlan_ping_C133508(
@@ -540,51 +575,65 @@ def test_Coex_sdk_fun_ble_slave_master_wlan_ping_C133508(
         6. Initiate ping with size 300
 
     """
-    assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
-    test_name = request.node.name
-    ping_count = utf_constants.get("ping_count")
-    test_type = "ping"
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-    )
-    logger().info(
-        "start capturing with Sniffer by giving the test case name as filename"
-    )
+    try:
+        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-    wifi_obj = WifiJoinThread(
-        wifi_sniffer=wifi_sniffer,
-        wifi_dut=wifi_dut,
-        wifi_access_point=wifi_access_point,
-        testcase=test_name,
-        wifi_client=wifi_client,
-        sl_collections=sl_collections,
-        ping_count=ping_count,
-        sniffer_filter=sniffer_filter,
-        test_type=test_type,
-    )
-    wifi_obj.join_to_ap(skip_power_save=True)
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+        wifi_obj.join_to_ap(skip_power_save=True)
 
-    ble_obj = BleDualRoleThreadFunctionality(
-        wifi_dut=wifi_dut,
-        ble_clients=ble_clients,
-        sl_collections=sl_collections,
-        ble_test_type="slave_and_master",
-        testcase=test_name,
-    )
-    ble_obj.start()
-    ble_obj.wait_for_exit()
-    wifi_obj.set_power_save()
-    wifi_obj.start()
-    wifi_obj.wait_for_exit()
-    time.sleep(60)
-    ble_obj.dual_role_disconnect()
-    wifi_obj.disconnect()
-    wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_obj.sniffer_validation_join()
-    logger().info("sniffer validation is successful")
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="slave_and_master",
+            testcase=test_name,
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj.set_power_save()
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        time.sleep(60)
+        ble_obj.dual_role_disconnect()
+        wifi_obj.disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        for ble_client in ble_clients:
+            ble_client.interfaces.bluetooth.close()
+        if ble_obj:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
+                                   ble_client_address=ble_obj.ble_clients_address[0],
+                                   ble_dut_address=ble_obj.ble_dut_address)
+
+
 
 
 @pytest.mark.config(
@@ -598,7 +647,6 @@ def test_Coex_sdk_fun_ble_slave_master_wlan_ping_C133508(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_scan",
     ],
 )
 def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133519(
@@ -622,51 +670,65 @@ def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133519(
         6. Initiate ping with size 300
 
     """
-    assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
-    test_name = request.node.name
-    ping_count = utf_constants.get("ping_count")
-    test_type = "ping"
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-    )
-    logger().info(
-        "start capturing with Sniffer by giving the test case name as filename"
-    )
+    try:
+        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-    wifi_obj = WifiJoinThread(
-        wifi_sniffer=wifi_sniffer,
-        wifi_dut=wifi_dut,
-        wifi_access_point=wifi_access_point,
-        testcase=test_name,
-        wifi_client=wifi_client,
-        sl_collections=sl_collections,
-        ping_count=ping_count,
-        sniffer_filter=sniffer_filter,
-        test_type=test_type,
-    )
-    wifi_obj.join_to_ap(skip_power_save=True)
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+        wifi_obj.join_to_ap(skip_power_save=True)
 
-    ble_obj = BleDualRoleThreadFunctionality(
-        wifi_dut=wifi_dut,
-        ble_clients=ble_clients,
-        sl_collections=sl_collections,
-        ble_test_type="slave_and_master",
-        testcase=test_name,
-    )
-    ble_obj.start()
-    ble_obj.wait_for_exit()
-    wifi_obj.set_power_save()
-    wifi_obj.start()
-    wifi_obj.wait_for_exit()
-    time.sleep(60)
-    ble_obj.dual_role_disconnect()
-    wifi_obj.disconnect()
-    wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_obj.sniffer_validation_join()
-    logger().info("sniffer validation is successful")
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="slave_and_master",
+            testcase=test_name,
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj.set_power_save()
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        time.sleep(60)
+        ble_obj.dual_role_disconnect()
+        wifi_obj.disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        for ble_client in ble_clients:
+            ble_client.interfaces.bluetooth.close()
+            if ble_obj:
+                ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        if ble_obj:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
+                                       ble_client_address=ble_obj.ble_clients_address[0],
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 
 @pytest.mark.config(
@@ -680,7 +742,6 @@ def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133519(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_scan",
     ],
 )
 def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133550(
@@ -704,56 +765,68 @@ def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133550(
         6. Initiate ping with size 300
 
     """
-    assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
-    test_name = request.node.name
-    ping_count = utf_constants.get("ping_count")
-    iter_count = utf_constants.get("iter_count")
-    test_type = "ping"
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-    )
-    logger().info(
-        "start capturing with Sniffer by giving the test case name as filename"
-    )
+    try:
+        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        iter_count = utf_constants.get("iter_count")
+        test_type = "ping"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-    wifi_obj = WifiJoinThread(
-        wifi_sniffer=wifi_sniffer,
-        wifi_dut=wifi_dut,
-        wifi_access_point=wifi_access_point,
-        testcase=test_name,
-        wifi_client=wifi_client,
-        sl_collections=sl_collections,
-        ping_count=ping_count,
-        sniffer_filter=sniffer_filter,
-        test_type=test_type,
-    )
-    wifi_obj.join_to_ap(skip_power_save=True)
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+        wifi_obj.join_to_ap(skip_power_save=True)
 
-    ble_obj = BleDualRoleThreadFunctionality(
-        wifi_dut=wifi_dut,
-        ble_clients=ble_clients,
-        sl_collections=sl_collections,
-        ble_test_type="slave_and_master",
-        testcase=test_name,
-    )
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="slave_and_master",
+            testcase=test_name,
+        )
 
-    for count in range(1, iter_count + 1):
+        for count in range(1, iter_count + 1):
 
-        ble_obj.start()
-        ble_obj.wait_for_exit()
-        if count == 1:
-            wifi_obj.set_power_save()
-            wifi_obj.start()
-            wifi_obj.wait_for_exit()
-        time.sleep(60)
-        ble_obj.dual_role_disconnect()
-    wifi_obj.disconnect()
-    wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_obj.sniffer_validation_join()
-    logger().info("sniffer validation is successful")
+            ble_obj.start()
+            ble_obj.wait_for_exit()
+            if count == 1:
+                wifi_obj.set_power_save()
+                wifi_obj.start()
+                wifi_obj.wait_for_exit()
+            time.sleep(60)
+            ble_obj.dual_role_disconnect()
+        wifi_obj.disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        for ble_client in ble_clients:
+            ble_client.interfaces.bluetooth.close()
+        if ble_obj:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
+                                       ble_client_address=ble_obj.ble_clients_address[0],
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
 
 
 @pytest.mark.config(
@@ -767,8 +840,6 @@ def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133550(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_scan",
-        "ble_stop_adv",
     ],
 )
 def test_Coex_sdk_fun_ble_master_slave_20ms_wlan_ping_C133572(
@@ -792,52 +863,65 @@ def test_Coex_sdk_fun_ble_master_slave_20ms_wlan_ping_C133572(
         6. Initiate ping with size 300
 
     """
-    assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
-    test_name = request.node.name
-    ping_count = utf_constants.get("ping_count")
-    test_type = "ping"
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-    )
-    logger().info(
-        "start capturing with Sniffer by giving the test case name as filename"
-    )
+    try:
+        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-    wifi_obj = WifiJoinThread(
-        wifi_sniffer=wifi_sniffer,
-        wifi_dut=wifi_dut,
-        wifi_access_point=wifi_access_point,
-        testcase=test_name,
-        wifi_client=wifi_client,
-        sl_collections=sl_collections,
-        ping_count=ping_count,
-        sniffer_filter=sniffer_filter,
-        test_type=test_type,
-    )
-    wifi_obj.join_to_ap(skip_power_save=True)
-    ble_obj = BleDualRoleThreadFunctionality(
-        wifi_dut=wifi_dut,
-        ble_clients=ble_clients,
-        sl_collections=sl_collections,
-        ble_test_type="master_and_slave",
-        testcase=test_name,
-        max_conn_interval=20,
-        min_conn_interval=20
-    )
-    ble_obj.start()
-    ble_obj.wait_for_exit()
-    wifi_obj.set_power_save()
-    wifi_obj.start()
-    wifi_obj.wait_for_exit()
-    time.sleep(60)
-    ble_obj.dual_role_disconnect()
-    wifi_obj.disconnect()
-    wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_obj.sniffer_validation_join()
-    logger().info("sniffer validation is successful")
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+        wifi_obj.join_to_ap(skip_power_save=True)
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="master_and_slave",
+            testcase=test_name,
+            max_conn_interval=20,
+            min_conn_interval=20
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj.set_power_save()
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        time.sleep(60)
+        ble_obj.dual_role_disconnect()
+        wifi_obj.disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        for ble_client in ble_clients:
+            ble_client.interfaces.bluetooth.close()
+        if ble_obj:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
+                                       ble_client_address=ble_obj.ble_clients_address[0],
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
 
 
 @pytest.mark.config(
@@ -851,7 +935,6 @@ def test_Coex_sdk_fun_ble_master_slave_20ms_wlan_ping_C133572(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_scan",
     ],
 )
 def test_Coex_sdk_discon_from_remote_wlan_conn_C133570(
@@ -875,47 +958,59 @@ def test_Coex_sdk_discon_from_remote_wlan_conn_C133570(
         6. Disconnect from remote device while ping in progress
 
     """
-    test_name = request.node.name
-    ping_count = utf_constants.get("ping_count")
-    test_type = "ping"
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-    )
-    logger().info(
-        "start capturing with Sniffer by giving the test case name as filename"
-    )
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-    ble_obj = BleThreadFunctionality(
-        wifi_dut=wifi_dut,
-        ble_client=ble_client,
-        sl_collections=sl_collections,
-        ble_test_type="master",
-    )
-    ble_obj.start()
-    ble_obj.wait_for_exit()
-    wifi_obj = WifiJoinThread(
-        wifi_sniffer=wifi_sniffer,
-        wifi_dut=wifi_dut,
-        wifi_access_point=wifi_access_point,
-        testcase=test_name,
-        wifi_client=wifi_client,
-        sl_collections=sl_collections,
-        ping_count=ping_count,
-        sniffer_filter=sniffer_filter,
-        test_type=test_type,
-    )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="master",
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
 
-    wifi_obj.join_to_ap()
-    time.sleep(60)
-    wifi_obj.start()
-    ble_obj.ble_disconnect(disconnect_from="remote")
-    wifi_obj.wait_for_exit()
-    wifi_obj.disconnect()
-    wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_obj.sniffer_validation_join()
-    logger().info("sniffer validation is successful")
+        wifi_obj.join_to_ap()
+        time.sleep(60)
+        wifi_obj.start()
+        ble_obj.ble_disconnect(disconnect_from="remote")
+        wifi_obj.wait_for_exit()
+        wifi_obj.disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
 
 
 # @pytest.mark.skip("UDP Data transfer issue")
@@ -934,8 +1029,6 @@ def test_Coex_sdk_discon_from_remote_wlan_conn_C133570(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_scan",
-        "ble_stop_adv",
     ],
 )
 def test_Coex_sdk_fun_ble_master_adv_wlan_UDP_C133447(
@@ -960,84 +1053,97 @@ def test_Coex_sdk_fun_ble_master_adv_wlan_UDP_C133447(
         4. Enable the wlan and bt power save mode in dut after the connection
         5. Initiate UDP data transfer
     """
-    assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
-    test_name = request.node.name
-    ping_count = utf_constants.get("ping_count")
-    test_type = "iperf"
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-    )
-    logger().info(
-        "start capturing with Sniffer by giving the test case name as filename"
-    )
+    try:
+        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "iperf"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-    ble_obj = BleThreadFunctionality(
-        wifi_dut=wifi_dut,
-        ble_client=ble_clients[0],
-        sl_collections=sl_collections,
-        ble_test_type="master",
-    )
-    ble_obj.start()
-    ble_obj.wait_for_exit()
-    ble_obj.advertise_dut()
-    wifi_obj = WifiJoinThread(
-        wifi_sniffer=wifi_sniffer,
-        wifi_dut=wifi_dut,
-        wifi_access_point=wifi_access_point,
-        testcase=test_name,
-        wifi_client=wifi_client,
-        sl_collections=sl_collections,
-        ping_count=ping_count,
-        sniffer_filter=sniffer_filter,
-        test_type=test_type,
-        net_perf_client=net_perf_client,
-        protocol=protocol,
-        traffic_type="RX",
-    )
-    wifi_obj.join_to_ap()
-    wifi_obj.start()
-    logger().info("Initiating scan from Remote device")
-    # Begin Scanning for BLE devices
-    ble_client_address = ble_clients[1].interfaces.bluetooth.start_smp_scan(
-        bt_dut_address=ble_obj.ble_dut_address
-    )
-    assert (
-        ble_client_address is not None
-    ), "Unable to fetch bluetooth address from Remote device"
-    logger().info(f"Started scan from remote BLE device")
-    logger().info("\n***********{}**********\n".format(ble_client_address))
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_clients[0],
+            sl_collections=sl_collections,
+            ble_test_type="master",
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.advertise_dut()
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+            net_perf_client=net_perf_client,
+            protocol=protocol,
+            traffic_type="RX",
+        )
+        wifi_obj.join_to_ap()
+        wifi_obj.start()
+        logger().info("Initiating scan from Remote device")
+        # Begin Scanning for BLE devices
+        ble_client_address = ble_clients[1].interfaces.bluetooth.start_smp_scan(
+            bt_dut_address=ble_obj.ble_dut_address
+        )
+        assert (
+            ble_client_address is not None
+        ), "Unable to fetch bluetooth address from Remote device"
+        logger().info(f"Started scan from remote BLE device")
+        logger().info("\n***********{}**********\n".format(ble_client_address))
 
-    for i in range(0, 3):
-        found_devices = ble_clients[1].interfaces.bluetooth.get_devices()
-        logger().info("\n***scan results:{}**********\n".format(found_devices))
-        time.sleep(10)
-    assert (
-        wifi_dut.interfaces.wifi.ble_address in found_devices
-    ), "DUT not found in scan results"
-    logger().info(
-        f"DUT BLE address:'{ble_obj.ble_dut_address}' found in raspi scan results"
-    )
-    ble_clients[1].interfaces.bluetooth.stop_scanning()
-    ble_clients[1].interfaces.bluetooth.close()
-    wifi_obj.wait_for_exit()
-    wifi_obj.disconnect()
+        for i in range(0, 3):
+            found_devices = ble_clients[1].interfaces.bluetooth.get_devices()
+            logger().info("\n***scan results:{}**********\n".format(found_devices))
+            time.sleep(10)
+        assert (
+            wifi_dut.interfaces.wifi.ble_address in found_devices
+        ), "DUT not found in scan results"
+        logger().info(
+            f"DUT BLE address:'{ble_obj.ble_dut_address}' found in raspi scan results"
+        )
+        ble_clients[1].interfaces.bluetooth.stop_scanning()
+        ble_clients[1].interfaces.bluetooth.close()
+        wifi_obj.wait_for_exit()
+        wifi_obj.disconnect()
 
-    status = ble_clients[0].interfaces.bluetooth.get_connection_status(
-        ble_obj.ble_dut_address
-    )
-    logger().info(
-        f"Connection status in remote device '{ble_clients[0].name}' is:{status}"
-    )
-    assert (
-        status
-    ), f"Remote device '{ble_clients[0].name}' is not connected to DUT"
-    logger().info(f"Initiating BLE disconnection from raspi")
-    ble_clients[0].interfaces.bluetooth.disconnect(ble_obj.ble_dut_address)
-    wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_obj.sniffer_validation_join()
-    logger().info("sniffer validation is successful")
+        status = ble_clients[0].interfaces.bluetooth.get_connection_status(
+            ble_obj.ble_dut_address
+        )
+        logger().info(
+            f"Connection status in remote device '{ble_clients[0].name}' is:{status}"
+        )
+        assert (
+            status
+        ), f"Remote device '{ble_clients[0].name}' is not connected to DUT"
+        logger().info(f"Initiating BLE disconnection from raspi")
+        ble_clients[0].interfaces.bluetooth.disconnect(ble_obj.ble_dut_address)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        for ble_client in ble_clients:
+            ble_client.interfaces.bluetooth.close()
+        if ble_obj:
+                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
+                               ble_client_address=ble_obj.ble_clients_address[0],
+                               ble_dut_address=ble_obj.ble_dut_address)
+
+
 
 
 # @pytest.mark.skip("UDP Data transfer issue")
@@ -1056,8 +1162,6 @@ def test_Coex_sdk_fun_ble_master_adv_wlan_UDP_C133447(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_adv",
-        "ble_stop_scan",
     ],
 )
 def test_Coex_sdk_ble_dual_role_wlan_UDP_RX_C133511(
@@ -1086,53 +1190,64 @@ def test_Coex_sdk_ble_dual_role_wlan_UDP_RX_C133511(
         5. Initiate UDP RX data transfer
 
     """
-    assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
-    test_name = request.node.name
-    ping_count = utf_constants.get("ping_count")
-    test_type = "iperf"
-    logger().info("configuring the Sniffer with the channel")
-    wifi_sniffer.interfaces.capture.configure_interface(
-        channel=wifi_access_point.interfaces.wifi.channel
-    )
-    logger().info(
-        "start capturing with Sniffer by giving the test case name as filename"
-    )
+    try:
+        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "iperf"
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
 
-    wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-    wifi_obj = WifiJoinThread(
-        wifi_sniffer=wifi_sniffer,
-        wifi_dut=wifi_dut,
-        wifi_access_point=wifi_access_point,
-        testcase=test_name,
-        wifi_client=wifi_client,
-        sl_collections=sl_collections,
-        ping_count=ping_count,
-        sniffer_filter=sniffer_filter,
-        test_type=test_type,
-        net_perf_client=net_perf_client,
-        protocol=protocol,
-        traffic_type="RX",
-    )
-    wifi_obj.join_to_ap(skip_power_save=True)
-    ble_obj = BleDualRoleThreadFunctionality(
-        wifi_dut=wifi_dut,
-        ble_clients=ble_clients,
-        sl_collections=sl_collections,
-        ble_test_type="slave_and_master",
-        testcase=test_name,
-    )
-    ble_obj.start()
-    ble_obj.wait_for_exit()
-    wifi_obj.set_power_save()
-    wifi_obj.start()
-    wifi_obj.wait_for_exit()
-    time.sleep(60)
-    ble_obj.dual_role_disconnect()
-    wifi_obj.disconnect()
-    wifi_sniffer.interfaces.capture.stop_capture()
-    wifi_obj.sniffer_validation_join()
-    logger().info("sniffer validation is successful")
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+            net_perf_client=net_perf_client,
+            protocol=protocol,
+            traffic_type="RX",
+        )
+        wifi_obj.join_to_ap(skip_power_save=True)
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="slave_and_master",
+            testcase=test_name,
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj.set_power_save()
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        time.sleep(60)
+        ble_obj.dual_role_disconnect()
+        wifi_obj.disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        for ble_client in ble_clients:
+            ble_client.interfaces.bluetooth.close()
+        if ble_obj:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
+                                       ble_client_address=ble_obj.ble_clients_address[0],
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 
@@ -1148,8 +1263,6 @@ def test_Coex_sdk_ble_dual_role_wlan_UDP_RX_C133511(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_scan",
-        "ble_stop_adv",
     ],
 )
 def test_Coex_sdk_profiles_ble_master_slave_wlan_connected_C133509(
@@ -1229,13 +1342,12 @@ def test_Coex_sdk_profiles_ble_master_slave_wlan_connected_C133509(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        for ble_client in ble_clients:
+            ble_client.interfaces.bluetooth.close()
         if ble_obj:
-            ble_clients[0].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-            ble_clients[1].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
                                        ble_client_address=ble_obj.ble_clients_address[0],
                                        ble_dut_address=ble_obj.ble_dut_address)
-
 
 
 
@@ -1251,8 +1363,6 @@ def test_Coex_sdk_profiles_ble_master_slave_wlan_connected_C133509(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_scan",
-        "ble_stop_adv",
     ],
 )
 def test_Coex_sdk_ble_multi_slave_wlan_connected_C133518(
@@ -1329,11 +1439,12 @@ def test_Coex_sdk_ble_multi_slave_wlan_connected_C133518(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         if ble_obj:
-            ble_clients[0].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-            ble_clients[1].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
-                                       ble_client_address=ble_obj.ble_clients_address[0],
-                                       ble_dut_address=ble_obj.ble_dut_address)
+            for ble_client in ble_clients:
+                ble_client.interfaces.bluetooth.close()
+            if ble_obj:
+                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
+                                           ble_client_address=ble_obj.ble_clients_address[0],
+                                           ble_dut_address=ble_obj.ble_dut_address)
 
 
 @pytest.mark.config(
@@ -1351,8 +1462,6 @@ def test_Coex_sdk_ble_multi_slave_wlan_connected_C133518(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_scan",
-        "ble_stop_adv",
     ],
 )
 @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4365")
@@ -1433,9 +1542,11 @@ def test_Coex_sdk_ble_multi_peripheral_UDP_TX_C538058(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        for ble_client in ble_clients:
+            ble_client.interfaces.bluetooth.close()
+            if ble_obj:
+                ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
         if ble_obj:
-            ble_clients[0].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-            ble_clients[1].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
                                        ble_client_address=ble_obj.ble_clients_address[0],
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -1458,8 +1569,6 @@ def test_Coex_sdk_ble_multi_peripheral_UDP_TX_C538058(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_scan",
-        "ble_stop_adv",
     ],
 )
 @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4365")
@@ -1539,9 +1648,11 @@ def test_Coex_sdk_ble_multi_central_UDP_RX_C538060(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        for ble_client in ble_clients:
+            ble_client.interfaces.bluetooth.close()
+            if ble_obj:
+                ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
         if ble_obj:
-            ble_clients[0].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-            ble_clients[1].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
                                        ble_client_address=ble_obj.ble_clients_address[0],
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -1561,8 +1672,6 @@ def test_Coex_sdk_ble_multi_central_UDP_RX_C538060(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_scan",
-        "ble_stop_adv",
     ],
 )
 @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4365")
@@ -1636,9 +1745,11 @@ def test_Coex_sdk_ble_multi_central_UDP_RX_C133567(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        for ble_client in ble_clients:
+            ble_client.interfaces.bluetooth.close()
+            if ble_obj:
+                ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
         if ble_obj:
-            ble_clients[0].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-            ble_clients[1].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
                                        ble_client_address=ble_obj.ble_clients_address[0],
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -1659,8 +1770,6 @@ def test_Coex_sdk_ble_multi_central_UDP_RX_C133567(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_scan",
-        "ble_stop_adv",
     ],
 )
 def test_Coex_sdk_gatt_rw_wr_dual_role_ssl_tx_C133510(
@@ -1768,13 +1877,14 @@ def test_Coex_sdk_gatt_rw_wr_dual_role_ssl_tx_C133510(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        for ble_client in ble_clients:
+            ble_client.interfaces.bluetooth.close()
+            if ble_obj:
+                ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
         if ble_obj:
-            ble_clients[0].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-            ble_clients[1].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
                                        ble_client_address=ble_obj.ble_clients_address[0],
                                        ble_dut_address=ble_obj.ble_dut_address)
-
 
 
 
@@ -1785,7 +1895,7 @@ def test_Coex_sdk_gatt_rw_wr_dual_role_ssl_tx_C133510(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
 def test_Coex_sdk_2_TCP_RX_ble_dual_role_C622328(
     wifi_sniffer,
@@ -1899,13 +2009,14 @@ def test_Coex_sdk_2_TCP_RX_ble_dual_role_C622328(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         remote_socket_factory.interfaces.socket.close_all()
+        for ble_client in ble_clients:
+            ble_client.interfaces.bluetooth.close()
+            if ble_obj:
+                ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
         if ble_obj:
-            ble_clients[0].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-            ble_clients[1].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
                                        ble_client_address=ble_obj.ble_clients_address[0],
                                        ble_dut_address=ble_obj.ble_dut_address)
-
 
 
 

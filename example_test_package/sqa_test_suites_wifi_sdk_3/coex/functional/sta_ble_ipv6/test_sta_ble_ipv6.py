@@ -824,8 +824,7 @@ class BleThreadFunctionality(ThreadBase):
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_adv",
-                      "ble_stop_scan"]
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
 def test_Coex_sdk_WLAN_ipv6_BLE_master_C156991(
     wifi_sniffer,
@@ -892,6 +891,7 @@ def test_Coex_sdk_WLAN_ipv6_BLE_master_C156991(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -934,8 +934,7 @@ def test_Coex_sdk_WLAN_ipv6_BLE_master_C156991(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_adv",
-                      "ble_stop_scan"]
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
 def test_Coex_sdk_WLAN_ipv6_BLE_slave_C156992(
     wifi_sniffer,
@@ -1010,6 +1009,7 @@ def test_Coex_sdk_WLAN_ipv6_BLE_slave_C156992(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -1057,8 +1057,6 @@ def test_Coex_sdk_WLAN_ipv6_BLE_slave_C156992(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_adv",
-        "ble_stop_scan",
     ],
 )
 def test_Coex_sdk_WLAN_ipv6_BLE_adv_scan_C156989(
@@ -1132,6 +1130,7 @@ def test_Coex_sdk_WLAN_ipv6_BLE_adv_scan_C156989(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -1183,8 +1182,6 @@ def test_Coex_sdk_WLAN_ipv6_BLE_adv_scan_C156989(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_adv",
-        "ble_stop_scan",
     ],
 )
 def test_Coex_sdk_WLAN_ipv6_BLE_adv_scan_C156990(
@@ -1266,6 +1263,7 @@ def test_Coex_sdk_WLAN_ipv6_BLE_adv_scan_C156990(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -1394,6 +1392,7 @@ def test_Coex_sdk_WLAN_IPV6_TCP_TX_BLE_adv_scan_C538007(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
@@ -1519,6 +1518,7 @@ def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_20ms_C538020(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
@@ -1646,6 +1646,7 @@ def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_112ms_C538021(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
@@ -1773,11 +1774,138 @@ def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_4000ms_C538022(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default
+                    | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE
+                              | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(4),
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz
+                           | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client
+                          | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.IPv6Mode
+                          | Si91xTCPIPFeatureBitMap.DHCPv6Server,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
+                               | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "ble_features": Si91xBLEFeatureBitMap.Default
+                        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+        },
+    },
+)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460", "ipv6_state": "1",
+                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
+)
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_20ms_C538023(
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        ble_client,
+        request,
+        utf_constants,
+        sl_collections,
+        wifi_client,
+        sniffer_filter,
+        net_perf_client,
+        protocol,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure AP on WPA2 security
+        3. Advertise DUT
+        4. Join the access point and get ipv6 address
+        5. Enable wlan and bt power save mode in dut after the connection
+        6. Scan from remote BLE device and connect to DUT with connection interval 20ms
+        7. Start the iperf UDP server on the Remote device
+        8. Start the iperf UDP client on the DUT
+        9. Validate the throughput
+        10.check BLE connection stability
+
+
+    """
+
+    try:
+
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              test_name=test_name, sl_collections=sl_collections, test_type="iperf",
+                              ping_count=ping_count, wifi_client=wifi_client,
+                              protocol=protocol,
+                              net_perf_client=net_perf_client,
+                              traffic_type="TX")
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_and_connect_from_remote",
+            conn_interval=20,
+        )
+        ble_obj.advertise_dut()
+        wlan_obj.join_to_ap()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        ble_obj.ble_disconnect()
+        wifi_dut.interfaces.wifi.leave()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 
 @pytest.mark.config(
@@ -1822,8 +1950,7 @@ def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_4000ms_C538022(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_adv",
-                      "ble_stop_scan"]
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
 @pytest.mark.config(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
@@ -1900,6 +2027,7 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_112ms_C538024(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
@@ -2026,6 +2154,7 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_4000ms_C538025(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
@@ -2075,8 +2204,7 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_4000ms_C538025(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_adv",
-                      "ble_stop_scan"]
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
 @pytest.mark.config(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
@@ -2159,6 +2287,7 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_C538027(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
@@ -2217,8 +2346,6 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_C538027(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_adv",
-        "ble_stop_scan",
     ],
 )
 @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4431")
@@ -2304,10 +2431,12 @@ def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_scan_C156989(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",

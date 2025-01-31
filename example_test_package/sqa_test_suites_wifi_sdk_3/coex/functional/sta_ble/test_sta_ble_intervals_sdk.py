@@ -274,6 +274,7 @@ class BleThreadFunctionality(ThreadBase):
         self.ble_client = ble_client
         self.adv_int = adv_int
         self.ble_dut_address = None
+        self.ble_client_address = None
         self.ble_test_type = ble_test_type
         self.ble_scan_interval = ble_scan_interval
         self.ble_scan_window = ble_scan_window
@@ -329,14 +330,14 @@ class BleThreadFunctionality(ThreadBase):
 
             logger().info("Initiating scan from Remote device")
             # Begin Scanning for BLE devices
-            bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(
+            self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(
                 bt_dut_address=self.ble_dut_address
             )
             assert (
-                bt_client_address is not None
+                self.ble_client_address is not None
             ), "Unable to fetch bluetooth address from Remote device"
             logger().info(f"Started scan from remote BLE device")
-            logger().info("\n***********{}**********\n".format(bt_client_address))
+            logger().info("\n***********{}**********\n".format(self.ble_client_address))
             for i in range(0, 3):
                 time.sleep(20)
                 if self.adv_int > 1000:
@@ -350,10 +351,10 @@ class BleThreadFunctionality(ThreadBase):
             logger().info(
                 f"DUT BLE address:'{self.ble_dut_address}' found in raspi scan results"
             )
-            return bt_client_address
+            return self.ble_client_address
 
         if self.ble_test_type == "scan":
-            self.sl_collections.check_ble_scan_functionality(
+            self.ble_client_address = self.sl_collections.check_ble_scan_functionality(
                 wifi_dut=self.wifi_dut,
                 ble_client=self.ble_client,
                 ble_address=self.ble_dut_address,
@@ -406,7 +407,6 @@ class BleThreadFunctionality(ThreadBase):
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
 def test_Wifi_sdk_scan_BLE_AI_20ms_C20164(
     wifi_sniffer,
     wifi_access_point,
@@ -471,6 +471,13 @@ def test_Wifi_sdk_scan_BLE_AI_20ms_C20164(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -503,7 +510,7 @@ def test_Wifi_sdk_scan_BLE_AI_20ms_C20164(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_connection_BLE_AI_20ms_C20165(
     wifi_sniffer,
@@ -572,6 +579,13 @@ def test_Wifi_sdk_connection_BLE_AI_20ms_C20165(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -608,7 +622,7 @@ def test_Wifi_sdk_connection_BLE_AI_20ms_C20165(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_Data_BLE_AI_20ms_C20166(
     wifi_sniffer,
@@ -679,6 +693,13 @@ def test_Wifi_sdk_Data_BLE_AI_20ms_C20166(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -710,7 +731,6 @@ def test_Wifi_sdk_Data_BLE_AI_20ms_C20166(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
 def test_Wifi_sdk_scan_BLE_AI_10240ms_C20167(
     wifi_sniffer,
     wifi_access_point,
@@ -775,6 +795,13 @@ def test_Wifi_sdk_scan_BLE_AI_10240ms_C20167(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -807,7 +834,7 @@ def test_Wifi_sdk_scan_BLE_AI_10240ms_C20167(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_wifi_sdk_AP_conn_BLE_AI_10240ms_C20168(
     wifi_sniffer,
@@ -878,6 +905,14 @@ def test_wifi_sdk_AP_conn_BLE_AI_10240ms_C20168(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -913,7 +948,7 @@ def test_wifi_sdk_AP_conn_BLE_AI_10240ms_C20168(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_Data_BLE_AI_10240ms_C20169(
     wifi_sniffer,
@@ -984,6 +1019,13 @@ def test_Wifi_sdk_Data_BLE_AI_10240ms_C20169(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1016,7 +1058,7 @@ def test_Wifi_sdk_Data_BLE_AI_10240ms_C20169(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_scan_BLE_SI_10240ms_SW_3440ms_C20173(
     wifi_sniffer,
@@ -1078,6 +1120,13 @@ def test_Wifi_sdk_scan_BLE_SI_10240ms_SW_3440ms_C20173(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1110,7 +1159,7 @@ def test_Wifi_sdk_scan_BLE_SI_10240ms_SW_3440ms_C20173(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_AP_conn_BLE_SI_10240ms_SW_3440ms_C20174(
     wifi_sniffer,
@@ -1180,6 +1229,13 @@ def test_Wifi_sdk_AP_conn_BLE_SI_10240ms_SW_3440ms_C20174(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1216,7 +1272,7 @@ def test_Wifi_sdk_AP_conn_BLE_SI_10240ms_SW_3440ms_C20174(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_Data_BLE_SI_10240ms_SW_3440ms_C20175(
     wifi_sniffer,
@@ -1288,6 +1344,13 @@ def test_Wifi_Data_BLE_SI_10240ms_SW_3440ms_C20175(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1320,7 +1383,7 @@ def test_Wifi_Data_BLE_SI_10240ms_SW_3440ms_C20175(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_scan_BLE_SI_7_5ms_SW_2_5ms_C20170(
     wifi_sniffer,
@@ -1382,6 +1445,13 @@ def test_Wifi_sdk_scan_BLE_SI_7_5ms_SW_2_5ms_C20170(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1414,7 +1484,7 @@ def test_Wifi_sdk_scan_BLE_SI_7_5ms_SW_2_5ms_C20170(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_AP_conn_BLE_SI_7_5ms_SW_2_5ms_C20171(
     wifi_sniffer,
@@ -1482,6 +1552,13 @@ def test_Wifi_sdk_AP_conn_BLE_SI_7_5ms_SW_2_5ms_C20171(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1518,7 +1595,7 @@ def test_Wifi_sdk_AP_conn_BLE_SI_7_5ms_SW_2_5ms_C20171(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_Data_BLE_SI_7_5ms_SW_2_5ms_C20172(
     wifi_sniffer,
@@ -1590,6 +1667,13 @@ def test_Wifi_sdk_Data_BLE_SI_7_5ms_SW_2_5ms_C20172(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1622,7 +1706,7 @@ def test_Wifi_sdk_Data_BLE_SI_7_5ms_SW_2_5ms_C20172(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_scan_BLE_SI_10240ms_SW_5000ms_C148613(
     wifi_sniffer,
@@ -1684,6 +1768,13 @@ def test_Wifi_sdk_scan_BLE_SI_10240ms_SW_5000ms_C148613(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1719,7 +1810,7 @@ def test_Wifi_sdk_scan_BLE_SI_10240ms_SW_5000ms_C148613(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_wifi_http_download_BLE_AI_20ms_C20176(
     wifi_sniffer,
@@ -1793,6 +1884,13 @@ def test_Wifi_sdk_wifi_http_download_BLE_AI_20ms_C20176(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 
 
@@ -1832,7 +1930,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_AI_20ms_C20176(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_wifi_http_download_BLE_AI_10240ms_C20177(
     wifi_sniffer,
@@ -1905,6 +2003,12 @@ def test_Wifi_sdk_wifi_http_download_BLE_AI_10240ms_C20177(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 
@@ -1943,7 +2047,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_AI_10240ms_C20177(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_wifi_http_download_BLE_SI_7_5ms_SW_2_5ms_C20178(
         wifi_sniffer,
@@ -2015,6 +2119,13 @@ def test_Wifi_sdk_wifi_http_download_BLE_SI_7_5ms_SW_2_5ms_C20178(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 
 
@@ -2053,7 +2164,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_SI_7_5ms_SW_2_5ms_C20178(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_wifi_http_download_BLE_SI_10240ms_SW_3440ms_C20179(
         wifi_sniffer,
@@ -2125,6 +2236,14 @@ def test_Wifi_sdk_wifi_http_download_BLE_SI_10240ms_SW_3440ms_C20179(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 
 
@@ -2163,7 +2282,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_SI_10240ms_SW_3440ms_C20179(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_wifi_http_download_BLE_SI_10240ms_SW_5000ms_C148614(
         wifi_sniffer,
@@ -2235,6 +2354,14 @@ def test_Wifi_sdk_wifi_http_download_BLE_SI_10240ms_SW_5000ms_C148614(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 
 
@@ -2272,7 +2399,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_SI_10240ms_SW_5000ms_C148614(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_wifi_http_download_BLE_CI_500ms_peripheral_C537981(
     wifi_sniffer,
@@ -2348,6 +2475,11 @@ def test_Wifi_sdk_wifi_http_download_BLE_CI_500ms_peripheral_C537981(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 
@@ -2386,7 +2518,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_CI_500ms_peripheral_C537981(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_wifi_http_download_BLE_CI_1000ms_peripheral_C537982(
     wifi_sniffer,
@@ -2461,6 +2593,11 @@ def test_Wifi_sdk_wifi_http_download_BLE_CI_1000ms_peripheral_C537982(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 
@@ -2499,7 +2636,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_CI_1000ms_peripheral_C537982(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_wifi_http_download_BLE_CI_500ms_central_C537983(
     wifi_sniffer,
@@ -2574,6 +2711,11 @@ def test_Wifi_sdk_wifi_http_download_BLE_CI_500ms_central_C537983(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 
@@ -2612,7 +2754,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_CI_500ms_central_C537983(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_wifi_http_download_BLE_CI_1000ms_central_C537984(
     wifi_sniffer,
@@ -2687,6 +2829,11 @@ def test_Wifi_sdk_wifi_http_download_BLE_CI_1000ms_central_C537984(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 
@@ -2724,7 +2871,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_CI_1000ms_central_C537984(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_45ms_peripheral_C538015(
     wifi_sniffer,
@@ -2800,9 +2947,12 @@ def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_45ms_peripheral_C538015(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        cleanup_ble(ble_client, ble_dut_addr)
         ble_client.interfaces.bluetooth.close()
-
+        if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 
@@ -2840,7 +2990,7 @@ def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_45ms_peripheral_C538015(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_500ms_peripheral_C538016(
     wifi_sniffer,
@@ -2915,8 +3065,13 @@ def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_500ms_peripheral_C538016(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        cleanup_ble(ble_client, ble_dut_addr)
         ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -2952,7 +3107,7 @@ def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_500ms_peripheral_C538016(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_1000ms_peripheral_C538017(
     wifi_sniffer,
@@ -3028,8 +3183,12 @@ def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_1000ms_peripheral_C538017(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        cleanup_ble(ble_client, ble_dut_addr)
         ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 
@@ -3065,7 +3224,7 @@ def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_1000ms_peripheral_C538017(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_scan_BLE_SI_1000ms_SW_100ms_C537945(
     wifi_sniffer,
@@ -3127,6 +3286,14 @@ def test_Wifi_sdk_scan_BLE_SI_1000ms_SW_100ms_C537945(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 
 
@@ -3164,7 +3331,7 @@ def test_Wifi_sdk_scan_BLE_SI_1000ms_SW_100ms_C537945(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_scan"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
 def test_Wifi_sdk_scan_BLE_SI_160ms_SW_40ms_C537978(
     wifi_sniffer,
@@ -3225,6 +3392,13 @@ def test_Wifi_sdk_scan_BLE_SI_160ms_SW_40ms_C537978(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 @pytest.mark.config(
@@ -3361,6 +3535,13 @@ def test_Wifi_sdk_SSL_RX_BLE_SI_1000ms_SW_100ms_C537949(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 

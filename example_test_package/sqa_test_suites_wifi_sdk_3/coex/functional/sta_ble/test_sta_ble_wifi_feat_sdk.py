@@ -45,7 +45,7 @@ from threading import Thread
 import threading
 from utf.utils import get_tls_certificate_dir
 
-
+ble_obj = None
 
 def num_sort(input_string: str):
     return list(map(int, re.findall(r'\d+', input_string)))[0]
@@ -170,8 +170,6 @@ def test_Coex_sdk_WLAN_bgscan_BLE_slave_C133585(
         6. Enable wlan and bt power save mode in dut after the connection
         7. Enable BG scan after wlan connection and check probe requests in sniffer
     """
-    ble_obj = None
-
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -244,6 +242,7 @@ def test_Coex_sdk_WLAN_bgscan_BLE_slave_C133585(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -286,7 +285,7 @@ def test_Coex_sdk_WLAN_bgscan_BLE_slave_C133585(
 )
 def test_Coex_sdk_WLAN_http_get_BLE_slave_C133481(http_server, wifi_dut, http_client, wifi_access_point, index_path,
                                                   utf_constants, wifi_sniffer, sl_collections, sniffer_filter,
-                                                  ble_client):
+                                                  ble_client,request):
 
     """
     Test Steps:
@@ -298,7 +297,6 @@ def test_Coex_sdk_WLAN_http_get_BLE_slave_C133481(http_server, wifi_dut, http_cl
         4. Initiate http get for http content
         5. Verify the http get response
     """
-    ble_obj = None
     try:
         test_name = "test_Coex_sdk_WLAN_http_get_BLE_slave_C133481"
         ping_count = utf_constants.get("ping_count")
@@ -371,6 +369,7 @@ def test_Coex_sdk_WLAN_http_get_BLE_slave_C133481(http_server, wifi_dut, http_cl
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if http_client_status:
             wifi_dut.interfaces.wifi.http_client_deinit()
         if ble_obj is not None:
@@ -410,7 +409,7 @@ def test_Coex_sdk_WLAN_http_get_BLE_slave_C133481(http_server, wifi_dut, http_cl
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_Coex_sdk_WLAN_http_post_BLE_slave_C133482(http_server, wifi_dut, wifi_access_point,
                                                    index_path, wifi_sniffer, sl_collections,
-                                                   sniffer_filter, utf_constants, ble_client):
+                                                   sniffer_filter, utf_constants, ble_client, request):
     """
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -420,7 +419,6 @@ def test_Coex_sdk_WLAN_http_post_BLE_slave_C133482(http_server, wifi_dut, wifi_a
         5. Enable the wlan and bt power save mode in dut after the connection
         6. Verify the http post response
     """
-    ble_obj = None
     try:
         test_name = "test_Coex_sdk_WLAN_http_post_BLE_slave_C133482"
         ping_count = utf_constants.get("ping_count")
@@ -485,6 +483,7 @@ def test_Coex_sdk_WLAN_http_post_BLE_slave_C133482(http_server, wifi_dut, wifi_a
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         logger().info("stopping the HTTP server")
         http_server.interfaces.http.stop_server()
         if ble_obj is not None:
@@ -524,7 +523,7 @@ def test_Coex_sdk_WLAN_http_post_BLE_slave_C133482(http_server, wifi_dut, wifi_a
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
 def test_Coex_sdk_WLAN_http_post_non_exist_ip_BLE_slave_C133483(http_server, wifi_dut, wifi_access_point,
                                                    index_path, wifi_sniffer, sl_collections,
-                                                   sniffer_filter, utf_constants, ble_client):
+                                                   sniffer_filter, utf_constants, ble_client, request):
     """
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -534,9 +533,8 @@ def test_Coex_sdk_WLAN_http_post_non_exist_ip_BLE_slave_C133483(http_server, wif
         5. Enable the wlan and bt power save mode in dut after the connection
         6. Verify the http post response with non existing ip
     """
-    ble_obj = None
     try:
-        test_name = "test_Coex_sdk_WLAN_http_post_non_exist_ip_BLE_slave_C133483"
+        test_name = "test_Coex_sdk_WLAN_http_post_BLE_slave_C133482"
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
 
@@ -593,6 +591,7 @@ def test_Coex_sdk_WLAN_http_post_non_exist_ip_BLE_slave_C133483(http_server, wif
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -629,7 +628,7 @@ def test_Coex_sdk_WLAN_http_post_non_exist_ip_BLE_slave_C133483(http_server, wif
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
 def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_C133480(wifi_dut, wifi_access_point,
                                                    wifi_sniffer, sl_collections,
-                                                   sniffer_filter, utf_constants, ble_client):
+                                                   sniffer_filter, utf_constants, ble_client, request):
     """
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -639,9 +638,8 @@ def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_C133480(wifi_dut, wifi_acc
         5. Enable the wlan and bt power save mode in dut after the connection
         6. Verify dns get with wrong server
     """
-    ble_obj = None
     try:
-        test_name = "test_Coex_sdk_WLAN_http_post_non_exist_ip_BLE_slave_C133483"
+        test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
 
@@ -698,6 +696,7 @@ def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_C133480(wifi_dut, wifi_acc
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -734,7 +733,7 @@ def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_C133480(wifi_dut, wifi_acc
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
 def test_Coex_sdk_WLAN_DNS_Query_BLE_slave_C133583(wifi_dut, wifi_access_point,
                                                    wifi_sniffer, sl_collections,
-                                                   sniffer_filter, utf_constants, ble_client):
+                                                   sniffer_filter, utf_constants, ble_client, request):
     """
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -744,9 +743,8 @@ def test_Coex_sdk_WLAN_DNS_Query_BLE_slave_C133583(wifi_dut, wifi_access_point,
         5. Enable the wlan and bt power save mode in dut after the connection
         6. Verify DNS get with valid server
     """
-    ble_obj = None
     try:
-        test_name = "test_Coex_sdk_WLAN_http_post_non_exist_ip_BLE_slave_C133483"
+        test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
 
@@ -805,6 +803,7 @@ def test_Coex_sdk_WLAN_DNS_Query_BLE_slave_C133583(wifi_dut, wifi_access_point,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -848,9 +847,8 @@ def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_C133477(wifi_dut, wifi_access_point,
     """
     Verify WiFi SSL Tx functionality and stability after BLE connection
     """
-    ble_obj = None
     try:
-        test_name = "test_Coex_sdk_WLAN_SSL_tx_BLE_slave_C133477"
+        test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
 
@@ -935,6 +933,7 @@ def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_C133477(wifi_dut, wifi_access_point,
         sl_collections.exception_handling(wifi_dut, error)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -974,13 +973,12 @@ def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_C133477(wifi_dut, wifi_access_point,
 def test_Coex_sdk_WLAN_SSL_rx_BLE_slave_C133478(wifi_dut, wifi_access_point,
                                                 wifi_sniffer, sl_collections,
                                                 sniffer_filter, utf_constants,
-                                                ble_client, ssl_server):
+                                                ble_client, ssl_server, request):
     """
     Verify WiFi SSL Rx functionality and stability after BLE connection
     """
-    ble_obj = None
     try:
-        test_name = "test_Coex_sdk_WLAN_SSL_rx_BLE_slave_C133478"
+        test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
 
@@ -1065,6 +1063,7 @@ def test_Coex_sdk_WLAN_SSL_rx_BLE_slave_C133478(wifi_dut, wifi_access_point,
         sl_collections.exception_handling(wifi_dut, error)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -1102,7 +1101,7 @@ def test_Coex_sdk_WLAN_SSL_rx_BLE_slave_C133478(wifi_dut, wifi_access_point,
 def test_Coex_sdk_WLAN_MQTT_BLE_slave_C133574(wifi_dut, wifi_access_point,
                                               wifi_sniffer, sl_collections,
                                               sniffer_filter, utf_constants, ble_client,
-                                              mqtt_server, mqtt_client):
+                                              mqtt_server, mqtt_client, request):
     """
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -1112,9 +1111,8 @@ def test_Coex_sdk_WLAN_MQTT_BLE_slave_C133574(wifi_dut, wifi_access_point,
         5. Enable the wlan and bt power save mode in dut after the connection
         6. Run MQTT srever and initiate ,subscribe,publish message from dut
     """
-    ble_obj = None
     try:
-        test_name = "test_Coex_sdk_WLAN_MQTT_BLE_slave_C133574"
+        test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
 
@@ -1209,6 +1207,7 @@ def test_Coex_sdk_WLAN_MQTT_BLE_slave_C133574(wifi_dut, wifi_access_point,
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -1327,6 +1326,7 @@ def test_Coex_sdk_fun_ble_deinit_init_wlan_data_C133566(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -1389,7 +1389,6 @@ def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
     protocol,
     multicast_client
 ):
-    ble_obj = None
     """
     Test Steps:
         1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
@@ -1501,17 +1500,13 @@ def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
             'Sniffer: Multicast packets are not captured'
 
-        # decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        # igmp_capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["udp"],
-        #                                  test_name)
-        # assert len(
-        #     igmp_capture_list) > 0, "IGMP packets or one of the 4-way handshake packets are not captured in the sniffer"
         logger().info("sniffer validation is successful")
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -1703,6 +1698,7 @@ def test_Coex_sdk_ble_bd_addr_wlan_TCP_TX_C133564(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -1770,7 +1766,6 @@ def test_Coex_sdk_Disconnect_BLE_while_WLAN_TCP_RX_C133559(
         7. repeat 3 ,4, 6 for 5 times
     """
     try:
-        test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_name = request.node.name
         logger().info("configuring the Sniffer with the channel")
@@ -1824,6 +1819,7 @@ def test_Coex_sdk_Disconnect_BLE_while_WLAN_TCP_RX_C133559(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -1970,6 +1966,7 @@ def test_Coex_sdk_otaf_ble_slave_C133484(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -1989,7 +1986,7 @@ def test_Coex_sdk_otaf_ble_slave_C133484(
         | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
                               | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
@@ -2040,8 +2037,6 @@ def test_Coex_sdk_BLE_RSSI_WLAN_HTTP_download_C133563(
         6. Connect DUT as BLE master
         7. Query RSSI when http_download in progress
     """
-    ble_obj = None
-
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -2090,6 +2085,7 @@ def test_Coex_sdk_BLE_RSSI_WLAN_HTTP_download_C133563(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -2131,7 +2127,7 @@ def test_Coex_sdk_BLE_RSSI_WLAN_HTTP_download_C133563(
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
 def test_Coex_sdk_WLAN_DNS_static_dns_server_BLE_slave_C133479(wifi_dut, wifi_access_point,
                                                    wifi_sniffer, sl_collections,
-                                                   sniffer_filter, utf_constants, ble_client):
+                                                   sniffer_filter, utf_constants, ble_client, request):
     """
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -2141,9 +2137,8 @@ def test_Coex_sdk_WLAN_DNS_static_dns_server_BLE_slave_C133479(wifi_dut, wifi_ac
         5. Enable the wlan and bt power save mode in dut after the connection
         6. Verify DNS get with valid server
     """
-    ble_obj = None
     try:
-        test_name = "test_Coex_sdk_WLAN_http_post_non_exist_ip_BLE_slave_C133483"
+        test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
 
@@ -2203,6 +2198,7 @@ def test_Coex_sdk_WLAN_DNS_static_dns_server_BLE_slave_C133479(wifi_dut, wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -2239,8 +2235,9 @@ def test_Coex_sdk_WLAN_DNS_static_dns_server_BLE_slave_C133479(wifi_dut, wifi_ac
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
 def test_Coex_sdk_WLAN_mac_based_conn_BLE_slave_C133485(wifi_dut, wifi_access_point,
-                                                   wifi_sniffer, sl_collections,
-                                                   sniffer_filter, utf_constants, ble_client):
+                                                        wifi_sniffer, sl_collections,
+                                                        sniffer_filter, utf_constants,
+                                                        ble_client, request):
     """
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -2250,9 +2247,8 @@ def test_Coex_sdk_WLAN_mac_based_conn_BLE_slave_C133485(wifi_dut, wifi_access_po
         5. Enable the wlan and bt power save mode in dut after the connection
 
     """
-    ble_obj = None
     try:
-        test_name = "Coex_sdk_WLAN_mac_based_conn_BLE_slave_C133485"
+        test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
 
@@ -2300,6 +2296,7 @@ def test_Coex_sdk_WLAN_mac_based_conn_BLE_slave_C133485(wifi_dut, wifi_access_po
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -2377,7 +2374,6 @@ def test_Coex_sdk_http_otaf_ble_scan_C551661(
 
 
     """
-    ble_obj = None
     try:
         test_name = request.node.name
         test_type = "ping"
@@ -2455,8 +2451,8 @@ def test_Coex_sdk_http_otaf_ble_scan_C551661(
         logger().info("sniffer validation is successful")
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
-
+    finally:
+        ble_client.interfaces.bluetooth.close()
 
 
 
@@ -2487,6 +2483,8 @@ def test_Coex_sdk_http_otaf_ble_scan_C551661(
             },
         },
     )
+
+@pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -2500,8 +2498,6 @@ def test_Coex_sdk_http_otaf_ble_scan_C551661(
         "disassociated",
     ],
 )
-@pytest.mark.http_server("raspi_lighttpd_tls")
-@pytest.mark.skip(reason="https otaf is not working in coex")
 def test_Coex_sdk_https_otaf_ble_slave_C551662(
     wifi_sniffer,
     wifi_access_point,
@@ -2589,7 +2585,7 @@ def test_Coex_sdk_https_otaf_ble_slave_C551662(
         )
 
         ble_obj.ble_connect(role="slave")
-        wifi_obj.join_to_ap()
+        wifi_obj.join_to_ap(skip_power_save=True)
         ble_obj.service_discovery_on_remote()
         ble_obj.start()
         time.sleep(5)
@@ -2629,13 +2625,22 @@ def test_Coex_sdk_https_otaf_ble_slave_C551662(
                                                       f" firmware through otaf"
 
         wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_obj.sniffer_validation_join()
+        sl_collections.join_sniffer_validation(
+            wifi_access_point,
+            wifi_sniffer,
+            wifi_obj.dut_mac_address,
+            wifi_obj.ap_mac_address,
+            sniffer_filter,
+            power_save=False,
+        )
         logger().info("sniffer validation is successful")
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
-        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 @pytest.mark.config(
@@ -2788,6 +2793,13 @@ def test_coex_sdk_SSL_AWS_ble_slave_C133575(wifi_sniffer, wifi_dut, wifi_access_
         wifi_obj.sniffer_validation_join()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 
@@ -2951,6 +2963,7 @@ def test_azure_mqtt_subscribe_publish_ble_adv_scan_C133584(firmware_loader, wifi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         azure_iot_client.interfaces.device.disconnect()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,

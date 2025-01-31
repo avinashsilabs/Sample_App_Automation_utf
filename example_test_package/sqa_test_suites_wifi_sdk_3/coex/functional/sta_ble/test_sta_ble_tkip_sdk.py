@@ -31,7 +31,7 @@ from datetime import datetime, date
 import re
 from test_sta_ble_sdk import BleThreadFunctionality, SnifferValidationProcess, ScanTime_JoinTime, WifiJoinThread
 
-
+ble_obj = None
 
 def logger():
     return get_logger(__name__)
@@ -87,7 +87,7 @@ def logger():
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan", "ble_stop_adv"])
+                       wifi=["wifi_powersave_disable",  "disassociated"])
 def test_Coex_sdk_join_time_WPA_TKIP_BLE_adv_C133457(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                      request, utf_constants, sl_collections, wifi_client,
                                                      sniffer_filter):
@@ -142,6 +142,13 @@ def test_Coex_sdk_join_time_WPA_TKIP_BLE_adv_C133457(wifi_sniffer, wifi_access_p
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 
 
@@ -182,7 +189,6 @@ def test_Coex_sdk_join_time_WPA_TKIP_BLE_adv_C133457(wifi_sniffer, wifi_access_p
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_adv",
     ],
 )
 def test_Coex_sdk_join_time_WPA_TKIP_PMK_BLE_Adv_C133459(
@@ -251,6 +257,13 @@ def test_Coex_sdk_join_time_WPA_TKIP_PMK_BLE_Adv_C133459(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -282,7 +295,7 @@ def test_Coex_sdk_join_time_WPA_TKIP_PMK_BLE_Adv_C133459(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_scan", "ble_stop_adv"])
+                       wifi=["wifi_powersave_disable",  "disassociated"])
 def test_Coex_sdk_join_time_WPA_TKIP_BLE_adv_bypass_C133493(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                      request, utf_constants, sl_collections, wifi_client,
                                                      sniffer_filter):
@@ -337,6 +350,13 @@ def test_Coex_sdk_join_time_WPA_TKIP_BLE_adv_bypass_C133493(wifi_sniffer, wifi_a
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
 
 
@@ -381,7 +401,6 @@ def test_Coex_sdk_join_time_WPA_TKIP_BLE_adv_bypass_C133493(wifi_sniffer, wifi_a
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        "ble_stop_adv",
     ],
 )
 def test_Coex_sdk_join_time_WPA_TKIP_PMK_BLE_Adv_bypass_C133495(
@@ -443,3 +462,10 @@ def test_Coex_sdk_join_time_WPA_TKIP_PMK_BLE_Adv_bypass_C133495(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)

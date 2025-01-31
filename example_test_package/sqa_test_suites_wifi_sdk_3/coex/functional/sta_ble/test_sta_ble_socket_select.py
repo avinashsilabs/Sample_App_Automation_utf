@@ -205,6 +205,7 @@ def test_Coex_sdk_WLAN_TCP_socket_select_without_bit_BLE_scan_C133576(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -336,6 +337,7 @@ def test_Coex_sdk_WLAN_TCP_socket_select_when_no_socket_BLE_scan_C133577(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -1225,33 +1227,10 @@ def test_Coex_sdk_socket_select_remote_terminate_BLE_scan_C133582(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
+        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

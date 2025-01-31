@@ -58,7 +58,7 @@ class BleFunctionality(ThreadBase):
 
     def ble_slave_connection(self, data_transfer=True, disconnect=False, wait_time=5):
         logger().info("******************** start ble in dut ********************")
-        ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
+        ble_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=0)
         assert ble_dut_address, "Failed to initialize ble in dut"
         self.ble_dut_address = ble_dut_address
         if data_transfer:
@@ -367,6 +367,8 @@ def test_wifi_sdk_error_code_check_when_cert_loaded_in_same_index_c19656(wifi_sn
     except Exception as error:
         wifi_dut.interfaces.wifi.is_dut_bad_state = True
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+    finally:
+        ble_client.interfaces.bluetooth.close()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -444,6 +446,8 @@ def test_wifi_sdk_load_cert_with_wlan_ble_in_connected_state_with_ps_c19651(wifi
     except Exception as error:
         wifi_dut.interfaces.wifi.is_dut_bad_state = True
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+    finally:
+        ble_client.interfaces.bluetooth.close()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -522,6 +526,9 @@ def test_wifi_sdk_load_cert_with_wlan_ble_in_connected_state_without_ps_c19652(w
         wifi_dut.interfaces.wifi.is_dut_bad_state = True
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
@@ -598,6 +605,9 @@ def test_wifi_sdk_ble_connectivity_data_tx_after_load_cert_c19653(wifi_sniffer, 
     except Exception as error:
         wifi_dut.interfaces.wifi.is_dut_bad_state = True
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -680,6 +690,9 @@ def test_wifi_sdk_ble_connection_data_tx_after_loading_cert0_cert1_c19654(sl_col
     except Exception as error:
         wifi_dut.interfaces.wifi.is_dut_bad_state = True
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -769,6 +782,9 @@ def test_wifi_sdk_ble_connectivity_data_tx_after_load_cert0_c19655(wifi_sniffer,
     except Exception as error:
         wifi_dut.interfaces.wifi.is_dut_bad_state = True
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -869,3 +885,6 @@ def test_wifi_sdk_wlan_ble_connection_load_cert_time_gt_200ms_c19657(wifi_sniffe
     except Exception as error:
         wifi_dut.interfaces.wifi.is_dut_bad_state = True
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
