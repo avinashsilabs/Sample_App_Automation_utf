@@ -4036,3 +4036,137 @@ def test_wifi_sdk_aws_combined_cert_rx_c688528(wifi_sniffer, wifi_access_point, 
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["intermediate-root-ca-3.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "region": 1,
+        "region_code": "korea"
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA3', "region": 'Korea', "channel": 13})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["intermediate-root-ca-3.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "region": 1,
+        "region_code": "korea"
+    }
+)
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_aws_two_client_with_same_client_id_c537898(wifi_sniffer, wifi_access_point, wifi_dut, logger,
+                                                             sl_collections, aws_iot_client, remote_wiseconnect3):
+    """
+    Negative case : Verify when two clients having same client id
+    """
+
+    test_name = "test_wifi_sdk_c661500"
+    messages = []
+    for i in range(10):
+        messages.append(text_generator(size=100))
+
+    try:
+        capture_filename = "test_wifi_sdk_c661500"
+        channel = wifi_access_point.interfaces.wifi.channel
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=0)
+        assert (len(scan_results) >= 1), "Scan failed"
+        logger.info(scan_results)
+
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+        sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                            wifi_access_point=wifi_access_point,
+                                            associated=wifi_dut.interfaces.wifi.associated,
+                                            channel=0,
+                                            power_save=True, skip_scan=False)
+
+        scan_results = remote_wiseconnect3.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=0)
+        assert (len(scan_results) >= 1), "Scan failed"
+        logger.info(scan_results)
+
+        remote_wiseconnect3.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+        sl_collections.join_to_wifi_network(wifi_dut=remote_wiseconnect3,
+                                            wifi_access_point=wifi_access_point,
+                                            associated=wifi_dut.interfaces.wifi.associated,
+                                            channel=0,
+                                            power_save=True, skip_scan=False)
+
+        aws_obj1 = AwsConnection(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, test_case=687529,
+                                wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, test_name=test_name,
+                                aws_iot_client=aws_iot_client, messages=messages, sleep=5)
+
+        aws_obj2 = AwsConnection(wifi_dut=remote_wiseconnect3, wifi_access_point=wifi_access_point, test_case=687529,
+                                 wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, test_name=test_name,
+                                 aws_iot_client=aws_iot_client, messages=messages, sleep=5)
+
+        logger.info(f"**** Publishing MQTT data on two devices with same client ID....")
+        try:
+            aws_obj1.start()
+            time.sleep(5)
+            aws_obj2.start()
+
+            aws_obj1.wait_for_exit()
+            aws_obj2.wait_for_exit()
+
+        except Exception as error:
+            assert "SL_STATUS_AWS_CONNECTION_FAILURE" in str(error), "Connected with same client ID"
+            logger.info(f"Exception occurred: {error} which is expected")
+
+        logger.info("Initiating aws_iot_disconnect from DUT")
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
+        time.sleep(20)
+        logger.info("\n")
+
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
