@@ -233,7 +233,7 @@ class Ble_Data_Transfer:
         for retry in range(retries):
             try:
                 self.ble_client.interfaces.bluetooth.pair_and_connect(self.ble_dut_address)
-                time.sleep(2)
+                time.sleep(30)
 
                 # Check Connection Status
                 logger().info("Checking connection status of BLE")
@@ -584,7 +584,7 @@ class Ble_Data_Transfer:
         try:
             assert len(notifications) == indication_count
         except:
-            assert len(notifications) == indication_count - 3
+            assert len(notifications) == indication_count - 1
         logger().info(f"Received Notifications : : {notifications}")
 
         self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
@@ -655,11 +655,9 @@ pytestmark = [
             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
             "oper_mode": 0,
             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.ULPGPIOHandshake |
-                        Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+            "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
                         Si91xFeatureBitMap.WPSSupportDisabled,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
-                              Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
             "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
@@ -716,7 +714,6 @@ def test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_without_respons_buffer_0_
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
-
     finally:
         ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client.interfaces.bluetooth.close()
@@ -972,7 +969,7 @@ def test_wifi_sdk_ble_dut_as_slave_with_232_bytes_write_with_response_buffer_1_c
         with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
             # Initializing DUT BLE Device
             ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
-            ble_dut_address  = ble_obj.ble_gatt_init(set_smp=0)
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
             # Set DUT Local name
             ble_obj.set_local_get_local_name_validation()
             # Set DUT To Advertising
@@ -1218,7 +1215,6 @@ def test_wifi_sdk_ble_dut_as_master_with_230_bytes_tx_indication_buffer_1_c19332
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
-
     finally:
         ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client.interfaces.bluetooth.close()
@@ -1514,7 +1510,6 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_write_with_response_buffer_1_
         ble_obj.clear_dut(role="master")
 
 
-# @pytest.mark.skip
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664430(ble_dut, ble_client, sl_collections):
     bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664430_"
@@ -1551,8 +1546,6 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664430
             # Scan and Connect From Remote Device
             ble_obj.scan_conn_from_remote_device()
 
-            logger().info(".... checking for ble connectivity stability ....")
-            time.sleep(60)
             # Get All Profiles
             char_path, char_props = ble_obj.service_discovery_on_dut(service_uid=service_uid, char_uid=char_uid)
 
@@ -1576,7 +1569,6 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664430
         ble_obj.clear_dut()
 
 
-# @pytest.mark.skip
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_ble_dut_as_master_with_240_bytes_tx_indication_buffer_1_C664431(ble_dut, ble_client, sl_collections):
     bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_master_with_240_bytes_tx_indication_buffer_1_C664431_"
@@ -1609,8 +1601,6 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_tx_indication_buffer_1_C66443
             # Start scan and connect from dut
             ble_obj.scan_conn_from_dut_device()
 
-            logger().info(".... checking for ble connectivity stability ....")
-            time.sleep(60)
             # Get All Profiles
             char_path, char_props = ble_obj.service_discovery_on_dut(service_uid=service_uid, char_uid=char_uid)
 
@@ -2018,7 +2008,6 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_write_with_response_buffer_1_
         ble_obj.clear_dut(role="master")
 
 
-# @pytest.mark.skip
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664690(ble_dut, ble_client, sl_collections):
     bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664690_"
@@ -2050,8 +2039,6 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664690
             # Scan and Connect From Remote Device
             ble_obj.scan_conn_from_remote_device()
 
-            logger().info(".... checking for ble connectivity stability ....")
-            time.sleep(60)
             # Get All Profiles
             char_path, char_props = ble_obj.service_discovery_on_dut(service_uid=service_uid, char_uid=char_uid)
 
@@ -2075,7 +2062,6 @@ def test_wifi_sdk_ble_dut_as_slave_with_240_bytes_tx_indication_buffer_1_C664690
         ble_obj.clear_dut()
 
 
-# @pytest.mark.skip
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_ble_dut_as_master_with_240_bytes_tx_indication_buffer_1C664691(ble_dut, ble_client, sl_collections):
     bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_master_with_240_bytes_tx_indication_buffer_1C664691_"
@@ -2103,8 +2089,6 @@ def test_wifi_sdk_ble_dut_as_master_with_240_bytes_tx_indication_buffer_1C664691
             # Start scan and connect from dut
             ble_obj.scan_conn_from_dut_device()
 
-            logger().info(".... checking for ble connectivity stability ....")
-            time.sleep(60)
             # Get All Profiles
             char_path, char_props = ble_obj.service_discovery_on_dut(service_uid=service_uid, char_uid=char_uid)
 
