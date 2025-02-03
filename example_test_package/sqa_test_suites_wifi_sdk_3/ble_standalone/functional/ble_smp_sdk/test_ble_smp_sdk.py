@@ -22,7 +22,6 @@ from utf.utils.thread_base import ThreadBase
 from utf.interfaces.bluetooth.nrf_blatann import create_interface, NrfBlatann
 from utf.devices import Device
 
-
 def logger():
     return get_logger(__name__)
 
@@ -125,7 +124,7 @@ class BLEFunc(ThreadBase):
             self.nrf_ble_client.interfaces.bluetooth.register_on_disconnect()
             self.nrf_ble_client.interfaces.bluetooth.register_on_security_level_changed()
             self.nrf_ble_client.interfaces.bluetooth.register_on_client_pairing_complete()
-            if self.testcase_no == 557287 or 557289 or 557290:
+            if self.testcase_no == 557287 or  self.testcase_no == 557289 or  self.testcase_no == 557290:
                 self.nrf_ble_client.interfaces.bluetooth.register_passkey_display(confirm=False)
             elif self.testcase_no == 557291:
                   pass
@@ -225,6 +224,8 @@ class BLEFunc(ThreadBase):
                 self.wifi_dut.interfaces.wifi.ble_start_advertising()
             logger().info("Start smp scan from the remote device")
             logger().info(f"Capability on remote: {self.capability_on_remote}")
+            self.ble_client.interfaces.bluetooth.close()
+            time.sleep(2)
             ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address, capability=self.capability_on_remote)
             assert ble_client_address, "failed to initiate ble in remote device"
 
@@ -251,9 +252,10 @@ class BLEFunc(ThreadBase):
         if self.reconnection_from_remote:
             logger().info("Set DUT in advertise mode")
             self.wifi_dut.interfaces.wifi.ble_start_advertising()
-
             logger().info("Start smp scan from the remote device")
             logger().info(f"Capability on remote: {self.capability_on_remote}")
+            self.ble_client.interfaces.bluetooth.close()
+            time.sleep(2)
             ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=ble_dut_address,
                                                                                      capability=self.capability_on_remote)
             assert ble_client_address, "failed to initiate ble in remote device"

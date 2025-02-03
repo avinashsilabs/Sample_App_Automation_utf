@@ -386,7 +386,7 @@ class BLEFunc(ThreadBase):
 
 
         if self.sniffer_check:
-            ble_dut_address_hex = re.split(":", ble_dut_address_ran)
+            ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex = re.split(":", ble_client_address)
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
