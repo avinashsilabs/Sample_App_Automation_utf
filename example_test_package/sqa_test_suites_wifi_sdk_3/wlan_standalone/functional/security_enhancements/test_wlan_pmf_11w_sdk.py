@@ -629,10 +629,12 @@ def test_wifi_sdk_mgmt_pmf_enable_receive_data_c19671(wifi_dut, wifi_access_poin
         remote_socket.interfaces.socket.send_data_tcp(tx_buffer, True)
 
         data_received = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
-        actual_data = (data_received.decode().split(':')[2].splitlines()[0])
-        logger().info(f"Data Received : {actual_data}")
-        assert tx_buffer != data_received, "buffer length sent and received is not matched"
-        logger().info(f"\n **** Transmit data matched ****\n")
+
+        if tx_buffer == data_received:
+            logger().info(f"\n **** Transmit data matched ****\n")
+        else:
+            logger().info(f"\n **** Transmit data not matched ****\n")
+            assert False
 
         # Stop sniffer and validate pmf bit in assoc request
         wifi_sniffer.interfaces.capture.stop_capture()
