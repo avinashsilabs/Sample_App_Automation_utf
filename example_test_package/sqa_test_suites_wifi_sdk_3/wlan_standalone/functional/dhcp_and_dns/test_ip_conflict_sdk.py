@@ -65,6 +65,7 @@ class Ip_Conflict(ThreadBase):
         dhcp_end = self.wifi_access_point.interfaces.wifi.dhcp_end_addr
         self.wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,
                                                               dhcp_lease="3600")
+        time.sleep(30)
         logger().info(f" dhcp_start value {dhcp_start} and dhcp_end value {dhcp_end}")
 
     def wifi_client_join(self, dhcp_start=None, dhcp_end=None):
