@@ -456,6 +456,7 @@ def test_wifi_sdk_ssl_max_sockets_testcase_c19128(wifi_sniffer, wifi_dut, wifi_a
     """
     Opening Max number of SSL client sockets and data transfer
     """
+    sock_opened = 0
     try:
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
@@ -494,6 +495,7 @@ def test_wifi_sdk_ssl_max_sockets_testcase_c19128(wifi_sniffer, wifi_dut, wifi_a
                 else:
                     assert sock == 1, f"socket id received is wrong, expected is 1"
                 logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+                sock_opened = sock_opened + 1
                 # Enable ssl option for socket opened
                 wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
                 if sock_count == 0:
@@ -549,6 +551,11 @@ def test_wifi_sdk_ssl_max_sockets_testcase_c19128(wifi_sniffer, wifi_dut, wifi_a
         sl_collections.ssl_packet_decryption(wifi_sniffer, decryption_key, dut_mac_address, ["tls"], capture_filename,
                                              ap_bssid)
     except Exception as error:
+        logger.info(f"In exception block")
+        for sock_id in range(sock_opened):
+            logger.info(f"Closing socket_id->{sock_id}")
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
+            logger.info(f"Successfully closed socket_id->{sock_id}")
         sl_collections.exception_handling(wifi_dut, error)
 
 
