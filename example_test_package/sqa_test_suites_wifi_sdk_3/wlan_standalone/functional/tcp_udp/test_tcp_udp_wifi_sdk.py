@@ -2216,7 +2216,6 @@ def test_udp_async_server_open_receive_close_C584247(wifi_sniffer, wifi_dut, wif
         "band": 0,
     }
 )
-@pytest.mark.check
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": 12345678})
 @pytest.mark.end_state("wifi_dut",
@@ -2242,7 +2241,8 @@ def test_tcp_server_open_more_than_max_limit_C19364(wifi_sniffer, wifi_dut, wifi
         server_port_base = 5001
         tcp_socks = []
         socket_list = []
-        for count in range(0, 11):
+        max_socket_count = 10
+        for count in range(0, max_socket_count + 1):
             local_port = server_port_base + count
             socket_list.append(local_port)
             logger().info(f'Server port = {local_port}')
@@ -2252,20 +2252,18 @@ def test_tcp_server_open_more_than_max_limit_C19364(wifi_sniffer, wifi_dut, wifi
             logger().info(
                 f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
             tcp_socks.append(sock)
-        for count in range(0, 11):
-            wifi_dut.interfaces.wifi.bind(socket_fd=tcp_socks[count], device_ip=wifi_thread.dut_addr['device_ip'],
-                                          server_port=socket_list[count], timeout=5, asynch=0)
-        for count in range(0, 11):
+            wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=wifi_thread.dut_addr['device_ip'],
+                                          server_port=local_port, timeout=5, asynch=0)
             try:
-                wifi_dut.interfaces.wifi.listen(socket_fd=tcp_socks[count], backlog=1, asynch=0)
-            except Exception as error:
-                if count == len(tcp_socks)-1:
+                wifi_dut.interfaces.wifi.listen(socket_fd=sock, backlog=1, asynch=0)
+            except Exception as e:
+                if count == max_socket_count:
                     wifi_dut.interfaces.wifi.get_saved_firmware_status(expected_status=
                                                                        SLStatus.SL_STATUS_SI91X_MAX_SOCKETS_EXCEEDED)
-                    logger().info("Received error matches with expected error successfully")
-                else:
-                    logger().info(error)
-        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=tcp_socks[len(tcp_socks)-1])
+                    logger().info(f"\n **** Status Received: {SLStatus.SL_STATUS_SI91X_MAX_SOCKETS_EXCEEDED}")
+                    tcp_socks.remove(sock)
+                    wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                    break
         for count in range(0, 10):
             ThreadBase.call_functions_simultaneously(
                 [
@@ -2285,7 +2283,7 @@ def test_tcp_server_open_more_than_max_limit_C19364(wifi_sniffer, wifi_dut, wifi
             logger().info(f"###################### Buffer Data  {buffer_rx}  ######################")
             logger().info(f"###################### Buffer Data Length  {buffer_length}  ######################")
             server_count = server_count + 1
-            assert tx_buffer == server_count, f"buffer length sent by remote peer and received on the socket id " \
+            assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id " \
                                            f"{tcp_socks[count]} opened in the DUT is not matched"
             logger().info("Data sent by remote peer and received on DUT is matching")
         logger().info("Stop the sniffer")
