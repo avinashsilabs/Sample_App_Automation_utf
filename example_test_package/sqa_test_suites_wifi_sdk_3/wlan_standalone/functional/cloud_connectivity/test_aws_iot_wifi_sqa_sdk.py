@@ -4098,6 +4098,8 @@ def test_wifi_sdk_aws_combined_cert_rx_c688528(wifi_sniffer, wifi_access_point, 
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.end_state("remote_wiseconnect3",
+                       wifi=["wifi_powersave_disable", "disassociated", "aws_unsubscribe", "aws_disconnect"])
 def test_wifi_sdk_aws_two_client_with_same_client_id_c537898(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                              sl_collections, aws_iot_client, remote_wiseconnect3):
     """

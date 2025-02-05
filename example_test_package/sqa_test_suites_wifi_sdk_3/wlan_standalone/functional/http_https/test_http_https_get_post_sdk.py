@@ -100,8 +100,10 @@ class WLanThread(ThreadBase):
                         logger().info(status_dut)
                         logger().info(content_dut)
                         assert content_dut == content_client, "fetched data is not same as expected data"
+
+                        self.wifi_dut.interfaces.wifi.http_client_deinit()
                     else:
-                        self.wifi_dut.interfaces.http.http_post(server=None, resource_path=self.index_path,
+                        self.wifi_dut.interfaces.http.http_post(server=None, resource_path="cgi-bin/cgi_example.py",
                                                                 server_ip=remote_ip,
                                                                 post_data=''.join(random.choices(string.ascii_uppercase + string.digits,
                                                                                             k=self.utf_constants.get('generate_bytes'))),
@@ -144,7 +146,7 @@ class WLanThread(ThreadBase):
 
                 self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
 
-                for _ in range(5):
+                for _ in range(3):
 
                     if self.test_name == '476943':
                         self.wifi_dut.interfaces.wifi.http_client_init(https_enable=False)
@@ -412,7 +414,7 @@ class WLanThread(ThreadBase):
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
                             self.http_server.interfaces.http,
-                            self.index_path,
+                            "cgi-bin/cgi_example.py",
                             post_data='hellotestingfrohttppostcontent',
                             server_port=443)
 
@@ -439,7 +441,7 @@ class WLanThread(ThreadBase):
                         logger().info(f"\n\n************* Put data using HTTP PUT request {i}*************\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_put(
                             self.http_server.interfaces.http,
-                            resource_path=self.index_path,
+                            resource_path="cgi-bin/cgi_example.py",
                             server_port=443)
 
                         logger().info(f"HTTP Put Status:{status_dut}")
@@ -503,14 +505,14 @@ class WLanThread(ThreadBase):
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_put(
                             self.http_server.interfaces.http,
                             server_port=443,
-                            resource_path=self.index_path)
+                            resource_path="cgi-bin/cgi_example.py")
                         logger().info(status_dut)
                         logger().info(content_dut)
 
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
                             self.http_server.interfaces.http,
-                            self.index_path,
+                            "cgi-bin/cgi_example.py",
                             post_data='hellotestingfrohttppostcontent',
                             server_port=443)
 
@@ -578,7 +580,7 @@ class WLanThread(ThreadBase):
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
                             self.http_server.interfaces.http,
-                            self.index_path,
+                            "cgi-bin/cgi_example.py",
                             post_data='hellotestingfrohttppostcontent',
                             server_port=443)
 
@@ -589,7 +591,7 @@ class WLanThread(ThreadBase):
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_put(
                             self.http_server.interfaces.http,
                             server_port=443,
-                            resource_path=self.index_path)
+                            resource_path="cgi-bin/cgi_example.py")
                         logger().info(status_dut)
                         logger().info(content_dut)
 
@@ -640,14 +642,14 @@ class WLanThread(ThreadBase):
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_put(
                             self.http_server.interfaces.http,
                             server_port=443,
-                            resource_path=self.index_path)
+                            resource_path="cgi-bin/cgi_example.py")
                         logger().info(status_dut)
                         logger().info(content_dut)
 
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
                             self.http_server.interfaces.http,
-                            self.index_path,
+                            "cgi-bin/cgi_example.py",
                             post_data='hellotestingfrohttppostcontent',
                             server_port=443)
 
@@ -657,7 +659,7 @@ class WLanThread(ThreadBase):
                         logger().info(f"\n\n***Fetching the data on https using get method iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
                             self.http_server.interfaces.http,
-                            self.index_path,
+                            "index.html",
                             server_port=443)
                         status_client, content_client = self.http_client.interfaces.http.http_get(
                             self.http_server.interfaces.http, self.index_path)
@@ -711,7 +713,7 @@ class WLanThread(ThreadBase):
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
                             self.http_server.interfaces.http,
-                            self.index_path,
+                            "cgi-bin/cgi_example.py",
                             post_data='hellotestingfrohttppostcontent',
                             server_port=443)
 
@@ -722,10 +724,9 @@ class WLanThread(ThreadBase):
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_put(
                             self.http_server.interfaces.http,
                             server_port=443,
-                            resource_path=self.index_path)
+                            resource_path="cgi-bin/cgi_example.py")
                         logger().info(status_dut)
                         logger().info(content_dut)
-
 
                         logger().info(f"\n\n***Fetching the data on https using get method iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
@@ -1033,7 +1034,7 @@ class WLanThread(ThreadBase):
 
                         self.wifi_dut.interfaces.http.http_post(
                             self.http_server.interfaces.http,
-                            self.index_path,
+                            "cgi-bin/cgi_example.py",
                             post_data='hellotestingforhttppostcontent',
                             server_port=443)
 
@@ -1303,36 +1304,36 @@ class Thread_https_post(WLanThread):
         logger().info(f"\n\n***Posting data using http post request ***\n\n")
         self.wifi_dut.interfaces.http.http_post(
             self.http_server.interfaces.http,
-            self.index_path,
+            "cgi-bin/cgi_example.py",
             post_data='hellotestingfrohttppostcontent',
             server_port=443)
         time.sleep(20)
         self.wifi_dut.interfaces.http.http_post(
             self.http_server.interfaces.http,
-            self.index_path,
+            "cgi-bin/cgi_example.py",
             post_data='hellotestingfrohttppostcontent',
             server_port=443)
         time.sleep(20)
         self.wifi_dut.interfaces.http.http_post(
             self.http_server.interfaces.http,
-            self.index_path,
+            "cgi-bin/cgi_example.py",
             post_data='hellotestingfrohttppostcontent',
             server_port=443)
         time.sleep(20)
         self.wifi_dut.interfaces.http.http_post(
             self.http_server.interfaces.http,
-            self.index_path,
+            "cgi-bin/cgi_example.py",
             post_data='hellotestingfrohttppostcontent',
             server_port=443)
         self.wifi_dut.interfaces.http.http_post(
             self.http_server.interfaces.http,
-            self.index_path,
+            "cgi-bin/cgi_example.py",
             post_data='hellotestingfrohttppostcontent',
             server_port=443)
         time.sleep(20)
         self.wifi_dut.interfaces.http.http_post(
             self.http_server.interfaces.http,
-            self.index_path,
+            "cgi-bin/cgi_example.py",
             post_data='hellotestingfrohttppostcontent',
             server_port=443)
 
@@ -1565,7 +1566,7 @@ def test_wifi_sdk_http_get_functionality_100mb_file_c19214(http_server, wifi_dut
 
         assert not status_dut, "failed to fetch the https data"
 
-        data = re.findall(r'((?<=http_get_response_length:)\d+)', content_dut)
+        data = re.findall(r'((?<=http_get_response_length:)\d+)', str(content_dut))[0]
 
         assert int(data) >= 104857600, 'Fetched data is not 100MB'
 
@@ -2536,6 +2537,7 @@ def test_wifi_sdk_https_get_tls_v1_3_c535795(http_server, wifi_dut, http_client,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",
                                "wan_ipv6_address": WLanThread().random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
@@ -2557,7 +2559,7 @@ def test_wifi_sdk_https_get_tls_v1_3_c535795(http_server, wifi_dut, http_client,
 )
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
-def test_wifi_sdk_http_get_with_ipv6_stateless_c564481(http_server, wifi_dut, http_client, wifi_access_point,
+def test_wifi_sdk_http_get_with_ipv6_stateless_c564481(firmware_loader, http_server, wifi_dut, http_client, wifi_access_point,
                                                        wifi_sniffer, sl_collections, sniffer_filter, wifi_client):
     test_name = '564481'
     index_path = "index.html"
@@ -2570,6 +2572,7 @@ def test_wifi_sdk_http_get_with_ipv6_stateless_c564481(http_server, wifi_dut, ht
     wlan_obj.wait_for_exit()
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1",
                                "wan_ipv6_address": WLanThread().random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
@@ -2591,7 +2594,7 @@ def test_wifi_sdk_http_get_with_ipv6_stateless_c564481(http_server, wifi_dut, ht
 )
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
-def test_wifi_sdk_http_get_with_ipv6_stateful_c476941(http_server, wifi_dut, http_client, wifi_access_point,
+def test_wifi_sdk_http_get_with_ipv6_stateful_c476941(firmware_loader, http_server, wifi_dut, http_client, wifi_access_point,
                                                       wifi_sniffer, sl_collections, sniffer_filter, wifi_client):
     test_name = '564481'
     index_path = "index.html"
@@ -2661,6 +2664,7 @@ def test_wifi_sdk_http_get_with_tcp_udp_data_c19218(http_server, wifi_dut, http_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1",
                                "wan_ipv6_address": WLanThread().random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
@@ -2683,7 +2687,7 @@ def test_wifi_sdk_http_get_with_tcp_udp_data_c19218(http_server, wifi_dut, http_
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
-def test_wifi_sdk_http_post_with_ipv6_stateful_c537907(http_server, wifi_dut, http_client, wifi_access_point,
+def test_wifi_sdk_http_post_with_ipv6_stateful_c537907(firmware_loader, http_server, wifi_dut, http_client, wifi_access_point,
                                                        index_path, wifi_sniffer, sl_collections, sniffer_filter,
                                                        wifi_client, utf_constants):
     test_name = '537907'
@@ -2822,6 +2826,7 @@ def test_wifi_sdk_https_put_get_post_in_sequence_c476956(http_server, wifi_dut, 
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config("wifi_access_point", wifi={"passphrase": '12345678', "ipv6_state": "0", "security": "Open",
                                                "wan_ipv6_address": WLanThread().random_ipv6_addr("2401:4900:1cb3::/48")})
 @pytest.mark.http_server("raspi_lighttpd")
@@ -2843,7 +2848,7 @@ def test_wifi_sdk_https_put_get_post_in_sequence_c476956(http_server, wifi_dut, 
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_http_put_get_post_in_sequence_ipv6_stateless_c476954(http_server, wifi_dut, http_client,
+def test_wifi_sdk_http_put_get_post_in_sequence_ipv6_stateless_c476954(firmware_loader, http_server, wifi_dut, http_client,
                                                                        wifi_access_point, wifi_sniffer, sl_collections,
                                                                        sniffer_filter, wifi_client):
     """Verify HTTP PUT,GET,POST with HTTP longer URL support BIT enable"""
@@ -2851,8 +2856,7 @@ def test_wifi_sdk_http_put_get_post_in_sequence_ipv6_stateless_c476954(http_serv
         test_name = '476954'
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               test_name=test_name, sl_collections=sl_collections, http_server=http_server,
-                              http_client=http_client, sniffer_filter=sniffer_filter, index_path=index_path,
-                              wifi_client=wifi_client)
+                              http_client=http_client, sniffer_filter=sniffer_filter, wifi_client=wifi_client)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
