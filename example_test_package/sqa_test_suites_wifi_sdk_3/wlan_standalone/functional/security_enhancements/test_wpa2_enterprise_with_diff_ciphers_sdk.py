@@ -2456,7 +2456,7 @@ def test_wsdk_WPA2_EAP_TLS_conn_with_wrong_cert_C113850(wifi_dut, wifi_access_po
                     Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
                           Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.RealTimeClockFromHost,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
@@ -2467,7 +2467,7 @@ def test_wsdk_WPA2_EAP_TLS_conn_with_wrong_cert_C113850(wifi_dut, wifi_access_po
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "band": 0,
-        "eap_cert": ["wifi-user-client-ca-parsering.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
@@ -2483,10 +2483,18 @@ def test_wsdk_WPA2_EAP_client_cert_parsing_TLSv12_C113902(wifi_dut, wifi_access_
         for i in range(0, iter_count):
             wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
             wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+            wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
+                                                       cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
             wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
             wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                      beacon_missed_count=40, first_time_retry_enable=0)
+
+            wifi_dut.interfaces.wifi.load_certs(
+                eap_cert=["wifi-user-client-ca-parsering.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
             wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
+            time.sleep(2)
+            wifi_dut.interfaces.wifi.set_rtc(seconds=50, minutes=59, hours=23, day=1, month=1, weekday=4, year=1950)
+            time.sleep(2)
             wifi_dut.interfaces.wifi.set_eap_credentials()
             wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                           passphrase=wifi_access_point.interfaces.wifi.passphrase,
@@ -2509,7 +2517,7 @@ def test_wsdk_WPA2_EAP_client_cert_parsing_TLSv12_C113902(wifi_dut, wifi_access_
             logger().info(f"\n\n Event data is: {output} \n\n")
             result = output.strip().split(':')[1].lstrip()
             logger().info(f"\n\n Reason code:{result} \n\n")
-            assert result == '0x4B', "Unable to get expected reason code hence test is failed"
+            assert result == '4B', "Unable to get expected reason code hence test is failed"
             logger().info(f"Observed Expected Error Code, Hence test cases is passed")
             dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
             logger().info(f"Mac Address of DUT: {dut_mac_address}")
@@ -2549,7 +2557,7 @@ def test_wsdk_WPA2_EAP_client_cert_parsing_TLSv12_C113902(wifi_dut, wifi_access_
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "band": 0,
-        "eap_cert": ["wifi-user-few-lines.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
+        "eap_cert": ["wifi-user-ca-few-lines-removed.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
