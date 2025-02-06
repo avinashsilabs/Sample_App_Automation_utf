@@ -31,6 +31,35 @@ def logger():
     return get_logger(__name__)
 
 
+def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None,):
+    """
+    Common method to generate wifi_dut marker for pytest.mark.config decorator.
+    """
+    config = {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "boot_option": 49,
+    }
+    if ca_cert:
+        config["ca_cert"] = ca_cert
+    if client_cert:
+        config["client_cert"] = client_cert
+
+    if client_key:
+        config["client_key"] = client_key
+    return pytest.mark.config("wifi_dut", wifi=config)
+
 class WifiJoin(ThreadBase):
     def __init__(self, wifi_dut=None, capture_filename=None, wifi_access_point=None, wifi_sniffer=None, http_server=None
                  , http_client=None, sl_collections=None, sniffer_filter=None, utf_constants=None, index_path=None,
@@ -99,27 +128,44 @@ class WifiJoin(ThreadBase):
 
         if self.test_case == '19235' or self.test_case == '528822' or self.test_case == '564051':
             self.wifi_dut.interfaces.wifi.leave()
+    def http_curl_functionality(self):
+        current_time = time.time()
+        self.wifi_dut.interfaces.wifi.http_server_init()
+        self.wifi_dut.interfaces.wifi.http_server_start()
+        status, resp_content = self.http_client.interfaces.http.http_get(self.http_server.interfaces.http,
+                                                                         self.index_path)
+        logger().info(f"........#HTTP_GET# length of DUT webpage {len(resp_content)} .......")
+        logger().info(f"........ contents of webpage {resp_content}\n\n\n ........")
+        file_time_stamp = str(datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+        webpage = "./reports/" + self.capture_filename + "webpage" + file_time_stamp + ".html"
+        logger().info(f"........ webpage ID sent by DUT is {webpage} ..........")
+        with open(webpage, "w") as recv:
+            recv.write(resp_content.decode())
+        status, resp_content = self.http_client.interfaces.http.http_put(self.http_server.interfaces.http,
+                                                                         self.index_path)
+        logger().info(f"........#HTTP_PUT# length of DUT webpage {len(resp_content)} .......")
+        logger().info(f"........ contents of webpage {resp_content}\n\n\n ........")
+        file_time_stamp = str(datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+        webpage = "./reports/" + self.capture_filename + "webpage" + file_time_stamp + ".html"
+        logger().info(f"........ webpage ID sent by DUT is {webpage} ..........")
+        with open(webpage, "w") as recv:
+            recv.write(resp_content.decode())
+        status, resp_content = self.http_client.interfaces.http.http_post(self.http_server.interfaces.http,
+                                                                          self.index_path)
+        logger().info(f"........ #HTTP_POST# length of DUT webpage {len(resp_content)} .......")
+        logger().info(f"........ contents of webpage {resp_content}\n\n\n ........")
+        file_time_stamp = str(datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+        webpage = "./reports/" + self.capture_filename + "webpage" + file_time_stamp + ".html"
+        logger().info(f"........ webpage ID sent by DUT is {webpage} ..........")
+        with open(webpage, "w") as recv:
+            recv.write(resp_content.decode())
+        time.sleep(5)
+        self.wifi_dut.interfaces.wifi.http_server_stop()
+        self.wifi_dut.interfaces.wifi.http_server_deinit()
+        time.sleep(2)
 
 
-pytestmark = [
-    pytest.mark.config(
-        "wifi_dut",
-        wifi=
-        {
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.Default,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DHCPv4Client,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
-            "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8}}
-        }
-    )
-]
-
-
+@wifi_dut_marker()
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -150,7 +196,7 @@ def test_wifi_sdk_query_webpage_http_server_c19235(
         logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
         raise e
 
-
+@wifi_dut_marker()
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -182,7 +228,7 @@ def test_wifi_sdk_query_webpage_http_server_c528822(
         logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
         raise e
 
-
+@wifi_dut_marker()
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -214,7 +260,7 @@ def test_wifi_sdk_webpage_http_server_write_data_c564051(
         logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
         raise e
 
-
+@wifi_dut_marker()
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -246,3 +292,45 @@ def test_wifi_sdk_query_webpage_http_server_c641388(
         logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
         raise e
 
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["clear_certs"])
+@wifi_dut_marker(ca_cert=("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"))
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "password": "12345678"}
+)
+def test_Verify_http_server_with_GET_PUT_POST_using_3rd_party_curl_client_C641377(http_server, wifi_dut,
+                                                                                  wifi_sniffer, wifi_access_point,
+                                                                                  request, http_client,
+                                                                                  sniffer_filter, utf_constants,
+                                                                                  sl_collections):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http server functionality with our DUT HTTP GET, PUT, POST using 3rd party curl client
+    """
+    try:
+        capture_filename = request.node.name
+        index_path = "/test"
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.
+                                                            channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, http_server=http_server, http_client=http_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, utf_constants=utf_constants,
+                            test_case='641377', index_path=index_path)
+
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        iter_count = utf_constants.get("iter_count")
+        for count in range(iter_count):
+            wifi_obj.http_curl_functionality()
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
+        raise e
