@@ -108,6 +108,9 @@ class Ip_Conflict(ThreadBase):
         self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
         self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
         logger().info("****** Configuring static ip to DUT****** ")
+        self.wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_client_ip = self.wifi_access_point.interfaces.wifi.read_ip_client_address(hostname)
         self.wifi_dut.interfaces.wifi.start_ip(static_ip=ap_client_ip, static_subnet=static_subnet,
                                                static_gateway=wifi_client_gateway_ip, vid=0,
@@ -591,6 +594,7 @@ def test_wifi_sdk_static_ip_assignment_with_and_Without_ip_Conflict_c101965(wifi
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
@@ -668,6 +672,7 @@ def test_wifi_sdk_tcp_tx_once_ip_conflict_resolved_static_mode_c101974(wifi_dut,
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
@@ -745,6 +750,7 @@ def test_wifi_sdk_tcp_rx_once_ip_conflict_resolved_static_mode_c101975(wifi_dut,
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
@@ -820,6 +826,7 @@ def test_wifi_sdk_udp_tx_once_ip_conflict_resolved_static_mode_c101976(wifi_dut,
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
@@ -965,6 +972,7 @@ def test_wifi_sdk_static_ip_conflict_multiple_iterations_c101980(wifi_dut, wifi_
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ssl_tx_once_ip_conflict_resolved_in_static_ip_c101978(wifi_dut, wifi_sniffer, wifi_access_point,
                                                                         request, ssl_server, utf_constants,
                                                                         wifi_client, sl_collections):
@@ -1066,6 +1074,7 @@ def test_wifi_sdk_ssl_tx_once_ip_conflict_resolved_in_static_ip_c101978(wifi_dut
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ssl_rx_once_ip_conflict_resolved_in_static_ip_c101979(wifi_dut, wifi_sniffer, wifi_access_point,
                                                                         request, ssl_server, utf_constants,
                                                                         wifi_client, sl_collections):
