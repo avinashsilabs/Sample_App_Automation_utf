@@ -1054,3 +1054,44 @@ def test_ble_sdk_directed_connectable_adv_passive_scan_C663365(ble_dut, ble_clie
         logger().info(f"time taken for test {t.duration}")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_wrong_rssi_value_in_passive_scan_C206387(ble_dut, ble_client, sl_collections):
+    """ Wrong RSSI value reported during passive Bluetooth scanning."""
+    try:
+        with TimeMeasurer() as t:
+            ble_dut_address = ble_dut.interfaces.wifi.ble_start()
+            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address)
+            assert ble_client_address, "Unable to get ble_client_address"
+            logger().info(f"\n\n Start scanning and connect to ble client \n\n")
+            ble_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address,
+                                                       ble_scan_type=0, timeout=180)
+            logger().info("enabling the power save modes ")
+            ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+            ble_dut.interfaces.wifi.enable_bt_power_save()
+            events = ble_dut.interfaces.bluetooth.get_async_events()
+            logger().info(f"AsyncEventIdentifiers.ADVERTISE:{AsyncEventIdentifiers.ADVERTISE}")
+            for event in events:
+                logger().info(f"event.event_type:{event.event_type}")
+                logger().info(f"event.event_data:{event.event_data}")
+                if event.event_type == AsyncEventIdentifiers.ADVERTISE:
+                    if "rsi_ble_simple_central_on_adv_report_event" in event.event_data:
+                        match = re.search(r'rssi:\s*(-\d+)', event.event_data)
+                        if match:
+                            rssi_value = match.group(1)  # Get the matched RSSI value
+                            logger().info(f"RSSI value found: {rssi_value}")
+                            assert int(rssi_value) < 0, "The RSSI value is not negative."
+                        else:
+                            assert match is not None, "No RSSI value found."
+
+            logger().info("stop scanning")
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+            logger().info("stop advertising")
+            ble_client.interfaces.bluetooth.stop_advertising()
+            time.sleep(2)
+            ble_client.interfaces.bluetooth.close()
+        logger().info(f"time taken for test {t.duration}")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)

@@ -7,6 +7,7 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBit
     Si91xCustomFeatureBitMap, Si91xBLECustomFeatureBitMap, Si91xBLEFeatureBitMap, Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes
 from utf.utils.logger import get_logger
 from utf.utils.time_measurer import TimeMeasurer
+from utf.utils.stopwatch import Stopwatch
 
 
 def logger():
@@ -446,3 +447,19 @@ def test_ble_sdk_undirected_non_connectable_random_addr_adv_C663392(ble_dut, sl_
         logger().info(f"time taken for test {t.duration}")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_start_stop_adv_clear_resolve_list_C219367(ble_dut, sl_collections):
+    """ Verify the BLE start advertising, stop advertising and clear resolve list api in loop for 1 minutes"""
+    logger().info("Initiate ble service in DUT")
+    ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert ble_dut_address, "failed to initiate ble in dut"
+    sw = Stopwatch()
+    while sw.elapsed_sec < 300:
+        logger().info("Set DUT in advertise mode")
+        ble_dut.interfaces.bluetooth.ble_start_advertising(timeout=120)
+        ble_dut.interfaces.bluetooth.ble_stop_advertising(timeout=30)
+        ble_dut.interfaces.bluetooth.ble_resolvlist(process_type=3, addr_type=0, remote_dev_addr="00:00:00:00:00:00",
+                                                    peer_irk=0, local_irk=0)

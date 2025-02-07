@@ -1903,3 +1903,35 @@ def test_ble_sdk_adv_report_C19848(ble_dut, ble_client, sl_collections):
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_quick_disconnection_after_connection_C667572(wifi_dut, ble_client, sl_collections):
+    """ Verify Quick Disconnect after Connection Causes Delayed Disconnect Event by 5sec with Timeout Reason"""
+    ble_dut_address = wifi_dut.interfaces.wifi.ble_start()
+    assert ble_dut_address, "failed to initiate ble in dut"
+    logger().info("Set DUT in advertise mode")
+    wifi_dut.interfaces.wifi.ble_start_advertising(timeout=120)
+    ble_client_address = sl_collections.scan_from_remote_device(wifi_dut=wifi_dut, ble_client=ble_client,
+                                                                ble_dut_address=ble_dut_address, )
+    logger().info(f"ble-client-address:{ble_client_address}")
+    ble_client.interfaces.bluetooth.connect(dev_addr=ble_dut_address, min_conn_interval=160, max_conn_interval=160,
+                                            conn_latency=0, supervision_timeout=2000)
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
+    logger().info("Device is connected")
+    start_time = time.time()
+    wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
+    time.sleep(3)
+    end_time = time.time()
+    disconnection_time = end_time - start_time
+    logger().info(f"Disconnection Time: {disconnection_time}")
+    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int != BLEDeviceState.Connected, "DUT BLE device is in connected state"
+    logger().info("Device got disconnected")
+    assert disconnection_time < 5, "Disconnection time is more than 5 sec"
+    logger().info(f"Disconnection Time: {disconnection_time}")
+    ble_client.interfaces.bluetooth.close()

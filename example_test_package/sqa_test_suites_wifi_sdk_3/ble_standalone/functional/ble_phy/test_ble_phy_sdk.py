@@ -1,6 +1,8 @@
 import time
 import pytest
 import re
+import os
+from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xOperatingMode,
     Si91xCoexMode,
@@ -37,6 +39,44 @@ def logger():
 
     Author: RaviNemali
 """
+
+
+def extract_link_key(ble_dut, master_address, slave_address, ble_sniffer):
+    link_key = ""
+    tw = Stopwatch()
+    while tw.elapsed_sec < 120:
+        events = ble_dut.interfaces.wifi.get_async_events()
+        for event in events:
+            if "link_key" in event.event_data:
+                event_data = event.event_data
+                logger().info(event_data)
+                link_key_data = re.findall("link_key::.*", event_data)
+                link_key_data_str = re.split(":<", link_key_data[0])
+                link_key_data_hex = re.split(":", link_key_data_str[0])
+                link_key = "0x"
+                for hex_data_part in link_key_data_hex:
+                    hex_data_part = hex_data_part.replace(" ", "")
+                    if len(hex_data_part) == 1:
+                        hex_data_part = '0' + hex_data_part
+                    link_key = link_key + hex_data_part
+            else:
+                continue
+        if link_key:
+            break
+    link_key = link_key.replace(" ", "")
+    link_key = link_key.replace("link_key", "")
+    logger().info(f"Link Key Extracted:{link_key}")
+    if len(link_key) > 34:
+        link_key = link_key.split('$')[0]
+        logger().info(f"Link Key Extracted:{link_key}")
+    else:
+        logger().info(f"**************Link Key Extracted: {link_key}***************")
+        assert len(link_key) == 34, f"link key is not proper format"
+    time.sleep(60)
+    ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address])
+    time.sleep(30)
+    if link_key != "":
+        ble_sniffer.interfaces.sniffer.add_link_key(link_key.upper(), master_address, slave_address)
 
 
 def ble_connection(ble_dut, remote_wiseconnect3):
@@ -114,10 +154,13 @@ def ble_connection(ble_dut, remote_wiseconnect3):
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
        },
 )
+@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_phy_change_tx_1_rx_1_lr_125_C19932(ble_dut, remote_wiseconnect3, sl_collections):
+def test_ble_phy_change_tx_1_rx_1_lr_125_C19932(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_1_rx_1_lr_125_C19932")
         ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
         time.sleep(0.5)
@@ -126,8 +169,36 @@ def test_ble_phy_change_tx_1_rx_1_lr_125_C19932(ble_dut, remote_wiseconnect3, sl
         state = ble_dut.interfaces.bluetooth.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
-
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "1M")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 1M and RX as 1M has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type Tx as 1M and RX as 1M has found in empty le packets in LE data layer in sniffer capture.")
 
         ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
         time.sleep(5)
@@ -174,10 +245,13 @@ def test_ble_phy_change_tx_1_rx_1_lr_125_C19932(ble_dut, remote_wiseconnect3, sl
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
        },
 )
+@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_phy_change_tx_1_rx_2_lr_125_C19933(ble_dut, remote_wiseconnect3, sl_collections):
+def test_ble_phy_change_tx_1_rx_2_lr_125_C19933(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_1_rx_2_lr_125_C19933")
         ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
         time.sleep(0.5)
@@ -186,8 +260,39 @@ def test_ble_phy_change_tx_1_rx_2_lr_125_C19933(ble_dut, remote_wiseconnect3, sl
         state = ble_dut.interfaces.bluetooth.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
-
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df["PHY"] == "1M")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 1M has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type Tx as 1M has found in empty le packets in LE data layer in sniffer capture.")
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "2M")]) >= 1, "\n\n **** Test case Failed: No PHY type RX as 2M has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type RX as 2M has found in empty le packets in LE data layer in sniffer capture.")
 
         ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
         time.sleep(5)
@@ -234,10 +339,13 @@ def test_ble_phy_change_tx_1_rx_2_lr_125_C19933(ble_dut, remote_wiseconnect3, sl
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
        },
 )
+@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_phy_change_tx_1_rx_lr_125_C19934(ble_dut, remote_wiseconnect3, sl_collections):
+def test_ble_phy_change_tx_1_rx_lr_125_C19934(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_1_rx_lr_125_C19934")
         ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
         time.sleep(0.5)
@@ -246,9 +354,40 @@ def test_ble_phy_change_tx_1_rx_lr_125_C19934(ble_dut, remote_wiseconnect3, sl_c
         state = ble_dut.interfaces.bluetooth.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
-
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
-
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "1M")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 1M has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type Tx as 1M has found in empty le packets in LE data layer in sniffer capture.")
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "125k")]) >= 1, "\n\n **** Test case Failed: No PHY type RX as 125k has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type RX as 125k has found in empty le packets in LE data layer in sniffer capture.")
         ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
         time.sleep(5)
     except Exception as error:
@@ -294,10 +433,13 @@ def test_ble_phy_change_tx_1_rx_lr_125_C19934(ble_dut, remote_wiseconnect3, sl_c
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
        },
 )
+@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_phy_change_tx_2_rx_1_lr_125_C19935(ble_dut, remote_wiseconnect3, sl_collections):
+def test_ble_phy_change_tx_2_rx_1_lr_125_C19935(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_2_rx_1_lr_125_C19935")
         ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
         time.sleep(0.5)
@@ -306,8 +448,40 @@ def test_ble_phy_change_tx_2_rx_1_lr_125_C19935(ble_dut, remote_wiseconnect3, sl
         state = ble_dut.interfaces.bluetooth.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
-
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "2M")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 2M has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type Tx as 2M has found in empty le packets in LE data layer in sniffer capture.")
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "1M")]) >= 1, "\n\n **** Test case Failed: No PHY type RX as 1M has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type RX as 1M has found in empty le packets in LE data layer in sniffer capture.")
 
         ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
         time.sleep(5)
@@ -354,10 +528,13 @@ def test_ble_phy_change_tx_2_rx_1_lr_125_C19935(ble_dut, remote_wiseconnect3, sl
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
        },
 )
+@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_phy_change_tx_2_rx_2_lr_125_C19936(ble_dut, remote_wiseconnect3, sl_collections):
+def test_ble_phy_change_tx_2_rx_2_lr_125_C19936(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_2_rx_2_lr_125_C19936")
         ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
         time.sleep(0.5)
@@ -366,8 +543,36 @@ def test_ble_phy_change_tx_2_rx_2_lr_125_C19936(ble_dut, remote_wiseconnect3, sl
         state = ble_dut.interfaces.bluetooth.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
-
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "2M")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 2M and Rx as 2M has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type Tx as 2M and Rx as 2M has found in empty le packets in LE data layer in sniffer capture.")
 
         ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
         time.sleep(5)
@@ -414,10 +619,13 @@ def test_ble_phy_change_tx_2_rx_2_lr_125_C19936(ble_dut, remote_wiseconnect3, sl
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
        },
 )
+@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_phy_change_tx_2_rx_1_lr_125_C19937(ble_dut, remote_wiseconnect3, sl_collections):
+def test_ble_phy_change_tx_2_rx_1_lr_125_C19937(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_2_rx_1_lr_125_C19937")
         ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
         time.sleep(2)
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
@@ -427,8 +635,40 @@ def test_ble_phy_change_tx_2_rx_1_lr_125_C19937(ble_dut, remote_wiseconnect3, sl
         state = ble_dut.interfaces.bluetooth.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
-
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "2M")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 2M has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type Tx as 2M has found in empty le packets in LE data layer in sniffer capture.")
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "125k")]) >= 1, "\n\n **** Test case Failed: No PHY type RX as 125k has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type RX as 125k has found in empty le packets in LE data layer in sniffer capture.")
 
         ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
         time.sleep(5)
@@ -475,10 +715,13 @@ def test_ble_phy_change_tx_2_rx_1_lr_125_C19937(ble_dut, remote_wiseconnect3, sl
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
        },
 )
+@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_phy_change_tx_rx_1_lr_125_C19938(ble_dut, remote_wiseconnect3, sl_collections):
+def test_ble_phy_change_tx_rx_1_lr_125_C19938(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_rx_1_lr_125_C19938")
         ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
         time.sleep(2)
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
@@ -488,9 +731,40 @@ def test_ble_phy_change_tx_rx_1_lr_125_C19938(ble_dut, remote_wiseconnect3, sl_c
         state = ble_dut.interfaces.bluetooth.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
-
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
-
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "125k")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 125k has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type Tx as 125k has found in empty le packets in LE data layer in sniffer capture.")
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "1M")]) >= 1, "\n\n **** Test case Failed: No PHY type RX as 1M has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type RX as 1M has found in empty le packets in LE data layer in sniffer capture.")
         ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
         time.sleep(5)
     except Exception as error:
@@ -536,10 +810,13 @@ def test_ble_phy_change_tx_rx_1_lr_125_C19938(ble_dut, remote_wiseconnect3, sl_c
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
        },
 )
+@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_phy_change_tx_rx_2_lr_125_C19939(ble_dut, remote_wiseconnect3, sl_collections):
+def test_ble_phy_change_tx_rx_2_lr_125_C19939(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_rx_2_lr_125_C19939")
         ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
         time.sleep(2)
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
@@ -549,9 +826,40 @@ def test_ble_phy_change_tx_rx_2_lr_125_C19939(ble_dut, remote_wiseconnect3, sl_c
         state = ble_dut.interfaces.bluetooth.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
-
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
-
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "125k")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 125k has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type Tx as 125k has found in empty le packets in LE data layer in sniffer capture.")
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "2M")]) >= 1, "\n\n **** Test case Failed: No PHY type RX as 2M has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type RX as 2M has found in empty le packets in LE data layer in sniffer capture.")
         ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
         time.sleep(5)
     except Exception as error:
@@ -597,10 +905,13 @@ def test_ble_phy_change_tx_rx_2_lr_125_C19939(ble_dut, remote_wiseconnect3, sl_c
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
        },
 )
+@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_phy_change_tx_rx_lr_125_C19940(ble_dut, remote_wiseconnect3, sl_collections):
+def test_ble_phy_change_tx_rx_lr_125_C19940(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_rx_lr_125_C19940")
         ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
         time.sleep(2)
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
@@ -610,8 +921,36 @@ def test_ble_phy_change_tx_rx_lr_125_C19940(ble_dut, remote_wiseconnect3, sl_col
         state = ble_dut.interfaces.bluetooth.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
-
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "125k")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 125k and RX as 125k has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type Tx as 125k and RX as 125k has found in empty le packets in LE data layer in sniffer capture.")
 
         ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
         time.sleep(5)
@@ -658,21 +997,60 @@ def test_ble_phy_change_tx_rx_lr_125_C19940(ble_dut, remote_wiseconnect3, sl_col
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
        },
 )
+@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_phy_change_tx_1_rx_lr_500_C19941(ble_dut, remote_wiseconnect3, sl_collections):
+def test_ble_phy_change_tx_1_rx_lr_500_C19941(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_1_rx_lr_500_C19941")
         ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
         time.sleep(2)
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
         time.sleep(0.5)
         ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=1, rx_phy=4, coded_phy=1)
+        time.sleep(10)
+        remote_wiseconnect3.interfaces.wifi.ble_set_phy(bt_dut_address, tx_phy=4, rx_phy=1, coded_phy=1)
+        time.sleep(10)
+        remote_wiseconnect3.interfaces.wifi.ble_read_phy(bt_dut_address)
         time.sleep(120)
         state = ble_dut.interfaces.bluetooth.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
-
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "1M")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 1M has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type Tx as 1M has found in empty le packets in LE data layer in sniffer capture.")
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "500k")]) >= 1, "\n\n **** Test case Failed: No PHY type RX as 500k has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type RX as 500k has found in empty le packets in LE data layer in sniffer capture.")
 
         ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
         time.sleep(5)
@@ -719,21 +1097,60 @@ def test_ble_phy_change_tx_1_rx_lr_500_C19941(ble_dut, remote_wiseconnect3, sl_c
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
        },
 )
+@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_phy_change_tx_2_rx_lr_500_C19942(ble_dut, remote_wiseconnect3, sl_collections):
+def test_ble_phy_change_tx_2_rx_lr_500_C19942(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_2_rx_lr_500_C19942")
         ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
         time.sleep(2)
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
         time.sleep(0.5)
         ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=2, rx_phy=4, coded_phy=1)
         time.sleep(120)
+        ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        remote_wiseconnect3.interfaces.wifi.ble_set_phy(bt_dut_address, tx_phy=4, rx_phy=2, coded_phy=1)
+        time.sleep(10)
+        remote_wiseconnect3.interfaces.wifi.ble_read_phy(bt_dut_address)
+        time.sleep(10)
         state = ble_dut.interfaces.bluetooth.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
-
-        ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "2M")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 2M has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type Tx as 2M has found in empty le packets in LE data layer in sniffer capture.")
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "500k")]) >= 1, "\n\n **** Test case Failed: No PHY type RX as 500k has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type RX as 500k has found in empty le packets in LE data layer in sniffer capture.")
 
         ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
         time.sleep(5)
@@ -780,10 +1197,13 @@ def test_ble_phy_change_tx_2_rx_lr_500_C19942(ble_dut, remote_wiseconnect3, sl_c
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
        },
 )
+@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_phy_change_tx_rx_1_lr_500_C19943(ble_dut, remote_wiseconnect3, sl_collections):
+def test_ble_phy_change_tx_rx_1_lr_500_C19943(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_rx_1_lr_500_C19943")
         ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
         time.sleep(2)
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
@@ -793,8 +1213,40 @@ def test_ble_phy_change_tx_rx_1_lr_500_C19943(ble_dut, remote_wiseconnect3, sl_c
         state = ble_dut.interfaces.bluetooth.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
-
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "500k")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 500k has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type Tx as 500k has found in empty le packets in LE data layer in sniffer capture.")
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "1M")]) >= 1, "\n\n **** Test case Failed: No PHY type RX as 1M has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type RX as 1M has found in empty le packets in LE data layer in sniffer capture.")
 
         ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
         time.sleep(5)
@@ -841,10 +1293,13 @@ def test_ble_phy_change_tx_rx_1_lr_500_C19943(ble_dut, remote_wiseconnect3, sl_c
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
        },
 )
+@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_phy_change_tx_rx_2_lr_500_C19944(ble_dut, remote_wiseconnect3, sl_collections):
+def test_ble_phy_change_tx_rx_2_lr_500_C19944(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_rx_2_lr_500_C19944")
         ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
         time.sleep(2)
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
@@ -854,8 +1309,40 @@ def test_ble_phy_change_tx_rx_2_lr_500_C19944(ble_dut, remote_wiseconnect3, sl_c
         state = ble_dut.interfaces.bluetooth.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
-
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "500k")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 500k has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type Tx as 500k has found in empty le packets in LE data layer in sniffer capture.")
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "2M")]) >= 1, "\n\n **** Test case Failed: No PHY type RX as 2M has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type RX as 2M has found in empty le packets in LE data layer in sniffer capture.")
 
         ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
         time.sleep(5)
@@ -902,23 +1389,248 @@ def test_ble_phy_change_tx_rx_2_lr_500_C19944(ble_dut, remote_wiseconnect3, sl_c
                                         | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
        },
 )
+@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_phy_change_tx_rx_lr_500_C19945(ble_dut, remote_wiseconnect3, sl_collections):
+def test_ble_phy_change_tx_rx_lr_500_C19945(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_rx_lr_500_C19945")
         ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
         time.sleep(2)
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
         time.sleep(0.5)
         ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=4, rx_phy=4, coded_phy=1)
+        time.sleep(5)
+        remote_wiseconnect3.interfaces.wifi.ble_read_phy(bt_dut_address)
+        time.sleep(5)
+        remote_wiseconnect3.interfaces.wifi.ble_set_phy(bt_dut_address, tx_phy=4, rx_phy=4, coded_phy=1)
         time.sleep(120)
         state = ble_dut.interfaces.bluetooth.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
-
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "500k")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 500k and RX as 500k has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type Tx as 500k and RX as 500k has found in empty le packets in LE data layer in sniffer capture.")
 
         ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
         time.sleep(5)
     except Exception as error:
         sl_collections.exception_handling(ble_dut, error)
+
+
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                                   Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                       | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        },
+    )
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                                   Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+       },
+)
+@pytest.mark.check
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_phy_change_tx_rx_lr_500_C537617(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
+    """ Verify BLE functionality by configuring PHY Rates(Tx=LR Rx=LR with LR=500) in between modules."""
+    try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_rx_lr_500_C537617")
+        ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
+        time.sleep(2)
+        ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        time.sleep(0.5)
+        ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=4, rx_phy=4, coded_phy=1)
+        time.sleep(10)
+        remote_wiseconnect3.interfaces.wifi.ble_read_phy(bt_dut_address)
+        time.sleep(10)
+        remote_wiseconnect3.interfaces.wifi.ble_set_phy(bt_dut_address, tx_phy=4, rx_phy=4, coded_phy=1)
+        time.sleep(120)
+        state = ble_dut.interfaces.bluetooth.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected
+        ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df["PHY"] == "500k")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 500kbps and RX as 500kbps has found in empty le packets in LE data layer ****\n\n"
+        logger().info("PHY type Tx as 500kbps and RX as 500kbps has found in empty le packets in LE data layer in sniffer capture.")
+        ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
+        time.sleep(5)
+    except Exception as error:
+        sl_collections.exception_handling(ble_dut, error)
+
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                                   Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                       | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        },
+    )
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                                   Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+       },
+)
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_phy_change_tx_rx_lr_125_C537618(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
+    """ Verify BLE functionality by configuring PHY Rates(Tx=LR Rx=LR with LR=125) in b/w modules."""
+    try:
+        ble_sniffer.interfaces.sniffer.init_sniffer()
+        ble_sniffer.interfaces.sniffer.start_capture(capture_file="test_ble_phy_change_tx_rx_lr_125_C537618")
+        ble_client_address, bt_dut_address = ble_connection(ble_dut, remote_wiseconnect3)
+        time.sleep(2)
+        ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        time.sleep(0.5)
+        ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=4, rx_phy=4, coded_phy=2)
+        time.sleep(120)
+        state = ble_dut.interfaces.bluetooth.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected
+        ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", bt_dut_address)
+        ble_client_address_hex = re.split(":", ble_client_address)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address = "0x"
+        for hex_data_part in ble_client_address_hex:
+            slave_address = slave_address + hex_data_part
+        extract_link_key(ble_dut, master_address, slave_address, ble_sniffer)
+        time.sleep(2)
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE DATA")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert len(sniffer_data_df.loc[(sniffer_data_df['LLID'] == "Empty") & (sniffer_data_df[
+                                                                                   "PHY"] == "125k")]) >= 1, "\n\n **** Test case Failed: No PHY type Tx as 125kbps and RX as 125kbps has found in empty le packets in LE data layer ****\n\n"
+        logger().info(
+            "PHY type Tx as 125kbps and RX as 125kbps has found in empty le packets in LE data layer in sniffer capture.")
+
+        ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
+        time.sleep(5)
+    except Exception as error:
+        sl_collections.exception_handling(ble_dut, error)
+
