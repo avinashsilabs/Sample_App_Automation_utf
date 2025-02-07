@@ -671,6 +671,7 @@ def test_wifi_sdk_ver_probe_req_chan_1_11_bg_scan_api_us_regi_ap_c661450(wifi_ac
         raise e  # Re-raise the exception to indicate failure in pytest
 
 
+# Need two evk harness
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("remote_wiseconnect3", sapi="init")
 @pytest.mark.config(
@@ -786,6 +787,7 @@ def test_wifi_sdk_verify_scan_and_conn_third_party_ap_conf_jp_region_c661449( wi
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
 
+# Need two evk harness
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("remote_wiseconnect3", sapi="init")
 @pytest.mark.config(

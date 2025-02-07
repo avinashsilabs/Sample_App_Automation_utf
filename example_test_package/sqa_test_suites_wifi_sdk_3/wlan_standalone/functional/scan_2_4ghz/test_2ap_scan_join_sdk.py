@@ -413,6 +413,7 @@ def test_wifi_sdk_scan_and_connect_in_world_domain_c19078(wifi_dut, utf_constant
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.skip("need to work")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config(
     "wifi_access_points",

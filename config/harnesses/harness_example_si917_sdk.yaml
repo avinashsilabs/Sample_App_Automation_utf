@@ -1117,6 +1117,15 @@ devices:
                 vid: 0x1915
                 pid: 0xC00A
 
+    # This represents the service_discovery configuration
+    avahi_daemon_linux:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            sd:
+                type: "service_discovery.avahi_daemon_linux"
+                shell: 'linux_shell'
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1244,6 +1253,8 @@ defaults:
         power_save: True
 
     wiseconnect_web: 'wiseconnect_web'
+
+    service_discovery: 'avahi_daemon_linux'
 
     net_perf_server: 'secondary_raspi_iperf'
 

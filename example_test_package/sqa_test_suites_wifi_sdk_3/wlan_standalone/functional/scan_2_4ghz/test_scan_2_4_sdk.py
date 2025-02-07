@@ -1776,6 +1776,7 @@ def test_wifi_sdk_scan_with_high_beacon_length_c538006(wifi_access_point, wifi_d
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+# Need two evk harness
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("remote_wiseconnect3", sapi="init")
 @pytest.mark.config(
@@ -1990,6 +1991,7 @@ def test_wifi_sdk_wifi_scan_no_ap_in_closed_room_c687827(wifi_dut, wifi_access_p
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+# Need two evk harness
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("remote_wiseconnect3", sapi="init")
 @pytest.mark.config(
@@ -2036,7 +2038,7 @@ def test_wifi_sdk_wifi_scan_no_ap_in_closed_room_c687827(wifi_dut, wifi_access_p
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_wifi_sdk_do_scan_in_channel_12_13_14_c19073(wifi_dut, remote_wiseconnect3, request, wifi_sniffer, sl_collections):
+def test_wifi_sdk_do_scan_in_channel_12_13_14_c19072(wifi_dut, remote_wiseconnect3, request, wifi_sniffer, sl_collections):
 
     """ Do scan in channels 12,13,14 in JP region """
     try:

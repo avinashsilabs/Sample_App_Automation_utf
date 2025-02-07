@@ -1,4 +1,5 @@
 import pytest
+import time
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xTCPIPFeatureBitMap, Si91xExtTCPIPFeatureBitMap, \
     Si91xFeatureBitMap, Si91xConfigFeatureBitMap, Si91xExtCustomFeatureBitMap, \
     Si91xCustomFeatureBitMap
@@ -70,7 +71,7 @@ class WifiThreadFunctionality(ThreadBase):
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPServer,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "bt_features": 0,
@@ -167,7 +168,7 @@ def test_wifi_sdk_mdns_neg_port_already_in_use_C19007(wifi_sniffer, wifi_access_
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPServer | Si91xTCPIPFeatureBitMap.mDNS,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.mDNS,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "bt_features": 0,
@@ -215,7 +216,7 @@ def test_wifi_sdk_mdns_neg_multicast_socket_in_open_state_C19008(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPServer | Si91xTCPIPFeatureBitMap.mDNS,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.mDNS,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "bt_features": 0,
@@ -266,7 +267,7 @@ def test_wifi_sdk_mdns_cmd_type_resp_C37585(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.HTTPServer | Si91xTCPIPFeatureBitMap.mDNS,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.mDNS,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
         "bt_features": 0,
@@ -306,3 +307,66 @@ def test_wifi_sdk_mdns_init_deinit_loop_C551869(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.mDNS,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_verify_mdns_functionality_restart_avahi_C551870(wifi_sniffer, wifi_access_point, wifi_dut, service_discovery,
+                                                                  sl_collections, request, utf_constants):
+    """Verify MDNS functionality by kill and restart avahi-daemon browser
+       from remote side(Use station ping application and add MDNS components)"""
+
+    try:
+        capture_filename = request.node.name
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}")
+
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+
+        iter_count = utf_constants.get("iter_count")
+        for count in range(iter_count):
+            sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, associated=wifi_dut.interfaces.wifi.associated)
+            wifi_dut.interfaces.wifi.mdns_init()
+            wifi_dut.interfaces.wifi.mdns_add_interface()
+            wifi_dut.interfaces.wifi.mdns_register_service()
+
+            status = service_discovery.interfaces.sd.get_status()
+            logger().info(f"Status {status}")
+            time.sleep(5)
+            service_discovery.interfaces.sd.start_discovering_services()
+            for _ in range(120):
+                logger().info("starting the avahi-daemon browser services from the remote side")
+                time.sleep(1)
+            service_discovery.interfaces.sd.stop_discovering_services()
+            time.sleep(10)
+
+            wifi_dut.interfaces.wifi.mdns_deinit()
+            wifi_dut.interfaces.wifi.leave()
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+

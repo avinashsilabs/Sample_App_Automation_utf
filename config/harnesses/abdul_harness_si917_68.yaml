@@ -198,7 +198,7 @@ devices:
                 protected_management_frame: 'Disable'
                 #ipv6 configuration
                 connection_type: 'STATIC_IPV6'
-                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1bcz"
+                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1bc"
                 wan_ipv6_gateway: "2401:4900:1cb3:3444::1"
                 wan_prefix_length: "64"
                 ipv6_state: "1" #0= "stateless" 1="stateful"
@@ -213,6 +213,23 @@ devices:
                 # radius server configuration
                 radius_ip: "10.207.18.18"
                 radius_port: "1812"
+#                guest_networks:
+#                    - band: "2g"
+#                      index: "1"
+#                      ssid: "ASUS_B0_2G_Guest"
+#                      passphrase: '123456789'
+#                      security: WPA2
+#                    - band: "2g"
+#                      index: "2"
+#                      ssid: "ASUS_B0_2G_Guest2"
+#                      passphrase: '123456789'
+#                      security: WPA2
+#                    - band: "2g"
+#                      index: "3"
+#                      ssid: "ASUS_B0_2G_Guest3"
+#                      passphrase: '123456789'
+#                      security: WPA2
+
     switched_ap:
         interfaces:
             wifi:
@@ -635,6 +652,13 @@ devices:
                 #            Defaults to authentication disabled
                 username: 'testuser'
                 password: 'testpassword'
+                accounts:
+                    - username: 'testuser1'
+                      password: 'password1'
+                    - username: 'testuser2'
+                      password: 'password2'
+                    - username: 'testuser3'
+                      password: 'password3'
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
 
@@ -736,6 +760,16 @@ devices:
                 tls_certificate: 'server-cert.pem'
                 tls_ca_chain: 'ca-cert.pem'
 
+    python_http_server:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            http:
+                type: 'http.server.python_http'
+                shell: 'linux_shell'
+                port: 80
+                interface: 'wlan0'
+
     raspi_http_client:
         interfaces:
             http:
@@ -791,7 +825,7 @@ devices:
 
     keysight_benchvue_power_analyzer_win_rm:
         interfaces:
-            windows_shell: 
+            windows_shell:
                 type: 'rem_mgmt.win_rm'
                 host_ip: '10.207.19.185'
                 username: 'test'
@@ -830,6 +864,7 @@ devices:
                 private_key: 'private-key.key'
                 client_cert: 'client-certificate.crt'
                 root_ca: 'start_field.pem'
+
     azure_iot:
         interfaces:
             hub:
@@ -849,14 +884,57 @@ devices:
                 cert_file: 'mydevkitcertificate.pem'
                 key_file: 'mydevkitkey.pem'
 
+    azure_iot_1:
+        interfaces:
+            hub:
+                type: 'azure_iot.azure_iot_hub'
+                connection_string_hub: 'HostName=SilabsHYDAzure.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=hN6vCGNtCvRXg7Uhre8OwR360cL8az8FBCObXSES4fI='
+                hostname: 'SilabsHYDAzure.azure-devices.net'
+                event_hub_connection_string: "Endpoint=sb://iothub-ns-silabshyda-25118973-20f98fa458.servicebus.windows.net/;SharedAccessKeyName=iothubowner;SharedAccessKey=hN6vCGNtCvRXg7Uhre8OwR360cL8az8FBCObXSES4fI=;EntityPath=silabshydazure"
+                event_hub_name: "silabshydazure"
+                consumer_group: "$Default"
+
+            device:
+                type: 'azure_iot.azure_iot_device'
+                connection_string_device: 'HostName=SilabsHYDAzure.azure-devices.net;DeviceId=symmetric_device;SharedAccessKey=Vn0P8z6gqR5ShVvv6ouQOT0eAcQFQB9GLfG0teX+ZpI='
+                device_type: 'symmetric_device'
+                hostname: 'SilabsHYDAzure.azure-devices.net'
+                device_id: 'symmetric_device'
+                cert_file: 'mydevkitcertificate.pem'
+                key_file: 'mydevkitkey.pem'
+    azure_iot_2:
+        interfaces:
+            hub:
+                type: 'azure_iot.azure_iot_hub'
+                connection_string_hub: 'HostName=WIFISDK-IOT-HUB.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=hN6vCGNtCvRXg7Uhre8OwR360cL8az8FBCObXSES4fI='
+                hostname: 'SilabsAzureIOT.azure-devices.net'
+                event_hub_connection_string: "Endpoint=sb://iothub-ns-silabsazur-24347843-f827db8d8a.servicebus.windows.net/;SharedAccessKeyName=iothubowner;SharedAccessKey=jZId6j3qgLt4NYlnJR62ntjOTcZq99bXEjCAf3KiUVI=;EntityPath=silabsazureiot"
+                event_hub_name: "silabsazureiot"
+                consumer_group: "$Default"
+
+            device:
+                type: 'azure_iot.azure_iot_device'
+                connection_string_device: 'HostName=SilabsAzureIOT.azure-devices.net;DeviceId=Silabs_Device_Azure_IOT;SharedAccessKey=VQyjs8oXxYL25PgZo6cIgLYw/fL++vLfrNh2dOdL9dk='
+                device_type: 'symmetric_device'
+                hostname: 'SilabsAzureIOT.azure-devices.net'
+                device_id: 'Silabs_Device_Azure_IOT'
+                cert_file: 'mydevkitcertificate.pem'
+                key_file: 'mydevkitkey.pem'
+
+    azure_blob:
+        interfaces:
+            blob:
+                type: 'azure_blob'
+                connection_string_blob: "DefaultEndpointsProtocol=https;AccountName=httpotaf;AccountKey=mr7Rg12ZPUlKoVK6hq9VLAEBJ6rZutXKiuwZRaaCVFp6XmRaI1NFjZ5PIx4izLTaNpYjzfr1FIvH+AStsGAn4w==;EndpointSuffix=core.windows.net"
+                container_name: "firmware"
 
     aws_s3_boto3:
         interfaces:
             s3:
                 type: 'aws_s3.boto3'
-                aws_access_key_id: "AKIAQFAKKP7UIDS6GHE7"
-                aws_secret_access_key: "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"
-                region: "us-east-1"
+                aws_access_key_id: "AKIAQRVCCU6GZ2FJ4QX7"
+                aws_secret_access_key: "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"
+                region_name: "us-east-2"
 
 
     50pa500_attenuator:
@@ -943,6 +1021,18 @@ devices:
                 type: 'iperf'
                 # to zip all the iperf output files
                 zip_results: 'Y'
+
+    raspi_iperf2:
+        interfaces:
+            net_perf:
+                type: 'iperf'
+                # to zip all the iperf output files
+                zip_results: 'Y'
+                host:
+                    TCP:
+                        port: 5201
+                    UDP:
+                        port: 5202
 
     sniffer_filter:
         interfaces:
@@ -1129,6 +1219,16 @@ devices:
                 shell: 'linux_shell'
                 interface: 'eth1'
 
+    # This represents the service_discovery configuration
+    avahi_daemon_linux:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            sd:
+                type: "service_discovery.avahi_daemon_linux"
+                shell: 'linux_shell'
+
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1162,6 +1262,12 @@ defaults:
     aws_iot_client: 'python_aws_iot_thing'
 
     azure_iot_client: 'azure_iot'
+
+    azure_iot_clients:
+        - 'azure_iot_1'
+        - 'azure_iot_2'
+
+    azure_blob: 'azure_blob'
 
     wifi_clients:
         - 'raspi_wifi'
@@ -1224,8 +1330,8 @@ defaults:
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
         baud: 115200
-        data_chunk_read_elapsed_time: 0.9
-        data_chunk_read_dealy: 0.03
+        data_chunk_read_elapsed_time: 5
+        data_chunk_read_dealy: 0.05
 
     ble_vulnerability_sniffer: 'ble_sweyntooth'
     bt_vulnerability_sniffer: 'bt_braktooth'
@@ -1243,7 +1349,7 @@ defaults:
         disable_sniffer_validation: false
 
         # firmware path for http/https otaf
-        http_url: '/SiWG917-B.2.10.1.0.0.6.bin'
+        http_url: '/SiWG917-B.2.13.2.0.0.3.rps'
 
         pll_mode: 0
         rf_type: 1
@@ -1255,6 +1361,8 @@ defaults:
         power_save: True
 
     wiseconnect_web: 'wiseconnect_web'
+
+    service_discovery: 'avahi_daemon_linux'
 
     net_perf_server: 'secondary_raspi_iperf'
 
@@ -1276,9 +1384,9 @@ defaults:
         screenshot_file_name: 'wiseconnect_screenshot'
 
     s3:
-        aws_access_key_id: "AKIAQFAKKP7UIDS6GHE7"
-        aws_secret_access_key: "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"
-        region: "us-east-1"
+        aws_access_key_id: "AKIAQRVCCU6GZ2FJ4QX7"
+        aws_secret_access_key: "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"
+        region: "us-east-2"
 
     openssl_config:
         certfile: "mosquitto-utf.silabs.com.cert.pem"
@@ -1434,7 +1542,9 @@ start_state:
 
 constants:
     time_duration:
-        value: 300
+        value: 5
+    long_duration:
+        value: 36000
     ping_count:
         value: 10
     iter_count:
@@ -1447,5 +1557,20 @@ constants:
         value: 30
     hostname:
         value: 'rs9116test'
+    wreck_host_name:
+        value: '192.168.50.175'
+    wreck_port:
+        value: 22
+    wreck_username:
+        value: 'test'
+    wreck_password:
+        value: 'test123'
+    rps_filename:
+        value:  'secured_SiWG917-B.2.13.2.0.0.3.rps'
+    m4_rps_filename:
+        value:  'secured_wifi_station_ping_soc.rps'
+    m4_rps_plain:
+        value: 'wifi_station_ping_soc.rps'
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
+
