@@ -46,7 +46,7 @@ from utf_wiseconnect_3.tests.bsd_errors import BSDErrnoStatus
         3. Access Point(Third Party AP's)
         4. NUC device for Sniffer
 
-    Author: Saurabh Sharma
+    Author: Saurabh Sharma & Achal Raghav
 """
 
 
@@ -434,7 +434,7 @@ class WifiJoinThread(ThreadBase):
                                              server_socks[count], local_port, server_ip, 0), daemon=True))
 
             socket_threads[count].start()
-            time.sleep(2)
+            socket_threads[count].join()
 
         for sock in server_socks:
             logger().info(f"Closing socket_id->{sock}")
@@ -528,6 +528,7 @@ class WifiJoinThread(ThreadBase):
 
         server_ip = self.wifi_client.interfaces.wifi.get_ip_address()
         self.remote_socket.interfaces.socket.start_server(port=local_port)
+        self.wifi_dut.interfaces.wifi.set_remote_terminate_callback()
         socket_id = self.wifi_dut.interfaces.wifi.Asyncsocket(domain="AF_INET", stream_type="SOCK_STREAM",
                                                               protocol="IPPROTO_TCP")
         logger().info(f"Socket open successfully : {socket_id}")
@@ -555,13 +556,9 @@ class WifiJoinThread(ThreadBase):
             server_ip=server_ip, server_port=local_port)
 
         logger().info(f"Number of bytes sent by dut {bytes_sent}")
-        time.sleep(2)
-
-        self.wifi_dut.interfaces.wifi.set_remote_terminate_callback()
-        time.sleep(2)
         self.remote_socket.interfaces.socket.stop()
         event_data_output = ""
-        time.sleep(7)
+        time.sleep(5)
         events = self.wifi_dut.interfaces.wifi.get_async_events()
         for event in events:
             if event.event_type == AsyncEventIdentifiers.REMOTE_TERMINATE:
@@ -638,6 +635,10 @@ def test_wifi_sdk_tcp_open_send_close_socket_c19347(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        remote_socket_factory.interfaces.socket.close_all()
+        remote_socket_factory.interfaces.socket.sockets = []
 
 
 @pytest.mark.config(
@@ -954,7 +955,6 @@ def test_wifi_sdk_socket_tcp_Data_Transfer_mss_c19356(wifi_access_point, wifi_du
         assert tp is not None, "Throughput not found"
         net_perf_client.interfaces.net_perf.close_files()
         net_perf_client.interfaces.net_perf.iperf_process.stop(10)
-        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
         logger().info(f"Successfully closed socket_id '{sock}' in the DUT")
 
         logger().info("Stop Sniffer finally")
@@ -966,8 +966,9 @@ def test_wifi_sdk_socket_tcp_Data_Transfer_mss_c19356(wifi_access_point, wifi_du
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)[
             'packet_count'], "Unable to find configured MSS value in sniffer packets"
     except Exception as e:
-        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1730,6 +1731,9 @@ def test_wifi_sdk_tcp_remote_terminate_c19362(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        remote_socket.interfaces.socket.stop()
 
 
 @pytest.mark.config(
