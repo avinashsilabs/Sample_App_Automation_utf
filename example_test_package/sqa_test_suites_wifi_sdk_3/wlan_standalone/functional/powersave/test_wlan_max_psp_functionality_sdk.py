@@ -1416,7 +1416,8 @@ def test_wifi_sdk_max_psp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_wifi_sdk_max_psp_listen_interval_11ms_c40154')
 
-        wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
         wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
         result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False, retry_count=3,
                                                      associated=False)
@@ -1752,6 +1753,8 @@ def test_wifi_sdk_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point,
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
             'packet_count'], 'No packet found for pwmt bit disable'
 
+
+@pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1778,7 +1781,8 @@ def test_wifi_sdk_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point,
                                "beacon_interval": 100,
                                "dtim": 3})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_sdk_max_psp_enable_ps2_ulp_ipv6_c535826(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections):
+def test_wifi_sdk_max_psp_enable_ps2_ulp_ipv6_c535826(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut,
+                                                      sl_collections, sniffer_filter):
     """
     Verify whether RSI_STA is wake up and receive data based on configured listen interval when enable power
     save2 with ULP and IPV6 enabled
@@ -1805,12 +1809,13 @@ def test_wifi_sdk_max_psp_enable_ps2_ulp_ipv6_c535826(wifi_sniffer, wifi_access_
         logger().info(f'AP BSSID = {ap_bssid}')
 
         logger().info(f"***** Enabling Max PSP in DUT ******")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', dtim_aligned_type=0,
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save', dtim_aligned_type=0,
                                                          num_of_dtim_skip=0, listen_interval=listen_interval,
                                                          monitor_interval=50)
         wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                       psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
 
+        time.sleep(100)
         logger().info("Pinging to DUT to with byte size 300")
         status = sl_collections.ping_with_custom_size(device_ip, ping_counts=60, byte_size=300)
         assert status, "DUT is not responding to ping request after powersave"
@@ -1819,7 +1824,13 @@ def test_wifi_sdk_max_psp_enable_ps2_ulp_ipv6_c535826(wifi_sniffer, wifi_access_
         wifi_sniffer.interfaces.capture.stop_capture()
 
         # Assoc resp frame in sniffer to get the DUT assoc id
-        packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=ap_bssid, da_addr=dut_mac_address,
+            filter_name="association_response")
+
+        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address, da_addr=ap_bssid,
+            filter_name="power_mgmt_bit")
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
             'packet_count'], 'No packet found for Assoc resp frame'
@@ -1831,9 +1842,6 @@ def test_wifi_sdk_max_psp_enable_ps2_ulp_ipv6_c535826(wifi_sniffer, wifi_access_
             assert False
         else:
             logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
-
-        packet_filter2 = f' (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address}) &&' \
-                         f' (wlan.da == {ap_bssid}))'
 
         packet_filter3 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} && ' \
                          f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.sa == {ap_bssid} && ' \
@@ -1868,6 +1876,7 @@ def test_wifi_sdk_max_psp_enable_ps2_ulp_ipv6_c535826(wifi_sniffer, wifi_access_
         raise error
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1894,7 +1903,8 @@ def test_wifi_sdk_max_psp_enable_ps2_ulp_ipv6_c535826(wifi_sniffer, wifi_access_
                                "beacon_interval": 100,
                                "dtim": 3})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_sdk_max_psp_dtim_enable_ps2_ulp_ipv6_c535827(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections):
+def test_wifi_sdk_max_psp_dtim_enable_ps2_ulp_ipv6_c535827(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut,
+                                                           sl_collections, sniffer_filter):
     """Verify whether RSI_STA is wake up and receive data based on DTIM beacon when enable power save2 with ULP and
     IPV6 enabled """
     validation = True
@@ -1916,11 +1926,12 @@ def test_wifi_sdk_max_psp_dtim_enable_ps2_ulp_ipv6_c535827(wifi_sniffer, wifi_ac
         logger().info(f'AP BSSID = {ap_bssid}')
 
         logger().info(f"***** Enabling Max PSP in DUT ******")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', dtim_aligned_type=0,
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save', dtim_aligned_type=0,
                                                          num_of_dtim_skip=0,
                                                          monitor_interval=50)
         wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                       psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+        time.sleep(20)
 
         logger().info("Pinging to DUT to with byte size 300")
         status = sl_collections.ping_with_custom_size(device_ip, ping_counts=30, byte_size=300)
@@ -1929,7 +1940,9 @@ def test_wifi_sdk_max_psp_dtim_enable_ps2_ulp_ipv6_c535827(wifi_sniffer, wifi_ac
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
         # Assoc resp frame in sniffer
-        packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=ap_bssid, da_addr=dut_mac_address,
+            filter_name="association_response")
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
             'packet_count'], 'No packet found for Assoc resp frame'
@@ -1948,8 +1961,8 @@ def test_wifi_sdk_max_psp_dtim_enable_ps2_ulp_ipv6_c535827(wifi_sniffer, wifi_ac
                          f'wlan.fc.type_subtype==8) || ((wlan.sa == {ap_bssid} && wlan.da == {dut_mac_address}) &&' \
                          f'(wlan.fc.type_subtype == 0x002c || wlan.fc.type_subtype == 0x000d || wlan.fc.type_subtype == 0x0018))'
 
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, None, powersave_validation)[
-            'packet_count']
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter4, None, powersave_validation)['packet_count']
+
         # ps_poll_packets_time_delta_list, case1, case2 = assoc_obj.DTIM_Based_validation(association_id)
         case1, case2, case3, case4 = ps_packet_exchange_obj.dtim_based_validation(association_id)
         if case1: logger().info(

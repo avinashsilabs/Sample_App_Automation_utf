@@ -623,35 +623,33 @@ class WLanThread(ThreadBase):
                 time.sleep(120)
 
             if self.test_case_no == 19167:
-                listen_interval = 1000
+                listen_interval = 2000
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
                 self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
-                                                                      Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+                                                                      Si91xJoinFeatureBitMap.ListenIntervalFromPowerSave)
                 self.wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated
                                                                          , ping_after_power_save=False,
-                                                                         mode='power_save',
                                                                          num_of_dtim_skip=0, listen_interval=600)
 
                 status = ping(self.dut_addr['device_ip'], 60, size="300")
                 assert status == 1, "Ping failed"
 
             if self.test_case_no == 19174:
-                listen_interval = 5000
+                listen_interval = 2000
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
                 self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
-                                                                      Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+                                                                      Si91xJoinFeatureBitMap.ListenIntervalFromPowerSave)
                 self.wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated
                                                                          , ping_after_power_save=False,
-                                                                         mode='power_save',
-                                                                         num_of_dtim_skip=0, listen_interval=700)
+                                                                         num_of_dtim_skip=0, listen_interval=600)
                 time.sleep(20)
                 status = ping(self.dut_addr['device_ip'], 60, size="300")
                 assert status == 1, "Ping failed"
@@ -2944,10 +2942,10 @@ def test_wifi_sdk_maxpsp_multiple_listen_interval_c19174(wifi_sniffer, wifi_acce
             'Unable to find PM bit 1 in packets'
 
         # set the device out of power save mode
-        logger().info('\n\n *** Set the device out of power save mode for listen interval = 700*** \n\n')
+        logger().info('\n\n *** Set the device out of power save mode for listen interval = 600*** \n\n')
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         time.sleep(2)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file="outofpower_savemode_700")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="outofpower_savemode_600")
         wifi_dut.interfaces.wifi.set_performance_profile()
         wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveDisabled)
         time.sleep(100)
@@ -2965,7 +2963,7 @@ def test_wifi_sdk_maxpsp_multiple_listen_interval_c19174(wifi_sniffer, wifi_acce
         time.sleep(2)
         wifi_sniffer.interfaces.capture.start_capture(capture_file="power_savemode_1000")
 
-        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save', listen_interval=1000)
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=1000)
         wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                       psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         time.sleep(20)
@@ -2999,7 +2997,7 @@ def test_wifi_sdk_maxpsp_multiple_listen_interval_c19174(wifi_sniffer, wifi_acce
         time.sleep(2)
         wifi_sniffer.interfaces.capture.start_capture(capture_file="power_savemode_2000")
 
-        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save', listen_interval=2000)
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency',listen_interval=2000)
         wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                       psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         time.sleep(20)
