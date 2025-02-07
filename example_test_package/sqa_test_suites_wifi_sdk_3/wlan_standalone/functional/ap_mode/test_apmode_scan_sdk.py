@@ -103,8 +103,13 @@ class ApModeClientConnections(ThreadBase):
                     time.sleep(5)
             time.sleep(5)
             assert len(scan_results) >= 1, " region based probe requests not seen in scan results"
-            logger().info(f'RASPI-STA Disconnecting from DUT-AP')
-            self.wifi_client.interfaces.wifi.leave()
+            if self.testcase_no == 689175:
+                rasp_mac_address = self.wifi_client.interfaces.wifi.get_mac_address()
+                logger().info(f'RASPI-STA Disconnecting from DUT-AP')
+                self.wifi_dut.interfaces.wifi.disconnect_ap_client(client_mac=rasp_mac_address)
+            else:
+                logger().info(f'RASPI-STA Disconnecting from DUT-AP')
+                self.wifi_client.interfaces.wifi.leave()
             logger().info("Stop sniffer finally")
             self.wifi_sniffer.interfaces.capture.stop_capture()
         except Exception as Ex:
@@ -540,47 +545,31 @@ def test_wifi_sdk_ap_mode_scan_with_PASSIVE_SCAN_TYPE_C688244(wifi_dut, wifi_acc
     }
 )
 @pytest.mark.config("wifi_client", wifi={"country": "US", "channel": "11"})
+@pytest.mark.start_state("wifi_dut", wifi=["net_init_stats"])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+    ],
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 11, "region": 'US'})
 def test_wifi_sdk_ap_mode_verify_DUT_able_to_send_stats_responce_or_not_C689175(wifi_dut, wifi_access_point,
-                                                                                wifi_client, wifi_sniffer,
+                                                                                wifi_client, wifi_sniffer, sniffer_filter,
                                                                                 sl_collections):
     """ verify DUT is able to send stats-responce or not while disconnecting STA from DUT """
     try:
-        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
-                                                  static_subnet="255.255.255.0",
-                                                  static_gateway="192.168.100.76")
-        logger().info(" ********** Starting DUT as an AP ********* ")
-        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", psk="Automation@123", channel=11,
-                                          dtim_beacon_count=1,
-                                          beacon_interval=100)
-        channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface='ap')
-        logger().info("********** configuring the sniffer with access point channel **********")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=channel)
-        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C689175.pcap")
-        time.sleep(3)
-        logger().info(" ********** Raspberry pi Client connecting to DUT-AP ********* ")
-        wifi_client.interfaces.wifi.join(ssid="SILABS_AP_MODE", security="WPA2", passphrase="Automation@123")
-        time.sleep(10)
-        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
-        logger().info(f"********* Dut IP **********: {dut_ip}")
+        ap_dut_obj = ApModeClientConnections(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                             wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+                                             sl_collections=sl_collections, capture_filename="test_C535824",
+                                             testcase_no=689175)
+        ap_dut_obj.start()
+        ap_dut_obj.wait_for_exit()
+
+        dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"*********{dut_ap_mac_address}**********")
         rasp_mac_address = wifi_client.interfaces.wifi.get_mac_address()
         logger().info(f"raspi_mac: {rasp_mac_address}")
-        client_ip = wifi_client.interfaces.wifi.get_ip_address()
-        logger().info(f"Client_ip: {client_ip}")
-        time.sleep(30)
-        logger().info(f"Initiating wlan ping from RASPI_STA")
-        rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute(
-            f"sudo ping -c {10} {dut_ip}")
-        assert rc == 0, f"RASPI-STA failed to ping DUT"
-        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
-        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
-        logger().info(f"*********{dut_mac_address}**********")
-        logger().info(f'RASPI-STA Disconnecting from DUT-AP')
-        wifi_client.interfaces.wifi.disconnect_ap_client(client_mac=rasp_mac_address)
-        logger().info("Stop sniffer finally")
-        wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
