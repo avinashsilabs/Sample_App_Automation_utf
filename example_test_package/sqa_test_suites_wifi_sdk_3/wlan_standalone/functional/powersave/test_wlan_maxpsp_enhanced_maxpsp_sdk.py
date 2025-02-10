@@ -1236,6 +1236,7 @@ class FilterPacket:
         return status
 
 
+@pytest.mark.skip("Test case marked as manual")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -1332,7 +1333,7 @@ def test_wifi_sdk_max_psp_ulp_c19678(wifi_sniffer, wifi_access_point, wifi_dut, 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
+@pytest.mark.skip("Test case marked as manual")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -1433,7 +1434,7 @@ def test_wifi_sdk_maxpsp_listen_interval_11ms_c19679(wifi_sniffer, wifi_access_p
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
+@pytest.mark.skip("Test case marked as manual")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
@@ -1618,7 +1619,7 @@ def test_wifi_sdk_max_psp_enable_disable_c19682(wifi_sniffer, wifi_access_point,
         logger().info(f"\n\n *** NO of iteration = {count}\n\n")
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
+@pytest.mark.skip("Test case marked as manual")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -1727,7 +1728,7 @@ def test_wifi_sdk_enhanced_max_psp_ulp_c19693(wifi_sniffer, wifi_access_point, w
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
+@pytest.mark.skip("Test case marked as manual")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -1841,7 +1842,7 @@ def test_wifi_sdk_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
         assert False
 
-
+@pytest.mark.skip("Test case marked as manual")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -1958,7 +1959,7 @@ def test_wifi_sdk_enhanced_max_psp_c19695(wifi_sniffer, wifi_access_point, wifi_
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
+@pytest.mark.skip("Test case marked as manual")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -2075,7 +2076,7 @@ def test_wifi_sdk_enhanced_max_psp_c19696(wifi_sniffer, wifi_access_point, wifi_
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
+@pytest.mark.skip("Test case marked as manual")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -2191,7 +2192,6 @@ def test_wifi_sdk_enhanced_max_psp_c19697(wifi_sniffer, wifi_access_point, wifi_
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
@@ -2282,7 +2282,7 @@ def test_wifi_sdk_max_psp_enable_disable_c19698(wifi_sniffer, wifi_access_point,
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)[
             'packet_count'], 'No packet found for pwmt bit disable'
 
-
+@pytest.mark.skip("Test case marked as manual")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
@@ -2398,7 +2398,7 @@ def test_wifi_sdk_enhanced_max_psp_with_diff_ap_c19699(wifi_sniffer, wifi_access
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
+@pytest.mark.skip("Test case marked as manual")
 @pytest.mark.net_perf_client("static_iperf")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -2487,7 +2487,7 @@ def test_wifi_sdk_enhanced_max_psp_with_diff_traffic_c19700(wifi_sniffer, wifi_a
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
+@pytest.mark.skip("Test case marked as manual")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
@@ -2605,7 +2605,7 @@ def test_wifi_sdk_enhanced_max_psp_with_high_data_rate_c19703(wifi_sniffer, wifi
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
+@pytest.mark.skip("Test case marked as manual")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
@@ -2722,7 +2722,7 @@ def test_wifi_sdk_enhanced_max_psp_with_ulp_mode_dtim_c19704(wifi_sniffer, wifi_
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
+@pytest.mark.skip("Test case marked as manual")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -2782,7 +2782,7 @@ def test_wifi_sdk_enhanced_max_psp_listen_interval_c19705(wifi_sniffer, wifi_acc
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
+@pytest.mark.skip("Test case marked as manual")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -2997,7 +2997,7 @@ def test_wifi_sdk_maxpsp_multiple_listen_interval_c19174(wifi_sniffer, wifi_acce
         time.sleep(2)
         wifi_sniffer.interfaces.capture.start_capture(capture_file="power_savemode_2000")
 
-        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency',listen_interval=2000)
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=2000)
         wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                       psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         time.sleep(20)
