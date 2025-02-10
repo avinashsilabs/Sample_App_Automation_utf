@@ -79,7 +79,8 @@ def logger():
 """
 
 
-def get_pkt_list(wifi_sniffer, dut_mac_address, decryption_key: str, print_layers: list, capture_filename) -> Dict[
+def get_pkt_list(wifi_sniffer, dut_mac_address, wifi_access_point, decryption_key: str,
+                 print_layers: list, capture_filename) -> Dict[
     str, int]:
     capture_list = []
     current_time = time.time()
@@ -88,13 +89,20 @@ def get_pkt_list(wifi_sniffer, dut_mac_address, decryption_key: str, print_layer
     file_name = f'./reports/{updated_capture_file}.pcap'
     local_capture_file = file_name
     wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
-    packet_filter1 = f'(wlan.addr == {dut_mac_address})'
+    packet_filter1 = f'(wlan.addr == {dut_mac_address}) && (wlan.addr == {wifi_access_point.interfaces.wifi.bssid})'
     wifi_sniffer.interfaces.capture.shell(
         f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{packet_filter1}' -T fields -e "
         f"frame.number -w "
         f"{wlan_filter_file}")
     with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
         sftp.get(wlan_filter_file, local_capture_file)
+    wlan_filter_file2 = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+    wifi_sniffer.interfaces.capture.shell(
+        f"wlantest -r {wifi_sniffer.interfaces.capture.remote_capture_file} "
+        f"-p {wifi_access_point.interfaces.wifi.passphrase} "
+        f"-w {wlan_filter_file2}")
+    with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+        sftp.get(wlan_filter_file2, local_capture_file)
     for packet in wifi_sniffer.interfaces.capture.iter_packets(
             decrypt_packets=True,
             encryption_type="WPA-PWD",
@@ -108,11 +116,13 @@ def get_pkt_list(wifi_sniffer, dut_mac_address, decryption_key: str, print_layer
                 for count in mac_layer.split("\n"):
                     if "Transmitter address" in count:
                         ta_address = count.split(": ")[1].strip()
+                        ra_address = wifi_access_point.interfaces.wifi.bssid
             if layer_name in print_layers:
-                if ta_address == dut_mac_address:
-                    proto_layer = str(layer)
-                    logger().info(f"As per sniffer capture expected packets sent by DUT..{ta_address}  ->  {proto_layer}")
-                    capture_list.append(tuple([proto_layer, packet.sniff_timestamp]))
+                logger().info(f">>>>>>{ta_address}>>>>>>{ra_address}")
+                proto_layer = str(layer)
+                logger().info(f"As per sniffer capture expected packets sent by DUT & AP ..{ta_address} ... "
+                              f"{ra_address}  ->  {proto_layer}")
+                capture_list.append(tuple([proto_layer, packet.sniff_timestamp]))
     return capture_list
 
 
@@ -687,8 +697,8 @@ def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_C133480(wifi_dut, wifi_acc
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["dns"],
-                                     test_name)
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], wifi_access_point,
+                                    decryption_key, ["dns"], test_name)
         assert len(
             capture_list) > 0, "DNS packets  are not captured in the sniffer"
 
@@ -794,8 +804,9 @@ def test_Coex_sdk_WLAN_DNS_Query_BLE_slave_C133583(wifi_dut, wifi_access_point,
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["dns"],
-                                     test_name)
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], wifi_access_point,
+                                    decryption_key, ["dns"],
+                                    test_name)
         assert len(
             capture_list) > 0, "DNS packets  are not captured in the sniffer"
 
@@ -843,7 +854,8 @@ def test_Coex_sdk_WLAN_DNS_Query_BLE_slave_C133583(wifi_dut, wifi_access_point,
 def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_C133477(wifi_dut, wifi_access_point,
                                                 wifi_sniffer, sl_collections,
                                                 sniffer_filter, utf_constants,
-                                                ble_client, ssl_server):
+                                                ble_client, ssl_server,
+                                                request):
     """
     Verify WiFi SSL Tx functionality and stability after BLE connection
     """
@@ -923,8 +935,8 @@ def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_C133477(wifi_dut, wifi_access_point,
 
         wifi_obj.sniffer_validation_join()
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["tls"],
-                                     test_name)
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], wifi_access_point,
+                                    decryption_key, ["tls"], test_name)
         assert len(
             capture_list) > 0, "SSL packets or one of the 4-way handshake packets are not captured in the sniffer"
         logger().info(f"Validating ssl frames")
@@ -1054,8 +1066,9 @@ def test_Coex_sdk_WLAN_SSL_rx_BLE_slave_C133478(wifi_dut, wifi_access_point,
 
         wifi_obj.sniffer_validation_join()
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["tls"],
-                                     test_name)
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], wifi_access_point,
+                                    decryption_key, ["tls"],
+                                    test_name)
         assert len(
             capture_list) > 0, "SSL packets or one of the 4-way handshake packets are not captured in the sniffer"
 
@@ -1199,8 +1212,8 @@ def test_Coex_sdk_WLAN_MQTT_BLE_slave_C133574(wifi_dut, wifi_access_point,
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["mqtt"],
-                                          test_name)
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'],
+                                    wifi_access_point, decryption_key, ["mqtt"], test_name)
         assert len(
             capture_list) > 0, "MQTT packets or one of the 4-way handshake packets are not captured in the sniffer"
         logger().info("sniffer validation is successful")
