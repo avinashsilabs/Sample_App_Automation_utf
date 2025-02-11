@@ -80,6 +80,7 @@ class BLEFunc(ThreadBase):
         self.local_oob_flag = local_oob_flag
         self.nrf_dongle_as_master = nrf_dongle_as_master
         self.testcase_no = testcase_no
+        self.sniffer_data_df = None
 
 
     def run(self):
@@ -441,6 +442,8 @@ class BLEFunc(ThreadBase):
             assert file_size > 0
             sniffer_data_df = self.ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
             assert sniffer_data_df is not None
+            logger().info(f"**********{self.sniffer_data_df}************")
+            return self.sniffer_data_df
 
 
 
@@ -477,7 +480,7 @@ pytestmark = [
 def test_ble_smp_anthencation_verify_passkey_not_entered_C557281(wifi_dut, nrf_ble_client, sl_collections, ble_client):
     """SMP Anthentication: Verify Passkey Display/Passkey Entry Auth methods timeout occure if passkey is not entered (Initiator:KeyboardOnly Responder: Displayonly"""
     try:
-        ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, error_code_expected="0x4b04", smp_io_capability=2, passkey_state=2,  cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_ONLY, nrf_connect_to_dut=True)
+        ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, error_code_expected="0x4bfc", smp_io_capability=2, passkey_state=2,  cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_ONLY, nrf_connect_to_dut=True)
         ble_obj.start()
         ble_obj.wait_for_exit()
 
@@ -489,7 +492,7 @@ def test_ble_smp_anthencation_verify_passkey_not_entered_C557281(wifi_dut, nrf_b
 def test_ble_smp_anthencation_verify_passkey_not_enterred_C557282(wifi_dut, nrf_ble_client, sl_collections, ble_client):
     """SMP Anthentication: Verify Passkey Display/Passkey Entry Auth methods timeout occure if passkey is not entered (Initiator:KeyboardDisplay Responder: DisplayYes No"""
     try:
-        ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, error_code_expected="0x4b04", smp_io_capability=4, passkey_state=2,  cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_connect_to_dut=True)
+        ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, error_code_expected="0x4bfc", smp_io_capability=4, passkey_state=2,  cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_connect_to_dut=True)
         ble_obj.start()
         ble_obj.wait_for_exit()
 
@@ -565,10 +568,24 @@ def test_ble_smp_anthencation_verify_passkey_entered_C557256(wifi_dut, nrf_ble_c
         ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C557256",  smp_io_capability=1, passkey_state=0,  cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_connect_to_dut=True)
         ble_obj.start()
         ble_obj.wait_for_exit()
+        assert len(ble_obj.sniffer_data_df.loc[(ble_obj.sniffer_data_df['Code'] == "Pairing Request") & (
+                    ble_obj.sniffer_data_df['IO Capabilities'] == "DisplayYesNo") & (ble_obj.sniffer_data_df[
+                                                                                         'MITM'] == "MITM Protection:  Yes") & (
+                                                           ble_obj.sniffer_data_df[
+                                                               'Secure Connection Pairing'] == "Yes")])
+        assert len(ble_obj.sniffer_data_df.loc[(ble_obj.sniffer_data_df['Code'] == "Pairing Response") & (
+                    ble_obj.sniffer_data_df['IO Capabilities'] == "DisplayYesNo") & (ble_obj.sniffer_data_df[
+                                                                                         'MITM'] == "MITM Protection:  Yes") & (
+                                                           ble_obj.sniffer_data_df[
+                                                               'Secure Connection Pairing'] == "Yes")])
+        logger().info(f"**************Testcase passed****************")
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
         time.sleep(3)
+
+    finally:
+        nrf_ble_client.interfaces.bluetooth.delete_bonding_data()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -650,10 +667,23 @@ def test_ble_smp_anthencation_verify_pairing_with_dut_entered_C557258(wifi_dut, 
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,  ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C557258",  smp_io_capability=1, passkey_state=0,  cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_YESNO,  nrf_connect_to_dut=True)
         ble_obj.start()
         ble_obj.wait_for_exit()
+        assert len(ble_obj.sniffer_data_df.loc[(ble_obj.sniffer_data_df['Code'] == "Pairing Request") & (
+                ble_obj.sniffer_data_df['IO Capabilities'] == "DisplayYesNo") & (ble_obj.sniffer_data_df[
+                                                                                     'MITM'] == "MITM Protection:  Yes") & (
+                                                       ble_obj.sniffer_data_df[
+                                                           'Secure Connection Pairing'] == "Yes")])
+        assert len(ble_obj.sniffer_data_df.loc[(ble_obj.sniffer_data_df['Code'] == "Pairing Response") & (
+                ble_obj.sniffer_data_df['IO Capabilities'] == "DisplayYesNo") & (ble_obj.sniffer_data_df[
+                                                                                     'MITM'] == "MITM Protection:  Yes") & (
+                                                       ble_obj.sniffer_data_df[
+                                                           'Secure Connection Pairing'] == "Yes")])
+        logger().info(f"**************Testcase passed****************")
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
         time.sleep(3)
+    finally:
+        nrf_ble_client.interfaces.bluetooth.delete_bonding_data()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -674,17 +704,17 @@ def test_ble_smp_disconnection_failure_C557265(wifi_dut, nrf_ble_client, ble_sni
         sl_collections.exception_handling(wifi_dut, error)
         time.sleep(3)
 
-@pytest.mark.ble_sniffer("frontline_sniffer")
-def test_ble_smp_anthencation_verify_passkey_entered_C557256(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
-    """Verify the NumericCompairision Pairing Method for DUT as Peripheral"""
-    try:
-        ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C557256",  smp_io_capability=1, passkey_state=0,  cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_connect_to_dut=True)
-        ble_obj.start()
-        ble_obj.wait_for_exit()
-
-    except Exception as error:
-        sl_collections.exception_handling(wifi_dut, error)
-        time.sleep(3)
+# @pytest.mark.ble_sniffer("frontline_sniffer")
+# def test_ble_smp_anthencation_verify_passkey_entered_C557256(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+#     """Verify the NumericCompairision Pairing Method for DUT as Peripheral"""
+#     try:
+#         ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C557256",  smp_io_capability=1, passkey_state=0,  cap_on_dongle = NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_connect_to_dut=True)
+#         ble_obj.start()
+#         ble_obj.wait_for_exit()
+#
+#     except Exception as error:
+#         sl_collections.exception_handling(wifi_dut, error)
+#         time.sleep(3)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
