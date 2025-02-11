@@ -70,6 +70,36 @@ class WLanThread(ThreadBase):
 
                 return
 
+            if self.test_name == '476928':
+                logger().info('\n*** Configuring Sniffer with WAP channel ***\n')
+                self.wifi_sniffer.interfaces.capture.configure_interface(
+                    channel=self.wifi_access_point.interfaces.wifi.channel)
+                self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                         channel=self.wifi_access_point.interfaces.wifi.channel)
+                for i in range(5):
+                    self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
+
+                    self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+
+                    self.wifi_dut.interfaces.http.http_put(self.http_server.interfaces.http, self.index_path,
+                                                           server_port=443)
+
+                    self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                    power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                        sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
+                        filter_name="power_mgmt_bit")
+                    assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=power_save_filter)[
+                               'packet_count'] > 0, "Unable to find NULL-Data frame packets with power save bit = 1"
+
+                logger().info("Stopping sniffer capture")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+
+                return
+
             if self.test_name == '537908':
                 logger().info('\n*** Configuring Sniffer with WAP channel ***\n')
                 self.wifi_sniffer.interfaces.capture.configure_interface(
@@ -422,9 +452,11 @@ def test_wifi_sdk_http_put_without_extended_header_c37573(http_server, wifi_dut,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1",
-                               "wan_ipv6_address": WLanThread().random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
+                               "wan_ipv6_address": WLanThread().random_ipv6_addr("2401:4900:1cb3::/48"),
+                               "security": "Open"}
 )
 @pytest.mark.config(
     "wifi_dut",
@@ -443,8 +475,9 @@ def test_wifi_sdk_http_put_without_extended_header_c37573(http_server, wifi_dut,
 )
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
-def test_wifi_sdk_http_put_with_ipv6_stateful_c537908(http_server, wifi_dut, http_client, wifi_access_point,
-                                                      wifi_sniffer, sl_collections, sniffer_filter, wifi_client):
+def test_wifi_sdk_http_put_with_ipv6_stateful_c537908(firmware_loader, http_server, wifi_dut, http_client,
+                                                      wifi_access_point, wifi_sniffer, sl_collections, sniffer_filter,
+                                                      wifi_client):
     try:
         test_name = '537908'
         index_path = "index.html"
@@ -486,6 +519,39 @@ def test_wifi_sdk_https_put_functionality_c37576(http_server, wifi_dut, http_cli
                               http_client=http_client, wifi_client=wifi_client,
                               test_name=test_name, sl_collections=sl_collections, http_server=http_server,
                               index_path=index_path, sniffer_filter=sniffer_filter)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": 0,
+        "features": Si91xFeatureBitMap.OpenMode,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.DNSClient,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_https_put_without_wlan_disconnect_c476928(http_server, wifi_dut, sniffer_filter, wifi_sniffer,
+                                                            wifi_access_point, index_path, http_client,
+                                                            sl_collections):
+    """Verify HTTPS PUT functionality in loop without WLAN Disconnect"""
+    try:
+        test_name = '476928'
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, index_path=index_path,
+                              http_server=http_server, test_name=test_name, sl_collections=sl_collections,
+                              sniffer_filter=sniffer_filter, wifi_sniffer=wifi_sniffer)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
     except Exception as e:
