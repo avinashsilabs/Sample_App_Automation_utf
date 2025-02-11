@@ -1049,3 +1049,27 @@ def test_ble_smp_legacy_pairing_initiator_Keyboard_Only_responder_No_input_No_ou
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
         time.sleep(3)
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+def test_verify_legacy_pairing_Display_yes_No_DUT_as_master_C557262(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+    """Verify legacy pairing with Display Yes/No with DUT as master"""
+    try:
+        ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, sniffer_check=True, layer_name="SMP",capture_filename="frontline_capture_C557262", smp_sc=0, smp_mtim=0, smp_io_capability=1, cap_on_dongle=NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_connect_to_dut=True, lesc_disabled=True, gatt_init=True, link_key=False)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+        time.sleep(3)
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+def test_verify_Rand_memset_0_for_encryption_using_STK_C557279(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+    """Verify EDIV/Rand memset 0 for encryption using STK"""
+    try:
+        ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, sniffer_check=True, layer_name="SMP", smp_sc=0, smp_io_capability=1, cap_on_dongle=NRFBLEIoCapabilities.KEYBOARD_ONLY, nrf_dongle_as_master=True, lesc_disabled=True, gatt_init=False, link_key=False)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+        time.sleep(3)
