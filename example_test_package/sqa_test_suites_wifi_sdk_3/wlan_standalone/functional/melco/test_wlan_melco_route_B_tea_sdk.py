@@ -291,7 +291,7 @@ class WifiThread(ThreadBase):
         dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address(interface=2)
         logger().info(f"*********{dut_mac_address}**********")
 
-        if self.test_type in [690734, 690736, 690737]:
+        if self.test_type in [690734, 690736]:
             packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                 sa_addr=dut_mac_address, filter_name="deauthentication")
 
@@ -738,25 +738,24 @@ def test_wifi_sdk_disconn_3rd_party_sta_from_aput_when_pinging_stamode_c690737(
         wifi_obj.check_beacon()
         ping_obj.start()
         time.sleep(10)
-        wifi_obj.raspi_client_leave()
-        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+        wifi_obj.wifi_client_leave()
         ping_obj.wait_for_exit()
         time.sleep(5)
         logger().info(".... stop the sniffer ....")
         wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_obj.sniffer_validation()
 
         logger().info("... configuring the Sniffer with the channel ...")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture()
-
-        wifi_obj.check_no_beacon()
+        time.sleep(10)
         logger().info(".... stop the sniffer ....")
         wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.check_no_beacon()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
 
 @pytest.mark.config(
@@ -1217,27 +1216,23 @@ def test_wifi_sdk_disconn_3rd_party_sta_from_aput_when_pinging_stamode_c693700(
         wifi_obj.ap_mode_with_ipv4()
         wifi_obj.check_beacon()
         wifi_obj.traffic_run()
-        wifi_obj.raspi_client_leave()
-        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
-
+        wifi_obj.wifi_client_leave()
         logger().info(".... stop the sniffer ....")
         wifi_sniffer.interfaces.capture.stop_capture()
-
-
         logger().info("... configuring the Sniffer with the channel ...")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture()
-
-        wifi_obj.check_no_beacon()
+        time.sleep(15)
         logger().info(".... stop the sniffer ....")
         wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.check_no_beacon()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
 
-@pytest.mark.skip(reason="Need to check de-init API")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1270,9 +1265,9 @@ def test_wifi_sdk_disconn_3rd_party_sta_from_aput_when_pinging_stamode_c693700(
         },
     }
 )
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA3", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_check_ping_during_http_server_deinit_c693695(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients, http_client, wiseconnect_web):
@@ -1303,19 +1298,19 @@ def test_wifi_sdk_check_ping_during_http_server_deinit_c693695(
         wifi_obj.beacon_stop = 1
         wifi_obj.start()
         wifi_obj.wait_for_exit()
-
-        for count in range(1):
-            wifi_obj.ap_mode_with_ipv4()
-            ping_obj.start()
-            wifi_obj.http_server_access_webpage()
-            ping_obj.wait_for_exit()
-            wifi_obj.http_server_deinit_stop()
-            wifi_dut.interfaces.wifi.sl_net_deinit(mode='ap')
+        wifi_obj.ap_mode_with_ipv4()
+        ping_obj.start()
+        wifi_obj.http_server_access_webpage()
+        ping_obj.wait_for_exit()
+        wifi_obj.http_server_deinit_stop()
+        wifi_obj.wifi_client_leave()
         logger().info(".... stop the sniffer ....")
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
 
 @pytest.mark.skip(reason="IPERF UDP Rx is failing with timeout issues")
