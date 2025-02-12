@@ -881,7 +881,7 @@ pytestmark = [
 ]
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
@@ -912,7 +912,7 @@ def test_wifi_sdk_verify_ble_scan_adv_after_twt_c198619(
         ble_client.interfaces.bluetooth.close()
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
@@ -942,7 +942,7 @@ def test_wifi_sdk_verify_ble_scan_adv_before_twt_c198620(
         ble_client.interfaces.bluetooth.close()
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
@@ -970,7 +970,7 @@ def test_wifi_sdk_verify_ble_master_before_twt_c198621(
         ble_obj.ble_cleanup()
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
@@ -999,7 +999,7 @@ def test_wifi_sdk_verify_ble_slave_before_twt_c198622(
         ble_obj.ble_cleanup()
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
@@ -1030,7 +1030,7 @@ def test_wifi_sdk_verify_twt_and_dut_wake_interval_before_ble_master_c198623(
         ble_obj.ble_cleanup()
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
@@ -1063,7 +1063,7 @@ def test_wifi_sdk_verify_twt_and_dut_wake_interval_after_ble_slave_c198624(
         ble_obj.ble_cleanup()
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
@@ -1095,11 +1095,11 @@ def test_wifi_sdk_verify_twt_with_ble_master_tx_data_transfer_c198625(
 
 
 @pytest.mark.skip("Not Deployed Yet")
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
-def test_wifi_sdk_verify_twt_unannounced_trigger_with_ble_master_tx_data_transfer_c198626(
+def test_wifi_sdk_verify_twt_announced_trigger_with_ble_master_tx_data_transfer_c198626(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client,
         utf_constants):
     """Check whether DUT is able to wake up at regular TWT intervals and receive data or not in unannounced + trigger
@@ -1127,7 +1127,7 @@ def test_wifi_sdk_verify_twt_unannounced_trigger_with_ble_master_tx_data_transfe
 
 
 @pytest.mark.skip("Not Deployed Yet")
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
@@ -1158,7 +1158,7 @@ def test_wifi_sdk_verify_twt_unannounced_trigger_with_ble_slave_tx_data_transfer
         ble_obj.ble_cleanup()
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
@@ -1189,7 +1189,7 @@ def test_wifi_sdk_verify_twt_retry_frames_with_ble_master_c198628(
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -1219,7 +1219,7 @@ def test_wifi_sdk_verify_twt_conn_with_invalid_parameter_ble_master_c198629(
 
 
 @pytest.mark.skip("Not Deployed Yet")
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
 def test_wifi_sdk_verify_twt_teardown_recreate_session_with_ble_master_c198630(
@@ -1255,7 +1255,7 @@ def test_wifi_sdk_verify_twt_teardown_recreate_session_with_ble_master_c198630(
 
 
 @pytest.mark.skip("Not Deployed Yet")
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
 def test_wifi_sdk_verify_twt_teardown_recreate_session_with_another_type_and_ble_slave_c198631(
@@ -1290,7 +1290,7 @@ def test_wifi_sdk_verify_twt_teardown_recreate_session_with_another_type_and_ble
 
 
 @pytest.mark.skip("Not Deployed Yet")
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
