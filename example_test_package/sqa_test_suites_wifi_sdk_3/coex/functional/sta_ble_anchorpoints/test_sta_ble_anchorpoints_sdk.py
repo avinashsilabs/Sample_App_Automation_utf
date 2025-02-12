@@ -22,6 +22,7 @@ from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
+ble_obj = None
 
 
 def logger():
@@ -41,35 +42,36 @@ def logger():
         2. Join to the access point and get IP through DHCP
         3. Enable the WLAN and BT power save mode in DUT after the connection
         4. Initiate ping from the AP backend machine
-        5. DO HTTP data transfer
-        6. BLE advertise, connect, update connection interval, latency, LSTO
+        5. BLE advertise, connect, update different connection interval, latency, LSTO
+        6. DO HTTP data transfer
 
     Author: Hari Bhargav Nalla
 
 """
+
 
 # this thread used for Wi-Fi join
 class WifiThread(ThreadBase):
     """This function is responsible for wifi scan ,connectivity ,powersave ,data transfer"""
 
     def __init__(
-        self,
-        wifi_sniffer=None,
-        wifi_dut=None,
-        wifi_access_point=None,
-        testcase=None,
-        wifi_client=None,
-        net_perf_client=None,
-        protocol=None,
-        test_type=None,
-        sl_collections=None,
-        ping_count=None,
-        sniffer_filter=None,
-        region=None,
-        switch=None,
-        http_server=None,
-        index_path=None,
-        https=0
+            self,
+            wifi_sniffer=None,
+            wifi_dut=None,
+            wifi_access_point=None,
+            testcase=None,
+            wifi_client=None,
+            net_perf_client=None,
+            protocol=None,
+            test_type=None,
+            sl_collections=None,
+            ping_count=None,
+            sniffer_filter=None,
+            region=None,
+            switch=None,
+            http_server=None,
+            index_path=None,
+            https=0
     ):
 
         super().__init__()
@@ -119,7 +121,7 @@ class WifiThread(ThreadBase):
             if self.power_save:
                 # Configure Listen interval based power save in join feat bitmap
                 self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
-                                                                  Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+                                                                      Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
             self.dut_addr = self.sl_collections.join_to_wifi_network(
                 wifi_dut=self.wifi_dut,
                 wifi_access_point=self.wifi_access_point,
@@ -172,8 +174,8 @@ class WifiThread(ThreadBase):
                 "packet_count"
             ], "Sniffer: Unable to find QOS data frames with more data bit set in sniffer"
 
-
     def disconnect(self):
+        # Check WiFi connection and initiate disconnection based on that
         if self.wifi_dut.interfaces.wifi.associated:
             logger().info("disconnecting to ap.....")
             self.wifi_dut.interfaces.wifi.leave()
@@ -181,11 +183,13 @@ class WifiThread(ThreadBase):
     def run(self):
 
         if self.test_type == "ping":
+            # Associate to AP and do ping
             self.join_to_ap()
             status = ping(self.device_ip, 50)
             assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
 
         if self.test_type == "http":
+            # Associate to AP and do HTTP file download
             if not self.wifi_dut.interfaces.wifi.associated:
                 self.join_to_ap()
             self.run_http_download()
@@ -194,18 +198,18 @@ class WifiThread(ThreadBase):
 # this thread used for BLE functionality
 class BleThreadFunctionality(ThreadBase):
     def __init__(
-        self,
-        wifi_dut=None,
-        ble_client=None,
-        adv_int=None,
-        ble_scan_interval=None,
-        ble_scan_window=None,
-        sl_collections=None,
-        ble_pairing=0,
-        min_conn_int=None,
-        max_conn_int=None,
-        conn_latency=None,
-        supervision_timeout=None,
+            self,
+            wifi_dut=None,
+            ble_client=None,
+            adv_int=None,
+            ble_scan_interval=None,
+            ble_scan_window=None,
+            sl_collections=None,
+            ble_pairing=None,
+            min_conn_int=None,
+            max_conn_int=None,
+            conn_latency=None,
+            supervision_timeout=None,
 
     ):
         super().__init__()
@@ -224,12 +228,13 @@ class BleThreadFunctionality(ThreadBase):
 
         # Set up DUT for BLE advertising
         logger().info("Initializing BLE")
-        self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start(set_smp=self.ble_pairing)
+        self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=self.ble_pairing)
         assert (
-            self.ble_dut_address is not None
+                self.ble_dut_address is not None
         ), "Unable to fetch bluetooth address from DUT"
         logger().info(f"ble_dut_address : {self.ble_dut_address}")
         time.sleep(5)
+        self.ble_client_address = None
 
     def ble_disconnect(self, disconnect_from="remote"):
         # This method will trigger BLE disconnection from Raspberry Pi
@@ -243,14 +248,15 @@ class BleThreadFunctionality(ThreadBase):
 
     def ble_conn_param_update(self):
 
-        logger().info("updating connection params")
+        logger().info("BLE connection Params update")
         self.ble_client.interfaces.bluetooth.hci_tool_manager.update_conn(dev_addr=self.ble_dut_address,
                                                                           min_conn_interval=int(
                                                                               int(self.min_conn_int) / 1.25),
                                                                           max_conn_interval=int(
                                                                               int(self.max_conn_int) / 1.25),
                                                                           conn_latency=self.conn_latency,
-                                                                          supervision_timeout=int(self.supervision_timeout)/10)
+                                                                          supervision_timeout=int(
+                                                                              self.supervision_timeout) / 10)
 
     def conn_param_update_check(self, btmon_file_name, search_strings):
         con_flag = None
@@ -287,65 +293,64 @@ class BleThreadFunctionality(ThreadBase):
 
     def run(self):
 
-        # Advertise DUT-BLE
-        self.ble_client_address = self.sl_collections.check_ble_advertise_functionality(wifi_dut=self.wifi_dut, ble_client=self.ble_client,
-                                                                        ble_dut_address=self.ble_dut_address, timeout=20)
-        self.wifi_dut.interfaces.wifi.ble_scanning = False
-        self.wifi_dut.interfaces.wifi.ble_advertising = False
-        # Initiate BLE SMP pairing
-        self.ble_client.interfaces.bluetooth.pair_and_connect(dev_addr=self.ble_dut_address)
-        logger().info("BLE Connection success")
+        # Initiates BLE connection to Raspberry Pi
+        self.ble_client_address = self.sl_collections.ble_connection(
+            wifi_dut=self.wifi_dut,
+            ble_client=self.ble_client,
+            ble_dut_address=self.ble_dut_address,
+            mode="slave",
+            ble_pairing=self.ble_pairing,
+        )
 
 pytestmark = [
- pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-        "bt_features": Si91xBTFeatureBitMap.Default,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-                              | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV
-                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE,
-        "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE ,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
-                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "thread_config": {
-            "wifi": {"count": 1, "stack_len": 4096, "priority": 8},
-            "ble": {"count": 1, "stack_len": 4096},
+    pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                                  | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV
+                                  | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID
+                                  | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE,
+            "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                       | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+            "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 4096, "priority": 8},
+                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+            },
         },
-    },
- )
+    )
 ]
 
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890","dtim": 1}
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890", "dtim": 1}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
 def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_5_LSTO_4s_C20122(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    ble_client,
-    request,
-    utf_constants,
-    sl_collections,
-    wifi_client,
-    sniffer_filter,
-    http_server,
-    index_path
-
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        ble_client,
+        request,
+        utf_constants,
+        sl_collections,
+        wifi_client,
+        sniffer_filter,
+        http_server,
+        index_path
 ):
     """
     Test Steps:
@@ -353,8 +358,8 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_5_LSTO_4s_C20122(
         2. Join to the access point and get IP through DHCP
         3. Enable the WLAN and BT power save mode in DUT after the connection
         4. Initiate ping from the AP backend machine
-        5. Do file download through HTTP
-        6. BLE advertise, connect, update connection interval 15ms, latency 5 and LSTO 4000ms
+        5. BLE advertise, connect, update connection interval 15ms, latency 5 and LSTO 4000ms
+        6. Do file download through HTTP
         7. Check the BLE connection stability
     """
 
@@ -395,16 +400,16 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_5_LSTO_4s_C20122(
 
         # btmon logs will be redirected to this file
         bt_mon_log_file = (f"reports/test_sta_ble_anchorpoints_sdk_C20122_{int(time.time())}.log"
-        )
+                           )
         ble_obj = BleThreadFunctionality(
-                wifi_dut=wifi_dut,
-                ble_client=ble_client,
-                sl_collections=sl_collections,
-                min_conn_int=min_connection_interval,
-                max_conn_int=max_connection_interval,
-                conn_latency=connection_latency,
-                supervision_timeout=supervision_timeout,
-                ble_pairing=1,
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            min_conn_int=min_connection_interval,
+            max_conn_int=max_connection_interval,
+            conn_latency=connection_latency,
+            supervision_timeout=supervision_timeout,
+            ble_pairing=1,
         )
 
         # Associate to Access point
@@ -414,16 +419,15 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_5_LSTO_4s_C20122(
         ble_obj.start()
         ble_obj.wait_for_exit()
 
-        # Get the BLE device state of DUT
-        state = wifi_dut.interfaces.wifi.ble_get_device_state()
-        state_int = int(state) if state.isdigit() else -1
-        assert state_int == dev_state, "DUT BLE device is not in connected state"
-
         # Start btmon logs capture
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=bt_mon_log_file):
             # Update the BLE connection parameters
             ble_obj.ble_conn_param_update()
+            # Get the BLE device state of DUT
+            state = wifi_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            assert state_int == dev_state, "DUT BLE device is not in connected state"
 
         search_strings = [
             "Connection interval: 15.00 msec (0x000c)",
@@ -436,12 +440,6 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_5_LSTO_4s_C20122(
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
-        # Initiate WiFi disconnection
-        wifi_obj.disconnect()
-
-        # Initiate BLE disconnection
-        ble_obj.ble_disconnect()
-
         # Stop wireshark sniffer capture
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -449,26 +447,24 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_5_LSTO_4s_C20122(
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
 
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-    finally:
-        logger().info("Finally")
-        # Stop wireshark sniffer capture
-        wifi_sniffer.interfaces.capture.stop_capture()
-
-        # Initiate WiFi disconnection
+        # Initiate BLE disconnect
+        ble_obj.ble_disconnect()
+        # Initiate WLAN disconnect
         wifi_obj.disconnect()
 
-        # Close the Raspi BLE
-        ble_client.interfaces.bluetooth.close()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-        # Clean up the BLE based on the device state
-        if ble_obj is not None:
+    finally:
+        # Close Raspi Bluetooth
+        ble_client.interfaces.bluetooth.close()
+        # Remove BLE bond information
+        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        # Does BLE clean up based on the device state of DUT
+        if ble_obj:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-
 
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
@@ -478,20 +474,20 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_5_LSTO_4s_C20122(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
 def test_WiFi_sdk_wifi_http_download_BLE_CI_240ms_latency_5_LSTO_4s_C20123(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    ble_client,
-    request,
-    utf_constants,
-    sl_collections,
-    wifi_client,
-    sniffer_filter,
-    http_server,
-    index_path
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        ble_client,
+        request,
+        utf_constants,
+        sl_collections,
+        wifi_client,
+        sniffer_filter,
+        http_server,
+        index_path
 ):
     """
     Test Steps:
@@ -499,8 +495,8 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_240ms_latency_5_LSTO_4s_C20123(
         2. Join to the access point and get IP through DHCP
         3. Enable the WLAN and BT power save mode in DUT after the connection
         4. Initiate ping from the AP backend machine
-        5. Do file download through HTTP
-        6. BLE advertise, connect, update connection interval 15ms, latency 5 and LSTO 4000ms
+        5. BLE advertise, connect, update connection interval 240ms, latency 5 and LSTO 4000ms
+        6. Do file download through HTTP
         7. Check the BLE connection stability
     """
     try:
@@ -540,16 +536,16 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_240ms_latency_5_LSTO_4s_C20123(
 
         # btmon logs will be redirected to this file
         bt_mon_log_file = (f"reports/test_sta_ble_anchorpoints_sdk_C20123_{int(time.time())}.log"
-        )
+                           )
         ble_obj = BleThreadFunctionality(
-                wifi_dut=wifi_dut,
-                ble_client=ble_client,
-                sl_collections=sl_collections,
-                min_conn_int=min_connection_interval,
-                max_conn_int=max_connection_interval,
-                conn_latency=connection_latency,
-                supervision_timeout=supervision_timeout,
-                ble_pairing=1,
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            min_conn_int=min_connection_interval,
+            max_conn_int=max_connection_interval,
+            conn_latency=connection_latency,
+            supervision_timeout=supervision_timeout,
+            ble_pairing=1,
         )
 
         # Associate to Access point
@@ -559,16 +555,15 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_240ms_latency_5_LSTO_4s_C20123(
         ble_obj.start()
         ble_obj.wait_for_exit()
 
-        # Get the BLE device state of DUT
-        state = wifi_dut.interfaces.wifi.ble_get_device_state()
-        state_int = int(state) if state.isdigit() else -1
-        assert state_int == dev_state, "DUT BLE device is not in connected state"
-
         # Start btmon logs capture
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=bt_mon_log_file):
             # Update the BLE connection parameters
             ble_obj.ble_conn_param_update()
+            # Get the BLE device state of DUT
+            state = wifi_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            assert state_int == dev_state, "DUT BLE device is not in connected state"
 
         search_strings = [
             "Connection interval: 240.00 msec (0x00c0)",
@@ -581,12 +576,6 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_240ms_latency_5_LSTO_4s_C20123(
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
-        # Initiate WiFi disconnection
-        wifi_obj.disconnect()
-
-        # Initiate BLE disconnection
-        ble_obj.ble_disconnect()
-
         # Stop wireshark sniffer capture
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -594,27 +583,27 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_240ms_latency_5_LSTO_4s_C20123(
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
 
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-    finally:
-        logger().info("Finally")
-        # Stop wireshark sniffer capture
-        wifi_sniffer.interfaces.capture.stop_capture()
-
-        # Initiate WiFi disconnection
+        # Initiate BLE disconnect
+        ble_obj.ble_disconnect()
+        # Initiate WLAN disconnect
         wifi_obj.disconnect()
 
-        # Close the Raspi BLE
-        ble_client.interfaces.bluetooth.close()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-        # Clean up the BLE based on the device state
-        if ble_obj is not None:
+
+    finally:
+        # Close Raspi Bluetooth
+        ble_client.interfaces.bluetooth.close()
+        # Remove BLE bond information
+        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        # Does BLE clean up based on the device state of DUT
+        if ble_obj:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
-
+@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4908")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.config(
@@ -623,20 +612,20 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_240ms_latency_5_LSTO_4s_C20123(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
 def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_2_LSTO_32s_C20124(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    ble_client,
-    request,
-    utf_constants,
-    sl_collections,
-    wifi_client,
-    sniffer_filter,
-    http_server,
-    index_path
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        ble_client,
+        request,
+        utf_constants,
+        sl_collections,
+        wifi_client,
+        sniffer_filter,
+        http_server,
+        index_path
 ):
     """
     Test Steps:
@@ -644,8 +633,8 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_2_LSTO_32s_C20124(
         2. Join to the access point and get IP through DHCP
         3. Enable the WLAN and BT power save mode in DUT after the connection
         4. Initiate ping from the AP backend machine
-        5. Do file download through HTTP
-        6. BLE advertise, connect, update connection interval 15ms, latency 5 and LSTO 4000ms
+        5. BLE advertise, connect, update connection interval 250ms, latency 5 and LSTO 32000ms
+        6. Do file download through HTTP
         7. Check the BLE connection stability
     """
 
@@ -686,16 +675,16 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_2_LSTO_32s_C20124(
 
         # btmon logs will be redirected to this file
         bt_mon_log_file = (f"reports/test_sta_ble_anchorpoints_sdk_C20124_{int(time.time())}.log"
-        )
+                           )
         ble_obj = BleThreadFunctionality(
-                wifi_dut=wifi_dut,
-                ble_client=ble_client,
-                sl_collections=sl_collections,
-                min_conn_int=min_connection_interval,
-                max_conn_int=max_connection_interval,
-                conn_latency=connection_latency,
-                supervision_timeout=supervision_timeout,
-                ble_pairing=1,
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            min_conn_int=min_connection_interval,
+            max_conn_int=max_connection_interval,
+            conn_latency=connection_latency,
+            supervision_timeout=supervision_timeout,
+            ble_pairing=1,
         )
 
         # Associate to Access point
@@ -705,16 +694,15 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_2_LSTO_32s_C20124(
         ble_obj.start()
         ble_obj.wait_for_exit()
 
-        # Get the BLE device state of DUT
-        state = wifi_dut.interfaces.wifi.ble_get_device_state()
-        state_int = int(state) if state.isdigit() else -1
-        assert state_int == dev_state, "DUT BLE device is not in connected state"
-
         # Start btmon logs capture
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=bt_mon_log_file):
             # Update the BLE connection parameters
             ble_obj.ble_conn_param_update()
+            # Get the BLE device state of DUT
+            state = wifi_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            assert state_int == dev_state, "DUT BLE device is not in connected state"
 
         search_strings = [
             "Connection interval: 250.00 msec (0x00c8)",
@@ -727,12 +715,6 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_2_LSTO_32s_C20124(
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
-        # Initiate WiFi disconnection
-        wifi_obj.disconnect()
-
-        # Initiate BLE disconnection
-        ble_obj.ble_disconnect()
-
         # Stop wireshark sniffer capture
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -740,26 +722,27 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_2_LSTO_32s_C20124(
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
 
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-    finally:
-        logger().info("Finally")
-        # Stop wireshark sniffer capture
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # Initiate BLE disconnect
+        ble_obj.ble_disconnect()
 
-        # Initiate WiFi disconnection
+        # Initiate WLAN disconnect
         wifi_obj.disconnect()
 
-        # Close the Raspi BLE
-        ble_client.interfaces.bluetooth.close()
 
-        # Clean up the BLE based on the device state
-        if ble_obj is not None:
+    except Exception as Ex:
+
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        # Close Raspi Bluetooth
+        ble_client.interfaces.bluetooth.close()
+        # Remove BLE bond information
+        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        # Does BLE clean up based on the device state of DUT
+        if ble_obj:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-
 
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
@@ -769,20 +752,20 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_2_LSTO_32s_C20124(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
 def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_0_LSTO_4s_C20125(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    ble_client,
-    request,
-    utf_constants,
-    sl_collections,
-    wifi_client,
-    sniffer_filter,
-    http_server,
-    index_path
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        ble_client,
+        request,
+        utf_constants,
+        sl_collections,
+        wifi_client,
+        sniffer_filter,
+        http_server,
+        index_path
 ):
     """
     Test Steps:
@@ -790,8 +773,8 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_0_LSTO_4s_C20125(
         2. Join to the access point and get IP through DHCP
         3. Enable the WLAN and BT power save mode in DUT after the connection
         4. Initiate ping from the AP backend machine
-        5. Do file download through HTTP
-        6. BLE advertise, connect, update connection interval 15ms, latency 5 and LSTO 4000ms
+        5. BLE advertise, connect, update connection interval 15ms, latency 0 and LSTO 4000ms
+        6. Do file download through HTTP
         7. Check the BLE connection stability
     """
 
@@ -832,16 +815,16 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_0_LSTO_4s_C20125(
 
         # btmon logs will be redirected to this file
         bt_mon_log_file = (f"reports/test_sta_ble_anchorpoints_sdk_C20125_{int(time.time())}.log"
-        )
+                           )
         ble_obj = BleThreadFunctionality(
-                wifi_dut=wifi_dut,
-                ble_client=ble_client,
-                sl_collections=sl_collections,
-                min_conn_int=min_connection_interval,
-                max_conn_int=max_connection_interval,
-                conn_latency=connection_latency,
-                supervision_timeout=supervision_timeout,
-                ble_pairing=1,
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            min_conn_int=min_connection_interval,
+            max_conn_int=max_connection_interval,
+            conn_latency=connection_latency,
+            supervision_timeout=supervision_timeout,
+            ble_pairing=1,
         )
 
         # Associate to Access point
@@ -851,16 +834,15 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_0_LSTO_4s_C20125(
         ble_obj.start()
         ble_obj.wait_for_exit()
 
-        # Get the BLE device state of DUT
-        state = wifi_dut.interfaces.wifi.ble_get_device_state()
-        state_int = int(state) if state.isdigit() else -1
-        assert state_int == dev_state, "DUT BLE device is not in connected state"
-
         # Start btmon logs capture
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=bt_mon_log_file):
             # Update the BLE connection parameters
             ble_obj.ble_conn_param_update()
+            # Get the BLE device state of DUT
+            state = wifi_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            assert state_int == dev_state, "DUT BLE device is not in connected state"
 
         search_strings = [
             "Connection interval: 15.00 msec (0x000c)",
@@ -873,12 +855,6 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_0_LSTO_4s_C20125(
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
-        # Initiate WiFi disconnection
-        wifi_obj.disconnect()
-
-        # Initiate BLE disconnection
-        ble_obj.ble_disconnect()
-
         # Stop wireshark sniffer capture
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -886,26 +862,25 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_0_LSTO_4s_C20125(
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
 
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-    finally:
-        logger().info("Finally")
-        # Stop wireshark sniffer capture
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # Initiate BLE disconnect
+        ble_obj.ble_disconnect()
 
-        # Initiate WiFi disconnection
+        # Initiate WLAN disconnect
         wifi_obj.disconnect()
 
-        # Close the Raspi BLE
-        ble_client.interfaces.bluetooth.close()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-        # Clean up the BLE based on the device state
-        if ble_obj is not None:
+    finally:
+        # Close Raspi Bluetooth
+        ble_client.interfaces.bluetooth.close()
+        # Remove BLE bond information
+        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        # Does BLE clean up based on the device state of DUT
+        if ble_obj:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-
 
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
@@ -915,20 +890,20 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_0_LSTO_4s_C20125(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
 def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_0_LSTO_32s_C20126(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    ble_client,
-    request,
-    utf_constants,
-    sl_collections,
-    wifi_client,
-    sniffer_filter,
-    http_server,
-    index_path
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        ble_client,
+        request,
+        utf_constants,
+        sl_collections,
+        wifi_client,
+        sniffer_filter,
+        http_server,
+        index_path
 ):
     """
     Test Steps:
@@ -936,8 +911,8 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_0_LSTO_32s_C20126(
         2. Join to the access point and get IP through DHCP
         3. Enable the WLAN and BT power save mode in DUT after the connection
         4. Initiate ping from the AP backend machine
-        5. Do file download through HTTP
-        6. BLE advertise, connect, update connection interval 15ms, latency 5 and LSTO 4000ms
+        5. BLE advertise, connect, update connection interval 250ms, latency 0 and LSTO 32000ms
+        6. Do file download through HTTP
         7. Check the BLE connection stability
     """
 
@@ -977,17 +952,17 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_0_LSTO_32s_C20126(
         )
 
         # btmon logs will be redirected to this file
-        bt_mon_log_file = (f"reports/test_sta_ble_anchorpoints_sdk_C20122_{int(time.time())}.log"
-        )
+        bt_mon_log_file = (f"reports/test_sta_ble_anchorpoints_sdk_C20126_{int(time.time())}.log"
+                           )
         ble_obj = BleThreadFunctionality(
-                wifi_dut=wifi_dut,
-                ble_client=ble_client,
-                sl_collections=sl_collections,
-                min_conn_int=min_connection_interval,
-                max_conn_int=max_connection_interval,
-                conn_latency=connection_latency,
-                supervision_timeout=supervision_timeout,
-                ble_pairing=1,
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            min_conn_int=min_connection_interval,
+            max_conn_int=max_connection_interval,
+            conn_latency=connection_latency,
+            supervision_timeout=supervision_timeout,
+            ble_pairing=1,
         )
 
         # Associate to Access point
@@ -997,16 +972,15 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_0_LSTO_32s_C20126(
         ble_obj.start()
         ble_obj.wait_for_exit()
 
-        # Get the BLE device state of DUT
-        state = wifi_dut.interfaces.wifi.ble_get_device_state()
-        state_int = int(state) if state.isdigit() else -1
-        assert state_int == dev_state, "DUT BLE device is not in connected state"
-
         # Start btmon logs capture
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=bt_mon_log_file):
             # Update the BLE connection parameters
             ble_obj.ble_conn_param_update()
+            # Get the BLE device state of DUT
+            state = wifi_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            assert state_int == dev_state, "DUT BLE device is not in connected state"
 
         search_strings = [
             "Connection interval: 250.00 msec (0x00c8)",
@@ -1019,12 +993,6 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_0_LSTO_32s_C20126(
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
-        # Initiate WiFi disconnection
-        wifi_obj.disconnect()
-
-        # Initiate BLE disconnection
-        ble_obj.ble_disconnect()
-
         # Stop wireshark sniffer capture
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -1032,27 +1000,27 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_0_LSTO_32s_C20126(
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
 
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-    finally:
-        logger().info("Finally")
-        # Stop wireshark sniffer capture
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # Initiate BLE disconnect
+        ble_obj.ble_disconnect()
 
-        # Initiate WiFi disconnection
+        # Initiate WLAN disconnect
         wifi_obj.disconnect()
 
-        # Close the Raspi BLE
-        ble_client.interfaces.bluetooth.close()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-        # Clean up the BLE based on the device state
-        if ble_obj is not None:
+    finally:
+        # Close Raspi Bluetooth
+        ble_client.interfaces.bluetooth.close()
+        # Remove BLE bond information
+        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        # Does BLE clean up based on the device state of DUT
+        if ble_obj:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
-
+@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4908")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.config(
@@ -1061,20 +1029,20 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_0_LSTO_32s_C20126(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
 def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_5_LSTO_16s_C20180(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    ble_client,
-    request,
-    utf_constants,
-    sl_collections,
-    wifi_client,
-    sniffer_filter,
-    http_server,
-    index_path
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        ble_client,
+        request,
+        utf_constants,
+        sl_collections,
+        wifi_client,
+        sniffer_filter,
+        http_server,
+        index_path
 ):
     """
     Test Steps:
@@ -1082,8 +1050,8 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_5_LSTO_16s_C20180(
         2. Join to the access point and get IP through DHCP
         3. Enable the WLAN and BT power save mode in DUT after the connection
         4. Initiate ping from the AP backend machine
-        5. Do file download through HTTP
-        6. BLE advertise, connect, update connection interval 15ms, latency 5 and LSTO 4000ms
+        5. BLE advertise, connect, update connection interval 50ms, latency 5 and LSTO 16000ms
+        6. Do file download through HTTP
         7. Check the BLE connection stability
     """
 
@@ -1124,16 +1092,16 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_5_LSTO_16s_C20180(
 
         # btmon logs will be redirected to this file
         bt_mon_log_file = (f"reports/test_sta_ble_anchorpoints_sdk_C20180_{int(time.time())}.log"
-        )
+                           )
         ble_obj = BleThreadFunctionality(
-                wifi_dut=wifi_dut,
-                ble_client=ble_client,
-                sl_collections=sl_collections,
-                min_conn_int=min_connection_interval,
-                max_conn_int=max_connection_interval,
-                conn_latency=connection_latency,
-                supervision_timeout=supervision_timeout,
-                ble_pairing=1,
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            min_conn_int=min_connection_interval,
+            max_conn_int=max_connection_interval,
+            conn_latency=connection_latency,
+            supervision_timeout=supervision_timeout,
+            ble_pairing=1,
         )
 
         # Associate to Access point
@@ -1143,16 +1111,15 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_5_LSTO_16s_C20180(
         ble_obj.start()
         ble_obj.wait_for_exit()
 
-        # Get the BLE device state of DUT
-        state = wifi_dut.interfaces.wifi.ble_get_device_state()
-        state_int = int(state) if state.isdigit() else -1
-        assert state_int == dev_state, "DUT BLE device is not in connected state"
-
         # Start btmon logs capture
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=bt_mon_log_file):
             # Update the BLE connection parameters
             ble_obj.ble_conn_param_update()
+            # Get the BLE device state of DUT
+            state = wifi_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            assert state_int == dev_state, "DUT BLE device is not in connected state"
 
         search_strings = [
             "Connection interval: 50.00 msec (0x0028)",
@@ -1165,12 +1132,6 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_5_LSTO_16s_C20180(
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
-        # Initiate WiFi disconnection
-        wifi_obj.disconnect()
-
-        # Initiate BLE disconnection
-        ble_obj.ble_disconnect()
-
         # Stop wireshark sniffer capture
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -1178,26 +1139,25 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_5_LSTO_16s_C20180(
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
 
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-    finally:
-        logger().info("Finally")
-        # Stop wireshark sniffer capture
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # Initiate BLE disconnect
+        ble_obj.ble_disconnect()
 
-        # Initiate WiFi disconnection
+        # Initiate WLAN disconnect
         wifi_obj.disconnect()
 
-        # Close the Raspi BLE
-        ble_client.interfaces.bluetooth.close()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-        # Clean up the BLE based on the device state
-        if ble_obj is not None:
+    finally:
+        # Close Raspi Bluetooth
+        ble_client.interfaces.bluetooth.close()
+        # Remove BLE bond information
+        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        # Does BLE clean up based on the device state of DUT
+        if ble_obj:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-
 
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
@@ -1207,20 +1167,20 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_5_LSTO_16s_C20180(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
 def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_0_LSTO_10s_C20181(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    ble_client,
-    request,
-    utf_constants,
-    sl_collections,
-    wifi_client,
-    sniffer_filter,
-    http_server,
-    index_path
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        ble_client,
+        request,
+        utf_constants,
+        sl_collections,
+        wifi_client,
+        sniffer_filter,
+        http_server,
+        index_path
 ):
     """
     Test Steps:
@@ -1228,8 +1188,8 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_0_LSTO_10s_C20181(
         2. Join to the access point and get IP through DHCP
         3. Enable the WLAN and BT power save mode in DUT after the connection
         4. Initiate ping from the AP backend machine
-        5. Do file download through HTTP
-        6. BLE advertise, connect, update connection interval 15ms, latency 5 and LSTO 4000ms
+        5. BLE advertise, connect, update connection interval 50ms, latency 0 and LSTO 10000ms
+        6. Do file download through HTTP
         7. Check the BLE connection stability
     """
 
@@ -1270,16 +1230,16 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_0_LSTO_10s_C20181(
 
         # btmon logs will be redirected to this file
         bt_mon_log_file = (f"reports/test_sta_ble_anchorpoints_sdk_C20181_{int(time.time())}.log"
-        )
+                           )
         ble_obj = BleThreadFunctionality(
-                wifi_dut=wifi_dut,
-                ble_client=ble_client,
-                sl_collections=sl_collections,
-                min_conn_int=min_connection_interval,
-                max_conn_int=max_connection_interval,
-                conn_latency=connection_latency,
-                supervision_timeout=supervision_timeout,
-                ble_pairing=1,
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            min_conn_int=min_connection_interval,
+            max_conn_int=max_connection_interval,
+            conn_latency=connection_latency,
+            supervision_timeout=supervision_timeout,
+            ble_pairing=1,
         )
 
         # Associate to Access point
@@ -1289,16 +1249,15 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_0_LSTO_10s_C20181(
         ble_obj.start()
         ble_obj.wait_for_exit()
 
-        # Get the BLE device state of DUT
-        state = wifi_dut.interfaces.wifi.ble_get_device_state()
-        state_int = int(state) if state.isdigit() else -1
-        assert state_int == dev_state, "DUT BLE device is not in connected state"
-
         # Start btmon logs capture
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=bt_mon_log_file):
             # Update the BLE connection parameters
             ble_obj.ble_conn_param_update()
+            # Get the BLE device state of DUT
+            state = wifi_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            assert state_int == dev_state, "DUT BLE device is not in connected state"
 
         search_strings = [
             "Connection interval: 50.00 msec (0x0028)",
@@ -1311,12 +1270,6 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_0_LSTO_10s_C20181(
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
-        # Initiate WiFi disconnection
-        wifi_obj.disconnect()
-
-        # Initiate BLE disconnection
-        ble_obj.ble_disconnect()
-
         # Stop wireshark sniffer capture
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -1324,22 +1277,22 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_0_LSTO_10s_C20181(
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
 
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-    finally:
-        logger().info("Finally")
-        # Stop wireshark sniffer capture
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # Initiate BLE disconnect
+        ble_obj.ble_disconnect()
 
-        # Initiate WiFi disconnection
+        # Initiate WLAN disconnect
         wifi_obj.disconnect()
 
-        # Close the Raspi BLE
-        ble_client.interfaces.bluetooth.close()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-        # Clean up the BLE based on the device state
-        if ble_obj is not None:
+    finally:
+        # Close Raspi Bluetooth
+        ble_client.interfaces.bluetooth.close()
+        # Remove BLE bond information
+        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        # Does BLE clean up based on the device state of DUT
+        if ble_obj:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
