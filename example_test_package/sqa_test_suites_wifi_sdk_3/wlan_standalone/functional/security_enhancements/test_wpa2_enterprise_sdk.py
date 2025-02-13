@@ -56,6 +56,124 @@ def logger():
 """
 
 
+class SnifferValidationProcess_pmf_validate:
+
+    def __init__(self, wifi_sniffer=None, wifi_dut=None, wifi_access_point=None, dut_mac_address=None, \
+                 ap_bssid=None, conn_status=True, eap_type="TLS", test_case_no=None, sniffer_filter=None):
+
+        self.wifi_sniffer = wifi_sniffer
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.dut_mac_address = dut_mac_address
+        self.ap_bssid = ap_bssid
+        self.conn_status = conn_status
+        self.eap_type = eap_type
+        self.test_case_no = test_case_no
+        self.sniffer_filter = sniffer_filter
+
+    def verify_sniffer_validation(self):
+
+        validation = True
+        if self.wifi_access_point.interfaces.wifi.security == SecurityMode.WPAEnterprise:
+            beacon_filter = f"(wlan.fc.type_subtype == 0x0008) and wlan.wfa.ie.wpa.type == 1 and (wlan.sa == {self.ap_bssid} && wlan.da == ff:ff:ff:ff:ff:ff)"
+        else:
+            beacon_filter = f"(wlan.fc.type_subtype == 0x0008) and wlan.rsn.akms.type == 1 and (wlan.sa == {self.ap_bssid} && wlan.da == ff:ff:ff:ff:ff:ff)"
+
+        logger().info(
+            f"Validating beacons"
+        )
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, beacon_filter)[
+            'packet_count'], 'Unable to find beacons in sniffer'
+
+        packet_filter2 = f"wlan.addr=={self.dut_mac_address} && wlan.fc.type_subtype == 0 ||eapol"
+        packet_filter3 = f"wlan.addr=={self.ap_bssid} && wlan.fc.type_subtype == 1 ||eapol"
+        # packet_filter4 = f" (dhcp) && (wlan.addr == {self.ap_bssid}) && (wlan.addr == {self.dut_mac_address})"
+        packet_filter5 = f'wlan.sa == {self.dut_mac_address} and ' \
+                         f'wlan.fc.pwrmgt == 1 and wlan.fc.type_subtype == 0x0024'
+        # Validating the ps poll frames
+        packet_filter6 = f'wlan.addr == {self.dut_mac_address} and wlan.fc.type_subtype == 0x001a and wlan.fc.pwrmgt == 1'
+        # Validating the de auth frames
+        packet_filter7 = f'wlan.addr == {self.dut_mac_address} and wlan.fc.type_subtype == 0x000c'
+        logger().info(
+            f"Validating association, eapol from DUT"
+        )
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
+            'packet_count'], 'Unable to find association, eapol sent from DUT in sniffer '
+        logger().info(
+            f"Validating association, eapol from AP"
+        )
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3)[
+            'packet_count'], 'Unable to find association, eapol sent from AP in sniffer '
+
+        if self.test_case_no == "679993" or self.test_case_no == "679994" \
+                or self.test_case_no == "679992" or self.test_case_no == "679991":
+            logger().info(f"validating in assoc req for pmf required")
+            packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=self.dut_mac_address, ta_addr=self.dut_mac_address,
+                filter_name='assoc_req_wpa2_eap_with_pmf_req')
+
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+                'packet_count'], \
+                'Unable to validate pmf frames in sniffer'
+
+        if self.test_case_no == "679986" or self.test_case_no == "679988" \
+                or self.test_case_no == "679989" or self.test_case_no == "679987":
+            logger().info(f"validating in assoc req for pmf capable")
+            packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=self.dut_mac_address, ta_addr=self.dut_mac_address,
+                filter_name='assoc_req_wpa2_eap_with_pmf_cap')
+
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+                'packet_count'], \
+                'Unable to validate pmf frames in sniffer'
+
+        if not self.conn_status:
+            # Validating the EAP failure frames
+            packet_filter9 = f'wlan.sa == {self.ap_bssid} and wlan.da == {self.dut_mac_address} and eap.code == 4'
+
+            logger().info(
+                f"Validating EAP failure frame in sniffer"
+            )
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter9)[
+                'packet_count'], 'Unable to find EAP failure frames sent from AP in sniffer '
+
+        if self.conn_status:
+            packet_filter8 = None
+
+            if self.eap_type == "TLS":
+                # Validating the EAP failure frames
+                packet_filter8 = f'wlan.addr == {self.ap_bssid} and wlan.addr == {self.dut_mac_address} and eap.type == 13'
+
+            if self.eap_type == "TTLS":
+                # Validating the EAP failure frames
+                packet_filter8 = f'wlan.addr == {self.ap_bssid} and wlan.addr == {self.dut_mac_address} and eap.type == 21'
+
+            if self.eap_type == "PEAP":
+                # Validating the EAP failure frames
+                packet_filter8 = f'wlan.addr == {self.ap_bssid} and wlan.addr == {self.dut_mac_address} and eap.type == 25'
+
+            if packet_filter8:
+                logger().info(
+                    f"Validating EAP frames for the method EAP {self.eap_type} in sniffer"
+                )
+                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter8)[
+                    'packet_count'], 'Unable to find EAP frames sent from AP in sniffer '
+
+            logger().info(f"Validating QOS  NULL data frames with power management bit")
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter5)[
+                'packet_count'], 'Unable to find power management bit in QOS null frames in sniffer capture'
+
+            logger().info(f"Validating PS Poll frames are sent from the device with power management bit")
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter6)[
+                'packet_count'], 'Unable to find ps polls in sniffer capture'
+
+            # logger().info(f"Validating deauth frames are sent from the device")
+            # assert self.wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter7)[
+            #     'packet_count'], 'Unable to find de-auths in sniffer capture'
+            logger().info("Successfully validated sniffer packets")
+
+
+
 class Eap_SnifferValidationProcess:
 
     def __init__(self, wifi_sniffer=None, wifi_access_point=None, dut_mac_address=None,
@@ -202,7 +320,8 @@ class WPA2Enterprise(ThreadBase):
             if self.eap_type == "tls" or self.eap_type == "ttls" or self.eap_type == "peap":
                 if self.test_case_no == "679987" or self.test_case_no == "679986" or self.test_case_no == "679988" or self.test_case_no == "679989":
                     self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-                        join_feature_bitmap=IEEE802_11W.Protection_capable)
+                        join_feature_bitmap=IEEE802_11W.Protection_capable |
+                                           Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
                     self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
                                                                             wifi_access_point=self.wifi_access_point,
                                                                             eap_type=self.eap_type,
@@ -213,8 +332,8 @@ class WPA2Enterprise(ThreadBase):
                     logger().info("DUT successfully connected with AP")
                     time.sleep(2)
                 elif self.test_case_no == "679992" or self.test_case_no == "679991" or self.test_case_no == "679993" or self.test_case_no == "679994":
-                    self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-                        join_feature_bitmap=IEEE802_11W.Protection_Required)
+                    self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=IEEE802_11W.Protection_Required |
+                                                                        Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
                     self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
                                                                             wifi_access_point=self.wifi_access_point,
                                                                             eap_type=self.eap_type,
@@ -2306,7 +2425,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_ttls_tcp_rx_11w_c679988(wifi_dut, wifi_acc
                                                        radius_server, sl_collections, request, utf_constants,
                                                        net_perf_client, wifi_client, protocol):
     """ Verify whether DUT is able to scan and connect to AP with EAP TTLS when AP enabled WPA2 Enterprise
-    with 11w capable and run TCP RX tarffic """
+    with 11w capable and run TCP RX traffic """
     try:
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -2330,10 +2449,10 @@ def test_wifi_sdk_wpa2_enterprise_eap_ttls_tcp_rx_11w_c679988(wifi_dut, wifi_acc
         wifi_sniffer.interfaces.capture.stop_capture()
 
         wifi_dut.interfaces.wifi.leave()
-        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
-                                                        wifi_access_point=wifi_access_point,
-                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
-                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification = SnifferValidationProcess_pmf_validate(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                                     wifi_access_point=wifi_access_point,
+                                                                     dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                                     ap_bssid=ap_mac_address, test_case_no="679988")
         sniffer_verification.verify_sniffer_validation()
         packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             da_addr=ap_mac_address,
@@ -2412,10 +2531,10 @@ def test_wifi_sdk_wpa2_enterprise_eap_ttls_udp_rx_11w_c679993(wifi_dut, wifi_acc
         wifi_sniffer.interfaces.capture.stop_capture()
 
         wifi_dut.interfaces.wifi.leave()
-        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
-                                                        wifi_access_point=wifi_access_point,
-                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
-                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification = SnifferValidationProcess_pmf_validate(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                                     wifi_access_point=wifi_access_point,
+                                                                     dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                                     ap_bssid=ap_mac_address, test_case_no="679993")
         sniffer_verification.verify_sniffer_validation()
         packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             da_addr=ap_mac_address,
@@ -2488,10 +2607,10 @@ def test_wifi_sdk_wpa2_enterprise_eap_peap_multicast_tx_11w_c679994(multicast_cl
         wifi_sniffer.interfaces.capture.stop_capture()
 
         wifi_dut.interfaces.wifi.leave()
-        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
-                                                        wifi_access_point=wifi_access_point,
-                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
-                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification = SnifferValidationProcess_pmf_validate(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                                     wifi_access_point=wifi_access_point,
+                                                                     dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                                     ap_bssid=ap_mac_address, test_case_no="679994")
         sniffer_verification.verify_sniffer_validation()
         packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             da_addr=ap_mac_address,
@@ -2577,10 +2696,10 @@ def test_wifi_sdk_wpa2_enterprise_eap_peap_tcp_rx_11w_c679989(wifi_dut, wifi_acc
         wifi_sniffer.interfaces.capture.stop_capture()
 
         wifi_dut.interfaces.wifi.leave()
-        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
-                                                        wifi_access_point=wifi_access_point,
-                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
-                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification = SnifferValidationProcess_pmf_validate(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                                     wifi_access_point=wifi_access_point,
+                                                                     dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                                     ap_bssid=ap_mac_address, test_case_no="679989")
         sniffer_verification.verify_sniffer_validation()
         packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             da_addr=ap_mac_address,
@@ -2652,10 +2771,10 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_1_0_tcp_tx_11w_c679986(wifi_dut, wifi_
         wifi_sniffer.interfaces.capture.stop_capture()
 
         wifi_dut.interfaces.wifi.leave()
-        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
-                                                        wifi_access_point=wifi_access_point,
-                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
-                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification = SnifferValidationProcess_pmf_validate(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                                     wifi_access_point=wifi_access_point,
+                                                                     dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                                     ap_bssid=ap_mac_address, test_case_no="679986")
         sniffer_verification.verify_sniffer_validation()
         packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             da_addr=ap_mac_address,
@@ -2734,10 +2853,10 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_1_2_tcp_tx_11w_c679987(wifi_dut, wifi_
         wifi_sniffer.interfaces.capture.stop_capture()
 
         wifi_dut.interfaces.wifi.leave()
-        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
-                                                        wifi_access_point=wifi_access_point,
-                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
-                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification = SnifferValidationProcess_pmf_validate(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                                     wifi_access_point=wifi_access_point,
+                                                                     dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                                     ap_bssid=ap_mac_address, test_case_no="679987")
         sniffer_verification.verify_sniffer_validation()
         packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             da_addr=ap_mac_address,
@@ -2794,7 +2913,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_1_2_udp_rx_11w_c679992(wifi_dut, wifi_
                                                       radius_server, sl_collections, request, utf_constants,
                                                       net_perf_client, wifi_client, protocol):
     """ Verify whether DUT is able to scan and connect to AP with EAP TLS1.2 when AP enabled WPA2 Enterprise
-    with 11w Required and run UDP RXtarffic """
+    with 11w Required and run UDP RX traffic """
     try:
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -2818,10 +2937,10 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_1_2_udp_rx_11w_c679992(wifi_dut, wifi_
         wifi_sniffer.interfaces.capture.stop_capture()
 
         wifi_dut.interfaces.wifi.leave()
-        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
-                                                        wifi_access_point=wifi_access_point,
-                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
-                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification = SnifferValidationProcess_pmf_validate(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                                     wifi_access_point=wifi_access_point,
+                                                                     dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                                     ap_bssid=ap_mac_address, test_case_no="679992")
         sniffer_verification.verify_sniffer_validation()
         packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             da_addr=ap_mac_address,
@@ -2902,10 +3021,11 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_1_0_udp_tx_11w_c679991(wifi_dut, wifi_
         wifi_sniffer.interfaces.capture.stop_capture()
 
         wifi_dut.interfaces.wifi.leave()
-        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
-                                                        wifi_access_point=wifi_access_point,
-                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
-                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification = SnifferValidationProcess_pmf_validate(wifi_sniffer=wifi_sniffer,
+                                                                     sniffer_filter=sniffer_filter,
+                                                                     wifi_access_point=wifi_access_point,
+                                                                     dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                                     ap_bssid=ap_mac_address, test_case_no="679991")
         sniffer_verification.verify_sniffer_validation()
         packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             da_addr=ap_mac_address,
