@@ -1726,42 +1726,44 @@ def test_wifi_sdk_scan_with_high_beacon_length_c538006(wifi_access_point, wifi_d
     """Verify WLAN scan with a third-party AP configured with a high beacon length (max 512 bytes)."""
     try:
         test_name = request.node.name
-        channels_list_2g = [11]
         packet_filter2 = '    Frame Length:'
 
-        for channel in channels_list_2g:
-            logger().info(f"Configuring the sniffer with the channel: {channel}")
-            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{channel}")
-            time.sleep(2)
+        logger().info("Configuring the Sniffer with access point channel.")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("Starting capture with Sniffer, using test case name as filename.")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        time.sleep(2)
 
-            ap_bssid = wifi_access_point.interfaces.wifi.bssid
-            logger().info(f"AP MAC: {ap_bssid}")
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {ap_bssid}")
 
-            logger().info("Initiating m4 ta secure_handshake...")
-            wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
+        logger().info("Initiating m4 ta secure_handshake...")
+        wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
 
-            logger().info("Initiating scan from DUT...")
-            scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=0, scan_type=0,
-                                                         bg_scan_periodicity=10)
-            time.sleep(20)
-            assert len(scan_results) >= 1, "Scan failed"
-            logger().info(scan_results)
+        logger().info("Initiating scan from DUT...")
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=0, scan_type=0,
+                                                     bg_scan_periodicity=10)
+        time.sleep(20)  # Wait for scan to complete
+        assert len(scan_results) >= 1, "Scan failed"
+        logger().info(scan_results)
 
-            logger().info("Stopping sniffer")
-            wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stopping sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
-            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_bssid,
-                                                                                            filter_name="beacon")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_bssid,
+                                                                                        filter_name="beacon")
+        logger().info("Validating Probe req(Broadcast)")
+        sniffer_validation_result = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
+                                                                                       packet_filter2=packet_filter2)
+        assert sniffer_validation_result['packet_count'], \
+            f'Unable to find beacon packet in channel: {wifi_access_point.interfaces.wifi.channel}'
 
-            logger().info("Validating Probe req(Broadcast)")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
-                                                                      packet_filter2=packet_filter2)['packet_count'], \
-                f'Unable to find beacon packet in channel: {channel}'
+        pattern = r"Frame Length:\s+(\d+)\s+bytes"
+        # Open the file and search for the pattern
+        capture_file_path = './reports/filter2_file.txt'
 
-            pattern = r"Frame Length:\s+(\d+)\s+bytes"
-            # Open the file and search for the pattern
-            with open(f'./reports/filter2_file.txt', 'r') as file:
+        try:
+            with open(capture_file_path, 'r') as file:
                 for line in file.readlines():
                     match = re.search(pattern, line)
                     if match:
@@ -1769,11 +1771,15 @@ def test_wifi_sdk_scan_with_high_beacon_length_c538006(wifi_access_point, wifi_d
                         frame_length = int(match.group(1))
                         if frame_length < 512:
                             return "Fail: Frame Length is less than 512 bytes"
-                logger().info(frame_length)
+                        logger().info(f"Frame Length: {frame_length} bytes")
+        except FileNotFoundError:
+            logger().error(f"Capture file not found: {capture_file_path}")
+            raise
 
     except Exception as e:
         logger().error(f"Exception occurred: {e}")  # Log the exception
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+        raise  # Re-raise the exception after handling to ensure test failure is reported
 
 
 # Need two evk harness
