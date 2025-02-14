@@ -36,6 +36,7 @@ from utf.utils.iperf.iperf_utils import ping
 def logger():
     return get_logger(__name__)
 
+ble_obj = None
 
 """
     setup requirement:
@@ -69,7 +70,8 @@ class BleDualRoleThreadFunctionality(ThreadBase):
         gatt=True,
         ble_pairing=0,
         max_conn_interval=160,
-        min_conn_interval=160
+        min_conn_interval=160,
+        bond_info=0
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -82,12 +84,13 @@ class BleDualRoleThreadFunctionality(ThreadBase):
         self.ble_pairing = ble_pairing
         self.max_conn_interval = max_conn_interval
         self.min_conn_interval = min_conn_interval
+        self.bond_info = bond_info
 
         if self.gatt:
             # Set up DUT for BLE advertising
             logger().info("start ble GATT service in DUT")
             self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(
-                set_smp=self.ble_pairing)
+                set_smp=self.ble_pairing, bond_info=self.bond_info)
         else:
             # Set up DUT for BLE advertising
             logger().info("Initialising BLE")
@@ -115,6 +118,8 @@ class BleDualRoleThreadFunctionality(ThreadBase):
                 ble_remote_dev_address=self.ble_clients_address[i]
             )
             self.ble_clients[i].interfaces.bluetooth.close()
+            time.sleep(5)
+
 
     def run(self):
         self.ble_clients_address = []
@@ -207,7 +212,6 @@ class BleDualRoleThreadFunctionality(ThreadBase):
                 )
 
 
-
 pytestmark = [
     pytest.mark.config(
         "wifi_dut",
@@ -290,6 +294,12 @@ def test_Coex_sdk_ble_adv_scan_wlan_conn_C133444(
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="advertise",
+        )
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -302,12 +312,6 @@ def test_Coex_sdk_ble_adv_scan_wlan_conn_C133444(
             test_type=test_type,
         )
         wifi_obj.join_to_ap(skip_power_save=True)
-        ble_obj = BleThreadFunctionality(
-            wifi_dut=wifi_dut,
-            ble_client=ble_client,
-            sl_collections=sl_collections,
-            ble_test_type="advertise",
-        )
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_client.interfaces.bluetooth.stop_scanning()
@@ -392,6 +396,12 @@ def test_Coex_sdk_ble_scan_adv_wlan_conn_C133569(
         )
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="advertise",
+        )
 
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
@@ -405,12 +415,7 @@ def test_Coex_sdk_ble_scan_adv_wlan_conn_C133569(
             test_type=test_type,
         )
         wifi_obj.join_to_ap(skip_power_save=True)
-        ble_obj = BleThreadFunctionality(
-            wifi_dut=wifi_dut,
-            ble_client=ble_client,
-            sl_collections=sl_collections,
-            ble_test_type="advertise",
-        )
+
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_client.interfaces.bluetooth.stop_scanning()
@@ -495,6 +500,14 @@ def test_Coex_sdk_fun_ble_master_slave_wlan_ping_C133507(
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="master_and_slave",
+            testcase=test_name,
+        )
+
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -508,13 +521,6 @@ def test_Coex_sdk_fun_ble_master_slave_wlan_ping_C133507(
         )
         wifi_obj.join_to_ap(skip_power_save=True)
 
-        ble_obj = BleDualRoleThreadFunctionality(
-            wifi_dut=wifi_dut,
-            ble_clients=ble_clients,
-            sl_collections=sl_collections,
-            ble_test_type="master_and_slave",
-            testcase=test_name,
-        )
         ble_obj.start()
         ble_obj.wait_for_exit()
         wifi_obj.set_power_save()
@@ -587,9 +593,14 @@ def test_Coex_sdk_fun_ble_slave_master_wlan_ping_C133508(
         logger().info(
             "start capturing with Sniffer by giving the test case name as filename"
         )
-
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="slave_and_master",
+            testcase=test_name,
+        )
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -602,14 +613,6 @@ def test_Coex_sdk_fun_ble_slave_master_wlan_ping_C133508(
             test_type=test_type,
         )
         wifi_obj.join_to_ap(skip_power_save=True)
-
-        ble_obj = BleDualRoleThreadFunctionality(
-            wifi_dut=wifi_dut,
-            ble_clients=ble_clients,
-            sl_collections=sl_collections,
-            ble_test_type="slave_and_master",
-            testcase=test_name,
-        )
         ble_obj.start()
         ble_obj.wait_for_exit()
         wifi_obj.set_power_save()
@@ -630,10 +633,8 @@ def test_Coex_sdk_fun_ble_slave_master_wlan_ping_C133508(
             ble_client.interfaces.bluetooth.close()
         if ble_obj:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
-                                   ble_client_address=ble_obj.ble_clients_address[0],
-                                   ble_dut_address=ble_obj.ble_dut_address)
-
-
+                                       ble_client_address=ble_obj.ble_clients_address[0],
+                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 @pytest.mark.config(
@@ -685,6 +686,14 @@ def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133519(
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="slave_and_master",
+            testcase=test_name,
+        )
+
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -697,14 +706,6 @@ def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133519(
             test_type=test_type,
         )
         wifi_obj.join_to_ap(skip_power_save=True)
-
-        ble_obj = BleDualRoleThreadFunctionality(
-            wifi_dut=wifi_dut,
-            ble_clients=ble_clients,
-            sl_collections=sl_collections,
-            ble_test_type="slave_and_master",
-            testcase=test_name,
-        )
         ble_obj.start()
         ble_obj.wait_for_exit()
         wifi_obj.set_power_save()
@@ -781,6 +782,15 @@ def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133550(
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="slave_and_master",
+            testcase=test_name,
+            bond_info=1
+        )
+
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -793,14 +803,6 @@ def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133550(
             test_type=test_type,
         )
         wifi_obj.join_to_ap(skip_power_save=True)
-
-        ble_obj = BleDualRoleThreadFunctionality(
-            wifi_dut=wifi_dut,
-            ble_clients=ble_clients,
-            sl_collections=sl_collections,
-            ble_test_type="slave_and_master",
-            testcase=test_name,
-        )
 
         for count in range(1, iter_count + 1):
 
@@ -878,6 +880,16 @@ def test_Coex_sdk_fun_ble_master_slave_20ms_wlan_ping_C133572(
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="master_and_slave",
+            testcase=test_name,
+            max_conn_interval=20,
+            min_conn_interval=20
+        )
+
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -890,15 +902,7 @@ def test_Coex_sdk_fun_ble_master_slave_20ms_wlan_ping_C133572(
             test_type=test_type,
         )
         wifi_obj.join_to_ap(skip_power_save=True)
-        ble_obj = BleDualRoleThreadFunctionality(
-            wifi_dut=wifi_dut,
-            ble_clients=ble_clients,
-            sl_collections=sl_collections,
-            ble_test_type="master_and_slave",
-            testcase=test_name,
-            max_conn_interval=20,
-            min_conn_interval=20
-        )
+
         ble_obj.start()
         ble_obj.wait_for_exit()
         wifi_obj.set_power_save()
@@ -1140,7 +1144,7 @@ def test_Coex_sdk_fun_ble_master_adv_wlan_UDP_C133447(
             ble_client.interfaces.bluetooth.close()
         if ble_obj:
                 sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
-                               ble_client_address=ble_obj.ble_clients_address[0],
+                               ble_client_address=ble_obj.ble_client_address,
                                ble_dut_address=ble_obj.ble_dut_address)
 
 
@@ -1205,6 +1209,14 @@ def test_Coex_sdk_ble_dual_role_wlan_UDP_RX_C133511(
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="slave_and_master",
+            testcase=test_name,
+        )
+
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1220,13 +1232,7 @@ def test_Coex_sdk_ble_dual_role_wlan_UDP_RX_C133511(
             traffic_type="RX",
         )
         wifi_obj.join_to_ap(skip_power_save=True)
-        ble_obj = BleDualRoleThreadFunctionality(
-            wifi_dut=wifi_dut,
-            ble_clients=ble_clients,
-            sl_collections=sl_collections,
-            ble_test_type="slave_and_master",
-            testcase=test_name,
-        )
+
         ble_obj.start()
         ble_obj.wait_for_exit()
         wifi_obj.set_power_save()
@@ -1302,6 +1308,14 @@ def test_Coex_sdk_profiles_ble_master_slave_wlan_connected_C133509(
         )
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="master_and_slave",
+            testcase=test_name,
+            gatt=True
+        )
 
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
@@ -1315,15 +1329,6 @@ def test_Coex_sdk_profiles_ble_master_slave_wlan_connected_C133509(
             test_type=test_type,
         )
         wifi_obj.join_to_ap(skip_power_save=True)
-
-        ble_obj = BleDualRoleThreadFunctionality(
-            wifi_dut=wifi_dut,
-            ble_clients=ble_clients,
-            sl_collections=sl_collections,
-            ble_test_type="master_and_slave",
-            testcase=test_name,
-            gatt=True
-        )
         ble_obj.start()
         ble_obj.wait_for_exit()
         logger().info("Fetching HeartRateService profile from RD")
@@ -1403,6 +1408,14 @@ def test_Coex_sdk_ble_multi_slave_wlan_connected_C133518(
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="multi_slave",
+            testcase=test_name,
+        )
+
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1415,13 +1428,6 @@ def test_Coex_sdk_ble_multi_slave_wlan_connected_C133518(
             test_type=test_type,
         )
 
-        ble_obj = BleDualRoleThreadFunctionality(
-            wifi_dut=wifi_dut,
-            ble_clients=ble_clients,
-            sl_collections=sl_collections,
-            ble_test_type="multi_slave",
-            testcase=test_name,
-        )
         ble_obj.start()
         ble_obj.wait_for_exit()
 
@@ -1503,6 +1509,15 @@ def test_Coex_sdk_ble_multi_peripheral_UDP_TX_C538058(
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="multi_slave",
+            testcase=test_name,
+            ble_pairing=1
+        )
+
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1519,14 +1534,7 @@ def test_Coex_sdk_ble_multi_peripheral_UDP_TX_C538058(
             timeout=120
         )
 
-        ble_obj = BleDualRoleThreadFunctionality(
-            wifi_dut=wifi_dut,
-            ble_clients=ble_clients,
-            sl_collections=sl_collections,
-            ble_test_type="multi_slave",
-            testcase=test_name,
-            ble_pairing=1
-        )
+
         ble_obj.start()
         ble_obj.wait_for_exit()
 
@@ -1609,6 +1617,15 @@ def test_Coex_sdk_ble_multi_central_UDP_RX_C538060(
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="multi_master",
+            testcase=test_name,
+            ble_pairing=1
+        )
+
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1623,15 +1640,6 @@ def test_Coex_sdk_ble_multi_central_UDP_RX_C538060(
             protocol=protocol,
             traffic_type="RX",
             timeout=120
-        )
-
-        ble_obj = BleDualRoleThreadFunctionality(
-            wifi_dut=wifi_dut,
-            ble_clients=ble_clients,
-            sl_collections=sl_collections,
-            ble_test_type="multi_master",
-            testcase=test_name,
-            ble_pairing=1
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -1711,6 +1719,15 @@ def test_Coex_sdk_ble_multi_central_UDP_RX_C133567(
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="multi_master",
+            testcase=test_name,
+            ble_pairing=1
+        )
+
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1723,14 +1740,7 @@ def test_Coex_sdk_ble_multi_central_UDP_RX_C133567(
             test_type=test_type,
         )
 
-        ble_obj = BleDualRoleThreadFunctionality(
-            wifi_dut=wifi_dut,
-            ble_clients=ble_clients,
-            sl_collections=sl_collections,
-            ble_test_type="multi_master",
-            testcase=test_name,
-            ble_pairing=1
-        )
+
         ble_obj.start()
         ble_obj.wait_for_exit()
         wifi_obj.join_to_ap()
@@ -1810,6 +1820,14 @@ def test_Coex_sdk_gatt_rw_wr_dual_role_ssl_tx_C133510(
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="master_and_slave",
+            testcase=test_name,
+        )
+
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1823,13 +1841,7 @@ def test_Coex_sdk_gatt_rw_wr_dual_role_ssl_tx_C133510(
         )
         wifi_obj.join_to_ap(skip_power_save=True)
 
-        ble_obj = BleDualRoleThreadFunctionality(
-            wifi_dut=wifi_dut,
-            ble_clients=ble_clients,
-            sl_collections=sl_collections,
-            ble_test_type="master_and_slave",
-            testcase=test_name,
-        )
+
         ble_obj.start()
         ble_obj.wait_for_exit()
         wifi_obj.set_power_save()
@@ -1917,7 +1929,7 @@ def test_Coex_sdk_2_TCP_RX_ble_dual_role_C622328(
         4. Run TCP RX by opening 2 sockets
         6. Scan from remote BLE device
     """
-    ble_obj = None
+
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -2000,6 +2012,7 @@ def test_Coex_sdk_2_TCP_RX_ble_dual_role_C622328(
             wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
 
         ble_obj.dual_role_disconnect()
+        time.sleep(5)
 
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -2017,8 +2030,5 @@ def test_Coex_sdk_2_TCP_RX_ble_dual_role_C622328(
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
                                        ble_client_address=ble_obj.ble_clients_address[0],
                                        ble_dut_address=ble_obj.ble_dut_address)
-
-
-
 
 

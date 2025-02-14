@@ -394,7 +394,7 @@ class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, sl_collections=None, test_name=None,
                  wifi_client=None, test_id=None, test_type=None, ping_from="remote", ping_count=10, addr_type="global",
                  traffic_type=None, protocol=None, net_perf_client=None, timeout=60, http_server=None, index_path=None,
-                 http_client=None, https=False):
+                 http_client=None, https=False, address=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -415,6 +415,8 @@ class WLanThread(ThreadBase):
         self.http_server = http_server
         self.https = https
         self.index_path = index_path
+        self.remote_ipv6 = None
+        self.address = address
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
         self.remote_ip = None
@@ -439,13 +441,17 @@ class WLanThread(ThreadBase):
 
     def http_get(self):
         mode = True if self.https else False
+        self.remote_ipv6 = self.wifi_client.interfaces.wifi.get_ip_address(version=6,
+                                                                           addr_type=self.addr_type)
         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=mode)
+        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=mode, ip_version='ipv6')
 
         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
             self.http_server.interfaces.http,
             self.index_path,
             server_port=self.http_server.interfaces.http.port,
+            url_address=self.address,
+            server_ip=f'"{self.remote_ipv6}"',
             timeout=100)
         status_client, content_client = self.http_client.interfaces.http.http_get(
             self.http_server.interfaces.http, self.index_path)
@@ -2319,7 +2325,8 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_C538027(
                           | Si91xTCPIPFeatureBitMap.DHCPv6Server | Si91xTCPIPFeatureBitMap.HTTPClient,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
-                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.IEEE802_11W,
         "ble_features": Si91xBLEFeatureBitMap.Default
                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
@@ -2348,9 +2355,8 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_C538027(
         "disassociated",
     ],
 )
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4431")
 @pytest.mark.http_server("raspi_lighttpd")
-def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_scan_C156989(
+def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_scan_C476962(
     wifi_sniffer,
     wifi_access_point,
     wifi_dut,
@@ -2360,7 +2366,6 @@ def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_scan_C156989(
     sl_collections,
     wifi_client,
     sniffer_filter,
-    index_path,
     http_server,
     http_client
 ):
@@ -2389,12 +2394,16 @@ def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_scan_C156989(
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
+        address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(index_path) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(index_path), write_content=index_path)
+
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                              test_name=test_name, sl_collections=sl_collections, test_type="ping",
-                              ping_count=ping_count, wifi_client=wifi_client, addr_type="link",
+                              test_name=test_name, sl_collections=sl_collections, test_type="http_get",
+                              ping_count=ping_count, wifi_client=wifi_client,
                               http_server=http_server,
                               index_path=index_path,
-                              http_client=http_client
+                              http_client=http_client,
+                              address=address1,
                               )
         ble_obj = BleThreadFunctionality(
             wifi_dut=wifi_dut,
@@ -2421,15 +2430,16 @@ def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_scan_C156989(
             ble_client=ble_client,
             ble_dut_address=ble_obj.ble_dut_address,
         )
+
         wifi_dut.interfaces.wifi.ble_stop_scanning()
         wifi_dut.interfaces.wifi.ble_stop_advertising()
         ble_client.interfaces.bluetooth.stop_advertising()
+        wifi_dut.interfaces.wifi.memory_free(address1)
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("sniffer validation is successful")
         wifi_dut.interfaces.wifi.leave()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
     finally:
         ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:

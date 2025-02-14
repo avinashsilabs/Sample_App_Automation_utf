@@ -167,7 +167,7 @@ class WifiJoinThread(ThreadBase):
             scan_count=5,
             mac=None,
             async_socket=0,
-            address = None,
+            address=None,
     ):
 
         super().__init__()
@@ -730,6 +730,7 @@ class BleThreadFunctionality(ThreadBase):
             dev_state=8,
             conn_int=160,
             gatt=True,
+            bond_info=0
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -743,13 +744,14 @@ class BleThreadFunctionality(ThreadBase):
         self.dev_state = dev_state
         self.conn_int = conn_int
         self.gatt = gatt
+        self.bond_info = bond_info
 
         # Set up DUT for BLE advertising
         if self.gatt:
             # Set up DUT for BLE advertising
             logger().info("start ble GATT service in DUT")
             self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(
-                set_smp=self.ble_pairing)
+                set_smp=self.ble_pairing, bond_info=self.bond_info)
         else:
             # Set up DUT for BLE advertising
             logger().info("Initialising BLE")
@@ -903,7 +905,6 @@ pytestmark = [
     )
 ]
 
-
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -955,6 +956,7 @@ def test_Coex_sdk_fun_ble_slave_wlan_conn_C133428(
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="slave",
+            bond_info=1
         )
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
@@ -1814,6 +1816,7 @@ def test_Coex_sdk_WLAN_disconnect_BLE_peripheral_C133466(
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
+
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -1877,6 +1880,7 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133503(
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="slave",
+            bond_info=1
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -1917,6 +1921,8 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133503(
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
+
+
 
 
 @pytest.mark.config(
@@ -1982,6 +1988,7 @@ def test_Coex_sdk_BLE_conn_disconn_master_WLAN_conn_C133520(
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="master",
+            bond_info=1
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -2022,6 +2029,7 @@ def test_Coex_sdk_BLE_conn_disconn_master_WLAN_conn_C133520(
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
+
 
 
 @pytest.mark.config(
@@ -2087,6 +2095,7 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133487(
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="slave",
+            bond_info=1
         )
         ble_obj.advertise_dut()
 
@@ -2977,6 +2986,7 @@ def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_C133460(
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="scan_from_remote_device",
+            bond_info=1
         )
         ble_obj.advertise_dut()
         ble_dut_addr=ble_obj.ble_dut_address
@@ -3077,6 +3087,7 @@ def test_Coex_sdk_BLE_master_WLAN_conn_disconn_C133556(
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="master",
+            bond_info=1
         )
 
         wifi_obj = WifiJoinThread(

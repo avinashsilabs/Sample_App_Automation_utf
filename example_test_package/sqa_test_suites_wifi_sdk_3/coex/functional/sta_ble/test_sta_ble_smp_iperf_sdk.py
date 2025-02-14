@@ -56,6 +56,7 @@ def num_sort(input_string: str):
     Author: Swathi.Chinthala
 
 """
+ble_obj = None
 
 pytestmark = [
     pytest.mark.config(
@@ -957,7 +958,6 @@ def test_Coex_sdk_SMP_slave_io_display_TCP_TX_C535082(
         6. Advertise BLE DUT
         7. Scan from remote BLE device and connect to DUT through smp pairing through IO display capability
     """
-    ble_obj = None
 
     try:
         test_name = request.node.name
@@ -980,7 +980,8 @@ def test_Coex_sdk_SMP_slave_io_display_TCP_TX_C535082(
             ble_test_type="scan_and_connect_from_remote",
             ble_pairing=1,
             capability=1,
-            dev_state=10
+            dev_state=10,
+            gatt=False
         )
 
         wifi_obj = WifiJoinThread(
@@ -1086,7 +1087,8 @@ def test_Coex_sdk_SMP_slave_io_no_input_no_output_UDP_RX_C535083(
             ble_test_type="scan_and_connect_from_remote",
             ble_pairing=1,
             capability=3,
-            dev_state=10
+            dev_state=10,
+            gatt=False
         )
 
         wifi_obj = WifiJoinThread(

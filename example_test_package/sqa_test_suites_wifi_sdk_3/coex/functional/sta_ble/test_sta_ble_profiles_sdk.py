@@ -18,7 +18,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xPowerSaveModes,
     Si91xPowerSaveProcedureTypes,
 )
-
+from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 import re
@@ -40,6 +40,7 @@ from utf.interfaces.bluetooth.bluez.gatt_application.link_loss_service import (
 from utf.utils.thread_base import ThreadBase
 import random
 import string
+from utf.utils.stopwatch import Stopwatch
 
 
 def logger():
@@ -78,7 +79,8 @@ class BleGattThread(ThreadBase):
         sl_collections=None,
         ble_pairing=0,
         service_class=None,
-        gatt=True
+        gatt=True,
+        bond_info=1
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -90,11 +92,12 @@ class BleGattThread(ThreadBase):
         self.service_class = service_class
         self.ble_client_address = None
         self.gatt = gatt
+        self.bond_info = bond_info
         if self.gatt:
             # Set up DUT for BLE advertising
             logger().info("start ble GATT service in DUT")
             self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(
-                set_smp=self.ble_pairing)
+                set_smp=self.ble_pairing, bond_info=self.bond_info)
         else:
             self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start(
                 set_smp=self.ble_pairing
@@ -304,6 +307,7 @@ def test_Coex_sdk_read_char_uuid_wlan_conn_C133434(
             sl_collections=sl_collections,
             ble_test_type="master",
             ble_pairing=0,
+            bond_info=1,
             service_class=["HeartRateService"]
 
         )
@@ -662,6 +666,7 @@ def test_Coex_sdk_supported_particular_profile_wlan_conneced_C133558(
             sl_collections=sl_collections,
             ble_test_type="master",
             ble_pairing=0,
+            bond_info=1,
             service_class=["BatteryService", "HeartRateService", "HealthThermometerService"]
         )
 

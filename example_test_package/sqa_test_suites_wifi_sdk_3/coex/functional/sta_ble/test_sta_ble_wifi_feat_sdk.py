@@ -1795,6 +1795,7 @@ def test_Coex_sdk_Disconnect_BLE_while_WLAN_TCP_RX_C133559(
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="master",
+            bond_info=1
         )
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
@@ -2280,6 +2281,7 @@ def test_Coex_sdk_WLAN_mac_based_conn_BLE_slave_C133485(wifi_dut, wifi_access_po
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="slave",
+            bond_info=1
         )
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
@@ -2506,9 +2508,9 @@ def test_Coex_sdk_http_otaf_ble_scan_C551661(
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
-        "clear_certs",
         "load_default_fw",
         "disassociated",
+        "clear_certs",
     ],
 )
 def test_Coex_sdk_https_otaf_ble_slave_C551662(
