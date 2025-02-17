@@ -732,9 +732,6 @@ class WLanThread(ThreadBase):
                     security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
                         "security"
                     ].name.lower(),
-                    passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0][
-                        "passphrase"
-                    ],
                 )
 
                 self.dut_addr = self.sl_collections.join_to_wifi_network(
