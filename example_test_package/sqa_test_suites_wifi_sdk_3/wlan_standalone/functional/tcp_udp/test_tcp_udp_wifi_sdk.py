@@ -2481,8 +2481,13 @@ def test_wifi_sdk_verify_keep_alive_functionality_with_LI_500_900_1000ms_c586158
             sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, wifi_thread.dut_addr['dut_mac_address'], ap_bssid,
                                               sniffer_filter)
             logger().info(f"Starting the Keep Alive Validation with duration {keepalive_time} seconds")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(
-                packet_filter1='tcp.analysis.keep_alive'), f"Keep alive packets not found in sniffer packets"
+
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                ta_addr=wifi_thread.dut_addr['dut_mac_address'],
+                ra_addr=ap_bssid, filter_name="keep_alive")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+                'packet_count'], f"Keep alive packets not found in sniffer packets"
+
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
 
@@ -2563,8 +2568,13 @@ def test_wifi_sdk_verify_keep_alive_functionality_with_different_dtim_c586159(wi
             dtim_packet_filter = f'wlan.tim.dtim_period == {dtim_interval} && wlan.addr == {ap_bssid}'
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=dtim_packet_filter), f"Configured DTIM value: {dtim_interval} not found in sniffer packets"
             logger().info(f"Starting the Keep Alive Validation with duration {keepalive_time} seconds")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(
-                packet_filter1='tcp.analysis.keep_alive'), f"Keep alive packets not found in sniffer packets"
+
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                ta_addr=wifi_thread.dut_addr['dut_mac_address'],
+                ra_addr=ap_bssid, filter_name="keep_alive")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+                'packet_count'], f"Keep alive packets not found in sniffer packets"
+
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
 

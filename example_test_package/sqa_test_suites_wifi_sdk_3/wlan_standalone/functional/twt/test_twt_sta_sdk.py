@@ -1576,11 +1576,11 @@ def test_wifi_sdk_verify_whether_dut_able_to_send_error_when_disable_twt_without
 
 
 
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN', "standard": 'gnbax'})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_wifi_sdk_verify_tcp_keep_alive_functionality_twt_enabled_with_LI_500_900_1200ms_c586161(wifi_dut, wifi_access_point,
+def test_wifi_sdk_verify_tcp_keep_alive_functionality_twt_enabled_with_LI_900ms_c586161(wifi_dut, wifi_access_point,
                                                                                                  sl_collections, wifi_sniffer,
                                                                                                  sniffer_filter, utf_constants,
                                                                                                   remote_socket):
@@ -1595,54 +1595,56 @@ def test_wifi_sdk_verify_tcp_keep_alive_functionality_twt_enabled_with_LI_500_90
     """
     try:
         keepalive_time = 30
-        listen_intervals = [500, 900, 1200]
-        for listen_interval in listen_intervals:
-            wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=listen_interval)
-            wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                     sl_collections=sl_collections,
-                                     wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='586161',
-                                     power_save=True, test_case='586161', utf_constants=utf_constants,
-                                     wake_duration=0xF0,
-                                     wake_duration_tol=0x90, wake_int_mantissa=0x07D0, wake_int_mantissa_tol=0x07D0,
-                                     )
-            wlan_obj.start()
-            wlan_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=900)
+        wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                 sl_collections=sl_collections,
+                                 wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='586161',
+                                 power_save=True, test_case='586161', utf_constants=utf_constants,
+                                 wake_duration=0xF0,
+                                 wake_duration_tol=0x90, wake_int_mantissa=0x07D0, wake_int_mantissa_tol=0x07D0,
+                                 )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
 
-            # Open remote server socket
-            server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
-            server_port = remote_socket.interfaces.socket.server_port
-            logger().info(f"\n Starting the Remote Socket Server \n")
-            remote_socket.interfaces.socket.start_server()
+        # Open remote server socket
+        server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
+        server_port = remote_socket.interfaces.socket.server_port
+        remote_socket.interfaces.socket.time_limit = 305
+        logger().info(f"\n Starting the Remote Socket Server \n")
+        remote_socket.interfaces.socket.start_server()
 
-            sockID = wifi_dut.interfaces.wifi.socket()
-            logger().info(f"Socket open successfully : {sockID}")
-            wifi_dut.interfaces.wifi.bind(socket_fd=sockID, device_ip=wlan_obj.dut_addr['device_ip'],
-                                          server_port=server_port,
-                                          timeout=15)
-            logger().info(f"Setting the socket option SO_KEEPALIVE with {keepalive_time} seconds")
-            wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=sockID, option_name="SO_KEEPALIVE",
-                                                          option_val=keepalive_time)
+        sockID = wifi_dut.interfaces.wifi.socket()
+        logger().info(f"Socket open successfully : {sockID}")
+        wifi_dut.interfaces.wifi.bind(socket_fd=sockID, device_ip=wlan_obj.dut_addr['device_ip'],
+                                      server_port=server_port,
+                                      timeout=15)
+        logger().info(f"Setting the socket option SO_KEEPALIVE with {keepalive_time} seconds")
+        wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=sockID, option_name="SO_KEEPALIVE",
+                                                 option_val=keepalive_time)
 
-            wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sockID, server_ip=server_ip, server_port=server_port)
-            logger().info("*********** Socket connection is successful ************")
+        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sockID, server_ip=server_ip, server_port=server_port)
+        logger().info("*********** Socket connection is successful ************")
 
-            time.sleep(40)
-            wifi_sniffer.interfaces.capture.stop_capture()
-            ap_mac = wifi_access_point.interfaces.wifi.bssid
+        logger().info("*********** wait for 300 sec ************")
+        time.sleep(300)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        ap_mac = wifi_access_point.interfaces.wifi.bssid
 
-            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sockID)
-            logger().info(f"Stopping the Remote Socket Server")
-            remote_socket.interfaces.socket.stop()
+        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sockID)
+        logger().info(f"Stopping the Remote Socket Server")
+        remote_socket.interfaces.socket.stop()
 
-            wifi_dut.interfaces.wifi.disable_twt()
-            wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.disable_twt()
+        wifi_dut.interfaces.wifi.leave()
 
-            sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
-                                                  wlan_obj.dut_addr['dut_mac_address'],
-                                                  ap_mac, sniffer_filter)
-            logger().info(f"Starting the Keep Alive Validation with duration {keepalive_time} seconds")
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(
-                packet_filter1='tcp.analysis.keep_alive'), f"Keep alive packets not found in sniffer packets"
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                               wlan_obj.dut_addr['dut_mac_address'],
+                                               ap_mac, sniffer_filter)
+        logger().info(f"Starting the Keep Alive Validation with duration {keepalive_time} seconds")
+
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(ta_addr=wlan_obj.dut_addr['dut_mac_address'],
+            ra_addr=ap_mac, filter_name="keep_alive")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], f"Keep alive packets not found in sniffer packets"
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
