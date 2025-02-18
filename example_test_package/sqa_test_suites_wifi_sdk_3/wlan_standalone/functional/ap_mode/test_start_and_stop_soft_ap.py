@@ -13,6 +13,7 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingM
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
 from utf.interfaces.wifi import SecurityMode
+import re
 
 
 def logger():
@@ -274,8 +275,8 @@ class ConcurrentFun(ThreadBase):
                                                                  associated=self.wifi_dut.interfaces.wifi.associated)
 
     def ap_mode_connection_data_rate(self):
-        rate_protocol = ["802.11g", "802.11n", "802.11b"]
-        data_rate = ["48Mbps", "65Mbps", "11Mbps"]
+        rate_protocol = ["802.11g", "802.11g", "802.11b"]
+        data_rate = ["24Mbps", "54Mbps", "11Mbps"]
         for i in range(len(rate_protocol)):
             self.ping_count = self.utf_constants.get("ping_count")
             self.sl_collections.configure_dut_in_static_ip(self.wifi_dut, static_ip="192.168.100.76",
@@ -2479,7 +2480,6 @@ def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C641352(
         logger().info(f"Clean up activity")
         wifi_dut.interfaces.wifi.stop_ap()
 
-@pytest.mark.skip("Need to check the steps")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -2493,14 +2493,14 @@ def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C641352(
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
-        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 8
+        "security": "OPEN", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 8
     },
 )
 @pytest.mark.config(
     "wifi_clients",
     wifi={
         0: {
-            "security": "WPA2",
+            "security": "OPEN",
             "ssid": "SILABS_AP_MODE",
             "passphrase": "Automation@123",
             "channel": 11,
@@ -2511,7 +2511,7 @@ def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C641352(
     'wifi_access_point',
     wifi={
         'ssid': 'Concurent_ap',
-        'security': 'WPA2',
+        'security': 'OPEN',
         'passphrase': 'test1234',
         'channel': 11,
     }
@@ -2523,19 +2523,54 @@ def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C585985(
     -->do ping from RASPI to APUT--> check Data rate--> AP STOP ->set APUT data rate-->AP START -->connect Raspi to APUT 
     -->ping from RASPI to APUT--> check Data rate--> AP STOP--> STAUT STOPS """
     try:
-        logger().info("********** configuring the sniffer with access point channel **********")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C585985")
-        time.sleep(3)
-        conc_obj = ConcurrentFun(wifi_dut=wifi_dut, wifi_clients=wifi_clients, wifi_sniffer=wifi_sniffer,
-                                 wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                 utf_constants=utf_constants, wifi_client=wifi_client, test_type=585985)
+        for count in range(1):
+            packet_filter2 = "802.11 radio information"
+            logger().info("********** configuring the sniffer with access point channel **********")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+            logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C585985")
+            time.sleep(3)
+            conc_obj = ConcurrentFun(wifi_dut=wifi_dut, wifi_clients=wifi_clients, wifi_sniffer=wifi_sniffer,
+                                     wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                     utf_constants=utf_constants, wifi_client=wifi_client, test_type=585985)
 
-        conc_obj.concurrent_connections()
+            conc_obj.concurrent_connections()
 
-        logger().info("Stop sniffer finally")
-        wifi_sniffer.interfaces.capture.stop_capture()
+            logger().info("Stop sniffer finally")
+            wifi_sniffer.interfaces.capture.stop_capture()
+
+            dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+            logger().info(f"*********{dut_mac_address}**********")
+
+            packet_filter1 = f'wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0020 and wlan_radio.data_rate == 24'
+
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(
+                packet_filter1=packet_filter1, packet_filter2=packet_filter2), "no data rate packet found "
+
+            filter_file = open(f'./reports/filter2_file.txt', 'r')
+            content = filter_file.read()
+            data_rate_check = re.findall(r"(Data.rate:.+)", content)
+            logger().info(f"received data rate is : {data_rate_check}")
+
+            packet_filter3 = f'wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0020 and wlan_radio.data_rate == 54'
+
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(
+                packet_filter1=packet_filter3, packet_filter2=packet_filter2), "no data rate packet found "
+
+            filter_file = open(f'./reports/filter2_file.txt', 'r')
+            content = filter_file.read()
+            data_rate_check = re.findall(r"(Data.rate:.+)", content)
+            logger().info(f"received data rate is : {data_rate_check}")
+
+            packet_filter4 = f'wlan.sa == {dut_mac_address} and wlan.fc.type_subtype == 0x0020 and wlan_radio.data_rate == 11'
+
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(
+                packet_filter1=packet_filter4, packet_filter2=packet_filter2), "no data rate packet found "
+
+            filter_file = open(f'./reports/filter2_file.txt', 'r')
+            content = filter_file.read()
+            data_rate_check = re.findall(r"(Data.rate:.+)", content)
+            logger().info(f"received data rate is : {data_rate_check}")
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
