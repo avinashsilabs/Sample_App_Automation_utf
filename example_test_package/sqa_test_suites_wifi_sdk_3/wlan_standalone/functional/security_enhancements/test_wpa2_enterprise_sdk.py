@@ -1700,8 +1700,9 @@ def test_wifi_sdk_http_otaf_wpa2_enterprise_c113803(wifi_dut, wifi_access_point,
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"server ip is {host_ip}")
         wifi_dut.interfaces.wifi.firmware_upgrade(flags=0, ip_address=host_ip, port=80, host_name=host_ip)
+        logger().info(f"*** resetting the device after successful upgradation****")
         wifi_dut.interfaces.wifi.reset()
-        time.sleep(15)
+        time.sleep(30)
         wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
         wifi_dut.interfaces.wifi.init(mode="eap", config_required=True, load_certificate=False)
         wifi_dut.interfaces.wifi.initialize_thread()
@@ -1786,8 +1787,9 @@ def test_wifi_sdk_https_otaf_wpa2_enterprise_c113804(wifi_dut, wifi_access_point
         logger().info(f"server ip is {host_ip}")
         time.sleep(5)
         wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=host_ip, port=443, host_name=host_ip)
+        logger().info(f"*** resetting the device after successful upgradation****")
         wifi_dut.interfaces.wifi.reset()
-        time.sleep(15)
+        time.sleep(30)
         wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
         wifi_dut.interfaces.wifi.init(mode="eap", config_required=True, load_certificate=False)
         wifi_dut.interfaces.wifi.initialize_thread()
