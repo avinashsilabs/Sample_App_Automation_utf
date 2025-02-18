@@ -1870,10 +1870,10 @@ def test_wifisdk_DUTAP_open_10_udp_server_sockets_rx_C19476(wifi_dut, remote_soc
                                                                   )
         dut = 6001
         udp_socks = []
-        local_port = randint(5001, 60000)
+        local_port = randint(6001, 60000)
         for sock_count in range(0, 10):
             port = local_port + sock_count
-            port_dut = 5001 + sock_count
+            port_dut = 6001 + sock_count
             sock_id = wifi_dut.interfaces.wifi.Asyncsocket(stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP")
             remote_multi_socket.interfaces.socket.start_server(port=port, socket_type=1, sock_id=sock_id)
             udp_socks.append(sock_id)
