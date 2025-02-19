@@ -136,7 +136,7 @@ devices:
                 type: 'cli.rs_sapi_commands'
                 src_dir: 'utf_wiseconnect'
 
-    rs9116_rt595_sapi:
+    rs9116_rt595_sapi: &rt595_device
 
         # The 'type' attribute is optional.  If it is present, the device will be created via a
         # create_device() function located in the corresponding python module under the 'devices'
@@ -210,6 +210,9 @@ devices:
                 port: 'auto'
                 vid: 0x1fc9
                 pid: 0x0090
+        devices:
+            rs9116:
+                <<: *rt595_device
 
     dlink810_ap:
         interfaces:

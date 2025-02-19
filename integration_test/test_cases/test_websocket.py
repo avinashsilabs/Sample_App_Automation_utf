@@ -48,6 +48,13 @@ def test_websocket_server_and_linux_client(
     http_client.interfaces.http.websocket_send("Howdy!")
     time.sleep(0.1)
     assert ws_handler.message_received == "Howdy!"
+
+    http_server.interfaces.http.send_message_to_websocket_clients("Hello!")
+    time.sleep(0.1)
+    data = http_client.interfaces.http.websocket_receive()
+    time.sleep(0.1)
+    assert data == "Hello!"
+
     http_client.interfaces.http.websocket_close()
     time.sleep(0.1)
     assert ws_handler.client_disconnected
