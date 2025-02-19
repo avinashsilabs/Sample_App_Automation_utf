@@ -1161,6 +1161,7 @@ def test_wifi_sdk_dut_apmode_11n_htcaps_support_c19446(wifi_sniffer, wifi_dut, c
 @pytest.mark.config(
     "wifi_dut",
     wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
@@ -1227,9 +1228,18 @@ def test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449(wifi_sniffer, wifi_dut, wifi_c
             'Sniffer: Unable to find data_packets in sniffer'
         logger().info("Initiating deinit")
         wifi_dut.interfaces.wifi.deinit()
-        logger().info("Initiating init to change DUT STA mode to AP Mode ")
+        time.sleep(10)
+        logger().info("Initiating init to change DUT AP mode to STA Mode ")
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
         wifi_dut.interfaces.wifi.set_wifi_config(oper_mode=6, coex_mode=13)
         wifi_dut.interfaces.wifi.init(mode="ap", config_required=False)
+        wifi_dut.interfaces.wifi.initialize_thread()
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+        time.sleep(5)
+        # logger().info("Initiating init to change DUT STA mode to AP Mode ")
+        # wifi_dut.interfaces.wifi.set_wifi_config(oper_mode=6, coex_mode=13)
+        # wifi_dut.interfaces.wifi.init(mode="ap", config_required=False)
+        # wifi_dut.interfaces.wifi.init(mode="ap", load_certificate=False)
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                              utf_constants, capture_filename="test_C19449",
                                              testcase_no=19465, sniffer_stop=True)
@@ -1249,6 +1259,7 @@ def test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449(wifi_sniffer, wifi_dut, wifi_c
 @pytest.mark.config(
     "wifi_dut",
     wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
         "oper_mode": Si91xOperatingMode.AccessPoint,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
@@ -1305,9 +1316,17 @@ def test_wifi_sdk_dut_ap_mode_soft_reset_ap_to_sta_c19450(wifi_sniffer, wifi_dut
             'Sniffer: Unable to find data_packets in sniffer'
         logger().info("Initiating de init")
         wifi_dut.interfaces.wifi.deinit()
+        time.sleep(10)
         logger().info("Initiating init to change DUT AP mode to STA Mode ")
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
         wifi_dut.interfaces.wifi.set_wifi_config(oper_mode=0, coex_mode=13)
         wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.initialize_thread()
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+        time.sleep(5)
+        # logger().info("Initiating init to change DUT AP mode to STA Mode ")
+        # wifi_dut.interfaces.wifi.set_wifi_config(oper_mode=0, coex_mode=13)
+        # wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
         logger().info("********* configuring the sniffer with access point channel *********")
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
         logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
@@ -1821,7 +1840,7 @@ def test_wifi_sdk_dutap_verify_channel_0_c37589(wifi_sniffer, wifi_dut,
         logger().info(" ********** Starting DUT as an AP ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", psk="Automation@123", channel=0,
                                           dtim_beacon_count=1,
-                                          beacon_interval=100)
+                                          beacon_interval=100, timeout=15)
         channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface='ap')
         logger().info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -2318,10 +2337,11 @@ def test_wifi_sdk_beacon_stop_functionality_c563999(wifi_sniffer, wifi_dut,
         wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=dut_mac_address,
-            filter_name='No_beacon')
+            filter_name='beacon')
         Validate_no_beacon = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count']
-        assert Validate_no_beacon == True, f"found beacon frame after stoping the beacon param"
+        logger().info(f"*** Validating beacon should not be present when beacon_stop=1 ")
+        assert Validate_no_beacon == False, f"Found beacon packets even after stopping the beacon param"
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
         logger().info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -2329,7 +2349,7 @@ def test_wifi_sdk_beacon_stop_functionality_c563999(wifi_sniffer, wifi_dut,
         logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"test_C563999_1.pcap")
         time.sleep(3)
-        logger().info(" ********** Starting DUT as an AP with beacon stop ********* ")
+        logger().info(" ********** Starting DUT as an AP with beacon stop as 0 ********* ")
         wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="WPA2", channel=11, psk="Automation@123",
                                           dtim_beacon_count=1,
                                           beacon_interval=100, beacon_stop=0)
