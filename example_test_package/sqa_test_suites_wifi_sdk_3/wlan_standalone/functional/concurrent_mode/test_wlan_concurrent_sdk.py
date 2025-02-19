@@ -258,6 +258,23 @@ class ConcurrentThread(ThreadBase):
             self.wifi_clients[i].interfaces.wifi.leave()
         self.wifi_dut.interfaces.wifi.leave()
 
+    def validate_aws_messages_from_raspi(self):
+        logger().info("\n *** Validating received AWS messages ***")
+        time.sleep(10)
+        # Retrieve received messages from AWS IoT client
+        recv_messages = self.aws_iot_client.interfaces.aws_iot.get_received_messages()
+        # Validate each received message
+        for count in range(5):
+            # Log details of the received message
+            logger().info(f"Received message {count + 1} is: '{recv_messages[count].payload.decode()}'")
+            logger().info(f"Received message {count + 1} topic is: '{recv_messages[count].topic}'")
+            logger().info(f"Received message {count + 1} qos is: '{recv_messages[count].qos}'")
+
+    def multi_client_disconnection(self):
+        for i in range(0, self.no_of_clients):
+            logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
+            self.wifi_clients[i].interfaces.wifi.leave()
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -2472,7 +2489,6 @@ def test_wifi_sdk_concurrent_mode_sta_ap_stability_check_c148587(
         wifi_dut.interfaces.wifi.stop_ap()
 
 
-@pytest.mark.skip("Test case is failing due to http put is not working")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -2517,11 +2533,10 @@ def test_wifi_sdk_concurrent_mode_sta_ap_stability_check_c148587(
     }
 )
 @pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"index.html"})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_concurrent_mode_sta_ap_http_put_c148565(
         wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, sniffer_filter, sl_collections, utf_constants, request,
-        http_server, index_path):
+        http_server):
     """ HTTP Put functionality with exact data buffer size - two clients connected to RSI_AP"""
     try:
         capture_filename = request.node.name
@@ -2536,11 +2551,14 @@ def test_wifi_sdk_concurrent_mode_sta_ap_http_put_c148565(
         wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
         wifi_dut.interfaces.wifi.http_client_init(https_enable=False)
 
-        wifi_dut.interfaces.http.http_put(http_server.interfaces.http, index_path)
+        wifi_dut.interfaces.http.http_put(http_server.interfaces.http, resource_path='cgi-bin/cgi_example.py')
         wifi_dut.interfaces.wifi.http_client_deinit()
 
+        conc_obj.multi_client_disconnection()
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
 
+    except Exception as e:
+        raise e
     finally:
-        wifi_dut.interfaces.wifi.stop_ap()
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
