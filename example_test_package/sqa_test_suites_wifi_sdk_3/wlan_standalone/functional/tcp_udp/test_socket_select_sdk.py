@@ -1222,7 +1222,7 @@ def test_wifi_sdk_sync_socket_select_with_time_interval_1_30_60_sec_c19336_case1
     finally:
         for sock_id in socks_opened:
             logger.info(f"Closing socket_id->{sock_id}")
-            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
         remote_socket_factory.interfaces.socket.close_all()
         remote_socket_factory.interfaces.socket.sockets = []
 
@@ -1311,7 +1311,7 @@ def test_wifi_sdk_sync_socket_select_with_time_interval_300_sec_c19336_case2(wif
     finally:
         for sock_id in socks_opened:
             logger.info(f"Closing socket_id->{sock_id}")
-            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
         remote_socket_factory.interfaces.socket.close_all()
         remote_socket_factory.interfaces.socket.sockets = []
 
@@ -1400,7 +1400,7 @@ def test_wifi_sdk_sync_socket_select_with_time_interval_900_sec_c19336_case3(wif
     finally:
         for sock_id in socks_opened:
             logger.info(f"Closing socket_id->{sock_id}")
-            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
         remote_socket_factory.interfaces.socket.close_all()
         remote_socket_factory.interfaces.socket.sockets = []
 
