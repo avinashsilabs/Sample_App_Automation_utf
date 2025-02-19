@@ -201,3 +201,16 @@ http_sni, (ip.src == {{ sa_addr }} and ip.dst == {{ da_addr }}), and (tls.handsh
 beacon_probe_req_count_packt,(wlan.ta == {{ sa_addr }} or  wlan.sa == {{ da_addr }} or wlan.da == ff:ff:ff:ff:ff:ff), and wlan.ssid == {{wlan_ssid}}
 ns_all_fs,(wlan.addr == {{ sa_addr }}), && icmpv6.nd.ns.target_address == ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
 keep_alive,(wlan.ta == {{ ta_addr }} and wlan.ra == {{ ra_addr }}), and (tcp.analysis.keep_alive)
+probe_res_ht_info, (wlan.sa == {{sa_addr}} and wlan.ra == {{ra_addr}}, and (wlan.fc.type_subtype == 0x0005) and (wlan.tag.number == 45))
+asso_res_ht_info, (wlan.sa == {{sa_addr}}  and wlan.ra == {{ra_addr}}, and (wlan.fc.type_subtype == 0x0001) and (wlan.tag.number == 45))
+asso_req_ht_info, (wlan.sa == {{sa_addr}}, and (wlan.fc.type_subtype == 0x0000) and (wlan.tag.number == 45))
+assoc_request_he_element, (wlan.sa == {{sa_addr}} and (wlan.fc.type_subtype == 0x0000)), and (wlan.ext_tag.number == 35)
+probe_req_he_info, (wlan.sa == {{sa_addr}}),  and (wlan.fc.type_subtype == 0x0004 && wlan.ext_tag.number == 35)
+probe_response_he_info, (wlan.sa == {{ap_mac}} && wlan.da == {{da_addr}}), and (wlan.fc.type_subtype == 0x0005 && wlan.ext_tag.number == 35)
+assoc_req_he_info, (wlan.sa == {{sa_addr}}),  and (wlan.fc.type_subtype == 0x0000 && wlan.ext_tag.number == 35)
+assoc_response_he_info, (wlan.sa == {{sa_addr}} && wlan.da == {{da_addr}}),  && (wlan.fc.type_subtype == 0x0001 && wlan.ext_tag.number == 35)
+beacon_with_he_info, (wlan.sa == {{sa_addr}}),  && (wlan.fc.type_subtype == 8 &&  wlan.ext_tag.number == 35)
+hidden_ssid_probe_res,(wlan.sa == {{ sa_addr }} and wlan.ssid == {{hidden_ssid}}), and (wlan.fc.type_subtype == 0x0005)
+hidden_ssid_probe_request_packet,(wlan.sa == {{ sa_addr }} and wlan.ssid == {{hidden_ssid}}), and (wlan.fc.type_subtype == 0x0004)
+ap_beacon_with_tkip_aes_mixed, (wlan.addr == {{ sa_addr }}), && (wlan.fc.type_subtype == 8 && (wlan.rsn.pcs.type == 4 && wlan.rsn.pcs.type == 2))
+ap_probe_response_with_tkip_aes_mixed, (wlan.addr == {{ sa_addr }}), && (wlan.fc.type_subtype == 5 && (wlan.rsn.pcs.type == 4 && wlan.rsn.pcs.type == 2))

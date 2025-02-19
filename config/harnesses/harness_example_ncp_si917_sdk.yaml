@@ -462,6 +462,7 @@ devices:
                 passphrase: 'thisisatestnetwork'
                 supports: [ 'wifi_ap', 'wifi_client' ]
                 interface: 'wlan0'
+                v6_interface: "eth1"
                 standard: 'n'
                 ip_address: '192.168.0.1'
                 region: 'Japan'
