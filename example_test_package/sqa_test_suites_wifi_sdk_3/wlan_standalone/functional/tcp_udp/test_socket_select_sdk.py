@@ -1116,7 +1116,7 @@ def test_wifi_sdk_sync_socket_select_with_timeout_null_c19335(wifi_sniffer, wifi
             count = 0
             for pkt_count in range(5):
                 tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=buffer_length))
-                logger().info(f"Sending data from remote peer, data --> {tx_buffer}")
+                logger.info(f"Sending data from remote peer, data --> {tx_buffer}")
                 sock_obj.send_data_tcp(remote_socket, tx_buffer, count)
                 buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock, timeout=120,
                                                                           async_timeout=120)

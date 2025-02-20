@@ -71,7 +71,7 @@ class ApModeClientConnections(ThreadBase):
             logger().info("******************* Scanning on AP interface after bringing up DUT as AP ***************")
             if self.testcase_no == 654498:
                 scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0,
-                                                                  ssid="self.wifi_access_point.interfaces.wifi.ssid",
+                                                                  ssid=self.wifi_access_point.interfaces.wifi.ssid,
                                                                   interface="ap")
             else:
                 scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, interface="ap")
