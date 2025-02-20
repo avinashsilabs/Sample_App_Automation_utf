@@ -1223,8 +1223,8 @@ defaults:
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
         baud: 115200
-        data_chunk_read_elapsed_time: 5
-        data_chunk_read_dealy: 0.05
+        data_chunk_read_elapsed_time: 0.9
+        data_chunk_read_dealy: 0.03
 
     ble_vulnerability_sniffer: 'ble_sweyntooth'
     bt_vulnerability_sniffer: 'bt_braktooth'
