@@ -1065,7 +1065,7 @@ def test_wifi_sdk_gtk_renewal_wpa2_eap_multicast_c70608(wifi_dut, wifi_access_po
     }
 )
 @pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPAEnterprise', "passphrase": '12345678', "gtk_int": 30})
+                    wifi={"security": 'WPAWPA2EnterpriseMixedMode', "passphrase": '12345678', "gtk_int": 30})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut",
@@ -1169,7 +1169,7 @@ def test_wifi_sdk_gtk_renewal_wpa_eap_unicast_c70607(wifi_dut, wifi_access_point
     }
 )
 @pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPAEnterprise', "passphrase": '12345678', "gtk_int": 30})
+                    wifi={"security": 'WPAWPA2EnterpriseMixedMode', "passphrase": '12345678', "gtk_int": 30})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut",
