@@ -214,3 +214,4 @@ hidden_ssid_probe_res,(wlan.sa == {{ sa_addr }} and wlan.ssid == {{hidden_ssid}}
 hidden_ssid_probe_request_packet,(wlan.sa == {{ sa_addr }} and wlan.ssid == {{hidden_ssid}}), and (wlan.fc.type_subtype == 0x0004)
 ap_beacon_with_tkip_aes_mixed, (wlan.addr == {{ sa_addr }}), && (wlan.fc.type_subtype == 8 && (wlan.rsn.pcs.type == 4 && wlan.rsn.pcs.type == 2))
 ap_probe_response_with_tkip_aes_mixed, (wlan.addr == {{ sa_addr }}), && (wlan.fc.type_subtype == 5 && (wlan.rsn.pcs.type == 4 && wlan.rsn.pcs.type == 2))
+eap_tls_alert_msg_verification_1_2,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (eap and tls.record.version == 0x0303) and (tls.record.content_type == 21) && (tls.alert_message.desc == 48)
