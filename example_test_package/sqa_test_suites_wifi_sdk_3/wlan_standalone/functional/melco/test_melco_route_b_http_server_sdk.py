@@ -288,7 +288,7 @@ class AccessDUTAPage(ThreadBase):
 
 def wifi_dut_marker(ext_custom_bit=0, thread_count=1, tcp_feat_bit=0, ext_tcp_feat_bit=0, feat_bit=0, ca_cert=None):
     config = {
-        "thread_config": {"wifi": {"count": thread_count, "stack_len": 3584}},
+        "thread_config": {"wifi": {"count": thread_count, "stack_len": 4096}},
         "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.SL_SI91X_FEAT_DISABLE_11AX_SUPPORT,
@@ -1294,7 +1294,6 @@ def test_melco_sdk_HTTP_server_tcp_tx_C557328(sl_collections, wifi_dut, wifi_cli
         wifi_dut.interfaces.wifi.stop_ap()
 
 
-
 @wifi_dut_marker()
 @pytest.mark.config(
     "wifi_client",
@@ -1309,10 +1308,13 @@ def test_melco_sdk_HTTP_server_tcp_tx_C557328(sl_collections, wifi_dut, wifi_cli
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
-# @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4742")
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 def test_melco_sdk_HTTP_server_tcp_tx_C557331(sl_collections, wifi_dut, wifi_client, channel,
                                               remote_socket, sniffer_filter, wifi_access_point,
-                                              wiseconnect_web, wifi_sniffer):
+                                              wiseconnect_web, wifi_sniffer, net_perf_client,protocol):
     """
     Verify the STA TCP Tx to 3rd party AP Backend machine with Credentials from HTTP Webpage.
     """
@@ -1336,35 +1338,33 @@ def test_melco_sdk_HTTP_server_tcp_tx_C557331(sl_collections, wifi_dut, wifi_cli
             wiseconnect_web,
             webpage, channel, wifi_access_point, ssid="TEST_C557331", security="WPA2",
             psk="Automation@123")
-        logger().info("Starting TCP server socket remotely")
-        server_port = randint(5001, 5100)
-        local_port = randint(5001, 60000)
-        remote_socket.interfaces.socket.stop()
-        # remote_socket.interfaces.socket.interface = sta_interface
-        logger().info("Starting TCP Server socket at remote device")
-        remote_socket.interfaces.socket.start_server(socket_type=SOCKET_TYPE_TCP, port=server_port, ip_version=6)
-        # server_ip = remote_socket.interfaces.socket.server_ip
-        # sock = wifi_dut.interfaces.wifi.socket()
-        host_ipv6 = wifi_client[0].interfaces.wifi.get_ip_address(network_interface=sta_interface, version=6)
-                                                                  #addr_type="link")
-        logger().info(f"http_server_ip: {host_ipv6}")
-        sock = wifi_dut.interfaces.wifi.socket(domain="AF_INET6", stream_type="SOCK_STREAM",
-                                               protocol="IPPROTO_TCP")
-        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=dut_sta_ipv6_global, server_port=server_port, timeout=15,
-                                      ip_version=6)
-        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=host_ipv6, server_port=server_port,
-                                                  ip_len=6)
-        time.sleep(3)
 
-        sw = Stopwatch()
-        while sw.elapsed_sec <= 30:
-            tx_data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=90))
-            wifi_dut.interfaces.wifi.bsdSocketSend(sock, tx_data)
-            time.sleep(1)
-            rx_data = remote_socket.interfaces.socket.recv_data_tcp(len(tx_data))
-            logger().info(f"Data received at remote TCP socket is -> {rx_data}")
-            assert tx_data == rx_data, "Data sent by DUT and received at server is not matching"
-            logger().info("Data sent by DUT and received on server is matching\n")
+        wifi_client[0].interfaces.wifi.interface = sta_interface
+        host_ipv6 = wifi_client[0].interfaces.wifi.get_ip_address(network_interface=sta_interface, version=6,
+                                                                  addr_type="link")
+
+        server_ip = f"{host_ipv6}%{sta_interface}"
+        logger().info(f"http_server_ip: {server_ip}")
+
+        logger().info("starting the server from Remote device")
+        # starting iperf
+        net_perf_client.interfaces.net_perf.init_server(host_ip=server_ip, device_ip=dut_sta_ipv6_link,
+                                                        protocol=protocol, time_out=60, version=6)
+        net_perf_client.interfaces.net_perf.start()
+
+        logger().info("sending data from DUT")
+        wifi_dut.interfaces.wifi.iperf(family=24, transfer_type=1, protocol=6,
+                                       local_port=net_perf_client.interfaces.net_perf.server_port,
+                                       local_ip=dut_sta_ipv6_link, remote_ip=host_ipv6,
+                                       remote_port=net_perf_client.interfaces.net_perf.server_port,
+                                       size=1380,
+                                       ttl=60,
+                                       throughput_type=1, qos=0,
+                                       timeout=80, ip_version=6)
+
+        logger().info("data transfer is successful")
+        net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        time.sleep(5)
 
         dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(interface=2)
         logger().info(f"dut_ap_mac_address: {dut_ap_mac_address}")

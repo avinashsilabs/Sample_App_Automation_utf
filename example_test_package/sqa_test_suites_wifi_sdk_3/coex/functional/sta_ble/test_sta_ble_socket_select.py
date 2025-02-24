@@ -174,10 +174,8 @@ def test_Coex_sdk_WLAN_TCP_socket_select_without_bit_BLE_scan_C133576(
         wifi_obj.set_power_save()
 
         wifi_dut.interfaces.wifi.set_filter_broadcast()
-
         server_port = random.randint(5001, 5020)
         local_port = random.randint(40001, 60000)
-
         remote_socket.interfaces.socket.start_server(port=server_port)
         server_ip = remote_socket.interfaces.socket.hostname_or_ip_address(ip_version=4)
 
@@ -1056,11 +1054,8 @@ def test_Coex_sdk_WLAN_TCP_sync_socket_select_threads_BLE_scann_C133581(
         "features": Si91xFeatureBitMap.Default
         | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV
                               | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1)
-                              | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE,
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(1),
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
         | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "ble_features": Si91xBLEFeatureBitMap.Default
@@ -1071,12 +1066,11 @@ def test_Coex_sdk_WLAN_TCP_sync_socket_select_threads_BLE_scann_C133581(
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
-            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "wifi": {"count": 1, "stack_len": 3584, "priority": 8},
             "ble": {"count": 1, "stack_len": 2048, "priority": 8},
         },
     },
 )
-@pytest.mark.skip(reason="not getting the remote terminate event")
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -1095,7 +1089,7 @@ def test_Coex_sdk_socket_select_remote_terminate_BLE_scan_C133582(
     sl_collections,
     wifi_client,
     sniffer_filter,
-    remote_socket_factory
+    remote_socket
 ):
     """
     Test Steps:
@@ -1150,70 +1144,67 @@ def test_Coex_sdk_socket_select_remote_terminate_BLE_scan_C133582(
         wifi_obj.set_power_save()
         port = random.randint(5001, 5020)
 
-        client_socket = remote_socket_factory.interfaces.socket.create_socket()
-        sock = wifi_dut.interfaces.wifi.socket(protocol="IPPROTO_TCP")
+        wifi_dut.interfaces.wifi.set_remote_terminate_callback()
+
+        local_port = randint(6000, 6100)
+        logger().info("Starting TCP Server socket at remote device")
+
+        sock = wifi_dut.interfaces.wifi.socket()
         assert sock == 0, f"socket id received is wrong, expected is 0"
-        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=wifi_obj.dut_addr["device_ip"], server_port=port,
-                                      timeout=30, asynch=0)
+        logger().info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=wifi_obj.dut_addr["device_ip"],
+                                      server_port=local_port, asynch=0)
         wifi_dut.interfaces.wifi.listen(socket_fd=sock, backlog=1, asynch=0)
 
-        count = 0
-        # sw = Stopwatch()
-        # while sw.elapsed_sec <= 60:
-
         tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1460))
-
-        logger().info(f"tx_buffer: {tx_buffer}")
         buffer_length = len(tx_buffer)
 
-        logger().info(f"count : {count}")
 
-        if count == 0:
-            result = ThreadBase.call_functions_simultaneously(
-                [
-                    (wifi_dut.interfaces.wifi.bsdSocketAccept, sock, 0),
-                    (
-                        client_socket.connect_client_tcp,
-                        wifi_obj.dut_addr["device_ip"],
-                        port,
-                    ),
-                ],
-                timeout=10,
-            )
-            result = ThreadBase.call_functions_simultaneously(
-                [
-                    (wifi_dut.interfaces.wifi.bsdSocketSelect, 1, 30),
-                    (
-                        client_socket.send_data_tcp,
-                        tx_buffer,
-                    ),
-                ],
-                timeout=10,
-            )
-        time.sleep(1)
-        client_socket.send_data_tcp(tx_buffer)
+        result = ThreadBase.call_functions_simultaneously(
+            [
+                (wifi_dut.interfaces.wifi.bsdSocketAccept, sock, 0),
+                (
+                    remote_socket.interfaces.socket.connect_client_tcp,
+                    wifi_obj.dut_addr["device_ip"],
+                    local_port,
+                ),
+            ],
+            timeout=10,
+        )
+        result = ThreadBase.call_functions_simultaneously(
+            [
+                (wifi_dut.interfaces.wifi.bsdSocketSelect, 1, 30),
+                (
+                    remote_socket.interfaces.socket.send_data_tcp,
+                    tx_buffer,
+                ),
+            ],
+            timeout=10,)
 
-        for retry in range(3):
-            try:
-                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceive(socket_fd=int(sock) + 1, timeout=30)
+        buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceive(socket_fd=int(sock) + 1, timeout=30)
+
+        sw = Stopwatch()
+        while sw.elapsed_sec < 10:
+            remote_socket.interfaces.socket.send_data_tcp(tx_buffer)
+            time.sleep(2)
+            buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceive(socket_fd=int(sock) + 1, timeout=30)
+            logger().info(f"###################### Buffer Data  {buffer_rx}  ######################")
+            logger().info(f"###################### Buffer Data Length  {buffer_length}  ######################")
+            assert buffer_length == len(
+                buffer_rx), f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+
+        time.sleep(2)
+        remote_socket.interfaces.socket.stop()
+        for i in range(0, 3):
+            time.sleep(5)
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            if len(events) >= 1:
                 break
-            except:
-                logger().info(f"retrying to receive data from the socket id {sock} opened in the DUT")
-                if retry == 2:
-                    raise Exception(f"failed to receive data from the socket id {sock} opened in the DUT")
+        assert len(events) >= 1, "TCP Remote terminate event not found"
 
-        assert buffer_length == len(
-            buffer_rx), f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched"
-        time.sleep(1)
-
-        wifi_dut.interfaces.wifi.set_remote_terminate_callback()
-        remote_socket_factory.interfaces.socket.close_all()
-        remote_socket_factory.interfaces.socket.sockets = []
-        time.sleep(10)
-        events = wifi_dut.interfaces.wifi.get_async_events()
         remote_terminate = ""
         for event in events:
-            if event.event_type == AsyncEventIdentifiers.REMOTE_TERMINATE:
+            if (event.event_type == AsyncEventIdentifiers.REMOTE_TERMINATE) or ("Remote Terminate" in event.event_data):
                 remote_terminate = event.event_data
         logger().info(f"*********{remote_terminate}*************")
         assert remote_terminate, f"unable to find remote terminate event"

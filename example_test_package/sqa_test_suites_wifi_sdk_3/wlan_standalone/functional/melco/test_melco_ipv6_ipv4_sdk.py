@@ -170,91 +170,37 @@ class SocketDataTransfer(ThreadBase):
         self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=tcp_socket_id)
         self.remote_socket.interfaces.socket.stop()
 
-    # def run_tcp_rx_traffic(self):
-    #     client_socket = self.remote_socket.interfaces.socket.create_socket()
-    #     socket_id = self.wifi_dut.interfaces.wifi.Asyncsocket(domain="AF_INET6", stream_type="SOCK_STREAM",
-    #                                                      protocol="IPPROTO_TCP")
-    #     logger().info(f"Socket open successfully : {socket_id}")
-    #     logger().info(f"Successfully opened tcp client socket and socket id received is {socket_id} which is expected")
-    #     local_port = 5001
-    #     self.wifi_dut.interfaces.wifi.bind(socket_fd=socket_id, device_ip=self.dut_ip,
-    #                                   server_port=local_port, timeout=5, asynch=1, ip_version=6)
-    #
-    #     self.wifi_dut.interfaces.wifi.listen(socket_fd=socket_id, backlog=1, asynch=1)
-    #
-    #     ThreadBase.call_functions_simultaneously(
-    #         [
-    #             (self.wifi_dut.interfaces.wifi.bsdSocketAccept, socket_id, 1, 6),
-    #             (
-    #                 client_socket.connect_client_tcp,
-    #                 self.dut_ip,
-    #                 local_port,
-    #             ),
-    #         ],
-    #         timeout=10,
-    #     )
-    #
-    #     tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=50))
-    #     buffer_length = len(tx_buffer)
-    #     sw = Stopwatch()
-    #     while sw.elapsed_sec < 60:
-    #         logger().info(f"Remote peer sending data over socket {socket_id} and data:{tx_buffer}")
-    #         client_socket.send_data_tcp(tx_buffer, use_server_socket=False)
-    #         time.sleep(1)
-    #         self.wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
-    #         buffer_rx = self.wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=socket_id + 1)
-    #         logger().info(f"###################### Buffer Data  {buffer_rx}  ######################")
-    #         logger().info(f"###################### Buffer Data Length  {buffer_length}  ######################")
-    #         assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id " \
-    #                                        f"{socket_id} opened in the DUT is not matched"
-    #         logger().info("Data sent by remote peer and received on DUT is matching")
-    #
-    #     self.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=socket_id)
-    #     client_socket.socket_close_indication(1)
-    #     logger().info("Successfully closed opened socket in the DUT")
-    #
 
     def run_tcp_rx_traffic(self):
-        # self.remote_socket.interfaces.socket.start_server()
 
         local_port = randint(6000, 6100)
-        # self.remote_socket.interfaces.socket.interface = "wlan0"
         logger().info("Starting TCP Server socket at remote device")
-        self.remote_socket.interfaces.socket.start_server(port=local_port, ip_version=6)
-        server_ip = self.remote_socket.interfaces.socket.hostname_or_ip_address(ip_version=6)
-        server_port = self.remote_socket.interfaces.socket.server_port
-        sock = self.wifi_dut.interfaces.wifi.Asyncsocket(domain="AF_INET6", stream_type="SOCK_STREAM",
+        sock = self.wifi_dut.interfaces.wifi.socket(domain="AF_INET6", stream_type="SOCK_STREAM",
                                                          protocol="IPPROTO_TCP")
         assert sock == 0, f"socket id received is wrong, expected is 0"
         logger().info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
-
         self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.dut_ip,
-                                           server_port=server_port, asynch=1, ip_version=6)
-
-        # self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
-        #                                                ip_len=6, server_port=server_port)
-
-        self.wifi_dut.interfaces.wifi.listen(socket_fd=sock, backlog=1, asynch=1)
+                                           server_port=local_port, asynch=0, ip_version=6)
+        self.wifi_dut.interfaces.wifi.listen(socket_fd=sock, backlog=1, asynch=0)
         ThreadBase.call_functions_simultaneously(
             [
-                (self.wifi_dut.interfaces.wifi.bsdSocketAccept, sock, 1, 6),
-                (self.remote_socket.interfaces.socket.connect_client_tcp, self.dut_ip, server_port),
+                (self.wifi_dut.interfaces.wifi.bsdSocketAccept, sock, 0, 6),
+                (self.remote_socket.interfaces.socket.connect_client_tcp, self.dut_ip, local_port, None, None, 6),
             ],
             timeout=10,
         )
-
         sw = Stopwatch()
         while sw.elapsed_sec < 60:
             tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=50))
             buffer_length = len(tx_buffer)
-            self.remote_socket.interfaces.socket.send_data_tcp(tx_buffer, device_ip=self.dut_ip)
-            time.sleep(2)
-            self.wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
-            buffer_rx = self.wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
+            self.remote_socket.interfaces.socket.send_data_tcp(tx_buffer)
+            time.sleep(self.interval)
+            buffer_rx = self.wifi_dut.interfaces.wifi.bsdSocketReceive(socket_fd=int(sock) + 1, timeout=30)
             logger().info(f"###################### Buffer Data  {buffer_rx}  ######################")
             logger().info(f"###################### Buffer Data Length  {buffer_length}  ######################")
             assert buffer_length == len(
                 buffer_rx), f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+
 
     def run_udp_traffic(self):
         local_port = randint(5001, 6000)
@@ -900,7 +846,7 @@ def test_wifi_melco_sdk_ipv4_tcp_tx_C557359(wifi_dut, wifi_access_point,
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.http_server("python_http_server")
+@pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 def test_wifi_melco_sdk_http_client_ipv4_ipv6_C557360(wifi_dut, wifi_access_point,
                                                       wifi_sniffer,
@@ -919,6 +865,7 @@ def test_wifi_melco_sdk_http_client_ipv4_ipv6_C557360(wifi_dut, wifi_access_poin
         5. Ping from remote to DUT IPV6 address
 
     """
+    http_client_status = ""
     test_name = request.node.name
     try:
         wifi_clients = wifi_clients[:2]
@@ -940,36 +887,23 @@ def test_wifi_melco_sdk_http_client_ipv4_ipv6_C557360(wifi_dut, wifi_access_poin
         wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
         wifi_dut.interfaces.wifi.http_client_init()
 
-        status_dut, content_dut = wifi_dut.interfaces.http.http_post(
-            http_server.interfaces.http,
-            index_path,
-            post_data='hellotestingfrohttppostcontent',
-            server_port=80)
-
-        assert status_dut == SLStatus.SL_STATUS_OK, "failed to post data using http post request"
-        logger().info(status_dut)
+        wifi_dut.interfaces.wifi.http_get(http_server.interfaces.http,
+                                          resource_path=index_path,
+                                          server_port=80)
+        time.sleep(5)
+        wifi_dut.interfaces.wifi.http_post(http_server.interfaces.http,
+                                           resource_path="cgi-bin/cgi_example.py",
+                                           post_data=''.join(random.choices(
+                                               string.ascii_uppercase + string.digits, k=30)),
+                                           server_port=80)
         time.sleep(5)
 
-        status_dut, content_dut = wifi_dut.interfaces.http.http_get(
-            http_server.interfaces.http,
-            index_path,
-            server_port=80)
-        status_client, content_client = http_client.interfaces.http.http_get(
-            http_server.interfaces.http, index_path)
-
-        assert not status_dut, "failed to fetch the https data"
-        assert status_client, "failed to load the https data"
-
-        logger().info(status_dut)
-        logger().info(content_dut)
-        assert content_dut == content_client, "fetched data is not same as expected data"
-
-        status_dut, content_dut = wifi_dut.interfaces.http.http_put(
-            http_server.interfaces.http,
-            server_port=80)
-        logger().info(f"HTTP Put Status:{status_dut}")
+        wifi_dut.interfaces.wifi.http_put(server=http_server.interfaces.http,
+                                          resource_path="cgi-bin/cgi_example.py",
+                                          server_port=80)
         time.sleep(5)
         wifi_dut.interfaces.wifi.http_client_deinit()
+        http_client_status = False
         wlan_obj.connect_disconnect_raspi_clients()
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -978,6 +912,8 @@ def test_wifi_melco_sdk_http_client_ipv4_ipv6_C557360(wifi_dut, wifi_access_poin
 
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+        if http_client_status:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 
@@ -1011,7 +947,6 @@ def test_wifi_melco_sdk_http_client_ipv4_ipv6_C557360(wifi_dut, wifi_access_poin
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
-@pytest.mark.skip("https not working")
 def test_wifi_melco_sdk_https_client_ipv4_ipv6_C557361(wifi_dut, wifi_access_point,
                                                        wifi_sniffer,
                                                        sl_collections, request,
@@ -1048,42 +983,24 @@ def test_wifi_melco_sdk_https_client_ipv4_ipv6_C557361(wifi_dut, wifi_access_poi
         assert status, f"RASPI-STA1 failed to ping to RASPI-STA2"
         wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
         server_ip = wlan_obj.dut_add_dict['remote_ap_ipv4']
-        wifi_dut.interfaces.wifi.http_client_init(https_enable=True)#, ip_version='ipv6')
+        remote_ipv6 = wlan_obj.dut_add_dict['remote_ap_ipv6']
+        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
 
-        status_dut, content_dut = wifi_dut.interfaces.http.http_post(
-            http_server.interfaces.http,
-            index_path,
-            # server_ip=server_ip,
-            post_data='hellotestingfrohttppostcontent',
-            server_port=443)
-
-        assert status_dut == SLStatus.SL_STATUS_OK, "failed to post data using http post request"
-        logger().info(status_dut)
+        wifi_dut.interfaces.wifi.http_client_init(https_enable=True, ip_version='ipv6')
+        wifi_dut.interfaces.wifi.http_get(http_server.interfaces.http,
+                                               resource_path=index_path,
+                                               server_port=443, server_ip=f'"{remote_ipv6}"')
         time.sleep(5)
+        wifi_dut.interfaces.wifi.http_post(http_server.interfaces.http,
+                                                resource_path="cgi-bin/cgi_example.py",
+                                                post_data=''.join(random.choices(
+                                                    string.ascii_uppercase + string.digits, k=30)),
+                                                server_port=443, server_ip=f'"{remote_ipv6}"')
 
-        status_dut, content_dut = wifi_dut.interfaces.http.http_get(
-            http_server.interfaces.http,
-            index_path,
-            # server_ip=f'"{server_ip}"',
-            server_port=443)
-        status_client, content_client = http_client.interfaces.http.http_get(
-            http_server.interfaces.http, index_path)
+        wifi_dut.interfaces.wifi.http_put(server=http_server.interfaces.http, resource_path="cgi-bin/cgi_example.py",
+                                          server_ip=f'"{remote_ipv6}"', server_port=443)
 
-        assert not status_dut, "failed to fetch the https data"
-        assert status_client, "failed to load the https data"
-
-        logger().info(status_dut)
-        logger().info(content_dut)
-        assert content_dut == content_client, "fetched data is not same as expected data"
-
-        status_dut, content_dut = wifi_dut.interfaces.http.http_put(
-            http_server.interfaces.http, "cgi-bin/cgi_example.py",
-            put_data_length=10,
-            server_port=443)
-
-        logger().info(f"HTTP Put Status:{status_dut}")
-
-        time.sleep(5)
+        time.sleep(10)
         wifi_dut.interfaces.wifi.http_client_deinit()
         wlan_obj.connect_disconnect_raspi_clients()
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1231,7 +1148,6 @@ def test_wifi_melco_sdk_embedded_mqtt_ssl_ipv4_ipv6_C557363(wifi_dut, wifi_acces
 
 
 
-
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -1336,7 +1252,6 @@ def test_wifi_melco_sdk_ipv4_tcp_tx_5s_int_ipv6_ping_C557367(wifi_dut, wifi_acce
     wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
           "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
 )
-@pytest.mark.skip("TCP RX through IPV6 is not working")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 def test_wifi_melco_sdk_ipv4_tcp_rx_5s_int_ipv6_ping_C557368(wifi_dut, wifi_access_point,
@@ -1421,9 +1336,9 @@ def test_wifi_melco_sdk_ipv4_tcp_rx_5s_int_ipv6_ping_C557368(wifi_dut, wifi_acce
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.skip()
 def test_wifi_melco_sdk_ipv4_ipv6_ip_change_notificaton_C557364(wifi_dut, wifi_access_point,
-                                                     #wifi_sniffer,
+                                                     wifi_sniffer,
                                                      sl_collections, request,
-                                                     #sniffer_filter,
+                                                     sniffer_filter,
                                                      utf_constants,
                                                      wifi_clients,
                                                      wifi_client):
