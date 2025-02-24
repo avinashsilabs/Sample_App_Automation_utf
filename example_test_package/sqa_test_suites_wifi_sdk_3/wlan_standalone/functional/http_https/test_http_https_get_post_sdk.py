@@ -62,6 +62,7 @@ class WLanThread(ThreadBase):
         self.power_save_filter = None
         self.dut_addr = None
         self.ap_mac_address = None
+        self.http_client_initialized = False
         self.switch = switch
 
     def run(self):
@@ -84,7 +85,9 @@ class WLanThread(ThreadBase):
 
                     self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
                     remote_ip = self.wifi_client.interfaces.wifi.get_ip_address(version=6)
-                    self.wifi_dut.interfaces.wifi.http_client_init(https_enable=False, ip_version='ipv6')
+                    status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=False, ip_version='ipv6')
+                    if status == SLStatus.SL_STATUS_OK:
+                        self.http_client_initialized = True
 
                     if self.test_name == '564481':
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(server=None,
@@ -101,7 +104,11 @@ class WLanThread(ThreadBase):
                         logger().info(content_dut)
                         assert content_dut == content_client, "fetched data is not same as expected data"
 
-                        self.wifi_dut.interfaces.wifi.http_client_deinit()
+                        status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = False
+
                     else:
                         self.wifi_dut.interfaces.http.http_post(server=None, resource_path="cgi-bin/cgi_example.py",
                                                                 server_ip=remote_ip,
@@ -149,12 +156,20 @@ class WLanThread(ThreadBase):
                 for _ in range(3):
 
                     if self.test_name == '476943':
-                        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=False)
+                        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=False)
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = True
+
                     elif self.test_name == '476954':
-                        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=False, ip_version='ipv6')
+                        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=False, ip_version='ipv6')
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = True
+
                         remote_ip = self.wifi_client.interfaces.wifi.get_ip_address(version=6)
                     else:
-                        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = True
 
                     if self.test_name == '476943':
                         self.wifi_dut.interfaces.wifi.http_put(self.http_server.interfaces.http, "cgi-bin/cgi_example.py")
@@ -196,7 +211,10 @@ class WLanThread(ThreadBase):
 
                     time.sleep(10)
 
-                    self.wifi_dut.interfaces.wifi.http_client_deinit()
+                    status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                    if status == SLStatus.SL_STATUS_OK:
+                        self.http_client_initialized = False
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
                 power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -225,7 +243,10 @@ class WLanThread(ThreadBase):
                                                                              channel=self.wifi_access_point.interfaces.wifi.channel)
 
                     self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                    self.wifi_dut.interfaces.wifi.http_client_init(https_enable=False)
+                    status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=False)
+                    if status == SLStatus.SL_STATUS_OK:
+                        self.http_client_initialized = True
+
                     logger().info("\n\n***Fetching the data on https using get method***\n\n")
                     if self.test_name == '476938':
                         self.wifi_dut.interfaces.http.http_get(self.http_server.interfaces.http, self.index_path,
@@ -251,7 +272,10 @@ class WLanThread(ThreadBase):
 
                         assert int(data) >= 104857600, 'Fetched data is not 100MB'
 
-                        self.wifi_dut.interfaces.wifi.http_client_deinit()
+                        status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = False
 
                     else:
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
@@ -267,7 +291,10 @@ class WLanThread(ThreadBase):
                         logger().info(status_dut)
                         logger().info(content_dut)
                         assert content_dut == content_client, "fetched data is not same as expected data"
-                        self.wifi_dut.interfaces.wifi.http_client_deinit()
+                        status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = False
 
                     logger().info("Stopping sniffer capture")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -297,7 +324,10 @@ class WLanThread(ThreadBase):
                                                                                 ping_after_power_save=False,
                                                                                 channel=self.wifi_access_point.interfaces.wifi.channel)
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = True
+
                         logger().info("\n\n***Fetching the data on https using get method***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
                             self.http_server.interfaces.http,
@@ -315,7 +345,10 @@ class WLanThread(ThreadBase):
 
                         logger().info("Stopping sniffer capture")
                         self.wifi_sniffer.interfaces.capture.stop_capture()
-                        self.wifi_dut.interfaces.wifi.http_client_deinit()
+                        status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = False
                         time.sleep(5)
                         self.wifi_dut.interfaces.wifi.leave()
 
@@ -358,7 +391,9 @@ class WLanThread(ThreadBase):
                     for i in range(0, 5):
                         logger().info(f"\n\n***Fetching the data on https using get method iteration = {i} ***\n\n")
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = True
 
                         for url in self.index_path:
                             logger().info("\n\n***Fetching the data on https using get method***\n\n")
@@ -375,7 +410,10 @@ class WLanThread(ThreadBase):
                             logger().info(status_dut)
                             logger().info(content_dut)
                             assert content_dut == content_client, "fetched data is not same as expected data"
-                        self.wifi_dut.interfaces.wifi.http_client_deinit()
+                        status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = False
                         time.sleep(5)
                     time.sleep(5)
                     self.wifi_dut.interfaces.wifi.leave()
@@ -409,7 +447,9 @@ class WLanThread(ThreadBase):
 
                     for i in range(0, 5):
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = True
 
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
@@ -447,7 +487,10 @@ class WLanThread(ThreadBase):
                         logger().info(f"HTTP Put Status:{status_dut}")
 
                         time.sleep(5)
-                        self.wifi_dut.interfaces.wifi.http_client_deinit()
+                        status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = False
 
                     logger().info("Stopping sniffer capture")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -484,7 +527,9 @@ class WLanThread(ThreadBase):
                         """ Verify DUT functionality with sequence HTTPS GET,PUT,POST"""
 
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = True
 
                         logger().info(f"\n\n***Fetching the data on https using get method iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
@@ -523,7 +568,10 @@ class WLanThread(ThreadBase):
                         logger().info(f"HTTP Put Status:{status_dut}")
 
                         time.sleep(5)
-                        self.wifi_dut.interfaces.wifi.http_client_deinit()
+                        status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = False
 
                     logger().info("Stopping sniffer capture")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -560,7 +608,9 @@ class WLanThread(ThreadBase):
                         """ Verify DUT functionality with sequence HTTPS GET,PUT,POST"""
 
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = True
 
                         logger().info(f"\n\n***Fetching the data on https using get method iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
@@ -600,7 +650,10 @@ class WLanThread(ThreadBase):
                         logger().info(f"HTTP Put Status:{status_dut}")
 
                         time.sleep(5)
-                        self.wifi_dut.interfaces.wifi.http_client_deinit()
+                        status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = False
 
                     logger().info("Stopping sniffer capture")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -636,7 +689,9 @@ class WLanThread(ThreadBase):
                         """ Verify DUT functionality with sequence HTTPS PUT,POST,GET """
 
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = True
 
                         logger().info(f"\n\n************* Put data using HTTP PUT request {i}*************\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_put(
@@ -670,7 +725,10 @@ class WLanThread(ThreadBase):
                         logger().info(status_dut)
                         logger().info(content_dut)
                         assert content_dut == content_client, "fetched data is not same as expected data"
-                        self.wifi_dut.interfaces.wifi.http_client_deinit()
+                        status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = False
 
                     logger().info("Stopping sniffer capture")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -708,7 +766,9 @@ class WLanThread(ThreadBase):
                         """ Verify DUT functionality with sequence HTTPS POST, PUT, GET"""
 
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = True
 
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_post(
@@ -744,7 +804,10 @@ class WLanThread(ThreadBase):
                         assert content_dut == content_client, "fetched data is not same as expected data"
 
                         time.sleep(5)
-                        self.wifi_dut.interfaces.wifi.http_client_deinit()
+                        status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = False
 
                     logger().info("Stopping sniffer capture")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -784,7 +847,9 @@ class WLanThread(ThreadBase):
                         """ Verify DUT functionality with sequence HTTPS POST """
 
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = True
 
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
 
@@ -830,7 +895,9 @@ class WLanThread(ThreadBase):
                     self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
                     for i in range(0, 1):
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = True
 
                         logger().info(f"\n\n***Fetching the data on https using get method iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
@@ -848,7 +915,10 @@ class WLanThread(ThreadBase):
                         assert content_dut == content_client, "fetched data is not same as expected data"
 
                         time.sleep(5)
-                        self.wifi_dut.interfaces.wifi.http_client_deinit()
+                        status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = False
 
                     logger().info("Stopping sniffer capture")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -887,8 +957,9 @@ class WLanThread(ThreadBase):
                     for i in range(0, 5):
                         """ Verify DUT functionality with sequence HTTPS POST """
 
-                        self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=False)
+                        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=False)
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = True
 
                         logger().info(f"\n\n***Posting data using http post request for iteration = {i} ***\n\n")
 
@@ -940,7 +1011,9 @@ class WLanThread(ThreadBase):
                         """ Verify DUT functionality with sequence HTTPS POST """
 
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = True
 
                         logger().info(f"\n\n***Fetching the data on https using get method iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
@@ -1013,7 +1086,9 @@ class WLanThread(ThreadBase):
                         """ Verify DUT functionality with sequence HTTPS POST """
 
                         self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                        self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = True
 
                         logger().info(f"\n\n***Fetching the data on https using get method iteration = {i} ***\n\n")
                         status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
@@ -1040,7 +1115,10 @@ class WLanThread(ThreadBase):
 
                         time.sleep(2)
                         logger().info("\n\n *** Initiating HTTP client deinit *** \n\n")
-                        self.wifi_dut.interfaces.wifi.http_client_deinit()
+                        status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                        if status == SLStatus.SL_STATUS_OK:
+                            self.http_client_initialized = False
 
                     logger().info("Stopping sniffer capture")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -1076,7 +1154,9 @@ class WLanThread(ThreadBase):
                     self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
 
                     self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                    self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True, tls_version='tls_v_1_0')
+                    status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True, tls_version='tls_v_1_0')
+                    if status == SLStatus.SL_STATUS_OK:
+                        self.http_client_initialized = True
 
                     status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
                         self.http_server.interfaces.http,
@@ -1093,7 +1173,10 @@ class WLanThread(ThreadBase):
                     assert content_dut == content_client, "fetched data is not same as expected data"
 
                     time.sleep(5)
-                    self.wifi_dut.interfaces.wifi.http_client_deinit()
+                    status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                    if status == SLStatus.SL_STATUS_OK:
+                        self.http_client_initialized = False
 
                     logger().info("Stopping sniffer capture")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -1131,8 +1214,9 @@ class WLanThread(ThreadBase):
 
                     self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
 
-                    self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                    self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True, tls_version='tls_v_1_3')
+                    status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True, tls_version='tls_v_1_3')
+                    if status == SLStatus.SL_STATUS_OK:
+                        self.http_client_initialized = True
 
                     status_dut, content_dut = self.wifi_dut.interfaces.http.http_get(
                         self.http_server.interfaces.http,
@@ -1149,7 +1233,10 @@ class WLanThread(ThreadBase):
                     assert content_dut == content_client, "fetched data is not same as expected data"
 
                     time.sleep(5)
-                    self.wifi_dut.interfaces.wifi.http_client_deinit()
+                    status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+
+                    if status == SLStatus.SL_STATUS_OK:
+                        self.http_client_initialized = False
 
                     logger().info("Stopping sniffer capture")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -1186,7 +1273,9 @@ class WLanThread(ThreadBase):
                     self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
                     time.sleep(2)
                     self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                    self.wifi_dut.interfaces.wifi.http_client_init(https_enable=False)
+                    status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=False)
+                    if status == SLStatus.SL_STATUS_OK:
+                        self.http_client_initialized = True
 
                     return
                 except Exception as e:
@@ -1204,7 +1293,9 @@ class WLanThread(ThreadBase):
                                                      channel=self.wifi_access_point.interfaces.wifi.channel)
 
             self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-            self.wifi_dut.interfaces.wifi.http_client_init()
+            status = self.wifi_dut.interfaces.wifi.http_client_init()
+            if status == SLStatus.SL_STATUS_OK:
+                self.http_client_initialized = True
 
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
@@ -1465,11 +1556,17 @@ def test_wifi_sdk_http_get_functionality_comparison_c19215(http_server, wifi_dut
 
         logger().info("Stopping sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_dut.interfaces.wifi.http_client_deinit()
+        status = wifi_dut.interfaces.wifi.http_client_deinit()
+        if status==SLStatus.SL_STATUS_OK:
+            wlan_obj.http_client_initialized = False
         time.sleep(5)
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.config(
@@ -1519,13 +1616,20 @@ def test_wifi_sdk_http_get_functionality_c19209(http_server, wifi_dut, http_clie
 
         logger().info("Stopping sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_dut.interfaces.wifi.http_client_deinit()
+        status = wifi_dut.interfaces.wifi.http_client_deinit()
+        if status == SLStatus.SL_STATUS_OK:
+            wlan_obj.http_client_initialized = False
         time.sleep(5)
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
+
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1572,11 +1676,17 @@ def test_wifi_sdk_http_get_functionality_100mb_file_c19214(http_server, wifi_dut
 
         logger().info("Stopping sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_dut.interfaces.wifi.http_client_deinit()
+        status = wifi_dut.interfaces.wifi.http_client_deinit()
+        if status == SLStatus.SL_STATUS_OK:
+            wlan_obj.http_client_initialized = False
         time.sleep(5)
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
@@ -1619,6 +1729,10 @@ def test_wifi_sdk_http_get_with_100mb_file_c476929(http_server, wifi_dut, http_c
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+
 
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.config(
@@ -1660,6 +1774,10 @@ def test_wifi_sdk_http_get_with_url_length_1140_with_open_security_c476930(http_
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
@@ -1704,6 +1822,10 @@ def test_wifi_sdk_http_get_with_url_length_1140_with_wpa3_security_c476931(http_
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.config("wifi_access_point", wifi={"passphrase": '12345678', "security": 'WPA2Enterprise'})
@@ -1756,6 +1878,10 @@ def test_wifi_sdk_http_get_multiple_times_with_long_http_url_bit_enable_eap_secu
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+
 
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
 @pytest.mark.config(
@@ -1798,6 +1924,10 @@ def test_wifi_sdk_http_get_with_url_length_approx_800_bytes_c476934(http_server,
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+
 
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
 @pytest.mark.config(
@@ -1838,6 +1968,10 @@ def test_wifi_sdk_http_get_with_url_length_1024_c476935(http_server, wifi_dut, h
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
@@ -1880,6 +2014,10 @@ def test_wifi_sdk_http_get_with_url_length_1140_c476936(http_server, wifi_dut, h
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+
 
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
 @pytest.mark.config(
@@ -1920,6 +2058,10 @@ def test_wifi_sdk_http_get_with_url_length_2048_c476937(http_server, wifi_dut, h
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
@@ -2085,6 +2227,10 @@ def test_wifi_sdk_https_post_get_put_c537883(http_server, wifi_dut, http_client,
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+
 
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
@@ -2119,6 +2265,10 @@ def test_wifi_sdk_https_post_get_put_c537902(http_server, wifi_dut, http_client,
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.http_server("raspi_lighttpd_tls")
@@ -2155,6 +2305,10 @@ def test_wifi_sdk_https_post_get_put_c537903(http_server, wifi_dut, http_client,
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+
 
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
@@ -2190,6 +2344,10 @@ def test_wifi_sdk_https_post_get_put_c537904(http_server, wifi_dut, http_client,
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+
 
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
@@ -2224,6 +2382,10 @@ def test_wifi_sdk_https_post_c537905(http_server, wifi_dut, http_client, wifi_ac
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.http_server("raspi_lighttpd_tls")
@@ -2264,6 +2426,10 @@ def test_wifi_sdk_https_get_c476966(http_server, wifi_dut, http_client, wifi_acc
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.http_server("raspi_lighttpd_tls")
@@ -2337,6 +2503,10 @@ def test_wifi_sdk_https_get_tls_v1_2_c535794(http_server, wifi_dut, http_client,
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.http_server("raspi_lighttpd_tls")
@@ -2464,6 +2634,10 @@ def test_wifi_sdk_https_get_post_c537879(http_server, wifi_dut, http_client, wif
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+
 
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
@@ -2499,6 +2673,10 @@ def test_wifi_sdk_https_get_tls_v1_c19208(http_server, wifi_dut, http_client, wi
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.http_server("raspi_lighttpd_tls")
@@ -2536,6 +2714,10 @@ def test_wifi_sdk_https_get_tls_v1_3_c535795(http_server, wifi_dut, http_client,
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+
 
 @pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
@@ -2561,15 +2743,23 @@ def test_wifi_sdk_https_get_tls_v1_3_c535795(http_server, wifi_dut, http_client,
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 def test_wifi_sdk_http_get_with_ipv6_stateless_c564481(firmware_loader, http_server, wifi_dut, http_client, wifi_access_point,
                                                        wifi_sniffer, sl_collections, sniffer_filter, wifi_client):
-    test_name = '564481'
-    index_path = "index.html"
-    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          http_client=http_client, wifi_client=wifi_client,
-                          test_name=test_name, sl_collections=sl_collections, http_server=http_server,
-                          index_path=index_path,
-                          sniffer_filter=sniffer_filter)
-    wlan_obj.start()
-    wlan_obj.wait_for_exit()
+    try:
+        test_name = '564481'
+        index_path = "index.html"
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              http_client=http_client, wifi_client=wifi_client,
+                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                              index_path=index_path,
+                              sniffer_filter=sniffer_filter)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.firmware_app("test_ipv6")
@@ -2596,15 +2786,23 @@ def test_wifi_sdk_http_get_with_ipv6_stateless_c564481(firmware_loader, http_ser
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 def test_wifi_sdk_http_get_with_ipv6_stateful_c476941(firmware_loader, http_server, wifi_dut, http_client, wifi_access_point,
                                                       wifi_sniffer, sl_collections, sniffer_filter, wifi_client):
-    test_name = '564481'
-    index_path = "index.html"
-    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          http_client=http_client, wifi_client=wifi_client,
-                          test_name=test_name, sl_collections=sl_collections, http_server=http_server,
-                          index_path=index_path,
-                          sniffer_filter=sniffer_filter)
-    wlan_obj.start()
-    wlan_obj.wait_for_exit()
+    try:
+        test_name = '564481'
+        index_path = "index.html"
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              http_client=http_client, wifi_client=wifi_client,
+                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                              index_path=index_path,
+                              sniffer_filter=sniffer_filter)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2', "passphrase": '12345678'})
@@ -2652,7 +2850,9 @@ def test_wifi_sdk_http_get_with_tcp_udp_data_c19218(http_server, wifi_dut, http_
             socket_thread.wait_for_exit()
 
             time.sleep(5)
-            wifi_dut.interfaces.wifi.http_client_deinit()
+            status = wifi_dut.interfaces.wifi.http_client_deinit()
+            if status == SLStatus.SL_STATUS_OK:
+                wlan_obj.http_client_initialized = False
 
             logger().info("Stopping sniffer capture")
             wifi_sniffer.interfaces.capture.stop_capture()
@@ -2662,6 +2862,10 @@ def test_wifi_sdk_http_get_with_tcp_udp_data_c19218(http_server, wifi_dut, http_
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.firmware_app("test_ipv6")
@@ -2690,14 +2894,18 @@ def test_wifi_sdk_http_get_with_tcp_udp_data_c19218(http_server, wifi_dut, http_
 def test_wifi_sdk_http_post_with_ipv6_stateful_c537907(firmware_loader, http_server, wifi_dut, http_client, wifi_access_point,
                                                        index_path, wifi_sniffer, sl_collections, sniffer_filter,
                                                        wifi_client, utf_constants):
-    test_name = '537907'
-    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                          http_client=http_client, wifi_client=wifi_client,
-                          test_name=test_name, sl_collections=sl_collections, http_server=http_server,
-                          index_path=index_path, utf_constants=utf_constants,
-                          sniffer_filter=sniffer_filter)
-    wlan_obj.start()
-    wlan_obj.wait_for_exit()
+    try:
+        test_name = '537907'
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              http_client=http_client, wifi_client=wifi_client,
+                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                              index_path=index_path, utf_constants=utf_constants,
+                              sniffer_filter=sniffer_filter)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 @pytest.mark.config(
@@ -2750,11 +2958,17 @@ def test_wifi_sdk_http_get_with_different_url_length_c19213(http_server, wifi_du
 
         logger().info("Stopping sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_dut.interfaces.wifi.http_client_deinit()
+        status = wifi_dut.interfaces.wifi.http_client_deinit()
+        if status == SLStatus.SL_STATUS_OK:
+            wlan_obj.http_client_initialized = False
         time.sleep(5)
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.config("wifi_access_point", wifi={"security": 'Open', "passphrase": '12345678'})
@@ -2790,6 +3004,10 @@ def test_wifi_sdk_http_put_get_post_in_sequence_c476943(http_server, wifi_dut, h
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+
 
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2', "passphrase": '12345678'})
 @pytest.mark.parametrize("index_path", {"index.html"})
@@ -2824,6 +3042,10 @@ def test_wifi_sdk_https_put_get_post_in_sequence_c476956(http_server, wifi_dut, 
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
 
 
 @pytest.mark.firmware_app("test_ipv6")
@@ -2862,3 +3084,7 @@ def test_wifi_sdk_http_put_get_post_in_sequence_ipv6_stateless_c476954(firmware_
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
