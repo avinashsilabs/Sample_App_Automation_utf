@@ -94,7 +94,7 @@ class ApModeConnections(ThreadBase):
             191346_1: {
                 "dtim_count": "4",
                 "beacon_interval": "300",
-                "no_of_clients": 1
+                "no_of_clients": 2
             },
             191349: {
                 "dtim_count": "3",
@@ -130,7 +130,7 @@ class ApModeConnections(ThreadBase):
                             f"sudo ping -c {self.ping_count} {dut_ip}")
                         assert rc == 0, f"STA1 failed to ping STA2"
                         logger().info(f"\n{stdout}\n")
-                        logger().info(f"Ping successful from wifi client 1(STA1) to dut")
+                        logger().info(f"Ping successful from wifi client {i}(STA{i}) to dut")
                         break
                     except Exception as e:
                         logger().info(f"STA  failed to ping DUT...retry count -> {count + 1}")
@@ -1140,6 +1140,13 @@ def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_invalid_beacon_interval_concurr
             "channel": "8",
             "interface": "wlan0",
         },
+        1: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
+            "channel": "8",
+            "interface": "wlan0",
+        },
     }
 )
 @pytest.mark.parametrize("channel", [8])
@@ -1238,7 +1245,7 @@ def test_wifi_sdk_dut_restart_start_ap_beacon_params_C191346(wifi_sniffer, wifi_
             'Unable to find  rsi_apmode in Sniffer'
         logger().info(f"validating SSID  in beacon")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=ap_dut_obj.dut_mac_address, ssid="SILABS_AP_MODE",
+            sa_addr=ap_dut_obj.dut_mac_address, ssid='"SILABS_AP_MODE"',
             filter_name='SSID_apmode')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find  ssid in beacon'
@@ -1328,6 +1335,13 @@ def test_wifi_sdk_giving_soft_stop_ap_without_start_ap_C191354(wifi_sniffer, wif
     "wifi_clients",
     wifi={
         0: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
+            "channel": "8",
+            "interface": "wlan0",
+        },
+        1: {
             "security": "WPA2",
             "ssid": "SILABS_AP_MODE",
             "passphrase": "Automation@123",
