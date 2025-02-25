@@ -292,22 +292,22 @@ devices:
                 # radius server configuration
                 radius_ip: "10.207.17.220"
                 radius_port: "1812"
-#                guest_networks:
-#                    - band: "2g"
-#                      index: "1"
-#                      ssid: "ASUS_B0_2G_Guest"
-#                      passphrase: '123456789'
-#                      security: WPA2
-#                    - band: "2g"
-#                      index: "2"
-#                      ssid: "ASUS_B0_2G_Guest2"
-#                      passphrase: '123456789'
-#                      security: WPA2
-#                    - band: "2g"
-#                      index: "3"
-#                      ssid: "ASUS_B0_2G_Guest3"
-#                      passphrase: '123456789'
-#                      security: WPA2
+                guest_networks:
+                    - band: "2g"
+                      index: "1"
+                      ssid: "ASUS_B0_2G_Guest"
+                      passphrase: '123456789'
+                      security: WPA2
+                    - band: "2g"
+                      index: "2"
+                      ssid: "ASUS_B0_2G_Guest2"
+                      passphrase: '123456789'
+                      security: WPA2
+                    - band: "2g"
+                      index: "3"
+                      ssid: "ASUS_B0_2G_Guest3"
+                      passphrase: '123456789'
+                      security: WPA2
 
     switched_ap:
         interfaces:
@@ -877,14 +877,14 @@ devices:
                 default:
                 type: 'wifi.sniffer.tshark'
                 shell: 'local_shell'
-                interface: 'wlp0s20f3'
-#                interface: 'wlx00c0ca9911aa'
+#                interface: 'wlp0s20f3'
+                interface: 'wlx00c0cab57c2a'
             live_capture:
                 host_address: 10.207.18.208
                 type: 'wifi.sniffer.pyshark_live_sniffer'
                 shell: 'local_shell'
-                interface: 'wlp0s20f3'
-#                interface: 'wlx00c0ca9911aa'
+#                interface: 'wlp0s20f3'
+                interface: 'wlx00c0cab57c2a'
 
     saleae_logic_analyzer:
         interfaces:
@@ -1299,16 +1299,6 @@ devices:
                 shell: 'linux_shell'
                 interface: 'eth1'
 
-    # This represents the service_discovery configuration
-    avahi_daemon_linux:
-        interfaces:
-            linux_shell:
-                type: 'shell.shell'
-            sd:
-                type: "service_discovery.avahi_daemon_linux"
-                shell: 'linux_shell'
-
-
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1447,8 +1437,6 @@ defaults:
         power_save: True
 
     wiseconnect_web: 'wiseconnect_web'
-
-    service_discovery: 'avahi_daemon_linux'
 
     net_perf_server: 'secondary_raspi_iperf'
 
