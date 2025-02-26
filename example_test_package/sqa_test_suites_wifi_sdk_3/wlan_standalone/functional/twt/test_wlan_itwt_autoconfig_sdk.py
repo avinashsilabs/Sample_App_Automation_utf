@@ -645,7 +645,7 @@ def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None):
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -675,7 +675,7 @@ def test_wifi_sdk_verify_dut_behaviour_twt_enable_traffic_enable_ps_enable_twt_d
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -705,7 +705,7 @@ def test_wifi_sdk_verify_dut_behaviour_twt_enable_traffic_enable_twt_disable_tra
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -739,7 +739,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_no_twt_tx_latency_0_c510684
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -773,7 +773,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_25_no_twt_tx_latency_0_c510685
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -807,7 +807,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_5_no_twt_tx_latency_0_c510686(
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -842,7 +842,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_500ms_no_tw
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -877,7 +877,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_800ms_no_tw
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -934,7 +934,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_5_secs_listen_interval_700ms_n
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -985,7 +985,7 @@ def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -1036,7 +1036,7 @@ def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -1087,7 +1087,7 @@ def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -1134,7 +1134,7 @@ def test_wifi_sdk_check_dut_able_to_send_twt_req_when_average_tx_throughput_grea
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -1181,7 +1181,7 @@ def test_wifi_sdk_check_dut_able_to_send_twt_req_when_average_tx_throughput_less
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -1228,7 +1228,7 @@ def test_wifi_sdk_verify_weather_dut_is_able_to_wakeup_for_rx_latency_60_secs_c5
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -1275,7 +1275,7 @@ def test_wifi_sdk_verify_weather_dut_is_able_to_wakeup_for_rx_latency_0_secs_and
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -1322,7 +1322,7 @@ def test_wifi_sdk_verify_weather_dut_is_able_to_configure_tx_latency_50sec_c5380
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -1370,7 +1370,7 @@ def test_wifi_sdk_verify_weather_dut_is_throwing_error_rx_latency_more_than_2160
 
 
 @wifi_dut_marker()
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -1433,7 +1433,7 @@ def test_wifi_sdk_verify_weather_dut_is_throwing_error_tx_latency_more_than_2160
         "SL_NET_TLS_CLIENT_CREDENTIAL_START",
     ],
 )
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state(
@@ -1518,7 +1518,7 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_55_secs_recieve_data_from
         "SL_NET_TLS_CLIENT_CREDENTIAL_START",
     ],
 )
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state(
@@ -1603,7 +1603,7 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_25_secs_recieve_data_from
         "SL_NET_TLS_CLIENT_CREDENTIAL_START",
     ],
 )
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state(

@@ -379,7 +379,7 @@ pytestmark = [
 ]
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -396,7 +396,7 @@ def test_wifi_sdk_reschedule_twt_indefinite_time_c540478(wifi_dut, wifi_access_p
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
@@ -413,7 +413,7 @@ def test_wifi_sdk_reschedule_twt_for_duration_c540479(wifi_dut, wifi_access_poin
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", 'disable_twt'])
@@ -430,7 +430,7 @@ def test_wifi_sdk_twt_resume_back_immediately_suspend_indefinitely_c540480(wifi_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", 'disable_twt'])
@@ -447,7 +447,7 @@ def test_wifi_sdk_twt_resume_back_immediately_suspend_for_duration_c540481(wifi_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
@@ -464,7 +464,7 @@ def test_wifi_sdk_reschedule_twt_connecting_to_non_twt_ap_c540483(wifi_dut, wifi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", 'disable_twt'])
@@ -481,7 +481,7 @@ def test_wifi_sdk_reschedule_twt_twice_c540485(wifi_dut, wifi_access_point, sl_c
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
@@ -498,7 +498,7 @@ def test_wifi_sdk_reschedule_twt_without_set_twt_c540486(wifi_dut, wifi_access_p
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
