@@ -269,6 +269,11 @@ class Power_Measurement_Thread(ThreadBase, Power_Device):
 
 # ********************************************************************************************************************
 
+pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]   
+
+# ********************************************************************************************************************
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -287,19 +292,19 @@ class Power_Measurement_Thread(ThreadBase, Power_Device):
         "ble_features" : 0,
         "ble_custom_ext_features": 0,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "enable_timeout_config": 1,
+        "keep_alive_timeout_value": 30,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_twt_power_2s_twt_int_wlan_ka_30s_C129923(power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request):
+def test_twt_power_2s_twt_int_wlan_ka_30s_C129923(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request):
      test_name = request.node.name
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
      logger().info(f"M4-TA secure handshake")
      wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
-
-     wifi_dut.interfaces.wifi.set_timeout_config(keep_alive_timeout_value=30)
 
      time.sleep(2)
 
@@ -315,14 +320,15 @@ def test_twt_power_2s_twt_int_wlan_ka_30s_C129923(power_meter, wifi_access_point
 
      wifi_dut.interfaces.wifi.twt_auto_config(
                 twt_enable=1,
-                average_tx_throughput=0,
-                tx_latency=0,
+                average_tx_throughput="\"0\"",
+                tx_latency="\"0\"",
                 rx_latency=2000,
                 device_average_throughput=20000,
-                estimated_extra_wake_duration_percent=0,
+                estimated_extra_wake_duration_percent="\"0\"",
                 twt_tolerable_deviation=10,
                 default_wake_interval_ms=1024,
                 default_minimum_wake_duration_ms=8,
+                beacon_wake_up_count_after_sp=2
                 )                                                                                                                                                                                                                                                                                                                            
  
      logger().info(f"Setting filter broadcast command")
@@ -363,19 +369,19 @@ def test_twt_power_2s_twt_int_wlan_ka_30s_C129923(power_meter, wifi_access_point
         "ble_features" : 0,
         "ble_custom_ext_features": 0,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "enable_timeout_config": 1,
+        "keep_alive_timeout_value": 30,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_twt_power_30s_twt_int_wlan_ka_30s_C129923(power_meter, wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, request):
+def test_twt_power_30s_twt_int_wlan_ka_30s_C129923(firmware_loader, power_meter, wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, request):
      test_name = request.node.name
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
      logger().info(f"M4-TA secure handshake")
      wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
-
-     wifi_dut.interfaces.wifi.set_timeout_config(keep_alive_timeout_value=30)
 
      time.sleep(2)
 
@@ -391,14 +397,15 @@ def test_twt_power_30s_twt_int_wlan_ka_30s_C129923(power_meter, wifi_dut, wifi_a
 
      wifi_dut.interfaces.wifi.twt_auto_config(
                 twt_enable=1,
-                average_tx_throughput=0,
-                tx_latency=0,
+                average_tx_throughput="\"0\"",
+                tx_latency="\"0\"",
                 rx_latency=30000,
                 device_average_throughput=20000,
-                estimated_extra_wake_duration_percent=0,
+                estimated_extra_wake_duration_percent="\"0\"",
                 twt_tolerable_deviation=10,
                 default_wake_interval_ms=1024,
                 default_minimum_wake_duration_ms=8,
+                beacon_wake_up_count_after_sp=2
                 )   
                                                                                                                                                                                                                                                                                                                               
      time.sleep(5)
@@ -441,19 +448,19 @@ def test_twt_power_30s_twt_int_wlan_ka_30s_C129923(power_meter, wifi_dut, wifi_a
         "ble_features" : 0,
         "ble_custom_ext_features": 0,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "enable_timeout_config": 1,
+        "keep_alive_timeout_value": 60,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_twt_power_60s_twt_int_wlan_ka_60s_C129923(power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request):
+def test_twt_power_60s_twt_int_wlan_ka_60s_C129923(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request):
      test_name = request.node.name
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
      logger().info(f"M4-TA secure handshake")
      wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
-
-     wifi_dut.interfaces.wifi.set_timeout_config(keep_alive_timeout_value=60)
 
      time.sleep(2)
 
@@ -469,14 +476,15 @@ def test_twt_power_60s_twt_int_wlan_ka_60s_C129923(power_meter, wifi_access_poin
 
      wifi_dut.interfaces.wifi.twt_auto_config(
                 twt_enable=1,
-                average_tx_throughput=0,
-                tx_latency=0,
+                average_tx_throughput="\"0\"",
+                tx_latency="\"0\"",
                 rx_latency=60000,
                 device_average_throughput=20000,
-                estimated_extra_wake_duration_percent=0,
+                estimated_extra_wake_duration_percent="\"0\"",
                 twt_tolerable_deviation=10,
                 default_wake_interval_ms=1024,
                 default_minimum_wake_duration_ms=8,
+                beacon_wake_up_count_after_sp=2
                 )                                                                                                                                                                                                                                                                                                                            
  
      logger().info(f"Setting filter broadcast command")
@@ -487,7 +495,7 @@ def test_twt_power_60s_twt_int_wlan_ka_60s_C129923(power_meter, wifi_access_poin
      time.sleep(2)
 
      m4_obj.start()
-     time.sleep(80)
+     time.sleep(60)
      pm_obj.start()
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
@@ -516,19 +524,19 @@ def test_twt_power_60s_twt_int_wlan_ka_60s_C129923(power_meter, wifi_access_poin
         "ble_features" : 0,
         "ble_custom_ext_features": 0,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "enable_timeout_config": 1,
+        "keep_alive_timeout_value": 30,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_twt_power_2s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket):
+def test_twt_power_2s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket):
      test_name = request.node.name
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
      logger().info(f"M4-TA secure handshake")
      wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
-
-     wifi_dut.interfaces.wifi.set_timeout_config(keep_alive_timeout_value=30)
 
      time.sleep(2)
 
@@ -551,14 +559,15 @@ def test_twt_power_2s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(power_meter, wifi_
 
      wifi_dut.interfaces.wifi.twt_auto_config(
                 twt_enable=1,
-                average_tx_throughput=0,
-                tx_latency=0,
+                average_tx_throughput="\"0\"",
+                tx_latency="\"0\"",
                 rx_latency=2000,
                 device_average_throughput=20000,
-                estimated_extra_wake_duration_percent=0,
+                estimated_extra_wake_duration_percent="\"0\"",
                 twt_tolerable_deviation=10,
                 default_wake_interval_ms=1024,
                 default_minimum_wake_duration_ms=8,
+                beacon_wake_up_count_after_sp=2
                 )                                                                                                                                                                                                                                                                                                                            
  
      logger().info(f"Setting filter broadcast command")
@@ -569,7 +578,7 @@ def test_twt_power_2s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(power_meter, wifi_
      time.sleep(2)
 
      m4_obj.start()
-     time.sleep(80)
+     time.sleep(60)
      pm_obj.start()
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
@@ -600,19 +609,19 @@ def test_twt_power_2s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(power_meter, wifi_
         "ble_features" : 0,
         "ble_custom_ext_features": 0,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "enable_timeout_config": 1,
+        "keep_alive_timeout_value": 30,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_twt_power_30s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket):
+def test_twt_power_30s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket):
      test_name = request.node.name
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
      logger().info(f"M4-TA secure handshake")
      wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
-
-     wifi_dut.interfaces.wifi.set_timeout_config(keep_alive_timeout_value=30)
 
      time.sleep(2)
 
@@ -634,14 +643,15 @@ def test_twt_power_30s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(power_meter, wifi
 
      wifi_dut.interfaces.wifi.twt_auto_config(
                 twt_enable=1,
-                average_tx_throughput=0,
-                tx_latency=0,
+                average_tx_throughput="\"0\"",
+                tx_latency="\"0\"",
                 rx_latency=30000,
                 device_average_throughput=20000,
-                estimated_extra_wake_duration_percent=0,
+                estimated_extra_wake_duration_percent="\"0\"",
                 twt_tolerable_deviation=10,
                 default_wake_interval_ms=1024,
                 default_minimum_wake_duration_ms=8,
+                beacon_wake_up_count_after_sp=2
                 )                                                                                                                                                                                                                                                                                                                            
  
      logger().info(f"Setting filter broadcast command")
@@ -652,7 +662,7 @@ def test_twt_power_30s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(power_meter, wifi
      time.sleep(2)
 
      m4_obj.start()
-     time.sleep(80)
+     time.sleep(60)
      pm_obj.start()
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
@@ -683,19 +693,19 @@ def test_twt_power_30s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(power_meter, wifi
         "ble_features" : 0,
         "ble_custom_ext_features": 0,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "enable_timeout_config": 1,
+        "keep_alive_timeout_value": 60,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_twt_power_60s_twt_int_wlan_ka_60s_tcp_ka_240s_C129923(power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket):
+def test_twt_power_60s_twt_int_wlan_ka_60s_tcp_ka_240s_C129923(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket):
      test_name = request.node.name
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
      logger().info(f"M4-TA secure handshake")
      wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
-
-     wifi_dut.interfaces.wifi.set_timeout_config(keep_alive_timeout_value=60)
 
      time.sleep(2)
 
@@ -717,14 +727,15 @@ def test_twt_power_60s_twt_int_wlan_ka_60s_tcp_ka_240s_C129923(power_meter, wifi
 
      wifi_dut.interfaces.wifi.twt_auto_config(
                 twt_enable=1,
-                average_tx_throughput=0,
-                tx_latency=0,
+                average_tx_throughput="\"0\"",
+                tx_latency="\"0\"",
                 rx_latency=60000,
                 device_average_throughput=20000,
-                estimated_extra_wake_duration_percent=0,
+                estimated_extra_wake_duration_percent="\"0\"",
                 twt_tolerable_deviation=10,
                 default_wake_interval_ms=1024,
                 default_minimum_wake_duration_ms=8,
+                beacon_wake_up_count_after_sp=2
                 )                                                                                                                                                                                                                                                                                                                            
  
      logger().info(f"Setting filter broadcast command")
@@ -735,7 +746,7 @@ def test_twt_power_60s_twt_int_wlan_ka_60s_tcp_ka_240s_C129923(power_meter, wifi
      time.sleep(2)
 
      m4_obj.start()
-     time.sleep(80)
+     time.sleep(60)
      pm_obj.start()
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
