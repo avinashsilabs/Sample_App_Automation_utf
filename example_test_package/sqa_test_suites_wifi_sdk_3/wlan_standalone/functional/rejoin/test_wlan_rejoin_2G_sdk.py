@@ -225,11 +225,17 @@ class WLanThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                               beacon_missed_count=40,
                                                                               first_time_retry_enable=0)
+
+                logger().info("Initiating wlan Scan from DUT")
+                scan_results = self.wifi_dut.interfaces.wifi.scan(ssid=self.wifi_access_point.interfaces.wifi.ssid)
+                logger().info(scan_results)
+                assert len(scan_results) > 0, "scan_list not found"
+
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated,
                                                                          ping_after_power_save=False,
-                                                                         channel=self.wifi_access_point.interfaces.wifi.channel)
+                                                                         channel=self.wifi_access_point.interfaces.wifi.channel, skip_scan=True)
                 logger().info("DUT successfully connected with AP")
 
             elif self.test_case_no == 19729:
@@ -1590,7 +1596,8 @@ def test_wifi_sdk_rejoin_first_time_retry_c19740(wifi_sniffer, wifi_access_point
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config('wifi_access_point', wifi={"ssid": 'Hidden_SSID_C19741', "broadcast_ssid": False})
+@pytest.mark.config('wifi_access_point', wifi={"ssid": 'Hidden_SSID_C19741', "broadcast_ssid": False,
+                                               "security": 'WPA2', "passphrase": '12345678', "channel": 6})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
     "wifi_dut",
