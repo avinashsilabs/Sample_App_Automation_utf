@@ -5006,9 +5006,8 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_with_wrong_private_key_C113886(wifi_du
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs", "reset_wifi_conn_stats"])
 def test_wsdk_WPA2_EAP_Conn_TLS_when_server_inter_root_ca_with_invalid_algorithm_C113900(wifi_dut, wifi_access_point,
                                                                                      wifi_sniffer, sniffer_filter,
-                                                                                     wifi_client, radius_server,
-                                                                                     sl_collections, request,
-                                                                                     utf_constants):
+                                                                                     radius_server,
+                                                                                     sl_collections, request):
     """ This test case Verifies WPA2 Enterprise Connection when the client Intermediate Root CA with invalid Algorithm is set"""
     try:
         test_name = request.node.name
@@ -5023,60 +5022,34 @@ def test_wsdk_WPA2_EAP_Conn_TLS_when_server_inter_root_ca_with_invalid_algorithm
         wifi_dut.interfaces.wifi.load_certs(
             eap_cert=["publickey.pem", "SL_NET_PUBLIC_KEY", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
         wifi_dut.interfaces.wifi.load_certs(
-            eap_cert=["cas.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
-        wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                     eap_type="tls", sl_collections=sl_collections, test_name=test_name)
-
-        wifi_thread.start()
-        wifi_thread.wait_for_exit()
-
+            eap_cert=["ca_sha384.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+        wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
+        wifi_dut.interfaces.wifi.set_eap_credentials()
+        wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
+                                      passphrase=wifi_access_point.interfaces.wifi.passphrase,
+                                      security="wpa2_enterprise", uid="user1", enc="tls",
+                                      expected_status= (SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION | SLStatus.SL_STATUS_SI91X_DEAUTH_REQUEST_FROM_SUPPLICANT))
+        time.sleep(2)
+        logger().info(
+            f" Connection failed when invalid algorithm of ca_sha384 is loaded into the device,observed error code "
+            f" 0x10008 which is expected")
+        wifi_dut.interfaces.wifi.start_ip(
+            expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
+        logger().info(
+            f"IP configuration failed when command given in incorrect state,observed error code 0x10021 which "
+            f" is expected")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-
-        host_ip = wifi_client.interfaces.wifi.get_ip_address()
-        logger().info(f"Remote device ip :{host_ip}")
-
-        device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-
-        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
-
-        net_perf_client.interfaces.net_perf.start()
-        logger().info("sending data from DUT")
-        wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
-                                       local_port=net_perf_client.interfaces.net_perf.server_port,
-                                       local_ip=device_ip, remote_ip=host_ip,
-                                       remote_port=net_perf_client.interfaces.net_perf.server_port,
-                                       size=1460, ttl=30, throughput_type=1, qos=0, async_socket=0)
-        time.sleep(5)
-
-        tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp is not None, "Throughput not found"
-        logger().info("data transfer is successful")
-
-        wifi_dut.interfaces.wifi.leave()
         sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                         wifi_access_point=wifi_access_point,
-                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                        sl_collections=sl_collections,
+                                                        dut_mac_address=dut_mac_address,
                                                         ap_mac_address=ap_mac_address)
-        sniffer_verification.verify_sniffer_validation()
-
-        packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            da_addr=ap_mac_address,
-            sa_addr=wifi_thread.dut_addr['dut_mac_address'], filter_name='eap_type_tls_verification')
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
-            'packet_count'], 'Unable to find EAP frames sent from AP in sniffer'
-
-        packet_filter6 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=wifi_thread.dut_addr['dut_mac_address'],
-            da_addr=ap_mac_address,
-            filter_name='eap_tls_cert_verification_1_2')
-        logger().info(f"Validating EAP frames TLS version 1.2 in sniffer")
-
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter6)['packet_count'], \
-            'Unable to find EAP frames with TLS version 1.2 sent'
+        sniffer_verification.verify_sniffer_for_negative_scenarios()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -5154,5 +5127,84 @@ def test_wifi_sdk_EAP_TLS_connectivity_with_wrong_public_and_private_key_c477797
             sa_addr=dut_mac_address, filter_name='eap_tls_alert_msg_verification_1_2')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count'], 'Unable to find TLS packet with an Alert message Decrypt error from DUT in sniffer'
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.TLS_V1,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.config("radius_server",
+                    radius_server={"private_key_file": 'sha384.pem', "certificate_file": 'sha384.pem',
+                                   "ca_file": 'sha384.pem'})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs", "reset_wifi_conn_stats"])
+def test_wsdk_WPA2_EAP_Conn_TLS_when_server_invalid_root_ca_C113892(wifi_dut, wifi_access_point,
+                                                                                     wifi_sniffer, sniffer_filter,
+                                                                                     radius_server,
+                                                                                     sl_collections, request):
+    """ This test case Verifies WPA2 Enterprise Connection when the Invalid Root CA is loaded to DUT"""
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.load_certs(
+            eap_cert=["cas.pem", "SL_NET_SIGNING_CERTIFICATE",
+                      "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+        wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
+        wifi_dut.interfaces.wifi.set_eap_credentials()
+        time.sleep(3)
+        wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
+                                      passphrase=wifi_access_point.interfaces.wifi.passphrase,
+                                      security="wpa2_enterprise", uid="user1", enc="tls",
+                                      expected_status= (SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION | SLStatus.SL_STATUS_SI91X_DEAUTH_REQUEST_FROM_SUPPLICANT))
+        logger().info(
+            f" Connection failed when invalid root CA cert is loaded into the device,observed error code "
+            f" 0x10008 which is expected")
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.start_ip(
+            expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
+        logger().info(
+            f"IP configuration failed when command given in incorrect state,observed error code 0x10021 which "
+            f" is expected")
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                        wifi_access_point=wifi_access_point,
+                                                        dut_mac_address=dut_mac_address,
+                                                        sl_collections=sl_collections,
+                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification.verify_sniffer_for_negative_scenarios()
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
