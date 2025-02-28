@@ -3133,3 +3133,204 @@ def test_wifi_sdk_wpa2_enterprise_connect_with_ipv6_c113875(firmware_loader, wif
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Default |
+                    Si91xFeatureBitMap.HTTPLongerURL,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.Default |
+                          Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs", "wifi_powersave_disable", "reset_wifi_conn_stats"])
+def test_wifi_sdk_https_client_connection_wpa2_enterprise_c113805(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
+                                                          wifi_client, radius_server, sl_collections, request,
+                                                          http_server, http_client, index_path):
+    """ This test case verifies the HTTP client connection WPA2 Enterprise """
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        logger().info(f"****** wifi_thread is initiating *******")
+        wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     eap_type="tls", sl_collections=sl_collections, test_name=test_name,
+                                     eap_type_tls_no_cert = False)
+
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+
+        dut_mac_address = wifi_thread.dut_addr['dut_mac_address']
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+
+        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+        wifi_dut.interfaces.http.http_put(http_server.interfaces.http, index_path, server_port=443)
+
+        logger().info("\n\n***Fetching the data on https using get method***\n\n")
+        status_dut, content_dut = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path,
+                                                                    server_port=443)
+        status_client, content_client = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
+
+        assert not status_dut, "failed to fetch the https data"
+        assert status_client, "failed to load the https data"
+
+        logger().info(status_dut)
+        logger().info(content_dut)
+        assert content_dut == content_client, "fetched data is not same as expected data"
+
+        logger().info(f"\n\n***Posting data using http post request ***\n\n")
+        status_dut, content_dut = wifi_dut.interfaces.http.http_post(
+            http_server.interfaces.http,
+            "cgi-bin/cgi_example.py",
+            post_data='hellotestingfrohttppostcontent',
+            server_port=443)
+
+        assert status_dut == SLStatus.SL_STATUS_OK, "failed to post data using http post request"
+        logger().info(status_dut)
+
+        wifi_dut.interfaces.wifi.http_client_deinit()
+        wifi_dut.interfaces.wifi.leave()
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=ap_mac_address,
+            sa_addr=wifi_thread.dut_addr['dut_mac_address'], filter_name='eap_type_tls_verification')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)[
+            'packet_count'], 'Unable to find EAP frames sent from AP in sniffer'
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Default |
+                    Si91xFeatureBitMap.HTTPLongerURL,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.Default |
+                          Si91xTCPIPFeatureBitMap.HTTPClient,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs", "wifi_powersave_disable", "reset_wifi_conn_stats"])
+def test_wifi_sdk_http_client_connection_wpa2_enterprise_c113806(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
+                                                          wifi_client, radius_server, sl_collections, request,
+                                                          http_server, http_client, index_path):
+    """ This test case verifies the HTTP client connection WPA2 Enterprise """
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        logger().info(f"****** wifi_thread is initiating *******")
+        wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     eap_type="tls", sl_collections=sl_collections, test_name=test_name,
+                                     eap_type_tls_no_cert = False)
+
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+
+        dut_mac_address = wifi_thread.dut_addr['dut_mac_address']
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+
+        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.wifi.http_client_init(https_enable=False)
+        wifi_dut.interfaces.http.http_put(http_server.interfaces.http, index_path)
+
+        logger().info("\n\n***Fetching the data on https using get method***\n\n")
+        status_dut, content_dut = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path,
+                                                                    server_port=80)
+        status_client, content_client = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
+
+        assert not status_dut, "failed to fetch the https data"
+        assert status_client, "failed to load the https data"
+
+        logger().info(status_dut)
+        logger().info(content_dut)
+        assert content_dut == content_client, "fetched data is not same as expected data"
+
+        logger().info(f"\n\n***Posting data using http post request ***\n\n")
+        status_dut, content_dut = wifi_dut.interfaces.http.http_post(
+            http_server.interfaces.http,
+            "cgi-bin/cgi_example.py",
+            post_data='hellotestingfrohttppostcontent',
+            server_port=80)
+
+        assert status_dut == SLStatus.SL_STATUS_OK, "failed to post data using http post request"
+        logger().info(status_dut)
+
+        wifi_dut.interfaces.wifi.http_client_deinit()
+        wifi_dut.interfaces.wifi.leave()
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=ap_mac_address,
+            sa_addr=wifi_thread.dut_addr['dut_mac_address'], filter_name='eap_type_tls_verification')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)[
+            'packet_count'], 'Unable to find EAP frames sent from AP in sniffer'
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
