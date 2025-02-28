@@ -429,7 +429,7 @@ def test_tcp_data_rx_with_BE_BK_VI_VO_c22115(wifi_sniffer, net_perf_client, wifi
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8}}
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=["init", "net_init_client"])
+@pytest.mark.start_state("wifi_dut", wifi=["net_init_client"])
 def test_wifi_sdk_tcp_tx_in_tcp_ip_bypass_mode_c539021(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                        wifi_client, protocol, sniffer_filter, sl_collections):
     """Verify TCP Tx data transfer ( TCP socket create->connect->close) in loop with TCP/IP bypass mode"""
@@ -438,6 +438,7 @@ def test_wifi_sdk_tcp_tx_in_tcp_ip_bypass_mode_c539021(wifi_sniffer, net_perf_cl
     throughput_type = 1
     size = 1460
     try:
+        wifi_dut.interfaces.wifi.init(mode='client')
         logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel)
