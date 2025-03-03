@@ -408,6 +408,7 @@ def test_wifi_sdk_ble_conn_disconn_along_wlan_scan_C20144(
         ble_client.interfaces.bluetooth.close()
 
 
+@pytest.mark.skip("Not Deployed Yet")
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ble_conn_along_wlan_conn_C20145(
@@ -687,6 +688,7 @@ def test_wifi_sdk_ble_conn_500ms_adv_wlan_scan_provisioning_C20159(
         ble_client.interfaces.bluetooth.close()
 
 
+@pytest.mark.skip("Not Deployed Yet")
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_ble_conn_10_24s_adv_wlan_scan_provisioning_C20160(
@@ -795,6 +797,7 @@ def test_wifi_sdk_ble_conn_along_wlan_conn_WPA3_security_C661503(
         ble_client.interfaces.bluetooth.close()
 
 
+@pytest.mark.skip("Not Deployed Yet")
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA', "cipher": "TKIP", "passphrase": 'thisisatestnework',
