@@ -107,11 +107,17 @@ class Ip_Conflict(ThreadBase):
 
         self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
         self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
-        logger().info("****** Configuring static ip to DUT****** ")
-        self.wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
-        self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+
+        if not self.ap_mode:
+            logger().info("Enabling power save Enhanced psp")
+            self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+            time.sleep(10)
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                       psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+            time.sleep(20)
         ap_client_ip = self.wifi_access_point.interfaces.wifi.read_ip_client_address(hostname)
+        logger().info(f"****** ap_client_ip: {ap_client_ip}****** ")
+        logger().info("****** Configuring static ip to DUT****** ")
         self.wifi_dut.interfaces.wifi.start_ip(static_ip=ap_client_ip, static_subnet=static_subnet,
                                                static_gateway=wifi_client_gateway_ip, vid=0,
                                                expected_status=SLStatus.SL_STATUS_SI91X_IP_CONFLICT_ERROR)

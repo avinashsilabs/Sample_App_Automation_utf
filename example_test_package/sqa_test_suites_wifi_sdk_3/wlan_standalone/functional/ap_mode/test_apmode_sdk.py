@@ -147,7 +147,7 @@ class ApModeClientConnections(ThreadBase):
             self.beacon_interval = "100"
             self.no_of_clients = 1
 
-        if self.testcase_no == 19465:
+        if self.testcase_no == 19465 or self.testcase_no == 19441:
             self.ssid = "SILABS_AP_MODE"
             self.security = "WPA2"
             self.password = "Automation@123"
@@ -257,16 +257,32 @@ class ApModeClientConnections(ThreadBase):
         self.sl_collections.configure_dut_in_static_ip(self.wifi_dut, static_ip="192.168.100.76",
                                                        static_subnet="255.255.255.0",
                                                        static_gateway="192.168.100.76")
-        self.dut_addr_dict = self.sl_collections.ap_mode_clients_connection(self.wifi_dut, self.wifi_clients,
-                                                                       channel=self.channel, ssid=self.ssid,
-                                                                       security=self.security, password=self.password,
-                                                                       dtim_count=self.dtim_count,
-                                                                       beacon_interval=self.beacon_interval,
-                                                                       ht_caps=self.htcaps_enable,
-                                                                       ping_count=ping_count,
-                                                                       no_of_clients=self.no_of_clients,
-                                                                       leave=self.leave,
-                                                                       enable_data_rate=self.enable_data_rate)
+        if self.testcase_no == 19441:
+            self.dut_addr_dict = self.sl_collections.ap_mode_clients_connection(self.wifi_dut, self.wifi_clients,
+                                                                                channel=self.channel, ssid=self.ssid,
+                                                                                security=self.security,
+                                                                                password=self.password,
+                                                                                dtim_count=self.dtim_count,
+                                                                                beacon_interval=self.beacon_interval,
+                                                                                ht_caps=self.htcaps_enable,
+                                                                                ping_count=ping_count,
+                                                                                no_of_clients=self.no_of_clients,
+                                                                                leave=self.leave,
+                                                                                enable_data_rate=self.enable_data_rate,
+                                                                                data_rate="24Mbps")
+        else:
+            logger().info("***** Other than 19441 case *** ")
+            self.dut_addr_dict = self.sl_collections.ap_mode_clients_connection(self.wifi_dut, self.wifi_clients,
+                                                                                channel=self.channel, ssid=self.ssid,
+                                                                                security=self.security,
+                                                                                password=self.password,
+                                                                                dtim_count=self.dtim_count,
+                                                                                beacon_interval=self.beacon_interval,
+                                                                                ht_caps=self.htcaps_enable,
+                                                                                ping_count=ping_count,
+                                                                                no_of_clients=self.no_of_clients,
+                                                                                leave=self.leave,
+                                                                                enable_data_rate=self.enable_data_rate)
         if self.traffic_type == "Tx":
             logger().info(f"***** starting iperf ******")
             self.net_perf_client.interfaces.net_perf.init_server(host_ip=self.dut_addr_dict['client_ip'], device_ip=self.dut_addr_dict['dut_ip'],
@@ -1397,7 +1413,7 @@ def test_wifi_sdk_dutap_fixed_data_rate_c19441(wifi_sniffer, wifi_dut,
     try:
         ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
                                              utf_constants,  net_perf_client=net_perf_client, protocol=protocol, capture_filename="test_c19441",
-                                             testcase_no=19465, traffic_type="Tx", enable_data_rate=True, leave=False, sniffer_stop=True)
+                                             testcase_no=19441, traffic_type="Tx", enable_data_rate=True, leave=False, sniffer_stop=True)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
         for i in range(0, 1):
