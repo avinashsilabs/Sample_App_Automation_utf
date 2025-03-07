@@ -1556,7 +1556,7 @@ start_state:
     wifi_access_point:
         wifi: 'ap_enabled'
     wifi_dut:
-        device: 'reset'
+#        device: 'reset'
         wifi: 'init'
 
 #end_state:
@@ -1585,4 +1585,4 @@ constants:
     hostname:
         value: 'rs9116test'    
 
-recovery_error_codes: ['0xffffffe2', '0xffffffd5']
+recovery_error_codes: ['0xffffffe2', '0xffffffd5', '0xffffffeb', '0xffffffff', '0xffffffe7']
