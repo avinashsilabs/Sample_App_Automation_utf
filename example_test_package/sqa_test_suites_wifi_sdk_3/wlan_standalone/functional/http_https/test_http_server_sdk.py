@@ -107,20 +107,43 @@ class WifiJoin(ThreadBase):
 
         self.wifi_dut.interfaces.wifi.http_server_start()
 
-        logger().info(f"...... sending http get request from third party client to DUT .......")
+        i = 0
+        if self.test_case == '708786':
+            sw = Stopwatch()
+            while sw.elapsed_sec < 120:
+                logger().info(f"...... sending http get request from third party client to DUT .......")
+                i = i + 1
+                status, resp_content = self.http_client.interfaces.http.http_request(
+                    self.http_server.interfaces.http, method, self.index_path, server_ip=self.dut_addr['device_ip'],
+                    timeout=20)
 
-        status, resp_content = self.http_client.interfaces.http.http_request(
-            self.http_server.interfaces.http, method, self.index_path, server_ip=self.dut_addr['device_ip'], timeout=20)
+                logger().info(f"........ length of DUT webpage {len(resp_content)}\n\n .......")
+                logger().info(f"........ contents of webpage {resp_content}\n\n\n ........")
 
-        logger().info(f"........ length of DUT webpage {len(resp_content)} .......")
-        logger().info(f"........ contents of webpage {resp_content}\n\n\n ........")
+                file_time_stamp = str(datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+                webpage = "./reports/" + self.capture_filename + "webpage" + file_time_stamp + ".html"
 
-        file_time_stamp = str(datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
-        webpage = "./reports/" + self.capture_filename + "webpage" + file_time_stamp + ".html"
+                logger().info(f"........ webpage ID sent by DUT is {webpage} ..........")
+                with open(webpage, "w") as recv:
+                    recv.write(resp_content.decode())
+                logger().info(f"webpage refreshment done {i}")
+                time.sleep(5)
+        else:
+            logger().info(f"...... sending http get request from third party client to DUT .......")
 
-        logger().info(f"........ webpage ID sent by DUT is {webpage} ..........")
-        with open(webpage, "w") as recv:
-            recv.write(resp_content.decode())
+            status, resp_content = self.http_client.interfaces.http.http_request(
+                self.http_server.interfaces.http, method, self.index_path, server_ip=self.dut_addr['device_ip'],
+                timeout=20)
+
+            logger().info(f"........ length of DUT webpage {len(resp_content)}\n\n .......")
+            logger().info(f"........ contents of webpage {resp_content}\n\n\n ........")
+
+            file_time_stamp = str(datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+            webpage = "./reports/" + self.capture_filename + "webpage" + file_time_stamp + ".html"
+
+            logger().info(f"........ webpage ID sent by DUT is {webpage} ..........")
+            with open(webpage, "w") as recv:
+                recv.write(resp_content.decode())
 
         self.wifi_dut.interfaces.wifi.http_server_stop()
         self.wifi_dut.interfaces.wifi.http_server_deinit()
@@ -328,6 +351,37 @@ def test_Verify_http_server_with_GET_PUT_POST_using_3rd_party_curl_client_C64137
         iter_count = utf_constants.get("iter_count")
         for count in range(iter_count):
             wifi_obj.http_curl_functionality()
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
+        raise e
+
+@wifi_dut_marker()
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_query_webpage_every_5secs_http_server_c708786(
+        wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client, request, sniffer_filter, sl_collections,
+        utf_constants):
+
+    """Verify http webpage at client side for every 5seconds like refresh"""
+    try:
+        capture_filename = request.node.name
+        index_path = "/data"
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, http_server=http_server, http_client=http_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, utf_constants=utf_constants,
+                            test_case='708786', index_path=index_path)
+
+        iter_count = utf_constants.get("iter_count")
+        for count in range(iter_count):
+            wifi_obj.start()
+            wifi_obj.wait_for_exit()
+            wifi_obj.http_functionality()
+
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
 
