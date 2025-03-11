@@ -414,11 +414,11 @@ devices:
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
-                hostname: '10.207.18.235'
+                hostname: '10.207.18.139'
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
-                outlet: 1
+                outlet: 5
                 # use_persistent_state: true will set a persistent state, that the outlet will revert
                 # to after reboot or power cycle
                 # use_persistent_state: false will set a transient state only, and the outlet will revert
