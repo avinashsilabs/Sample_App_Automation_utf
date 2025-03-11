@@ -4,6 +4,7 @@ import random
 import string
 from random import randint
 import re
+import concurrent.futures
 from datetime import datetime
 from utf.interfaces.shell.ssh_shell import SSHShell
 from utf_wiseconnect_3.tests.devices.si91x import (
@@ -18,6 +19,8 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     DeviceConstants,
     Si91xPowerSaveModes,
     Si91xPowerSaveProcedureTypes,
+    Si91xBTFeatureBitMap,
+    Si91xRegionCode
 )
 from utf.utils.logger import get_logger
 from utf.utils.stopwatch import Stopwatch
@@ -47,6 +50,31 @@ from threading import Thread
 
 def logger():
     return get_logger(__name__)
+
+def transmit_stats(fixture, enable=1, power=127, rate=139,
+                   length=100, mode=0, channel=1, aggr_enable=0,
+                   enable_11ax=0):
+    fixture.interfaces.wifi.set_antenna(interface="client", antenna=4)
+    logger().info(f"Antenna Command Frame Success")
+    logger().info(f"Transmit test start with params enable={enable}, power={power}, rate={rate}, length={length}, mode={mode}, "
+                  f"channel={channel}, aggr_enable={aggr_enable}, enable_11ax={enable_11ax}")
+    fixture.interfaces.wifi.sl_si91x_transmit_test_start(
+        enable=enable,
+        power=power,
+        rate=rate,
+        length=length,
+        mode=mode,
+        channel=channel,
+        aggr_enable=aggr_enable,
+        enable_11ax=enable_11ax,
+    )
+    logger().info(f"Transmit test start Success")
+
+
+def start_statistic_report(fixture, channel=1, max_stats_count=50, async_timeout=100):
+    logger().info(f"\r\nReceive Statistics...\r\n")
+    fixture.interfaces.wifi.start_statistic_report(interface="client", channel=channel, max_stats_count=max_stats_count, async_timeout=async_timeout)
+
 class TCPDataTransfer(ThreadBase):
     def __init__(self, wifi_dut, remote_socket, device_ip=None, data="Thisisfromtcpclient"):
         super().__init__()
@@ -822,3 +850,109 @@ def test_powersave_functionality_after_rejoin_sdk_C19508(switch, wifi_sniffer, w
         # logger().info("\n\nEnabling Wireless in AP")
         # wifi_access_point.interfaces.wifi.start_ap()
         # time.sleep(60)
+
+
+# Need two evk harness
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("remote_wiseconnect3")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 0, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.PERMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region":1,
+        "region_code": Si91xRegionCode.Worldwide,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+    }
+)
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    sapi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}, "ble": {"count": 0, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.PERMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DHCPv4Client,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region":1,
+        "region_code": Si91xRegionCode.Worldwide,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_wifi_sdk_sta_check_basic_per_transmit_and_receive_two_evk_c34780(wifi_dut, wifi_access_point, remote_wiseconnect3, sl_collections, wifi_sniffer, request, sniffer_filter):
+    """
+        Test the basic PER (Packet Error Rate) transmit and receive functionality between two EVKs (Evaluation Kits).
+
+        This test performs the following steps:
+        1. Configures the sniffer on the WiFi access point channel.
+        2. Starts the sniffer capture.
+        3. Executes the TX (transmit) test by running `transmit_stats` on `wifi_dut` and `start_statistic_report` on `remote_wiseconnect3`.
+        4. Stops the statistic report on `remote_wiseconnect3`.
+        5. Executes the RX (receive) test by running `transmit_stats` on `remote_wiseconnect3` and `start_statistic_report` on `wifi_dut`.
+        6. Stops the statistic report on `wifi_dut`.
+        7. Stops the sniffer capture.
+
+        Args:
+            wifi_dut: The Device Under Test (DUT) WiFi interface.
+            wifi_access_point: The WiFi access point interface.
+            remote_wiseconnect3: The remote WiFi interface for the second EVK.
+            sl_collections: Collection of utility functions for the test.
+            wifi_sniffer: The WiFi sniffer interface.
+            request: The pytest request object containing test metadata.
+
+        Raises:
+            Exception: If any error occurs during the test execution.
+        """
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{request.node.name}.pcap")
+        logger().info(f"Starting the TX Test")
+        primary_dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        secondary_dut_mac_address = remote_wiseconnect3.interfaces.wifi.get_mac_address()
+        logger().info(f"\r\n The Primary DUT MAC address is {primary_dut_mac_address} and the secondary DUT MAC address is {secondary_dut_mac_address} \r\n")
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Submit the functions to the executor
+            executor.submit(transmit_stats, wifi_dut)
+            executor.submit(start_statistic_report, remote_wiseconnect3)
+        remote_wiseconnect3.interfaces.wifi.stop_statistic_report()
+
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=primary_dut_mac_address,
+            filter_name="association_request_with_malformed_packets")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find association request broadcast packet'
+
+        logger().info(f"Starting the RX Test")
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Submit the functions to the executor
+            executor.submit(transmit_stats, remote_wiseconnect3)
+            executor.submit(start_statistic_report, wifi_dut)
+        wifi_dut.interfaces.wifi.stop_statistic_report()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        logger().error(f"Exception occurred: {e}")  # Log the exception
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
