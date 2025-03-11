@@ -596,7 +596,6 @@ def test_wifi_sdk_ipv6_assign_sta_interface_c557420(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip(reason="Need to check the test case")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -607,8 +606,7 @@ def test_wifi_sdk_ipv6_assign_sta_interface_c557420(
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv4Server |
                           Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.DHCPv6Server
-                          | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
-                          Si91xTCPIPFeatureBitMap.HTTPClient,
+                          | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.IEEE802_11W |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
@@ -623,7 +621,7 @@ def test_wifi_sdk_ipv6_assign_sta_interface_c557420(
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "thisistestnetwork", "ssid": "sharma123", "ipv6_state": "1",
-                          "connection_type": "disable"})
+                          "connection_type": "disabled", "use_ipv6_web": True})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_static_ipv6_assign_sta_interface_c557421(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
@@ -632,7 +630,6 @@ def test_wifi_sdk_static_ipv6_assign_sta_interface_c557421(
 
     try:
         test_name = request.node.name
-
         ping_count = utf_constants.get("ping_count")
 
         logger().info("... configuring the Sniffer with the channel ...")
