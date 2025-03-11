@@ -617,7 +617,7 @@ def test_wifi_sdk_mgmt_pmf_enable_receive_data_c19671(wifi_dut, wifi_access_poin
         remote_socket.interfaces.socket.start_server(server_ip=remote_ip, port=tcp_ip_port)
 
         # Open TCP socket in the DUT
-        sock = wifi_dut.interfaces.wifi.socket(timeout=20)
+        sock = wifi_dut.interfaces.wifi.Asyncsocket(protocol="IPPROTO_TCP")
 
         assert sock == 0, "socket id received is not matched. Expected is 0"
 
@@ -641,8 +641,9 @@ def test_wifi_sdk_mgmt_pmf_enable_receive_data_c19671(wifi_dut, wifi_access_poin
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count']
 
-        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
-        wifi_dut.interfaces.wifi.leave()
+        time.sleep(5)
+        remote_socket.interfaces.socket.close_server()
+        wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
