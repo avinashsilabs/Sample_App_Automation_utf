@@ -337,7 +337,7 @@ class WifiThreadFunctionality(ThreadBase):
 
 class BleThreadFunctionality(ThreadBase):
     def __init__(self, wifi_dut=None, ble_client=None, ble_test_type=None, sl_collections=None, test_case=None,
-                 ble_dut=None, ble_pairing=0, switch=None, utf_constants=None):
+                 ble_dut=None, ble_pairing=0, switch=None, utf_constants=None, bond_info=0):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_client = ble_client
@@ -350,10 +350,12 @@ class BleThreadFunctionality(ThreadBase):
         self.ble_pairing = ble_pairing
         self.switch = switch
         self.utf_constants = utf_constants
+        self.bond_info = bond_info
 
     def run(self):
         """ *************************** Set up DUT for BLE advertising ***************************** """
-        self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=self.ble_pairing)
+        self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=self.ble_pairing,
+                                                                            bond_info=self.bond_info)
         assert (self.ble_dut_address is not None), "Unable to fetch bluetooth address from DUT"
         logger().info(f" BLE DUT ADDRESS : {self.ble_dut_address}")
         time.sleep(5)
@@ -821,7 +823,7 @@ def test_wifi_sdk_wlan_tcp_tx_with_11ax_ble_connect_and_disconnect_slave_c198678
 
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
                                          ble_dut=ble_dut, ble_pairing=0, test_case="198678",
-                                         utf_constants=utf_constants)
+                                         utf_constants=utf_constants, bond_info=1)
 
         wifi_obj = WifiThreadFunctionality(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                            wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, qos=qos,
