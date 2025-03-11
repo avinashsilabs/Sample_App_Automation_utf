@@ -1,12 +1,14 @@
 import pytest
 import re
 from utf.utils.logger import get_logger
+from utf.utils.iperf.iperf_utils import ping
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xOperatingMode, Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap, \
     Si91xExtTCPIPFeatureBitMap, Si91xPowerSaveModes, Si91xJoinFeatureBitMap, \
     Si91xPowerSaveProcedureTypes, Si91xWebSocketParms
 from utf.utils.thread_base import ThreadBase
 from utf.utf_config import UtfConfig
+from base64 import b64decode, b64encode
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 import random
 import string
@@ -239,6 +241,46 @@ class WLanJoinThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
+
+            elif self.test_case == '688096':
+                self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, "example.com",
+                                                             "/websocket",
+                                                             80, 5001)
+                self.wifi_dut.interfaces.wifi.websocket_connect()
+                assert ws_handler.client_connected
+                iter_count = 1
+                for i in range(iter_count):
+                    self.wifi_dut.interfaces.wifi.websocket_send(
+                        opcode=Si91xWebSocketParms.SL_WEBSOCKET_OPCODE_PONG,
+                        higher_data_len=0, data="Hello_World!")
+                    time.sleep(2)
+                    logger().info(f"data received on websocket server ->{ws_handler.message_received}")
+                    status = ping(self.dut_addr['device_ip'], self.ping_count)
+                    assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+                self.wifi_dut.interfaces.wifi.websocket_close()
+                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.leave()
+                logger().info("Stopping sniffer capture")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                opcode_10 = 0
+                dut_ip, dut_mac_address = self.dut_addr['device_ip'], self.dut_addr['dut_mac_address']
+                decryption_key = f"{self.wifi_access_point.interfaces.wifi.passphrase}:{self.wifi_access_point.interfaces.wifi.ssid}"
+                ap_bssid = self.wifi_access_point.interfaces.wifi.bssid
+                websocket_capture_list = \
+                    self.sl_collections.ssl_packet_decryption(self.wifi_sniffer, decryption_key, dut_mac_address,
+                                                              ["websocket"],
+                                                              self.capture_filename, ap_bssid)['websocket']
+                for websocket in websocket_capture_list:
+                    logger().info(f"websocket info {websocket[0]}")
+                    # fetch DUT ip address
+                    if websocket[2] == dut_ip:
+                        # fetch websocket layer content from the sniffer capture fields
+                        websocket_layer = websocket[0]
+                        if re.search(".*Opcode: Pong", websocket_layer):
+                            logger().info(f"DUT sent opcode-10(pong) websocket frame")
+                            opcode_10 = opcode_10 + 1
+                assert opcode_10 != 0,  "4-way handshake is not captured or DUT doesn't send opcode-10 frame->websocket " \
+                                      "pong "
 
             elif self.test_case == '688097':
                 self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, server_port=80,
@@ -541,6 +583,34 @@ class WLanJoinThread(ThreadBase):
                             opcode_9 = opcode_9 + 1
                 assert opcode_9 != 0, "4-way handshake is not captured or DUT doesn't send opcode-9 frame->websocket " \
                                       "ping "
+
+            elif self.test_case == '19344':
+                host_name = "example.com"
+                resource_name = "/websocket"
+                self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, host_name,
+                                                             resource_name,
+                                                             80, 5001)
+                self.wifi_dut.interfaces.wifi.websocket_connect()
+                time.sleep(0.1)
+                assert ws_handler.client_connected
+                iter_count = 3
+                for i in range(iter_count):
+                    data = text_generator(size=100)
+                    self.http_server.interfaces.http.send_message_to_websocket_clients(data)
+                    time.sleep(3)
+                    events = self.wifi_dut.interfaces.wifi.get_async_events()
+                    received_data = None
+                    for event in events:
+                        if event.event_type == AsyncEventIdentifiers.WEBSOCKET_DATA_RECEIVE_EVENT:
+                            received_data = re.findall(r"data_received:(.*)", event.event_data)
+                            received_data = b64decode(received_data[0])
+                            logger().info(f"The sent data from the Remote Server is {data} and received data is {received_data}")
+                    assert received_data.decode() == data, "Data sent by Websocket server and received on DUT is not same"
+                self.wifi_dut.interfaces.wifi.websocket_close()
+                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.leave()
+                logger().info("Stopping sniffer capture")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
 
             elif self.test_case == '687274':
                 invalid_server = "192.168.30.50"
@@ -904,6 +974,54 @@ def test_wifi_sdk_websocket_opcode_8_func_c19342(wifi_dut, wifi_access_point, wi
         ping_count = utf_constants.get("ping_count")
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                   sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='19342',
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
+                                  http_server=http_server, capture_filename=capture_filename)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+@pytest.mark.skip("Fixed In: https://jira.silabs.com/browse/UTF-6517")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        }
+    )
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_websocket_verify_rx_without_fin_bit_c19344(wifi_dut, wifi_access_point, wifi_sniffer, http_server, utf_constants,
+                                                 request, sl_collections, sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+        5. Verify websocket RX from server to DUT without FIN bit
+    """
+    capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='19344',
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
                                   http_server=http_server, capture_filename=capture_filename)
 
@@ -1330,7 +1448,6 @@ def test_wifi_sdk_websocket_ssl_connect_disconnect_c37479(wifi_dut, wifi_access_
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
-
 @pytest.mark.skip()
 @wifi_dut_marker()
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1663,6 +1780,41 @@ def test_wifi_sdk_websocket_functionality_hostname_resourcename_empty_string_c68
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
                                   http_server=http_server, capture_filename=capture_filename,
                                   resource_name=resource_name)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_websocket_functionality_with_pong_frame_c688096(wifi_dut, wifi_access_point, wifi_sniffer, http_server, utf_constants,
+                                            request, sl_collections, sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+        5. Verify websocket connectivity and close functionality
+    """
+    capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='688096',
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
+                                  http_server=http_server, capture_filename=capture_filename)
 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
