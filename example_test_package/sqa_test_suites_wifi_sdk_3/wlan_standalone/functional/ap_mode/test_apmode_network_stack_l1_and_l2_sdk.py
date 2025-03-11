@@ -1768,16 +1768,25 @@ def test_wifisdk_DUTAP_open_10_tcp_server_sockets_rx_C19475(wifi_dut, wifi_sniff
         client_socket = []
         for count in range(0, 10):
             server_port = server_port_base + count
-            client_socket.append(remote_socket_factory.interfaces.socket.create_socket())
+            client_socket.append(remote_socket_factory.interfaces.socket.create_socket(interface="wlan0"))
             sock = wifi_dut.interfaces.wifi.Asyncsocket(protocol="IPPROTO_TCP")
             tcp_socks.append(sock)
             wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=dut_addr_dict['dut_ip'], server_port=server_port, timeout=15,
                                           asynch=1)
-            wifi_dut.interfaces.wifi.listen(sock, backlog=0, asynch=1)
+            wifi_dut.interfaces.wifi.listen(sock, backlog=1, asynch=1)
             time.sleep(3)
             ThreadBase.call_functions_simultaneously(
-                [(client_socket[count].connect_client_tcp, dut_addr_dict['dut_ip'], server_port),
-                 (wifi_dut.interfaces.wifi.bsdSocketAccept, sock, 1)], timeout=10)
+                [
+                    (wifi_dut.interfaces.wifi.bsdSocketAccept, sock, 1),
+                    (
+                        client_socket[count].connect_client_tcp,
+                        dut_addr_dict['dut_ip'],
+                        server_port,
+                    ),
+                ],
+                timeout=10,
+            )
+
             time.sleep(3)
         count = 0
         for sock_no in tcp_socks:
