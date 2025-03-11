@@ -24,6 +24,7 @@ import threading
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingMode, Si91xFeatureBitMap, Si91xTCPIPFeatureBitMap, \
     Si91xCustomFeatureBitMap, \
     Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xBLEFeatureBitMap, Si91xConfigFeatureBitMap, Si91xExtCustomFeatureBitMap
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 
 
 
@@ -2359,10 +2360,11 @@ def test_wifi_sdk_DUTAP_wlan_disconnect_while_sending_data_C551124(wifi_sniffer,
         while sw.elapsed_sec < 120:
             events = wifi_dut.interfaces.wifi.get_async_events()
             for event in events:
-                 logger().info(f"*********{event.event_data}******")
-                 if "Client disconnected:" in event.event_data:
+                logger().info(f"*********{event.event_data}******")
+                if "Client disconnected:" in event.event_data:
                     client_disconnect = 1
-                    break
+            if client_disconnect:
+                break
         assert client_disconnect, f"unable to find client disconnect event"
 
     except Exception as Ex:
