@@ -13,6 +13,8 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xExtCustomFeatureBitMap,
     Si91xJoinFeatureBitMap
 )
+from random import randint
+import concurrent.futures
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utils.time_measurer import TimeMeasurer
@@ -23,6 +25,10 @@ import string
 import random
 import re
 
+socket_list = {
+    "async_socket": [],
+    "sync_socket": [],
+}
 
 def logger():
     return get_logger(__name__)
@@ -46,7 +52,7 @@ def logger():
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, http_client=None, wifi_client=None,
                  test_name=None, sl_collections=None, http_server=None, index_path=None, sniffer_filter=None,
-                 switch=None, utf_constants=None):
+                 switch=None, utf_constants=None, ssl_server=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -64,6 +70,7 @@ class WLanThread(ThreadBase):
         self.ap_mac_address = None
         self.http_client_initialized = False
         self.switch = switch
+        self.ssl_server = ssl_server
 
     def run(self):
         try:
@@ -128,6 +135,34 @@ class WLanThread(ThreadBase):
                     packet_filter1=self.power_save_filter)['packet_count'] > 0, \
                     "Unable to find NULL-Data frame packets with power save bit = 1"
 
+                return
+
+            if self.test_name in ['537712', '537906']:
+                https_sequential_requests = HTTPSSequenceDataTransfer(
+                    wifi_dut=self.wifi_dut,
+                    wifi_access_point=self.wifi_access_point,
+                    wifi_sniffer=self.wifi_sniffer,
+                    sniffer_filter=self.sniffer_filter,
+                    http_server=self.http_server,
+                    test_name = self.test_name,
+                    sl_collections=self.sl_collections,
+                )
+                https_sequential_requests.start()
+                https_sequential_requests.wait_for_exit()
+                tls_tx_thread = TLSThread(
+                    wifi_dut=self.wifi_dut,
+                    dut_addr=https_sequential_requests.dut_addr,
+                    transfer_type="TX",
+                    port_number=5001,
+                    ssl_server=self.ssl_server,
+                )
+                tls_tx_thread.start()
+                tls_tx_thread.wait_for_exit()
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    # Submit the functions to the executor
+                    executor.submit(https_sequential_requests.sequence_requests)
+                    #executor.submit(tls_tx_thread.transmit_data, 0)
+                tls_tx_thread.close_sockets()
                 return
 
             if self.test_name == '476943' or self.test_name == '476956' or self.test_name == '476954':
@@ -1460,6 +1495,199 @@ class Thread_ap(WLanThread):
         self.switch.interfaces.pdu_switch.turn_on(70)
         time.sleep(20)
         # time.sleep(20)
+
+class TLSThread(ThreadBase):
+    def __init__(
+        self,
+        wifi_dut=None,
+        remote_ip_address=None,
+        dut_addr=None,
+        client_socket=None,
+        transfer_type=None,
+        port_number=None,
+        ssl_server=None,
+    ):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.remote_ip_address = remote_ip_address
+        self.dut_addr = dut_addr
+        self.client_socket = client_socket
+        self.transfer_type = transfer_type
+        self.port_number = port_number
+        self.ssl_server = ssl_server
+
+    def run(self):
+        try:
+            global socket_list
+            self.ssl_server.interfaces.ssl.start_server(port=self.port_number)
+            self.remote_ip_address = self.ssl_server.interfaces.ssl.server_ip
+
+            self.socket_fd = (
+                self.wifi_dut.interfaces.wifi.socket()
+                if self.transfer_type == "TX"
+                else self.wifi_dut.interfaces.wifi.async_sdk_socket(
+                    domain="AF_INET", stream_type="SOCK_STREAM", protocol="IPPROTO_TCP"
+                )
+            )
+            if (
+                self.transfer_type == "TX"
+                and self.socket_fd not in socket_list["sync_socket"]
+            ):
+                socket_list["sync_socket"].append(self.socket_fd)
+            if (
+                self.transfer_type == "RX"
+                and self.socket_fd not in socket_list["async_socket"]
+            ):
+                socket_list["async_socket"].append(self.socket_fd)
+            self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(
+                socket_fd=self.socket_fd, option_name="TCP_ULP"
+            )
+            if self.transfer_type == "RX":
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOptAsync(
+                    self.socket_fd,
+                    option_name="SL_SI91X_SO_HIGH_PERFORMANCE_SOCKET",
+                    cert_index=128,
+                )
+            self.wifi_dut.interfaces.wifi.bind(
+                socket_fd=self.socket_fd,
+                device_ip=self.dut_addr["device_ip"],
+                server_port=randint(5001, 60000),
+                timeout=15,
+            )
+            for count in range(3):
+                connect_status = False
+                try:
+                    self.wifi_dut.interfaces.wifi.bsdSocketConnect(
+                        socket_fd=self.socket_fd,
+                        server_ip=self.remote_ip_address,
+                        server_port=self.port_number,
+                    )
+                    connect_status = True
+                    break
+                except:
+                    logger().info(
+                        f"Socket connection failed in DUT...retry_count:{count + 1}"
+                    )
+                    assert connect_status, "Socket connection failed in DUT"
+        except Exception as e:
+            logger().info(
+                f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n"
+            )
+
+    def transmit_data(self, server_socket_no=None):
+        duration = 40
+        buffer_length = 100
+        sw = Stopwatch()
+        while sw.elapsed_sec < duration:
+            tx_buffer = "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
+            )
+            self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=server_socket_no, data=tx_buffer)
+            data_receive = self.ssl_server.interfaces.ssl.data_recv_content(server_socket_no+1, buffer_length)
+            logger().info(f"Data received on remote socket opened is {data_receive.decode()}")
+            assert tx_buffer == data_receive.decode(), "Data sent by DUT and received on server is matching"
+            logger().info(
+                f"bytes sent by DUT on the ssl socket opened-> {len(tx_buffer)}, received by remote peer-> {len(data_receive)}"
+            )
+
+    def close_sockets(self):
+        for sock_type, socket in socket_list.items():
+            if sock_type == "sync_socket":
+                for sock in socket:
+                    self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+            else:
+                for sock in socket:
+                    self.wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
+        socket_list.clear()
+        socket_list.update(
+            {
+                "async_socket": [],
+                "sync_socket": [],
+            }
+        )
+
+    def recv_data(self, server_socket_no=None, duration=None):
+        buffer_length = 1370
+        pkt_count = 50000
+        self.ssl_server.interfaces.ssl.send_data(
+            server_socket_no, pkt_count, msg_length=buffer_length, duration=duration
+        )
+        time.sleep(60)
+        bytes_sent = self.ssl_server.interfaces.ssl.data_send_stats(server_socket_no)
+        result = self.wifi_dut.interfaces.wifi.get_socket_rx_stats(
+            self.socket_fd, no_of_pkts="pkt_count", ttl=30
+        )
+        logger().info(f"\n*** RX_Stats: {result}\n")
+        bytes_received = int(result)
+        logger().info(f"\n Bytes sent by Remote Peer -> {bytes_sent}\n")
+        logger().info(
+            f"\n ****Bytes Received on Socket: {self.socket_fd} -> {bytes_received}"
+        )
+        logger().info(
+            f"SSL RX throughput ->  {((bytes_received * 8) / (1000 * 1000 * duration))} Mbps"
+        )
+        time.sleep(2)
+
+
+class HTTPSSequenceDataTransfer(ThreadBase):
+    def __init__(self, wifi_dut=None, wifi_access_point=None, http_server=None, sniffer_filter=None, wifi_sniffer=None, test_name = None, sl_collections=None, dut_addr=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.http_server = http_server
+        self.sniffer_filter = sniffer_filter
+        self.wifi_sniffer = wifi_sniffer
+        self.test_name = test_name
+        self.sl_collections = sl_collections
+        self.dut_addr = dut_addr
+
+    def run(self):
+        logger().info('\n*** Configuring Sniffer with WAP channel ***\n')
+        self.wifi_sniffer.interfaces.capture.configure_interface(
+            channel=self.wifi_access_point.interfaces.wifi.channel)
+        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+        time.sleep(3)
+        self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                 wifi_access_point=self.wifi_access_point,
+                                                                 associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                 channel=self.wifi_access_point.interfaces.wifi.channel)
+        self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
+
+    def sequence_requests(self):
+        server_port = 443 if self.test_name == '537906' else 80
+        https_enable = True if self.test_name == '537906' else False
+        for _ in range(1):
+            status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=https_enable)
+            if status == SLStatus.SL_STATUS_OK:
+                self.http_client_initialized = True
+            self.wifi_dut.interfaces.wifi.http_put(self.http_server.interfaces.http,
+                                                   "cgi-bin/cgi_example.py", server_port=server_port)
+            self.wifi_dut.interfaces.wifi.http_get(self.http_server.interfaces.http,
+                                                   "index.html",
+                                                   server_port=server_port)
+            time.sleep(5)
+
+            self.wifi_dut.interfaces.wifi.http_post(self.http_server.interfaces.http,
+                                                    resource_path="cgi-bin/cgi_example.py",
+                                                    post_data=''.join(random.choices(
+                                                        string.ascii_uppercase + string.digits, k=30)),
+                                                    server_port=server_port)
+
+            time.sleep(10)
+            status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+            if status == SLStatus.SL_STATUS_OK:
+                self.http_client_initialized = False
+        logger().info("Stopping sniffer capture")
+        self.wifi_sniffer.interfaces.capture.stop_capture()
+        power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
+            filter_name="power_mgmt_bit")
+
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=power_save_filter)['packet_count'] > 0, \
+            "Unable to find NULL-Data frame packets with power save bit = 1"
+        time.sleep(5)
+        self.wifi_dut.interfaces.wifi.leave()
 
 
 @pytest.mark.config(
@@ -3079,6 +3307,86 @@ def test_wifi_sdk_http_put_get_post_in_sequence_ipv6_stateless_c476954(firmware_
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               test_name=test_name, sl_collections=sl_collections, http_server=http_server,
                               http_client=http_client, sniffer_filter=sniffer_filter, wifi_client=wifi_client)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+
+
+@pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2', "passphrase": '12345678'})
+@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.http_server("python_http_server")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 2, "stack_len": 4096, "buffer_len": 1600, "priority": 8}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+
+    }
+)
+def test_wifi_sdk_http_put_get_post_in_thread_1_ssl_tx_in_thread_2_c537712(http_server, wifi_dut, http_client, wifi_access_point,
+                                                         wifi_sniffer, sl_collections, index_path, sniffer_filter, ssl_server):
+    """Verify HTTPs PUT,GET,POST"""
+    try:
+        test_name = '537712'
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                              http_client=http_client, sniffer_filter=sniffer_filter, index_path=index_path, ssl_server=ssl_server)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+
+
+@pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2', "passphrase": '12345678'})
+@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 2, "stack_len": 4096, "buffer_len": 1600, "priority": 8}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        #"ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+
+    }
+)
+def test_wifi_sdk_https_put_get_post_in_thread_1_ssl_tx_in_thread_2_c537906(http_server, wifi_dut, http_client, wifi_access_point,
+                                                         wifi_sniffer, sl_collections, index_path, sniffer_filter, ssl_server):
+    """Verify HTTPs PUT,GET,POST"""
+    try:
+        test_name = '537906'
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections, http_server=http_server,
+                              http_client=http_client, sniffer_filter=sniffer_filter, index_path=index_path, ssl_server=ssl_server)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
