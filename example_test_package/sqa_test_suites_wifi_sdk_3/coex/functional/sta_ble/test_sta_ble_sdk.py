@@ -30,6 +30,7 @@ from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.utils.time_measurer import TimeMeasurer
 from datetime import datetime, date
 import re
+import pyshark
 
 def logger():
     return get_logger(__name__)
@@ -53,6 +54,43 @@ def logger():
 """
 
 ble_obj = None
+
+def calculate_join_time(pcap_file, src_mac, dst_mac):
+    # Open the capture file and specify a display filter to capture only relevant packets
+    cap = pyshark.FileCapture(pcap_file)
+
+    probe_request_timestamp = None
+    eapol_key4_timestamp = None
+
+    # Iterate through the packets
+    for packet in cap:
+        if 'wlan' in packet:
+            logger().info(f"Packet: {packet.wlan.fc_type_subtype}")
+            if packet.wlan.fc_type_subtype == '4' and (packet.wlan.sa == src_mac.lower() and packet.wlan.da == dst_mac.lower()):
+                logger().info("in probe request packet")
+                probe_request_timestamp = float(packet.sniff_time.timestamp())
+                logger().info(f"unicast Probe Request Timestamp: {probe_request_timestamp}")
+
+            if packet.wlan.fc_type_subtype == '40' and (packet.wlan.sa == src_mac.lower() or packet.wlan.da == src_mac.lower()):
+                if 'eapol' in packet:
+                    logger().info(packet.eapol.wlan_rsna_keydes_msgnr)
+                    if int(packet.eapol.wlan_rsna_keydes_msgnr) == 4:
+                        eapol_key4_timestamp = float(packet.sniff_time.timestamp())
+                        logger().info("EAPOL Key 4 Timestamp: {eapol_key4_timestamp}")
+
+        # If both packets are found, break the loop
+        if probe_request_timestamp and eapol_key4_timestamp:
+            logger().info("both probe request and eapol key 4 packets found.")
+            break
+
+    # Calculate and return the time difference
+    if probe_request_timestamp and eapol_key4_timestamp:
+        time_diff = eapol_key4_timestamp - probe_request_timestamp
+        logger().info(f"Time Difference: {time_diff} seconds")
+        return time_diff
+    else:
+        logger().info("Could not find both probe Request and EAPOL Key 4 packets.")
+
 
 
 class SnifferValidationProcess:
@@ -633,67 +671,12 @@ class ScanTime_JoinTime(ThreadBase):
 
     def caluculate_join_time(self):
 
-        packet_filter2 = "    Type/Subtype: Probe Request (0x0004)"
+        logger().info(f"file name:{self.wifi_sniffer.interfaces.capture.main_local_capture_file}")
+        join_time = calculate_join_time(f"{self.wifi_sniffer.interfaces.capture.main_local_capture_file}",
+                                           self.dut_mac_address, self.ap_mac_address)
+        logger().info(f"Join time is : {join_time}")
+        assert join_time, "Join time not found due to missing packet in sniffer"
 
-        packet_filter1 = (
-            self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                sa_addr=self.dut_mac_address,
-                da_addr=self.ap_mac_address,
-                filter_name="probe_req_response",
-            )
-        )
-        packet_filter3 = (
-            self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                sa_addr=self.dut_mac_address,
-                da_addr=self.ap_mac_address,
-                filter_name="assoc_req_resp_eapol_4_way_handshake",
-            )
-        )
-
-        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-            packet_filter1=packet_filter1
-        )[
-            "packet_count"
-        ], "Sniffer: Unable to find probe_req_response packet in sniffer"
-        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-            packet_filter1=packet_filter3, packet_filter2=packet_filter2
-        )[
-            "packet_count"
-        ], "Sniffer: Unable to find assoc_req_resp_eapol_4_way_handshake packet in sniffer"
-
-        packet_filter1 = "Arrival Time:"
-        count = 0
-        time_diff_list = []
-        filter_file = open(f"./reports/filter2_file.txt", "r")
-        line = filter_file.readlines()
-        for x in line:
-            count = count + 1
-            if packet_filter1 in x:
-                result = re.search(r"\d+:\d+:\d+.\d+", x)
-                logger().info(f" RESULT {result}")
-                time_stamp = result.group()
-                logger().info(f"time_stamp={time_stamp}")
-                time_diff_list.append(time_stamp)
-
-        filter_file.close()
-        logger().info(f"time stamp list ={time_diff_list}")
-        time_str1 = time_diff_list[0]
-        time_str1 = time_str1[:-3]
-        time_object1 = datetime.strptime(time_str1, "%H:%M:%S.%f").time()
-        logger().info(f"probe req time {time_object1}")
-
-        time_str2 = time_diff_list[1]
-        time_str2 = time_str2[:-3]
-        time_object2 = datetime.strptime(time_str2, "%H:%M:%S.%f").time()
-
-        logger().info(f"eapol key time {time_object2}")
-        date1 = date(1, 1, 1)
-        datetime1 = datetime.combine(date1, time_object1)
-        datetime2 = datetime.combine(date1, time_object2)
-        time_taken = datetime2 - datetime1
-        time_taken = time_taken.total_seconds()
-        logger().info(f"time taken to connect is: {time_taken}")
-        time.sleep(2)
 
     def disconnect(self):
         if self.wifi_dut.interfaces.wifi.associated:
@@ -788,6 +771,7 @@ class BleThreadFunctionality(ThreadBase):
             disconnect_from=disconnect_from,
             ble_client_address=self.ble_client_address,
         )
+        time.sleep(10)
 
     def advertise_remote_device(self):
         self.ble_client_address = self.sl_collections.advertise_remote_device(
@@ -2396,10 +2380,6 @@ def test_Coex_sdk_selected_channels_scan_time_BLE_slave_C133454(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.config(
-    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
-)
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
@@ -2418,8 +2398,6 @@ def test_Coex_sdk_join_time_BLE_slave_C133458(
     sl_collections,
     wifi_client,
     sniffer_filter,
-    net_perf_client,
-    protocol,
 ):
     """
     Test Steps:
@@ -2940,10 +2918,6 @@ def test_Coex_sdk_BLE_scan_while_TCP_TX_C133573(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.config(
-    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
-)
-@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
@@ -2962,8 +2936,6 @@ def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_C133460(
     sl_collections,
     wifi_client,
     sniffer_filter,
-    net_perf_client,
-    protocol,
 ):
     """
     Test Steps:

@@ -1645,6 +1645,7 @@ def test_Coex_sdk_BLE_encrypt_UDP_TX_C133440(
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
+        iter_count = utf_constants.get("iter_count")
         test_type = "iperf"
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -1662,6 +1663,7 @@ def test_Coex_sdk_BLE_encrypt_UDP_TX_C133440(
             sl_collections=sl_collections,
             ble_test_type="master",
             ble_pairing=1,
+            bond_info=1,
         )
 
         wifi_obj = WifiJoinThread(
@@ -1681,16 +1683,15 @@ def test_Coex_sdk_BLE_encrypt_UDP_TX_C133440(
         )
         wifi_obj.join_to_ap()
         wifi_obj.start()
-        ble_obj.start()
-        ble_obj.wait_for_exit()
+
+        for count in range(0, iter_count):
+            ble_obj.start()
+            ble_obj.wait_for_exit()
+
+            logger().info("Checking connection stability for 60 seconds")
+            time.sleep(30)
+            ble_obj.ble_disconnect()
         wifi_obj.wait_for_exit()
-        logger().info("Checking connection stability for 60 seconds")
-        time.sleep(60)
-        ble_obj.ble_disconnect()
-        logger().info("Advertise BLE remote")
-        ble_obj.advertise_remote_device()
-        logger().info("again issue pairing from DUT")
-        logger().info("***********need to add apis for pairing here******************")
         wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("sniffer validation is successful")
