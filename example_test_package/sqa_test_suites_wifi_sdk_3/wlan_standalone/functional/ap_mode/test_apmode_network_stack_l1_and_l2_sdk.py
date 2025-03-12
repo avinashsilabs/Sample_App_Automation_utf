@@ -11,6 +11,7 @@ from threading import Thread
 from random import randint
 from utf.utils.stopwatch import Stopwatch
 from utf.utils.thread_base import ThreadBase
+import concurrent.futures
 import pytest as pytest
 from utf.utils import get_random_data
 from utf.interfaces.iperf.iperf_constants import IperfConstants
@@ -44,6 +45,315 @@ setup requirement:
         2. Raspberry PI4 - 2 and more
         3. Access Point(Third Party AP's)
 """
+
+socket_list = {
+    "async_socket": [],
+    "sync_socket": [],
+}
+
+class TCPThread(ThreadBase):
+    def __init__(
+        self,
+        wifi_dut=None,
+        remote_socket_factory=None,
+        remote_ip_address=None,
+        dut_addr=None,
+        client_socket=None,
+        transfer_type=None,
+        port_number=None,
+    ):
+        super().__init__()
+        self.thread_lock = threading.Lock()
+        self.wifi_dut = wifi_dut
+        self.remote_socket_factory = remote_socket_factory
+        self.remote_ip_address = remote_ip_address
+        self.dut_addr = dut_addr
+        self.client_socket = client_socket
+        self.transfer_type = transfer_type
+        self.port_number = port_number
+
+    def run(self):
+        if True:
+            global socket_list
+            keepalive_time = 60
+            self.socket_fd = (
+                self.wifi_dut.interfaces.wifi.socket(
+                    domain="AF_INET", stream_type="SOCK_STREAM", protocol="IPPROTO_TCP"
+                )
+                if self.transfer_type == "TX"
+                else self.wifi_dut.interfaces.wifi.Asyncsocket(
+                    domain="AF_INET", stream_type="SOCK_STREAM", protocol="IPPROTO_TCP"
+                )
+            )
+            # Append the sync and async sockets to the list to close the sockets at the end of the testcase
+            if (
+                self.transfer_type == "TX"
+                and self.socket_fd not in socket_list["sync_socket"]
+            ):
+                socket_list["sync_socket"].append(self.socket_fd)
+            if (
+                self.transfer_type == "RX"
+                and self.socket_fd not in socket_list["async_socket"]
+            ):
+                socket_list["async_socket"].append(self.socket_fd)
+
+            self.client_socket = (
+                self.remote_socket_factory.interfaces.socket.create_socket()
+            )
+            if self.transfer_type == "TX":
+                self.client_socket.start_server(port=self.port_number)
+            self.wifi_dut.interfaces.wifi.bind(
+                socket_fd=self.socket_fd,
+                device_ip=self.dut_addr['dut_ip'],
+                server_port=self.port_number,
+                timeout=5,
+                asynch=0 if self.transfer_type == "TX" else 1,
+            )
+            logger().info(f"bind API is invoked")
+            if self.transfer_type != "TX":
+                self.wifi_dut.interfaces.wifi.listen(
+                    socket_fd=self.socket_fd, backlog=1, asynch=1
+                )
+                logger().info(f"listen API is invoked")
+                ThreadBase.call_functions_simultaneously(
+                    [
+                        (
+                            self.wifi_dut.interfaces.wifi.bsdSocketAccept,
+                            self.socket_fd,
+                            1,
+                        ),
+                        (
+                            self.client_socket.connect_client_tcp,
+                            self.dut_addr['dut_ip'],
+                            self.port_number,
+                        ),
+                    ],
+                    timeout=10,
+                )
+                return
+            logger().info(
+                f"Setting the socket option SO_KEEPALIVE with {keepalive_time} seconds"
+            )
+            self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(
+                socket_fd=self.socket_fd,
+                option_name="SO_KEEPALIVE",
+                option_val=keepalive_time,
+            )
+            for count in range(3):
+                connect_status = False
+                if True:
+                    self.wifi_dut.interfaces.wifi.bsdSocketConnect(
+                        socket_fd=self.socket_fd,
+                        server_ip=self.remote_ip_address,
+                        server_port=self.port_number,
+                    )
+                    connect_status = True
+                    # break
+                # except:
+                #     logger().info(
+                #         f"Socket connection failed in DUT...retry_count:{count + 1}"
+                #     )
+                # assert connect_status, "Socket connection failed in DUT"
+        # except Exception as e:
+        #     logger().info(
+        #         f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n"
+        #     )
+
+    def transmit_tcp_data(self):
+        duration = 60
+        sw = Stopwatch()
+        logger().info(f"\n Starting the TCP TX data Transfer \n")
+        while sw.elapsed_sec < duration:
+            sent_data = "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=20)
+            )
+            try:
+                self.wifi_dut.interfaces.wifi.bsdSocketSend(
+                    socket_fd=self.socket_fd, data=sent_data, higher_data_len=0
+                )
+                self.client_socket.set_recv_timeout(socket_type=0)
+                received_data = self.client_socket.recv_data_tcp(len(sent_data))
+                logger().info(
+                    f"\n###################### Received TCP Data: {received_data} ######################\n"
+                )
+                assert (
+                    sent_data == received_data
+                ), f"Data mismatch in sent and received data"
+            except Exception as e:
+                logger().info(
+                    f"\n Socket Data Transfer Failed Within Duration: {sw.elapsed_sec} \n"
+                )
+                break
+
+    def recv_tcp_data(self, recv_sock_id=None):
+        duration = 60
+        sw = Stopwatch()
+        logger().info(f"\n Starting the TCP RX Data Transfer \n")
+        while sw.elapsed_sec < duration:
+            sent_data = "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=20)
+            )
+            self.client_socket.send_data_tcp(sent_data)
+            time.sleep(1)
+            received_data = self.wifi_dut.interfaces.wifi.bsdSocketReceive(
+                recv_sock_id + 1
+            )
+            logger().info(
+                f"###################### Buffer TCP Data  {received_data}  ######################"
+            )
+            logger().info(
+                f"###################### Buffer TCP Data Length  {len(received_data)}  ######################"
+            )
+            assert sent_data == received_data, (
+                f"buffer length sent by remote peer and received on the socket id "
+                f"{self.socket_fd} opened in the DUT didn't matched"
+            )
+            logger().info("Data received successfully")
+        self.client_socket.socket_close_indication(1)
+
+
+class UDPThread(ThreadBase):
+    def __init__(
+        self,
+        wifi_dut=None,
+        remote_socket_factory=None,
+        remote_ip_address=None,
+        dut_addr=None,
+        client_socket=None,
+        transfer_type=None,
+        port_number=None,
+    ):
+        super().__init__()
+        self.thread_lock = threading.Lock()
+        self.wifi_dut = wifi_dut
+        self.remote_socket_factory = remote_socket_factory
+        self.remote_ip_address = remote_ip_address
+        self.dut_addr = dut_addr
+        self.client_socket = client_socket
+        self.transfer_type = transfer_type
+        self.port_number = port_number
+
+    def run(self):
+        if True:
+            global socket_list
+            keepalive_time = 60
+            self.socket_fd = (
+                self.wifi_dut.interfaces.wifi.socket(
+                    domain="AF_INET", stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP"
+                )
+                if self.transfer_type == "TX"
+                else self.wifi_dut.interfaces.wifi.Asyncsocket(
+                    domain="AF_INET", stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP"
+                )
+            )
+            # Append the sync and async sockets to the list to close the sockets at the end of the test
+            if (
+                self.transfer_type == "TX"
+                and self.socket_fd not in socket_list["sync_socket"]
+            ):
+                socket_list["sync_socket"].append(self.socket_fd)
+            if (
+                self.transfer_type == "RX"
+                and self.socket_fd not in socket_list["async_socket"]
+            ):
+                socket_list["async_socket"].append(self.socket_fd)
+            self.client_socket = (
+                self.remote_socket_factory.interfaces.socket.create_socket()
+            )
+            logger().info(f"Starting the Remote Server Socket")
+            self.client_socket.start_server(port=self.port_number, socket_type=1)
+            self.wifi_dut.interfaces.wifi.bind(
+                socket_fd=self.socket_fd,
+                device_ip=self.dut_addr["dut_ip"],
+                server_port=self.port_number,
+                timeout=5,
+                asynch=0 if self.transfer_type == "TX" else 1,
+            )
+            if self.transfer_type == "TX":
+                logger().info(
+                    f"Setting the socket option SO_KEEPALIVE with {keepalive_time} seconds"
+                )
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(
+                    socket_fd=self.socket_fd,
+                    option_name="SO_KEEPALIVE",
+                    option_val=keepalive_time,
+                )
+            for count in range(3):
+                connect_status = False
+                if True:
+                    self.wifi_dut.interfaces.wifi.bsdSocketConnect(
+                        socket_fd=self.socket_fd,
+                        server_ip=self.remote_ip_address,
+                        server_port=self.port_number,
+                    )
+                    connect_status = True
+                #     break
+                # except:
+                #     logger().info(
+                #         f"Socket connection failed in DUT...retry_count:{count + 1}"
+                #     )
+                assert connect_status, "Socket connection failed in DUT"
+        # except Exception as e:
+        #     logger().info(
+        #         f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n"
+        #     )
+
+    def transmit_udp_data(self):
+        duration = 60
+        sw = Stopwatch()
+        logger().info(f"\n Starting the UDP TX data Transfer \n")
+        while sw.elapsed_sec < duration:
+            sent_data = "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=20)
+            )
+            try:
+                self.wifi_dut.interfaces.wifi.bsdSocketSend(
+                    socket_fd=self.socket_fd, data=sent_data, higher_data_len=0
+                )
+                self.client_socket.set_recv_timeout(
+                    socket_type=1, use_client_socket=True
+                )
+                received_data = self.client_socket.recv_data_udp(len(sent_data))[0]
+                logger().info(
+                    f"\n###################### Received UDP Data: {received_data} ######################\n"
+                )
+                assert (
+                    sent_data == received_data
+                ), f"Data mismatch in sent and received data"
+            except Exception as e:
+                logger().info(
+                    f"Socket Data Transfer Failed Within Duration: {sw.elapsed_sec}"
+                )
+                break
+
+    def rev_udp_data(self, recv_sock_id=None):
+        duration = 60
+        sw = Stopwatch()
+        logger().info(f"\n Starting the UDP RX data Transfer \n")
+        while sw.elapsed_sec < duration:
+            sent_data = "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=20)
+            )
+            self.client_socket.send_data_udp(
+                sent_data, self.dut_addr["dut_ip"], port=self.port_number
+            )
+            time.sleep(1)
+            self.wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
+            received_data = self.wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(
+                socket_fd=recv_sock_id
+            )
+            logger().info(
+                f"###################### Buffer UDP Data  {received_data}  ######################"
+            )
+            logger().info(
+                f"###################### Buffer UDP Data Length  {received_data}  ######################"
+            )
+            assert len(sent_data) == len(
+                received_data
+            ), f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+            assert (
+                sent_data == received_data
+            ), f"Data mismatch in sent and received data"
 
 class IperfThread(ThreadBase):
 
@@ -3120,6 +3430,246 @@ def test_verify_one_UDP_RX_and_TCP_RX_using_multithread_C689599(wifi_dut, wifi_c
         udp_rx_obj.wait_for_exit()
         tcp_rx_obj.wait_for_exit()
         logger().info(f"UDP_rx & TCP_RX run successfully in multithreads")
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.stop_ap()
+
+@pytest.mark.skip("validation is in progress")
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 4, "stack_len": 2500, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.NWP160MHz,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,"channel": 11
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+def test_verify_two_TCP_TX_and_TCP_RX_using_multithread_C689590(wifi_dut, wifi_clients, request, wifi_sniffer, remote_socket_factory, wifi_access_point, sl_collections, channel):
+    """ Verify  two UDP RX and UDP TX simultaneously using multi thread sockets
+        steps:
+          1:set_socket_config as per testrail
+          2:DUT as AP should bring up and connect to client
+          3:start 2 threads parallel
+          4:run traffic using iperf in both threads parallel
+          5:repeat steps 3&4 in loop for 3 times
+          6:close all sockets and terminate threads.
+        """
+    test_name = request.node.name
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{689590}.pcap")
+        time.sleep(3)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.set_socket_config(total_sockets=4, total_tcp_sockets=4, tcp_rx_high_performance_sockets=2, tcp_rx_only_sockets=2,
+                                                   tcp_tx_only_sockets=2)
+        dut_addr_dict = sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
+                                                                  channel=11, ssid="SILABS_AP_MODE",
+                                                                  security="WPA2",
+                                                                  password="Automation@123",
+                                                                  dtim_count=1,
+                                                                  beacon_interval=100,
+                                                                  ping_count=10,
+                                                                  no_of_clients=1, leave=False
+                                                                  )
+        tcp_tx_thread_1 = TCPThread(
+            wifi_dut=wifi_dut,
+            remote_socket_factory=remote_socket_factory,
+            remote_ip_address=dut_addr_dict['client_ip'],
+            dut_addr=dut_addr_dict,
+            transfer_type="TX",
+            port_number=5001,
+        )
+        tcp_tx_thread_2 = TCPThread(
+            wifi_dut=wifi_dut,
+            remote_socket_factory=remote_socket_factory,
+            remote_ip_address=dut_addr_dict['client_ip'],
+            dut_addr=dut_addr_dict,
+            transfer_type="TX",
+            port_number=5002,
+        )
+        tcp_rx_thread_1 = TCPThread(
+            wifi_dut=wifi_dut,
+            remote_socket_factory=remote_socket_factory,
+            remote_ip_address=dut_addr_dict['client_ip'],
+            dut_addr=dut_addr_dict,
+            transfer_type="RX",
+            port_number=5003,
+        )
+        tcp_rx_thread_2 = TCPThread(
+            wifi_dut=wifi_dut,
+            remote_socket_factory=remote_socket_factory,
+            remote_ip_address=dut_addr_dict['client_ip'],
+            dut_addr=dut_addr_dict,
+            transfer_type="RX",
+            port_number=5004,
+        )
+        tcp_tx_thread_1.start()
+        tcp_tx_thread_1.wait_for_exit()
+        tcp_tx_thread_2.start()
+        tcp_tx_thread_2.wait_for_exit()
+        tcp_rx_thread_1.start()
+        tcp_rx_thread_1.wait_for_exit()
+        tcp_rx_thread_2.start()
+        tcp_rx_thread_2.wait_for_exit()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Submit the functions to the executor
+            executor.submit(tcp_rx_thread_1.recv_tcp_data, 2)
+            executor.submit(tcp_rx_thread_2.recv_tcp_data, 4)
+            executor.submit(tcp_tx_thread_1.transmit_tcp_data)
+            executor.submit(tcp_tx_thread_2.transmit_tcp_data)
+        logger().info(f" TCP_TX  & TCP_RX ran in 2 threads is completed")
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.stop_ap()
+
+@pytest.mark.skip("validation is in progress")
+@pytest.mark.wifi_client("raspi_wifi")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 4, "stack_len": 2500, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.NWP160MHz,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,"channel": 11
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP_MODE",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+def test_verify_two_UDP_TX_and_UDP_RX_using_multithread_C689591(wifi_dut, wifi_clients, request, wifi_sniffer, remote_socket_factory, wifi_access_point, sl_collections, channel):
+    """ Verify  two UDP RX and UDP TX simultaneously using multi thread sockets
+        steps:
+          1:set_socket_config as per testrail
+          2:DUT as AP should bring up and connect to client
+          3:start 2 threads parallel
+          4:run traffic using iperf in both threads parallel
+          5:repeat steps 3&4 in loop for 3 times
+          6:close all sockets and terminate threads.
+        """
+    test_name = request.node.name
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{689590}.pcap")
+        time.sleep(3)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.set_socket_config(total_sockets=4, total_tcp_sockets=0, tcp_rx_high_performance_sockets=0, tcp_rx_only_sockets=0,
+                                                   tcp_tx_only_sockets=0, total_udp_sockets=4, udp_rx_only_sockets=2, udp_tx_only_sockets=2)
+        dut_addr_dict = sl_collections.ap_mode_clients_connection(wifi_dut, wifi_clients,
+                                                                  channel=11, ssid="SILABS_AP_MODE",
+                                                                  security="WPA2",
+                                                                  password="Automation@123",
+                                                                  dtim_count=1,
+                                                                  beacon_interval=100,
+                                                                  ping_count=10,
+                                                                  no_of_clients=1, leave=False
+                                                                  )
+        udp_tx_thread_1 = UDPThread(
+            wifi_dut=wifi_dut,
+            remote_socket_factory=remote_socket_factory,
+            remote_ip_address=dut_addr_dict['client_ip'],
+            dut_addr=dut_addr_dict,
+            transfer_type="TX",
+            port_number=1234,
+        )
+        udp_tx_thread_2 = UDPThread(
+            wifi_dut=wifi_dut,
+            remote_socket_factory=remote_socket_factory,
+            remote_ip_address=dut_addr_dict['client_ip'],
+            dut_addr=dut_addr_dict,
+            transfer_type="TX",
+            port_number=1235,
+        )
+        udp_rx_thread_1 = UDPThread(
+            wifi_dut=wifi_dut,
+            remote_socket_factory=remote_socket_factory,
+            remote_ip_address=dut_addr_dict['client_ip'],
+            dut_addr=dut_addr_dict,
+            transfer_type="RX",
+            port_number=1236,
+        )
+        udp_rx_thread_2 = UDPThread(
+            wifi_dut=wifi_dut,
+            remote_socket_factory=remote_socket_factory,
+            remote_ip_address=dut_addr_dict['client_ip'],
+            dut_addr=dut_addr_dict,
+            transfer_type="RX",
+            port_number=1237,
+        )
+        udp_tx_thread_1.start()
+        udp_tx_thread_1.wait_for_exit()
+        udp_tx_thread_2.start()
+        udp_tx_thread_2.wait_for_exit()
+        udp_rx_thread_1.start()
+        udp_rx_thread_1.wait_for_exit()
+        udp_rx_thread_2.start()
+        udp_rx_thread_2.wait_for_exit()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Submit the functions to the executor
+            executor.submit(udp_rx_thread_1.rev_udp_data, 2)
+            executor.submit(udp_rx_thread_2.rev_udp_data, 4)
+            executor.submit(udp_tx_thread_1.transmit_udp_data)
+            executor.submit(udp_tx_thread_2.transmit_udp_data)
+        logger().info(f" TCP_TX  & TCP_RX ran in 2 threads is completed")
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
