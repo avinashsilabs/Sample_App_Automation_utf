@@ -1,61 +1,46 @@
 firmware:
     efx32:
       load_binary:
-        file_name: &firmware_file_anchor 'SiWG917-B.2.12.2.1.0.9.rps'
+        file_name: &secure_firmware_file_anchor encrypted_1_SiWG917-B.2.14.4.0.0.1.rps # prefixed original firmware file name with prefix field value in 24
       write_firmware:
-        file_name: &test_agent_file_anchor 'test_agent_soc_rcf2_daf57c7579_generic192k.rps'
-
-perform_secure_encrypt: True
+        file_name: &secure_test_agent_file_anchor encrypted_1_test_agent_soc_ifc1fc_bc0a23d8cb_generic192k.rps # prefixed original test_agent file name with prefix field value in 30
 
 secure_firmware_config:
-  init:
-     default_mbr: /app/manifest/secure_firmware_keys/ta_mbr_SiWG917M111MGTBA.bin
-
+  perform_secure_encrypt: True
+  generate_keys : False
   base_keys_path:  /app/manifest/secure_firmware_keys/
-
-  generate_keys : True
-  generate_keys_config:
-    # need to add three level keys.json path, extract_dir_path
-    - keys_json_path: &level_1_keys_json level_1/keys.json
-      extract_dir_path: level_1/keys
-
-    - keys_json_path: &level_2_keys_json level_2/keys.json
-      extract_dir_path: level_2/keys
-
-    - keys_json_path: &level_3_keys_json level_3/keys.json
-      extract_dir_path: level_3/keys
-
-
+    
   conversion:
-    - file_name: *firmware_file_anchor # &firmware_file_anchor defined in line 4
+    - file_name: &firmware_file_anchor SiWG917-B.2.14.4.0.0.1.rps # original firmware file name
       TA: True
       config:
-          - prefix: level_1 # the output file will be prefixed with this name
-            key: *level_1_keys_json
-            sign: level_1/keys/ta_private_key.pem
+          - prefix: encrypted_1 # the output file will be prefixed with this name
+            key: ota_key_1.txt
+            sign: ta_private_key_1.pem
 
-          - prefix: level_2
-            key: *level_2_keys_json
-            sign: level_2/keys/ta_private_key.pem
+          - prefix: encrypted_2 # the output file will be prefixed with this name
+            key: ota_key_2.txt
+            sign: ta_private_key_2.pem
 
-          - prefix: level_3
-            key: *level_3_keys_json
-            sign: level_3/keys/ta_private_key.pem
+          - prefix: encrypted_3 # the output file will be prefixed with this name
+            key: ota_key_2.txt
+            sign: ta_private_key_2.pem
 
-    - file_name: *test_agent_file_anchor # &test_agent_file_anchor should be defined in line 6
+
+    - file_name: &test_agent_file_anchor test_agent_soc_ifc1fc_bc0a23d8cb_generic192k.rps  # original test agent file name
       TA: False
       config:
-          - prefix: level_1
-            key: *level_1_keys_json
-            sign: level_1/keys/m4_private_key.pem
+          - prefix: encrypted_1 # the output file will be prefixed with this name
+            key: m4_ota_key_1.txt
+            sign: m4_private_key_1.pem
 
-          - prefix: level_2
-            key: *level_2_keys_json
-            sign: level_2/keys/m4_private_key.pem
+          - prefix: encrypted_2 # the output file will be prefixed with this name
+            key: m4_ota_key_2.txt
+            sign: m4_private_key_2.pem
 
-          - prefix: level_3
-            key: *level_3_keys_json
-            sign: level_3/keys/m4_private_key.pem
+          - prefix: encrypted_3 # the output file will be prefixed with this name
+            key: m4_ota_key_3.txt
+            sign: m4_private_key_3.pem
 
 firmware_version_file: *firmware_file_anchor
 # List of devices to be reset when needed
@@ -65,51 +50,17 @@ reset: [efx32]
 firmware_applications:
     # List of markers for test cases
 
-    firmware_security_level_1:
+    firmware_security_encrypted_1:
       # List of devices and their firmware images for this marker
       - device_type: 'efx32'
         device_subtype: 'efr32'
         filename:
-          load_keys:
-            arguments:
-              mbr_bin_file: /app/manifest/secure_firmware_keys/ta_mbr_SiWG917M111MGTBA.bin
-              keys_json_file: /app/manifest/secure_firmware_keys/level_1/keys.json
-              security_level_file: /app/manifest/secure_firmware_keys/level_1/config.json
           load_binary:
-            file_name: 'level_1_SiWG917-B.2.12.2.1.0.9.rps'
-          write_firmware:
-            file_name: 'level_1_test_agent_soc_rcf2_daf57c7579_generic192k.rps'
+            file_name: *secure_firmware_file_anchor
+          write_firmware: 
+            file_name: *secure_test_agent_file_anchor
         is_secure: True
 
-    firmware_security_level_2:
-      - device_type: 'efx32'
-        device_subtype: 'efr32'
-        filename:
-          load_keys:
-            arguments:
-              mbr_bin_file: /app/manifest/secure_firmware_keys/ta_mbr_SiWG917M111MGTBA.bin
-              keys_json_file: /app/manifest/secure_firmware_keys/level_2/keys.json
-              security_level_file: /app/manifest/secure_firmware_keys/level_2/config.json
-          load_binary:
-            file_name: 'level_2_SiWG917-B.2.12.2.1.0.9.rps'
-          write_firmware:
-            file_name: 'level_2_test_agent_soc_rcf2_daf57c7579_generic192k.rps'
-        is_secure: True
-
-    firmware_security_level_3:
-      - device_type: 'efx32'
-        device_subtype: 'efr32'
-        filename:
-          load_keys:
-            arguments:
-              mbr_bin_file: /app/manifest/secure_firmware_keys/ta_mbr_SiWG917M111MGTBA.bin
-              keys_json_file: /app/manifest/secure_firmware_keys/level_3/keys.json
-              security_level_file: /app/manifest/secure_firmware_keys/level_3/config.json
-          load_binary:
-            file_name: 'level_3_SiWG917-B.2.12.2.1.0.9.rps'
-          write_firmware:
-            file_name: 'level_3_test_agent_soc_rcf2_daf57c7579_generic192k.rps'
-        is_secure: True
 
     wifitest:
     # List of devices and their firmware images for this marker
