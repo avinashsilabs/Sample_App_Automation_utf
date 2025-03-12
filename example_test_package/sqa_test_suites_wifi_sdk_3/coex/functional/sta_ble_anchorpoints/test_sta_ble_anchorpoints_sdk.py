@@ -458,10 +458,10 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_5_LSTO_4s_C20122(
     finally:
         # Close Raspi Bluetooth
         ble_client.interfaces.bluetooth.close()
-        # Remove BLE bond information
-        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-        # Does BLE clean up based on the device state of DUT
         if ble_obj:
+            # Remove BLE bond information
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            # Does BLE clean up based on the device state of DUT
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -595,15 +595,15 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_240ms_latency_5_LSTO_4s_C20123(
     finally:
         # Close Raspi Bluetooth
         ble_client.interfaces.bluetooth.close()
-        # Remove BLE bond information
-        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-        # Does BLE clean up based on the device state of DUT
         if ble_obj:
+            # Remove BLE bond information
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            # Does BLE clean up based on the device state of DUT
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4908")
+
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.config(
@@ -736,10 +736,10 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_2_LSTO_32s_C20124(
     finally:
         # Close Raspi Bluetooth
         ble_client.interfaces.bluetooth.close()
-        # Remove BLE bond information
-        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-        # Does BLE clean up based on the device state of DUT
         if ble_obj:
+            # Remove BLE bond information
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            # Does BLE clean up based on the device state of DUT
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -874,10 +874,10 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_0_LSTO_4s_C20125(
     finally:
         # Close Raspi Bluetooth
         ble_client.interfaces.bluetooth.close()
-        # Remove BLE bond information
-        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-        # Does BLE clean up based on the device state of DUT
         if ble_obj:
+            # Remove BLE bond information
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            # Does BLE clean up based on the device state of DUT
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -1012,15 +1012,15 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_0_LSTO_32s_C20126(
     finally:
         # Close Raspi Bluetooth
         ble_client.interfaces.bluetooth.close()
-        # Remove BLE bond information
-        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-        # Does BLE clean up based on the device state of DUT
         if ble_obj:
+            # Remove BLE bond information
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            # Does BLE clean up based on the device state of DUT
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4908")
+
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.config(
@@ -1151,10 +1151,10 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_5_LSTO_16s_C20180(
     finally:
         # Close Raspi Bluetooth
         ble_client.interfaces.bluetooth.close()
-        # Remove BLE bond information
-        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-        # Does BLE clean up based on the device state of DUT
         if ble_obj:
+            # Remove BLE bond information
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            # Does BLE clean up based on the device state of DUT
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -1289,10 +1289,10 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_0_LSTO_10s_C20181(
     finally:
         # Close Raspi Bluetooth
         ble_client.interfaces.bluetooth.close()
-        # Remove BLE bond information
-        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-        # Does BLE clean up based on the device state of DUT
         if ble_obj:
+            # Remove BLE bond information
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            # Does BLE clean up based on the device state of DUT
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
