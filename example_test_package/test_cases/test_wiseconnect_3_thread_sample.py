@@ -103,3 +103,7 @@ def test_wiseconnect_3_get_async_messages_with_threads(wifi_dut, wifi_access_poi
 
 def test_wiseconnect_3_ncp(wifi_dut):
     wifi_dut.interfaces.wifi.scan(ssid=None)
+
+def test_wiseconnect_3_soc_secure(wifi_dut):
+    wifi_dut.interfaces.wifi.version()
+    wifi_dut.interfaces.wifi.scan(ssid=None)
