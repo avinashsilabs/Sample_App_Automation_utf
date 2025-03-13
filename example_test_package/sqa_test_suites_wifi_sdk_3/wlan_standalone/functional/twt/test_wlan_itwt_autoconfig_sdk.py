@@ -58,7 +58,7 @@ class SocketDataTransfer:
         self.data_transfer_duration = 60
 
     def start_remote_socket_server(self, socket_type):
-        logger().info(f"The socket_ype is {socket_type}")
+        logger().info(f"The socket_type is {socket_type}")
         self.server_ip = self.remote_socket.interfaces.socket.hostname_or_ip_address()
         self.server_port = self.remote_socket.interfaces.socket.server_port
         logger().info(
@@ -150,12 +150,14 @@ class TWT_AUTOCONFIG(ThreadBase):
         self.sniffer_capture = sniffer_capture
         self.testcase_id = testcase_id
         self.second_level_filter = "        Tag: Target Wake Time"
+        self.wakeup_period = 0
+        self.wakeup_interval = 0
         self.socket_data_transfer_obj = SocketDataTransfer(remote_socket=remote_socket)
         self.twt_params = TWTParams()
 
     def verify_twt_data_packets_at_rx_latency(self, twt_response_frame_epoch_time: int):
         self.wifi_sniffer.interfaces.capture.collecting_frame_number(
-            packet_filter1=f"wlan.tim.aid"
+            packet_filter1=f"wlan.tim.bmapctl != 0x00 && wlan.fc.type_subtype == 0x008 && frame.time_epoch >= {twt_response_frame_epoch_time} && frame.time_epoch <= {twt_response_frame_epoch_time + self.twt_params.rx_latency // 1000}"
         )
         with open("./reports/filter2_file.txt", "r") as file:
             frame_number = file.readline()
@@ -173,19 +175,18 @@ class TWT_AUTOCONFIG(ThreadBase):
             match = re.search(pattern, data)
             if match:
                 epoch_time = match.group(1)
-        logger().info(f"The Epoch time at which TIM bit is set is: {epoch_time}")
-        max_packet_retrival_time = self.twt_params.rx_latency * 0.001 - (
-            float(epoch_time) - twt_response_frame_epoch_time
-        )
+
         logger().info(
-            f"The maximum packet retrieval time is: {max_packet_retrival_time}"
+            f"\n\n The Epoch time at which TIM bit is set is: {epoch_time} \n\n"
         )
+
+        # Check if DUT sends any Data packets after TIM Bit is set till wakeup interval time under the specified RX Latency
         assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-            packet_filter1=f"(wlan.sa == {self.device_info['dut_mac_address']} && wlan.da == {self.remote_mac_address}) && (frame.time_epoch <= {twt_response_frame_epoch_time + max_packet_retrival_time + 7}) && wlan.fc.type_subtype == 0x0028",
+            packet_filter1=f"(wlan.ta == {self.device_info['dut_mac_address']} && (frame.time_epoch <= {float(epoch_time) + self.wakeup_interval} && frame.time_epoch > {float(epoch_time)}) && (tcp || wlan.fc.type == 0x002))",
             packet_filter2=self.second_level_filter,
         )[
             "packet_count"
-        ], f"Not able to find the Data packets till {twt_response_frame_epoch_time + max_packet_retrival_time} seconds"
+        ], f"Not able to find any Data packets till {float(epoch_time) + self.wakeup_interval} seconds"
 
     def twt_frame_info(self, frame: str):
         with open("./reports/filter2_file.txt", "r") as file:
@@ -248,20 +249,22 @@ class TWT_AUTOCONFIG(ThreadBase):
         )
 
     def disable_twt(self):
-        self.wifi_dut.interfaces.wifi.disable_twt()
+        self.wifi_dut.interfaces.wifi.twt_auto_config(twt_enable=0)
 
     def twt_enable_disable_data_transfer(self, power_save=False):
         iteration_count = 0
         while iteration_count < 3:
             if iteration_count != 0:
-                logger().info(f"\nEnable the target wake time\n")
+                logger().info(
+                    f"\n....Enable the target wake time for : {iteration_count + 1} time....\n"
+                )
                 self.enable_twt()
             if power_save:
                 self.wifi_dut.interfaces.wifi.set_performance_profile(
                     mode="power_save_low_latency"
                 )
             self.socket_data_transfer_obj.send_data_over_socket(
-                wifi_dut=self.wifi_dut, duration=60, sleep_time=0
+                wifi_dut=self.wifi_dut, duration=self.socket_data_transfer_obj.data_transfer_duration, sleep_time=0
             )
             logger().info(f"\n\nDisable the target wake time\n\n")
             self.disable_twt()
@@ -269,10 +272,9 @@ class TWT_AUTOCONFIG(ThreadBase):
                 self.wifi_dut.interfaces.wifi.set_performance_profile(
                     mode="high_performance"
                 )
-            # Commenting the data transfer after disabling the TWT, might be a firmware related issue.
-            # self.socket_data_transfer_obj.send_data_over_socket(
-            #    wifi_dut=self.wifi_dut, duration=60, sleep_time=0
-            # )
+            self.socket_data_transfer_obj.send_data_over_socket(
+                wifi_dut=self.wifi_dut, duration=self.socket_data_transfer_obj.data_transfer_duration, sleep_time=0
+            )
             iteration_count += 1
 
     def aws_cloud_connectivity(self):
@@ -297,7 +299,6 @@ class TWT_AUTOCONFIG(ThreadBase):
         self.wifi_dut.interfaces.wifi.set_performance_profile(
             mode="power_save_low_latency"
         )
-        time.sleep(5)
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
         logger().info(f"\n\n Getting Shadow Update \n\n ")
         self.wifi_dut.interfaces.wifi.aws_iot_shadow_yield()
@@ -333,6 +334,7 @@ class TWT_AUTOCONFIG(ThreadBase):
         if self.testcase_id in ["538042", "538043", "538044"]:
             self.aws_cloud_connectivity()
             self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+            logger().info(f"\n\nSniffer Validation for TWT Request Frame\n\n")
             twt_req_frame = (
                 self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                     sa_addr=self.device_info["dut_mac_address"],
@@ -340,12 +342,11 @@ class TWT_AUTOCONFIG(ThreadBase):
                     filter_name="twt_requesting_sta_1",
                 )
             )
-
             self.wifi_sniffer.interfaces.capture.sniffer_validation(
                 packet_filter1=twt_req_frame, packet_filter2=self.second_level_filter
             )
-
             self.twt_frame_info("twt_request_frame")
+            logger().info(f"\n\nSniffer Validation for TWT Response Frame\n\n")
             twt_response_frame = (
                 self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                     sa_addr=ap_mac_address,
@@ -353,41 +354,25 @@ class TWT_AUTOCONFIG(ThreadBase):
                     filter_name="twt_responding_sta_0",
                 )
             )
-
             self.wifi_sniffer.interfaces.capture.sniffer_validation(
                 packet_filter1=twt_response_frame,
                 packet_filter2=self.second_level_filter,
             )
-
             self.twt_frame_info("twt_response_frame")
-            # Sniffer Validation for Power Management BIT
-            power_save_filter = (
-                self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                    sa_addr=self.device_info["dut_mac_address"],
-                    da_addr=ap_mac_address,
-                    filter_name="power_mgmt_bit",
-                )
-            )
-            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                packet_filter1=power_save_filter
-            )[
-                "packet_count"
-            ], "Unable to find NULL-Data frame packets with power save bit = 1"
+
+            # Extracting the TWT Parameters from Sniffer Capture
             extracted_params = self.extract_twt_setup_command(
                 "./reports/filter2_file.txt"
             )
-            wakeup_interval = (
-                extracted_params[1] * 2 ** extracted_params[2]
-            ) * 0.000001
-            wakeup_period = extracted_params[0] * (256 * 0.000001)
-            assert (
-                1 < wakeup_interval < 256
-            ), "Wakeup Interval is not within (1-256) ms range"
+            self.wakeup_interval = extracted_params[1] * (
+                (2 ** int(extracted_params[2])) * 0.000001
+            )
+            self.wakeup_period = extracted_params[0] * (256 * 0.000001)
             logger().info(
-                f"\n\nThe Wakeup Interval is {wakeup_interval} seconds and wakeup period is {wakeup_period} seconds\n\n"
+                f"\n\nThe Wakeup Interval is {self.wakeup_interval} seconds and wakeup period is {self.wakeup_period} seconds\n\n"
             )
             logger().info(
-                f"The timestamp at which the AP responds with TWT is {extracted_params[3]}"
+                f"The Timestamp and Epoch Time at which the AP responds with TWT is {extracted_params[3]} : {extracted_params[4]}"
             )
             self.wifi_sniffer.interfaces.capture.collecting_frame_number(
                 packet_filter1=f"wlan.fixed.timestamp >= {int(extracted_params[3])}"
@@ -415,7 +400,7 @@ class TWT_AUTOCONFIG(ThreadBase):
             validation_end_time = (
                 float(epoch_time)
                 + (self.twt_params.rx_latency * 0.001)
-                + wakeup_interval * 1.3
+                + self.wakeup_interval * 1.3
             )
             logger().info(f"The Epoch time at which TWT is Set is: {epoch_time}")
             assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
@@ -424,6 +409,20 @@ class TWT_AUTOCONFIG(ThreadBase):
             )[
                 "packet_count"
             ], f"Not able to find the Data packets till {float(epoch_time) + self.twt_params.rx_latency} epoch time"
+
+            # Sniffer Validation for Power Management BIT
+            power_save_filter = (
+                self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                    sa_addr=self.device_info["dut_mac_address"],
+                    da_addr=ap_mac_address,
+                    filter_name="power_mgmt_bit",
+                )
+            )
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
+                packet_filter1=power_save_filter
+            )[
+                "packet_count"
+            ], "Unable to find NULL-Data frame packets with power save bit = 1"
             return
 
         if self.testcase_id in ["510690", "510691", "510692"]:
@@ -538,16 +537,67 @@ class TWT_AUTOCONFIG(ThreadBase):
             return
         if self.testcase_id in ["510684", "510687", "510688"]:
             self.twt_params.rx_latency = 55000
+            self.twt_params.average_tx_throughput = 1000
         if self.testcase_id == "510685":
             self.twt_params.rx_latency = 25000
+            self.twt_params.average_tx_throughput = 1000
         if self.testcase_id in ["510686", "510689"]:
             self.twt_params.rx_latency = 5000
+            self.twt_params.average_tx_throughput = 1000
         self.enable_twt()
         self.wifi_dut.interfaces.wifi.set_performance_profile(
             mode="power_save_low_latency"
         )
-        time.sleep(2)
+        self.socket_data_transfer_obj.send_data_over_socket(
+            wifi_dut=self.wifi_dut,
+            duration=(self.twt_params.rx_latency // 1000),
+            sleep_time=0,
+        )
+        twt_req_frame = (
+            self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=self.device_info["dut_mac_address"],
+                da_addr=ap_mac_address,
+                filter_name="twt_requesting_sta_1",
+            )
+        )
+
+        logger().info(f"\n\nSniffer Validation for TWT Request Frame\n\n")
+        self.wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=twt_req_frame, packet_filter2=self.second_level_filter
+        )
+        self.twt_frame_info("twt_request_frame")
+
+        logger().info(f"\n\nSniffer Validation for TWT Response Frame\n\n")
+        twt_response_frame = (
+            self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=ap_mac_address,
+                da_addr=self.device_info["dut_mac_address"],
+                filter_name="twt_responding_sta_0",
+            )
+        )
+        self.wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=twt_response_frame, packet_filter2=self.second_level_filter
+        )
+        self.twt_frame_info("twt_response_frame")
+
+        extracted_params = self.extract_twt_setup_command("./reports/filter2_file.txt")
+        self.wakeup_interval = extracted_params[1] * (
+            (2 ** int(extracted_params[2])) * 0.000001
+        )
+        self.wakeup_period = extracted_params[0] * (256 * 0.000001)
+        logger().info(
+            f"\n\n**** The Wakeup Interval is {self.wakeup_interval} seconds and Wakeup period is {self.wakeup_period} seconds ****\n\n"
+        )
+        logger().info(
+            f"The Timestamp at which the AP responds with TWT Response frame is {extracted_params[3]} and Epoch time is {extracted_params[4]}"
+        )
+        # Sniffer Validation for RX Latency Period
+        self.verify_twt_data_packets_at_rx_latency(
+            twt_response_frame_epoch_time=float(extracted_params[4])
+        )
+
         # Sniffer Validation for Power Management BIT
+        logger().info(f"\n\nSniffer Validation for Power Management BIT\n\n")
         power_save_filter = (
             self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                 sa_addr=self.device_info["dut_mac_address"],
@@ -560,59 +610,12 @@ class TWT_AUTOCONFIG(ThreadBase):
         )[
             "packet_count"
         ], "Unable to find NULL-Data frame packets with power save bit = 1"
-
-        twt_req_frame = (
-            self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                sa_addr=self.device_info["dut_mac_address"],
-                da_addr=ap_mac_address,
-                filter_name="twt_requesting_sta_1",
-            )
-        )
-
-        self.wifi_sniffer.interfaces.capture.sniffer_validation(
-            packet_filter1=twt_req_frame, packet_filter2=self.second_level_filter
-        )
-
-        self.twt_frame_info("twt_request_frame")
-        twt_response_frame = (
-            self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                sa_addr=ap_mac_address,
-                da_addr=self.device_info["dut_mac_address"],
-                filter_name="twt_responding_sta_0",
-            )
-        )
-
-        self.wifi_sniffer.interfaces.capture.sniffer_validation(
-            packet_filter1=twt_response_frame, packet_filter2=self.second_level_filter
-        )
-
-        self.twt_frame_info("twt_response_frame")
-
-        extracted_params = self.extract_twt_setup_command("./reports/filter2_file.txt")
-        wakeup_interval = (extracted_params[1] * 2 ** extracted_params[2]) * 0.000001
-        wakeup_period = extracted_params[0] * (256 * 0.000001)
-        assert (
-            1 < wakeup_interval < 256
-        ), "Wakeup Interval is not within (1-256) ms range"
-        logger().info(
-            f"\n\nThe Wakeup Interval is {wakeup_interval} seconds and wakeup period is {wakeup_period} seconds\n\n"
-        )
-        logger().info(
-            f"The timestamp at which the AP responds with TWT is {extracted_params[3]}"
-        )
-
-        self.socket_data_transfer_obj.send_data_over_socket(
-            wifi_dut=self.wifi_dut,
-            duration=self.socket_data_transfer_obj.data_transfer_duration,
-            sleep_time=(self.twt_params.rx_latency * 0.0008),
-        )
-        self.verify_twt_data_packets_at_rx_latency(
-            twt_response_frame_epoch_time=float(extracted_params[4])
-        )
         self.wifi_sniffer.interfaces.capture.stop_capture()
 
 
-def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None):
+def wifi_dut_marker(
+    ca_cert=None, client_cert=None, client_key=None, set_timeout_config=True
+):
     config = {
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
@@ -635,6 +638,9 @@ def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None):
         | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
         | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
     }
+    if set_timeout_config:
+        config["enable_timeout_config"] = True
+        config["keep_alive_timeout_value"] = 240
     if ca_cert:
         config["ca_cert"] = ca_cert
     if client_cert:
@@ -648,7 +654,7 @@ def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None):
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_twt_enable_traffic_enable_ps_enable_twt_disable_traffic_disable_ps_disable_c538046(
     wifi_dut,
     wifi_access_point,
@@ -678,7 +684,7 @@ def test_wifi_sdk_verify_dut_behaviour_twt_enable_traffic_enable_ps_enable_twt_d
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_twt_enable_traffic_enable_twt_disable_traffic_disable_c538047(
     wifi_dut,
     wifi_access_point,
@@ -708,7 +714,7 @@ def test_wifi_sdk_verify_dut_behaviour_twt_enable_traffic_enable_twt_disable_tra
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_no_twt_tx_latency_0_c510684(
     wifi_dut,
     remote_socket,
@@ -742,7 +748,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_no_twt_tx_latency_0_c510684
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_rx_latency_25_no_twt_tx_latency_0_c510685(
     wifi_dut,
     wifi_sniffer,
@@ -776,7 +782,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_25_no_twt_tx_latency_0_c510685
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_rx_latency_5_no_twt_tx_latency_0_c510686(
     wifi_dut,
     wifi_sniffer,
@@ -810,7 +816,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_5_no_twt_tx_latency_0_c510686(
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_500ms_no_twt_tx_latency_0_c510687(
     wifi_dut,
     remote_socket,
@@ -845,7 +851,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_500ms_no_tw
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_800ms_no_twt_tx_latency_0_c510688(
     wifi_dut,
     remote_socket,
@@ -880,7 +886,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_800ms_no_tw
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_rx_latency_5_secs_listen_interval_700ms_no_twt_tx_latency_0_c510689(
     wifi_dut,
     remote_socket,
@@ -927,7 +933,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_5_secs_listen_interval_700ms_n
             )
             twt_autoconfig_obj.start()
             twt_autoconfig_obj.wait_for_exit()
-            wifi_dut.interfaces.wifi.disable_twt()
+            twt_autoconfig_obj.disable_twt()
             wifi_dut.interfaces.wifi.leave()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -937,7 +943,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_5_secs_listen_interval_700ms_n
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_1000ms_twt_interval_1024_c510690(
     wifi_dut,
     remote_socket,
@@ -988,7 +994,7 @@ def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_1000ms_twt_interval_5024_ms_c510691(
     wifi_dut,
     remote_socket,
@@ -1039,7 +1045,7 @@ def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_500ms_twt_interval_1024_ms_c510692(
     wifi_dut,
     remote_socket,
@@ -1090,7 +1096,7 @@ def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_check_dut_able_to_send_twt_req_when_average_tx_throughput_greater_than_device_average_throughput_c538035(
     wifi_dut,
     remote_socket,
@@ -1137,7 +1143,7 @@ def test_wifi_sdk_check_dut_able_to_send_twt_req_when_average_tx_throughput_grea
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_check_dut_able_to_send_twt_req_when_average_tx_throughput_less_than_device_average_throughput_c538036(
     wifi_dut,
     remote_socket,
@@ -1184,7 +1190,7 @@ def test_wifi_sdk_check_dut_able_to_send_twt_req_when_average_tx_throughput_less
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_weather_dut_is_able_to_wakeup_for_rx_latency_60_secs_c538037(
     wifi_dut,
     remote_socket,
@@ -1231,7 +1237,7 @@ def test_wifi_sdk_verify_weather_dut_is_able_to_wakeup_for_rx_latency_60_secs_c5
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_weather_dut_is_able_to_wakeup_for_rx_latency_0_secs_and_check_data_transfer_c538038(
     wifi_dut,
     remote_socket,
@@ -1278,7 +1284,7 @@ def test_wifi_sdk_verify_weather_dut_is_able_to_wakeup_for_rx_latency_0_secs_and
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_weather_dut_is_able_to_configure_tx_latency_50sec_c538039(
     wifi_dut,
     remote_socket,
@@ -1325,7 +1331,7 @@ def test_wifi_sdk_verify_weather_dut_is_able_to_configure_tx_latency_50sec_c5380
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_verify_weather_dut_is_throwing_error_rx_latency_more_than_2160_secs_c538040(
     wifi_dut,
     remote_socket,
@@ -1373,7 +1379,7 @@ def test_wifi_sdk_verify_weather_dut_is_throwing_error_rx_latency_more_than_2160
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_verify_weather_dut_is_throwing_error_tx_latency_more_than_2160_secs_c538041(
     wifi_dut,
     remote_socket,
@@ -1432,15 +1438,14 @@ def test_wifi_sdk_verify_weather_dut_is_throwing_error_tx_latency_more_than_2160
         "SL_NET_PRIVATE_KEY",
         "SL_NET_TLS_CLIENT_CREDENTIAL_START",
     ],
+    set_timeout_config=False,
 )
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state(
     "wifi_dut",
-    wifi=[
-        "unassociated",
-    ],
+    wifi=["unassociated", "disable_auto_twt"],
 )
 def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_55_secs_recieve_data_from_aws_cloud_tx_latency_0_c538042(
     wifi_dut,
@@ -1495,10 +1500,6 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_55_secs_recieve_data_from
         twt_autoconfig_obj.wait_for_exit()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-    finally:
-        logger().info(f"\n **** Disabling the TWT Session **** \n")
-        twt_autoconfig_obj.twt_params.twt_enable = 0
-        twt_autoconfig_obj.enable_twt()
 
 
 @wifi_dut_marker(
@@ -1517,15 +1518,14 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_55_secs_recieve_data_from
         "SL_NET_PRIVATE_KEY",
         "SL_NET_TLS_CLIENT_CREDENTIAL_START",
     ],
+    set_timeout_config=False,
 )
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state(
     "wifi_dut",
-    wifi=[
-        "unassociated",
-    ],
+    wifi=["unassociated", "disable_auto_twt"],
 )
 def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_25_secs_recieve_data_from_aws_cloud_tx_latency_0_c538043(
     wifi_dut,
@@ -1580,10 +1580,6 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_25_secs_recieve_data_from
         twt_autoconfig_obj.wait_for_exit()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-    finally:
-        logger().info(f"\n **** Disabling the TWT Session **** \n")
-        twt_autoconfig_obj.twt_params.twt_enable = 0
-        twt_autoconfig_obj.enable_twt()
 
 
 @wifi_dut_marker(
@@ -1602,15 +1598,14 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_25_secs_recieve_data_from
         "SL_NET_PRIVATE_KEY",
         "SL_NET_TLS_CLIENT_CREDENTIAL_START",
     ],
+    set_timeout_config=False,
 )
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state(
     "wifi_dut",
-    wifi=[
-        "unassociated",
-    ],
+    wifi=["unassociated", "disable_auto_twt"],
 )
 def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_2_secs_recieve_data_from_aws_cloud_tx_latency_0_c538044(
     wifi_dut,
@@ -1665,7 +1660,3 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_2_secs_recieve_data_from_
         twt_autoconfig_obj.wait_for_exit()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-    finally:
-        logger().info(f"\n **** Disabling the TWT Session **** \n")
-        twt_autoconfig_obj.twt_params.twt_enable = 0
-        twt_autoconfig_obj.enable_twt()
