@@ -789,7 +789,7 @@ devices:
         interfaces:
             local_shell:
                 type: 'shell.ssh_shell'
-                remote: 10.207.18.30  # configure sniffer NUC IP
+                remote: 10.208.70.9  # configure sniffer NUC IP
                 username: test       # sniffer NUC username
                 password: test123    # sniffer NUC password
                 use_paramiko_expect: false
@@ -801,7 +801,7 @@ devices:
                 interface: 'wlp0s20f3'
 #                interface: 'wlx00c0cab57c2a'
             live_capture:
-                host_address: 10.207.18.30
+                host_address: 10.208.70.9
                 type: 'wifi.sniffer.pyshark_live_sniffer'
                 shell: 'local_shell'
                 interface: 'wlp0s20f3'
@@ -1061,7 +1061,7 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
                 # host machine details where iperf is configuered
-                host_ip: "10.207.18.30"
+                host_ip: "10.208.70.9"
                 host_username: "test"
                 host_password: "test123"
 
@@ -1112,7 +1112,7 @@ devices:
         interfaces:
             ssh_shell:
                 type: 'shell.ssh_shell'
-                remote: '10.207.18.30'  # configure Free Radius Server NUC IP
+                remote: '10.208.70.9'  # configure Free Radius Server NUC IP
                 username: test       # NUC username
                 password: test123    # NUC password
                 use_paramiko_expect: false
@@ -1534,7 +1534,7 @@ start_state:
     wifi_access_point:
         wifi: 'ap_enabled'
     wifi_dut:
-        device: 'reset'
+#        device: 'reset'
         wifi: 'init'
 
 #end_state:
@@ -1545,7 +1545,7 @@ constants:
     time_duration:
         value: 5
     long_duration:
-        value: 36000
+        value: 30
     ping_count:
         value: 10
     iter_count:

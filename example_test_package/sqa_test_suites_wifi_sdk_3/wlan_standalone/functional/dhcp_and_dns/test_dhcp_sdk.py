@@ -250,7 +250,7 @@ class WifiJoinThread(ThreadBase):
     }
 )
 def test_wifi_sdk_verify_static_ip_allocation_to_dut_c19292(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
-                                                            wifi_client, request, sl_collections, sniffer_filter):
+                                                            request, sl_collections, sniffer_filter):
     try:
         capture_filename = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -400,6 +400,7 @@ def test_wifi_sdk_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer, w
 def test_wifi_sdk_tcp_tx_functionality_while_dhcp_renewal_c19295(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                                  net_perf_client, protocol, utf_constants, request, sl_collections, dhcp_lease, sniffer_filter):
     time_delta = 60
+    status = None
     packet_filter2 = '        DHCP: Request (3)'
     ping_count = utf_constants.get("ping_count")
     capture_filename = request.node.name
@@ -478,6 +479,7 @@ def test_wifi_sdk_tcp_rx_functionality_while_dhcp_renewal_c19296(wifi_sniffer, w
                                                                  protocol, utf_constants, request, sl_collections, dhcp_lease,
                                                                  sniffer_filter):
     time_delta = 60
+    status = None
     packet_filter2 = '        DHCP: Request (3)'
     ping_count = utf_constants.get("ping_count")
     capture_filename = request.node.name
@@ -553,6 +555,7 @@ def test_wifi_sdk_tcp_rx_functionality_while_dhcp_renewal_c19296(wifi_sniffer, w
 def test_wifi_sdk_ssl_tx_functionality_while_dhcp_renewal_c551871(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                   utf_constants, request, sl_collections, dhcp_lease, ssl_server, sniffer_filter):
     time_delta = 60
+    status = None
     packet_filter2 = '        DHCP: Request (3)'
     ping_count = utf_constants.get("ping_count")
     capture_filename = request.node.name
@@ -627,6 +630,7 @@ def test_wifi_sdk_ssl_tx_functionality_while_dhcp_renewal_c551871(wifi_access_po
 def test_wifi_sdk_ssl_rx_functionality_while_dhcp_renewal_c551872(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                   utf_constants, request, sl_collections, dhcp_lease, ssl_server, sniffer_filter):
     time_delta = 60
+    status = None
     packet_filter2 = '        DHCP: Request (3)'
     ping_count = utf_constants.get("ping_count")
     capture_filename = request.node.name
@@ -694,8 +698,8 @@ def test_wifi_sdk_ssl_rx_functionality_while_dhcp_renewal_c551872(wifi_access_po
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_legacy_dhcp_discover_failure_c683173(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
-                                                       utf_constants, request, sl_collections, dhcp_lease, sniffer_filter):
+def test_wifi_sdk_legacy_dhcp_discover_failure_c683173(wifi_sniffer, wifi_access_point, wifi_dut,
+                                                       request, sl_collections, dhcp_lease, sniffer_filter):
     capture_filename = request.node.name
     try:
         logger().info("Configuring the Sniffer with access point channel.")
@@ -759,8 +763,8 @@ def test_wifi_sdk_legacy_dhcp_discover_failure_c683173(wifi_sniffer, wifi_access
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_legacy_dhcp_request_failure_c683174(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
-                                                       utf_constants, request, sl_collections, dhcp_lease, sniffer_filter):
+def test_wifi_sdk_legacy_dhcp_request_failure_c683174(wifi_sniffer, wifi_access_point, wifi_dut,
+                                                      request, sl_collections, dhcp_lease, sniffer_filter):
     capture_filename = request.node.name
     mode = "power_save_low_latency"
     try:
@@ -791,18 +795,11 @@ def test_wifi_sdk_legacy_dhcp_request_failure_c683174(wifi_sniffer, wifi_access_
         wifi_dut.interfaces.wifi.set_performance_profile(mode)
         wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2, psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
-        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2", dhcp_end="192.168.50.3")
-        time.sleep(60)
-
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr, filter_name='dhcp_discover')
+        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr, filter_name='dhcp_request')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
-            'Unable to find the dhcp discover sniffer packets'
-
-        filter_2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr, filter_name='dhcp_request')
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_2)['packet_count'], \
             'Unable to find the dhcp request sniffer packets'
 
     except Exception as e:
@@ -834,8 +831,8 @@ def test_wifi_sdk_legacy_dhcp_request_failure_c683174(wifi_sniffer, wifi_access_
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_dhcp_discover_fail_after_retries_min_max_inter_c683175(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
-                                                                         request, sl_collections, sniffer_filter, min_discover_retry_interval,
+def test_wifi_sdk_dhcp_discover_fail_after_retries_min_max_inter_c683175(wifi_sniffer, wifi_access_point, wifi_dut,request,
+                                                                         sl_collections, sniffer_filter, min_discover_retry_interval,
                                                                          max_discover_retry_interval, min_discover_retries):
     """Verify DHCP discover failure by setting minimum and maximum retry interval"""
 
@@ -865,7 +862,7 @@ def test_wifi_sdk_dhcp_discover_fail_after_retries_min_max_inter_c683175(wifi_sn
 
         wifi_dut.interfaces.wifi.start_ip(min_discover_retry_interval=min_discover_retry_interval, max_discover_retry_interval=max_discover_retry_interval,
                                           min_discover_retries=min_discover_retries, enable_dhcp=1,
-                                          expected_status=SLStatus.SL_STATUS_SI91X_DHCP_HANDSHAKE_FAILURE, timeout=20)
+                                          expected_status=SLStatus.SL_STATUS_SI91X_DHCP_HANDSHAKE_FAILURE, timeout=20, async_timeout=300)
         time.sleep(200)
         logger().info(f"\n\n Observed the expected error code: 0x1FF9C (SL_STATUS_SI91X_DHCP_HANDSHAKE_FAILURE) \n\n")
 
@@ -906,8 +903,8 @@ def test_wifi_sdk_dhcp_discover_fail_after_retries_min_max_inter_c683175(wifi_sn
         "ble_custom_ext_features": 0,
     }
 )
-def test_wifi_sdk_dhcp_request_fail_after_retries_min_max_inter_c683176(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
-                                                                        request, sl_collections, sniffer_filter, min_request_retry_interval,
+def test_wifi_sdk_dhcp_request_fail_after_retries_min_max_inter_c683176(wifi_sniffer, wifi_access_point, wifi_dut, request,
+                                                                        sl_collections, sniffer_filter, min_request_retry_interval,
                                                                         max_request_retry_interval, max_request_retries):
 
     """ Verify DHCP request failure by setting minimum and maximum retry interval """
@@ -937,7 +934,7 @@ def test_wifi_sdk_dhcp_request_fail_after_retries_min_max_inter_c683176(wifi_sni
         # Start the DHCP process on the DUT
         ip_config = wifi_dut.interfaces.wifi.start_ip(min_request_retry_interval=min_request_retry_interval,
                                                       max_request_retry_interval=max_request_retry_interval,
-                                                      max_request_retries=max_request_retries, enable_dhcp=1)
+                                                      max_request_retries=max_request_retries, enable_dhcp=1, async_timeout=300)
         time.sleep(200)
 
         wifi_dut.interfaces.wifi.get_device_ip(ip_config)
@@ -946,18 +943,308 @@ def test_wifi_sdk_dhcp_request_fail_after_retries_min_max_inter_c683176(wifi_sni
         wifi_dut.interfaces.wifi.set_performance_profile(mode)
         wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2, psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
-        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2", dhcp_end="192.168.50.3")
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr, filter_name='dhcp_request')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
+            'Unable to find the dhcp request sniffer packets'
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2", dhcp_end="192.168.50.254")
         time.sleep(60)
+
+
+@pytest.mark.parametrize("min_discover_retry_interval,max_discover_retry_interval,min_discover_retries", [(5, 100, 8)])
+@pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "60", "security": 'OPEN'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+def test_wifi_sdk_dhcp_discover_fail_by_setting_retry_value_c683177(wifi_sniffer, wifi_access_point, wifi_dut, request,
+                                                                    sl_collections, sniffer_filter, min_discover_retry_interval,
+                                                                    max_discover_retry_interval, min_discover_retries):
+    """Verify DHCP discover failure by setting retry value"""
+
+    capture_filename = request.node.name
+    try:
+        logger().info("Configuring the Sniffer with access point channel.")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("Starting capture with Sniffer, using test case name as filename.")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+
+        logger().info("Initiating scan...")
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+        time.sleep(20)
+        logger().info(scan_results)
+        assert len(scan_results) >= 1, "scan results not found"
+
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2", dhcp_end="192.168.50.3", dhcp_lease=60)
+        time.sleep(100)
+
+        wifi_dut.interfaces.wifi.start_ip(min_discover_retry_interval=min_discover_retry_interval, max_discover_retry_interval=max_discover_retry_interval,
+                                          min_discover_retries=min_discover_retries, enable_dhcp=1,
+                                          expected_status=SLStatus.SL_STATUS_SI91X_DHCP_HANDSHAKE_FAILURE, timeout=150, async_timeout=600)
+        time.sleep(400)
+        logger().info(f"\n\n Observed the expected error code: 0x1FF9C (SL_STATUS_SI91X_DHCP_HANDSHAKE_FAILURE) \n\n")
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr, filter_name='dhcp_discover')
+        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr,
+                                                                                  filter_name='dhcp_discover')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
             'Unable to find the dhcp discover sniffer packets'
 
-        filter_2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr, filter_name='dhcp_request')
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_2)['packet_count'], \
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2", dhcp_end="192.168.50.254")
+        time.sleep(60)
+
+
+@pytest.mark.parametrize("min_request_retry_interval,max_request_retry_interval,max_request_retries", [(5, 100, 8), (7, 700, 9), (9, 1000, 10)])
+@pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "60", "security": 'OPEN'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+def test_wifi_sdk_dhcp_request_fail_by_setting_retry_value_c683178(wifi_sniffer, wifi_access_point, wifi_dut,request,
+                                                                   sl_collections, sniffer_filter, min_request_retry_interval,
+                                                                   max_request_retry_interval, max_request_retries):
+
+    """ Verify DHCP request failure by setting retry value """
+
+    capture_filename = request.node.name
+    mode = "power_save_low_latency"
+    try:
+        logger().info("Configuring the Sniffer with access point channel.")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("Starting capture with Sniffer, using test case name as filename.")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+
+        logger().info("Initiating scan...")
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+        time.sleep(20)
+        logger().info(scan_results)
+        assert len(scan_results) >= 1, "scan results not found"
+
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+        # Start the DHCP process on the DUT
+        ip_config = wifi_dut.interfaces.wifi.start_ip(min_request_retry_interval=min_request_retry_interval,
+                                                      max_request_retry_interval=max_request_retry_interval,
+                                                      max_request_retries=max_request_retries, enable_dhcp=1, async_timeout=300)
+        time.sleep(400)
+
+        wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+
+        logger().info(f"....Applying performance profile mode : {mode}")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2, psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr, filter_name='dhcp_request')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
+            'Unable to find the dhcp request sniffer packets'
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2", dhcp_end="192.168.50.254")
+        time.sleep(60)
+
+
+@pytest.mark.parametrize("min_discover_retry_interval,max_discover_retry_interval,min_discover_retries", [(5, 100, 0)])
+@pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "60", "security": 'OPEN'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+def test_wifi_sdk_dhcp_discover_by_setting_retry_value_0_c683179(wifi_sniffer, wifi_access_point, wifi_dut,
+                                                                 request, sl_collections, sniffer_filter, min_discover_retry_interval,
+                                                                 max_discover_retry_interval, min_discover_retries):
+    """Verify DHCP Discover retry value by setting to 0"""
+
+    capture_filename = request.node.name
+    try:
+        logger().info("Configuring the Sniffer with access point channel.")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("Starting capture with Sniffer, using test case name as filename.")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+
+        logger().info("Initiating scan...")
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+        time.sleep(20)
+        logger().info(scan_results)
+        assert len(scan_results) >= 1, "scan results not found"
+
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2", dhcp_end="192.168.50.3", dhcp_lease=60)
+        time.sleep(100)
+
+        wifi_dut.interfaces.wifi.start_ip(min_discover_retry_interval=min_discover_retry_interval, max_discover_retry_interval=max_discover_retry_interval,
+                                          min_discover_retries=min_discover_retries, enable_dhcp=1,
+                                          expected_status=SLStatus.SL_STATUS_SI91X_DHCP_HANDSHAKE_FAILURE, timeout=20, async_timeout=300)
+        time.sleep(200)
+        logger().info(f"\n\n Observed the expected error code: 0x1FF9C (SL_STATUS_SI91X_DHCP_HANDSHAKE_FAILURE) \n\n")
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr,
+                                                                                  filter_name='dhcp_discover')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
+            'Unable to find the dhcp discover sniffer packets'
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2", dhcp_end="192.168.50.254")
+        time.sleep(60)
+
+
+@pytest.mark.parametrize("min_request_retry_interval,max_request_retry_interval,max_request_retries", [(5, 10, 0)])
+@pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "60", "security": 'OPEN'})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+def test_wifi_sdk_dhcp_request_by_setting_retry_value_0_c683179(wifi_sniffer, wifi_access_point, wifi_dut, request,
+                                                                sl_collections, sniffer_filter, min_request_retry_interval,
+                                                                max_request_retry_interval, max_request_retries):
+
+    """Verify DHCP request retry value by setting to 0"""
+
+    capture_filename = request.node.name
+    mode = "power_save_low_latency"
+    try:
+        logger().info("Configuring the Sniffer with access point channel.")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("Starting capture with Sniffer, using test case name as filename.")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+
+        logger().info("Initiating scan...")
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+        time.sleep(20)
+        logger().info(scan_results)
+        assert len(scan_results) >= 1, "scan results not found"
+
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+        # Start the DHCP process on the DUT
+        ip_config = wifi_dut.interfaces.wifi.start_ip(min_request_retry_interval=min_request_retry_interval,
+                                                      max_request_retry_interval=max_request_retry_interval,
+                                                      max_request_retries=max_request_retries, enable_dhcp=1, async_timeout=300)
+        time.sleep(200)
+
+        wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+
+        logger().info(f"....Applying performance profile mode : {mode}")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2, psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr, filter_name='dhcp_request')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
             'Unable to find the dhcp request sniffer packets'
 
     except Exception as e:
@@ -988,8 +1275,8 @@ def test_wifi_sdk_dhcp_request_fail_after_retries_min_max_inter_c683176(wifi_sni
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
-def test_wifi_sdk_verify_config_ip_and_get_ip_address_api_c693569(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
-                                                                  utf_constants, sl_collections):
+def test_wifi_sdk_verify_config_ip_and_get_ip_address_api_c693569(wifi_access_point, wifi_dut, sl_collections):
+
     """Verify sl_net_configure_ip and sl_net_get_ip_address APIs"""
     try:
         static_ip = UtfConfig.instance().defaults["wifi"].get("static_ip", None)
