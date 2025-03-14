@@ -1600,13 +1600,16 @@ def test_sdk_WPA2_EAP_PEAP_ca_cert_flag_set_1_C113854(
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_sdk_WPA2_EAP_PEAP_ca_cert_flag_set_1_cert_not_loaded_C113855(
         wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, radius_server, sl_collections, request):
     """ WPA2 Enterprise conn. in EAP PEAP Method with ca_cert_required flag set to 1 and certificate is not loaded """
 
     try:
         test_name = request.node.name
+        wifi_dut.interfaces.wifi.load_certs(
+            eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
         wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
                                                    cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1616,7 +1619,6 @@ def test_sdk_WPA2_EAP_PEAP_ca_cert_flag_set_1_cert_not_loaded_C113855(
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=2)
         wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
-        wifi_dut.interfaces.wifi.set_eap_credentials()
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                       passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                       security="wpa2_enterprise", uid="user1", enc="peap", timeout_ms=1,
@@ -1645,6 +1647,13 @@ def test_sdk_WPA2_EAP_PEAP_ca_cert_flag_set_1_cert_not_loaded_C113855(
             'packet_count'], 'Unable to find EAP failure frames sent from AP in sniffer'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_dut.interfaces.wifi.reset()
+        time.sleep(30)
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        wifi_dut.interfaces.wifi.init(load_certificate=False)
+        wifi_dut.interfaces.wifi.initialize_thread()
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
 
 
 @pytest.mark.config(
