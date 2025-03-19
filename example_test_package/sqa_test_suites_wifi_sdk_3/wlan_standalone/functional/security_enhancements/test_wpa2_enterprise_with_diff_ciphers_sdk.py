@@ -4943,8 +4943,9 @@ def test_wsdk_WPA2_EAP_invalid_algorithm_client_root_ca_cert_c113895(wifi_dut, w
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "band": 0,
-        "eap_cert": (["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]),
-        "private_key_file": ['private-key.key',"SL_NET_PRIVATE_KEY", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID" ],
+        "eap_cert": (["cacert_encrypted.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]),
+        "eap_cert": (["my_certification_signed.key", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]),
+        "private_key_file": ['my_privatekey.key',"SL_NET_PRIVATE_KEY", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID" ],
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
@@ -4965,8 +4966,8 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_with_wrong_private_key_C113886(wifi_du
             wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
             wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                      beacon_missed_count=40, first_time_retry_enable=0)
-            wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
-            wifi_dut.interfaces.wifi.set_eap_credentials(username='user1', password='123456789')
+            wifi_dut.interfaces.wifi.scan(channel=0)
+            wifi_dut.interfaces.wifi.set_eap_credentials(username='user1', password='123456789', credential_key="12345678")
             wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                           passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                           security="wpa2_enterprise", uid="user1", enc="tls",
@@ -4985,7 +4986,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_with_wrong_private_key_C113886(wifi_du
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-@pytest.mark.skip("validation is in process")
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
