@@ -35,7 +35,8 @@ def logger():
 
 
 class BleFunctionality(ThreadBase):
-    def __init__(self, wifi_dut=None, ble_clients=None, ble_sniffer=None, bt_dut_address=None, ble_adv=None, ble_adv_connection=True, min_adv_int=None, max_adv_int=None, min_conn_int=None, max_conn_int=None, scan_type=None, scan_addr_type=None,adv_addr_type=None, own_addr_type=None, layer_name=None, capture_filename=None,stability_check_time=300):
+    def __init__(self, wifi_dut=None, ble_clients=None, ble_sniffer=None, bt_dut_address=None, ble_adv=None, ble_adv_connection=True, min_adv_int=None, max_adv_int=None, min_conn_int=None, max_conn_int=None, scan_type=None, scan_addr_type=None,adv_addr_type=None, own_addr_type=None, layer_name=None, capture_filename=None,stability_check_time=300,
+                 iter=1, dual_role_dut_as_slave=False, dual_role_dut_as_master=False, ble_gatt_init=False, random_addr_on_dut=False, ble_client_address=None, ble_conn_interval_min=None, ble_conn_interval_max=None, ble_scan_interval=None, ble_advt=False, ble_scan=False, ble_scan_window=None, adv_and_scan=False):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_clients = ble_clients
@@ -54,32 +55,105 @@ class BleFunctionality(ThreadBase):
         self.layer_name = layer_name
         self.capture_filename = capture_filename
         self.own_addr_type = own_addr_type
+        self.iter = iter
+        self.dual_role_dut_as_slave = dual_role_dut_as_slave
+        self.dual_role_dut_as_master = dual_role_dut_as_master
+        self.random_addr_on_dut = random_addr_on_dut
+        self.ble_client_address = ble_client_address
+        self.ble_conn_interval_min = ble_conn_interval_min
+        self.ble_conn_interval_max = ble_conn_interval_max
+        self.ble_scan_interval=ble_scan_interval
+        self.ble_advt = ble_advt
+        self.ble_scan = ble_scan
+        self.ble_scan_window = ble_scan_window
+        self.adv_and_scan = adv_and_scan
 
 
     def run(self):
-        self.wifi_dut.interfaces.wifi.ble_start_advertising()
-        enable_wifi_ps = self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-        assert enable_wifi_ps == 0, 'failed to enable wlan power save'
-        enable_bt_ps = self.wifi_dut.interfaces.wifi.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-        assert enable_bt_ps == 0, 'failed to enable bt power save'
-        logger().info("initiating scan in rd_1")
-        bt_client_address_1 = self.ble_clients.interfaces.bluetooth.start_smp_scan(self.bt_dut_address)
-        assert bt_client_address_1, "failed to initiate ble in remote device"
-        device_found = False
-        sw = Stopwatch()
-        while sw.elapsed_sec < 30:
-            found_devices = self.ble_clients.interfaces.bluetooth.get_devices()
-            if self.bt_dut_address in found_devices and \
-                    found_devices[self.bt_dut_address] == self.wifi_dut.interfaces.wifi.ble_advertising_data:
-                device_found = True
-                break
+        if adv_and_scan:
+            self.wifi_dut.interfaces.wifi.ble_start_advertising()
+            enable_wifi_ps = self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+            assert enable_wifi_ps == 0, 'failed to enable wlan power save'
+            enable_bt_ps = self.wifi_dut.interfaces.wifi.enable_bt_power_save(
+                psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+            assert enable_bt_ps == 0, 'failed to enable bt power save'
+            logger().info("initiating scan in rd_1")
+            bt_client_address_1 = self.ble_clients.interfaces.bluetooth.start_smp_scan(self.bt_dut_address)
+            assert bt_client_address_1, "failed to initiate ble in remote device"
+            device_found = False
+            sw = Stopwatch()
+            while sw.elapsed_sec < 30:
+                found_devices = self.ble_clients.interfaces.bluetooth.get_devices()
+                if self.bt_dut_address in found_devices and \
+                        found_devices[self.bt_dut_address] == self.wifi_dut.interfaces.wifi.ble_advertising_data:
+                    device_found = True
+                    break
+            assert device_found
+            if self.ble_adv_connection:
+                self.ble_clients.interfaces.bluetooth.connect(dev_addr=self.bt_dut_address)
+
+        if self.ble_advt:
+            self.wifi_dut.interfaces.wifi.ble_start_advertising()
+        if self.ble_scan:
+            ble_scan_int = int(self.ble_scan_interval / 0.625)
+            ble_scan_win = int(self.ble_scan_window / 0.625)
+            self.wifi_dut.interfaces.wifi.ble_start_scanning( ble_scan_interval=ble_scan_int,ble_scan_window=ble_scan_win, timeout=30)
+        if self.dual_role_dut_as_slave:
+            self.wifi_dut.interfaces.wifi.ble_start_advertising()
+            time.sleep(2)
+
+            logger().info("\n\n======= enable power save in ble dut ========")
+            self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                               psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+            self.ble_client_address = self.ble_clients.interfaces.bluetooth.start_smp_scan(self.bt_dut_address)
+            assert self.ble_client_address, "failed to initiate ble in remote device"
+
+            time.sleep(5)
+
+            logger().info("Check the dut is listed...")
+            self.ble_clients.interfaces.bluetooth.get_devices()
+
+            self.ble_clients.interfaces.bluetooth.pair_and_connect(self.bt_dut_address)
+            time.sleep(60)
+
+        if self.dual_role_dut_as_master:
+            if self.random_addr_on_dut:
+                bt_dut_address = "11:33:33:33:33:11"
+                self.wifi_dut.interfaces.wifi.set_ble_address(ble_address=bt_dut_address)
+            # start adv on ble_client1
+            logger().info("Start adv on client")
+            self.ble_client_address = self.ble_clients.interfaces.bluetooth.start_smp_adv(bt_dut_address=self.bt_dut_address)
+            assert self.ble_client_address is not None
+            time.sleep(1)
+
+            self.wifi_dut.interfaces.wifi.ble_start_advertising()
+            # Start scanning and connect to ble client
+
+            if self.random_addr_on_dut:
+                logger().info(f"Start scanning and connect to ble client with random address")
+                self.wifi_dut.interfaces.wifi.ble_start_scanning(
+                    ble_client_address=self.ble_client_address, ble_address_type=1, timeout=30
+                )
+            else:
+                logger().info(f"Start scanning and connect to ble client")
+                self.wifi_dut.interfaces.wifi.ble_start_scanning(
+                    ble_client_address=self.ble_client_address, timeout=30
+                )
+
+            logger().info("\n\n======= enable power save in ble dut ========")
+            self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                               psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+
+            self.wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=self.ble_client_address, ble_conn_interval_min=self.ble_conn_interval_min, ble_conn_interval_max=self.ble_conn_interval_max,timeout=120)
+            time.sleep(60)
+            state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+            logger().info(f"dev state: {state}")
 
         self.ble_clients.interfaces.bluetooth.stop_scanning()
-        assert device_found
-        if self.ble_adv_connection:
-            self.ble_clients.interfaces.bluetooth.connect(dev_addr=self.bt_dut_address)
+
 
     def scan_advertse_on_dut(self):
         assert len(self.ble_clients) >= 2, f"MINIMUM 2 RASPI DEVICES NEEDED"
@@ -255,7 +329,7 @@ def test_ble_sdk_dual_role_1slave_1master_conn_disconn_reconn_C19917(wifi_dut, b
         assert bt_dut_address, "failed to initiate ble in dut"
         for i in range(0, iter_count):
             ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1, bt_dut_address=bt_dut_address,
-                                       ble_adv_connection=True)
+                                       ble_adv_connection=True, adv_and_scan=True)
             ble_obj.start()
             ble_obj.wait_for_exit()
             ble_client_address = sl_collections.ble_connection(wifi_dut=wifi_dut, ble_client=ble_client2,
@@ -291,7 +365,7 @@ def test_ble_sdk_dual_role_1slave_conn_with_15ms_1master_conn_with_200ms_c19918(
         bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
         assert bt_dut_address, "failed to initiate ble in dut"
         ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1,  bt_dut_address=bt_dut_address, ble_adv="ble_adv_powersave",
-                                   ble_adv_connection=False)
+                                   ble_adv_connection=False, adv_and_scan=True)
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_client1.interfaces.bluetooth.connect(dev_addr=ble_obj.bt_dut_address, min_conn_interval=15,
@@ -329,7 +403,7 @@ def test_ble_sdk_dual_role_1slave_conn_with_20ms_1master_conn_with_200ms_c19919(
         bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
         assert bt_dut_address, "failed to initiate ble in dut"
         ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1, bt_dut_address=bt_dut_address, ble_adv="ble_adv_powersave",
-                                   ble_adv_connection=False)
+                                   ble_adv_connection=False, adv_and_scan=True)
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_client1.interfaces.bluetooth.connect(dev_addr=ble_obj.bt_dut_address, min_conn_interval=20,
@@ -566,3 +640,155 @@ def test_ble_sdk_passive_scanning_with_random_address_advertising_with_public_ad
         wifi_dut.interfaces.wifi.ble_stop_advertising()
         logger().info(f"***************Testcase passed successfully***************")
 
+def test_verify_dual_role_connection_using_conn_interval_100_200_ms_C663245(wifi_dut, ble_clients, sl_collections):
+    """1.Initilize the dut in (0,13) opermode
+              2.Start the ble in dut
+              3.Scan and advertise on dut
+              4.Enable the passive scan on dut
+              5.Scan with public address & Advertise with random address
+              6.Check scanning & advertising for 5mins"""
+
+    try:
+        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        ble_client1 = ble_clients[0]
+        ble_client2 = ble_clients[1]
+        logger().info("Initiate ble service in DUT")
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1)
+        assert bt_dut_address, "failed to initiate ble in dut"
+
+        ble_obj1 = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1, dual_role_dut_as_master=True, bt_dut_address=bt_dut_address, ble_conn_interval_min=100, ble_conn_interval_max=200)
+        ble_obj1.start()
+        ble_obj1.wait_for_exit()
+
+        time.sleep(10)
+
+        ble_obj2 = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client2, dual_role_dut_as_slave=True,  bt_dut_address=bt_dut_address)
+        ble_obj2.start()
+        ble_obj2.wait_for_exit()
+
+        time.sleep(600)
+
+        ble_obj1.check_device_state_on_rasp()
+        ble_obj2.check_device_state_on_rasp()
+        ble_client1.interfaces.bluetooth.disconnect(bt_dut_address)
+        ble_client2.interfaces.bluetooth.disconnect(bt_dut_address)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        logger().info("stop scanning")
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        logger().info("stop advertising")
+        wifi_dut.interfaces.wifi.ble_stop_advertising()
+
+
+def test_verify_dual_role_connection_using_conn_interval_500_1280_ms_C663246(wifi_dut, ble_clients, sl_collections):
+    """1.Initilize the dut in (0,13) opermode
+              2.Start the ble in dut
+              3.Scan and advertise on dut
+              4.Enable the passive scan on dut
+              5.Scan with public address & Advertise with random address
+              6.Check scanning & advertising for 5mins"""
+
+    try:
+        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        ble_client1 = ble_clients[0]
+        ble_client2 = ble_clients[1]
+        logger().info("Initiate ble service in DUT")
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1)
+        assert bt_dut_address, "failed to initiate ble in dut"
+
+        ble_obj1 = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1, dual_role_dut_as_master=True, bt_dut_address=bt_dut_address, ble_conn_interval_min=500, ble_conn_interval_max=1280)
+        ble_obj1.start()
+        ble_obj1.wait_for_exit()
+
+        time.sleep(10)
+
+        ble_obj2 = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client2, dual_role_dut_as_slave=True,  bt_dut_address=bt_dut_address)
+        ble_obj2.start()
+        ble_obj2.wait_for_exit()
+
+        time.sleep(600)
+
+        ble_obj1.check_device_state_on_rasp()
+        ble_obj2.check_device_state_on_rasp()
+        ble_client1.interfaces.bluetooth.disconnect(bt_dut_address)
+        ble_client2.interfaces.bluetooth.disconnect(bt_dut_address)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        logger().info("stop scanning")
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        logger().info("stop advertising")
+        wifi_dut.interfaces.wifi.ble_stop_advertising()
+
+def test_verify_ble_scanning_5ms_DUT_connected_as_peripheral_C663249(wifi_dut, ble_clients, sl_collections):
+    """1.Initilize the dut in (0,13) opermode
+              2.Start the ble in dut
+              3.Scan and advertise on dut
+              4.Enable the passive scan on dut
+              5.Scan with public address & Advertise with random address
+              6.Check scanning & advertising for 5mins"""
+
+    try:
+        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        ble_client1 = ble_clients[0]
+        ble_client2 = ble_clients[1]
+        logger().info("Initiate ble service in DUT")
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1)
+        assert bt_dut_address, "failed to initiate ble in dut"
+
+        ble_obj1 = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1, dual_role_dut_as_slave=True,
+                                     bt_dut_address=bt_dut_address, ble_scan_interval=5, ble_scan_window=2.5, ble_scan=True)
+        ble_obj1.start()
+        ble_obj1.wait_for_exit()
+
+        time.sleep(600)
+
+        ble_obj1.check_device_state_on_rasp()
+        ble_client1.interfaces.bluetooth.disconnect(bt_dut_address)
+        logger().info("stop scanning")
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        logger().info("stop advertising")
+        wifi_dut.interfaces.wifi.ble_stop_advertising()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+def test_verify_ble_scanning_10240ms_DUT_connected_as_peripheral_C663250(wifi_dut, ble_clients, sl_collections):
+    """1.Initilize the dut in (0,13) opermode
+              2.Start the ble in dut
+              3.Scan and advertise on dut
+              4.Enable the passive scan on dut
+              5.Scan with public address & Advertise with random address
+              6.Check scanning & advertising for 5mins"""
+
+    try:
+        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        ble_client1 = ble_clients[0]
+        ble_client2 = ble_clients[1]
+        logger().info("Initiate ble service in DUT")
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1)
+        assert bt_dut_address, "failed to initiate ble in dut"
+
+        ble_obj1 = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1, dual_role_dut_as_slave=True,
+                                    bt_dut_address=bt_dut_address, ble_scan_interval=10240, ble_scan_window=5000,ble_scan=True)
+        ble_obj1.start()
+        ble_obj1.wait_for_exit()
+
+        time.sleep(600)
+
+        ble_obj1.check_device_state_on_rasp()
+        ble_client1.interfaces.bluetooth.disconnect(bt_dut_address)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        logger().info("stop scanning")
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        logger().info("stop advertising")
+        wifi_dut.interfaces.wifi.ble_stop_advertising()

@@ -52,7 +52,7 @@ class BLEFunc(ThreadBase):
                  dut_capability=None, capability_on_remote=None, mtim_disabled=False, lesc_disabled=False,
                  reconnection_from_remote=False, powersave=True, random_addr_on_dut=False, local_oob_flag=False,
                  nrf_dongle_as_master=False, testcase_no=None, ble_client_address=None, ble_dut_address=None,
-                 connect_from_raspi_passkey_entry=None, iter=None):
+                 connect_from_raspi_passkey_entry=None, iter=1,passkey_entry=False, passkey=False):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.nrf_ble_client = nrf_ble_client
@@ -91,6 +91,8 @@ class BLEFunc(ThreadBase):
         self.iter = iter
         self.ble_client_address = ble_client_address
         self.ble_dut_address = ble_dut_address
+        self.passkey_entry = passkey_entry
+        self.passkey = passkey
 
     def run(self):
         if self.sniffer_check or self.encrypted_file:
@@ -150,6 +152,8 @@ class BLEFunc(ThreadBase):
                                                                                                  timeout_sec=0,
                                                                                                  auto_restart=False
                                                                                                  )
+            if self.testcase_no == 557280 or 557260:
+                self.nrf_ble_client.interfaces.bluetooth.register_dynamic_passkey_entry()
             time.sleep(3)
             logger().info(f"Start scanning and connect to ble client")
             self.wifi_dut.interfaces.wifi.ble_start_scanning(
@@ -164,18 +168,62 @@ class BLEFunc(ThreadBase):
                                                                    psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
             self.wifi_dut.interfaces.wifi.ble_stop_scanning()
             logger().info(f"Initiating connection this can take upto {timeout} seconds....")
-            for retry_count in range(0, 3):
-                try:
+            if self.passkey_entry:
+
+                def connect():
+                    logger().info("Initiating connection through ble_conect")
                     self.wifi_dut.interfaces.wifi.ble_connect(
                         ble_remote_dev_address=self.ble_client_address, timeout=timeout,
                         expected="RSI_BLE_ENCRYPT_STARTED_EVENT"
                     )
-                    time.sleep(3)
-                    break
-                except Exception as err:
-                    logger().warning(f"Connection Failed...RETRY COUNT IS {retry_count + 1}\nWarning:{err}")
-                    time.sleep(15)
+
+                time.sleep(3)
+                t = threading.Thread(target=connect)
+                t.start()
+                time.sleep(10)
+                tw = Stopwatch()
+                pass_key_found = False
+                while tw.elapsed_sec < 120:
+                    events = self.wifi_dut.interfaces.wifi.get_async_events()
+                    for event in events:
+                        if "passkey" in event.event_data:
+                            passkey = re.findall(r"passkey: ([\d]*)", event.event_data)
+                            if passkey[0] is not None:
+                                pass_key_value = str(passkey[0])
+                                logger().info(f"passkey : {pass_key_value}")
+                                self.nrf_ble_client.interfaces.bluetooth.set_passkey(pass_key_value)
+                                time.sleep(60)
+                                state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+                                state_int = int(state) if state.isdigit() else -1
+                                logger().info(f"********{state_int}")
+                                pass_key_found = True
+                                break
+                        time.sleep(1)
+                    if pass_key_found:
+                        break
+            else:
+                for retry_count in range(0, 3):
+                    try:
+                        self.wifi_dut.interfaces.wifi.ble_connect(
+                            ble_remote_dev_address=self.ble_client_address, timeout=timeout,
+                            expected="RSI_BLE_ENCRYPT_STARTED_EVENT"
+                        )
+                        time.sleep(3)
+                        break
+                    except Exception as err:
+                        logger().warning(f"Connection Failed...RETRY COUNT IS {retry_count + 1}\nWarning:{err}")
+                        time.sleep(15)
                 # disconnecting from dut
+            logger().info(f"***********before get device state*********************")
+            state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
+            logger().info(f"********************************")
+            logger().info("Disconnecting the bt host....")
+            self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
+            time.sleep(2)
+            self.nrf_ble_client.interfaces.bluetooth.delete_bonding_data()
+            time.sleep(10)
         if self.nrf_dongle_as_master:
             self.wifi_dut.interfaces.wifi.ble_set_cap_data(remote_addr_type=0, smp_io_cap=self.smp_io_capability,
                                                            smp_auth_req_bonding=self.smp_auth_bond,
@@ -298,73 +346,109 @@ class BLEFunc(ThreadBase):
                     self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
 
         if self.connect_from_raspi_passkey_entry:
-            if self.random_addr_on_dut:
-                logger().info("Set DUT in advertise mode with random")
-                self.wifi_dut.interfaces.wifi.ble_start_advertising(own_addr_type=1, ble_addr_type=1)
-            else:
-                logger().info("Set DUT in advertise mode")
-                self.wifi_dut.interfaces.wifi.ble_start_advertising()
+            for i in range(0, self.iter):
+                if self.random_addr_on_dut:
+                    logger().info("Set DUT in advertise mode with random")
+                    self.wifi_dut.interfaces.wifi.ble_start_advertising(own_addr_type=1, ble_addr_type=1)
+                else:
+                    logger().info("Set DUT in advertise mode")
+                    self.wifi_dut.interfaces.wifi.ble_start_advertising()
 
-            # Start ble client scan
-            logger().info("Start smp scan from the remote device")
-            self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(
-                bt_dut_address=self.ble_dut_address,
-                capability=self.client_capability,
-                pin_code=self.pin_code)
-            assert self.ble_client_address, "failed to initiate ble in remote device"
+                # Start ble client scan
+                logger().info("Start smp scan from the remote device")
+                self.ble_client.interfaces.bluetooth.close()
 
-            if self.powersave:
-                logger().info("enabling the power save modes ")
-                self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-                self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                                   psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+                logger().info(f"*****iter  : ***{self.iter}*************")
 
-            time.sleep(5)
+                if i == 0 or self.passkey==True:
+                    logger().info("Start smp scan from the remote device True")
+                    ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(
+                        bt_dut_address=self.ble_dut_address,
+                        capability=self.client_capability,
+                        pin_code=self.pin_code, remove_device=True)
+                else:
+                    logger().info("Start smp scan from the remote device False")
+                    ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(
+                        bt_dut_address=self.ble_dut_address,
+                        capability=self.client_capability,
+                        pin_code=self.pin_code, remove_device=False)
+                assert ble_client_address, "failed to initiate ble in remote device"
 
-            logger().info("stop scanning ....")
-            self.ble_client.interfaces.bluetooth.stop_scanning()
+                if self.powersave:
+                    logger().info("enabling the power save modes ")
+                    self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+                    self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                                               psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
 
-            logger().info("Check the dut is listed...")
-            self.ble_client.interfaces.bluetooth.get_devices()
+                time.sleep(5)
 
-            def connect():
-                logger().info("Connecting to the DUT with MAC address...")
-                self.ble_client.interfaces.bluetooth.pair_and_connect(self.ble_dut_address, timeout=10)
+                logger().info("stop scanning ....")
+                self.ble_client.interfaces.bluetooth.stop_scanning()
 
-            time.sleep(3)  # Give it time to connect
+                logger().info("Check the dut is listed...")
+                self.ble_client.interfaces.bluetooth.get_devices()
 
-            # Create and start the connect thread
-            connect_thread = threading.Thread(target=connect)
-            connect_thread.start()
-            time.sleep(10)
-            tw = Stopwatch()
+                def connect():
+                    if i == 0 or self.passkey==True:
+                        logger().info("Connecting to the DUT with MAC address...")
+                        self.ble_client.interfaces.bluetooth.pair_and_connect(self.ble_dut_address, timeout=10)
+                    else:
+                        logger().info("Connecting to the DUT with connect api.....")
+                        self.ble_client.interfaces.bluetooth.connect(self.ble_dut_address)
 
-            pass_key_found = False
-            while tw.elapsed_sec < 30:
-                events = self.wifi_dut.interfaces.wifi.get_async_events()
-                for event in events:
-                    logger().info(f"********{event.event_data}*************")
-                    if "passkey" in event.event_data:
-                        passkey = re.findall(r"(?<=passkey: )\d*", event.event_data)
-                        if passkey[0] is not None:
-                            pass_key_value = str(passkey[0])
-                            logger().info(f"passkey : {pass_key_value}")
-                            self.ble_client.interfaces.bluetooth.set_pin(pass_key_value)
-                            pass_key_found = True
-                            break
-                        time.sleep(1)
-                if pass_key_found:
-                    break
+                time.sleep(3)  # Give it time to connect
 
-            time.sleep(60)
-            logger().info(f"********************************")
-            state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
-            state_int = int(state) if state.isdigit() else -1
-            assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
-            logger().info(f"********************************")
-            logger().info("Disconnecting the bt host....")
-            self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
-            time.sleep(10)
+                # Create and start the connect thread
+                connect_thread = threading.Thread(target=connect)
+                connect_thread.start()
+                time.sleep(10)
+                tw = Stopwatch()
+                logger().info("after starting thread")
+
+                if self.testcase_no != 663375:
+                    pass_key_found = False
+                    if i == 0 or self.passkey==True:
+                        while tw.elapsed_sec < 30:
+                            events = self.wifi_dut.interfaces.wifi.get_async_events()
+                            for event in events:
+                                if "passkey" in event.event_data:
+                                    passkey = re.findall(r"(?<=passkey: )\d*", event.event_data)
+                                    if passkey[0] is not None:
+                                        pass_key_value = str(passkey[0])
+                                        logger().info(f"passkey : {pass_key_value}")
+                                        if self.testcase_no == 663375:
+                                            logger().info(f"*****inside if test case breaking..*************")
+                                            pass_key_value = ""
+                                            break
+                                        else:
+                                            self.ble_client.interfaces.bluetooth.set_pin(pass_key_value)
+                                            break
+                                    time.sleep(1)
+
+                if self.testcase_no == 663375:
+                    time.sleep(30)
+                    pass
+                elif self.testcase_no == 557273:
+                    time.sleep(60)
+                    logger().info(f"**************inside elif******************")
+                    state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+                    state_int = int(state) if state.isdigit() else -1
+                    assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
+                    logger().info(f"**************after device state******************")
+                    pass
+                else:
+                    self.wifi_dut.interfaces.wifi.ble_mtu_exchange_event_handler(remote_address=ble_client_address,
+                                                                                 mtu_size=100)
+                    time.sleep(60)
+                    logger().info(f"********************************")
+                    state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+                    state_int = int(state) if state.isdigit() else -1
+                    assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
+                    time.sleep(3)
+                    logger().info(f"********************************")
+                    logger().info("Disconnecting the bt host....")
+                    self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
+                    time.sleep(10)
 
         if self.reconnection_from_remote:
             logger().info("Set DUT in advertise mode")
@@ -412,15 +496,27 @@ class BLEFunc(ThreadBase):
             # Start ble client
             self.ble_client.interfaces.bluetooth.close()
             time.sleep(2)
-            self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
-                pin_code=self.pin_code, capability=self.client_capability, bt_dut_address=self.ble_dut_address
-            )
+            if self.testcase_no == 663374:
+                self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
+                    pin_code=self.pin_code, capability=self.client_capability, bt_dut_address=self.ble_dut_address
+                )
+            else:
+                self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
+                    pin_code=self.pin_code, capability=self.client_capability, bt_dut_address=self.ble_dut_address
+                )
             assert self.ble_client_address is not None
             time.sleep(1)
             # Start scanning and connect to ble client
-            self.wifi_dut.interfaces.wifi.ble_start_scanning(
-                ble_client_address=self.ble_client_address, timeout=60
-            )
+            if self.random_addr_on_dut:
+                logger().info(f"Start scanning and connect to ble client")
+                self.wifi_dut.interfaces.wifi.ble_start_scanning(
+                    ble_client_address=self.ble_client_address, ble_address_type=1, timeout=30
+                )
+            else:
+                logger().info(f"Start scanning and connect to ble client")
+                self.wifi_dut.interfaces.wifi.ble_start_scanning(
+                    ble_client_address=self.ble_client_address, timeout=30
+                )
             self.wifi_dut.interfaces.wifi.ble_stop_scanning()
 
             def connect():
@@ -433,31 +529,38 @@ class BLEFunc(ThreadBase):
 
             tw = Stopwatch()
             pass_key_found = False
-            while tw.elapsed_sec < 30:
-                events = self.wifi_dut.interfaces.wifi.get_async_events()
-                for event in events:
-                    if event.event_type == AsyncEventIdentifiers.BLE_SC_PASSKEY:
-                        if "passkey" in event.event_data:
-                            passkey = re.findall(r"passkey: ([\d]*)", event.event_data)
-                            if passkey[0] is not None:
-                                pass_key_value = str(passkey[0])
-                                logger().info(f"passkey : {pass_key_value}")
-                                self.ble_client.interfaces.bluetooth.set_pin(pass_key_value)
-                                pass_key_found = True
-                                break
-                if pass_key_found:
-                    break
-                time.sleep(1)
+            if self.testcase_no != 663374:
+                while tw.elapsed_sec < 30:
+                    events = self.wifi_dut.interfaces.wifi.get_async_events()
+                    for event in events:
+                        if event.event_type == AsyncEventIdentifiers.BLE_SC_PASSKEY:
+                            if "passkey" in event.event_data:
+                                passkey = re.findall(r"passkey: ([\d]*)", event.event_data)
+                                if passkey[0] is not None:
+                                    pass_key_value = str(passkey[0])
+                                    logger().info(f"passkey : {pass_key_value}")
+                                    self.ble_client.interfaces.bluetooth.set_pin(pass_key_value)
+                                    pass_key_found = True
+                                    break
+                    if pass_key_found:
+                        break
+                    time.sleep(1)
 
-            time.sleep(60)
+            if self.testcase_no == 663374:
+                time.sleep(40)
+                pass
+            else:
+                time.sleep(60)
+                state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+                state_int = int(state) if state.isdigit() else -1
+                time.sleep(3)
+                assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
+                if t is not None:
+                    t.join()
+                if state_int == 8:
+                    self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
 
-            state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
-            state_int = int(state) if state.isdigit() else -1
-            assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
-            if t is not None:
-                t.join()
-            if state_int == 8:
-                self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
+                time.sleep(10)
 
         if self.encrypted_file:
             state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
@@ -512,7 +615,11 @@ class BLEFunc(ThreadBase):
                 assert len(link_key) == 34, f"link key is not proper format"
             time.sleep(60)
             if self.ble_connect_from_raspi or self.pair_connect_from_dut or self.connect_from_raspi_passkey_entry:
-                self.ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address])
+                if self.random_addr_on_dut:
+                    self.ble_sniffer.interfaces.sniffer.select_bt_devices(
+                        [master_address , slave_address+ f" type=random"])
+                else:
+                    self.ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address])
                 time.sleep(30)
                 if link_key != "":
                     self.ble_sniffer.interfaces.sniffer.add_link_key(link_key.upper(), master_address,
@@ -1959,7 +2066,7 @@ def test_ble_smp_anthencation_encryption_initiation_C557277(wifi_dut, nrf_ble_cl
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           dut_capability=dut_capability, client_capability=client_capability, pin_code=pin_code,
                           capture_filename="frontline_capture_C557277", smp_io_capability=0, pair_connect_from_dut=True,
                           nrf_connect_to_dut=False)
@@ -2062,7 +2169,7 @@ def test_verify_Encryption_initiation_DUT_as_central_with_random_addr_C557278(wi
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False,
-                          sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C557278",
+                          sniffer_check=True, layer_name=["LE LL", "SMP"], capture_filename="frontline_capture_C557278",
                           dut_capability=dut_capability, smp_io_capability=0, smp_sc=1, passkey_state=0,
                           pin_code=pin_code, client_capability=client_capability, pair_connect_from_dut=True,
                           random_addr_on_dut=True)
@@ -2210,3 +2317,71 @@ def test_verify_passkey_entry_pairing_method_by_DUT_as_peripheral_with_random_ad
                                    ble_dut_address=ble_obj.ble_dut_address)
         nrf_ble_client.interfaces.bluetooth.stop_scanning()
         nrf_ble_client.interfaces.bluetooth.delete_bonding_data()
+
+@pytest.mark.parametrize(
+    "dut_capability, client_capability, pin_code",
+    [
+        (0, "KeyboardOnly", "-8"),  # -8 to wait for pass_key
+    ],
+)
+@pytest.mark.ble_sniffer("frontline_sniffer")
+def test_verify_SMP_timeout_error_DUT_as_peripheral_C663375(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client, dut_capability, client_capability, pin_code):
+    """Verify Encryption initiated by DUT as peripheral"""
+    try:
+        ble_obj = BLEFunc(wifi_dut=wifi_dut, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=True, error_code_expected="0x4bfc", sniffer_check=False, layer_name="SMP", capture_filename="frontline_capture_C663375", dut_capability=dut_capability, smp_io_capability=0, smp_sc=1, passkey_state=0, pin_code=pin_code, client_capability=client_capability, connect_from_raspi_passkey_entry=True, testcase_no=663375)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+        time.sleep(3)
+
+@pytest.mark.parametrize(
+    "dut_capability, client_capability, pin_code",
+    [
+        (0, "KeyboardOnly", "-8"),  # -8 to wait for pass_key
+    ],
+)
+@pytest.mark.ble_sniffer("frontline_sniffer")
+def test_verify_connect_disconnect_reconnect_DUT_as_peripheral_C557270(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client, dut_capability, client_capability, pin_code):
+    """Verify Encryption initiated by DUT as peripheral"""
+    try:
+        ble_obj = BLEFunc(wifi_dut=wifi_dut, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C557274", dut_capability=dut_capability, smp_io_capability=0, smp_sc=1, passkey_state=0, pin_code=pin_code, client_capability=client_capability, connect_from_raspi_passkey_entry=True, iter=10, passkey=False)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+        time.sleep(3)
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+def test_verify_Rand_memset_0_for_encryption_using_LTK_C557280(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+    """Verify LESC pairing EDIV/Rand memset 0 for encryption using LTK"""
+    try:
+        ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, capture_filename="frontline_capture_C557280",sniffer_check=True, layer_name=["LE LL", "SMP"], smp_sc=1, smp_mtim=1, smp_io_capability=0, cap_on_dongle=NRFBLEIoCapabilities.KEYBOARD_ONLY, nrf_connect_to_dut=True, passkey_entry=True, testcase_no=557280)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+        time.sleep(3)
+
+@pytest.mark.parametrize(
+    "dut_capability, client_capability, pin_code",
+    [
+        (0, "KeyboardOnly", "-8"),  # -8 to wait for pass_key
+    ],
+)
+@pytest.mark.ble_sniffer("frontline_sniffer")
+def test_verify_SMP_timeout_error_DUT_as_central_C663374(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client, dut_capability, client_capability, pin_code):
+    """Verify Encryption initiated by DUT as peripheral"""
+    try:
+        ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=True, error_code_expected="0x4bfc", sniffer_check=False, layer_name="SMP", capture_filename="frontline_capture_C663375", dut_capability=dut_capability, smp_io_capability=0, smp_sc=1, passkey_state=0, pin_code=pin_code, client_capability=client_capability, pair_connect_from_dut=True, testcase_no=663374)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+        time.sleep(3)
+
+
