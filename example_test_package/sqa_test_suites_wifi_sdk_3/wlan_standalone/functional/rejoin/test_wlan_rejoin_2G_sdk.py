@@ -147,8 +147,8 @@ class WLanThread(ThreadBase):
                                                                          channel=self.wifi_access_point.interfaces.wifi.channel)
 
                 time.sleep(5)
-                self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET,
-                                                             option_val=SocketOptions.TCP_MAX_RETRY,
+                self.socket_data_transfer_recovery_in_rejoin(option_name='SO_MAX_RETRANSMISSION_TIMEOUT_VALUE',
+                                                             option_val='128',
                                                              data_transfer=True)
 
                 logger().info("Stop sniffer capture")

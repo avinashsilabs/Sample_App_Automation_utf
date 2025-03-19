@@ -1249,6 +1249,7 @@ class WLanThread(ThreadBase):
 
                     self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
 
+                    self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
                     status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True, tls_version='tls_v_1_3')
                     if status == SLStatus.SL_STATUS_OK:
                         self.http_client_initialized = True
