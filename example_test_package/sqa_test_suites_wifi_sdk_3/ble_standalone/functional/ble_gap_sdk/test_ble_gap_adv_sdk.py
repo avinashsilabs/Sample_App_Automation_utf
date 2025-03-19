@@ -22,10 +22,8 @@ def logger():
 
     Test Steps:
         1. Initiates the DUT Coex wlan and BT mode
-        2. Initiates the DUT in master Spp mode for the capability
-        3. Initiates the client in slave spp with capability enables
-        4. Opens Bt socket and connects to the remote client.
-        5. Verifies ping after the connection.
+        2. Initiates the advertising from DUT using different adv_type
+        3. Verifying adv_type and channels on sniffer logs
 
     Author: Vishakha
 """
@@ -126,7 +124,6 @@ def test_ble_sdk_undirected_non_connectable_adv_C663355(ble_sniffer, ble_dut, sl
     """
     Configure DUT in Slave and verify connectivity with Undirected non-connectable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -144,7 +141,6 @@ def test_ble_sdk_undirected_connectable_min_int_adv_C663377(ble_dut, sl_collecti
     """
     Configure DUT in Slave and verify connectivity with Undirected connectable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -156,8 +152,6 @@ def test_ble_sdk_undirected_connectable_min_int_adv_C663377(ble_dut, sl_collecti
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
 
-#Blocked: SI91X-17365
-@pytest.mark.skip()
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
@@ -165,7 +159,6 @@ def test_ble_sdk_directed_connectable_min_int_adv_C663378(ble_dut, sl_collection
     """
     Configure DUT in Slave and verify connectivity with directed connectable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -184,7 +177,6 @@ def test_ble_sdk_undirected_scannable_min_int_adv_C663379(ble_dut, sl_collection
     """
     Configure DUT in Slave and verify connectivity with Undirected scannable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -203,7 +195,6 @@ def test_ble_sdk_undirected_non_connectable_min_int_adv_C663380(ble_dut, sl_coll
     """
     Configure DUT in Slave and verify connectivity with Undirected non-connectable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -222,7 +213,6 @@ def test_ble_sdk_undirected_connectable_max_int_adv_C663381(ble_dut, sl_collecti
     """
     Configure DUT in Slave and verify connectivity with Undirected connectable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -234,8 +224,6 @@ def test_ble_sdk_undirected_connectable_max_int_adv_C663381(ble_dut, sl_collecti
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
 
-#Blocked: SI91X-17365
-@pytest.mark.skip()
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
@@ -243,7 +231,6 @@ def test_ble_sdk_directed_connectable_max_int_adv_C663382(ble_dut, sl_collection
     """
     Configure DUT in Slave and verify connectivity with directed connectable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -262,7 +249,6 @@ def test_ble_sdk_undirected_scannable_max_int_adv_C663383(ble_dut, sl_collection
     """
     Configure DUT in Slave and verify connectivity with undirected scannable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -281,7 +267,6 @@ def test_ble_sdk_undirected_non_connectable_max_int_adv_C663384(ble_dut, sl_coll
     """
     Configure DUT in Slave and verify connectivity with Undirected non connectable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -300,7 +285,6 @@ def test_ble_sdk_undirected_connectable_max_min_int_adv_C663385(ble_dut, sl_coll
     """
     Configure DUT in Slave and verify connectivity with Undirected connectable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -312,8 +296,6 @@ def test_ble_sdk_undirected_connectable_max_min_int_adv_C663385(ble_dut, sl_coll
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
 
-#Blocked: SI91X-17365
-@pytest.mark.skip()
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
@@ -321,7 +303,6 @@ def test_ble_sdk_directed_connectable_max_min_int_adv_C663386(ble_dut, sl_collec
     """
     Configure DUT in Slave and verify connectivity with directed connectable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -340,7 +321,6 @@ def test_ble_sdk_undirected_scannable_max_min_int_adv_C663387(ble_dut, sl_collec
     """
     Configure DUT in Slave and verify connectivity with undirected scannable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -359,7 +339,6 @@ def test_ble_sdk_undirected_non_connectable_max_min_int_adv_C663388(ble_dut, sl_
     """
     Configure DUT in Slave and verify connectivity with Undirected non-connectable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -378,7 +357,6 @@ def test_ble_sdk_undirected_connectable_random_addr_C663389(ble_dut, sl_collecti
     """
     Configure DUT in Slave and verify connectivity with Undirected connectable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -390,8 +368,6 @@ def test_ble_sdk_undirected_connectable_random_addr_C663389(ble_dut, sl_collecti
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
 
-#Blocked: SI91X-17365
-@pytest.mark.skip()
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
@@ -399,7 +375,6 @@ def test_ble_sdk_directed_connectable_random_addr_C663390(ble_dut, sl_collection
     """
     Configure DUT in Slave and verify connectivity with directed connectable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -418,7 +393,6 @@ def test_ble_sdk_undirected_scannable_random_addr_C663391(ble_dut, sl_collection
     """
     Configure DUT in Slave and verify connectivity with undirected scannable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
@@ -437,7 +411,6 @@ def test_ble_sdk_undirected_non_connectable_random_addr_adv_C663392(ble_dut, sl_
     """
     Configure DUT in Slave and verify connectivity with Undirected non-connectable devices
     :param ble_dut:  Fixture parameter to issue command in DUT.
-    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
         with TimeMeasurer() as t:
