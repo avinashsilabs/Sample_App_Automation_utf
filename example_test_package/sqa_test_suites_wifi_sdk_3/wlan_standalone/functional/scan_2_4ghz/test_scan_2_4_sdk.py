@@ -2078,3 +2078,74 @@ def test_wifi_sdk_do_scan_in_channel_12_13_14_c19072(wifi_dut, remote_wiseconnec
     except Exception as e:
         logger().error(f"Exception occurred: {e}")  # Log the exception
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'EU_SILABS_AP',
+        'security': 'WPA2',
+        'passphrase': '123123123',
+        'region': 'Europe'
+    }
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code":"europe"
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+def test_wifi_sdk_Verify_DS_param_in_EU_region_c719887(wifi_sniffer, wifi_dut, wifi_access_point, sniffer_filter, request, sl_collections):
+    """ Verify DS param in probe request of DUT in EU region"""
+    try:
+        test_name = request.node.name
+        logger().info("Setting DUT in wlan power save...")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
+        logger().info("Enabling rejoin...")
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        channel_list = [11, 12, 13]
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+
+        for channel in channel_list:
+            logger().info("Starting access point with custom channel...")
+            wifi_access_point.interfaces.wifi.start_ap(channel=channel)
+            logger().info("Initiating scan...")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_with_channel_{channel}")
+            logger().info("Initiating scan...")
+            scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+            time.sleep(20)
+            logger().info(scan_results)
+
+            logger().info("Stop Sniffer finally")
+            wifi_sniffer.interfaces.capture.stop_capture()
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
+                                                                                            filter_name="probe_req_ds_param")
+            logger().info(f"Validate DS Param in Probe req")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+                'packet_count'], \
+                f'Unable to find DS Param in probe request packet in channel:{channel}'
+
+            logger().info(f"found DS Param in Probe req in channel:{channel}'")
+        logger().info("DUT scan success in all channels")
+        logger().info("Dut is able to scan successfully in Europe region")
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
