@@ -713,7 +713,9 @@ class BleThreadFunctionality(ThreadBase):
             dev_state=8,
             conn_int=160,
             gatt=True,
-            bond_info=0
+            bond_info=0,
+            client_capability="NoInputNoOutput",
+            pin_code="4321",
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -728,6 +730,8 @@ class BleThreadFunctionality(ThreadBase):
         self.conn_int = conn_int
         self.gatt = gatt
         self.bond_info = bond_info
+        self.client_capability = client_capability
+        self.pin_code = pin_code
 
         # Set up DUT for BLE advertising
         if self.gatt:
@@ -747,6 +751,15 @@ class BleThreadFunctionality(ThreadBase):
         logger().info(f"bt_dut_address : {self.ble_dut_address}")
         time.sleep(5)
         self.ble_client_address = None
+
+    def set_capabilities(self):
+        self.wifi_dut.interfaces.wifi.ble_set_cap_data(remote_addr_type=0, smp_io_cap=self.capability,
+                                                       smp_auth_req_bonding=1,
+                                                       smp_auth_req_mitm=1,
+                                                       smp_auth_req_sc=1, smp_max_enc_key_size=16,
+                                                       smp_local_oob_data_flag_not_present=0,
+                                                       smp_enc_key=1, smp_id_key=0,
+                                                       smp_sign_key=0)
 
     def stop_adv_scan(self):
         logger().info("Initiating stop advertise from DUT")
@@ -778,6 +791,8 @@ class BleThreadFunctionality(ThreadBase):
             wifi_dut=self.wifi_dut,
             ble_client=self.ble_client,
             ble_dut_address=self.ble_dut_address,
+            client_capability=self.client_capability,
+            pin_code=self.pin_code,
         )
 
     def advertise_dut(self):
@@ -791,6 +806,8 @@ class BleThreadFunctionality(ThreadBase):
             ble_address=self.ble_dut_address,
             ble_scan_type=self.ble_scan_type,
             timeout=60,
+            client_capability=self.client_capability,
+            pin_code=self.pin_code,
         )
 
     def scan_and_connect_from_remote(self):
@@ -799,7 +816,10 @@ class BleThreadFunctionality(ThreadBase):
             ble_client=self.ble_client,
             ble_dut_address=self.ble_dut_address,
             ble_pairing=self.ble_pairing,
-            dev_state=self.dev_state
+            dev_state=self.dev_state,
+            capability=self.capability,
+            client_capability=self.client_capability,
+            pin_code=self.pin_code,
         )
 
     def scan_and_connect_from_dut(self):
@@ -807,7 +827,11 @@ class BleThreadFunctionality(ThreadBase):
             wifi_dut=self.wifi_dut,
             ble_client=self.ble_client,
             ble_client_address=self.ble_client_address,
-            dev_state=self.dev_state
+            dev_state=self.dev_state,
+            capability=self.capability,
+            client_capability=self.client_capability,
+            pin_code=self.pin_code,
+
         )
 
     def run(self):
@@ -817,6 +841,9 @@ class BleThreadFunctionality(ThreadBase):
                 ble_client=self.ble_client,
                 ble_dut_address=self.ble_dut_address,
                 timeout=20,
+                capability=self.capability,
+                client_capability=self.client_capability,
+                pin_code=self.pin_code,
             )
 
         if self.ble_test_type == "scan":
@@ -826,6 +853,9 @@ class BleThreadFunctionality(ThreadBase):
                 ble_address=self.ble_dut_address,
                 ble_scan_type=self.ble_scan_type,
                 timeout=60,
+                capability=self.capability,
+                client_capability=self.client_capability,
+                pin_code=self.pin_code,
             )
         if self.ble_test_type == "start_scan_stop_scan":
             # Start scanning
@@ -846,13 +876,18 @@ class BleThreadFunctionality(ThreadBase):
                 mode=self.ble_test_type,
                 ble_pairing=self.ble_pairing,
                 min_conn_interval=self.conn_int,
-                max_conn_interval=self.conn_int
+                max_conn_interval=self.conn_int,
+                capability=self.capability,
+                client_capability=self.client_capability,
+                pin_code=self.pin_code,
             )
         if self.ble_test_type == "scan_from_remote_device":
             self.ble_client_address = self.sl_collections.scan_from_remote_device(
                 wifi_dut=self.wifi_dut,
                 ble_client=self.ble_client,
                 ble_dut_address=self.ble_dut_address,
+                client_capability=self.client_capability,
+                pin_code=self.pin_code,
             )
 
         if self.ble_test_type == "scan_and_connect_from_dut":

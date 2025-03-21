@@ -979,11 +979,12 @@ def test_Coex_sdk_SMP_slave_io_display_TCP_TX_C535082(
             sl_collections=sl_collections,
             ble_test_type="scan_and_connect_from_remote",
             ble_pairing=1,
-            capability=1,
             dev_state=10,
-            gatt=False
+            gatt=True,
+            capability=1,
+            client_capability="KeyboardOnly",
+            pin_code=-8
         )
-
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -999,6 +1000,7 @@ def test_Coex_sdk_SMP_slave_io_display_TCP_TX_C535082(
             traffic_type="TX",
             timeout=120
         )
+        ble_obj.set_capabilities()
         wifi_obj.join_to_ap()
         wifi_obj.start()
         time.sleep(5)
@@ -1009,8 +1011,6 @@ def test_Coex_sdk_SMP_slave_io_display_TCP_TX_C535082(
         ble_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.ble_scanning=True
         wifi_obj.wait_for_exit()
-        logger().info("Checking connection stability for 60 seconds")
-        time.sleep(60)
         wifi_dut.interfaces.wifi.ble_stop_scanning()
         ble_obj.ble_disconnect()
         wifi_obj.disconnect()
@@ -1024,6 +1024,7 @@ def test_Coex_sdk_SMP_slave_io_display_TCP_TX_C535082(
         ble_client.interfaces.bluetooth.close()
         if ble_obj:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            time.sleep(5)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -1088,8 +1089,9 @@ def test_Coex_sdk_SMP_slave_io_no_input_no_output_UDP_RX_C535083(
             ble_pairing=1,
             capability=3,
             dev_state=10,
-            gatt=False
+            gatt=True
         )
+        ble_obj.set_capabilities()
 
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
@@ -1706,7 +1708,4 @@ def test_Coex_sdk_BLE_encrypt_UDP_TX_C133440(
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-
-
-
 
