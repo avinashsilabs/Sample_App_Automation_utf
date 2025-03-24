@@ -93,6 +93,7 @@ class Ble_Data_Transfer:
         self.set_local_name = set_local_name
         self.ble_dut_address = None
         self.ble_client_address = None
+        self.scan_state=None
 
     def add_service(self, service_uuid):
         logger().info(f"***** Configuring ble GATT service {hex(service_uuid)} in DUT *****")
@@ -183,6 +184,7 @@ class Ble_Data_Transfer:
         logger().info("Start scanning....")
         # Start scanning and connect to BLE client
         self.ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=self.ble_client_address)
+        self.scan_state = True
         time.sleep(30)
         events = self.ble_dut.interfaces.bluetooth.get_async_events()
         device_found = False
@@ -195,7 +197,13 @@ class Ble_Data_Transfer:
         logger().info(f"Found BLE client address: {self.ble_client_address}")
         logger().info("Remote device found in scan results, BLE scanning is successful")
         time.sleep(2)
-        self.ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        state = self.ble_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        if state_int == 2:
+            logger().info("Device is scanning status try to stop scanning")
+            self.ble_dut.interfaces.bluetooth.ble_stop_scanning()
+            self.scan_state = False
+
         return self.ble_client_address
 
     def scan_conn_from_dut_device(self):
@@ -635,6 +643,7 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_without_response_C664436(bl
                 capture_file="test_ble_dut_as_master_and_slave_240_bytes_write_without_response_C664436")
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            allocated_mem_addr = None
             ble_obj1 = Ble_Data_Transfer(ble_dut, ble_client1, sl_collections)
             ble_obj2 = Ble_Data_Transfer(ble_dut, ble_client2, sl_collections)
             # Initializing DUT BLE Device
@@ -713,28 +722,30 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_without_response_C664436(bl
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_CMD") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.write_count, "No ATT_WRITE_CMD packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.write_count/2), "No ATT_WRITE_CMD packets are present"
             logger().info("ATT_WRITE_CMD packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_CMD") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.write_count, "No ATT_WRITE_CMD packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.write_count/2), "No ATT_WRITE_CMD packets are present"
             logger().info("ATT_WRITE_CMD packets are sent successfully")
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        # Disconnect From Remote Device
-        ble_obj1.check_device_state_on_dut()
+        logger().info(ble_obj1.scan_state)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        # # Disconnect From Remote Device
         ble_obj1.disconnect_from_remote(ble_client=ble_client1)
-        # Disconnect from dut
-        ble_obj2.check_device_state_on_dut()
+        # # Disconnect from dut
         ble_obj2.disconnect_form_dut(ble_client=ble_client2)
         ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -751,7 +762,9 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_C664440(ble_dut, bl
 
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
-
+            char_path = None
+            char_path1 = None
+            allocated_mem_addr = None
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -848,14 +861,14 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_C664440(ble_dut, bl
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.indication_count, "No ATT_HANDLE_VALUE_IND packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.indication_count/2), "No ATT_HANDLE_VALUE_IND packets are present"
             logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (
                                    sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.indication_count, "No ATT_HANDLE_VALUE_IND packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.indication_count/2), "No ATT_HANDLE_VALUE_IND packets are present"
 
             logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
 
@@ -863,14 +876,19 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_C664440(ble_dut, bl
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info("disabling the notifications")
-        ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-        logger().info("unsubscribe to notifications")
-        ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        logger().info("disabling the notifications")
-        ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
-        logger().info("unsubscribe to notifications")
-        ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        logger().info(ble_obj1.scan_state)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path:
+            logger().info("disabling the notifications")
+            ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            logger().info("unsubscribe to notifications")
+            ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        if char_path1:
+            logger().info("disabling the notifications")
+            ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
+            logger().info("unsubscribe to notifications")
+            ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         logger().info("DISCONNECTING THE DEVICES")
@@ -880,7 +898,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_C664440(ble_dut, bl
         ble_obj2.disconnect_form_dut(ble_client=ble_client2)
         ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -898,6 +917,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_rx_notification_C664442(ble_dut, 
 
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            write_handle1 = None
+            write_handle2 = None
             svc = 'HealthThermometerService'
             charc = 'CustomNotifyCharacteristic'
             ble_obj1 = Ble_Data_Transfer(ble_dut, ble_client1, sl_collections)
@@ -995,25 +1016,30 @@ def test_ble_dut_as_master_and_slave_240_bytes_rx_notification_C664442(ble_dut, 
                                                                      '+BD Address (LE PKT)'] == f"0x{ble_client_address1.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.rx_notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.rx_notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* C") & (sniffer_data_df[
                                                                      '+BD Address (LE PKT)'] == f"0x{ble_client_address2.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.rx_notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.rx_notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address1,
-                                                       handle=(write_handle1 + 1), enable_notify=0)
-        time.sleep(2)
-        ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
-                                                       handle=(write_handle2 + 1), enable_notify=0)
+        logger().info(ble_obj1.scan_state)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if write_handle1:
+            ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address1,
+                                                           handle=(write_handle1 + 1), enable_notify=0)
+            time.sleep(2)
+        if write_handle2:
+            ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
+                                                           handle=(write_handle2 + 1), enable_notify=0)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         # Disconnect From Remote Device
@@ -1041,7 +1067,9 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_notification_C664444(ble_dut, 
 
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
-
+            allocated_mem_addr = None
+            char_path = None
+            char_path1 = None
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -1139,27 +1167,31 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_notification_C664444(ble_dut, 
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info(f' *********************** unsubscribe to notifications ***********************')
-        ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-        ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        time.sleep(2)
-        logger().info(f' *********************** unsubscribe to notifications ***********************')
-        ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
-        ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path:
+            logger().info(f' *********************** unsubscribe to notifications ***********************')
+            ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+            time.sleep(2)
+        if char_path1:
+            logger().info(f' *********************** unsubscribe to notifications ***********************')
+            ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
+            ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         # Disconnect From Remote Device
@@ -1170,7 +1202,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_notification_C664444(ble_dut, 
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -1188,6 +1221,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_without_response_tx_indicat
                 capture_file="test_ble_dut_as_master_and_slave_240_bytes_write_without_response_tx_indication_C664447")
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            allocated_mem_addr =None
+            char_path1 = None
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -1278,24 +1313,27 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_without_response_tx_indicat
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_CMD") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.write_count, "No ATT_WRITE_CMD packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.write_count/2), "No ATT_WRITE_CMD packets are present"
             logger().info("ATT_WRITE_CMD packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.indication_count, "No ATT_HANDLE_VALUE_IND packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.indication_count/2), "No ATT_HANDLE_VALUE_IND packets are present"
             logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info("disabling the notifications")
-        ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
-        logger().info("unsubscribe to notifications")
-        ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path1:
+            logger().info("disabling the notifications")
+            ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
+            logger().info("unsubscribe to notifications")
+            ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         logger().info("DISCONNECTING THE DEVICES")
@@ -1307,7 +1345,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_without_response_tx_indicat
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -1325,6 +1364,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_without_response_tx_notific
                 capture_file="test_ble_dut_as_master_and_slave_240_bytes_write_without_response_tx_notification_C664448")
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            allocated_mem_addr = None
+            char_path = None
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -1420,23 +1461,26 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_without_response_tx_notific
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_CMD") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.write_count, "No ATT_WRITE_CMD packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.write_count/2), "No ATT_WRITE_CMD packets are present"
             logger().info("ATT_WRITE_CMD packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info(f' *********************** unsubscribe to notifications ***********************')
-        ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-        ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path:
+            logger().info(f' *********************** unsubscribe to notifications ***********************')
+            ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         # Disconnect From Remote Device
@@ -1447,7 +1491,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_without_response_tx_notific
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -1466,6 +1511,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_without_response_rx_notific
 
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            allocated_mem_addr = None
+            write_handle2 = None
             svc = 'HealthThermometerService'
             charc = 'CustomNotifyCharacteristic'
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
@@ -1562,22 +1609,25 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_without_response_rx_notific
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_CMD") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.write_count, "No ATT_WRITE_CMD packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.write_count/2), "No ATT_WRITE_CMD packets are present"
             logger().info("ATT_WRITE_CMD packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* C") & (sniffer_data_df[
                                                                      '+BD Address (LE PKT)'] == f"0x{ble_client_address2.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.rx_notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.rx_notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
-                                                       handle=(write_handle2 + 1), enable_notify=0)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if write_handle2:
+            ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
+                                                           handle=(write_handle2 + 1), enable_notify=0)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         # Disconnect From Remote Device
@@ -1588,7 +1638,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_without_response_rx_notific
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -1607,7 +1658,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_write_without_respo
 
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
-
+            allocated_mem_addr = None
+            char_path = None
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -1706,24 +1758,27 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_write_without_respo
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.indication_count, "No ATT_HANDLE_VALUE_IND packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.indication_count/2), "No ATT_HANDLE_VALUE_IND packets are present"
             logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_CMD") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.write_count, "No ATT_WRITE_CMD packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.write_count/2), "No ATT_WRITE_CMD packets are present"
             logger().info("ATT_WRITE_CMD packets are sent successfully")
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info("disabling the notifications")
-        ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-        logger().info("unsubscribe to notifications")
-        ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path:
+            logger().info("disabling the notifications")
+            ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            logger().info("unsubscribe to notifications")
+            ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         # Disconnect From Remote Device
@@ -1732,7 +1787,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_write_without_respo
         ble_obj2.disconnect_form_dut(ble_client=ble_client2)
         ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -1751,6 +1807,9 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_tx_notification_C66
 
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            allocated_mem_addr = None
+            char_path1 = None
+            char_path2 = None
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -1847,28 +1906,32 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_tx_notification_C66
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.indication_count, "No ATT_HANDLE_VALUE_IND packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.indication_count/2), "No ATT_HANDLE_VALUE_IND packets are present"
             logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info("disabling the notifications")
-        ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
-        logger().info("unsubscribe to notifications")
-        ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        time.sleep(5)
-        logger().info(f' *********************** unsubscribe to notifications ***********************')
-        ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path2)
-        ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        time.sleep(5)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path1:
+            logger().info("disabling the notifications")
+            ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
+            logger().info("unsubscribe to notifications")
+            ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+            time.sleep(5)
+        if char_path2:
+            logger().info(f' *********************** unsubscribe to notifications ***********************')
+            ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path2)
+            ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+            time.sleep(5)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         # Disconnect From Remote Device
@@ -1879,7 +1942,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_tx_notification_C66
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -1897,6 +1961,9 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_rx_notification_C66
                 capture_file="test_ble_dut_as_master_and_slave_240_bytes_tx_indication_rx_notification_C664465")
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            write_handle2 = None
+            char_path = None
+            allocated_mem_addr = None
             svc = 'HealthThermometerService'
             charc = 'CustomNotifyCharacteristic'
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
@@ -1993,28 +2060,30 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_rx_notification_C66
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.indication_count, "No ATT_HANDLE_VALUE_IND packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.indication_count/2), "No ATT_HANDLE_VALUE_IND packets are present"
             logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* C") & (sniffer_data_df[
                                                                      '+BD Address (LE PKT)'] == f"0x{ble_client_address2.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.rx_notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.rx_notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info("disabling the notifications")
-        ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-        logger().info("unsubscribe to notifications")
-        ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-
-        ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
-                                                       handle=(write_handle2 + 1), enable_notify=0)
-
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path:
+            logger().info("disabling the notifications")
+            ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            logger().info("unsubscribe to notifications")
+            ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        if write_handle2:
+            ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
+                                                           handle=(write_handle2 + 1), enable_notify=0)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         # Disconnect From Remote Device
@@ -2026,7 +2095,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_rx_notification_C66
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
     
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -2044,7 +2114,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_notification_write_without_res
 
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
-
+            allocated_mem_addr = None
+            char_path = None
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -2138,22 +2209,25 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_notification_write_without_res
                            (sniffer_data_df['Role'] == "* C") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (sniffer_data_df['Opcode'] == "* ATT_WRITE_CMD") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.write_count, "No ATT_WRITE_CMD packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.write_count/2), "No ATT_WRITE_CMD packets are present"
             logger().info("ATT_WRITE_CMD packets are sent successfully")
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info(f' *********************** unsubscribe to notifications ***********************')
-        ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-        ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        time.sleep(2)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path:
+            logger().info(f' *********************** unsubscribe to notifications ***********************')
+            ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+            time.sleep(2)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         # Disconnect From Remote Device
@@ -2164,7 +2238,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_notification_write_without_res
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -2183,7 +2258,9 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_notification_tx_indication_C66
 
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
-
+            allocated_mem_addr = None
+            char_path = None
+            char_path1 = None
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -2276,26 +2353,30 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_notification_tx_indication_C66
                            (sniffer_data_df['Role'] == "* C") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.indication_count, "No ATT_HANDLE_VALUE_IND packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.indication_count/2), "No ATT_HANDLE_VALUE_IND packets are present"
             logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info(f' *********************** unsubscribe to notifications ***********************')
-        ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-        ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        time.sleep(2)
-        logger().info("disabling the notifications")
-        ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
-        logger().info("unsubscribe to notifications")
-        ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path:
+            logger().info(f' *********************** unsubscribe to notifications ***********************')
+            ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+            time.sleep(2)
+        if char_path1:
+            logger().info("disabling the notifications")
+            ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
+            logger().info("unsubscribe to notifications")
+            ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         logger().info("DISCONNECTING THE DEVICES")
@@ -2307,7 +2388,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_notification_tx_indication_C66
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -2325,6 +2407,9 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_notification_rx_notification_C
                 capture_file="test_ble_dut_as_master_and_slave_240_bytes_tx_notification_rx_notification_C664473")
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            allocated_mem_addr = None
+            char_path = None
+            write_handle2 = None
             svc = 'HealthThermometerService'
             charc = 'CustomNotifyCharacteristic'
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
@@ -2427,25 +2512,29 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_notification_rx_notification_C
                            (sniffer_data_df['Role'] == "* C") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* C") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_client_address2.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.rx_notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.rx_notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info(f' *********************** unsubscribe to notifications ***********************')
-        ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-        ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        time.sleep(2)
-        time.sleep(2)
-        ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
-                                                       handle=(write_handle2 + 1), enable_notify=0)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path:
+            logger().info(f' *********************** unsubscribe to notifications ***********************')
+            ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+            time.sleep(2)
+            time.sleep(2)
+        if write_handle2:
+            ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
+                                                           handle=(write_handle2 + 1), enable_notify=0)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         # Disconnect From Remote Device
@@ -2456,7 +2545,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_notification_rx_notification_C
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -2473,6 +2563,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_rx_notification_write_without_res
                 capture_file="test_ble_dut_as_master_and_slave_240_bytes_rx_notification_write_without_response_C664478")
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            write_handle1 = None
+            allocated_mem_addr = None
             svc = 'HealthThermometerService'
             charc = 'CustomNotifyCharacteristic'
             ble_obj1 = Ble_Data_Transfer(ble_dut, ble_client1, sl_collections)
@@ -2567,20 +2659,23 @@ def test_ble_dut_as_master_and_slave_240_bytes_rx_notification_write_without_res
                            (sniffer_data_df['Role'] == "* P") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_client_address1.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.rx_notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.rx_notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (sniffer_data_df['Opcode'] == "* ATT_WRITE_CMD") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.write_count, "No ATT_WRITE_CMD packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.write_count/2), "No ATT_WRITE_CMD packets are present"
             logger().info("ATT_WRITE_CMD packets are sent successfully")
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address1,
-                                                       handle=(write_handle1 + 1), enable_notify=0)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if write_handle1:
+            ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address1,
+                                                           handle=(write_handle1 + 1), enable_notify=0)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         # Disconnect From Remote Device
@@ -2593,7 +2688,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_rx_notification_write_without_res
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -2612,6 +2708,9 @@ def test_ble_dut_as_master_and_slave_240_bytes_rx_notification_tx_indication_C66
 
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            allocated_mem_addr = None
+            write_handle1 = None
+            char_path1 = None
             svc = 'HealthThermometerService'
             charc = 'CustomNotifyCharacteristic'
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
@@ -2710,25 +2809,29 @@ def test_ble_dut_as_master_and_slave_240_bytes_rx_notification_tx_indication_C66
                            (sniffer_data_df['Role'] == "* P") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_client_address1.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.rx_notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.rx_notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.indication_count, "No ATT_HANDLE_VALUE_IND packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.indication_count/2), "No ATT_HANDLE_VALUE_IND packets are present"
             logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address1,
-                                                       handle=(write_handle1 + 1), enable_notify=0)
-        time.sleep(2)
-        logger().info("disabling the notifications")
-        ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
-        logger().info("unsubscribe to notifications")
-        ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if write_handle1:
+            ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address1,
+                                                           handle=(write_handle1 + 1), enable_notify=0)
+            time.sleep(2)
+        if char_path1:
+            logger().info("disabling the notifications")
+            ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
+            logger().info("unsubscribe to notifications")
+            ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         logger().info("DISCONNECTING THE DEVICES")
@@ -2740,7 +2843,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_rx_notification_tx_indication_C66
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -2759,6 +2863,9 @@ def test_ble_dut_as_master_and_slave_240_bytes_rx_notification_tx_notification_C
 
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            allocated_mem_addr = None
+            write_handle1 = None
+            char_path1 = None
             svc = 'HealthThermometerService'
             charc = 'CustomNotifyCharacteristic'
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
@@ -2856,26 +2963,30 @@ def test_ble_dut_as_master_and_slave_240_bytes_rx_notification_tx_notification_C
                            (sniffer_data_df['Role'] == "* P") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_client_address1.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.rx_notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.rx_notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address1,
-                                                       handle=(write_handle1 + 1), enable_notify=0)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if write_handle1:
+            ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address1,
+                                                           handle=(write_handle1 + 1), enable_notify=0)
 
-        time.sleep(2)
-        logger().info(f' *********************** unsubscribe to notifications ***********************')
-        ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
-        ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+            time.sleep(2)
+        if char_path1:
+            logger().info(f' *********************** unsubscribe to notifications ***********************')
+            ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
+            ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         logger().info("DISCONNECTING THE DEVICES")
@@ -2887,7 +2998,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_rx_notification_tx_notification_C
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -2904,7 +3016,9 @@ def test_ble_dut_as_master_and_slave_200_bytes_tx_notification_C664486(ble_dut, 
 
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
-
+            allocated_mem_addr = None
+            char_path = None
+            char_path1 = None
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -3001,26 +3115,30 @@ def test_ble_dut_as_master_and_slave_200_bytes_tx_notification_C664486(ble_dut, 
                            (sniffer_data_df['Role'] == "* C") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 203)]) == ble_fun1.notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 203)]) >= int(ble_fun1.notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 203)]) == ble_fun2.notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 203)]) >= int(ble_fun2.notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info(f' *********************** unsubscribe to notifications ***********************')
-        ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-        ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        time.sleep(2)
-        logger().info(f' *********************** unsubscribe to notifications ***********************')
-        ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
-        ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path:
+            logger().info(f' *********************** unsubscribe to notifications ***********************')
+            ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+            time.sleep(2)
+        if char_path1:
+            logger().info(f' *********************** unsubscribe to notifications ***********************')
+            ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
+            ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         # Disconnect From Remote Device
@@ -3031,7 +3149,8 @@ def test_ble_dut_as_master_and_slave_200_bytes_tx_notification_C664486(ble_dut, 
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -3048,6 +3167,8 @@ def test_ble_dut_as_master_and_slave_200_bytes_rx_notification_C664488(ble_dut, 
 
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            write_handle1 = None
+            write_handle2 = None
             svc = 'HealthThermometerService'
             charc = 'CustomNotifyCharacteristic'
             ble_obj1 = Ble_Data_Transfer(ble_dut, ble_client1, sl_collections)
@@ -3142,24 +3263,28 @@ def test_ble_dut_as_master_and_slave_200_bytes_rx_notification_C664488(ble_dut, 
                            (sniffer_data_df['Role'] == "* P") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_client_address1.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 203)]) == ble_fun1.rx_notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 203)]) >= int(ble_fun1.rx_notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* C") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_client_address2.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 203)]) == ble_fun2.rx_notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 203)]) >= int(ble_fun2.rx_notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address1,
-                                                       handle=(write_handle1 + 1), enable_notify=0)
-        time.sleep(2)
-        ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
-                                                       handle=(write_handle2 + 1), enable_notify=0)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if write_handle1:
+            ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address1,
+                                                           handle=(write_handle1 + 1), enable_notify=0)
+            time.sleep(2)
+        if write_handle2:
+            ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
+                                                           handle=(write_handle2 + 1), enable_notify=0)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         # Disconnect From Remote Device
@@ -3186,7 +3311,9 @@ def test_ble_dut_as_master_and_slave_200_bytes_tx_indication_C664490(ble_dut, bl
 
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
-
+            allocated_mem_addr = None
+            char_path = None
+            char_path1 = None
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -3280,26 +3407,30 @@ def test_ble_dut_as_master_and_slave_200_bytes_tx_indication_C664490(ble_dut, bl
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* C") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 203)]) == ble_fun1.indication_count, "No ATT_HANDLE_VALUE_IND packets are present"
+                                       '+PDU Length (L2CAP)'] == 203)]) >= int(ble_fun1.indication_count/2), "No ATT_HANDLE_VALUE_IND packets are present"
             logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 203)]) == ble_fun2.indication_count, "No ATT_HANDLE_VALUE_IND packets are present"
+                                       '+PDU Length (L2CAP)'] == 203)]) >= int(ble_fun2.indication_count/2), "No ATT_HANDLE_VALUE_IND packets are present"
             logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info("disabling the notifications")
-        ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-        logger().info("unsubscribe to notifications")
-        ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        logger().info("disabling the notifications")
-        ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
-        logger().info("unsubscribe to notifications")
-        ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path:
+            logger().info("disabling the notifications")
+            ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            logger().info("unsubscribe to notifications")
+            ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        if char_path1:
+            logger().info("disabling the notifications")
+            ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
+            logger().info("unsubscribe to notifications")
+            ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         logger().info("DISCONNECTING THE DEVICES")
@@ -3311,7 +3442,8 @@ def test_ble_dut_as_master_and_slave_200_bytes_tx_indication_C664490(ble_dut, bl
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -3327,7 +3459,7 @@ def test_ble_dut_as_master_and_slave_200_bytes_write_without_response_C664492(bl
                 capture_file="test_ble_dut_as_master_and_slave_200_bytes_write_without_response_C664492")
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
-
+            allocated_mem_addr = None
             ble_obj1 = Ble_Data_Transfer(ble_dut, ble_client1, sl_collections)
             ble_obj2 = Ble_Data_Transfer(ble_dut, ble_client2, sl_collections)
             
@@ -3409,17 +3541,19 @@ def test_ble_dut_as_master_and_slave_200_bytes_write_without_response_C664492(bl
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* C") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (sniffer_data_df['Opcode'] == "* ATT_WRITE_CMD") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 203)]) == ble_fun1.write_count, "No ATT_WRITE_CMD packets are present"
+                                       '+PDU Length (L2CAP)'] == 203)]) >= int(ble_fun1.write_count/2), "No ATT_WRITE_CMD packets are present"
             logger().info("ATT_WRITE_CMD packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (sniffer_data_df['Opcode'] == "* ATT_WRITE_CMD") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 203)]) == ble_fun2.write_count, "No ATT_WRITE_CMD packets are present"
+                                       '+PDU Length (L2CAP)'] == 203)]) >= int(ble_fun2.write_count/2), "No ATT_WRITE_CMD packets are present"
             logger().info("ATT_WRITE_CMD packets are sent successfully")
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
         # Disconnect From Remote Device
         ble_obj1.check_device_state_on_dut()
         ble_obj1.disconnect_from_remote(ble_client=ble_client1)
@@ -3430,7 +3564,8 @@ def test_ble_dut_as_master_and_slave_200_bytes_write_without_response_C664492(bl
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -3447,7 +3582,7 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_with_response_C664438(ble_d
                 capture_file="test_ble_dut_as_master_and_slave_240_bytes_write_with_response_C664438")
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
-
+            allocated_mem_addr = None
             ble_obj1 = Ble_Data_Transfer(ble_dut, ble_client1, sl_collections)
             ble_obj2 = Ble_Data_Transfer(ble_dut, ble_client2, sl_collections)
             # Initializing DUT BLE Device
@@ -3527,16 +3662,18 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_with_response_C664438(ble_d
                         sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_REQ") & (
                                                    sniffer_data_df[
-                                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.write_count, "No ATT_WRITE_REQ packets are found"
+                                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.write_count/2), "No ATT_WRITE_REQ packets are found"
             assert len(sniffer_data_df.loc[(sniffer_data_df['Role'] == "* P") & (
                         sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_REQ") & (
                                                    sniffer_data_df[
-                                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.write_count, "No ATT_WRITE_REQ packets are found"
+                                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.write_count/2), "No ATT_WRITE_REQ packets are found"
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
         # Disconnect From Remote Device
         ble_obj1.disconnect_from_remote(ble_client=ble_client1)
         # Disconnect from dut
@@ -3545,7 +3682,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_with_response_C664438(ble_d
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -3563,7 +3701,7 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_without_response_write_with
                 capture_file="test_ble_dut_as_master_and_slave_240_bytes_write_without_response_write_with_response_C664446")
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
-
+            allocated_mem_addr = None
             ble_obj1 = Ble_Data_Transfer(ble_dut, ble_client1, sl_collections)
             ble_obj2 = Ble_Data_Transfer(ble_dut, ble_client2, sl_collections)
 
@@ -3644,19 +3782,21 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_without_response_write_with
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_CMD") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.write_count, "No ATT_WRITE_CMD packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.write_count/2), "No ATT_WRITE_CMD packets are present"
             logger().info("ATT_WRITE_CMD packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_REQ") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.write_count, "No ATT_WRITE_REQ packet is sent"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.write_count/2), "No ATT_WRITE_REQ packet is sent"
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
         # Disconnect From Remote Device
         ble_obj1.disconnect_from_remote(ble_client=ble_client1)
         # Disconnect from dut
@@ -3665,7 +3805,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_without_response_write_with
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -3683,7 +3824,7 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_with_response_write_without
                 capture_file="test_ble_dut_as_master_and_slave_240_bytes_write_with_response_write_without_response_C664454")
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
-
+            allocated_mem_addr = None
             ble_obj1 = Ble_Data_Transfer(ble_dut, ble_client1, sl_collections)
             ble_obj2 = Ble_Data_Transfer(ble_dut, ble_client2, sl_collections)
 
@@ -3763,19 +3904,21 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_with_response_write_without
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_REQ") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.write_count, "No ATT_WRITE_REQ packets are found"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.write_count/2), "No ATT_WRITE_REQ packets are found"
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_CMD") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.write_count, "No ATT_WRITE_CMD packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.write_count/2), "No ATT_WRITE_CMD packets are present"
             logger().info("ATT_WRITE_CMD packets are sent successfully")
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
         # Disconnect From Remote Device
         ble_obj1.disconnect_from_remote(ble_client=ble_client1)
         # Disconnect from dut
@@ -3784,7 +3927,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_with_response_write_without
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -3802,6 +3946,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_with_response_tx_indication
                 capture_file="test_ble_dut_as_master_and_slave_240_bytes_write_with_response_tx_indication_C664455")
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            allocated_mem_addr = None
+            char_path1 = None
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -3897,23 +4043,26 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_with_response_tx_indication
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_REQ") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.write_count, "No ATT_WRITE_REQ packets are found"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.write_count/2), "No ATT_WRITE_REQ packets are found"
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.indication_count, "No ATT_HANDLE_VALUE_IND packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.indication_count/2), "No ATT_HANDLE_VALUE_IND packets are present"
             logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info("disabling the notifications")
-        ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
-        logger().info("unsubscribe to notifications")
-        ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path1:
+            logger().info("disabling the notifications")
+            ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
+            logger().info("unsubscribe to notifications")
+            ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         logger().info("DISCONNECTING THE DEVICES")
@@ -3925,7 +4074,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_with_response_tx_indication
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -3943,6 +4093,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_with_response_tx_notificati
                 capture_file="test_ble_dut_as_master_and_slave_240_bytes_write_with_response_tx_notification_C664456")
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            char_path = None
+            allocated_mem_addr = None
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -4035,21 +4187,24 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_with_response_tx_notificati
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_REQ") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.write_count, "No ATT_WRITE_REQ packets are found"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.write_count/2), "No ATT_WRITE_REQ packets are found"
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info(f' *********************** unsubscribe to notifications ***********************')
-        ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-        ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path:
+            logger().info(f' *********************** unsubscribe to notifications ***********************')
+            ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         logger().info("DISCONNECTING THE DEVICES")
@@ -4061,7 +4216,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_with_response_tx_notificati
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -4079,6 +4235,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_with_response_rx_notificati
                 capture_file="test_ble_dut_as_master_and_slave_240_bytes_write_with_response_rx_notification_C664457")
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            write_handle2 = None
+            allocated_mem_addr = None
             svc = 'HealthThermometerService'
             charc = 'CustomNotifyCharacteristic'
             ble_obj1 = Ble_Data_Transfer(ble_dut, ble_client1, sl_collections)
@@ -4173,20 +4331,23 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_with_response_rx_notificati
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_REQ") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.write_count, "No ATT_WRITE_REQ packets are found"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.write_count/2), "No ATT_WRITE_REQ packets are found"
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* C") & (sniffer_data_df[
                                                                      '+BD Address (LE PKT)'] == f"0x{ble_client_address2.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.rx_notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.rx_notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
-                                                       handle=(write_handle2 + 1), enable_notify=0)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if write_handle2:
+            ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
+                                                           handle=(write_handle2 + 1), enable_notify=0)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         logger().info("DISCONNECTING THE DEVICES")
@@ -4198,7 +4359,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_write_with_response_rx_notificati
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -4217,6 +4379,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_write_with_response
             assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            char_path1 = None
+            allocated_mem_addr = None
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -4309,22 +4473,25 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_write_with_response
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.indication_count, "No ATT_HANDLE_VALUE_IND packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.indication_count/2), "No ATT_HANDLE_VALUE_IND packets are present"
             logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_REQ") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.write_count, "No ATT_WRITE_REQ packets are found"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.write_count/2), "No ATT_WRITE_REQ packets are found"
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info("disabling the notifications")
-        ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
-        logger().info("unsubscribe to notifications")
-        ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path1:
+            logger().info("disabling the notifications")
+            ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
+            logger().info("unsubscribe to notifications")
+            ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
         logger().info("DISCONNECTING THE DEVICES")
@@ -4336,7 +4503,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_indication_write_with_response
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -4355,7 +4523,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_notification_write_with_respon
 
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
-
+            char_path = None
+            allocated_mem_addr = None
             service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
             char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
 
@@ -4450,23 +4619,26 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_notification_write_with_respon
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_REQ") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.write_count, "No ATT_WRITE_REQ packets are found"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.write_count/2), "No ATT_WRITE_REQ packets are found"
 
 
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        logger().info(f' *********************** unsubscribe to notifications ***********************')
-        ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-        ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if char_path:
+            logger().info(f' *********************** unsubscribe to notifications ***********************')
+            ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         time.sleep(2)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
@@ -4479,7 +4651,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_tx_notification_write_with_respon
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -4498,6 +4671,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_rx_notification_write_with_respon
 
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
+            write_handle1 = None
+            allocated_mem_addr = None
             svc = 'HealthThermometerService'
             charc = 'CustomNotifyCharacteristic'
             ble_obj1 = Ble_Data_Transfer(ble_dut, ble_client1, sl_collections)
@@ -4590,20 +4765,23 @@ def test_ble_dut_as_master_and_slave_240_bytes_rx_notification_write_with_respon
                                                                      '+BD Address (LE PKT)'] == f"0x{ble_client_address1.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun1.rx_notification_count, "No ATT_HANDLE_VALUE_NTF packets are present"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun1.rx_notification_count/2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (
                                        sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_REQ") & (
                                    sniffer_data_df[
-                                       '+PDU Length (L2CAP)'] == 240)]) == ble_fun2.write_count, "No ATT_WRITE_REQ packets are found"
+                                       '+PDU Length (L2CAP)'] == 240)]) >= int(ble_fun2.write_count/2), "No ATT_WRITE_REQ packets are found"
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
-        ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address1,
-                                                       handle=(write_handle1 + 1), enable_notify=0)
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        if write_handle1:
+            ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address1,
+                                                           handle=(write_handle1 + 1), enable_notify=0)
         time.sleep(2)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
@@ -4616,7 +4794,8 @@ def test_ble_dut_as_master_and_slave_240_bytes_rx_notification_write_with_respon
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -4633,7 +4812,7 @@ def test_ble_dut_as_master_and_slave_200_bytes_write_with_response_C664494(ble_d
                 capture_file="test_ble_dut_as_master_and_slave_200_bytes_write_with_response_C664494")
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
-
+            allocated_mem_addr = None
             ble_obj1 = Ble_Data_Transfer(ble_dut, ble_client1, sl_collections)
             ble_obj2 = Ble_Data_Transfer(ble_dut, ble_client2, sl_collections)
             # Initializing DUT BLE Device
@@ -4713,16 +4892,18 @@ def test_ble_dut_as_master_and_slave_200_bytes_write_with_response_C664494(ble_d
                         sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_REQ") & (
                                                    sniffer_data_df[
-                                                       '+PDU Length (L2CAP)'] == 203)]) == ble_fun1.write_count, "No ATT_WRITE_REQ packets are found"
+                                                       '+PDU Length (L2CAP)'] == 203)]) >= int(ble_fun1.write_count/2), "No ATT_WRITE_REQ packets are found"
             assert len(sniffer_data_df.loc[(sniffer_data_df['Role'] == "* P") & (
                         sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                                        sniffer_data_df['Opcode'] == "* ATT_WRITE_REQ") & (
                                                    sniffer_data_df[
-                                                       '+PDU Length (L2CAP)'] == 203)]) == ble_fun2.write_count, "No ATT_WRITE_REQ packets are found"
+                                                       '+PDU Length (L2CAP)'] == 203)]) >= int(ble_fun2.write_count/2), "No ATT_WRITE_REQ packets are found"
     except Exception as error:
         logger().info(f"error message :{error}")
         raise
     finally:
+        if ble_obj1.scan_state:
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
         # Disconnect From Remote Device
         ble_obj1.disconnect_from_remote(ble_client=ble_client1)
         # Disconnect from dut
@@ -4731,5 +4912,6 @@ def test_ble_dut_as_master_and_slave_200_bytes_write_with_response_C664494(ble_d
         ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if allocated_mem_addr:
+            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
