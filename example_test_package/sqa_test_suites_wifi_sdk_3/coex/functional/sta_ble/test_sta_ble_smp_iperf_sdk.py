@@ -1105,7 +1105,7 @@ def test_Coex_sdk_SMP_slave_io_no_input_no_output_UDP_RX_C535083(
             ping_count=ping_count,
             sniffer_filter=sniffer_filter,
             test_type=test_type,
-            traffic_type="TX",
+            traffic_type="RX",
             timeout=120
         )
         wifi_obj.join_to_ap()

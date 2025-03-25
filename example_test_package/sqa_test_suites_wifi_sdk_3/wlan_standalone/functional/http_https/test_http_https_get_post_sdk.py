@@ -1858,7 +1858,6 @@ def test_wifi_sdk_http_get_functionality_c19209(http_server, wifi_dut, http_clie
             wifi_dut.interfaces.wifi.http_client_deinit()
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
