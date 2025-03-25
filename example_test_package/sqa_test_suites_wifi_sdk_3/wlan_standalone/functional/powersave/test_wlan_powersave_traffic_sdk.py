@@ -51,13 +51,15 @@ from threading import Thread
 def logger():
     return get_logger(__name__)
 
+
 def transmit_stats(fixture, enable=1, power=127, rate=139,
                    length=100, mode=0, channel=1, aggr_enable=0,
                    enable_11ax=0):
     fixture.interfaces.wifi.set_antenna(interface="client", antenna=4)
     logger().info(f"Antenna Command Frame Success")
-    logger().info(f"Transmit test start with params enable={enable}, power={power}, rate={rate}, length={length}, mode={mode}, "
-                  f"channel={channel}, aggr_enable={aggr_enable}, enable_11ax={enable_11ax}")
+    logger().info(
+        f"Transmit test start with params enable={enable}, power={power}, rate={rate}, length={length}, mode={mode}, "
+        f"channel={channel}, aggr_enable={aggr_enable}, enable_11ax={enable_11ax}")
     fixture.interfaces.wifi.sl_si91x_transmit_test_start(
         enable=enable,
         power=power,
@@ -73,14 +75,16 @@ def transmit_stats(fixture, enable=1, power=127, rate=139,
 
 def start_statistic_report(fixture, channel=1, max_stats_count=50, async_timeout=100):
     logger().info(f"\r\nReceive Statistics...\r\n")
-    fixture.interfaces.wifi.start_statistic_report(interface="client", channel=channel, max_stats_count=max_stats_count, async_timeout=async_timeout)
+    fixture.interfaces.wifi.start_statistic_report(interface="client", channel=channel, max_stats_count=max_stats_count,
+                                                   async_timeout=async_timeout)
+
 
 class TCPDataTransfer(ThreadBase):
     def __init__(self, wifi_dut, remote_socket, device_ip=None, data="Thisisfromtcpclient"):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.remote_socket = remote_socket
-        #self.utf_constants = utf_constants
+        # self.utf_constants = utf_constants
         self.dut_ip = device_ip
         self.data = data
 
@@ -101,8 +105,8 @@ class TCPDataTransfer(ThreadBase):
             f"Successfully opened tcp client socket and socket id received is {tcp_socket_id} which is expected")
         logger().info(f"Socket binds at (device_ip, 5001) in DUT")
         bind_response = self.wifi_dut.interfaces.wifi.bind(socket_fd=tcp_socket_id, device_ip=self.dut_ip,
-                                                      server_port=server_port,
-                                                      timeout=5)
+                                                           server_port=server_port,
+                                                           timeout=5)
         logger().info(f"Bind socket successfully: {bind_response}")
 
         logger().info("DUT is connecting to server socket")
@@ -110,7 +114,7 @@ class TCPDataTransfer(ThreadBase):
         for count in range(3):
             try:
                 self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=tcp_socket_id, server_ip=server_ip,
-                                                          server_port=server_port)
+                                                               server_port=server_port)
                 connect_status = True
                 break
             except:
@@ -120,7 +124,8 @@ class TCPDataTransfer(ThreadBase):
         logger().info("Socket connection is successful")
         for packets in range(10):
             logger().info("DUT Sending Data packets")
-            bytes_sent = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=tcp_socket_id, data=self.data, timeout=30)
+            bytes_sent = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=tcp_socket_id, data=self.data,
+                                                                     timeout=30)
             logger().info(f"Number of bytes sent by dut {bytes_sent}")
 
 
@@ -130,11 +135,12 @@ class UDPDataTransfer(ThreadBase):
         self.wifi_dut = wifi_dut
         self.remote_socket = remote_socket
         self.device_ip = device_ip
+
     def run(self):
         self.data = "Data sent from DUT"
         local_port = randint(5010, 6000)
         logger().info("Starting UDP server socket at remote device")
-        #self.remote_socket.interfaces.socket.interface = "wlan0"
+        # self.remote_socket.interfaces.socket.interface = "wlan0"
         self.remote_socket.interfaces.socket.start_server(socket_type=1)  # 0-TCP, 1-UDP
         server_ip = self.remote_socket.interfaces.socket.hostname_or_ip_address()
         logger().info(f"Server_ip is {server_ip}")
@@ -142,7 +148,7 @@ class UDPDataTransfer(ThreadBase):
         logger().info(f"Server port is {server_port}")
         logger().info(f"DUT opens tcp client socket")
         udp_socket_id = self.wifi_dut.interfaces.wifi.socket(domain="AF_INET", stream_type="SOCK_DGRAM",
-                                                         protocol="IPPROTO_UDP",timeout=60)
+                                                             protocol="IPPROTO_UDP", timeout=60)
         logger().info(f"Socket open successfully : {udp_socket_id}")
         logger().info("Initiating socket bind from DUT")
         self.wifi_dut.interfaces.wifi.bind(udp_socket_id, device_ip=self.device_ip, server_port=local_port)
@@ -150,7 +156,8 @@ class UDPDataTransfer(ThreadBase):
         connect_status = False
         for count in range(3):
             try:
-                self.wifi_dut.interfaces.wifi.bsdSocketConnect(udp_socket_id, server_ip=server_ip, server_port=server_port)
+                self.wifi_dut.interfaces.wifi.bsdSocketConnect(udp_socket_id, server_ip=server_ip,
+                                                               server_port=server_port)
                 connect_status = True
                 break
             except:
@@ -161,7 +168,8 @@ class UDPDataTransfer(ThreadBase):
         time.sleep(3)
         for packets in range(20):
             logger().info("DUT Sending Data packets")
-            bytes_sent = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=udp_socket_id, data=self.data, timeout=30)
+            bytes_sent = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=udp_socket_id, data=self.data,
+                                                                     timeout=30)
             logger().info(f"Number of bytes sent by dut {bytes_sent}")
             logger().info("Setting UDP socket receive timeout in remote server")
             self.remote_socket.interfaces.socket.set_recv_timeout(use_client_socket=True, socket_type=1)
@@ -195,7 +203,7 @@ class UDPDataTransfer(ThreadBase):
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_power_mode_switching_before_assoc_C19500(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
-                                                  sniffer_filter,sl_collections):
+                                                  sniffer_filter, sl_collections):
     """
     Power Save Mode switching before association
     """
@@ -289,7 +297,10 @@ def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wi
         time.sleep(30)
 
         wifi_sniffer.interfaces.capture.stop_capture()
-        packet_filter1 = f"(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address}) && (wlan.da == {ap_bssid}))"
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                        da_addr=ap_bssid,
+                                                                                        filter_name='power_mgmt_bit')
+
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], 'Unable to find Qos Null with PM1'
 
@@ -306,7 +317,9 @@ def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wi
         wifi_sniffer.interfaces.capture.stop_capture()
         validation = True
         logger().info("CHECKING MAX PSP DISABLED - SO SHOULD NOT GET NUL PACKETS")
-        packet_filter2 = f"(wlan.fc.pwrmgt == 0) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address}) && (wlan.da == {ap_bssid}))"
+        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                        da_addr=ap_bssid,
+                                                                                        filter_name='power_mgmt_bit_disable')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
             'packet_count'], "Unable to find Qos Null with PM 0"
 
@@ -343,7 +356,10 @@ def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wi
         logger().info("Stopping sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        packet_filter1 = f"(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address}) && (wlan.da == {ap_bssid}))"
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                        da_addr=ap_bssid,
+                                                                                        filter_name='power_mgmt_bit')
+
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
             'packet_count'], 'Unable to find Qos Null with PM1'
 
@@ -360,7 +376,9 @@ def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wi
         logger().info("CHECKING ENHANCDED MAX PSP DISABLED - SO SHOULD NOT GET NUL PACKETS")
 
         validation = True
-        packet_filter2 = f"(wlan.fc.pwrmgt == 0) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address}) && (wlan.da == {ap_bssid}))"
+        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                        da_addr=ap_bssid,
+                                                                                        filter_name='power_mgmt_bit_disable')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)[
             'packet_count'], "Unable to find Qos Null with PM 0"
 
@@ -427,7 +445,8 @@ def test_send_multicast_broadcast_data_sdk_C19507(multicast_client, net_perf_cli
             logger().info(f"Broadcast ip is {broadcast_ip}")
 
             logger().info(f"SENDING MULTICAST DATA")
-            ip_version, ttl, multicast_mac, multicast_ip, device_port, server_port, buffer_length, no_of_pkts = multicast_client.interfaces.multicast.multicast_params()
+            (ip_version, ttl, multicast_mac, multicast_ip, device_port, server_port, buffer_length,
+             no_of_pkts) = multicast_client.interfaces.multicast.multicast_params()
 
             logger().info(f"DUT joining to the multicast group {multicast_ip}")
             wifi_dut.interfaces.wifi.sl_net_join_multicast_address()
@@ -448,7 +467,6 @@ def test_send_multicast_broadcast_data_sdk_C19507(multicast_client, net_perf_cli
             wifi_dut.interfaces.wifi.sl_net_leave_multicast_address()
 
             logger().info(f"SENDING BROADCAST DATA")
-            # sl_collections.run_traffic(wifi_dut=wifi_dut, net_perf_client=net_perf_client, protocol=protocol, device_ip=device_ip, host_ip=host_ip, timeout=60, traffic_type="TX")
             sl_collections.run_traffic(wifi_dut=wifi_dut, net_perf_client=net_perf_client, protocol=protocol,
                                        device_ip=broadcast_ip, host_ip=host_ip, timeout=60, traffic_type="TX")
 
@@ -462,7 +480,7 @@ def test_send_multicast_broadcast_data_sdk_C19507(multicast_client, net_perf_cli
 
             logger().info("validate NULL data frame with PM bit set to '1'")
             packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
-                                                                                            da_addr={ap_bssid},
+                                                                                            da_addr=ap_bssid,
                                                                                             filter_name='power_mgmt_bit')
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
                 'Unable to find power management bit in QOS null frames in sniffer capture'
@@ -558,7 +576,7 @@ def test_powersave_mode_2_enterprise_sdk_C19509(wifi_dut, wifi_access_point, wif
 
             logger().info("validate NULL data frame with PM bit set to '1'")
             packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
-                                                                                            da_addr={ap_bssid},
+                                                                                            da_addr=ap_bssid,
                                                                                             filter_name='power_mgmt_bit')
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
                 'Unable to find power management bit in QOS null frames in sniffer capture'
@@ -628,14 +646,14 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
             logger().info("validate NULL data frame with PM bit set to '1'")
 
             packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
-                                                                                            da_addr={ap_bssid},
+                                                                                            da_addr=ap_bssid,
                                                                                             filter_name='power_mgmt_bit')
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
                 'Unable to find power management bit in QOS null frames in sniffer capture'
 
             wifi_dut.interfaces.wifi.inited = False
             wifi_dut.interfaces.wifi.associated = False
-            logger().info(f"Initialising deinit")
+            logger().info(f"Initialising De init")
             wifi_dut.interfaces.wifi.deinit()
             logger().info(f"Initialising init")
             wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
@@ -646,11 +664,12 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
 
         except:
             error_count = error_count + 1
-            logger().info(f"### Failure Count {error_count}: Failed in iteration -> {iteration} at {sw.elapsed_sec} seconds")
+            logger().info(
+                f"### Failure Count {error_count}: Failed in iteration -> {iteration} at {sw.elapsed_sec} seconds")
             continue
         finally:
             if error_count > expected_error_count:
-                logger().info(f"*** Error count is {error_count}. Here error coount is more than expected ***")
+                logger().info(f"*** Error count is {error_count}. Here error count is more than expected ***")
                 logger().error(
                     f"\n\n********** Observed error count '{error_count}' times which is more than expected"
                     f" error count '{expected_error_count}', Hence marking the testcase as fail **********")
@@ -661,7 +680,9 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
             wifi_dut.interfaces.wifi.init(load_certificate=False)
             wifi_dut.interfaces.wifi.initialize_thread()
             wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
-            assert error_count <= expected_error_count, f"Error count is more than  '{expected_error_count}' times in  of test run time: {test_run_time} Hence failing the test case"
+            assert error_count <= expected_error_count, (f"Error count is more than  '{expected_error_count}' times in "
+                                                         f" of test run time: {test_run_time} Hence failing the test "
+                                                         f"case")
 
 
 @pytest.mark.config(
@@ -673,7 +694,7 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.SSL,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default  | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
@@ -686,8 +707,8 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '12345678'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_TCP_UDP_bidi_in_powersave_mode2_ulp_sdk_C19494(wifi_sniffer, remote_socket, wifi_dut,
-                                                                  wifi_access_point, utf_constants,
-                                                                  sl_collections, sniffer_filter,net_perf_client,wifi_client):
+                                                        wifi_access_point, utf_constants,
+                                                        sl_collections, sniffer_filter, net_perf_client, wifi_client):
     iter_count = utf_constants.get("iter_count")
     try:
         for i in range(iter_count):
@@ -725,7 +746,7 @@ def test_TCP_UDP_bidi_in_powersave_mode2_ulp_sdk_C19494(wifi_sniffer, remote_soc
             t1.start()
             t1.wait_for_exit()
 
-            t2=UDPDataTransfer(wifi_dut,remote_socket,device_ip)
+            t2 = UDPDataTransfer(wifi_dut, remote_socket, device_ip)
             t2.start()
             t2.wait_for_exit()
 
@@ -737,7 +758,7 @@ def test_TCP_UDP_bidi_in_powersave_mode2_ulp_sdk_C19494(wifi_sniffer, remote_soc
 
             logger().info("validate NULL data frame with PM bit set to '1'")
             packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
-                                                                                            da_addr={ap_bssid},
+                                                                                            da_addr=ap_bssid,
                                                                                             filter_name='power_mgmt_bit')
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
                 'Unable to find power management bit in QOS null frames in sniffer capture'
@@ -766,9 +787,10 @@ def test_TCP_UDP_bidi_in_powersave_mode2_ulp_sdk_C19494(wifi_sniffer, remote_soc
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_powersave_functionality_after_rejoin_sdk_C19508(switch, wifi_sniffer, wifi_dut, wifi_access_point, utf_constants,
-                                                     sl_collections):
-# def test_powersave_functionality_after_rejoin_sdk_C19508(wifi_sniffer, wifi_dut, wifi_access_point,utf_constants,sl_collections):
+def test_powersave_functionality_after_rejoin_sdk_C19508(switch, wifi_sniffer, wifi_dut, wifi_access_point,
+                                                         utf_constants,
+                                                         sl_collections):
+    # def test_powersave_functionality_after_rejoin_sdk_C19508(wifi_sniffer, wifi_dut, wifi_access_point,utf_constants,sl_collections):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
     try:
@@ -802,12 +824,15 @@ def test_powersave_functionality_after_rejoin_sdk_C19508(switch, wifi_sniffer, w
             time.sleep(30)
 
             validation = True
-            packet_filter1 = f"(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address}) && (wlan.da == {ap_bssid}))"
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=dut_mac_address,
+                da_addr=ap_bssid,
+                filter_name='power_mgmt_bit')
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "Unable to find Qos Null with PM 1"
 
             channel = wifi_access_point.interfaces.wifi.channel
-            capture_filename_2 = "test_powersave_functionality_after_rejoin_C19508_after_turn_off"
+            capture_filename_2 = "test_power_save_functionality_after_rejoin_C19508_after_turn_off"
             logger().info(f"Configuring the sniffer with channel {channel}")
             wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
             logger().info("Starting capture")
@@ -821,9 +846,6 @@ def test_powersave_functionality_after_rejoin_sdk_C19508(switch, wifi_sniffer, w
 
             logger().info("***** Turn on Access Point *****")
             switch.interfaces.pdu_switch.turn_on(delay=60)
-            # logger().info("\n\nEnabling Wireless in AP")
-            # wifi_access_point.interfaces.wifi.start_ap()
-            # time.sleep(60)
 
             logger().info("Pinging to DUT to check rejoin process is completed or not")
             status = sl_collections.ping(device_ip, 30, 5)
@@ -834,7 +856,9 @@ def test_powersave_functionality_after_rejoin_sdk_C19508(switch, wifi_sniffer, w
 
             validation = True
             logger().info(f"Checking whether DUT is again went to power save for data collection")
-            packet_filter1 = f"(wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address}) && (wlan.da == {ap_bssid}))"
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                            da_addr=ap_bssid,
+                                                                                            filter_name='power_mgmt_bit')
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1)[
                 'packet_count'], "Unable to find Qos Null with PM 1"
 
@@ -871,7 +895,7 @@ def test_powersave_functionality_after_rejoin_sdk_C19508(switch, wifi_sniffer, w
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
-        "region":1,
+        "region": 1,
         "region_code": Si91xRegionCode.Worldwide,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
@@ -881,7 +905,8 @@ def test_powersave_functionality_after_rejoin_sdk_C19508(switch, wifi_sniffer, w
     "remote_wiseconnect3",
     sapi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}, "ble": {"count": 0, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                          "ble": {"count": 0, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.PERMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.WPSSupportDisabled,
@@ -893,13 +918,15 @@ def test_powersave_functionality_after_rejoin_sdk_C19508(switch, wifi_sniffer, w
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
-        "region":1,
+        "region": 1,
         "region_code": Si91xRegionCode.Worldwide,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_wifi_sdk_sta_check_basic_per_transmit_and_receive_two_evk_c34780(wifi_dut, wifi_access_point, remote_wiseconnect3, sl_collections, wifi_sniffer, request, sniffer_filter):
+def test_wifi_sdk_sta_check_basic_per_transmit_and_receive_two_evk_c34780(wifi_dut, wifi_access_point,
+                                                                          remote_wiseconnect3, sl_collections,
+                                                                          wifi_sniffer, request, sniffer_filter):
     """
         Test the basic PER (Packet Error Rate) transmit and receive functionality between two EVKs (Evaluation Kits).
 
@@ -931,7 +958,9 @@ def test_wifi_sdk_sta_check_basic_per_transmit_and_receive_two_evk_c34780(wifi_d
         logger().info(f"Starting the TX Test")
         primary_dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
         secondary_dut_mac_address = remote_wiseconnect3.interfaces.wifi.get_mac_address()
-        logger().info(f"\r\n The Primary DUT MAC address is {primary_dut_mac_address} and the secondary DUT MAC address is {secondary_dut_mac_address} \r\n")
+        logger().info(
+            f"\r\n The Primary DUT MAC address is {primary_dut_mac_address} and the secondary DUT MAC address is "
+            f"{secondary_dut_mac_address} \r\n")
         with concurrent.futures.ThreadPoolExecutor() as executor:
             # Submit the functions to the executor
             executor.submit(transmit_stats, wifi_dut)
