@@ -158,6 +158,7 @@ class FilterPacket:
     "wifi_dut",
     wifi=
     {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Default,
@@ -254,6 +255,7 @@ def test_wifi_sdk_ssl_three_sockets_receive_data_testcase_C19153(wifi_sniffer, w
     "wifi_dut",
     wifi=
     {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Default,
@@ -351,6 +353,7 @@ def test_wifi_sdk_ssl_three_openssl_sockets_set_16k_record_C19164(wifi_sniffer, 
     "wifi_dut",
     wifi=
     {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Default,
@@ -1380,6 +1383,7 @@ def test_wifi_sdk_2SSL_1TCP_TX_testcase_C19185(wifi_sniffer, wifi_dut, wifi_acce
     "wifi_dut",
     wifi=
     {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -2432,6 +2436,7 @@ def test_wifi_sdk_2ssl_1aws_testcase_c19150(wifi_sniffer, wifi_dut, wifi_access_
     "wifi_dut",
     wifi=
     {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
@@ -3480,7 +3485,7 @@ def test_wifi_sdk_ssl_tx_with_1aws_2tcp_sockets_c19193(wifi_sniffer, wifi_dut, w
 
         for sock_id in range(3):
             logger.info(f"Closing socket_id->{sock_id}")
-            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
         remote_socket_factory.interfaces.socket.close_all()
         logger.info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()

@@ -2913,7 +2913,7 @@ def test_wifi_sdk_https_get_tls_v1_c19208(http_server, wifi_dut, http_client, wi
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,

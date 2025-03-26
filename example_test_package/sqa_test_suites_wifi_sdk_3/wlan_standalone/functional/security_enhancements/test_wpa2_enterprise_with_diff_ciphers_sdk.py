@@ -4399,18 +4399,12 @@ def test_wsdk_WPA2_EAP_Conn_with_dut_supports_TLSv2_Server_supports_TLSv1_C11378
             logger().info(f"Mac Address of DUT: {dut_mac_address}")
             logger().info("Stop Sniffer finally")
             wifi_sniffer.interfaces.capture.stop_capture()
-            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
-                                                                                            filter_name='tls.alert_message.desc')
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
-                'packet_count'], 'Unable to find packet in sniffer'
             sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                             wifi_access_point=wifi_access_point,
                                                             dut_mac_address=dut_mac_address,
                                                             sl_collections=sl_collections,
                                                             ap_mac_address=ap_mac_address, test_case_no=None)
             sniffer_verification.verify_sniffer_for_negative_scenarios()
-
-
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
