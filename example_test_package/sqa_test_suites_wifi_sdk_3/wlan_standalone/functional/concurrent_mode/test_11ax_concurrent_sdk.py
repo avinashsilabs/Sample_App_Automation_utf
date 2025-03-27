@@ -25,7 +25,7 @@ from utf.utils.thread_base import ThreadBase
         3. Access Point(Third Party AP's)
         4. Sniffer(NUC device)
 
-    Author: Vishakha
+    Author: Vishakha / Saurabh
 
 """
 
@@ -342,8 +342,6 @@ def test_terminate_sta_while_running_ap_C148304(wifi_dut, wifi_access_point, wif
         wifi_dut.interfaces.wifi.stop_ap()
 
 
-''' EU region not working on channel 12,13'''
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -358,14 +356,9 @@ def test_terminate_sta_while_running_ap_C148304(wifi_dut, wifi_access_point, wif
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.Default,
+        "security": "WPA2", "ssid": "TEST_C148306", "passphrase": "Automation@123", "beacon": 100, "channel": "13",
         "region": 1,
-        "region_code": "Europe"
-    }
-)
-@pytest.mark.config(
-    'wifi_access_point',
-    wifi={
-        'security': 'WPA2', 'standard': 'gnbax', 'channel': 13, 'region': 'Europe'
+        "region_code": "europe"
     }
 )
 @pytest.mark.config(
@@ -374,22 +367,24 @@ def test_terminate_sta_while_running_ap_C148304(wifi_dut, wifi_access_point, wif
         "security": "WPA2",
         "ssid": "TEST_C148306",
         "passphrase": "Automation@123",
-        "channel": 13,
-        "interface": "wlan0",
-        'region': 'Europe'
+        "country": "Europe",
+        "channel": "13",
+        "interface": "wlan0"
+
     }
 )
+@pytest.mark.config('wifi_access_point',
+                    wifi={'security': 'WPA2', 'standard': 'gnbax', 'channel': 13, 'region': 'europe'})
 @pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
-def test_conn_ping_on_EU_region_C148306(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client,
-                                        sniffer_filter, sl_collections):
+def test_conn_ping_on_EU_region_C148306(
+        wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, sl_collections, sniffer_filter):
     try:
         con_obj = ConcurrentMode()
         capture_filename = "test_c148306"
         logger().info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(channel=13)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
-        wifi_dut.interfaces.wifi.set_wifi_region(region_code=Si91xRegionCode.Europe)
         result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False,
                                                      retry_count=3, associated=False)
         dut_sta_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
@@ -399,8 +394,7 @@ def test_conn_ping_on_EU_region_C148306(wifi_dut, wifi_access_point, wifi_sniffe
         sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
         logger().info(" ********** Starting DUT as an AP ********* ")
-        wifi_dut.interfaces.wifi.set_wifi_region(region_code=Si91xRegionCode.Europe)
-        wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148306_AP", security="WPA2", psk="Automation@123", channel=13,
+        wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C148306", security="WPA2", psk="Automation@123", channel=13,
                                           dtim_beacon_count="1", beacon_interval="100")
         con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut)
         logger().info("\n\nChecking DUT STA connectivity")
@@ -408,17 +402,19 @@ def test_conn_ping_on_EU_region_C148306(wifi_dut, wifi_access_point, wifi_sniffe
         sl_collections.ping(dut_sta_ip, 30, 5)
 
         logger().info("Stop sniffer finally")
-        validation = True
-        packet_filter = f'((wlan.addr == {dut_mac_address}) and (wlan.ext_tag.number == 35)) and ' \
-                        f'(wlan.fc.type_subtype == 0x0000)'
+
         logger().info("Validating Assoc Req with HE information")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter)['packet_count'], \
-            'Unable to find Assoc Req  with HE information in sniffer'
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=result['dut_mac_address'], filter_name='assoc_req_he_info')
+
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find Assoc Req  with HE information in sniffer"
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        wifi_dut.interfaces.wifi.stop_ap()
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
 
 ''' set different region on STA and AP but its not joining'''

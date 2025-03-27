@@ -99,6 +99,11 @@ class ProvisioningFunctionality(ThreadBase):
                                             supervision_timeout=self.supervision_timeout)
             time.sleep(3)
 
+            if self.test_case in [20145, 20149]:
+                self.wifi_dut.interfaces.wifi.ble_update_conn_param(
+                    ble_remote_dev_address=self.ble_client_address, ble_conn_interval_min=3200,
+                    ble_conn_interval_max=3200, ble_conn_latency=0, ble_supervision_timeout=2000)
+
             logger().info(f"....Applying performance profile mode and Enable_bt_power_save....")
             self.ble_dut.interfaces.bluetooth.set_performance_profile(mode="power_save_low_latency")
             self.ble_dut.interfaces.bluetooth.enable_bt_power_save()
@@ -122,7 +127,7 @@ class ProvisioningFunctionality(ThreadBase):
             assert self.char_path, "characters are empty"
             assert len(char_props) > 0, "length of characters is 0"
 
-            self.ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=self.char_path)
+            # self.ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=self.char_path)
 
             if self.test_case == 20145 or self.test_case == 20147 or self.test_case == 20148 or self.test_case == 20149 or self.test_case == 201159 or self.test_case == 201275 or self.test_case == 661503 or self.test_case == 198666:
                 logger().info(f"******************** get all profiles ********************")
@@ -167,13 +172,12 @@ class ProvisioningFunctionality(ThreadBase):
                 for length in range(len(data)):
                     self.ble_dut.interfaces.bluetooth.ble_set_att_value(
                         ble_remote_dev_address=self.ble_client_address, handle=(write_handle + 1), enable_notify=1)
-                    time.sleep(1)
 
                     since_time = time.perf_counter_ns()
 
                     logger().info("******************** Sending data to DUT ***********************")
                     self.ble_client.interfaces.bluetooth.send_gatt_charc_notification(svc, charc, data[length])
-                    time.sleep(1)
+                    time.sleep(30)
                     events = self.wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
                     for event in events:
                         if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
@@ -219,6 +223,7 @@ class ProvisioningFunctionality(ThreadBase):
             time.sleep(3)
             logger().info("******************** Validate Data ********************")
             notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
+            time.sleep(30)
             logger().info(f' ******* received ssid and security on remote device is : {notifications} *******')
 
             assert notifications, ".... received data is empty ...."
@@ -311,6 +316,44 @@ class ProvisioningFunctionality(ThreadBase):
         logger().info("*********************** Disconnecting from DUT ***********************")
         self.ble_client.interfaces.bluetooth.disconnect(self.bt_dut_address)
         self.ble_client.interfaces.bluetooth.close()
+
+    def ble_cleanup_disconn(self):
+        logger().info("Checking connection status of BLE")
+        state = self.ble_dut.interfaces.bluetooth.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        if state_int == 8:
+            logger().info("Device is in connected status try to disconnect")
+            self.ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
+            time.sleep(5)
+        elif state_int == 2:
+            logger().info("Device is in scanning status try to stop scanning")
+            self.ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        elif state_int == 1:
+            logger().info("Device is in advertising status try to stop advertising")
+            self.ble_dut.interfaces.bluetooth.ble_stop_advertising()
+        elif state_int == 3:
+            logger().info("Device is in scanning status try to stop scanning")
+            self.ble_dut.interfaces.bluetooth.ble_stop_scanning()
+            logger().info("Device is advertising status try to stop advertising")
+            self.ble_dut.interfaces.bluetooth.ble_stop_advertising()
+        elif state_int == 9:
+            logger().info("Device is in connected status try to disconnect")
+            self.ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
+            logger().info("Device is in advertising status try to stop advertising")
+            self.ble_dut.interfaces.bluetooth.ble_stop_advertising()
+        elif state_int == 10:
+            logger().info("Device is in connected status try to disconnect")
+            self.ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
+            logger().info("Device is advertising status try to stop advertising")
+            self.ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        elif state_int == 0:
+            logger().info("Device is in idle status")
+        else:
+            logger().info("Device is in unknown state")
+            self.ble_dut.interfaces.bluetooth.is_dut_bad_state = True
+
+        self.ble_client.interfaces.bluetooth.close()
+        logger().info(" *************DUT Cleanup Success *******************")
 
 
 def wifi_dut_marker(IEEE802_11W=0, memory_config=0):
@@ -408,7 +451,6 @@ def test_wifi_sdk_ble_conn_disconn_along_wlan_scan_C20144(
         ble_client.interfaces.bluetooth.close()
 
 
-@pytest.mark.skip("Not Deployed Yet")
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ble_conn_along_wlan_conn_C20145(
@@ -435,7 +477,6 @@ def test_wifi_sdk_ble_conn_along_wlan_conn_C20145(
             ble_obj.wifi_scan()
             ble_obj.wifi_connect()
             ble_obj.ble_remove_servie()
-            ble_obj.ble_disconnect()
 
             wifi_sniffer.interfaces.capture.stop_capture()
             logger().info("Stop the Sniffer")
@@ -444,7 +485,7 @@ def test_wifi_sdk_ble_conn_along_wlan_conn_C20145(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
-        ble_client.interfaces.bluetooth.close()
+        ble_obj.ble_cleanup_disconn()
 
 
 @wifi_dut_marker()
@@ -550,7 +591,6 @@ def test_wifi_sdk_ble_conn_and_wifi_conn_with_32_bytes_ssid_C20148(
         ble_client.interfaces.bluetooth.close()
 
 
-@pytest.mark.skip(reason="Data Tx more than 20 bytes")
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point',
@@ -569,14 +609,13 @@ def test_wifi_sdk_ble_conn_and_wifi_conn_with_63_bytes_psk_C20149(
         ble_obj = ProvisioningFunctionality(
             wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, ble_pairing=0,
             utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-            test_case=20149, min_conn_interval=3200, max_conn_interval=3200)
+            test_case=20149, min_conn_interval=200, max_conn_interval=200)
 
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.wifi_scan()
         ble_obj.wifi_connect()
         ble_obj.ble_remove_servie()
-        ble_obj.ble_disconnect()
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop the Sniffer")
@@ -585,7 +624,7 @@ def test_wifi_sdk_ble_conn_and_wifi_conn_with_63_bytes_psk_C20149(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
-        ble_client.interfaces.bluetooth.close()
+        ble_obj.ble_cleanup_disconn()
 
 
 @wifi_dut_marker()
