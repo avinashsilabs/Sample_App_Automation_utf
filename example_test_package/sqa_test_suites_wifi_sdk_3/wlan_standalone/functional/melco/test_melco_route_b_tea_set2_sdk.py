@@ -29,6 +29,10 @@ from utf.utils.stopwatch import Stopwatch
 from threading import Thread
 from utf.utils.thread_base import ThreadBase
 from utf.interfaces.socket import SOCKET_TYPE_TCP
+from utf.interfaces.iperf.iperf_constants import IperfConstants
+import ipaddress
+import random
+from test_melco_ipv6_ipv4_sdk import WLanConThread
 
 
 """
@@ -75,6 +79,57 @@ def logger():
     return get_logger(__name__)
 
 
+
+def random_ipv6_addr(subnet):
+    network = ipaddress.ip_network(subnet)
+    max_value = int(network.network_address) + network.num_addresses - 1
+    random_ip = ipaddress.IPv6Address(random.randint(int(network.network_address), max_value))
+    return str(random_ip)
+
+
+
+class IperfThraed(ThreadBase):
+
+    def __init__(self, wifi_dut=None, wifi_access_point=None, sl_collections=None, test_name=None, wifi_client=None,
+                 test_id=None,
+                 traffic_type=None, protocol=None, net_perf_client=None, timeout=60,
+                 device_ip=None, remote_ip=None, ip_version=4,async_socket=0):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.sl_collections = sl_collections
+        self.test_name = test_name
+        self.wifi_client = wifi_client
+        self.test_id = test_id
+        self.traffic_type = traffic_type
+        self.net_perf_client = net_perf_client
+        self.protocol = protocol
+        self.timeout = timeout
+        self.ip_version = ip_version
+        self.device_ip = device_ip
+        self.remote_ip = remote_ip
+        self.async_socket = async_socket
+
+    def run_traffic(self):
+        self.sl_collections.run_traffic(
+            wifi_dut=self.wifi_dut,
+            net_perf_client=self.net_perf_client,
+            protocol=self.protocol,
+            device_ip=self.device_ip,
+            host_ip=self.remote_ip,
+            timeout=self.timeout,
+            traffic_type=self.traffic_type,
+            ip_version=self.ip_version,
+            buffer_size_tcp=1380,
+            buffer_size_udp=1390,
+            async_socket=self.async_socket
+        )
+
+    def run(self):
+        self.run_traffic()
+
+
+
 class ConcurrentMode:
     def __init__(self):
         self.dut_ap_ip = None
@@ -89,6 +144,7 @@ class ConcurrentMode:
                 client.interfaces.wifi.leave()
             self.clients_connected = False
         for i in range(len(wifi_clients)):
+            wifi_clients[i].interfaces.wifi.config['interface'] = "wlan0"
             logger().info(f"RASPI-STA{i + 1}:'{wifi_clients[i].name}' is joining to DUT-AP")
             wifi_clients[i].interfaces.wifi.join()
             time.sleep(5)
@@ -243,9 +299,10 @@ class AccessDUTAPage(ThreadBase):
             logger().info(f"HTTP Response Content:\n{result.content}\n")
 
 
-def wifi_dut_marker(ext_custom_bit=0, thread_count=1, tcp_feat_bit=0, ext_tcp_feat_bit=0, feat_bit=0, ca_cert=None):
+def wifi_dut_marker(ext_custom_bit=0, thread_count=1, tcp_feat_bit=0, ext_tcp_feat_bit=0,
+                    feat_bit=0, ca_cert=None, stack_len=4096):
     config = {
-        "thread_config": {"wifi": {"count": thread_count, "stack_len": 4096}},
+        "thread_config": {"wifi": {"count": thread_count, "stack_len": stack_len}},
         "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Default | feat_bit,
@@ -265,8 +322,6 @@ def wifi_dut_marker(ext_custom_bit=0, thread_count=1, tcp_feat_bit=0, ext_tcp_fe
     if ca_cert:
         config["ca_cert"] = ca_cert
     return pytest.mark.config("wifi_dut", wifi=config)
-
-
 
 
 
@@ -551,8 +606,6 @@ def test_melco_sdk_APUT_14_chanel_limit_1_13_JP_C693703(sl_collections, wifi_dut
         wifi_dut.interfaces.wifi.stop_ap()
 
 
-
-
 @wifi_dut_marker()
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
@@ -574,7 +627,8 @@ def test_melco_sdk_STA_scan_AP_OFF_C693670(sl_collections, wifi_dut, wifi_client
         time.sleep(50)
 
         logger().info("Initiating wlan scan")
-        wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, expected_status=[SLStatus.SL_STATUS_SI91X_NO_AP_FOUND])
+        wifi_dut.interfaces.wifi.scan(channel=0, ssid=None,
+                                      expected_status=SLStatus.SL_STATUS_SI91X_NO_AP_FOUND)
 
         logger().info("Found no APs in the scan results as expected")
 
@@ -703,14 +757,17 @@ def test_melco_sdk_APUT_HTTP_after_ap_deinit_C693693(sl_collections, wifi_dut, w
 
         for count in range(iter_count):
 
-            sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
+            sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                      static_subnet="255.255.255.0",
                                                       static_gateway="192.168.100.76")
 
             logger().info(" ********** Starting DUT as an AP ********* ")
-            wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C693693", security="WPA2", psk="Automation@123", channel=channel,
+            wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C693693", security="WPA2", psk="Automation@123",
+                                              channel=channel,
                                               dtim_beacon_count="1", beacon_interval="100")
             time.sleep(30)
-            wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+            wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6,
+                                                      send_large_data=1, data=webpage)
             wifi_dut.interfaces.wifi.http_server_start()
             dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
 
@@ -748,11 +805,11 @@ def test_melco_sdk_APUT_HTTP_after_ap_deinit_C693693(sl_collections, wifi_dut, w
 @wifi_dut_marker()
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
-def test_melco_sdk_APUT_HTTP_after_ap_slnet_down_C693694(sl_collections, wifi_dut, wifi_client, channel,
-                                       wifi_sniffer,
-                                       sniffer_filter,
-                                       http_client, request, utf_constants):
-
+def test_melco_sdk_APUT_HTTP_after_ap_slnet_down_C693694(sl_collections, wifi_dut, wifi_client,
+                                                         channel,
+                                                         wifi_sniffer,
+                                                         sniffer_filter,
+                                                         http_client, request, utf_constants):
     try:
 
         iter_count = utf_constants.get("iter_count")
@@ -794,6 +851,693 @@ def test_melco_sdk_APUT_HTTP_after_ap_slnet_down_C693694(sl_collections, wifi_du
         sl_collections.exception_handling(wifi_dut, error)
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+
+
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        }
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@wifi_dut_marker(thread_count=2, stack_len=4096)
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
+          "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+# @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+def test_wifi_melco_sdk_con_UDP_txrx_ap_con_discon_C690738(wifi_dut, wifi_access_point,
+                                                           wifi_sniffer,
+                                                           sl_collections,
+                                                           request,
+                                                           sniffer_filter,
+                                                           utf_constants,
+                                                           wifi_client, wifi_clients, net_perf_clients):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure AP on WPA2 security
+        3. Join the access point and enable the dhcpv4 and dhcpv6
+        4. Enable wlan and bt power save mode in dut after the connection
+        5. Ping from remote to DUT IPV6 address
+        6. Run UDP tx and rx in 2 threads
+        7. Connect and disconnect connected clients
+        8. Make sure data transmission should not be interrupted
+        9. Connect and disconnect connected clients should success
+
+    """
+    test_name = request.node.name
+    try:
+        wifi_clients = wifi_clients[:2]
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wlan_obj = WLanConThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                 test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                                 ping_count=ping_count, wifi_client=wifi_client,
+                                 wifi_clients=wifi_clients,
+                                 remote_type="raspi", static_ipv6="ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+                                 )
+        wlan_obj.join_to_ap()
+        wlan_obj.create_ap_connect_remote_clients()
+        wlan_obj.check_ping_from_remote_to_dut_sta()
+        dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(interface=2)
+        logger().info(f"dut_ap_mac_address: {dut_ap_mac_address}")
+        tx_obj = IperfThraed(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                             test_name=test_name, wifi_client=wifi_client,
+                             traffic_type="TX", protocol="UDP", net_perf_client=net_perf_clients[0], timeout=60,
+                             device_ip=wlan_obj.dut_add_dict['device_ip'],
+                             remote_ip=wlan_obj.dut_add_dict['remote_ap_ipv4'],
+                             ip_version=4
+                             )
+        rx_obj = IperfThraed(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                             test_name=test_name, wifi_client=wifi_client,
+                             traffic_type="RX", protocol="UDP", net_perf_client=net_perf_clients[1], timeout=60,
+                             device_ip=wlan_obj.dut_add_dict['device_ip'],
+                             remote_ip=wlan_obj.dut_add_dict['remote_ap_ipv4'],
+                             ip_version=4,
+                             async_socket=1
+                             )
+
+        tx_obj.start()
+        time.sleep(5)
+        rx_obj.start()
+        time.sleep(10)
+        wlan_obj.raspi_client_leave()
+        tx_obj.wait_for_exit()
+        rx_obj.wait_for_exit()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        for i in range(0, len(wifi_clients)):
+            packet_filter1 = (
+                sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                    sa_addr=dut_ap_mac_address, filter_name="deauthentication"
+                )
+            )
+            logger().info(f"Validating deauthentication frames")
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(
+                packet_filter1=packet_filter1
+            )["packet_count"], "Sniffer: Unable to find deauthentication packets in sniffer"
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+
+# @pytest.mark.config(
+#     "wifi_client",
+#     wifi={
+#         "security": "WPA2",
+#         "ssid": "TEST_C693682",
+#         "passphrase": "Automation@123",
+#         "channel": 11,
+#         "interface": "wlan0",
+#     }
+# )
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "TEST_C693682",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "TEST_C693682",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        2: {
+            "security": "WPA2",
+            "ssid": "TEST_C693682",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        3: {
+            "security": "WPA2",
+            "ssid": "TEST_C693682",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        }
+    }
+)
+@wifi_dut_marker()
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
+def test_melco_sdk_Con_HTTP_server_4_clients_cred_C693682(sl_collections, wifi_dut, wifi_client, channel,
+                                                          wifi_sniffer,
+                                                          sniffer_filter,
+                                                          http_client, request, utf_constants,
+                                                          wifi_clients,
+                                                          wiseconnect_web,
+                                                          wifi_access_point):
+
+    try:
+
+        iter_count = utf_constants.get("iter_count")
+        con_obj = ConcurrentMode()
+        test_name = request.node.name
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
+
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C693682", security="WPA2", psk="Automation@123",
+                                          channel=channel,
+                                          dtim_beacon_count="1", beacon_interval="100")
+        time.sleep(30)
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6,
+                                                  send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+        dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut, ping_count=20)['dut_ip']
+
+        url = f'http://{dut_as_ap_ip}/login'
+        result = http_client.interfaces.http.session.request('GET', url)
+        assert result.status_code == 200, f"Failed to get HTTP response from DUT as AP"
+        logger().info(f"HTTP Response Content:\n{result.content}\n")
+
+        # dut_as_ap_ip = self.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
+        wiseconnect_web.interfaces.wiseconnect_ui.connect(ip_address=dut_as_ap_ip, web_ui_port=80,
+                                                          ssid=wifi_access_point.interfaces.wifi.ssid,
+                                                          security=wifi_access_point.interfaces.wifi.security,
+                                                          passphrase=wifi_access_point.interfaces.wifi.passphrase)
+        data = wifi_dut.interfaces.wifi.http_server_get_credentials_from_webpage(timeout=30)
+
+        logger().info(f"credenatils from webpage: {data}")
+        con_obj.credentials = re.search(r'ssid:(\w+),password:(\w+),security:(\w+)', data.decode())
+        logger().info(f"credenatils: {con_obj.credentials}")
+        assert con_obj.credentials, "Unable to fetch 3rd party AP details from DUT"
+        # wifi_dut.interfaces.wifi.http_server_deinit()
+        # wifi_dut.interfaces.wifi.http_server_stop()
+        # wifi_dut.interfaces.wifi.sl_net_deinit(mode="ap")
+        # wifi_dut.interfaces.wifi.sl_net_init(mode="client", timeout=20)
+        con_obj.join_to_ap(wifi_dut, sl_collections,
+                           con_obj.credentials[1],
+                           con_obj.credentials[2],
+                           con_obj.credentials[3].lower())
+
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "TEST_C693683",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "TEST_C693683",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        2: {
+            "security": "WPA2",
+            "ssid": "TEST_C693683",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        3: {
+            "security": "WPA2",
+            "ssid": "TEST_C693683",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        }
+    }
+)
+@wifi_dut_marker()
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
+def test_melco_sdk_Con_HTTP_server_4_clients_cred_C693683(sl_collections, wifi_dut, wifi_client, channel,
+                                                          wifi_sniffer,
+                                                          sniffer_filter,
+                                                          http_client, request, utf_constants,
+                                                          wifi_clients,
+                                                          wiseconnect_web,
+                                                          wifi_access_point):
+
+    try:
+
+        iter_count = utf_constants.get("iter_count")
+        con_obj = ConcurrentMode()
+        test_name = request.node.name
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+        wifi_dut.interfaces.wifi.init(mode="ap")
+        con_obj.http_server_provisioning(sl_collections, wifi_dut, wifi_clients,
+                                         wiseconnect_web,
+                                         webpage, channel, wifi_access_point,
+                                         ssid="TEST_C693683", security="WPA2",
+                                         psk="Automation@123")
+
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+
+
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+        "security": "WPA2",
+        "ssid": "TEST_C693692",
+        "passphrase": "Automation@123",
+        "channel": 11,
+        # "interface": "wlan0",
+    }
+)
+@wifi_dut_marker()
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
+def test_melco_sdk_Concurrent_STA_ping_APUT_up_down_C693692(sl_collections, wifi_dut, wifi_client, channel,
+                                                            wifi_sniffer,
+                                                            sniffer_filter,
+                                                            http_client, request, wifi_access_point,
+                                                            utf_constants):
+    try:
+        con_obj = ConcurrentMode()
+        test_name = request.node.name
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
+        ap_interface = wifi_client.interfaces.wifi.config["interface"]
+        iter_count = utf_constants.get("iter_count")
+        con_obj.join_to_ap(wifi_dut, sl_collections, wifi_access_point.interfaces.wifi.ssid,
+                           wifi_access_point.interfaces.wifi.passphrase,
+                           wifi_access_point.interfaces.wifi.security.name.lower(),
+                           ping_count=30)
+        ping_link_local_addr = f"{con_obj.dut_sta_ipv6_link}%{ap_interface}"
+
+        iperf_thread = Thread(target=sl_collections.ping, args=(ping_link_local_addr, 100, 3))
+        iperf_thread.start()
+
+        for count in range(iter_count):
+
+            con_obj.enable_aput(sl_collections, wifi_dut, "TEST_C693692", "WPA2",
+                                "Automation@123", channel)
+            con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut, ping_count=20)['dut_ip']
+            wifi_dut.interfaces.wifi.sl_net_down(mode="ap")
+        iperf_thread.join()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        }
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@wifi_dut_marker(thread_count=2, stack_len=4096)
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
+          "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+# @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+def test_wifi_melco_sdk_con_UDP_txrx_ap_con_http_webpage_C700496(wifi_dut, wifi_access_point,
+                                                               wifi_sniffer,
+                                                               sl_collections,
+                                                               request,
+                                                               sniffer_filter,
+                                                               utf_constants,
+                                                               wifi_client, wifi_clients,
+                                                               net_perf_clients,
+                                                               http_client):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure AP on WPA2 security
+        3. Connect the STA to 3rd party AP
+        4. Set STATIC IPV6 CONFIG to STA Interface "FF:FF:FF:FF:FF:FF:FF:FF"
+        4. Enable wlan and bt power save mode in dut after the connection
+        5. Ping from remote to DUT IPV6 address
+        6. Configure static ipv4 address to APUT and start APUT
+        7. Run UDP tx and rx in 2 threads
+        8. Run the HTTP Webpage refresh while running UDP Tx/Rx traffic
+        9. Make sure data transmission should not be interrupted
+
+    """
+    test_name = request.node.name
+    try:
+        con_obj = ConcurrentMode()
+        wifi_clients = wifi_clients[:2]
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wlan_obj = WLanConThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                 test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                                 ping_count=ping_count, wifi_client=wifi_client,
+                                 wifi_clients=wifi_clients,
+                                 remote_type="raspi", static_ipv6="ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+                                 )
+        wlan_obj.join_to_ap()
+        wlan_obj.check_ping_from_remote_to_dut_sta()
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="Concurent_AP", security="WPA2", psk="Automation@123", channel=11,
+                                          dtim_beacon_count="1", beacon_interval="100", beacon_stop=1)
+        dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(interface=2)
+        logger().info(f"dut_ap_mac_address: {dut_ap_mac_address}")
+        tx_obj = IperfThraed(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                             test_name=test_name, wifi_client=wifi_client,
+                             traffic_type="TX", protocol="UDP", net_perf_client=net_perf_clients[0], timeout=60,
+                             device_ip=wlan_obj.dut_add_dict['device_ip'],
+                             remote_ip=wlan_obj.dut_add_dict['remote_ap_ipv4'],
+                             ip_version=4
+                             )
+        rx_obj = IperfThraed(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                             test_name=test_name, wifi_client=wifi_client,
+                             traffic_type="RX", protocol="UDP", net_perf_client=net_perf_clients[1], timeout=60,
+                             device_ip=wlan_obj.dut_add_dict['device_ip'],
+                             remote_ip=wlan_obj.dut_add_dict['remote_ap_ipv4'],
+                             ip_version=4,
+                             async_socket=1
+                             )
+        tx_obj.start()
+        time.sleep(5)
+        rx_obj.start()
+        time.sleep(10)
+        dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut, ping_count=20)['dut_ip']
+
+        url = f'http://{dut_as_ap_ip}/login'
+        result = http_client.interfaces.http.session.request('GET', url)
+        assert result.status_code == 200, f"Failed to get HTTP response from DUT as AP"
+        logger().info(f"HTTP Response Content:\n{result.content}\n")
+
+        tx_obj.wait_for_exit()
+        rx_obj.wait_for_exit()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        }
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@wifi_dut_marker(thread_count=2, stack_len=4096)
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
+          "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+# @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+def test_wifi_melco_sdk_con_UDP_txrx_ap_con_http_webpage_refresh_C700497(wifi_dut, wifi_access_point,
+                                                               wifi_sniffer,
+                                                               sl_collections,
+                                                               request,
+                                                               sniffer_filter,
+                                                               utf_constants,
+                                                               wifi_client, wifi_clients,
+                                                               net_perf_clients,
+                                                               http_client):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure AP on WPA2 security
+        3. Connect the STA to 3rd party AP
+        4. Set STATIC IPV6 CONFIG to STA Interface "FF:FF:FF:FF:FF:FF:FF:FF"
+        4. Enable wlan and bt power save mode in dut after the connection
+        5. Ping from remote to DUT IPV6 address
+        6. Configure static ipv4 address to APUT and start APUT
+        7. Run UDP tx and rx in 2 threads
+        8. Run the HTTP Webpage refresh while running UDP Tx/Rx traffic
+        9. Make sure data transmission should not be interrupted
+
+    """
+    test_name = request.node.name
+    try:
+        con_obj = ConcurrentMode()
+        wifi_clients = wifi_clients[:2]
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wlan_obj = WLanConThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                 test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                                 ping_count=ping_count, wifi_client=wifi_client,
+                                 wifi_clients=wifi_clients,
+                                 remote_type="raspi", static_ipv6="ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+                                 )
+        wlan_obj.join_to_ap()
+        wlan_obj.check_ping_from_remote_to_dut_sta()
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="Concurent_AP", security="WPA2", psk="Automation@123", channel=11,
+                                          dtim_beacon_count="1", beacon_interval="100", beacon_stop=1)
+        dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(interface=2)
+        logger().info(f"dut_ap_mac_address: {dut_ap_mac_address}")
+        tx_obj = IperfThraed(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                             test_name=test_name, wifi_client=wifi_client,
+                             traffic_type="TX", protocol="UDP", net_perf_client=net_perf_clients[0], timeout=100,
+                             device_ip=wlan_obj.dut_add_dict['device_ip'],
+                             remote_ip=wlan_obj.dut_add_dict['remote_ap_ipv4'],
+                             ip_version=4
+                             )
+        rx_obj = IperfThraed(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                             test_name=test_name, wifi_client=wifi_client,
+                             traffic_type="RX", protocol="UDP", net_perf_client=net_perf_clients[1], timeout=100,
+                             device_ip=wlan_obj.dut_add_dict['device_ip'],
+                             remote_ip=wlan_obj.dut_add_dict['remote_ap_ipv4'],
+                             ip_version=4,
+                             async_socket=1
+                             )
+        tx_obj.start()
+        time.sleep(5)
+        rx_obj.start()
+        time.sleep(10)
+        dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut, ping_count=20)['dut_ip']
+        t1 = AccessDUTAPage(http_client, dut_as_ap_ip)
+        t1.start()
+        t1.wait_for_exit()
+        tx_obj.wait_for_exit()
+        rx_obj.wait_for_exit()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "Concurent_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+        }
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@wifi_dut_marker(thread_count=2, stack_len=4096)
+@pytest.mark.skip(reason="long duration")
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={"ssid": "Concurent_STA", "security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
+          "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+# @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+def test_wifi_melco_sdk_con_UDP_txrx_ap_con_http_webpage_C693701(wifi_dut, wifi_access_point,
+                                                               wifi_sniffer,
+                                                               sl_collections,
+                                                               request,
+                                                               sniffer_filter,
+                                                               utf_constants,
+                                                               wifi_client, wifi_clients,
+                                                               net_perf_clients,
+                                                               http_client):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure AP on WPA2 security
+        3. Connect the STA to 3rd party AP
+        4. Set STATIC IPV6 CONFIG to STA Interface "FF:FF:FF:FF:FF:FF:FF:FF"
+        4. Enable wlan and bt power save mode in dut after the connection
+        5. Ping from remote to DUT IPV6 address
+        6. Configure static ipv4 address to APUT and start APUT
+        7. Run UDP tx and rx in 2 threads
+        8. Run the HTTP Webpage refresh while running UDP Tx/Rx traffic for 12 HOurs
+        9. Make sure data transmission should not be interrupted
+
+    """
+    test_name = request.node.name
+    try:
+        con_obj = ConcurrentMode()
+        wifi_clients = wifi_clients[:2]
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wlan_obj = WLanConThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                 test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                                 ping_count=ping_count, wifi_client=wifi_client,
+                                 wifi_clients=wifi_clients,
+                                 remote_type="raspi", static_ipv6="ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+                                 )
+        wlan_obj.join_to_ap()
+        wlan_obj.check_ping_from_remote_to_dut_sta()
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="Concurent_AP", security="WPA2", psk="Automation@123", channel=11,
+                                          dtim_beacon_count="1", beacon_interval="100")
+        dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(interface=2)
+        logger().info(f"dut_ap_mac_address: {dut_ap_mac_address}")
+        tx_obj = IperfThraed(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                             test_name=test_name, wifi_client=wifi_client,
+                             traffic_type="TX", protocol="UDP", net_perf_client=net_perf_clients[0], timeout=60,
+                             device_ip=wlan_obj.dut_add_dict['device_ip'],
+                             remote_ip=wlan_obj.dut_add_dict['remote_ap_ipv4'],
+                             ip_version=4
+                             )
+        rx_obj = IperfThraed(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                             test_name=test_name, wifi_client=wifi_client,
+                             traffic_type="RX", protocol="UDP", net_perf_client=net_perf_clients[1], timeout=60,
+                             device_ip=wlan_obj.dut_add_dict['device_ip'],
+                             remote_ip=wlan_obj.dut_add_dict['remote_ap_ipv4'],
+                             ip_version=4,
+                             async_socket=1
+                             )
+        tx_obj.start()
+        time.sleep(5)
+        rx_obj.start()
+        time.sleep(10)
+        dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut, ping_count=20)['dut_ip']
+
+        url = f'http://{dut_as_ap_ip}/login'
+        result = http_client.interfaces.http.session.request('GET', url)
+        assert result.status_code == 200, f"Failed to get HTTP response from DUT as AP"
+        logger().info(f"HTTP Response Content:\n{result.content}\n")
+
+        tx_obj.wait_for_exit()
+        rx_obj.wait_for_exit()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
 
 
 

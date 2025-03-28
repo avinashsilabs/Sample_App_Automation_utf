@@ -526,8 +526,6 @@ def test_wifi_sdk_verify_conc_http_webpage_with_tcp_tx_c547023(sl_collections, w
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 def test_wifi_sdk_verify_conc_http_webpage_with_sta_tcp_rx_c547024(sl_collections, wifi_dut, wifi_client, channel,
                                                                remote_socket, wifi_access_point, wiseconnect_web, wifi_sniffer, http_client):
-# def test_wifi_sdk_verify_conc_http_webpage_with_sta_tcp_rx_c547024(sl_collections, wifi_dut, wifi_client, channel,
-#                                                                    remote_socket, wifi_access_point,wiseconnect_web, http_client):
 
     """
     Verify the STA TCP Rx to 3rd party AP Backend machine with Credentials from HTTP Webpage.
@@ -618,8 +616,6 @@ def test_wifi_sdk_verify_conc_http_webpage_with_sta_tcp_rx_c547024(sl_collection
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 def test_wifi_sdk_verify_conc_http_webpage_with_ap_tcp_rx_interface_c569445(sl_collections, wifi_dut, wifi_client, channel,
                                                                             remote_socket, wifi_access_point, wiseconnect_web, wifi_sniffer, http_client):
-# def test_wifi_sdk_verify_conc_http_webpage_with_ap_tcp_rx_interface_c569445(sl_collections, wifi_dut, wifi_client,
-#                                                                             channel, remote_socket, wifi_access_point,wiseconnect_web, http_client):
     """
     Verify the AP TCP Rx to 3rd party AP Backend machine with Credentials from HTTP Webpage.
     """
@@ -714,8 +710,6 @@ def test_wifi_sdk_verify_conc_http_webpage_with_ap_tcp_rx_interface_c569445(sl_c
 def test_wifi_sdk_verify_conc_http_webpage_with_ap_tcp_tx_c569448(sl_collections, wifi_dut, wifi_client, channel,
                                                                   remote_socket, sniffer_filter, wifi_access_point,
                                                                   wiseconnect_web, wifi_sniffer):
-# def test_wifi_sdk_verify_conc_http_webpage_with_ap_tcp_tx_c569448(sl_collections, wifi_dut, wifi_client, channel,
-#                                                                   remote_socket, wifi_access_point, wiseconnect_web):
 
     """
     Verify the AP TCP Tx to 3rd party AP Backend machine with Credentials from HTTP Webpage.
@@ -783,6 +777,110 @@ def test_wifi_sdk_verify_conc_http_webpage_with_ap_tcp_tx_c569448(sl_collections
                                                                                         filter_name="beacon_ap_mode_us_region")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find beacon frame from DUT in Sniffer'
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+        "security": "WPA2",
+        "ssid": "TEST_C547025",
+        "passphrase": "Automation@123",
+        "channel": 11,
+        "interface": "wlan0",
+    }
+)
+@pytest.mark.parametrize("channel", [11])
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.check3
+def test_wifi_sdk_verify_conc_http_server_c547025_with_stop_start_ap(sl_collections, wifi_dut, wifi_client, channel,
+                                                                     wifi_sniffer,
+                                                                     sniffer_filter, http_client):
+    """
+    Verify the HTTP Webpage on 3rd party STA which is connected to APUT and restart aput using stop and start.
+    """
+    try:
+        wifi_client = [wifi_client]
+        con_obj = ConcurrentMode()
+        capture_filename = "test_c547025"
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C547025", security="WPA2", psk="Automation@123", channel=channel,
+                                          dtim_beacon_count="1", beacon_interval="100")
+        time.sleep(30)
+        dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
+
+        url = f'http://{dut_as_ap_ip}/login'
+        result = http_client.interfaces.http.session.request('GET', url)
+        assert result.status_code == 200, f"Failed to get HTTP response from DUT as AP"
+        logger().info(f"HTTP Response Content:\n{result.content}\n")
+
+        dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(interface=2)
+        logger().info(f"dut_ap_mac_address: {dut_ap_mac_address}")
+
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Checking for Beacons from the DUT as AP in Sniffer")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(wlan_addr=dut_ap_mac_address,
+                                                                                        radio_ch=channel,
+                                                                                        filter_name="beacon_ap_mode_us_region")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find beacon frame from DUT in Sniffer'
+
+        logger().info("Stopping http_server ")
+        wifi_dut.interfaces.wifi.http_server_stop()
+        time.sleep(2)
+
+        logger().info("Stopping http_de_init ")
+        wifi_dut.interfaces.wifi.http_server_deinit()
+        time.sleep(10)
+
+        logger().info("Stopping AP ")
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+        time.sleep(20)
+
+        logger().info("Starting AP after stopping ")
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+        logger().info(" ********** ReStarting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C547025", security="WPA2", psk="Automation@123", channel=channel,
+                                          dtim_beacon_count="1", beacon_interval="100")
+        time.sleep(60)
+        dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
+        time.sleep(20)
+
+        url = f'http://{dut_as_ap_ip}/login'
+        result = http_client.interfaces.http.session.request('GET', url)
+        assert result.status_code == 200, f"Failed to get HTTP response from DUT as AP"
+        logger().info(f"HTTP Response Content:\n{result.content}\n")
+
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:

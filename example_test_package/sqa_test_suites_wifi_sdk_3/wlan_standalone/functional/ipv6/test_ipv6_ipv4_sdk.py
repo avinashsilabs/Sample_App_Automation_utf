@@ -21,7 +21,9 @@ from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utils.iperf.iperf_utils import ping
 from threading import Thread
 from utf.utf_config import UtfConfig
-
+from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
+from utf.utils.time_measurer import TimeMeasurer
+import re
 
 def logger():
     return get_logger(__name__)
@@ -76,7 +78,7 @@ class FilterPacket:
 class MqttThread(ThreadBase):
 
     def __init__(self, wifi_dut=None, mqtt_client=None, mqtt_server=None, wifi_client=None, topic=None, message=None,
-                 topic_address=None, msg_address=None):
+                 topic_address=None, msg_address=None, ip_version=4):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.mqtt_client = mqtt_client
@@ -86,6 +88,7 @@ class MqttThread(ThreadBase):
         self.message = message
         self.topic_address = topic_address
         self.msg_address = msg_address
+        self.ip_version = ip_version
 
 
     def subscribe_and_publish(self, qos):
@@ -108,10 +111,10 @@ class MqttThread(ThreadBase):
         self.wifi_dut.interfaces["mqtt"] = self.wifi_dut.interfaces.wifi
         self.wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client")
         logger().info(".....DUT connects to MQTT server.....")
-        self.wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=self.mqtt_server.interfaces.mqtt, usrname_address=None,
-                                      password_address=None)
+        self.wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=self.mqtt_server.interfaces.mqtt)
         logger().info(".....MQTT Client connects to MQTT server.....")
-        self.mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=self.mqtt_server.interfaces.mqtt)
+        self.mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=self.mqtt_server.interfaces.mqtt,
+                                                                       version=self.ip_version)
         time.sleep(5)
 
         self.subscribe_and_publish(qos=Si91xMqttQos.QOS0)
@@ -130,10 +133,10 @@ class MqttThread(ThreadBase):
                                                     "message received is wrong"
 
 
-
 class HttpDownload(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, sl_collections=None, test_name=None, wifi_client=None,
-                 device_ip=None, remote_ip=None, ip_version=6, http_server=None, index_path=None, ipv6_addr_type="global"):
+                 device_ip=None, remote_ip=None, ip_version=6, http_server=None, index_path=None, ipv6_addr_type="global",
+                 https=0):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -147,6 +150,7 @@ class HttpDownload(ThreadBase):
         self.index_path = index_path
         self.ipv6_addr_type = ipv6_addr_type
         self.ping_count = 10
+        self.https = https
 
     def run(self):
 
@@ -161,7 +165,10 @@ class HttpDownload(ThreadBase):
             assert status, "unable to ping to http_server, please check testline connection and interface in harness"
 
             status = ""
-            for retry in range(0, 3):
+            for retry in range(0, 1):
+
+                data_downloaded = 0
+                file_size_bytes = 0
                 try:
 
                     logger().info("checking weather server is running....")
@@ -174,17 +181,48 @@ class HttpDownload(ThreadBase):
                     logger().info(f"Socket open successfully : {tcp_socket_id}")
                     logger().info(
                         f"Successfully opened tcp client socket and socket id received is {tcp_socket_id} which is expected")
+                    # bind_response = self.wifi_dut.interfaces.wifi.bind(socket_fd=tcp_socket_id,
+                    #                                               device_ip=self.device_ip,
+                    #                                               server_port=self.http_server.interfaces.http.port,
+                    #                                               asynch=0,
+                    #                                               timeout=5,
+                    #                                               ip_len=6,
+                    #                                               ip_version=6)
+                    #
+                    # time.sleep(5)
+                    # logger().info(f"Bind socket successfully: {bind_response}")
 
-                    time.sleep(5)
+                    if self.https:
+                        self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=tcp_socket_id, option_level='SOL_TCP',
+                                                                      option_name='TCP_ULP', option_val="tls")
+
                     logger().info("DUT is connecting to server socket")
                     self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=tcp_socket_id, server_ip=host_ipv6,
                                                                    ip_len=6,
                                                                    server_port=self.http_server.interfaces.http.port)
+
+
                     time.sleep(5)
-                    self.wifi_dut.interfaces.wifi.http_client_download(socket_id=tcp_socket_id,
-                                                                       file_name=self.index_path,
-                                                                       ip_address=f"\"[{host_ipv6}]\"",
-                                                                       mode=0, timeout=1000)
+                    with TimeMeasurer() as t:
+                        result = self.wifi_dut.interfaces.wifi.http_client_download(socket_id=tcp_socket_id,
+                                                                           file_name=self.index_path,
+                                                                           ip_address=f"\"[{host_ipv6}]\"",
+                                                                           mode=self.https, timeout=1000)
+                    logger().info(f"time taken for file download {t.duration}")
+                    logger().info(f"result:{result}")
+                    data = re.findall(r"total received bytes: ([\d]*)", result.decode())
+                    if data and len(data) > 0:
+                        data_downloaded = data[0]
+                        logger().info(f"data_downloaded:{data_downloaded}")
+                    file_size = self.index_path.split(".htm")[0]
+                    logger().info(f"file_size :{file_size}")
+                    if "MB" in str(file_size):
+                        file_size_bytes = int(file_size.split("MB")[0]) * 1024 * 1024
+                    if "KB" in str(file_size):
+                        file_size_bytes = int(file_size.split("KB")[0]) * 1024
+                    logger().info(f"file_size_bytes:{file_size_bytes}")
+                    assert int(data_downloaded) >= file_size_bytes, "data downloaded and file size is not matching"
+                    logger().info(f"data downloaded is greater than or equal to file size")
                     status = True
                     break
                 except Exception as e:
@@ -411,9 +449,10 @@ class WLanThread(ThreadBase):
             logger().info(" ping to IPV6 global successful")
 
 
-def wifi_dut_config(ext_custom_bit=0, thread_count=1, tcp_ip_bit=0, ext_tcp_ip_bit=0):
-    return {
-        "thread_config": {"wifi": {"count": thread_count, "stack_len": 3584, "priority": 8}},
+def wifi_dut_marker(ext_custom_bit=0, thread_count=1, tcp_ip_bit=0, ext_tcp_ip_bit=0, stack_len=4096, priority=8,
+                    ca_cert=None, client_cert=None):
+    config = {
+        "thread_config": {"wifi": {"count": thread_count, "stack_len": stack_len, "priority": priority}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -426,9 +465,14 @@ def wifi_dut_config(ext_custom_bit=0, thread_count=1, tcp_ip_bit=0, ext_tcp_ip_b
                                | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | ext_custom_bit,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | ext_tcp_ip_bit,
     }
+    if ca_cert:
+        config["ca_cert"] = ca_cert
+    if client_cert:
+        config["client_cert"] = client_cert
+    return pytest.mark.config("wifi_dut", wifi=config)
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config())
+@wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
@@ -475,7 +519,7 @@ def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156954(wifi_dut, wifi_access_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W))
+@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA3", "passphrase": "231469460",
                                "ipv6_state": "1", "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
@@ -517,7 +561,7 @@ def test_wifi_sdk_ipv4_ipv6_stateful_dhcpv6_WPA3_C156955(wifi_dut, wifi_access_p
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config())
+@wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
                                "ipv6_state": "0",
@@ -568,7 +612,7 @@ def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156957(wifi_dut, wifi_access_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W))
+@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA3", "passphrase": "231469460",
                                "ipv6_state": "1",
@@ -610,7 +654,7 @@ def test_wifi_sdk_ipv4_ipv6_stateful_dhcpv6_WPA3_C156958(wifi_dut, wifi_access_p
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W))
+@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA3", "passphrase": "231469460",
                                "ipv6_state": "1",
@@ -644,7 +688,7 @@ def test_wifi_sdk_ipv4_ipv6_stateful_dhcpv6_WPA3_C156959(wifi_dut, wifi_access_p
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config())
+@wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
                                "ipv6_state": "0",
@@ -685,7 +729,7 @@ def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156960(wifi_dut, wifi_access_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 @pytest.mark.firmware_app("test_ipv6")
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W))
+@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA3", "passphrase": "231469460",
                                "ipv6_state": "1",
@@ -721,7 +765,7 @@ def test_wifi_sdk_sim_ping_ipv4_ipv6_stateless_dhcpv6_WPA3_C156961(firmware_load
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config())
+@wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
                                "ipv6_state": "0",
@@ -764,7 +808,7 @@ def test_wifi_sdk_sim_ping_ipv4_ipv6_stateless_dhcpv6_WPA2_C156962(wifi_dut, wif
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config())
+@wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
                                "ipv6_state": "1",
@@ -819,7 +863,7 @@ def test_wifi_sdk_ipv6_assign_dut_while_conn_disc_C156975(wifi_dut, wifi_access_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config())
+@wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
                                "ipv6_state": "1",
@@ -872,7 +916,7 @@ def test_wifi_sdk_static_ip_DUT_stateful_dhcpv6_WPA2_C156971(wifi_dut, wifi_acce
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config())
+@wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
                                "ipv6_state": "0",
@@ -910,7 +954,7 @@ def test_wifi_sdk_config_static_IPV6_DUT_C206918(wifi_dut, wifi_access_point, wi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config())
+@wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "Open",
                                "ipv6_state": "1",
@@ -987,7 +1031,7 @@ def test_wifi_sdk_assign_existing_static_ip_DUT_stateful_dhcpv6_WPA2_C156974(wif
 
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W))
+@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA3", "passphrase": "231469460",
                                "ipv6_state": "1", "protected_management_frame": "Capable",
@@ -995,7 +1039,7 @@ def test_wifi_sdk_assign_existing_static_ip_DUT_stateful_dhcpv6_WPA2_C156974(wif
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.test_src_map_id('C156970')
 def test_wifi_sdk_IPV6_assign_after_rejoin_DUT_stateful_dhcpv6_WPA3_C156970(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                             sl_collections,
@@ -1036,20 +1080,22 @@ def test_wifi_sdk_IPV6_assign_after_rejoin_DUT_stateful_dhcpv6_WPA3_C156970(wifi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.skip(reason="Needs work")
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config(0))
+@wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
                                "ipv6_state": "1",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3:3444::/64")}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.start_state("wifi_dut", wifi=["reset"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.test_src_map_id('C156972')
-def test_wifi_sdk_ipv4_change_notify_IPV6_C156972(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
+def test_wifi_sdk_ipv4_change_notify_IPV6_C156972(wifi_dut, wifi_access_point,
+                                                  wifi_sniffer,
+                                                  sl_collections,
                                                   request,
-                                                  sniffer_filter, utf_constants,
+                                                  sniffer_filter,
+                                                  utf_constants,
                                                   wifi_client):
     """
 
@@ -1070,10 +1116,10 @@ def test_wifi_sdk_ipv4_change_notify_IPV6_C156972(wifi_dut, wifi_access_point, w
         ping_count = utf_constants.get("ping_count")
 
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2",
-                                                         dhcp_end="192.168.50.60",
-                                                         dhcp_lease="60")
-        time.sleep(20)
-
+                                                         dhcp_end="192.168.50.100",
+                                                         dhcp_lease="120")
+        time.sleep(60)
+        wifi_dut.interfaces.wifi.sl_net_init(mode="client")
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               test_name=test_name, sl_collections=sl_collections,
                               wifi_client=wifi_client,
@@ -1084,13 +1130,26 @@ def test_wifi_sdk_ipv4_change_notify_IPV6_C156972(wifi_dut, wifi_access_point, w
                               )
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.100", dhcp_end="192.168.50.240",
-                                                         dhcp_lease="60")
-        logger().info(f"Enabling DHCP lease time")
-        time.sleep(100)
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.100", dhcp_end="192.168.50.200",
+                                                         dhcp_lease="120")
 
-        wifi_dut.interfaces.wifi.get_async_events()
-        logger().info(f"enabling async_events")
+        time.sleep(100)
+        events=[]
+        for i in range(0, 3):
+            time.sleep(20)
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            if len(events) >= 1:
+                break
+        assert len(events) >= 1, "TCP Remote terminate event not found"
+        ip_change_notification = ""
+        for event in events:
+            if event.event_type == AsyncEventIdentifiers.IP_CHANGE_NOTIFICATION:
+                ip_change_notification = event.event_data
+        logger().info(f"*********{ip_change_notification}*************")
+        assert ip_change_notification, f"unable to find ip_change_notification"
+        logger().info("ip_change_notification event is received by DUT when range changed in AP")
+        time.sleep(60)
+
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
@@ -1098,9 +1157,8 @@ def test_wifi_sdk_ipv4_change_notify_IPV6_C156972(wifi_dut, wifi_access_point, w
 
 
 
-
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W,
-                                                     thread_count=3))
+@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W,
+                 thread_count=2, stack_len=4096)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA3", "passphrase": "231469460",
                                "ipv6_state": "1", "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
@@ -1150,7 +1208,8 @@ def test_wifi_sdk_sim_tcp_tx_rx_ipv4_ipv6_stateful_dhcpv6_WPA3_C156963(wifi_dut,
                                test_name=test_name, wifi_client=wifi_client,
                                traffic_type="RX", protocol="TCP", net_perf_client=net_perf_clients[1], timeout=60,
                                device_ip=wlan_obj.dut_add_dict['device_ipv6_global'], remote_ip=wlan_obj.remote_ipv6,
-                               ip_version=6, async_socket=1
+                               ip_version=6, async_socket=1,
+
                                )
 
         ipv4_obj.start()
@@ -1166,10 +1225,12 @@ def test_wifi_sdk_sim_tcp_tx_rx_ipv4_ipv6_stateful_dhcpv6_WPA3_C156963(wifi_dut,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config(thread_count=3))
+@wifi_dut_marker(thread_count=2, stack_len=4096)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
-                               "ipv6_state": "1", "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
+                               "ipv6_state": "1",
+                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")
+                               }
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1238,7 +1299,7 @@ def test_wifi_sdk_sim_udp_tx_rx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156964(wifi_dut,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config(thread_count=2))
+@wifi_dut_marker(thread_count=2, stack_len=4096)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
                                "ipv6_state": "1", "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
@@ -1310,8 +1371,7 @@ def test_wifi_sdk_sim_tcp_rx_udp_tx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156965(wifi_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config(thread_count=2))
+@wifi_dut_marker(thread_count=2, stack_len=4096)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
                                "ipv6_state": "1", "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
@@ -1383,11 +1443,227 @@ def test_wifi_sdk_sim_tcp_rx_udp_tx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156965(wifi_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@wifi_dut_marker(thread_count=1)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"ipv6_state": "1", "security": "WPA2", "passphrase": "12345678",
+                               }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"1MB.htm"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_ipv6_http_file_download_stateful_C119367(wifi_dut,
+                                                           wifi_access_point, wifi_sniffer,
+                                                           sl_collections,
+                                                           utf_constants,
+                                                           request, sniffer_filter,
+                                                           wifi_client,
+                                                           http_server, index_path,
+                                                           mqtt_server, mqtt_client,
+                                                        ):
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
 
-@pytest.mark.config("wifi_dut",
-                    wifi=wifi_dut_config(thread_count=3, tcp_ip_bit=Si91xTCPIPFeatureBitMap.HTTPClient,
-                    ext_tcp_ip_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
-                                 | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose))
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                              ping_count=ping_count, wifi_client=wifi_client,
+                              ping_before_power_save=False,
+                              ping_after_power_save=False,
+                              )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        http_obj = HttpDownload(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                test_name="C119367", wifi_client=wifi_client,
+                                device_ip=wlan_obj.dut_add_dict["device_ipv6_global"],
+                                ip_version=6, http_server=http_server, index_path=index_path,
+                                ipv6_addr_type="global")
+
+        http_obj.start()
+        http_obj.wait_for_exit()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key,
+                                                  ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
+
+        assert result['ipv6_state'] == 1, "IPV6 stateful configuration is not set in AP"
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@wifi_dut_marker(thread_count=1,
+                 tcp_ip_bit=Si91xTCPIPFeatureBitMap.SSL,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE",
+                          "SL_NET_TLS_SERVER_CREDENTIAL_START"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"ipv6_state": "1", "security": "WPA2", "passphrase": "12345678",
+                               }
+)
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"1MB.htm"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_ipv6_https_file_download_C119370(wifi_dut,
+                                                   wifi_access_point, wifi_sniffer,
+                                                   sl_collections,
+                                                   utf_constants,
+                                                   request, sniffer_filter,
+                                                   wifi_client,
+                                                   http_server, index_path,
+                                                   mqtt_server, mqtt_client):
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                              ping_count=ping_count, wifi_client=wifi_client,
+                              ping_before_power_save=False,
+                              ping_after_power_save=False,
+                              )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        http_obj = HttpDownload(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                test_name="C119367", wifi_client=wifi_client,
+                                device_ip=wlan_obj.dut_add_dict["device_ipv6_global"],
+                                ip_version=6, http_server=http_server, index_path=index_path,
+                                ipv6_addr_type="global", https=1)
+
+        http_obj.start()
+        http_obj.wait_for_exit()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key,
+                                                  ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
+
+        assert result['ipv6_state'] == 1, "IPV6 stateful configuration is not set in AP"
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@wifi_dut_marker(thread_count=1)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"ipv6_state": "0", "security": "WPA2", "passphrase": "12345678",
+                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3:3444::/64")}
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"1MB.htm"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_ipv6_http_file_download_stateless_C119404(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                            sl_collections,
+                                                            utf_constants,
+                                                            request, sniffer_filter, wifi_client,
+                                                            http_server, index_path
+                                                            ):
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                              ping_count=ping_count, wifi_client=wifi_client,
+                              ping_before_power_save=False,
+                              ping_after_power_save=False,
+                              )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        http_obj = HttpDownload(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                test_name="C119404", wifi_client=wifi_client,
+                                device_ip=wlan_obj.dut_add_dict["device_ipv6_global"],
+                                ip_version=6, http_server=http_server, index_path=index_path,
+                                ipv6_addr_type="global")
+
+        http_obj.start()
+        http_obj.wait_for_exit()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key,
+                                                  ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
+
+        assert result['ipv6_state'] == 0, "IPV6 stateless configuration is not set in AP"
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+@wifi_dut_marker(thread_count=1,
+                 tcp_ip_bit=Si91xTCPIPFeatureBitMap.SSL,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+                )
+@pytest.mark.config(
+    "wifi_access_point", wifi={"ipv6_state": "0", "security": "WPA2", "passphrase": "12345678",
+                               }
+)
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"1MB.htm"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_ipv6_https_file_download_C119405(wifi_dut,
+                                                  wifi_access_point, wifi_sniffer,
+                                                  sl_collections,
+                                                  utf_constants,
+                                                  request, sniffer_filter,
+                                                  wifi_client,
+                                                  http_server, index_path
+                                                  ):
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                              ping_count=ping_count, wifi_client=wifi_client,
+                              ping_before_power_save=False,
+                              ping_after_power_save=False,
+                              )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        http_obj = HttpDownload(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                test_name="C119405", wifi_client=wifi_client,
+                                device_ip=wlan_obj.dut_add_dict["device_ipv6_global"],
+                                ip_version=6, http_server=http_server, index_path=index_path,
+                                ipv6_addr_type="global", https=1)
+
+        http_obj.start()
+        http_obj.wait_for_exit()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key,
+                                                  ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
+
+        assert result['ipv6_state'] == 0, "IPV6 stateless configuration is not set in AP"
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+@wifi_dut_marker(thread_count=2,
+                 ext_tcp_ip_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
+                                | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 )
+
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0", "security": "WPA2", "passphrase": "12345678",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3:3444::/64")}
@@ -1395,15 +1671,15 @@ def test_wifi_sdk_sim_tcp_rx_udp_tx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156965(wifi_
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_ipv6_http_file_download_ipv4_firmware_mqtt_stateless_C156968(wifi_dut,
-                                                                              wifi_access_point, wifi_sniffer,
-                                                                              sl_collections,
-                                                                              utf_constants,
-                                                                              request, sniffer_filter,
-                                                                              wifi_client,
-                                                                              http_server, index_path,
-                                                                              mqtt_server, mqtt_client,
-                                                                            ):
+def test_wifi_sdk_ipv6_http_dwnld_ipv4_fw_mqtt_stateless_C156968(wifi_dut,
+                                                                 wifi_access_point, wifi_sniffer,
+                                                                 sl_collections,
+                                                                 utf_constants,
+                                                                 request, sniffer_filter,
+                                                                 wifi_client,
+                                                                 http_server, index_path,
+                                                                 mqtt_server, mqtt_client,
+                                                                 ):
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1447,40 +1723,53 @@ def test_wifi_sdk_ipv6_http_file_download_ipv4_firmware_mqtt_stateless_C156968(w
         wifi_dut.interfaces.wifi.memory_free(address1)
         wifi_dut.interfaces.wifi.memory_free(address2)
         wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key,
+                                                  ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
 
-        # decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        # result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_info['dut_mac_address'],
-        #                                           decryption_key, ["icmpv6"],
-        #                                           test_name, wlan_obj.dut_info['ap_mac_address'])
-        # assert result['ipv6_state'] == 1, "IPV6 stateful configuration is not set in AP"
+        assert result['ipv6_state'] == 0, "IPV6 stateless configuration is not set in AP"
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-
-
-
-@pytest.mark.config("wifi_dut", wifi=wifi_dut_config(thread_count=3, tcp_ip_bit=Si91xTCPIPFeatureBitMap.HTTPClient,
-                                                      ext_tcp_ip_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
-                                                                     | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose))
+@wifi_dut_marker(thread_count=2,
+                 tcp_ip_bit=Si91xTCPIPFeatureBitMap.SSL,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 ext_tcp_ip_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
+                                 | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                 ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE",
+                          "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+                 )
 @pytest.mark.config(
-    "wifi_access_point", wifi={"ipv6_state": "0", "security": "WPA2", "passphrase": "12345678",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3:3444::/64")}
+    "wifi_access_point", wifi={"ipv6_state": "1", "security": "WPA2", "passphrase": "12345678",
+                               }
 )
-@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.skip()
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
-@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_ipv6_http_file_download_ipv4_firmware_mqtt_stateless_C156969(wifi_dut,
-                                                                              wifi_access_point, wifi_sniffer,
-                                                                              sl_collections,
-                                                                              utf_constants,
-                                                                              request, sniffer_filter, wifi_client,
-                                                                              http_server, index_path,
-                                                                              mqtt_server, mqtt_client,
-                                                                            ):
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_ipv6_https_dwnld_ipv4_fw_mqtt_stateless_C156967(wifi_dut,
+                                                                  wifi_access_point, wifi_sniffer,
+                                                                  sl_collections,
+                                                                  utf_constants,
+                                                                  request, sniffer_filter,
+                                                                  wifi_client,
+                                                                  http_server, index_path,
+                                                                  mqtt_server, mqtt_client,
+                                                                    ):
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
+        topic = "mytesttopic"
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
+        address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(topic) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(topic), write_content=topic)
+
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(message) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(message), write_content=message)
+
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
@@ -1493,86 +1782,109 @@ def test_wifi_sdk_ipv6_http_file_download_ipv4_firmware_mqtt_stateless_C156969(w
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
-        # http_obj = HttpDownload(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-        #                         test_name="C156968", wifi_client=wifi_client,
-        #                         device_ip=wlan_obj.dut_add_dict["device_ipv6_global"],
-        #                         ip_version=6, http_server=http_server, index_path=index_path,
-        #                         ipv6_addr_type="global")
-        topic = "mytesttopic"
-        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
+        http_obj = HttpDownload(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                test_name="C156967", wifi_client=wifi_client,
+                                device_ip=wlan_obj.dut_add_dict["device_ip"],
+                                ip_version=4, http_server=http_server, index_path=index_path,
+                                https=1)
 
         mqtt_obj = MqttThread(wifi_dut=wifi_dut,
                               wifi_client=wifi_client, mqtt_client=mqtt_client,
-                              mqtt_server=mqtt_server, topic=topic, message=message)
-        # http_obj.start()
+                              mqtt_server=mqtt_server, topic=topic, message=message, topic_address=address1,
+                              msg_address=address2, ip_version=6)
+        http_obj.start()
         mqtt_obj.start()
         mqtt_obj.wait_for_exit()
-        # http_obj.wait_for_exit()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        http_obj.wait_for_exit()
 
-        # decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        # result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_info['dut_mac_address'],
-        #                                           decryption_key, ["icmpv6"],
-        #                                           test_name, wlan_obj.dut_info['ap_mac_address'])
-        # assert result['ipv6_state'] == 1, "IPV6 stateful configuration is not set in AP"
+        logger().info("Unsubscribing from the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.memory_free(address1)
+        wifi_dut.interfaces.wifi.memory_free(address2)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key,
+                                                  ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
+
+        assert result['ipv6_state'] == 1, "IPV6 stateful configuration is not set in AP"
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
 
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation
-                    | Si91xFeatureBitMap.OpenMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client
-                          | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
-                          | Si91xTCPIPFeatureBitMap.IPv6Mode
-                          | Si91xTCPIPFeatureBitMap.DHCPv6Server
-                          | Si91xTCPIPFeatureBitMap.HTTPClient,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-                               | Si91xExtCustomFeatureBitMap.FeatureLowPower
-                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-    }
-)
+@wifi_dut_marker(thread_count=2, tcp_ip_bit=Si91xTCPIPFeatureBitMap.SSL,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 ext_tcp_ip_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
+                                 | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                 ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE",
+                          "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0", "security": "WPA2", "passphrase": "12345678",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3:3444::/64")}
 )
-@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-def test_wifi_sdk_ipv6_http_file_download_stateless_C119404(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
-                                                  utf_constants,
-                                                  request, sniffer_filter, wifi_client,
-                                                  http_server, index_path
-                                                  ):
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_ipv6_https_dwnld_ipv4_fw_mqtt_stateless_C156969(wifi_dut,
+                                                                  wifi_access_point, wifi_sniffer,
+                                                                  sl_collections,
+                                                                  utf_constants,
+                                                                  request, sniffer_filter,
+                                                                  wifi_client,
+                                                                  http_server, index_path,
+                                                                  mqtt_server, mqtt_client,
+                                                                ):
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
-        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                              test_name=test_name, sl_collections=sl_collections,
-                              wifi_client=wifi_client, test_id=119367,
-                              http_server=http_server, index_path=index_path,
-                              ping_count=ping_count)
+        topic = "mytesttopic"
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
+        address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(topic) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(topic), write_content=topic)
+
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(message) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(message), write_content=message)
+
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                              ping_count=ping_count, wifi_client=wifi_client,
+                              ping_before_power_save=False,
+                              ping_after_power_save=False,
+                              )
         wlan_obj.start()
         wlan_obj.wait_for_exit()
-        wlan_obj.sniffer_capture(mode='stop')
-        # decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        # result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_info['dut_mac_address'],
-        #                                           decryption_key, ["icmpv6"],
-        #                                           test_name, wlan_obj.dut_info['ap_mac_address'])
-        # assert result['ipv6_state'] == 0, "IPV6 stateless configuration is not set in AP"
+
+        http_obj = HttpDownload(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                test_name="C156969", wifi_client=wifi_client,
+                                device_ip=wlan_obj.dut_add_dict["device_ipv6_global"],
+                                ip_version=6, http_server=http_server, index_path=index_path,
+                                ipv6_addr_type="global", https=1)
+
+        mqtt_obj = MqttThread(wifi_dut=wifi_dut,
+                              wifi_client=wifi_client, mqtt_client=mqtt_client,
+                              mqtt_server=mqtt_server, topic=topic, message=message, topic_address=address1,
+                              msg_address=address2)
+        http_obj.start()
+        mqtt_obj.start()
+        mqtt_obj.wait_for_exit()
+        http_obj.wait_for_exit()
+
+        logger().info("Unsubscribing from the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.memory_free(address1)
+        wifi_dut.interfaces.wifi.memory_free(address2)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key,
+                                                  ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
+
+        assert result['ipv6_state'] == 0, "IPV6 stateless configuration is not set in AP"
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
-
-
-
-

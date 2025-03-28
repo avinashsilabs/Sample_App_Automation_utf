@@ -257,7 +257,7 @@ class WLanConThread(ThreadBase):
                  test_id=None, test_type=None, ping_count=10, remote_wiseconnect3=None, wifi_client=None,
                  ipv6_addr_type="global", switch=None, listen_interval=False,
                  set_power_save=False, traffic_type=None, protocol=None, net_perf_client=None, timeout=60,
-                 ping_from="remote", remote_type="raspi"):
+                 ping_from="remote", remote_type="raspi", static_ipv6=None):
 
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -288,6 +288,7 @@ class WLanConThread(ThreadBase):
         self.listen_interval = listen_interval
         self.remote_type = remote_type
         self.ping_from = ping_from
+        self.static_ipv6 = static_ipv6
 
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
@@ -359,6 +360,11 @@ class WLanConThread(ThreadBase):
                     client.interfaces.wifi.leave()
                 self.clients_connected = False
 
+    def raspi_client_leave(self):
+        for i in range(self.no_of_clients):
+            self.wifi_dut.interfaces.wifi.disconnect_ap_client(
+                client_mac=self.dut_add_dict[f'client{i + 1}_mac'], deauth_option="deauth_client_unspecified")
+
     @staticmethod
     @retry(Exception, delay=15, tries=3)
     def ping_from_wifi_client(wifi_client, dest_ip, ping_count=10):
@@ -418,6 +424,7 @@ class WLanConThread(ThreadBase):
                     logger().info(f"RASPI-STA{i + 1}:'{self.wifi_clients[i].name}' is successfully connected to DUT-AP")
                     logger().info(f"Initiating wlan ping from client '{self.wifi_clients[i].name}' to DUT")
                     self.dut_add_dict[f'client{i + 1}_ip'] = self.wifi_clients[i].interfaces.wifi.get_ip_address()
+                    self.dut_add_dict[f'client{i + 1}_mac'] = self.wifi_clients[i].interfaces.wifi.get_mac_address()
                     logger().info(f"Client{i + 1}_ip: {self.dut_add_dict[f'client{i + 1}_ip']}")
                     rc, stdout, stderr = self.wifi_clients[i].interfaces.wifi.shell.execute(
                         f"sudo ping -c {self.ping_count} {self.dut_add_dict['dut_ap_ipv4']}")
@@ -477,9 +484,16 @@ class WLanConThread(ThreadBase):
                                                                      ping_after_power_save=False,
                                                                      )
         self.dut_add_dict['ap_mac_address'] = self.wifi_access_point.interfaces.wifi.bssid
-        ip_status, ip_config = self.sl_collections.configure_ip(self.wifi_dut, ip_status=False, retry_count=1,
-                                                                ip_version="ipv6")
-        assert ip_status, f"....Unable to assign IPv6 ADDRESS through DHCP with reason: {ip_config}...."
+
+        if self.static_ipv6:
+            ip_config = self.wifi_dut.interfaces.wifi.start_ip(timeout=30, ip_version="ipv6", vid=0,
+                                                               static_ipv6_address=self.static_ipv6,
+                                                               ipv6_gw_address=self.static_ipv6, )
+        else:
+            ip_status, ip_config = self.sl_collections.configure_ip(self.wifi_dut, ip_status=False, retry_count=1,
+                                                                    ip_version="ipv6")
+
+            assert ip_status, f"....Unable to assign IPv6 ADDRESS through DHCP with reason: {ip_config}...."
         self.dut_add_dict['dut_sta_ipv6_global'] = ip_config[1]
         self.dut_add_dict['dut_sta_ipv6_link'] = ip_config[0]
         logger().info(f"DUT MAC ADDRESS :  {self.dut_add_dict['dut_mac_address']}\n"
@@ -1570,3 +1584,6 @@ def test_wifi_melco_sdk_ipv4_ipv6_ip_change_notificaton_C557364(wifi_dut, wifi_a
 
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+
+
+
