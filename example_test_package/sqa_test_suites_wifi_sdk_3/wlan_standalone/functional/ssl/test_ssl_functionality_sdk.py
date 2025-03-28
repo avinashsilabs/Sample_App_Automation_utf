@@ -3928,6 +3928,296 @@ def test_wifi_sdk_ssl_verify_alpn_functionality_when_header_exceeds_256_bytes_c6
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
+        | Si91xTCPIPFeatureBitMap.SSL
+        | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.MultipleSslVersionSupport,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP
+        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ca_cert": [("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
+                    ("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
+        ],
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"]
+)
+def test_wifi_sdk_ssl_verify_alpn_with_sni_using_two_sockets_c661870(
+    wifi_sniffer,
+    wifi_dut,
+    wifi_access_point,
+    ssl_server,
+    logger,
+    sniffer_filter,
+    sl_collections,
+    request,
+):
+    """
+        Test the SSL ALPN (Application-Layer Protocol Negotiation) and SNI (Server Name Indication) functionality using two sockets.
+
+        This test verifies the following:
+        - The device can establish SSL connections with ALPN and SNI enabled.
+        - The device can handle multiple SSL connections simultaneously.
+        - The device can correctly negotiate the application-layer protocol using ALPN.
+        - The device can correctly indicate the server name using SNI.
+
+        Parameters:
+        wifi_sniffer (object): The WiFi sniffer object for capturing network traffic.
+        wifi_dut (object): The Device Under Test (DUT) for WiFi functionality.
+        wifi_access_point (object): The WiFi access point object.
+        ssl_server (object): The SSL server object for establishing SSL connections.
+        logger (object): The logger object for logging test information.
+        sniffer_filter (object): The sniffer filter object for filtering captured packets.
+        sl_collections (object): The collections object for handling test data and results.
+        request (object): The request object for handling test requests.
+
+        Raises:
+        Exception: If any error occurs during the test execution.
+        """
+    try:
+        second_level_filter = "        Tag: Transport Layer Security"
+        tls_sni_extension = "example.com"
+        tls_alpn_extension = "http/1.1"
+        buffer_length = 100
+        # Configure the sniffer on wifi_access_point channel
+        wifi_sniffer.interfaces.capture.configure_interface(
+            wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(request.node.name)
+        result = sl_collections.join_to_wifi_network(
+            wifi_dut,
+            wifi_access_point,
+            associated=wifi_dut.interfaces.wifi.associated,
+            power_save=True,
+        )
+        device_ip, dut_mac_address = result["device_ip"], result["dut_mac_address"]
+        for sock_count in range(0, 5):
+            for iteration in range(2):
+                port = ssl_server.interfaces.ssl.config["device_port1"] if iteration == 0 else ssl_server.interfaces.ssl.config["device_port2"]
+                ssl_server.interfaces.ssl.start_server(port=port)
+                server_ip = ssl_server.interfaces.ssl.server_ip
+                socket_id = wifi_dut.interfaces.wifi.socket()
+                wifi_dut.interfaces.wifi.bsdSetSocketOpt(
+                    socket_id, option_name="TCP_ULP", option_val="tls_1_2"
+                )
+                wifi_dut.interfaces.wifi.bsdSetSocketOpt(
+                    socket_id, option_name="TCP_ULP", option_val="tls_1_2", tls_extensions_enable=1, tls_sni_extension=tls_sni_extension, tls_alpn_enable=1
+                )
+                wifi_dut.interfaces.wifi.bind(
+                    socket_fd=socket_id,
+                    device_ip=device_ip,
+                    server_port=randint(5001, 10000) if iteration == 0 else randint(10001, 20000),
+                    timeout=15,
+                )
+                wifi_dut.interfaces.wifi.bsdSocketConnect(
+                    socket_fd=socket_id, server_ip=server_ip, server_port=port
+                )
+            logger.info(
+                f"Generate {buffer_length} bytes of Data and send it over opened Sockets"
+            )
+            for socket_id in [0 , 1]:
+                tx_buffer = "".join(
+                    random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
+                )
+                wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=socket_id, data=tx_buffer)
+                rx_buffer = ssl_server.interfaces.ssl.data_recv_content(
+                    1 if socket_id == 0 else 2, buffer_size=len(tx_buffer)
+                )
+                logger.info(f"\n\nRECEIVED DATA on Socket ID: {socket_id}:  {rx_buffer} \n\n")
+                assert (
+                    tx_buffer == rx_buffer.decode()
+                ), f"Sent data: {tx_buffer} didn't match received data: {rx_buffer}"
+            logger.info(f"Closing Opened Sockets")
+            for socket in [0, 1]: wifi_dut.interfaces.wifi.bsdSockClose(socket)
+            ssl_server.interfaces.ssl.stop_server()
+            sni_extension_frame = (
+                sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=device_ip,
+                da_addr=ssl_server.interfaces.ssl.server_ip,
+                filter_name="http_sni",
+                )
+            )
+            assert int(wifi_sniffer.interfaces.capture.sniffer_validation(
+                packet_filter1=sni_extension_frame,
+                packet_filter2=second_level_filter
+            )['find_packet_num']) == 2 * (sock_count + 1), "Unable to find SNI frame in TLS Hello Packet"
+
+            #Sniffer Validation for TLS SNI and ALPN Extension
+            with open("./reports/filter2_file.txt", "r") as file:
+                contents = file.read()
+                extensions = []
+                patterns = [
+                    r"Server Name:\s*(\S+)",
+                    r"ALPN Next Protocol:\s*(\S+)"
+                    ]
+                for pattern in patterns:
+                    match = re.search(pattern, contents)
+                    if match:
+                        extensions.append(match.group(1))
+                server_name = extensions[0]
+                alpn_extension = extensions[1]
+                logger.info(f"\n\nThe Server Name: {server_name}\n\n")
+                assert server_name == tls_sni_extension, "SNI Extension didn't match"
+                logger.info(f"\n\nThe ALPN Extension Is: {alpn_extension}\n\n")
+                assert alpn_extension == tls_alpn_extension, "ALPN Extension didn't match"
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
+        | Si91xTCPIPFeatureBitMap.SSL
+        | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.MultipleSslVersionSupport,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP
+        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ca_cert": [("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
+        ],
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"]
+)
+def test_wifi_sdk_ssl_verify_alpn_with_sni_using_single_socket_and_tls_1_3_c661871(
+    wifi_sniffer,
+    wifi_dut,
+    wifi_access_point,
+    ssl_server,
+    logger,
+    sniffer_filter,
+    sl_collections,
+    request,
+):
+    """
+        Test the SSL ALPN (Application-Layer Protocol Negotiation) and SNI (Server Name Indication) functionality using a single socket with TLS 1.3.
+
+        This test verifies the following:
+        - The device can establish an SSL connection with ALPN and SNI enabled using a single socket.
+        - The device can correctly negotiate the application-layer protocol using ALPN.
+        - The device can correctly indicate the server name using SNI.
+        - The device can establish a secure connection using TLS 1.3.
+
+        Parameters:
+        wifi_sniffer (object): The WiFi sniffer object for capturing network traffic.
+        wifi_dut (object): The Device Under Test (DUT) for WiFi functionality.
+        wifi_access_point (object): The WiFi access point object.
+        ssl_server (object): The SSL server object for establishing SSL connections.
+        logger (object): The logger object for logging test information.
+        sniffer_filter (object): The sniffer filter object for filtering captured packets.
+        sl_collections (object): The collections object for handling test data and results.
+        request (object): The request object for handling test requests.
+
+        Raises:
+        Exception: If any error occurs during the test execution.
+        """
+    try:
+        second_level_filter = "        Tag: Transport Layer Security"
+        tls_sni_extension = "example.com"
+        tls_alpn_extension = "http/1.1"
+        buffer_length = 100
+        # Configure the sniffer on wifi_access_point channel
+        wifi_sniffer.interfaces.capture.configure_interface(
+            wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(request.node.name)
+        result = sl_collections.join_to_wifi_network(
+            wifi_dut,
+            wifi_access_point,
+            associated=wifi_dut.interfaces.wifi.associated,
+            power_save=True,
+        )
+        device_ip, dut_mac_address = result["device_ip"], result["dut_mac_address"]
+        for sock_count in range(0, 5):
+            for iteration in range(1):
+                port = ssl_server.interfaces.ssl.config["device_port1"] if iteration == 0 else ssl_server.interfaces.ssl.config["device_port2"]
+                ssl_server.interfaces.ssl.start_server(port=port)
+                server_ip = ssl_server.interfaces.ssl.server_ip
+                socket_id = wifi_dut.interfaces.wifi.socket()
+                wifi_dut.interfaces.wifi.bsdSetSocketOpt(
+                    socket_id, option_name="TCP_ULP", option_val="tls_1_3"
+                )
+                wifi_dut.interfaces.wifi.bsdSetSocketOpt(
+                    socket_id, option_name="TCP_ULP", option_val="tls_1_3", tls_extensions_enable=1, tls_sni_extension=tls_sni_extension, tls_alpn_enable=1
+                )
+                wifi_dut.interfaces.wifi.bind(
+                    socket_fd=socket_id,
+                    device_ip=device_ip,
+                    server_port=randint(5001, 10000) if iteration == 0 else randint(10001, 20000),
+                    timeout=15,
+                )
+                wifi_dut.interfaces.wifi.bsdSocketConnect(
+                    socket_fd=socket_id, server_ip=server_ip, server_port=port
+                )
+            logger.info(
+                f"Generate {buffer_length} bytes of Data and send it over opened Sockets"
+            )
+
+            tx_buffer = "".join(
+                    random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
+            )
+            wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=0, data=tx_buffer)
+            rx_buffer = ssl_server.interfaces.ssl.data_recv_content(
+                    1, buffer_size=len(tx_buffer)
+            )
+            logger.info(f"\n\nRECEIVED DATA on Socket ID: 0:  {rx_buffer} \n\n")
+            assert (
+                    tx_buffer == rx_buffer.decode()
+            ), f"Sent data: {tx_buffer} didn't match received data: {rx_buffer}"
+            logger.info(f"Closing Opened Sockets")
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=0)
+            ssl_server.interfaces.ssl.stop_server()
+            sni_extension_frame = (
+                sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=device_ip,
+                da_addr=ssl_server.interfaces.ssl.server_ip,
+                filter_name="http_sni",
+                )
+            )
+            assert int(wifi_sniffer.interfaces.capture.sniffer_validation(
+                packet_filter1=sni_extension_frame,
+                packet_filter2=second_level_filter
+            )['find_packet_num']) == sock_count + 1, "Unable to find SNI frame in TLS Hello Packet"
+
+            #Sniffer Validation for TLS SNI and ALPN Extension
+            with open("./reports/filter2_file.txt", "r") as file:
+                contents = file.read()
+                extensions = []
+                patterns = [
+                    r"Server Name:\s*(\S+)",
+                    r"ALPN Next Protocol:\s*(\S+)"
+                    ]
+                for pattern in patterns:
+                    match = re.search(pattern, contents)
+                    if match:
+                        extensions.append(match.group(1))
+                server_name = extensions[0]
+                alpn_extension = extensions[1]
+                logger.info(f"\n\nThe Server Name: {server_name}\n\n")
+                assert server_name == tls_sni_extension, "SNI Extension didn't match"
+                logger.info(f"\n\nThe ALPN Extension Is: {alpn_extension}\n\n")
+                assert alpn_extension == tls_alpn_extension, "ALPN Extension didn't match"
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
 
 """Below testcases are not supported in Si917_Beta_Soc_WIFISDK"""
 # @pytest.mark.config(
