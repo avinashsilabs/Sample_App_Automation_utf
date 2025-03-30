@@ -37,7 +37,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xPowerSaveModes,
     Si91xPowerSaveProcedureTypes,
     SocketOptions,
-
+    Si91xJoinFeatureBitMap
 )
 from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
@@ -266,6 +266,23 @@ class WLanThread(ThreadBase):
                 self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
                                                                         wifi_access_point=self.wifi_access_point,
                                                                         eap_type="tls", ping_after_power_save=True)
+                time.sleep(5)
+                self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET,
+                                                             option_val=SocketOptions.TCP_MAX_RETRY)
+            elif self.test_case_no == 680007:
+                self.wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+
+                logger().info("Setting Rejoin Parameters in DUT")
+                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0,
+                                                                              scan_interval=4,
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=0)
+
+                logger().info("DUT Joining to AP in EAP-TLS mode and wpa3_transition_enterprise security")
+                self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
+                                                                        wifi_access_point=self.wifi_access_point,
+                                                                        eap_type="tls", ping_after_power_save=True,
+                                                                        security="wpa3_transition_enterprise")
                 time.sleep(5)
                 self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET,
                                                              option_val=SocketOptions.TCP_MAX_RETRY)
@@ -2795,3 +2812,65 @@ def test_wifi_sdk_wpa3_rejoin_eap_security_with_pmf_c680006(wifi_dut, wifi_acces
 
     finally:
         wifi_sniffer.interfaces.capture.stop_capture()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678', })
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+def test_wifi_sdk_wpa3_rejoin_transition_eap_security_with_pmf_c680007(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                                       sniffer_filter, sl_collections, request,
+                                                                       radius_server, switch, net_perf_client,
+                                                                       wifi_client):
+    """Verify rejoin functionality in EAP-TLS mode with WPA3 security and PMF enabled"""
+    test_name = request.node.name
+    wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
+    wifi_access_point.interfaces.wifi.start_ap()
+    wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+        join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+    wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+    wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                             beacon_missed_count=40, first_time_retry_enable=0)
+
+    wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
+    wifi_dut.interfaces.wifi.set_eap_credentials()
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                          test_name=test_name, test_case_no=680007, sl_collections=sl_collections,
+                          switch=switch, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                          protocol="UDP", data_transfer=False)
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
+                                                   cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
