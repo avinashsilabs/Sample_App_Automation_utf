@@ -1008,6 +1008,7 @@ devices:
                 private_key_file: 'wifi-user.pem'
                 certificate_file: 'wifi-user.pem'
                 ca_file: 'wifi-user.pem'
+#                private_key_password: 12345678
 
     static_radius_server:
         interfaces:

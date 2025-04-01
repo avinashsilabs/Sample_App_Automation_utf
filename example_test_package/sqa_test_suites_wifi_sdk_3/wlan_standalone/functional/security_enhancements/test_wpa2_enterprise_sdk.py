@@ -3335,6 +3335,7 @@ def test_wifi_sdk_http_client_connection_wpa2_enterprise_c113806(wifi_dut, wifi_
         logger().info("Stopping sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -3346,31 +3347,32 @@ def test_wifi_sdk_http_client_connection_wpa2_enterprise_c113806(wifi_dut, wifi_
                     Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
                           Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid |
+                           Si91xCustomFeatureBitMap.RealTimeClockFromHost,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
-        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
-                           Si91xConfigFeatureBitMap.TLS_V2,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "band": 0,
-        "eap_cert": ["wifi-user_41.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+        "eap_cert": ["cacert_encrypted.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+        "client_cert": ["my_certification_signed", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["my_privatekey", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.config("radius_server",
-                    radius_server={"private_key_file": 'wifi-user.pem', "certificate_file": 'wifi-user.pem',
-                                   "ca_file": 'wifi-user.pem'})
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
-def test_wifi_sdk_wpa2_enterprise_eap_tls_C680026(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
+                    radius_server={"private_key_file": 'my_privatekey', "certificate_file": 'my_certification_signed',
+                                   "ca_file": 'cacert_encrypted.pem'})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
+def test_wifi_sdk_wpa2_enterprise_eap_tls_C113792(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                                           sniffer_filter, radius_server, sl_collections, request):
-    """ This test case verifies the WPA2 Enterprise Connectivity while using EAP TLS Method when some lines in the certificate
-            is removed from certificate """
+    """ This test case verifies the WPA2 Enterprise Connectivity while using EAP TLS Method when the certificate
+            header is removed from certificate """
     try:
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -3384,7 +3386,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_C680026(wifi_dut, wifi_access_point, w
         wifi_dut.interfaces.wifi.set_eap_credentials(credential_key="12345678")
         for count in range(0, utf_constants.get('iter_count')):
             wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                         sl_collections=sl_collections, test_name=test_name, eap_type_tls_no_cert="tls")
+                                         sl_collections=sl_collections, test_name=test_name, eap_type="tls")
             wifi_thread.start()
             wifi_thread.wait_for_exit()
         logger().info("Stop Sniffer finally")

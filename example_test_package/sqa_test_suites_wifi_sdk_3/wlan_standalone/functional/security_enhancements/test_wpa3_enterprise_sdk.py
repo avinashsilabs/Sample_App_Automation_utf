@@ -2097,15 +2097,9 @@ def test_wifi_sdk_wpa_3enterprise_eap_tls_C680024(wifi_dut, wifi_access_point, w
     """ This test case verifies the WPA2 Enterprise Connectivity while using EAP TLS Method when the certificate
             header is removed from certificate """
     try:
+        logger().info(f"Since WPA3-ENT is not supported in 3rd party Asus Ap , as per input from QA team configured "
+                      f"wpa2-ent-pmf on 3rd party side and on dut enabled wpa3-enterprise with pmf")
         test_name = request.node.name
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
-                                                   cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
-        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"****** DUT MAC ADDRESS **** {dut_mac_address}")
-        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-        logger().info(f"**** AP mac address*****{ap_mac_address}")
         wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
         wifi_access_point.interfaces.wifi.start_ap()
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
@@ -2113,22 +2107,57 @@ def test_wifi_sdk_wpa_3enterprise_eap_tls_C680024(wifi_dut, wifi_access_point, w
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
-        wifi_dut.interfaces.wifi.scan(channel=0)
+        wifi_dut.interfaces.wifi.set_eap_credentials()
+        iter_count =  utf_constants.get('iter_count')
+        for i in range(0, iter_count):
+            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-        for count in range(0, utf_constants.get('iter_count')):
-            wifi_thread = WPA3Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, test_case_no='680024',
-                                         sl_collections=sl_collections, test_name=test_name, eap_type_tls_no_cert="tls")
-            wifi_thread.start()
-            wifi_thread.wait_for_exit()
-        logger().info("Stop Sniffer finally")
-        wifi_sniffer.interfaces.capture.stop_capture()
-        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+            wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
+            wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
+                                          passphrase=wifi_access_point.interfaces.wifi.passphrase,
+                                          security="wpa3_enterprise", uid="user1", enc="tls",
+                                          expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
+            wifi_dut.interfaces.wifi.start_ip(
+                expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
+            logger().info(
+                f"IP configuration failed when command given in incorrect state,observed error code 0x10021 which "
+                f" is expected")
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            rejoin_error_events = [
+                event
+                for event in events
+                if event.event_type == AsyncEventIdentifiers.WIFICONNECTIONLOGEVENTASYNC
+            ]
+            for event in rejoin_error_events:
+                logger().info(f"event type is {event.event_type} and event data is: {event.event_data}")
+                output = event.event_data
+            logger().info(f"\n\n Event data is: {output} \n\n")
+            result = output.strip().split(':')[1].lstrip()
+            logger().info(f"\n\n Reason code:{result} \n\n")
+            assert result == '2A', "Unable to get expected reason code hence test is failed"
+            logger().info(f"Observed Expected Error Code, Hence test cases is passed")
+            ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+            logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+            dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+            logger().info(f"Mac Address of DUT: {dut_mac_address}")
+
+            logger().info("Stop Sniffer finally")
+            wifi_sniffer.interfaces.capture.stop_capture()
+
+            wifi_dut.interfaces.wifi.leave()
+
+            sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                             wifi_access_point=wifi_access_point,
                                                             dut_mac_address=dut_mac_address,
                                                             ap_mac_address=ap_mac_address)
-        sniffer_verification.verify_sniffer_for_negative_scenarios()
+            sniffer_verification.verify_sniffer_for_negative_scenarios()
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        wifi_sniffer.interfaces.capture.stop_capture()
 
 
 @pytest.mark.config(

@@ -286,6 +286,23 @@ class WLanThread(ThreadBase):
                 time.sleep(5)
                 self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET,
                                                              option_val=SocketOptions.TCP_MAX_RETRY)
+            elif self.test_case_no == 680006:
+                self.wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+
+                logger().info("Setting Rejoin Parameters in DUT")
+                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0,
+                                                                              scan_interval=4,
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=0)
+
+                logger().info("DUT Joining to AP in EAP-TLS mode and wpa3_transition_enterprise security")
+                self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
+                                                                        wifi_access_point=self.wifi_access_point,
+                                                                        eap_type="tls", ping_after_power_save=True,
+                                                                        security="wpa3_enterprise")
+                time.sleep(5)
+                self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET,
+                                                             option_val=SocketOptions.TCP_MAX_RETRY)
 
             elif self.test_case_no == 19731:
                 self.wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
@@ -2764,54 +2781,33 @@ def test_wifi_sdk_beacon_miss_count_stats_90_c641350(wifi_sniffer, wifi_access_p
 def test_wifi_sdk_wpa3_rejoin_eap_security_with_pmf_c680006(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                             sl_collections, request, radius_server,
                                                             wifi_client):
-    """ Verify whether DUT is able to rejoin or not when DUT connects to AP with WPA3 EAP security """
+    """Verify rejoin functionality in EAP-TLS mode"""
+    test_name = request.node.name
+    wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
+    wifi_access_point.interfaces.wifi.start_ap()
+    wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+        join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+    wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+    wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                             beacon_missed_count=40, first_time_retry_enable=0)
+
+    wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
+    wifi_dut.interfaces.wifi.set_eap_credentials()
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                          test_name=test_name, test_case_no=680006, sl_collections=sl_collections,
+                          switch=switch, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                          protocol="UDP", data_transfer=False)
     try:
-        logger().info(f"Since WPA3-ENT is not supported in 3rd party Asus Ap , as per input from QA team configured "
-                      f"wpa2-ent-pmf on 3rd party side and on dut enabled wpa3-enterprise with pmf")
-        test_name = request.node.name
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-
-        wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
-        wifi_access_point.interfaces.wifi.start_ap()
-        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
-        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
-        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0)
-
-        wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
-        wifi_dut.interfaces.wifi.set_eap_credentials()
-
-        wifi_thread = WPA3Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                     eap_type="peap", sl_collections=sl_collections, test_name=test_name,
-                                     wifi_client=wifi_client)
-        wifi_thread.start()
-        wifi_thread.wait_for_exit()
-
-        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
-        logger().info("Stop Sniffer finally")
-        wifi_sniffer.interfaces.capture.stop_capture()
-
-        wifi_dut.interfaces.wifi.leave()
-
-        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
-                                                        wifi_access_point=wifi_access_point,
-                                                        dut_mac_address=wifi_thread.dut_add_dict['dut_mac_address'],
-                                                        ap_mac_address=ap_mac_address)
-        sniffer_verification.verify_sniffer_validation()
-        packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            da_addr=ap_mac_address,
-            sa_addr=wifi_thread.dut_add_dict['dut_mac_address'], filter_name='assoc_req_resp_eapol_4_way_handshake_wpa3_eap')
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
-            'packet_count'], 'Unable to find EAP frames sent from AP in sniffer'
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
+                                                   cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
     finally:
-        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.config(
