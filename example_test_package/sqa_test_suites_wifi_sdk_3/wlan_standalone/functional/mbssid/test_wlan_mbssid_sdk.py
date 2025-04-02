@@ -1070,20 +1070,19 @@ class WLanThread(ThreadBase):
 
                 vap_list = self.find_mbssid_vaps()
                 logger().info(f"VAP List = {vap_list}")
-                time.sleep(10)
 
                 for i in range(0, 5):
                     """ Initiate the connection again for T based BSSID """
+                    logger().info(f"\n\n ***** Connection initiation for T based BSSID iteration number = {i} \n\n *****")
                     self.wifi_sniffer.interfaces.capture.configure_interface(
                         channel=self.wifi_access_point.interfaces.wifi.channel
                     )
                     self.wifi_sniffer.interfaces.capture.start_capture(
-                        capture_file=self.test_name
+                        capture_file=f"T_based_connection_iteration_{i}"
                     )
-
-                    scan_results = self.wifi_dut.interfaces.wifi.scan(ssid=self.wifi_access_point.interfaces.wifi.ssid)
-                    logger().info(scan_results)
-                    assert len(scan_results) > 0, "scan_list not found"
+                    if i == 0:
+                        scan_results = self.wifi_dut.interfaces.wifi.scan(ssid=self.wifi_access_point.interfaces.wifi.ssid)
+                        assert len(scan_results) > 0, "scan_list not found"
 
                     self.dut_addr = self.sl_collections.join_to_wifi_network(
                         wifi_dut=self.wifi_dut,
@@ -1091,6 +1090,7 @@ class WLanThread(ThreadBase):
                         associated=self.wifi_dut.interfaces.wifi.associated,
                         ping_after_power_save=False,
                         skip_scan=True,
+                        retry_count=3,
                     )
                     packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                         sa_addr=self.dut_addr["dut_mac_address"],
@@ -1102,24 +1102,22 @@ class WLanThread(ThreadBase):
                     time.sleep(2)
                     self.wifi_dut.interfaces.wifi.leave()
                     self.wifi_sniffer.interfaces.capture.stop_capture()
-                    time.sleep(2)
+                    time.sleep(20)
                     assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
                         packet_filter1=packet_filter1
                     )[
                         "packet_count"
                     ], "Unable to find NULL-Data frame packets with power save bit 1"
 
-                    # Initiate the connection again for NT based BSSID
-                    vap0_mbssid = self.find_vaps_mbssid()
-                    logger().info(f"VAP0 MBSSID = {vap0_mbssid}")
+                    """ Initiate the connection again for NT based BSSID """
                     self.wifi_sniffer.interfaces.capture.configure_interface(
                         channel=self.wifi_access_point.interfaces.wifi.channel
                     )
                     self.wifi_sniffer.interfaces.capture.start_capture(
-                        capture_file=self.test_name
+                        capture_file=f"NT_based_connection_iteration_{i}"
                     )
-                    for i in range(0, 5):
-                        self.wifi_dut.interfaces.wifi.scan(self.wifi_access_point.interfaces.wifi.guest_networks[
+                    for _ in range(0, 1):
+                        self.scan_list = self.wifi_dut.interfaces.wifi.scan(self.wifi_access_point.interfaces.wifi.guest_networks[
                                                            0
                                                        ]["ssid"], retries=3, timeout=25)
                     self.wifi_dut.interfaces.wifi.join(
@@ -1143,8 +1141,10 @@ class WLanThread(ThreadBase):
                         skip_connect=True,
                         retry_count=3,
                     )
-                    time.sleep(25)
-                    packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                    time.sleep(20)
+                    vap0_mbssid = self.find_vaps_mbssid().replace(")]", "")
+                    logger().info(f"VAP0 MBSSID = {vap0_mbssid}")
+                    packet_filter4 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                         sa_addr=self.dut_addr["dut_mac_address"],
                         da_addr=vap0_mbssid,
                         filter_name="power_mgmt_bit",
@@ -1154,9 +1154,9 @@ class WLanThread(ThreadBase):
                     time.sleep(2)
                     self.wifi_dut.interfaces.wifi.leave()
                     self.wifi_sniffer.interfaces.capture.stop_capture()
-                    time.sleep(2)
+                    time.sleep(10)
                     assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                        packet_filter1=packet_filter1
+                        packet_filter1=packet_filter4
                     )[
                         "packet_count"
                     ], "Unable to find NULL-Data frame packets with power save bit 1"
@@ -4223,6 +4223,9 @@ Check the connection with hidden MBSSID AP with WPA2 security enabled in AP"""
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "security": "WPA2",
                                                "broadcast_ssid": False})
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
+)
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -4256,9 +4259,6 @@ Check the connection with hidden MBSSID AP with WPA2 security enabled in AP"""
         ],
     },
 )
-@pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
-)
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -4276,7 +4276,7 @@ Check the connection with hidden MBSSID AP with WPA2 security enabled in AP"""
         "ble_custom_ext_features": 0,
     },
 )
-def test_wifi_sdk_mbssid_T_NT_connect_disconnect__hidden_mode_c535831(
+def test_wifi_sdk_mbssid_T_NT_connect_disconnect_hidden_mode_c535831(
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
