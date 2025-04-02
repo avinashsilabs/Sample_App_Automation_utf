@@ -367,7 +367,7 @@ def test_terminate_sta_while_running_ap_C148304(wifi_dut, wifi_access_point, wif
         "security": "WPA2",
         "ssid": "TEST_C148306",
         "passphrase": "Automation@123",
-        "country": "Europe",
+        "country": "GE",
         "channel": "13",
         "interface": "wlan0"
 

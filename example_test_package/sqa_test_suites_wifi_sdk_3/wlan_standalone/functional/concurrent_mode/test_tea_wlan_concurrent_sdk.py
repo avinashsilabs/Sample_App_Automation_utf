@@ -26,6 +26,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
 from threading import Thread
 from random import randint
 from utf.interfaces.socket import SOCKET_TYPE_TCP
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 
 lock = threading.Lock()
 
@@ -518,4 +519,78 @@ def test_wifi_sdk_ssl_socket_func_when_network_is_not_stable_c37577(wifi_sniffer
                                                sniffer_filter)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Aggregation,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+    }
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+        "security": "WPA2",
+        "ssid": "sharma123",
+        "passphrase": "Automation@123",
+        "channel": 11,
+        "interface": "wlan0"
+
+    }
+)
+@pytest.mark.config('wifi_access_point',
+                    wifi={'security': 'WPA2', 'channel': 11, 'ssid': 'sharma1234', 'passphrase': 'thisistestnet'})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_connect_correct_psk_C694555(
+        wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, sl_collections):
+    """Verify DUT connectivity with correct PSK after sl_net_up(connect API) with wrong PSK"""
+    try:
+        con_obj = ConcurrentMode()
+        capture_filename = "test_c694555"
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=13)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}")
+
+        wrong_psk = '12345678'
+        logger().info(f"\n Changing the PSK to {wrong_psk}\n")
+        wifi_access_point.interfaces.wifi.passphrase = wrong_psk
+
+        wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+
+        wifi_dut.interfaces.wifi.join_ap(
+            wifi_access_point, pmk_enable=False, expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
+        logger().info(
+            f"\n Observed 0x10008 error on connecting DUT with wrong PSK, which is expected \n")
+
+        wifi_access_point.interfaces.wifi.passphrase = 'thisistestnet'
+        dut_addr = sl_collections.join_to_wifi_network(
+            wifi_dut, wifi_access_point=wifi_access_point, power_save=False, ping_after_power_save=True,
+            retry_count=3, associated=wifi_dut.interfaces.wifi.associated, pmk_enable=False)
+
+
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="sharma123", security="WPA2", psk="Automation@123", channel=11,
+                                          dtim_beacon_count="1", beacon_interval="100")
+        con_obj.connect_clients_to_dut_as_ap([wifi_client], wifi_dut)
+        logger().info("\n\nChecking DUT STA connectivity")
+        logger().info(f"********* Dut STA IP **********: {dut_addr['device_ip']}")
+        sl_collections.ping(dut_addr['device_ip'], 30, 5)
+
+        logger().info("Stop sniffer finally")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
