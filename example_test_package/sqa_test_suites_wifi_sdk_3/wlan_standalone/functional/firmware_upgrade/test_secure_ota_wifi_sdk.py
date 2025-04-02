@@ -401,7 +401,7 @@ class WifiJoin(ThreadBase):
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.firmware_app("firmware_security_level_3")
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
 def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c510696(firmware_loader, wifi_client, http_server,
                                                                               wifi_sniffer, wifi_access_point, wifi_dut,
@@ -425,7 +425,7 @@ def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c510696(fi
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
-@pytest.mark.firmware_app("firmware_security_level_3")
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
 def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c510697(firmware_loader, wifi_client,
                                                                               http_server, wifi_sniffer,
@@ -447,7 +447,7 @@ def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c510697(fi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.firmware_app("firmware_security_level_3")
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @wifi_dut_marker(ca_cert=["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_c510698(firmware_loader, aws_s3, wifi_sniffer, wifi_access_point,
@@ -468,7 +468,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_c510698(firmware_loader, aws
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.firmware_app("firmware_security_level_3")
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @wifi_dut_marker(ca_cert=["silabs_dgcert_ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 def test_wifi_sdk_https_fw_upgrade_using_azure_server_c510699(firmware_loader, azure_blob, wifi_sniffer,
@@ -492,7 +492,7 @@ def test_wifi_sdk_https_fw_upgrade_using_azure_server_c510699(firmware_loader, a
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
-@pytest.mark.firmware_app("firmware_security_level_3")
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 def test_wifi_sdk_m4_fw_upgrade_in_sta_alone_mode_and_measure_time_c510701(firmware_loader, wifi_client, http_server,
                                                                            wifi_sniffer, wifi_access_point, wifi_dut,
@@ -514,7 +514,7 @@ def test_wifi_sdk_m4_fw_upgrade_in_sta_alone_mode_and_measure_time_c510701(firmw
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.firmware_app("firmware_security_level_3")
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @wifi_dut_marker(ca_cert=["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
@@ -538,7 +538,7 @@ def test_wifi_sdk_m4_fw_upgrade_using_aws_server_c510702(firmware_loader, aws_s3
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
-@pytest.mark.firmware_app("firmware_security_level_3")
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
 def test_wifi_sdk_plain_fw_upgrade_negative_c510708(firmware_loader, wifi_client, http_server,
                                                     wifi_sniffer, wifi_access_point, wifi_dut,
                                                     sl_collections):
@@ -559,7 +559,7 @@ def test_wifi_sdk_plain_fw_upgrade_negative_c510708(firmware_loader, wifi_client
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
-@pytest.mark.firmware_app("firmware_security_level_3")
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
 def test_wifi_sdk_corrupted_fw_upgrade_negative_c510709(firmware_loader, wifi_client, http_server,
                                                         wifi_sniffer, wifi_access_point, wifi_dut,
                                                         sl_collections):
@@ -580,7 +580,7 @@ def test_wifi_sdk_corrupted_fw_upgrade_negative_c510709(firmware_loader, wifi_cl
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
-@pytest.mark.firmware_app("firmware_security_level_3")
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
 def test_wifi_sdk_fw_upgrade_negative_with_no_file_c510710(firmware_loader, wifi_client, http_server,
                                                            wifi_sniffer, wifi_access_point, wifi_dut,
                                                            sl_collections):
@@ -601,7 +601,7 @@ def test_wifi_sdk_fw_upgrade_negative_with_no_file_c510710(firmware_loader, wifi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
-@pytest.mark.firmware_app("firmware_security_level_3")
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
 def test_wifi_sdk_m4_plain_fw_upgrade_negative_c510711(firmware_loader, wifi_client,http_server,
                                                        wifi_sniffer, wifi_access_point, wifi_dut, sl_collections):
     """Verify the M4 firmware upgradation(HTTP OTAF) functionality Plain FW update application"""
@@ -621,7 +621,7 @@ def test_wifi_sdk_m4_plain_fw_upgrade_negative_c510711(firmware_loader, wifi_cli
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
-@pytest.mark.firmware_app("firmware_security_level_3")
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
 def test_wifi_sdk_m4_corrupted_fw_upgrade_negative_c510712(firmware_loader, wifi_client, http_server,
                                                            wifi_sniffer, wifi_access_point, wifi_dut,
                                                            sl_collections):
@@ -642,7 +642,7 @@ def test_wifi_sdk_m4_corrupted_fw_upgrade_negative_c510712(firmware_loader, wifi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
-@pytest.mark.firmware_app("firmware_security_level_3")
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
 def test_wifi_sdk_m4_fw_upgrade_negative_with_no_file_c510713(firmware_loader, wifi_client, http_server,
                                                               wifi_sniffer, wifi_access_point, wifi_dut,
                                                               sl_collections):
@@ -661,7 +661,7 @@ def test_wifi_sdk_m4_fw_upgrade_negative_with_no_file_c510713(firmware_loader, w
 
 
 @wifi_dut_marker()
-@pytest.mark.firmware_app("firmware_security_level_3")
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 def test_wifi_sdk_https_fw_upgrade_downgrade_overnight_c510707(firmware_loader, http_server, wifi_sniffer, wifi_client,
@@ -677,4 +677,3 @@ def test_wifi_sdk_https_fw_upgrade_downgrade_overnight_c510707(firmware_loader, 
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
