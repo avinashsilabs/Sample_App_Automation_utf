@@ -68,7 +68,7 @@ class WLanJoinThread(ThreadBase):
                 logger().info(
                     f"Dut Tried to connect to ap with wrong password, observed error code 0x10008 which is expected")
 
-            if '694554' in self.test_case:
+            elif '694554' in self.test_case:
                 self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
 
                 self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point,
