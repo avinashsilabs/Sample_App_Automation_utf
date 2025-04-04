@@ -399,7 +399,7 @@ class WLanThread(ThreadBase):
             raise e
 
     def parse_time(self, line):
-        result = re.search('2024(.*)IST', line)
+        result = re.search(r'\d{4}(.*)IST', line)
         time_stamp = result.group(1).strip()
         size = len(time_stamp)
         mod_time_stamp1 = time_stamp[:size - 3]
@@ -2652,6 +2652,8 @@ def test_wifi_sdk_beacon_miss_count_stats_20_c641349(wifi_sniffer, wifi_access_p
         wlan_obj.wait_for_exit()
 
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        ap_ssid = wifi_access_point.interfaces.wifi.ssid
+        logger().info(f'\n\n *** AP SSID = "{ap_ssid}" *** \n\n')
 
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         time.sleep(2)
@@ -2668,6 +2670,7 @@ def test_wifi_sdk_beacon_miss_count_stats_20_c641349(wifi_sniffer, wifi_access_p
         packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_bssid,
                                                                                         da_addr=wlan_obj.dut_addr[
                                                                                             'dut_mac_address'],
+                                                                                        wlan_ssid=f'"{ap_ssid}"',
                                                                                         filter_name='beacon_probe_req_count_packt')
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5,
@@ -2719,6 +2722,8 @@ def test_wifi_sdk_beacon_miss_count_stats_90_c641350(wifi_sniffer, wifi_access_p
         wlan_obj.wait_for_exit()
 
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        ap_ssid = wifi_access_point.interfaces.wifi.ssid
+        logger().info(f'\n\n *** AP SSID = "{ap_ssid}" *** \n\n')
 
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         time.sleep(2)
@@ -2735,6 +2740,7 @@ def test_wifi_sdk_beacon_miss_count_stats_90_c641350(wifi_sniffer, wifi_access_p
         packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_bssid,
                                                                                         da_addr=wlan_obj.dut_addr[
                                                                                             'dut_mac_address'],
+                                                                                        wlan_ssid=f'"{ap_ssid}"',
                                                                                         filter_name='beacon_probe_req_count_packt')
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5,
