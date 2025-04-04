@@ -2015,3 +2015,77 @@ def test_wifi_sdk_check_total_number_of_sockets_c667724(wifi_sniffer, wifi_dut, 
         remote_socket_factory.interfaces.socket.sockets = []
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(10),
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_ip_change_notification_c538012(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory,
+                                                 logger, sl_collections, sniffer_filter, wifi_client, remote_socket):
+    """Verify remote socket termination when socket select timeout configured to NULL"""
+    try:
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.50", dhcp_end="192.168.50.100", dhcp_lease="240")
+        time.sleep(60)
+        capture_filename = "C538012"
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(
+            capture_file=f"{capture_filename}.pcap")
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+        wifi_dut.interfaces.wifi.init(mode="client")
+        dut_addr = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point,
+                                                       power_save=True,
+                                                       associated=wifi_dut.interfaces.wifi.associated)
+
+        device_ip, dut_mac_address = dut_addr['device_ip'], dut_addr['dut_mac_address']
+
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+
+        local_port = 6001
+        client_socket = remote_socket_factory.interfaces.socket.create_socket()
+        server_socket = wifi_dut.interfaces.wifi.Asyncsocket(protocol="IPPROTO_TCP")
+        wifi_dut.interfaces.wifi.bind(socket_fd=server_socket, device_ip=device_ip, ip_len=4, server_port=local_port,
+                                      asynch=1)
+        wifi_dut.interfaces.wifi.listen(socket_fd=server_socket, backlog=1, asynch=1)
+
+        ThreadBase.call_functions_simultaneously(
+            [(client_socket.connect_client_tcp, device_ip, local_port),
+             (wifi_dut.interfaces.wifi.bsdSocketAccept, server_socket, 1)], timeout=300)
+
+        logger.info("Changing the DHCP pool in the AP")
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.20", dhcp_end="192.168.50.30", dhcp_lease="120")
+        time.sleep(60)
+        wifi_dut.interfaces.wifi.bsdSocketSelect(numberOfFds=1, time=100, timeout_disable=1, async_timeout=300, expected_status=SLStatus.SL_STATUS_TIMEOUT)
+
+        ip_change_notification = None
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        for event in events:
+            logger.info(f"Event Type: {event.event_type}, Event Data: {event.event_data}")
+            ip_change_notification = "10000004" if event.event_type =="10000004" else None
+        assert ip_change_notification, "IP change notification is not received"
+        logger.info(f"IP Change Notification: {ip_change_notification}")
+
+    except Exception as error:
+        wifi_dut.interfaces.wifi.is_dut_bad_state = True
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+    finally:
+        remote_socket.interfaces.socket.stop()
+
