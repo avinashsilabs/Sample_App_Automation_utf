@@ -113,11 +113,10 @@ class Ble_Data_Transfer:
         return state_int
 
     def scan_from_dut(self):
-        scan_result = ""
         logger().info("Start scanning....")
-
         # Start scanning and connect to BLE client
         self.ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=self.ble_client_address)
+        self.scan_state = True
         time.sleep(30)
         events = self.ble_dut.interfaces.bluetooth.get_async_events()
         device_found = False
