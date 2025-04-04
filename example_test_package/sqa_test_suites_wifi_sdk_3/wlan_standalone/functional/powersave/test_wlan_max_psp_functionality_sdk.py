@@ -31,7 +31,7 @@ def logger():
     return get_logger(__name__)
 
 
-"""Author : Vivek"""
+"""Author : Vivek / Achal"""
 
 """This test plan runs below test steps for validation of DUT-Si91x for Max-psp.
         1. Configuration of DUT in 2G : BGN
@@ -648,6 +648,7 @@ class FilterPacket:
         qos_null = int('0x002c', 16)
         action_frame = int('0x000d', 16)
         block_req = int('0x0018', 16)
+        null_function = int('0x0024', 16)
         no_of_filtered_packets = len(frame_list)
         case2 = 0
         while 1:
@@ -656,6 +657,10 @@ class FilterPacket:
             else:
                 break
             moredata_pspoll_failed = 0
+            if frame_list[frame_number][2] == str(null_function):
+                if frame_list[frame_number][4] == '0':
+                    logger().info("found Null frame with PM '0'")
+                    return frame_number, case2, first_beacon_time
             if ((frame_list[frame_number][2] == str(qos_data)) or (frame_list[frame_number][2] == str(qos_null)) or (
                     frame_list[frame_number][2] == str(action_frame)) or (
                     frame_list[frame_number][2] == str(block_req))):
@@ -1978,5 +1983,497 @@ def test_wifi_sdk_max_psp_dtim_enable_ps2_ulp_ipv6_c535827(firmware_loader, wifi
             assert False
         else:
             assert True, "DUT is sending PS-POLL to retrieve the data at DTIM beacon only"
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.firmware_app("test_ipv6")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default
+        | Si91xTCPIPFeatureBitMap.DHCPv6Client
+        | Si91xTCPIPFeatureBitMap.IPv6Mode
+        | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+        | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
+        | Si91xTCPIPFeatureBitMap.DHCPv6Server,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.FeatureLowPower
+        | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+        | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
+        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+        | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config("wifi_access_point", wifi={"ipv6_state": "0", "security": "Open", "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")})
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
+)
+def test_wifi_sdk_verify_sta_wakeup_with_fast_psp_ulp_ipv6_enabled_c702112(
+    firmware_loader,
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    sl_collections,
+    sniffer_filter,
+    request,
+):
+    """
+    Verify whether RSI_STA wakes up and receives data with Fast PSP and ULP enabled, and IPv6 enabled.
+
+    This test verifies the following:
+    - The device can establish a connection with Fast PSP and ULP enabled.
+    - The device can handle IPv6 traffic.
+    - The device wakes up correctly and receives data based on the configured listen interval.
+
+    Parameters:
+    firmware_loader (object): The firmware loader object for loading firmware.
+    wifi_sniffer (object): The WiFi sniffer object for capturing network traffic.
+    wifi_access_point (object): The WiFi access point object.
+    wifi_dut (object): The Device Under Test (DUT) for WiFi functionality.
+    sl_collections (object): The collections object for handling test data and results.
+    sniffer_filter (object): The sniffer filter object for filtering captured packets.
+    request (object): The request object for handling test requests.
+
+    Raises:
+    Exception: If any error occurs during the test execution.
+    """
+    listen_interval = 1000
+    validation = True
+    ipv6_addr_type = "global"
+    powersave_validation = True
+    assoc_packet_filter = "    Type/Subtype: Association Response (0x0001)"
+    ps_poll_time_delta_obj = FilterPacket()
+    assoc_obj = FilterPacket()
+
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+
+        result = sl_collections.join_to_wifi_network(
+            wifi_dut,
+            wifi_access_point,
+            power_save=True,
+            associated=wifi_dut.interfaces.wifi.associated,
+            ipv6_type=ipv6_addr_type,
+            ip_version="ipv6",
+        )
+        device_ip, dut_mac_address = result["device_ip"], result["dut_mac_address"]
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP BSSID = {ap_bssid}")
+
+        logger().info(f"\r\n PINGING THE DUT FROM AP BACKEND MACHINE")
+        sl_collections.ping_with_custom_interval(
+            device_ip, ping_count=300, interval=0.1
+        )
+
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        # Assoc resp frame in sniffer to get the DUT assoc id
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=ap_bssid,
+            da_addr=dut_mac_address,
+            filter_name="association_response",
+        )
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            validation, packet_filter1, assoc_packet_filter
+        )["packet_count"], "No packet found for Assoc resp frame"
+
+        # Get the Assoc ID from the sniffer capture
+        association_id = assoc_obj.get_association_id()
+        if association_id is None:
+            logger().info(f"\n Unable to find ASSOCIATION-ID: {association_id} \n")
+            assert False
+        else:
+            logger().info(f"\n\n *** ASSOCIATION-ID : {association_id} *** \n")
+
+        packet_filter2 = (
+            f" (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address}) &&"
+            f" (wlan.da == {ap_bssid}))"
+        )
+
+        # Packet filter to get the PS-Poll frame, Null data frame and Beacon frame, Qos Null data frame, Beacon frames
+        packet_filter3 = (
+            f"(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} && "
+            f"(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.sa == {ap_bssid} && "
+            f"wlan.fc.type_subtype==8) || ((wlan.sa == {ap_bssid} && wlan.da == {dut_mac_address}) &&"
+            f"(wlan.fc.type_subtype == 0x002c || wlan.fc.type_subtype == 0x000d || wlan.fc.type_subtype == 0x0018))"
+        )
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            validation, packet_filter2
+        )["packet_count"]
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            validation, packet_filter3, None, powersave_validation
+        )["packet_count"]
+
+        (
+            ps_poll_packets_time_delta_list,
+            ps_poll_before_tim,
+            ps_poll_after_listen_interval,
+        ) = ps_poll_time_delta_obj.listen_interval_based_validation(
+            listen_interval, association_id
+        )
+
+        if ps_poll_before_tim != 0:
+            logger().info(
+                f"\r\n Observed {ps_poll_before_tim} times DUT is sending PS-POLL to retrieve the data even though TIM is not set \r\n"
+            )
+        if ps_poll_after_listen_interval != 0:
+            logger().info(
+                f"\r\n Observed {ps_poll_after_listen_interval} times DUT is sending the PS-POLL to retrieve the data after post listen interval beacon only even though more data bit is set \r\n"
+            )
+
+        if ps_poll_before_tim or ps_poll_after_listen_interval != 0:
+            assert False
+        else:
+            assert (
+                True
+            ), "DUT is sending PS-POLL to retrieve the data at Listen interval beacon only"
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.firmware_app("test_ipv6")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default
+        | Si91xTCPIPFeatureBitMap.DHCPv6Client
+        | Si91xTCPIPFeatureBitMap.IPv6Mode
+        | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+        | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
+        | Si91xTCPIPFeatureBitMap.DHCPv6Server,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.FeatureLowPower
+        | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+        | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
+        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+        | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={"ipv6_state": "0", "security": "Open", "beacon_interval": 100, "dtim": 3, "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")},
+)
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
+)
+def test_wifi_sdk_verify_sta_wakeup_with_dtim_3_fast_psp_ulp_ipv6_enabled_c702113(
+    firmware_loader,
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    sl_collections,
+    sniffer_filter,
+    request,
+):
+    """
+    Verify whether RSI_STA wakes up and receives data with DTIM=3, Fast PSP, ULP, and IPv6 enabled.
+
+    This test verifies the following:
+    - The device can establish a connection with DTIM=3, Fast PSP, and ULP enabled.
+    - The device can handle IPv6 traffic.
+    - The device wakes up correctly and receives data based on the configured listen interval.
+
+    Parameters:
+    firmware_loader (object): The firmware loader object for loading firmware.
+    wifi_sniffer (object): The WiFi sniffer object for capturing network traffic.
+    wifi_access_point (object): The WiFi access point object.
+    wifi_dut (object): The Device Under Test (DUT) for WiFi functionality.
+    sl_collections (object): The collections object for handling test data and results.
+    sniffer_filter (object): The sniffer filter object for filtering captured packets.
+    request (object): The request object for handling test requests.
+
+    Raises:
+    Exception: If any error occurs during the test execution.
+    """
+    validation = True
+    ipv6_addr_type = "global"
+    powersave_validation = True
+    assoc_packet_filter = "    Type/Subtype: Association Response (0x0001)"
+    ps_packet_exchange_obj = FilterPacket()
+    assoc_obj = FilterPacket()
+
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.Default
+        )
+        result = sl_collections.join_to_wifi_network(
+            wifi_dut,
+            wifi_access_point,
+            power_save=False,
+            associated=wifi_dut.interfaces.wifi.associated,
+            ipv6_type=ipv6_addr_type,
+            ip_version="ipv6",
+        )
+        device_ip, dut_mac_address = result["device_ip"], result["dut_mac_address"]
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP BSSID = {ap_bssid}")
+
+        logger().info(f"***** Enabling Fast PSP in DUT ******")
+        wifi_dut.interfaces.wifi.set_performance_profile(
+            mode="power_save_low_latency",
+            dtim_aligned_type=0,
+            num_of_dtim_skip=0,
+            monitor_interval=50,
+        )
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave,
+        )
+
+        logger().info(f"\r\n PINGING THE DUT FROM AP BACKEND MACHINE")
+        sl_collections.ping_with_custom_interval(
+            device_ip, ping_count=300, interval=0.1
+        )
+
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        # Assoc resp frame in sniffer to get the DUT assoc id
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=ap_bssid,
+            da_addr=dut_mac_address,
+            filter_name="association_response",
+        )
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            validation, packet_filter1, assoc_packet_filter
+        )["packet_count"], "No packet found for Assoc resp frame"
+
+        # Get the Assoc ID from the sniffer capture
+        association_id = assoc_obj.get_association_id()
+        if association_id is None:
+            logger().info(f"\n Unable to find ASSOCIATION-ID: {association_id} \n")
+            assert False
+        else:
+            logger().info(f"\n\n *** ASSOCIATION-ID : {association_id} *** \n")
+
+        # Applying filter to find the Beacon with (association-id + DTIM count 0) -> Ps-Poll with PM bit = 1 -> Qos data
+        packet_filter2 = (
+            f"(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} && "
+            f"(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.sa == {ap_bssid} && "
+            f"wlan.fc.type_subtype==8) || ((wlan.sa == {ap_bssid} && wlan.da == {dut_mac_address}) &&"
+            f"(wlan.fc.type_subtype == 0x002c || wlan.fc.type_subtype == 0x000d || wlan.fc.type_subtype == 0x0018))"
+        )
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            validation, packet_filter2, None, powersave_validation
+        )["packet_count"]
+        case1, case2, case3, case4 = ps_packet_exchange_obj.dtim_based_validation(
+            association_id
+        )
+        if case1:
+            logger().info(
+                f"Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set"
+            )
+        if case2:
+            logger().info(
+                f"Observed {case2} times DUT is sending PS-POLL at next DTIM beacon even though more data bit set"
+            )
+        if case3:
+            logger().info(
+                f"Observed {case3} times DUT is not sending PS-POLL at DTIM beacon even though TIM is set"
+            )
+        if case4:
+            logger().info(
+                f"Observed {case4} times DUT is sending PS-POLL at non-DTIM beacons"
+            )
+
+        if case1 or case4 or case3 > 3 or case2 != 0:
+            assert False
+        else:
+            assert (
+                True
+            ), "DUT is sending PS-POLL to retrieve the data at DTIM beacon only"
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.firmware_app("test_ipv6")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default
+        | Si91xTCPIPFeatureBitMap.DHCPv6Client
+        | Si91xTCPIPFeatureBitMap.IPv6Mode
+        | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+        | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
+        | Si91xTCPIPFeatureBitMap.DHCPv6Server,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.FeatureLowPower
+        | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+        | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config("wifi_access_point", wifi={"ipv6_state": "0", "security": "Open", "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")})
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
+)
+def test_wifi_sdk_verify_sta_wakeup_using_internal_clk_fast_psp_ulp_ipv6_enabled_c703339(
+    firmware_loader,
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    sl_collections,
+    sniffer_filter,
+    request,
+):
+    """
+    Verify whether RSI_STA wakes up and receives data using internal clock with Fast PSP, ULP, and IPv6 enabled.
+
+    This test verifies the following:
+    - The device can establish a connection with Fast PSP, ULP, and IPv6 enabled.
+    - The device can handle IPv6 traffic.
+    - The device wakes up correctly and receives data based on the configured listen interval using the internal clock.
+
+    Parameters:
+    firmware_loader (object): The firmware loader object for loading firmware.
+    wifi_sniffer (object): The WiFi sniffer object for capturing network traffic.
+    wifi_access_point (object): The WiFi access point object.
+    wifi_dut (object): The Device Under Test (DUT) for WiFi functionality.
+    sl_collections (object): The collections object for handling test data and results.
+    sniffer_filter (object): The sniffer filter object for filtering captured packets.
+    request (object): The request object for handling test requests.
+
+    Raises:
+    Exception: If any error occurs during the test execution.
+    """
+    listen_interval = 1100
+    validation = True
+    ipv6_addr_type = "global"
+    powersave_validation = True
+    assoc_packet_filter = "    Type/Subtype: Association Response (0x0001)"
+    ps_poll_time_delta_obj = FilterPacket()
+    assoc_obj = FilterPacket()
+
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.ListenIntervalFromJoin
+        )
+        wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
+        result = sl_collections.join_to_wifi_network(
+            wifi_dut,
+            wifi_access_point,
+            power_save=True,
+            associated=wifi_dut.interfaces.wifi.associated,
+            ipv6_type=ipv6_addr_type,
+            ip_version="ipv6",
+            listen_interval=listen_interval,
+            monitor_interval=50,
+        )
+        device_ip, dut_mac_address = result["device_ip"], result["dut_mac_address"]
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP BSSID = {ap_bssid}")
+
+        logger().info(f"\r\n PINGING THE DUT FROM AP BACKEND MACHINE")
+        sl_collections.ping_with_custom_interval(
+            device_ip, ping_count=300, interval=0.1
+        )
+
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        # Assoc resp frame in sniffer to get the DUT assoc id
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=ap_bssid,
+            da_addr=dut_mac_address,
+            filter_name="association_response",
+        )
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            validation, packet_filter1, assoc_packet_filter
+        )["packet_count"], "No packet found for Assoc resp frame"
+
+        # Get the Assoc ID from the sniffer capture
+        association_id = assoc_obj.get_association_id()
+        if association_id is None:
+            logger().info(f"\n Unable to find ASSOCIATION-ID: {association_id} \n")
+            assert False
+        else:
+            logger().info(f"\n\n *** ASSOCIATION-ID : {association_id} *** \n")
+
+        packet_filter2 = (
+            f" (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address}) &&"
+            f" (wlan.da == {ap_bssid}))"
+        )
+
+        # Packet filter to get the PS-Poll frame, Null data frame and Beacon frame, Qos Null data frame, Beacon frames
+        packet_filter3 = (
+            f"(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} && "
+            f"(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.sa == {ap_bssid} && "
+            f"wlan.fc.type_subtype==8) || ((wlan.sa == {ap_bssid} && wlan.da == {dut_mac_address}) &&"
+            f"(wlan.fc.type_subtype == 0x002c || wlan.fc.type_subtype == 0x000d || wlan.fc.type_subtype == 0x0018))"
+        )
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            validation, packet_filter2
+        )["packet_count"]
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            validation, packet_filter3, None, powersave_validation
+        )["packet_count"]
+
+        (
+            ps_poll_packets_time_delta_list,
+            ps_poll_before_tim,
+            ps_poll_after_listen_interval,
+        ) = ps_poll_time_delta_obj.listen_interval_based_validation(
+            listen_interval, association_id
+        )
+
+        if ps_poll_before_tim != 0:
+            logger().info(
+                f"\r\n Observed {ps_poll_before_tim} times DUT is sending PS-POLL to retrieve the data even though TIM is not set \r\n"
+            )
+        if ps_poll_after_listen_interval != 0:
+            logger().info(
+                f"\r\n Observed {ps_poll_after_listen_interval} times DUT is sending the PS-POLL to retrieve the data after post listen interval beacon only even though more data bit is set \r\n"
+            )
+
+        if ps_poll_before_tim or ps_poll_after_listen_interval != 0:
+            assert False
+        else:
+            assert (
+                True
+            ), "DUT is sending PS-POLL to retrieve the data at Listen interval beacon only"
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
