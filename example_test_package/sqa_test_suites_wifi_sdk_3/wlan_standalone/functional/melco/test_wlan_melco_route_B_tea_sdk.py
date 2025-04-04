@@ -226,7 +226,8 @@ class WifiThread(ThreadBase):
             print_dict("##     ", iperf_throughput)
 
     def run_traffic_between_two_clients(
-            self, net_perf_server, net_perf_client, server_ip, client_ip, protocol, iperf_time=30):
+            self, net_perf_server, net_perf_client, server_ip, client_ip, protocol, iperf_time=30,
+            stop_access_point=False):
 
         logger().info(f"***** Starting Iperf Server on {net_perf_server.name} *****")
         net_perf_server.interfaces.net_perf.init_server(protocol=protocol, host_ip=client_ip,
@@ -238,6 +239,9 @@ class WifiThread(ThreadBase):
         logger().info(f"**** Starting Iperf Client on {net_perf_client.name} ****")
         net_perf_client.interfaces.net_perf.init_client(host_ip=server_ip, device_ip=client_ip,
                                                         protocol=protocol, time_out=iperf_time)
+        if stop_access_point:
+            self.wifi_access_point.interfaces.wifi.stop_ap()
+
         client_port = net_perf_client.interfaces.net_perf.client_port
         args = net_perf_client.interfaces.net_perf.executable_arguments
         args[args.index(str(client_port))] = str(server_port)
@@ -1437,3 +1441,177 @@ def test_wifi_sdk_scan_with_no_ap_present_c693672(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         wifi_access_point.interfaces.wifi.start_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv4Server |
+                          Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.DHCPv6Server
+                          | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma123",
+            "passphrase": "thisistestnetwork",
+            "channel": 8,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "sharma123",
+            "passphrase": "thisistestnetwork",
+            "channel": 8,
+        },
+    }
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config("wifi_access_point",
+                    wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_power_off_when_runn_traffic_between_connected_apmode_clients_c693679(
+        wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
+        wifi_clients, net_perf_client, net_perf_server, protocol):
+    """In Concurrent Mode, Power off the 3rd party AP While Pinging between 3rd party Clients Connected to APUT"""
+
+    try:
+        test_name = request.node.name
+
+        ping_count = utf_constants.get("ping_count")
+
+        logger().info("... configuring the Sniffer with the channel ...")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("... start capturing with Sniffer by giving the test case name as filename ...")
+
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wifi_obj = WifiThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=test_name, wifi_client=wifi_client, sl_collections=sl_collections,
+                              sniffer_filter=sniffer_filter, utf_constants=utf_constants, leave=False,
+                              ping_count=ping_count, wifi_clients=wifi_clients, ip_version='ipv4', test_type=693678,
+                              net_perf_client=net_perf_client, net_perf_server=net_perf_server, protocol=protocol)
+
+        ping_obj = ping(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
+                        sl_collections=sl_collections, utf_constants=utf_constants, ping_count=ping_count,
+                        wifi_clients=wifi_clients, test_type=693678)
+
+        wifi_leave_obj = wifi_leave(wifi_dut=wifi_dut)
+
+        wifi_obj.no_of_clients = 2
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        ip_dict = wifi_obj.ap_mode_with_ipv4()
+        client_ip = ip_dict['client1_ip']
+        server_ip = ip_dict['client2_ip']
+        ping_obj.start()
+        ping_obj.wait_for_exit()
+        wifi_obj.run_traffic_between_two_clients(
+            net_perf_server, net_perf_client, server_ip, client_ip, protocol, iperf_time=60, stop_access_point=True)
+        time.sleep(15)
+        wifi_leave_obj.start()
+        wifi_leave_obj.wait_for_exit()
+        wifi_obj.wifi_client_leave()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        wifi_access_point.interfaces.wifi.start_ap()
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv4Server |
+                          Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.DHCPv6Server
+                          | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma123",
+            "passphrase": "thisistestnetwork",
+            "channel": 8,
+        },
+    }
+)
+@pytest.mark.config("wifi_access_point",
+                    wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_check_beacon_stop_after_power_off_ap_c693681(
+        wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
+        wifi_clients):
+    """In Concurrent Mode, Check the Beacon stop functionality after 3rd party AP Power off with 3rd party STA Clients
+    Connected to it"""
+
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+
+        logger().info("... configuring the Sniffer with the channel ...")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("... start capturing with Sniffer by giving the test case name as filename ...")
+
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wifi_obj = WifiThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              testcase=test_name, wifi_client=wifi_client, sl_collections=sl_collections,
+                              sniffer_filter=sniffer_filter, utf_constants=utf_constants, leave=False,
+                              ping_count=ping_count, wifi_clients=wifi_clients, ip_version='ipv4', test_type=690737)
+
+        ping_obj = ping(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
+                        sl_collections=sl_collections, utf_constants=utf_constants, ping_count=ping_count,
+                        wifi_clients=wifi_clients, test_type=690737)
+
+        wifi_obj.beacon_stop = 1
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        wifi_obj.ap_mode_with_ipv4()
+        wifi_obj.check_beacon()
+        ping_obj.start()
+        ping_obj.wait_for_exit()
+        wifi_access_point.interfaces.wifi.stop_ap()
+        time.sleep(10)
+        wifi_obj.check_beacon()
+        wifi_obj.wifi_client_leave()
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        wifi_access_point.interfaces.wifi.start_ap()
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
