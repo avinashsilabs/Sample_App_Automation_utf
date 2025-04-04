@@ -1,5 +1,6 @@
 import time
 import pytest
+from utf.interfaces.bluetooth.hid_recorder import HidRecorder
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect_3.tests.devices.si91x import (Si91xCoexMode, Si91xExtTCPIPFeatureBitMap, Si91xBTFeatureBitMap, \
@@ -1580,3 +1581,90 @@ def test_ble_master_tx_rx_230_bytes_C19931(wifi_dut, ble_client, sl_collections,
     finally:
         wifi_dut.interfaces.wifi.memory_free(address=allocated_mem_addr)
         ble_client.interfaces.bluetooth.close()
+
+
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048},
+                "ble": {"count": 1, "stack_len": 2048},
+            },
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                                   Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+        },
+    )
+
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_hogp_smp_master_mode_C537347(ble_dut, ble_client, sl_collections):
+    with BleLogs(
+            start_collecting_logs=True,
+            bt_log_path=f"reports/test_ble_hogp_smp_master_mode_C537347.log_{int(time.time())}",
+    ) as bt_logs:
+        ble_dut_addr = ble_dut.interfaces.wifi.ble_gatt_start()
+        assert ble_dut_addr, "FAILED TO LOAD BT ADDRESS..."
+        try:
+            logger().info("....ADDING HID SERVICE....")
+            ble_dut.interfaces.wifi.ble_add_hid_service()
+            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_addr)
+            assert ble_client_address, f"ble initialization failed in remote device"
+
+            time.sleep(5)
+            ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address)
+            time.sleep(2)
+            logger().info("..ENTERING POWER SAVE MODE..")
+            enable_wifi_ps = ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+            assert enable_wifi_ps == 0, '..FAILED TO ENABLE WIFI POWER SAVE..'
+            enable_bt_ps = ble_dut.interfaces.wifi.enable_bt_power_save(
+                psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+            assert enable_bt_ps == 0, '..FAILED TO ENABLE BT POWER SAVE..'
+            logger().info("stop scanning")
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+            logger().info(f"Initiating ble connection...")
+            ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=ble_client_address, timeout=60)
+            logger().info(f"Ble connection is successful")
+            time.sleep(60)
+            logger().info("Check connection status of BLE")
+            status = ble_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(status) if status.isdigit() else -1
+            assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
+            logger().info("..ENTERING POWER SAVE MODE..")
+
+            test_data = ["0xb", "0x0", "0x12", "0x0", "0xa", "0x0"]
+            test_data_expected_from_raspi = [
+                "11,00,00,0b,00,00,00,00,00,00,00,00",
+                "11,00,00,00,00,00,00,00,00,00,00,00",
+                "11,00,00,12,00,00,00,00,00,00,00,00",
+                "11,00,00,00,00,00,00,00,00,00,00,00",
+                "11,00,00,0a,00,00,00,00,00,00,00,00",
+                "11,00,00,00,00,00,00,00,00,00,00,00",
+            ]
+            with HidRecorder() as hid_recorder:
+                for item in test_data:
+                    ble_dut.interfaces.wifi.ble_hid_send_interrupt(item)
+                    time.sleep(0.5)
+                hid_logs = hid_recorder.logs()
+
+            assert len(hid_logs) == len(test_data), "LENGTH OF HID DATA DOESN'T MATCH..."
+            for i in range(len(test_data)):
+                assert hid_logs[i] == test_data_expected_from_raspi[i], f"HID DATA {hid_logs[i]} DOESN'T MATCH WITH " \
+                                                                        f"EXPECTED DATA {test_data_expected_from_raspi[i]}..."
+            time.sleep(2)
+            ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=ble_client_address)
+            time.sleep(5)
+        except Exception as Ex:
+            sl_collections.exception_handling(wifi_dut=ble_dut, exception=Ex)
+        finally:
+            ble_client.interfaces.bluetooth.remove_device(ble_dut_addr)
