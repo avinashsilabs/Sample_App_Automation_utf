@@ -205,7 +205,6 @@ class BLEFunc(ThreadBase):
                 while tw.elapsed_sec < 120:
                     events = self.wifi_dut.interfaces.wifi.get_async_events()
                     for event in events:
-                        if event.event_type == AsyncEventIdentifiers.BLE_PASSKEY:
                             if "passkey" in event.event_data:
                                 passkey = re.findall(r"passkey: ([\d]*)", event.event_data)
                                 if passkey[0] is not None:
@@ -322,7 +321,6 @@ class BLEFunc(ThreadBase):
                 while tw.elapsed_sec < 120:
                     events = self.wifi_dut.interfaces.wifi.get_async_events()
                     for event in events:
-                        if event.event_type == AsyncEventIdentifiers.BLE_PASSKEY:
                             if "passkey" in event.event_data:
                                 passkey = re.findall(r"passkey: ([\d]*)", event.event_data)
                                 if passkey[0] is not None:
@@ -403,7 +401,54 @@ class BLEFunc(ThreadBase):
             else:
                 logger().info(f"*********Disconnecting from dut ****************")
                 self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
-                time.sleep(10)
+            time.sleep(10)
+        if self.sniffer_check:
+            ble_dut_address_hex = re.split(":", self.ble_dut_address)
+            ble_client_address_hex = re.split(":", self.ble_client_address)
+            master_address = "0x"
+            for hex_data_part in ble_dut_address_hex:
+                master_address = master_address + hex_data_part
+            slave_address = "0x"
+            for hex_data_part in ble_client_address_hex:
+                slave_address = slave_address + hex_data_part
+            tw = Stopwatch()
+            link_key = ""
+            while tw.elapsed_sec < 120:
+                events = self.wifi_dut.interfaces.wifi.get_async_events()
+                for event in events:
+                    logger().info(f"************{event.event_data}")
+                    if "link_key" in event.event_data:
+                        event_data = event.event_data
+                        link_key_data = re.findall("link_key::.*", event_data)
+                        link_key_data_str = re.split(":<", link_key_data[0])
+                        link_key_data_hex = re.split(":", link_key_data_str[0])
+                        link_key = "0x"
+                        for hex_data_part in link_key_data_hex:
+                            hex_data_part = hex_data_part.replace(" ", "")
+                            if len(hex_data_part) == 1:
+                                hex_data_part = '0' + hex_data_part
+                            link_key = link_key + hex_data_part
+                    else:
+                        continue
+                if link_key:
+                    break
+            link_key1 = link_key.replace(" ", "")
+            link_key1 = link_key1.replace("link_key", "")
+            link_value1 = link_key1.split("$")
+            logger().info(f"**********link key : {link_value1[0]}")
+            linkey_key_value = link_value1[0]
+            if self.random_addr_on_dut:
+                self.ble_sniffer.interfaces.sniffer.select_bt_devices(
+                    [slave_address + f" type=random"])
+                if link_key != "":
+                    self.ble_sniffer.interfaces.sniffer.add_link_key(linkey_key_value.upper(), master_address,
+                                                                     slave_address + f" type=random")
+            else:
+                self.ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address + f" type=random"])
+                time.sleep(30)
+                if link_key != "":
+                    self.ble_sniffer.interfaces.sniffer.add_link_key(linkey_key_value.upper(), master_address,
+                                                                     slave_address + f" type=random")
 
         if self.sniffer_check:
             self.ble_sniffer.interfaces.sniffer.stop_capture()
@@ -2185,7 +2230,7 @@ def test_ble_smp_legacy_pairing_initiator_Keyboard_display_responder_No_input_No
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "No")]), "unable to find the packets in sniffer"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
-                ble_obj.sniffer_data_df_2['IO Capabilities'] == "KeyboardDisplay") & (ble_obj.sniffer_data_df_2[
+                ble_obj.sniffer_data_df_2['IO Capabilities'] == "NoInputNoOutput") & (ble_obj.sniffer_data_df_2[
                                                                                           'MITM'] == "MITM Protection:  Yes") & (
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "No")]), "unable to find the packets in sniffer"
@@ -2222,7 +2267,7 @@ def test_ble_smp_legacy_pairing_initiator_Keyboard_Only_responder_No_input_No_ou
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "No")]), "unable to find the packets in sniffer"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
-                ble_obj.sniffer_data_df_2['IO Capabilities'] == "KeyboardDisplay") & (ble_obj.sniffer_data_df_2[
+                ble_obj.sniffer_data_df_2['IO Capabilities'] == "NoInputNoOutput") & (ble_obj.sniffer_data_df_2[
                                                                                           'MITM'] == "MITM Protection:  Yes") & (
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "No")]), "unable to find the packets in sniffer"
@@ -2336,7 +2381,7 @@ def test_ble_smp_legacy_pairing_initiator_Keyboard_display_responder_No_input_No
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "No")]), "unable to find the packets in sniffer"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
-                ble_obj.sniffer_data_df_2['IO Capabilities'] == "KeyboardDisplay") & (ble_obj.sniffer_data_df_2[
+                ble_obj.sniffer_data_df_2['IO Capabilities'] == "NoInputNoOutput") & (ble_obj.sniffer_data_df_2[
                                                                                           'MITM'] == "MITM Protection:  Yes") & (
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "No")]), "unable to find the packets in sniffer"
@@ -2374,7 +2419,7 @@ def test_ble_smp_legacy_pairing_initiator_Keyboard_Only_responder_No_input_No_ou
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "No")]), "unable to find the packets in sniffer"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
-                ble_obj.sniffer_data_df_2['IO Capabilities'] == "KeyboardDisplay") & (ble_obj.sniffer_data_df_2[
+                ble_obj.sniffer_data_df_2['IO Capabilities'] == "NoInputNoOutput") & (ble_obj.sniffer_data_df_2[
                                                                                           'MITM'] == "MITM Protection:  Yes") & (
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "No")]), "unable to find the packets in sniffer"

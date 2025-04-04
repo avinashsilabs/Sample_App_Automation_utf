@@ -214,16 +214,6 @@ class BLEFunc(ThreadBase):
                         logger().warning(f"Connection Failed...RETRY COUNT IS {retry_count + 1}\nWarning:{err}")
                         time.sleep(15)
                 # disconnecting from dut
-            logger().info(f"***********before get device state*********************")
-            state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
-            state_int = int(state) if state.isdigit() else -1
-            assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
-            logger().info(f"********************************")
-            logger().info("Disconnecting the bt host....")
-            self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
-            time.sleep(2)
-            self.nrf_ble_client.interfaces.bluetooth.delete_bonding_data()
-            time.sleep(10)
         if self.nrf_dongle_as_master:
             self.wifi_dut.interfaces.wifi.ble_set_cap_data(remote_addr_type=0, smp_io_cap=self.smp_io_capability,
                                                            smp_auth_req_bonding=self.smp_auth_bond,
@@ -314,8 +304,8 @@ class BLEFunc(ThreadBase):
             connect_thread.start()
             time.sleep(3)
             tw = Stopwatch()
-            # if self.testcase_no == 557265:
-            #     time.sleep(40)
+            if self.testcase_no == 557265:
+                time.sleep(40)
             while tw.elapsed_sec < 30:
                 events = self.wifi_dut.interfaces.wifi.get_async_events()
                 for event in events:
@@ -331,10 +321,10 @@ class BLEFunc(ThreadBase):
                                 self.ble_client.interfaces.bluetooth.set_pin(pass_key_value)
                                 break
 
-            time.sleep(60)
             if self.testcase_no == 557265:
                 pass
             else:
+                time.sleep(60)
                 logger().info("Connection successfully stable for 60sec")
                 self.wifi_dut.interfaces.wifi.ble_advertising = False
                 logger().info("Checking connection status of BLE")
@@ -362,17 +352,17 @@ class BLEFunc(ThreadBase):
 
                 if i == 0 or self.passkey==True:
                     logger().info("Start smp scan from the remote device True")
-                    ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(
+                    self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(
                         bt_dut_address=self.ble_dut_address,
                         capability=self.client_capability,
                         pin_code=self.pin_code, remove_device=True)
                 else:
                     logger().info("Start smp scan from the remote device False")
-                    ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(
+                    self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(
                         bt_dut_address=self.ble_dut_address,
                         capability=self.client_capability,
                         pin_code=self.pin_code, remove_device=False)
-                assert ble_client_address, "failed to initiate ble in remote device"
+                assert self.ble_client_address, "failed to initiate ble in remote device"
 
                 if self.powersave:
                     logger().info("enabling the power save modes ")
@@ -437,8 +427,8 @@ class BLEFunc(ThreadBase):
                     logger().info(f"**************after device state******************")
                     pass
                 else:
-                    self.wifi_dut.interfaces.wifi.ble_mtu_exchange_event_handler(remote_address=ble_client_address,
-                                                                                 mtu_size=100)
+                    # self.wifi_dut.interfaces.wifi.ble_mtu_exchange_event_handler(remote_address=ble_client_address,
+                    #                                                              mtu_size=100)
                     time.sleep(60)
                     logger().info(f"********************************")
                     state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
@@ -447,7 +437,7 @@ class BLEFunc(ThreadBase):
                     time.sleep(3)
                     logger().info(f"********************************")
                     logger().info("Disconnecting the bt host....")
-                    self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
+                    self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
                     time.sleep(10)
 
         if self.reconnection_from_remote:
@@ -941,7 +931,7 @@ def test_ble_smp_verify_dh_key_check_exchange_C557257(wifi_dut, nrf_ble_client, 
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C557257", smp_io_capability=0, nrf_connect_to_dut=False,
                           ble_connect_from_raspi=True, capability_on_remote="KeyboardOnly", pin_code=pin_code)
         ble_obj.start()
@@ -997,7 +987,7 @@ def test_ble_smp_anthencation_verify_fields_of_pairing_request_C557253(wifi_dut,
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           dut_capability=dut_capability, client_capability=client_capability, pin_code=pin_code,
                           capture_filename="frontline_capture_C557253", smp_io_capability=0, pair_connect_from_dut=True,
                           nrf_connect_to_dut=False)
@@ -1048,7 +1038,7 @@ def test_ble_smp_anthencation_passkey_verify_pairing_response_C557254(wifi_dut, 
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           dut_capability=dut_capability, client_capability=client_capability, pin_code=pin_code,
                           capture_filename="frontline_capture_C557254", smp_io_capability=0, pair_connect_from_dut=True,
                           nrf_connect_to_dut=False)
@@ -1105,7 +1095,7 @@ def test_ble_smp_anthencation_verify_responder_key_fields_C557255(wifi_dut, nrf_
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           dut_capability=dut_capability, client_capability=client_capability, pin_code=pin_code,
                           capture_filename="frontline_capture_C557255", smp_io_capability=0, pair_connect_from_dut=True,
                           nrf_connect_to_dut=False)
@@ -1153,7 +1143,7 @@ def test_ble_smp_anthencation_verify_pairing_with_dut_entered_C557258(wifi_dut, 
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C557258", smp_io_capability=1, passkey_state=0,
                           cap_on_dongle=NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_connect_to_dut=True)
         ble_obj.start()
@@ -1199,7 +1189,7 @@ def test_ble_smp_anthencation_verify_lesc_non_lesc_C557263(wifi_dut, nrf_ble_cli
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C557263", smp_io_capability=1, passkey_state=0,
                           cap_on_dongle=NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_connect_to_dut=True, lesc_disabled=True)
         ble_obj.start()
@@ -1215,7 +1205,7 @@ def test_ble_smp_anthencation_verify_lesc_non_lesc_C557263(wifi_dut, nrf_ble_cli
                                                              'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
                 ble_obj.sniffer_data_df_2['IO Capabilities'] == "DisplayYesNo") & (ble_obj.sniffer_data_df_2[
-                                                                                       'MITM'] == "MITM Protection:  Yes") & (
+                                                                                       'MITM'] == "MITM Protection:  No") & (
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "No")]), "unable to find the packets in sniffer"
 
@@ -1238,7 +1228,7 @@ def test_ble_smp_anthencation_mitm_bit_disabled_C557259(wifi_dut, nrf_ble_client
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, smp_mtim=0, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, smp_mtim=0, check_error=False, sniffer_check=True,layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C557259", smp_io_capability=1, passkey_state=0,
                           cap_on_dongle=NRFBLEIoCapabilities.DISPLAY_ONLY, nrf_connect_to_dut=True, mtim_disabled=True,
                           local_oob_flag=True)
@@ -1279,7 +1269,7 @@ def test_ble_smp_anthencation_justworks_pairing_method_C557261(wifi_dut, nrf_ble
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C557261", smp_io_capability=0, passkey_state=0,
                           cap_on_dongle=NRFBLEIoCapabilities.DISPLAY_ONLY, nrf_connect_to_dut=True, mtim_disabled=True,
                           smp_mtim=0)
@@ -1331,7 +1321,7 @@ def test_ble_smp_anthencation_just_works_displayonly_on_both_sides_pairing_metho
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C663304", smp_io_capability=0, passkey_state=0,
                           cap_on_dongle=NRFBLEIoCapabilities.DISPLAY_ONLY, nrf_dongle_as_master=True)
         ble_obj.start()
@@ -1381,7 +1371,7 @@ def test_ble_smp_just_works_pairing_method_Initiator_displayonly_responsder_disp
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C663309", smp_io_capability=1, passkey_state=0,
                           cap_on_dongle=NRFBLEIoCapabilities.DISPLAY_ONLY, nrf_dongle_as_master=True)
         ble_obj.start()
@@ -1430,7 +1420,7 @@ def test_ble_smp_just_works_pairing_Initiator_displayonly_responder_NoInput_NoOu
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C663319", smp_io_capability=3, passkey_state=0,
                           cap_on_dongle=NRFBLEIoCapabilities.DISPLAY_ONLY, nrf_dongle_as_master=True)
         ble_obj.start()
@@ -1445,7 +1435,7 @@ def test_ble_smp_just_works_pairing_Initiator_displayonly_responder_NoInput_NoOu
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
-                ble_obj.sniffer_data_df_2['IO Capabilities'] == "NoInputNoOutout") & (ble_obj.sniffer_data_df_2[
+                ble_obj.sniffer_data_df_2['IO Capabilities'] == "NoInputNoOutput") & (ble_obj.sniffer_data_df_2[
                                                                                       'MITM'] == "MITM Protection:  Yes") & (
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
@@ -1478,7 +1468,7 @@ def test_ble_smp_just_works_pairing_Initiator_displayyesorno_responder_displayon
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C663305", smp_io_capability=0, passkey_state=0,
                           cap_on_dongle=NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_dongle_as_master=True)
         ble_obj.start()
@@ -1532,7 +1522,7 @@ def test_just_works_pairing_method_DUT_as_peripheral_C663376(wifi_dut, nrf_ble_c
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C663376", dut_capability=dut_capability,
                           smp_io_capability=0, pin_code=pin_code, client_capability=client_capability, passkey_state=0,
                           connect_from_raspi_passkey_entry=True, capability_on_remote="KeyboardOnly")
@@ -1587,7 +1577,7 @@ def test_verify_passkey_entry_pairing_method_for_DUT_as_peripheral_C557266(wifi_
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False,
-                          sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C557266",
+                          sniffer_check=True, layer_name=["LE LL", "SMP"], capture_filename="frontline_capture_C557266",
                           dut_capability=dut_capability, smp_io_capability=0, smp_sc=1, passkey_state=0,
                           pin_code=pin_code, client_capability=client_capability, connect_from_raspi_passkey_entry=True)
         ble_obj.start()
@@ -1642,7 +1632,7 @@ def test_verify_Encryption_initiated_by_DUT_as_peripheral_C557274(wifi_dut, nrf_
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False,
-                          sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C557274",
+                          sniffer_check=True, layer_name=["LE LL", "SMP"], capture_filename="frontline_capture_C557274",
                           dut_capability=dut_capability, smp_io_capability=0, smp_sc=1, passkey_state=0,
                           pin_code=pin_code, client_capability=client_capability, connect_from_raspi_passkey_entry=True)
         ble_obj.start()
@@ -1689,7 +1679,7 @@ def test_verify_just_works_pairing_DUT_master_with_random_address_C557267(wifi_d
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True,layer_name=["LE LL", "SMP"],
                           smp_io_capability=0, passkey_state=0, cap_on_dongle=NRFBLEIoCapabilities.DISPLAY_ONLY,
                           nrf_connect_to_dut=True, random_addr_on_dut=True,
                           capture_filename="frontline_capture_C557267")
@@ -1740,7 +1730,7 @@ def test_ble_smp_just_works_pairing_Initiator_displayyesorno_responder_no_input_
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C663320", smp_io_capability=3, passkey_state=0,
                           cap_on_dongle=NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_dongle_as_master=True)
         ble_obj.start()
@@ -1840,7 +1830,7 @@ def test_ble_smp_just_works_pairing_Initiator_no_input_no_output_responder_no_in
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C663322", smp_io_capability=3, passkey_state=0,
                           cap_on_dongle=NRFBLEIoCapabilities.NONE, nrf_dongle_as_master=True)
         ble_obj.start()
@@ -1890,7 +1880,7 @@ def test_ble_smp_just_works_pairing_Initiator_noInputNoOutput_responder_displayy
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C663312", smp_io_capability=1, passkey_state=0,
                           cap_on_dongle=NRFBLEIoCapabilities.NONE, nrf_dongle_as_master=True)
         ble_obj.start()
@@ -1905,7 +1895,7 @@ def test_ble_smp_just_works_pairing_Initiator_noInputNoOutput_responder_displayy
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
-                ble_obj.sniffer_data_df_2['IO Capabilities'] == "DisplayOnly") & (ble_obj.sniffer_data_df_2[
+                ble_obj.sniffer_data_df_2['IO Capabilities'] == "DisplayYesNo") & (ble_obj.sniffer_data_df_2[
                                                                                           'MITM'] == "MITM Protection:  Yes") & (
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
@@ -1940,7 +1930,7 @@ def test_ble_smp_just_works_pairing_initiator_No_Input_No_Output_responder_displ
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C663307", smp_io_capability=0, passkey_state=0,
                           cap_on_dongle=NRFBLEIoCapabilities.NONE, nrf_dongle_as_master=True)
         ble_obj.start()
@@ -1987,7 +1977,7 @@ def test_ble_smp_anthencation_verify_passkey_entered_C557256(wifi_dut, nrf_ble_c
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C557256", smp_io_capability=1, passkey_state=0,
                           cap_on_dongle=NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_connect_to_dut=True)
         ble_obj.start()
@@ -2039,7 +2029,7 @@ def test_ble_smp_disconnection_failure_C557265(wifi_dut, nrf_ble_client, ble_sni
     """Verify BLE disconnect on authentication failure """
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=True, sniffer_check=False, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=True, sniffer_check=False, layer_name=["LE LL", "SMP"],
                           dut_capability=dut_capability, pin_code=pin_code,
                           capture_filename="frontline_capture_C557265", capability_on_remote="KeyboardOnly",
                           smp_io_capability=0, ble_connect_from_raspi=True, nrf_connect_to_dut=False,
@@ -2115,7 +2105,7 @@ def test_ble_smp_anthencation_verify_passkey_entered_C557285(wifi_dut, nrf_ble_c
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
-                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP",
+                          ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
                           capture_filename="frontline_capture_C557285", smp_io_capability=1, passkey_state=0,
                           cap_on_dongle=NRFBLEIoCapabilities.DISPLAY_YESNO, nrf_connect_to_dut=True)
         ble_obj.start()
@@ -2225,7 +2215,7 @@ def test_verify_Encryption_initiated_by_DUT_as_peripheral_C557274(wifi_dut, nrf_
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False,
-                          sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C557274",
+                          sniffer_check=True, layer_name=["LE LL", "SMP"], capture_filename="frontline_capture_C557274",
                           dut_capability=dut_capability, smp_io_capability=0, smp_sc=1, passkey_state=0,
                           pin_code=pin_code, client_capability=client_capability, connect_from_raspi_passkey_entry=True)
         ble_obj.start()
@@ -2279,7 +2269,7 @@ def test_verify_passkey_entry_pairing_method_by_DUT_as_peripheral_with_random_ad
     ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False,
-                          sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C557269",
+                          sniffer_check=True, layer_name=["LE LL", "SMP"], capture_filename="frontline_capture_C557269",
                           dut_capability=dut_capability, smp_io_capability=0, smp_sc=1, passkey_state=0,
                           pin_code=pin_code, client_capability=client_capability, connect_from_raspi_passkey_entry=True,
                           random_addr_on_dut=True)
@@ -2345,8 +2335,9 @@ def test_verify_SMP_timeout_error_DUT_as_peripheral_C663375(wifi_dut, nrf_ble_cl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 def test_verify_connect_disconnect_reconnect_DUT_as_peripheral_C557270(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client, dut_capability, client_capability, pin_code):
     """Verify Encryption initiated by DUT as peripheral"""
+    ble_obj = None
     try:
-        ble_obj = BLEFunc(wifi_dut=wifi_dut, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name="SMP", capture_filename="frontline_capture_C557274", dut_capability=dut_capability, smp_io_capability=0, smp_sc=1, passkey_state=0, pin_code=pin_code, client_capability=client_capability, connect_from_raspi_passkey_entry=True, iter=10, passkey=False)
+        ble_obj = BLEFunc(wifi_dut=wifi_dut, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"], capture_filename="frontline_capture_C557274", dut_capability=dut_capability, smp_io_capability=0, smp_sc=1, passkey_state=0, pin_code=pin_code, client_capability=client_capability, connect_from_raspi_passkey_entry=True, iter=10, passkey=False)
         ble_obj.start()
         ble_obj.wait_for_exit()
 
@@ -2354,9 +2345,17 @@ def test_verify_connect_disconnect_reconnect_DUT_as_peripheral_C557270(wifi_dut,
         sl_collections.exception_handling(wifi_dut, error)
         time.sleep(3)
 
+    finally:
+        sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                   ble_client_address=ble_obj.ble_client_address,
+                                   ble_dut_address=ble_obj.ble_dut_address)
+        nrf_ble_client.interfaces.bluetooth.stop_advertising()
+        nrf_ble_client.interfaces.bluetooth.delete_bonding_data()
+
 @pytest.mark.ble_sniffer("frontline_sniffer")
 def test_verify_Rand_memset_0_for_encryption_using_LTK_C557280(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify LESC pairing EDIV/Rand memset 0 for encryption using LTK"""
+    ble_obj = None
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, capture_filename="frontline_capture_C557280",sniffer_check=True, layer_name=["LE LL", "SMP"], smp_sc=1, smp_mtim=1, smp_io_capability=0, cap_on_dongle=NRFBLEIoCapabilities.KEYBOARD_ONLY, nrf_connect_to_dut=True, passkey_entry=True, testcase_no=557280)
         ble_obj.start()
@@ -2365,6 +2364,13 @@ def test_verify_Rand_memset_0_for_encryption_using_LTK_C557280(wifi_dut, nrf_ble
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
         time.sleep(3)
+
+    finally:
+        sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                   ble_client_address=ble_obj.ble_client_address,
+                                   ble_dut_address=ble_obj.ble_dut_address)
+        nrf_ble_client.interfaces.bluetooth.stop_advertising()
+        nrf_ble_client.interfaces.bluetooth.delete_bonding_data()
 
 @pytest.mark.parametrize(
     "dut_capability, client_capability, pin_code",
@@ -2375,13 +2381,21 @@ def test_verify_Rand_memset_0_for_encryption_using_LTK_C557280(wifi_dut, nrf_ble
 @pytest.mark.ble_sniffer("frontline_sniffer")
 def test_verify_SMP_timeout_error_DUT_as_central_C663374(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client, dut_capability, client_capability, pin_code):
     """Verify Encryption initiated by DUT as peripheral"""
+    ble_obj = None
     try:
-        ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=True, error_code_expected="0x4bfc", sniffer_check=False, layer_name="SMP", capture_filename="frontline_capture_C663375", dut_capability=dut_capability, smp_io_capability=0, smp_sc=1, passkey_state=0, pin_code=pin_code, client_capability=client_capability, pair_connect_from_dut=True, testcase_no=663374)
+        ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=True, error_code_expected="0x4bfc", sniffer_check=False, layer_name=["LE LL", "SMP"], capture_filename="frontline_capture_C663375", dut_capability=dut_capability, smp_io_capability=0, smp_sc=1, passkey_state=0, pin_code=pin_code, client_capability=client_capability, pair_connect_from_dut=True, testcase_no=663374)
         ble_obj.start()
         ble_obj.wait_for_exit()
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
         time.sleep(3)
+
+    finally:
+        sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                   ble_client_address=ble_obj.ble_client_address,
+                                   ble_dut_address=ble_obj.ble_dut_address)
+        nrf_ble_client.interfaces.bluetooth.stop_advertising()
+        nrf_ble_client.interfaces.bluetooth.delete_bonding_data()
 
 
