@@ -510,11 +510,14 @@ class WLanConThread(ThreadBase):
     def check_ping_from_remote_to_dut_sta(self):
         self.ping(ip_address=self.dut_add_dict['device_ip'], ping_from="remote", ping_count=self.ping_count,
                   ip_version="ipv4")
+        logger().info(f"self.ipv6_addr_type :{self.ipv6_addr_type}")
         if self.ipv6_addr_type == "link":
             interface = self.wifi_client.interfaces.wifi.config["interface"]
             dut_addr = f"{self.dut_add_dict['dut_sta_ipv6_link']}%{interface}"
         else:
             dut_addr = self.dut_add_dict['dut_sta_ipv6_global']
+
+        logger().info(f"pinging dut ipv6 address: {dut_addr}")
         self.ping(ip_address=dut_addr, ping_from="remote", ping_count=self.ping_count,
                   ip_version="ipv6")
 
@@ -524,11 +527,7 @@ class WLanConThread(ThreadBase):
         self.ping(ip_address=self.dut_add_dict['remote_ap_ipv6'], ping_from="dut", ping_count=self.ping_count,
                   ip_version="ipv6")
 
-    def check_ping_from_remote_to_dut_sta(self):
-        self.ping(ip_address=self.dut_add_dict['device_ip'], ping_from="remote", ping_count=self.ping_count,
-                  ip_version="ipv4")
-        self.ping(ip_address=self.dut_add_dict['dut_sta_ipv6_global'], ping_from="remote", ping_count=self.ping_count,
-                  ip_version="ipv6")
+
 
     def check_ping_from_dut_ap_to_remote(self):
         self.ping(ip_address=self.dut_add_dict['remote_sta_ipv4'], ping_from="dut", ping_count=self.ping_count,
