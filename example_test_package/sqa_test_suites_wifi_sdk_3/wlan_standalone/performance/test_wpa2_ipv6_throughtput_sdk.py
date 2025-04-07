@@ -367,7 +367,7 @@ def test_sdk_WLAN_IPV6_TCP_RX_C119376(
                               ping_count=ping_count, wifi_client=wifi_client,
                               protocol=protocol,
                               net_perf_client=net_perf_client,
-                              test_case_no='119376',
+                              test_case_no=119376,
                               traffic_type="RX")
         wlan_obj.join_to_ap()
         wlan_obj.start()

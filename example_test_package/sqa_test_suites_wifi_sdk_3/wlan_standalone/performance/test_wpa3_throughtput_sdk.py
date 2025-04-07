@@ -128,7 +128,7 @@ class WifiConnectionThread(ThreadBase):
                         logger().info("data transfer successful")
                         time.sleep(3)
                 if self.traffic_type == "RX":
-                    self.iteration_count = self.iteration_count
+                    # self.iteration_count = self.iteration_count
                     for i in range(0, self.iteration_count):
                         # Iperf Client Started
                         if self.protocol == "UDP":
@@ -153,26 +153,26 @@ class WifiConnectionThread(ThreadBase):
                             self.net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=
                             self.dut_addr['device_ip'], protocol=self.protocol)
 
-                        def start_client():
-                            time.sleep(1)
-                            logger().info(f"***** start listening  ******")
-                            self.net_perf_client.interfaces.net_perf.start()
+                            def start_client():
+                                time.sleep(1)
+                                logger().info(f"***** start listening  ******")
+                                self.net_perf_client.interfaces.net_perf.start()
 
-                        client_thread1 = Thread(target=start_client, args=(), )
-                        client_thread1.start()
+                            client_thread1 = Thread(target=start_client, args=(), )
+                            client_thread1.start()
 
-                        # open socket and listen for data
-                        timeout = 40
-                        self.wifi_dut.interfaces.wifi.set_socket_config()
-                        self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
-                                                            local_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                            local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
-                                                            remote_port=self.net_perf_client.interfaces.net_perf.client_port,
-                                                            size=size, ttl=30, throughput_type=throughput_type, qos=0,
-                                                            async_socket=1, timeout=timeout + 2)
-                        client_thread1.join()
-                        logger().info("data received is successful")
-                        time.sleep(3)
+                            # open socket and listen for data
+                            timeout = 40
+                            self.wifi_dut.interfaces.wifi.set_socket_config()
+                            self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=protocol,
+                                                                local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                                local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
+                                                                remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                                size=size, ttl=30, throughput_type=throughput_type, qos=0,
+                                                                async_socket=1, timeout=timeout + 2)
+                            client_thread1.join()
+                            logger().info("data received is successful")
+                            time.sleep(3)
 
             time.sleep(2)
             if self.test_case_no == 34509:
