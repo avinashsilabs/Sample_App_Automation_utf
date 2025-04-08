@@ -1357,6 +1357,12 @@ def test_wifi_sdk_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C194
                }
          }
 )
+@pytest.mark.config(
+    "remote_socket_factory",
+    socket={
+        "interface": "wlan0"
+    }
+)
 def test_wifisdk_DUTAP_open_10_TCP_client_sockets_send_tx_C19473( wifi_dut, wifi_sniffer, remote_socket_factory, sl_collections, wifi_clients):
     '''Open 10 TCP client sockets and Data TX in ap mode'''
     socket_threads = []
@@ -2056,7 +2062,8 @@ def test_wifi_sdk_DUTAP_Bidirectional_UDP_traffic_data_C19468(wifi_sniffer, net_
                }
          }
 )
-def test_wifisdk_DUTAP_open_10_tcp_server_sockets_rx_C19475(wifi_dut, wifi_sniffer, utf_constants, remote_socket_factory, sl_collections, wifi_clients):
+def test_wifisdk_DUTAP_open_10_tcp_server_sockets_rx_C19475(wifi_dut, wifi_sniffer, utf_constants,
+                                                            remote_socket_factory, sl_collections, wifi_clients):
     """Open 10 TCP server sockets and Data RX"""
     try:
         wifi_sniffer.interfaces.capture.configure_interface(channel=11)
@@ -2171,7 +2178,9 @@ def test_wifisdk_DUTAP_open_10_tcp_server_sockets_rx_C19475(wifi_dut, wifi_sniff
          }
 )
 @pytest.mark.end_state("wifi_dut", ["close_sockets"])
-def test_wifisdk_DUTAP_open_10_udp_server_sockets_rx_C19476(wifi_dut, remote_socket, wifi_sniffer, utf_constants, remote_socket_factory, sl_collections, wifi_clients, remote_multi_socket):
+def test_wifisdk_DUTAP_open_10_udp_server_sockets_rx_C19476(wifi_dut, remote_socket, wifi_sniffer, utf_constants,
+                                                            remote_socket_factory, sl_collections, wifi_clients,
+                                                            remote_multi_socket):
     """Open 10 UDP server sockets and Data RX"""
     try:
         wifi_sniffer.interfaces.capture.configure_interface(channel=11)
@@ -2442,6 +2451,12 @@ def test_wifisdk_DUTAP_open_5_UDP_client_sockets_tx_5_TCP_server_socket_send_rx_
                 "interface": "wlan0",
                }
          }
+)
+@pytest.mark.config(
+    "remote_socket_factory",
+    socket={
+        "interface": "wlan0"
+    }
 )
 def test_wifisdk_DUTAP_open_5_TCP_client_sockets_tx_5_udp_server_socket_send_rx_C19477( wifi_dut, wifi_sniffer, remote_multi_socket, utf_constants, remote_socket_factory, sl_collections, wifi_clients):
     socket_threads = []
