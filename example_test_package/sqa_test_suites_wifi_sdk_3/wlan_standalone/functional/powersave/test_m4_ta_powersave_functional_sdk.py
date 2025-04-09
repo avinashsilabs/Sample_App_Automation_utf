@@ -8,7 +8,7 @@ import re
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xCustomFeatureBitMap, Si91xOperatingMode, Si91xExtCustomFeatureBitMap, Si91xTCPIPFeatureBitMap, \
-    Si91xExtTCPIPFeatureBitMap, Si91xJoinFeatureBitMap, Si91xAwsQos,
+    Si91xExtTCPIPFeatureBitMap, Si91xJoinFeatureBitMap, Si91xAwsQos
 from utf.interfaces.wifi import WlanError
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.utils.logger import get_logger
