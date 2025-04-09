@@ -529,6 +529,45 @@ class BleThreadFunctionality(ThreadBase):
         self.sl_collections.cleanup_ble(
             ble_dut=self.wifi_dut, ble_client=self.ble_client, ble_client_address=self.ble_client_address)
 
+    def ble_cleanup_disconn(self):
+        logger().info("Checking connection status of BLE")
+        state = self.ble_dut.interfaces.bluetooth.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        if state_int == 8:
+            logger().info("Device is in connected status try to disconnect")
+            self.ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
+            time.sleep(5)
+        elif state_int == 2:
+            logger().info("Device is in scanning status try to stop scanning")
+            self.ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        elif state_int == 1:
+            logger().info("Device is in advertising status try to stop advertising")
+            self.ble_dut.interfaces.bluetooth.ble_stop_advertising()
+        elif state_int == 3:
+            logger().info("Device is in scanning status try to stop scanning")
+            self.ble_dut.interfaces.bluetooth.ble_stop_scanning()
+            logger().info("Device is advertising status try to stop advertising")
+            self.ble_dut.interfaces.bluetooth.ble_stop_advertising()
+        elif state_int == 9:
+            logger().info("Device is in connected status try to disconnect")
+            self.ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
+            time.sleep(5)
+            logger().info("Device is in advertising status try to stop advertising")
+            self.ble_dut.interfaces.bluetooth.ble_stop_advertising()
+        elif state_int == 10:
+            logger().info("Device is in connected status try to disconnect")
+            self.ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
+            logger().info("Device is advertising status try to stop advertising")
+            self.ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        elif state_int == 0:
+            logger().info("Device is in idle status")
+        else:
+            logger().info("Device is in unknown state")
+            self.ble_dut.interfaces.bluetooth.is_dut_bad_state = True
+        self.ble_client.interfaces.bluetooth.remove_device(self.ble_dut_address)
+        self.ble_client.interfaces.bluetooth.close()
+        logger().info(" *************DUT Cleanup Success *******************")
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1472,7 +1511,6 @@ def test_wifi_sdk_11ax_ble_provisioning_c198666(
         ble_client.interfaces.bluetooth.close()
 
 
-@pytest.mark.skip("master BLE connection is not stable")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1543,7 +1581,7 @@ def test_wifi_sdk_https_download_with_11ax_ble_connect_master_c198675(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
-        ble_obj.ble_cleanup()
+        ble_obj.ble_cleanup_disconn()
 
 
 @pytest.mark.config(
