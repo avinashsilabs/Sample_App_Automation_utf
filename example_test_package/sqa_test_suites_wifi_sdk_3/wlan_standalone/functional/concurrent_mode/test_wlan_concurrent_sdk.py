@@ -233,7 +233,7 @@ class ClientsConnection(AP_start_STA_connect):
 
 
 class ConcurrentThread(ThreadBase):
-    def __init__(self, wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants, wifi_access_point, net_perf_client=None, protocol=None, testcase_no = None, capture_filename = None,  ping=True, traffic_type=None, stop_sniffer=True, leave=False):
+    def __init__(self, wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants, wifi_access_point, net_perf_client=None, protocol=None, testcase_no = None, capture_filename = None,  ping=True, traffic_type=None, stop_sniffer=True, leave=False, ht_caps=0):
         super().__init__()
         self.ap_mac_address = None
         self.wifi_dut = wifi_dut
@@ -258,6 +258,7 @@ class ConcurrentThread(ThreadBase):
         self.password = "Automation@123"
         self.dtim_count = "1"
         self.beacon_interval = "100"
+        self.ht_caps = ht_caps
 
         if self.testcase_no == 19318:
             self.security = "OPEN"
@@ -283,7 +284,7 @@ class ConcurrentThread(ThreadBase):
                                                                             beacon_interval=self.beacon_interval,
                                                                             ping_count=ping_count,
                                                                             no_of_clients=self.no_of_clients,
-                                                                            leave=self.leave)
+                                                                            leave=self.leave, ht_caps=self.ht_caps)
 
         if self.testcase_no == 654504:
             logger().info("***Scanning on AP interface after bringing up DUT in concurrent mode with Specific SSID****")
@@ -1727,12 +1728,12 @@ def test_wifi_sdk_device_as_ap_and_sta_c477524(sl_collections, wifi_access_point
     try:
         conc_obj = ConcurrentThread(wifi_dut, sl_collections, wifi_sniffer, sniffer_filter, wifi_clients, utf_constants,
                                     wifi_access_point, net_perf_client=net_perf_client, protocol=protocol, testcase_no=477524,
-                                    capture_filename="test_C477524", ping=True, traffic_type="Tx", stop_sniffer=True, htcaps=1)
+                                    capture_filename="test_C477524", ping=True, traffic_type="Tx", stop_sniffer=True, ht_caps=1)
         conc_obj.start()
         conc_obj.wait_for_exit()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=conc_obj.dut_addr_dict['dut_mac_address'],
-            filter_name="beacon_ht")
+            filter_name="beacon_HT_capability")
         logger().info(f"packet_filter1: {packet_filter1}")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Sniffer: Unable to find htcaps_IES packet in sniffer'

@@ -483,7 +483,7 @@ class DataTransfer(ThreadBase):
         logger().info("Socket connection is successful")
         for packets in range(10):
             logger().info("DUT Sending Data packets")
-            bytes_sent = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=tcp_socket_id, data=self.data, timeout=30)
+            bytes_sent = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=tcp_socket_id, data=self.data, timeout=60)
             logger().info(f"Number of bytes sent by dut {bytes_sent}")
 
 
