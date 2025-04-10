@@ -8,7 +8,7 @@ import re
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xCustomFeatureBitMap, Si91xOperatingMode, Si91xExtCustomFeatureBitMap, Si91xTCPIPFeatureBitMap, \
-    Si91xExtTCPIPFeatureBitMap, Si91xJoinFeatureBitMap, Si91xAwsQos
+    Si91xExtTCPIPFeatureBitMap, Si91xJoinFeatureBitMap, Si91xAwsQos, Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes
 from utf.interfaces.wifi import WlanError
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.utils.logger import get_logger
@@ -731,3 +731,50 @@ def test_tcp_rx_ta_interrupt_m4_wakeup_DTIM_based_power_save_c514375(wifi_sniffe
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints |
+                               Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+    }
+)
+def test_wifi_sdk_deinit_functionality_after_m4_wakeup_c708580(wifi_dut, wifi_access_point, sl_collections):
+    """Verify sl_wifi_deinit functionality after M4 awakes from sleep when WLAN is in connected state"""
+    try:
+        wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
+        wifi_dut.interfaces.wifi.get_fw_version()
+        dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                       power_save=False,
+                                                       wifi_access_point=wifi_access_point,
+                                                       associated=wifi_dut.interfaces.wifi.associated,
+                                                       channel=wifi_access_point.interfaces.wifi.channel)
+
+        logger().info(f"Device IP address : {dut_addr['device_ip']}")
+        logger().info(f"Device MAC address : {dut_addr['dut_mac_address']}")
+        wifi_dut.interfaces.wifi.set_filter_broadcast()
+        mode = 'power_save_low_latency'
+        logger().info(f"....Applying performance profile mode : {mode}")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode, 0, 0, 0, 0)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=2000)
+        wifi_dut.interfaces.wifi.deinit()
+
+    except Exception as error:
+        logger().error(f"Exception occurred: {error}")
+        raise error
