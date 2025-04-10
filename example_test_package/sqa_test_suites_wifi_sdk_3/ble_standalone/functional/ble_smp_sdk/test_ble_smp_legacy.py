@@ -2109,12 +2109,12 @@ def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_
         assert len(ble_obj.sniffer_data_df_1.loc[(
                 ble_obj.sniffer_data_df_1['Control Pkt'] == "LL_ENC_RSP")]), "unable to find encryption response"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Request") & (
-                ble_obj.sniffer_data_df_2['IO Capabilities'] == "NoInputNoOutput") & (ble_obj.sniffer_data_df_2[
+                ble_obj.sniffer_data_df_2['IO Capabilities'] == "KeyboardDisplay") & (ble_obj.sniffer_data_df_2[
                                                                                           'MITM'] == "MITM Protection:  Yes") & (
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "No")]), "unable to find the packets in sniffer"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
-                ble_obj.sniffer_data_df_2['IO Capabilities'] == "KeyboardDisplay") & (ble_obj.sniffer_data_df_2[
+                ble_obj.sniffer_data_df_2['IO Capabilities'] == "NoInputNoOutput") & (ble_obj.sniffer_data_df_2[
                                                                                           'MITM'] == "MITM Protection:  Yes") & (
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "No")]), "unable to find the packets in sniffer"

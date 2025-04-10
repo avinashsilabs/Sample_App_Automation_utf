@@ -572,7 +572,7 @@ class BLEFunc(ThreadBase):
             tw = Stopwatch()
             link_key = ""
             while tw.elapsed_sec < 120:
-                events = self.wifi_dut.interfaces.wifi.get_async_events()
+                events = self.wifi_dut.interfaces.wifi.get_async_events(since_time=0)
                 for event in events:
                     if "link_key" in event.event_data:
                         event_data = event.event_data
@@ -1240,7 +1240,7 @@ def test_ble_smp_anthencation_mitm_bit_disabled_C557259(wifi_dut, nrf_ble_client
                 ble_obj.sniffer_data_df_1['Control Pkt'] == "LL_ENC_RSP")]), "unable to find encryption response"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Request") & (
                 ble_obj.sniffer_data_df_2['IO Capabilities'] == "DisplayYesNo") & (ble_obj.sniffer_data_df_2[
-                                                                                       'MITM'] == "MITM Protection:  No") & (
+                                                                                       'MITM'] == "MITM Protection:  Yes") & (
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
@@ -2033,7 +2033,7 @@ def test_ble_smp_disconnection_failure_C557265(wifi_dut, nrf_ble_client, ble_sni
                           dut_capability=dut_capability, pin_code=pin_code,
                           capture_filename="frontline_capture_C557265", capability_on_remote="KeyboardOnly",
                           smp_io_capability=0, ble_connect_from_raspi=True, nrf_connect_to_dut=False,
-                          error_code_expected="0x4bfc")
+                          error_code_expected="0x4bfc", testcase_no=557265)
         ble_obj.start()
         ble_obj.wait_for_exit()
 
