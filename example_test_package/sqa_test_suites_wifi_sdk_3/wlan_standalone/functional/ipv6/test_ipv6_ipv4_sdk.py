@@ -78,7 +78,7 @@ class FilterPacket:
 class MqttThread(ThreadBase):
 
     def __init__(self, wifi_dut=None, mqtt_client=None, mqtt_server=None, wifi_client=None, topic=None, message=None,
-                 topic_address=None, msg_address=None, ip_version=4):
+                 topic_address=None, msg_address=None, ip_version=4, qos=Si91xMqttQos.QOS0):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.mqtt_client = mqtt_client
@@ -89,48 +89,57 @@ class MqttThread(ThreadBase):
         self.topic_address = topic_address
         self.msg_address = msg_address
         self.ip_version = ip_version
+        self.qos = qos
 
 
-    def subscribe_and_publish(self, qos):
+    def subscribe(self):
 
         logger().info("MQTT Client subscribes to the topic")
-        self.mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=self.topic, qos=qos)
+        self.mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=self.topic, qos=self.qos)
 
         logger().info("DUT subscribes to the topic")
-        self.wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=self.topic, qos=qos, topic_address=self.topic_address)
+        self.wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=self.topic, qos=self.qos, topic_address=self.topic_address)
 
-        time.sleep(5)
-
-        logger().info("DUT publishes message over the topic")
-        self.wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=self.topic, message=self.message, qos=qos, timeout=20,
-                                                          topic_address=self.topic_address, msg_address=self.msg_address)
         time.sleep(5)
 
 
     def run(self):
+
         self.wifi_dut.interfaces["mqtt"] = self.wifi_dut.interfaces.wifi
-        self.wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client")
+        if self.ip_version == 4:
+            ip_version = "ipv4"
+        else:
+            ip_version = "ipv6"
+        self.wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client",
+                                                                             ip_version=ip_version)
         logger().info(".....DUT connects to MQTT server.....")
         self.wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=self.mqtt_server.interfaces.mqtt)
         logger().info(".....MQTT Client connects to MQTT server.....")
-        self.mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=self.mqtt_server.interfaces.mqtt,
-                                                                       version=self.ip_version)
+        self.mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=self.mqtt_server.interfaces.mqtt)
         time.sleep(5)
 
-        self.subscribe_and_publish(qos=Si91xMqttQos.QOS0)
+        self.subscribe()
 
-        msgs = []
+        logger().info("DUT publishes message over the topic")
+        self.wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=self.topic, message=self.message,
+                                                          qos=self.qos, timeout=20,
+                                                          topic_address=self.topic_address,
+                                                          msg_address=self.msg_address)
+        time.sleep(5)
         sw = Stopwatch()
-        while sw.elapsed_sec < 10:
-            time.sleep(0.1)
-            msgs = self.mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
-            if len(msgs) == 1:
-                break
-        assert len(msgs) == 1, "No message is received by mqtt-client"
-        assert msgs[0].topic == self.topic, "No message received by mqtt-client on subscribed topic"
-        assert msgs[0].qos == Si91xMqttQos.QOS0, "DUT sent message with wrong QOS. expected is QOS1"
-        assert msgs[0].payload.decode() == self.message, "No message is received by mqtt-client on subscribed topic or " \
-                                                    "message received is wrong"
+        while sw.elapsed_sec <= 60:
+            msgs = []
+            mq = Stopwatch()
+            while mq.elapsed_sec < 10:
+                time.sleep(0.1)
+                msgs = self.mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+                if len(msgs) == 1:
+                    break
+            assert len(msgs) == 1, "No message is received by mqtt-client"
+            assert msgs[0].topic == self.topic, "No message received by mqtt-client on subscribed topic"
+            assert msgs[0].qos == self.qos, f"DUT sent message with wrong QOS. expected is {self.qos}"
+            assert msgs[0].payload.decode() == self.message, "No message is received by mqtt-client on subscribed topic or " \
+                                                        "message received is wrong"
 
 
 class HttpDownload(ThreadBase):
@@ -157,11 +166,11 @@ class HttpDownload(ThreadBase):
             self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
 
             logger().info("fetching server ip....")
-            host_ipv6 = self.wifi_client.interfaces.wifi.get_ip_address(version=self.ip_version, addr_type=self.ipv6_addr_type)
-            logger().info(f"http_server_ip: {host_ipv6}")
+            host_ip = self.wifi_client.interfaces.wifi.get_ip_address(version=self.ip_version, addr_type=self.ipv6_addr_type)
+            logger().info(f"http_server_ip: {host_ip}")
 
             logger().info("pinging to http_server_ip....")
-            status = ping(host_ipv6, self.ping_count)
+            status = ping(host_ip, self.ping_count)
             assert status, "unable to ping to http_server, please check testline connection and interface in harness"
 
             status = ""
@@ -177,36 +186,45 @@ class HttpDownload(ThreadBase):
                         self.http_server.interfaces.http.start_server()
                     logger().info(f'http server state is {self.http_server.interfaces.http.started}')
 
-                    tcp_socket_id = self.wifi_dut.interfaces.wifi.socket(domain="AF_INET6")
+                    if self.ip_version == 4:
+                        tcp_socket_id = self.wifi_dut.interfaces.wifi.socket()
+                        bind_response = self.wifi_dut.interfaces.wifi.bind(socket_fd=tcp_socket_id,
+                                                                      device_ip=self.device_ip,
+                                                                      server_port=self.http_server.interfaces.http.port,
+                                                                      asynch=0,
+                                                                      timeout=5)
+
+
+                    else:
+                        tcp_socket_id = self.wifi_dut.interfaces.wifi.socket(domain="AF_INET6")
                     logger().info(f"Socket open successfully : {tcp_socket_id}")
                     logger().info(
                         f"Successfully opened tcp client socket and socket id received is {tcp_socket_id} which is expected")
-                    # bind_response = self.wifi_dut.interfaces.wifi.bind(socket_fd=tcp_socket_id,
-                    #                                               device_ip=self.device_ip,
-                    #                                               server_port=self.http_server.interfaces.http.port,
-                    #                                               asynch=0,
-                    #                                               timeout=5,
-                    #                                               ip_len=6,
-                    #                                               ip_version=6)
-                    #
-                    # time.sleep(5)
-                    # logger().info(f"Bind socket successfully: {bind_response}")
 
                     if self.https:
                         self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=tcp_socket_id, option_level='SOL_TCP',
                                                                       option_name='TCP_ULP', option_val="tls")
 
                     logger().info("DUT is connecting to server socket")
-                    self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=tcp_socket_id, server_ip=host_ipv6,
-                                                                   ip_len=6,
+                    self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=tcp_socket_id, server_ip=host_ip,
+                                                                   ip_len=self.ip_version,
                                                                    server_port=self.http_server.interfaces.http.port)
 
 
                     time.sleep(5)
                     with TimeMeasurer() as t:
-                        result = self.wifi_dut.interfaces.wifi.http_client_download(socket_id=tcp_socket_id,
+
+                        if self.ip_version == 4:
+                            result = self.wifi_dut.interfaces.wifi.http_client_download(socket_id=tcp_socket_id,
+                                                                               file_name=self.index_path,
+                                                                               ip_address=f"\"{host_ip}\"",
+                                                                               mode=self.https, timeout=1000)
+
+                        else:
+
+                            result = self.wifi_dut.interfaces.wifi.http_client_download(socket_id=tcp_socket_id,
                                                                            file_name=self.index_path,
-                                                                           ip_address=f"\"[{host_ipv6}]\"",
+                                                                           ip_address=f"\"[{host_ip}]\"",
                                                                            mode=self.https, timeout=1000)
                     logger().info(f"time taken for file download {t.duration}")
                     logger().info(f"result:{result}")
@@ -458,8 +476,7 @@ def wifi_dut_marker(ext_custom_bit=0, thread_count=1, tcp_ip_bit=0, ext_tcp_ip_b
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client
                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
-                          | Si91xTCPIPFeatureBitMap.IPv6Mode
-                          | Si91xTCPIPFeatureBitMap.DHCPv6Server | tcp_ip_bit,
+                          | Si91xTCPIPFeatureBitMap.IPv6Mode | tcp_ip_bit,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
                                | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | ext_custom_bit,
@@ -1600,7 +1617,6 @@ def test_wifi_sdk_ipv6_http_file_download_stateless_C119404(wifi_dut, wifi_acces
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-
 @wifi_dut_marker(thread_count=1,
                  tcp_ip_bit=Si91xTCPIPFeatureBitMap.SSL,
                  ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
@@ -1735,6 +1751,7 @@ def test_wifi_sdk_ipv6_http_dwnld_ipv4_fw_mqtt_stateless_C156968(wifi_dut,
 
 
 @wifi_dut_marker(thread_count=2,
+                 stack_len=4096,
                  tcp_ip_bit=Si91xTCPIPFeatureBitMap.SSL,
                  ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
                  ext_tcp_ip_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
@@ -1747,18 +1764,18 @@ def test_wifi_sdk_ipv6_http_dwnld_ipv4_fw_mqtt_stateless_C156968(wifi_dut,
                                }
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.mqtt_server("raspi_mosquitto_ipv6")
 @pytest.mark.skip()
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_ipv6_https_dwnld_ipv4_fw_mqtt_stateless_C156967(wifi_dut,
+def test_wifi_sdk_ipv4_https_dwnld_ipv6_fw_mqtt_stateless_C156967(wifi_dut,
                                                                   wifi_access_point, wifi_sniffer,
                                                                   sl_collections,
                                                                   utf_constants,
                                                                   request, sniffer_filter,
                                                                   wifi_client,
                                                                   http_server, index_path,
-                                                                  mqtt_server, mqtt_client,
-                                                                    ):
+                                                                  mqtt_server, mqtt_client):
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1886,5 +1903,143 @@ def test_wifi_sdk_ipv6_https_dwnld_ipv4_fw_mqtt_stateless_C156969(wifi_dut,
                                                   test_name, wlan_obj.dut_add_dict['ap_mac_address'])
 
         assert result['ipv6_state'] == 0, "IPV6 stateless configuration is not set in AP"
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@wifi_dut_marker(thread_count=1,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 ext_tcp_ip_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
+                                 | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                 )
+@pytest.mark.config(
+    "wifi_access_point", wifi={"ipv6_state": "1", "security": "WPA2", "passphrase": "12345678",
+                               }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.mqtt_server("raspi_mosquitto_ipv6")
+def test_wifi_sdk_mqtt_on_ipv6_stateful_dhcp_QOS0_C119385(wifi_dut,
+                                                                   wifi_access_point, wifi_sniffer,
+                                                                   sl_collections,
+                                                                   utf_constants,
+                                                                   request, sniffer_filter,
+                                                                   wifi_client,
+                                                                   mqtt_server,
+                                                                   mqtt_client
+                                                                   ):
+    """
+            MQTT test with QOS0 over IPV6 when  AP  is configured with stateful DHCPv6
+    """
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        topic = "mytesttopic"
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
+        address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(topic) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(topic), write_content=topic)
+
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(message) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(message), write_content=message)
+
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                              ping_count=ping_count, wifi_client=wifi_client,
+                              ping_before_power_save=False,
+                              ping_after_power_save=False,
+                              )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        mqtt_obj = MqttThread(wifi_dut=wifi_dut,
+                              wifi_client=wifi_client, mqtt_client=mqtt_client,
+                              mqtt_server=mqtt_server, topic=topic, message=message, topic_address=address1,
+                              msg_address=address2, ip_version=6)
+        mqtt_obj.start()
+        mqtt_obj.wait_for_exit()
+
+        logger().info("Unsubscribing from the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.memory_free(address1)
+        wifi_dut.interfaces.wifi.memory_free(address2)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key,
+                                                  ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
+
+        assert result['ipv6_state'] == 1, "IPV6 stateful configuration is not set in AP"
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@wifi_dut_marker(thread_count=1,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 ext_tcp_ip_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
+                                | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                 )
+@pytest.mark.config(
+    "wifi_access_point", wifi={"ipv6_state": "1", "security": "WPA2", "passphrase": "12345678",
+                               }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.mqtt_server("raspi_mosquitto_ipv6")
+def test_wifi_sdk_mqtt_on_ipv6_stateful_dhcp_QOS1_TC119387(wifi_dut,
+                                                           wifi_access_point, wifi_sniffer,
+                                                           sl_collections,
+                                                           utf_constants,
+                                                           request, sniffer_filter,
+                                                           wifi_client,
+                                                           mqtt_server,
+                                                           mqtt_client
+                                                           ):
+    """
+        MQTT test with QOS1 over IPV6 when  AP  is configured with stateful DHCPv6
+    """
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        topic = "mytesttopic"
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
+        address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(topic) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(topic), write_content=topic)
+
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(message) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(message), write_content=message)
+
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                              ping_count=ping_count, wifi_client=wifi_client,
+                              ping_before_power_save=False,
+                              ping_after_power_save=False,
+                              )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        mqtt_obj = MqttThread(wifi_dut=wifi_dut,
+                              wifi_client=wifi_client, mqtt_client=mqtt_client,
+                              mqtt_server=mqtt_server, topic=topic, message=message, topic_address=address1,
+                              msg_address=address2, ip_version=6, qos=Si91xMqttQos.QOS1)
+        mqtt_obj.start()
+        mqtt_obj.wait_for_exit()
+
+        logger().info("Unsubscribing from the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.memory_free(address1)
+        wifi_dut.interfaces.wifi.memory_free(address2)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        result = sl_collections.get_pkt_list_ipv6(wifi_sniffer, wlan_obj.dut_add_dict['dut_mac_address'],
+                                                  decryption_key,
+                                                  ["icmpv6"],
+                                                  test_name, wlan_obj.dut_add_dict['ap_mac_address'])
+
+        assert result['ipv6_state'] == 1, "IPV6 stateful configuration is not set in AP"
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
