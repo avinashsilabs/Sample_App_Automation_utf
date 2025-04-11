@@ -107,3 +107,12 @@ firmware_applications:
       - device_type: 'efx32'
         device_subtype: 'efr32'
         filename: 'test_agent_soc_cf_352K.rps'
+
+    load_ta_and_m4:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename:
+          load_binary:
+            file_name: 'SiWG917-B.2.13.5.2.2.4.rps'
+          write_firmware:
+            file_name: '917_ccp/test_agent_soc_ifc2_c7d161bbc7_generic192k.rps'
