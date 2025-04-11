@@ -131,6 +131,7 @@ eap_tls__aes256_sha256_aes256_sha_v1_0,(wlan.addr == {{ sa_addr }}) and (wlan.ad
 eap_type_tls_verification,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (eap.type == 13)
 eap_type_ttls_verification,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (eap.type == 21)
 eap_type_peap_verification,(wlan.da == {{ da_addr }}) and (wlan.sa == {{ sa_addr }}), and (eap.type == 25)
+eap_type_fast_verification,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (eap.type == 43)
 eap_tls_cert_verification_1_2,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and eap and tls.record.version == 0x0303
 eap_tls_cert_verification_1_0,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and eap and tls.record.version == 0x0301
 eap_connection_failure,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (eap.code == 4)
