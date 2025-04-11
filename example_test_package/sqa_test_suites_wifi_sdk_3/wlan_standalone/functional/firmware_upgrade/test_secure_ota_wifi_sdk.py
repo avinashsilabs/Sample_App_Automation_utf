@@ -286,7 +286,7 @@ class WifiJoin(ThreadBase):
                     ip_address=self.host_ip,
                     port=443,
                     host_name=self.host_ip,
-                    http_url="/SiWG917-B.2.13.3.0.0.4.rps",
+                    http_url="/SiWG917-B.2.13.4.1.0.2.rps",
                     expected_status=SLStatus.SL_STATUS_SI91X_FW_UPDATE_FAILED,
                     timeout=150)
                 logger().info("stop Sniffer capture...")
