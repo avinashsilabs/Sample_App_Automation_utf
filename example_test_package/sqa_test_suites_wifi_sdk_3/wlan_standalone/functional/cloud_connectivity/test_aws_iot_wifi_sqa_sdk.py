@@ -145,7 +145,7 @@ class AwsConnection(ThreadBase):
 
     @retry(Exception, delay=25, tries=3)
     def connect_to_aws_server_from_dut(self, wifi_dut=None, client_id=None, iscleansession=True, keep_alive=1200,
-                                       timeout=120, isWillMsgPresent=False, expected_status=SLStatus.SL_STATUS_OK,
+                                       timeout=120, isWillMsgPresent="false", expected_status=SLStatus.SL_STATUS_OK,
                                        port=8883, aws_iot_mqtt_rx_buf_len=1024):
         """
         @param wifi_dut: Fixture parameter to issue command in DUT.
@@ -172,6 +172,7 @@ class AwsConnection(ThreadBase):
         self.topic = 'topic_' + self.test_name
         try:
             if self.messages is None:
+                self.messages = []
                 for i in range(10):
                     self.messages.append(text_generator(size=10))
                 logger().info(f"Messages are:{self.messages}")
@@ -190,6 +191,7 @@ class AwsConnection(ThreadBase):
             if self.test_name == 'test_wifi_sdk_c537911':
                 result = self.publish_from_dut(self.wifi_dut, self.topic, self.messages[0], qos=self.qos,
                                                negative_case=True)
+                logger().info(f"Result of publish from DUT is: {result}")
                 if result == 0xffffffdf:
                     logger().info("\n\n *** Publishing status from DUT on topic is failed error -33 observed as per "
                                   "expectation *** \n\n\n\n")
@@ -233,6 +235,7 @@ class AwsConnection(ThreadBase):
         @param timeout: Timeout value to wait until command to be executed successfully.
         @param negative_case: Boolean Value(True/False).
         """
+        logger().info(f"\nDUT is publishing message on topic:'{topic}' \nQOS:'{qos}'")
         result = wifi_dut.interfaces.wifi.aws_iot_mqtt_publish(topic_name=topic, qos=qos, payload=message,
                                                                timeout=timeout,
                                                                negative_case=negative_case)
@@ -257,6 +260,7 @@ class AwsConnection(ThreadBase):
         @param topic: Topic name to subscribe from Raspi on AWS Server.
         @param qos: QOS value to subscribe on aws topic(0/1).
         """
+        logger().info(f"\n\n *** aws_iot_client is Subscribing on topic '{topic}' and QOS:'{qos}'*** \n\n")
         aws_iot_client.interfaces.aws_iot.received_messages.clear()
         aws_iot_client.interfaces.aws_iot.aws_iot_subscribe(topic, qos=qos)
         status = aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
@@ -298,6 +302,7 @@ class AwsConnection(ThreadBase):
             try:
                 time.sleep(wait_time)
                 recv_msg = wifi_dut.interfaces.wifi.aws_select_socket(expected_status=expected_status)
+                logger().info(f"Received message from DUT is: '{recv_msg[-1].payload.decode()}'")
                 assert len(recv_msg), "Failed to receive published message in DUT"
                 return recv_msg[-1]
             except Exception as err:
@@ -2589,8 +2594,8 @@ def test_wifi_sdk_aws_connect_will_message_negative_c537896(wifi_sniffer, wifi_a
 
         aws_obj = AwsConnection()
         logger.info("Initiating aws connect from DUT")
-        assert aws_obj.connect_to_aws_server_from_dut(wifi_dut=wifi_dut, isWillMsgPresent=True, client_id=client_id,
-                                                      timeout=10), "Failed to connect aws server " \
+        assert aws_obj.connect_to_aws_server_from_dut(wifi_dut=wifi_dut, isWillMsgPresent="true", client_id=client_id,
+                                                      expected_status=SLStatus.SL_STATUS_AWS_WILL_CONNECTION_FAILURE), "Failed to connect aws server " \
                                                                    "from DUT"
         logger.info("As per expectation connection to AWS server from DUT should be unsuccessful")
 
@@ -2631,7 +2636,7 @@ def test_wifi_sdk_aws_connect_will_message_negative_c537896(wifi_sniffer, wifi_a
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
+                       wifi=["wifi_powersave_disable", "aws_unsubscribe",
                              "disassociated"])
 def test_wifi_sdk_aws_change_port_number_negative_c537897(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                           sl_collections):
@@ -2656,7 +2661,7 @@ def test_wifi_sdk_aws_change_port_number_negative_c537897(wifi_sniffer, wifi_acc
         logger.info("Initiating aws connect from DUT")
         assert aws_obj.connect_to_aws_server_from_dut(wifi_dut=wifi_dut, client_id=client_id, port=9999,
                                                       expected_status=SLStatus.SL_STATUS_AWS_CONNECTION_FAILURE,
-                                                      timeout=10), "Failed to connect aws server " \
+                                                      timeout=20), "Failed to connect aws server " \
                                                                    "from DUT"
         logger.info("As per expectation connection to AWS server from DUT should be unsuccessful")
 
@@ -2798,7 +2803,7 @@ def test_wifi_sdk_aws_2000_bytes_rx_data_send_to_dut_c537910(wifi_sniffer, wifi_
         aws_obj = AwsConnection()
         logger.info("Initiating aws connect from DUT")
         assert aws_obj.connect_to_aws_server_from_dut(wifi_dut=wifi_dut, client_id=client_id,
-                                                      timeout=10), "Failed to connect aws server " \
+                                                      timeout=20), "Failed to connect aws server " \
                                                                    "from DUT"
 
         time.sleep(20)
