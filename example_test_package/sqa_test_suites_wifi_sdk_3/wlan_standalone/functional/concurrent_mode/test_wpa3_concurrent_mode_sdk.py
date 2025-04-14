@@ -238,7 +238,7 @@ class WifiPingThread(ThreadBase):
         else:
             logger().info(f"Initiate ping from third party wifi-client to DUT")
             self.wifi_client.interfaces.wifi.ping(server_ip=self.wifi_dut.interfaces.wifi.get_ip_address(),
-                                                  ip_version=ip_version, ping_size=64, num_ping_attempts=45)
+                                                  num_ping_attempts=45)
 
 
 class LongPingThread(ThreadBase):
