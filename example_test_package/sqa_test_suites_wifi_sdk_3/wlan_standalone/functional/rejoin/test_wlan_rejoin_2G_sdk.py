@@ -147,8 +147,8 @@ class WLanThread(ThreadBase):
                                                                          channel=self.wifi_access_point.interfaces.wifi.channel)
 
                 time.sleep(5)
-                self.socket_data_transfer_recovery_in_rejoin(option_name='SO_MAX_RETRANSMISSION_TIMEOUT_VALUE',
-                                                             option_val='128',
+                self.socket_data_transfer_recovery_in_rejoin(option_name=SocketOptions.SOL_SOCKET,
+                                                             option_val=SocketOptions.TCP_MAX_RETRY,
                                                              data_transfer=True)
 
                 logger().info("Stop sniffer capture")
@@ -250,7 +250,7 @@ class WLanThread(ThreadBase):
                                                                          associated=self.wifi_dut.interfaces.wifi.associated,
                                                                          channel_bitmap_2_4=self.channel_bitmap_2_4,
                                                                          ping_after_power_save=False,
-                                                                         channel=self.wifi_access_point.interfaces.wifi.channel)
+                                                                         channel=4)
                 logger().info("DUT successfully connected with AP")
 
             elif self.test_case_no == 19730:
@@ -346,7 +346,7 @@ class WLanThread(ThreadBase):
                                                                          associated=self.wifi_dut.interfaces.wifi.associated,
                                                                          channel_bitmap_2_4=self.channel_bitmap_2_4,
                                                                          ping_after_power_save=False,
-                                                                         channel=self.wifi_access_point.interfaces.wifi.channel)
+                                                                         channel=4)
                 logger().info("DUT successfully connected with AP")
 
             elif self.test_case_no == 19722:
@@ -362,7 +362,7 @@ class WLanThread(ThreadBase):
                                                                          associated=self.wifi_dut.interfaces.wifi.associated,
                                                                          channel_bitmap_2_4=self.channel_bitmap_2_4,
                                                                          ping_after_power_save=False,
-                                                                         channel=self.wifi_access_point.interfaces.wifi.channel)
+                                                                         channel=4)
                 logger().info("DUT successfully connected with AP")
             else:
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
@@ -492,7 +492,7 @@ class WLanThread(ThreadBase):
             assert False
 
     def socket_data_transfer_recovery_in_rejoin(self, option_name=None, option_val=None, bsdSetSocketOpt=True,
-                                                data_transfer=False):
+                                                data_transfer=False, rejoin_time=100):
 
         """ This method is responsible to validate socket data transfer recovery after rejoin event """
         if data_transfer:
@@ -576,10 +576,13 @@ class WLanThread(ThreadBase):
             self.switch.interfaces.pdu_switch.turn_off(delay=150)
             logger().info("Stop sniffer capture")
 
-            logger().info('******* Turn on Access point **********')
-            self.switch.interfaces.pdu_switch.turn_on(delay=100)
+            logger().info(f'******* Turn on Access point with delay {rejoin_time} **********')
+            self.switch.interfaces.pdu_switch.turn_on(delay=rejoin_time)
 
             # Initiate ping from third party wifi-client to DUT
+            logger().info("Initiating ping from third party wifi-client to DUT")
+            logger().info(f"DUT IP address: {self.dut_addr['device_ip']}")
+
             status = ping(self.dut_addr['device_ip'], 20)
             assert status, "Failed to ping to DUT"
         self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -781,6 +784,7 @@ def test_wifi_sdk_rejoin_max_retry_failure_c19722(switch, wifi_sniffer, wifi_acc
     test_name = request.node.name
     max_retry_attempts = 4
     time_period = utf_constants.get("time_period")
+    wifi_access_point.interfaces.wifi.start_ap(channel=4)
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
@@ -1042,6 +1046,7 @@ def test_wifi_sdk_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi
     test_name = request.node.name
     max_retry_attempts = 4
     time_period = utf_constants.get("time_period")
+    wifi_access_point.interfaces.wifi.start_ap(channel=4)
 
     """Verify rejoin functionality by changing connected AP security settings in 2.4Ghz"""
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
@@ -1111,6 +1116,7 @@ def test_wifi_sdk_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_du
     test_name = request.node.name
     rejoin_max_value = 20
     time_period = utf_constants.get("time_period")
+    wifi_access_point.interfaces.wifi.start_ap(channel=4)
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
@@ -1728,6 +1734,7 @@ def test_wifi_sdk_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wi
     """ Verify Rejoin Functionality with US region enabled in 2.4GHZ band"""
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
+    rejoin_time = utf_constants.get("rejoin_time")
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
                           wifi_sniffer=wifi_sniffer,
@@ -1744,7 +1751,7 @@ def test_wifi_sdk_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wi
         time.sleep(2)
         wifi_sniffer.interfaces.capture.start_capture(capture_file="test_rejoin_us_region")
         logger().info("\n\n ****** Access point is going to turn off  ******")
-        wlan_obj.socket_data_transfer_recovery_in_rejoin(bsdSetSocketOpt=False)
+        wlan_obj.socket_data_transfer_recovery_in_rejoin(bsdSetSocketOpt=False, rejoin_time=rejoin_time)
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.
@@ -1785,6 +1792,7 @@ def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wi
     """Verify Rejoin Functionality with EU region enabled in 2.4GHZ band"""
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
+    rejoin_time = utf_constants.get("rejoin_time")
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
@@ -1799,7 +1807,8 @@ def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wi
         time.sleep(5)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         time.sleep(2)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file="test_bgscan_rejoin_")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="test_EU_region_rejoin_19743")
+
         logger().info("\n\n ****** Access point is going to turn off  ******")
         switch.interfaces.pdu_switch.turn_off(delay=150)
         logger().info("Stop sniffer capture")
@@ -1811,8 +1820,12 @@ def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wi
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find Broadcast Probe request packet'
 
-        logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=100)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="Turn_on_AP_19743")
+
+        logger().info(f'******* Turn on Access point with delay {rejoin_time}**********')
+        switch.interfaces.pdu_switch.turn_on(delay=rejoin_time)
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(wlan_obj.dut_addr['device_ip'], 20)
@@ -1822,6 +1835,8 @@ def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wi
             logger().info('**** DUT successfully re-associated after AP power turn on ****')
         else:
             logger().info('DUT failed to reconnect after AP power turn on ')
+
+        wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1860,6 +1875,7 @@ def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_access_point, wifi_sniffer,
         # Please Note - ASUS AP doesn't have Japan region, So changed to US region"""
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
+    rejoin_time = utf_constants.get("rejoin_time")
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
@@ -1875,7 +1891,7 @@ def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_access_point, wifi_sniffer,
         time.sleep(2)
         wifi_sniffer.interfaces.capture.start_capture(capture_file="test_rejoin_japan_region")
         logger().info("\n\n ****** Access point is going to turn off  ******")
-        wlan_obj.socket_data_transfer_recovery_in_rejoin(bsdSetSocketOpt=False)
+        wlan_obj.socket_data_transfer_recovery_in_rejoin(bsdSetSocketOpt=False, rejoin_time=rejoin_time)
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.
@@ -1925,6 +1941,7 @@ def test_wifi_sdk_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_po
     """ Verify Rejoin Functionality with world mode region enabled in 2.4GHZ band"""
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
+    rejoin_time = utf_constants.get("rejoin_time")
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
@@ -1952,7 +1969,7 @@ def test_wifi_sdk_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_po
             'Unable to find Broadcast Probe request packet'
 
         logger().info('******* Turn on Access point **********')
-        switch.interfaces.pdu_switch.turn_on(delay=100)
+        switch.interfaces.pdu_switch.turn_on(delay=rejoin_time)
 
         # Initiate ping from third party wifi-client to DUT
         status = ping(wlan_obj.dut_addr['device_ip'], 20)

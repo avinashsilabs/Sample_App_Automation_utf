@@ -1465,6 +1465,8 @@ constants:
         value:  'secured_wifi_station_ping_soc.rps'
     m4_rps_plain:
         value: 'wifi_station_ping_soc.rps'
+    rejoin_time:
+        value: 160
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
 
