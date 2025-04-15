@@ -305,7 +305,7 @@ class WPA2Enterprise(ThreadBase):
                 throughput_type = 3
                 size = 1460
 
-            if self.test_case_no == "679992" or self.test_case_no == "679993":
+            if self.test_case_no == "679992" or self.test_case_no == "679993"or self.test_case_no == "113792":
                 transfer_type = 2
                 protocol = 17
                 throughput_type = 4
@@ -344,10 +344,17 @@ class WPA2Enterprise(ThreadBase):
                     logger().info("DUT successfully connected with AP")
                     time.sleep(2)
                 else:
-                    self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
-                                                                            wifi_access_point=self.wifi_access_point,
-                                                                            eap_type=self.eap_type,
-                                                                            ping_after_power_save=True)
+                    if self.test_case_no == "113792":
+                        self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
+                                                                                wifi_access_point=self.wifi_access_point,
+                                                                                eap_type=self.eap_type,
+                                                                                ping_after_power_save=True,
+                                                                                set_eap_cred=False)
+                    else:
+                        self.dut_addr = self.sl_collections.join_to_eap_network(wifi_dut=self.wifi_dut,
+                                                                                wifi_access_point=self.wifi_access_point,
+                                                                                eap_type=self.eap_type,
+                                                                                ping_after_power_save=True)
                     logger().info(
                         f"device_ip, device_mac : {self.dut_addr['device_ip']}, {self.dut_addr['dut_mac_address']}")
             if self.eap_type_tls_no_cert == "tls" or self.eap_type_tls_no_cert == "ttls" or self.eap_type_tls_no_cert == "peap":
@@ -3335,7 +3342,6 @@ def test_wifi_sdk_http_client_connection_wpa2_enterprise_c113806(wifi_dut, wifi_
         logger().info("Stopping sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -3369,10 +3375,11 @@ def test_wifi_sdk_http_client_connection_wpa2_enterprise_c113806(wifi_dut, wifi_
                                    "ca_file": 'cacert_encrypted.pem'})
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
-def test_wifi_sdk_wpa2_enterprise_eap_tls_C113792(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
-                                                          sniffer_filter, radius_server, sl_collections, request):
-    """ This test case verifies the WPA2 Enterprise Connectivity while using EAP TLS Method when the certificate
-            header is removed from certificate """
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_wpa2_enterprise_eap_tls_C113792(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, net_perf_client,
+                                                          sniffer_filter, protocol, radius_server, sl_collections, request, wifi_client):
+    """ This test case verifies the WPA2 Enterprise Connectivity while using EAP TLS Method when the encrypted certificate
+        is loaded and data_traffic in it  """
     try:
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -3383,10 +3390,12 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_C113792(wifi_dut, wifi_access_point, w
         logger().info(f"****** DUT MAC ADDRESS **** {dut_mac_address}")
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"**** AP mac address*****{ap_mac_address}")
-        wifi_dut.interfaces.wifi.set_eap_credentials(credential_key="12345678")
+        key = '"'"\\"'"'"12345678\\"'"''"'
+        wifi_dut.interfaces.wifi.set_eap_credentials(credential_key=key)
         for count in range(0, utf_constants.get('iter_count')):
             wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                         sl_collections=sl_collections, test_name=test_name, eap_type="tls")
+                                         sl_collections=sl_collections, test_name=test_name, eap_type="tls", test_case_no="113792",
+                                         data_transfer=True, wifi_client=wifi_client, traffic_type="TX", protocol=protocol, net_perf_client=net_perf_client)
             wifi_thread.start()
             wifi_thread.wait_for_exit()
         logger().info("Stop Sniffer finally")
@@ -3395,7 +3404,12 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_C113792(wifi_dut, wifi_access_point, w
                                                             wifi_access_point=wifi_access_point,
                                                             dut_mac_address=dut_mac_address,
                                                             ap_mac_address=ap_mac_address)
-        sniffer_verification.verify_eap_failure_sniffer_validation()
+        sniffer_verification.verify_sniffer_validation()
+        packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=ap_mac_address,
+            sa_addr=wifi_thread.dut_addr['dut_mac_address'], filter_name='eap_type_tls_verification')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
+            'packet_count'], 'Unable to find EAP frames sent from AP in sniffer'
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
