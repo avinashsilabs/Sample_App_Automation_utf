@@ -73,7 +73,7 @@ class TCPThread(ThreadBase):
         self.port_number = port_number
 
     def run(self):
-        if True:
+        try:
             global socket_list
             keepalive_time = 60
             self.socket_fd = (
@@ -87,13 +87,13 @@ class TCPThread(ThreadBase):
             )
             # Append the sync and async sockets to the list to close the sockets at the end of the testcase
             if (
-                self.transfer_type == "TX"
-                and self.socket_fd not in socket_list["sync_socket"]
+                    self.transfer_type == "TX"
+                    and self.socket_fd not in socket_list["sync_socket"]
             ):
                 socket_list["sync_socket"].append(self.socket_fd)
             if (
-                self.transfer_type == "RX"
-                and self.socket_fd not in socket_list["async_socket"]
+                    self.transfer_type == "RX"
+                    and self.socket_fd not in socket_list["async_socket"]
             ):
                 socket_list["async_socket"].append(self.socket_fd)
 
@@ -109,12 +109,10 @@ class TCPThread(ThreadBase):
                 timeout=5,
                 asynch=0 if self.transfer_type == "TX" else 1,
             )
-            logger().info(f"bind API is invoked")
             if self.transfer_type != "TX":
                 self.wifi_dut.interfaces.wifi.listen(
                     socket_fd=self.socket_fd, backlog=1, asynch=1
                 )
-                logger().info(f"listen API is invoked")
                 ThreadBase.call_functions_simultaneously(
                     [
                         (
@@ -141,23 +139,23 @@ class TCPThread(ThreadBase):
             )
             for count in range(3):
                 connect_status = False
-                if True:
+                try:
                     self.wifi_dut.interfaces.wifi.bsdSocketConnect(
                         socket_fd=self.socket_fd,
                         server_ip=self.remote_ip_address,
                         server_port=self.port_number,
                     )
                     connect_status = True
-                    # break
-                # except:
-                #     logger().info(
-                #         f"Socket connection failed in DUT...retry_count:{count + 1}"
-                #     )
-                # assert connect_status, "Socket connection failed in DUT"
-        # except Exception as e:
-        #     logger().info(
-        #         f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n"
-        #     )
+                    break
+                except:
+                    logger().info(
+                        f"Socket connection failed in DUT...retry_count:{count + 1}"
+                    )
+                    assert connect_status, "Socket connection failed in DUT"
+        except Exception as e:
+            logger().info(
+                f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n"
+            )
 
     def transmit_tcp_data(self):
         duration = 60
@@ -234,7 +232,7 @@ class UDPThread(ThreadBase):
         self.port_number = port_number
 
     def run(self):
-        if True:
+        try:
             global socket_list
             keepalive_time = 60
             self.socket_fd = (
@@ -278,25 +276,10 @@ class UDPThread(ThreadBase):
                     option_name="SO_KEEPALIVE",
                     option_val=keepalive_time,
                 )
-            for count in range(3):
-                connect_status = False
-                if True:
-                    self.wifi_dut.interfaces.wifi.bsdSocketConnect(
-                        socket_fd=self.socket_fd,
-                        server_ip=self.remote_ip_address,
-                        server_port=self.port_number,
-                    )
-                    connect_status = True
-                #     break
-                # except:
-                #     logger().info(
-                #         f"Socket connection failed in DUT...retry_count:{count + 1}"
-                #     )
-                assert connect_status, "Socket connection failed in DUT"
-        # except Exception as e:
-        #     logger().info(
-        #         f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n"
-        #     )
+        except Exception as e:
+            logger().info(
+                f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n"
+            )
 
     def transmit_udp_data(self):
         duration = 60
@@ -3454,7 +3437,7 @@ def test_verify_one_UDP_RX_and_TCP_RX_using_multithread_C689599(wifi_dut, wifi_c
         time.sleep(2)
         wifi_dut.interfaces.wifi.stop_ap()
 
-@pytest.mark.skip("validation is in progress")
+
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
     "wifi_dut",
@@ -3574,7 +3557,7 @@ def test_verify_two_TCP_TX_and_TCP_RX_using_multithread_C689590(wifi_dut, wifi_c
         time.sleep(2)
         wifi_dut.interfaces.wifi.stop_ap()
 
-@pytest.mark.skip("validation is in progress")
+
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.config(
     "wifi_dut",
