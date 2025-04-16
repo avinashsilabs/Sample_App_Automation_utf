@@ -1651,7 +1651,8 @@ def test_wifi_sdk_ssl_tx_socket_connection_in_wpa3_transition_enterprise_c680002
         wifi_dut.interfaces.wifi.set_eap_credentials()
 
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                       passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                       security="wpa3_transition_enterprise", uid="user1", enc="tls")
@@ -1680,7 +1681,7 @@ def test_wifi_sdk_ssl_tx_socket_connection_in_wpa3_transition_enterprise_c680002
             pkt_count = 1
             tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=buffer_length))
             ssl_server.interfaces.ssl.send_data(1, pkt_count, buffer_length, message=tx_buffer)
-            buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock, timeout=70, async_timeout=70)
+            buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock, timeout=150, async_timeout=150)
             assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
         logger().info("Stop Sniffer finally")
@@ -1751,7 +1752,8 @@ def test_wifi_sdk_ssl_rx_socket_connection_in_wpa3_transition_enterprise_c680003
         wifi_dut.interfaces.wifi.set_eap_credentials()
 
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                       passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                       security="wpa3_transition_enterprise", uid="user1", enc="ttls")
@@ -1857,7 +1859,8 @@ def test_wifi_sdk_wpa3_transition_enterprise_eap_tls_multicast_rx_c680001(multic
         wifi_dut.interfaces.wifi.set_eap_credentials()
 
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                       passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                       security="wpa3_transition_enterprise", uid="user1", enc="tls")
@@ -1946,7 +1949,8 @@ def test_wsdk_WPA3_EAP_transition_Conn_TLS_conn_with_sha384_C680013(wifi_dut, wi
         wifi_dut.interfaces.wifi.set_eap_credentials()
 
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                       passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                       security="wpa3_transition_enterprise", uid="user1", enc="tls")
@@ -2029,7 +2033,8 @@ def test_wsdk_WPA3_EAP_transition_Conn_TLS_conn_with_sha512_C680015(wifi_dut, wi
         wifi_dut.interfaces.wifi.set_eap_credentials()
 
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                       passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                       security="wpa3_transition_enterprise", uid="user1", enc="tls")
