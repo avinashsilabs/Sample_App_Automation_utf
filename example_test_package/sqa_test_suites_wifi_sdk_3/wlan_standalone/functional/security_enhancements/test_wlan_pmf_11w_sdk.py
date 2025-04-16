@@ -578,7 +578,7 @@ def test_wifi_sdk_disconnection_with_pmf_c19672(wifi_sniffer, wifi_access_point,
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -586,7 +586,7 @@ def test_wifi_sdk_disconnection_with_pmf_c19672(wifi_sniffer, wifi_access_point,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "custom_features": Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features" : Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.IEEE802_11W | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.IEEE802_11W | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -642,7 +642,7 @@ def test_wifi_sdk_mgmt_pmf_enable_receive_data_c19671(wifi_dut, wifi_access_poin
             'packet_count']
 
         time.sleep(5)
-        remote_socket.interfaces.socket.close_server()
+        remote_socket.interfaces.socket.stop()
         wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
 
     except Exception as e:
