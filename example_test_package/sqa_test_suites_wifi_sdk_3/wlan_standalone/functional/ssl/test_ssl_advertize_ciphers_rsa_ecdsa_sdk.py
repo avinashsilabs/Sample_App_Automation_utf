@@ -47,8 +47,6 @@ The testcases added in this file run below test steps for DUT-Si91x
         5. NUC Wifi Sniffer
 """
 
-iteration_count = UTFConstantReader().get('iter_count')
-
 
 def logger():
     return get_logger(__name__)
@@ -502,69 +500,77 @@ def test_wifi_sdk_advertise_ciphers_ssl_rx_c19617(wifi_sniffer, wifi_access_poin
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.parametrize("iter_count", range(iteration_count))
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
 @pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256']])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 def test_wifi_sdk_advertise_ciphers_ssl_tx_c564188(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
-                                                   request, cert, sl_collections, sniffer_filter, iter_count):
+                                                   request, cert, sl_collections, sniffer_filter, utf_constants):
     try:
-        ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
+        iterations = utf_constants.get('iter_count')
+        for i in range(iterations):
+            logger().info(f"Iteration {i + 1} of {iterations}")
+            ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
                                  cipher_list, sniffer_filter=sniffer_filter, server_cert=cert[1],
                                  server_key=cert[2], mode=0)
-        ssl_obj.ssl_connection_tx_rx(ca_cert=cert[0])
+            ssl_obj.ssl_connection_tx_rx(ca_cert=cert[0])
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.parametrize("iter_count", range(iteration_count))
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
 @pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384']])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 def test_wifi_sdk_advertise_ciphers_ssl_tx_c564189(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
-                                                   request, cert, sl_collections, sniffer_filter, iter_count):
+                                                   request, cert, sl_collections, sniffer_filter, utf_constants):
     try:
-        ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
+        iterations = utf_constants.get('iter_count')
+        for i in range(iterations):
+            logger().info(f"Iteration {i + 1} of {iterations}")
+            ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
                                  cipher_list, sniffer_filter=sniffer_filter, server_cert=cert[1],
                                  server_key=cert[2], mode=0)
-        ssl_obj.ssl_connection_tx_rx(ca_cert=cert[0])
+            ssl_obj.ssl_connection_tx_rx(ca_cert=cert[0])
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.parametrize("iter_count", range(iteration_count))
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
 @pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256']])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 def test_wifi_sdk_advertise_cipher_ssl_tx_c564193(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
-                                                  request, cert, sl_collections, sniffer_filter, iter_count):
+                                                  request, cert, sl_collections, sniffer_filter,utf_constants):
     try:
-        ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
+        iterations = utf_constants.get('iter_count')
+        for i in range(iterations):
+            logger().info(f"Iteration {i + 1} of {iterations}")
+            ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
                                  cipher_list, sniffer_filter=sniffer_filter, server_cert=cert[1],
                                  server_key=cert[2], mode=0)
-        ssl_obj.ssl_connection_tx_rx(ca_cert=cert[0])
+            ssl_obj.ssl_connection_tx_rx(ca_cert=cert[0])
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.parametrize("iter_count", range(iteration_count))
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("cert", ["ca-chain.cert.pem"])
 @pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256']])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 def test_wifi_sdk_advertise_cipher_ssl_tx_c564190(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
-                                                  request, cert, sl_collections, sniffer_filter, iter_count):
+                                                  request, cert, sl_collections, sniffer_filter, utf_constants):
     try:
-        ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
-                                 cipher_list, sniffer_filter=sniffer_filter, mode=0)
-        ssl_obj.ssl_connection_tx_rx(ca_cert=cert)
+        iterations = utf_constants.get('iter_count')
+        for i in range(iterations):
+            logger().info(f"Iteration {i + 1} of {iterations}")
+            ssl_obj = ssl_connection(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, request, sl_collections,
+                                     cipher_list, sniffer_filter=sniffer_filter, mode=0)
+            ssl_obj.ssl_connection_tx_rx(ca_cert=cert)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
@@ -703,7 +709,7 @@ def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537934(wifi_sniffer, wifi_acce
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list", [['TLS13_CHACHA20_POLY1305_SHA256']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
-@pytest.mark.check2
+
 def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537941(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                          cipher_list, sl_collections, request, sniffer_filter, ca_cert):
     """
