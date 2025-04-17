@@ -5,6 +5,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xTCPIPFeatureBitMap,
     Si91xExtTCPIPFeatureBitMap,
     Si91xCertificateType,
+    Si91xCertIdentifier,
     Si91xFeatureBitMap,
     Si91xConfigFeatureBitMap,
     Si91xMqttQos,
@@ -16,6 +17,7 @@ from utf.utils.logger import get_logger
 import string
 import re
 import random
+import concurrent.futures
 from utf.utils.thread_base import ThreadBase
 from typing import Dict
 from datetime import datetime
@@ -25,6 +27,7 @@ from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
 from utf.utils.time_measurer import TimeMeasurer
 from utf.interfaces.iperf.iperf_constants import IperfConstants
+from utf.utils import get_tls_certificate_dir
 
 """The testcases added in this file can run below test steps :
         1. Configuration of DUT in 2G
@@ -48,6 +51,107 @@ Author : Saurabh Sharma
 
 def logger():
     return get_logger(__name__)
+
+class HTTPSGET(ThreadBase):
+    def __init__(self, wifi_dut=None, http_server=None, index_path=None, http_client=None, iter_count=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.http_server = http_server
+        self.index_path = index_path
+        self.http_client = http_client
+        self.iter_count = iter_count
+        self.server_port = None
+
+    def run(self):
+        for i in range(5):
+            status_dut, content_dut = self.wifi_dut.interfaces.wifi.http_get(self.http_server.interfaces.http,
+                                                                             self.index_path,
+                                                                             server_port=self.server_port)
+            status_client, content_client = self.http_client.interfaces.http.http_get(self.http_server.interfaces.http,
+                                                                                      self.index_path)
+
+            assert not status_dut, "failed to fetch the https data"
+            assert content_dut, "failed to load the https data"
+
+            logger().info(status_dut)
+            logger().info(status_dut)
+
+            assert content_dut == content_client, "\n Fetched Data from DUT and HTTP client are not same \n"
+        status = self.wifi_dut.interfaces.wifi.http_client_deinit()
+        if status == SLStatus.SL_STATUS_OK:
+            self.http_client_initialized = False
+
+    def http_client_init(self):
+        self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
+        self.server_port = 443
+        https_enable = True
+        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=https_enable, tls_version="tls_v_1_3")
+        if status == SLStatus.SL_STATUS_OK:
+            self.http_client_initialized = True
+
+
+class MQTTParallelThread(ThreadBase):
+    def __init__(self, wifi_dut=None, mqtt_server=None, mqtt_client=None, topic=None, message=None, iter_count=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.mqtt_server = mqtt_server
+        self.mqtt_client = mqtt_client
+        self.topic = topic
+        self.message = message
+        self.iter_count = iter_count
+        self.message_address = None
+        self.topic_address = None
+        self.address_dict = {
+            "topic": [],
+            "message": [],
+        }
+
+    def run(self):
+        logger().info(f"The address dict is {self.address_dict}")
+        for topic_address, message_address in zip(self.address_dict['topic'], self.address_dict['message']):
+
+            self.wifi_dut.interfaces.mqtt.mqtt_client_publish_allocate_mem(topic=self.topic, message=self.message,
+                                                                           qos=1,
+                                                                           timeout=100, load_mem=True,
+                                                                           message_address=message_address,
+                                                                           topic_address=topic_address)
+
+            msgs = []
+            sw = Stopwatch()
+            while sw.elapsed_sec < 10:
+                time.sleep(0.1)
+                msgs = self.mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+
+            assert msgs[0].topic == self.topic, "No message received by mqtt-client on subscribed topic"
+            assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
+            assert msgs[0].payload.decode() == self.message, "No message is received by mqtt-client on subscribed topic or " \
+                                                                 "message received is wrong"
+
+        logger().info("....Unsubscribing from the topic....")
+        self.wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=self.topic)
+
+    def mqtt_client_connect(self):
+        for i in range(self.iter_count):
+            if self.message is not None:
+                self.message_address = self.wifi_dut.interfaces.wifi.allocate_memory(size=len(self.message) + 1)
+                self.wifi_dut.interfaces.wifi.load_memory(address=self.message_address, size=len(self.message), write_content=self.message)
+                self.address_dict['message'].append(self.message_address)
+            if self.topic is not None:
+                self.topic_address = self.wifi_dut.interfaces.wifi.allocate_memory(size=len(self.topic) + 1)
+                self.wifi_dut.interfaces.wifi.load_memory(address=self.topic_address, size=len(self.topic), write_content=self.topic)
+                self.address_dict['topic'].append(self.topic_address)
+
+        self.wifi_dut.interfaces["mqtt"] = self.wifi_dut.interfaces.wifi
+        self.wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client", server_port=8883, qos=1, is_connection_encrypted=True)
+        logger().info(".....DUT connects to MQTT server.....")
+        self.wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=self.mqtt_server.interfaces.mqtt)
+        time.sleep(15)
+        logger().info(".....MQTT Client connects to MQTT server.....")
+        self.mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=self.mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+        logger().info("MQTT Client subscribes to the topic")
+        self.mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=self.topic, qos=1)
 
 
 class WifiJoin(ThreadBase):
@@ -6243,3 +6347,100 @@ def test_wifi_sdk_mqtt_qos2_connection_failed_c537968(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 4096, "buffer_len": 1600, "priority": 8}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_verify_multithread_using_https_and_mqtt_over_ssl_c563984(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, http_server, http_client):
+    """
+        Test Case ID: C563984
+
+        Objective:
+        Verify the functionality of the DUT (Device Under Test) when performing multithreaded operations using HTTPS and MQTT over SSL.
+
+        Steps:
+        1. Configure the Wi-Fi DUT to connect to the access point.
+        2. Set up SSL certificates for secure communication.
+        3. Start HTTPS operations in one thread.
+        4. Simultaneously, initiate MQTT operations over SSL in another thread.
+        5. Capture network traffic using the Wi-Fi sniffer for analysis.
+        6. Verify that both HTTPS and MQTT operations complete successfully without interference.
+        7. Ensure proper cleanup of resources after the test.
+
+        Parameters:
+        - wifi_sniffer: The Wi-Fi sniffer used to capture network traffic.
+        - mqtt_server: The MQTT server used for the test.
+        - mqtt_client: The MQTT client used for sending and receiving messages.
+        - wifi_access_point: The Wi-Fi access point used for the test.
+        - wifi_dut: The Wi-Fi Device Under Test (DUT).
+        - request: Pytest request object for test metadata.
+        - sl_collections: Collection of utility functions for Wi-Fi operations.
+        - sniffer_filter: Filter configuration for the Wi-Fi sniffer.
+        - http_server: The HTTP server used for HTTPS operations.
+        - http_client: The HTTP client used for sending HTTPS requests.
+
+        Assertions:
+        - Verify that HTTPS operations are successful.
+        - Ensure MQTT operations over SSL complete without errors.
+        - Confirm that no interference occurs between HTTPS and MQTT operations.
+        """
+    try:
+        iter_count=5
+        topic = "mytesttopic"
+        index_path = "index.html"
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=30))
+        capture_filename = request.node.name
+        wifi_dut.interfaces.wifi.set_ssl_certificate(
+            str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")),
+            Si91xCertificateType.SL_NET_SIGNING_CERTIFICATE,
+            Si91xCertIdentifier.SL_NET_TLS_SERVER_CREDENTIAL_START,
+            cert_index=1)
+
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        mqtt_connection = MQTTParallelThread(wifi_dut=wifi_dut, mqtt_server=mqtt_server,
+                                             mqtt_client=mqtt_client,
+                                             topic=topic, message=message, iter_count=iter_count)
+        mqtt_connection.mqtt_client_connect()
+
+        http_get_connection = HTTPSGET(wifi_dut=wifi_dut, http_server=http_server, index_path=index_path,
+                                       http_client=http_client, iter_count=iter_count)
+        http_get_connection.http_client_init()
+        #Start the Multiple Threads
+        mqtt_connection.start()
+        http_get_connection.start()
+        http_get_connection.wait_for_exit()
+        mqtt_connection.wait_for_exit()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.clear_certificate(cert_index=1)
+
+
+

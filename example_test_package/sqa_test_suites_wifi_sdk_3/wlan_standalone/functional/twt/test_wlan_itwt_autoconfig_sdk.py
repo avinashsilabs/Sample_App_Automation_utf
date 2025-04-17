@@ -264,7 +264,9 @@ class TWT_AUTOCONFIG(ThreadBase):
                     mode="power_save_low_latency"
                 )
             self.socket_data_transfer_obj.send_data_over_socket(
-                wifi_dut=self.wifi_dut, duration=self.socket_data_transfer_obj.data_transfer_duration, sleep_time=0
+                wifi_dut=self.wifi_dut,
+                duration=self.socket_data_transfer_obj.data_transfer_duration,
+                sleep_time=0,
             )
             logger().info(f"\n\nDisable the target wake time\n\n")
             self.disable_twt()
@@ -273,7 +275,9 @@ class TWT_AUTOCONFIG(ThreadBase):
                     mode="high_performance"
                 )
             self.socket_data_transfer_obj.send_data_over_socket(
-                wifi_dut=self.wifi_dut, duration=self.socket_data_transfer_obj.data_transfer_duration, sleep_time=0
+                wifi_dut=self.wifi_dut,
+                duration=self.socket_data_transfer_obj.data_transfer_duration,
+                sleep_time=0,
             )
             iteration_count += 1
 
@@ -306,6 +310,8 @@ class TWT_AUTOCONFIG(ThreadBase):
         self.wifi_dut.interfaces.wifi.aws_iot_shadow_add_reported()
         self.wifi_dut.interfaces.wifi.aws_iot_finalize_json_document()
         self.wifi_dut.interfaces.wifi.aws_iot_shadow_update()
+        if self.testcase_id == "538045":
+            return
         logger().info(f"\n....Disconnecting from AWS Cloud....\n")
         self.wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
 
@@ -331,6 +337,65 @@ class TWT_AUTOCONFIG(ThreadBase):
             power_save=False,
         )
 
+        if self.testcase_id == "538045":
+            self.aws_cloud_connectivity()
+            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+            logger().info(f"\n\n Initiating UDP TX Data Transfer \n\n")
+            self.socket_data_transfer_obj.start_remote_socket_server(
+                socket_type=SOCKET_TYPE_UDP
+            )
+            self.socket_data_transfer_obj.open_and_set_socket_option(
+                socket_domain="AF_INET",
+                socket_type="SOCK_DGRAM",
+                socket_protocol="IPPROTO_UDP",
+                wifi_dut=self.wifi_dut,
+            )
+            self.socket_data_transfer_obj.send_data_over_socket(
+                wifi_dut=self.wifi_dut,
+                duration=300,
+                sleep_time=0,
+                socket_type=SOCKET_TYPE_UDP,
+            )
+            logger().info(f"\n\nSniffer Validation for TWT Request Frame\n\n")
+            twt_req_frame = (
+                self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                    sa_addr=self.device_info["dut_mac_address"],
+                    da_addr=ap_mac_address,
+                    filter_name="twt_requesting_sta_1",
+                )
+            )
+            self.wifi_sniffer.interfaces.capture.sniffer_validation(
+                packet_filter1=twt_req_frame, packet_filter2=self.second_level_filter
+            )
+            self.twt_frame_info("twt_request_frame")
+            logger().info(f"\n\nSniffer Validation for TWT Response Frame\n\n")
+            twt_response_frame = (
+                self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                    sa_addr=ap_mac_address,
+                    da_addr=self.device_info["dut_mac_address"],
+                    filter_name="twt_responding_sta_0",
+                )
+            )
+            self.wifi_sniffer.interfaces.capture.sniffer_validation(
+                packet_filter1=twt_response_frame,
+                packet_filter2=self.second_level_filter,
+            )
+            self.twt_frame_info("twt_response_frame")
+
+            # Extracting the TWT Parameters from Sniffer Capture
+            extracted_params = self.extract_twt_setup_command(
+                "./reports/filter2_file.txt"
+            )
+            self.wakeup_interval = extracted_params[1] * (
+                (2 ** int(extracted_params[2])) * 0.000001
+            )
+            self.wakeup_period = extracted_params[0] * (256 * 0.000001)
+            logger().info(
+                f"\n\nThe Wakeup Interval is {self.wakeup_interval} seconds and wakeup period is {self.wakeup_period} seconds\n\n"
+            )
+            logger().info(f"\n....Disconnecting from AWS Cloud....\n")
+            self.wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
+            return
         if self.testcase_id in ["538042", "538043", "538044"]:
             self.aws_cloud_connectivity()
             self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
@@ -1655,6 +1720,88 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_2_secs_recieve_data_from_
             wifi_client=wifi_client,
             sniffer_capture="test_wifi_sdk_verify_dut_behaviour_with_rx_latency_2_secs_recieve_data_from_aws_cloud_tx_latency_0_c538044",
             testcase_id="538044",
+        )
+        twt_autoconfig_obj.start()
+        twt_autoconfig_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@wifi_dut_marker(
+    ca_cert=[
+        "start_field.pem",
+        "SL_NET_SIGNING_CERTIFICATE",
+        "SL_NET_TLS_SERVER_CREDENTIAL_START",
+    ],
+    client_cert=[
+        "client-certificate.crt",
+        "SL_NET_CERTIFICATE",
+        "SL_NET_TLS_CLIENT_CREDENTIAL_START",
+    ],
+    client_key=[
+        "private-key.key",
+        "SL_NET_PRIVATE_KEY",
+        "SL_NET_TLS_CLIENT_CREDENTIAL_START",
+    ],
+    set_timeout_config=False,
+)
+@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
+def test_wifi_sdk_verify_dut_behaviour_with_twt_enabled_while_running_udp_tx_and_aws_traffic_c538045(
+    wifi_dut,
+    remote_socket,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+    request,
+):
+    """
+    Test Case ID: C538045
+
+    Objective:
+    Verify the behavior of the Device Under Test (DUT) with Target Wake Time (TWT) enabled while running UDP TX and AWS traffic.
+
+    Steps:
+    1. Configure the WiFi DUT to connect to the access point.
+    2. Enable TWT on the DUT.
+    3. Start UDP TX data transfer on the DUT.
+    4. Simultaneously, initiate AWS traffic on the DUT.
+    5. Capture network traffic using the WiFi sniffer for analysis.
+    6. Verify that both UDP TX and AWS traffic operate without interference.
+    7. Ensure proper cleanup of resources after the test.
+
+    Parameters:
+    - wifi_dut: The WiFi Device Under Test (DUT) interface.
+    - remote_socket: The remote socket interface.
+    - wifi_access_point: The WiFi access point interface.
+    - wifi_sniffer: The WiFi sniffer interface.
+    - sl_collections: The SL collections interface.
+    - wifi_client: The WiFi client interface.
+    - sniffer_filter: The sniffer filter interface.
+    - request: Pytest request object for test metadata.
+
+    Assertions:
+    - Verify that TWT is successfully enabled on the DUT.
+    - Ensure UDP TX and AWS traffic run concurrently without errors.
+    - Confirm that no packet loss or interference occurs during the test.
+    """
+    try:
+        logger().info(f"\n Execute M4 power save \n")
+        wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
+        twt_autoconfig_obj = TWT_AUTOCONFIG(
+            wifi_dut=wifi_dut,
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            sl_collections=sl_collections,
+            remote_socket=remote_socket,
+            sniffer_filter=sniffer_filter,
+            wifi_client=wifi_client,
+            sniffer_capture=request.node.name,
+            testcase_id="538045",
         )
         twt_autoconfig_obj.start()
         twt_autoconfig_obj.wait_for_exit()
