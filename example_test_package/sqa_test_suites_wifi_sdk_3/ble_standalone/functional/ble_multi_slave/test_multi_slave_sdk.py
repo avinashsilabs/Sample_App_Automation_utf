@@ -70,7 +70,7 @@ class BleFunctionality(ThreadBase):
 
 
     def run(self):
-        if adv_and_scan:
+        if self.adv_and_scan:
             self.wifi_dut.interfaces.wifi.ble_start_advertising()
             enable_wifi_ps = self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
             assert enable_wifi_ps == 0, 'failed to enable wlan power save'
@@ -128,7 +128,6 @@ class BleFunctionality(ThreadBase):
             assert self.ble_client_address is not None
             time.sleep(1)
 
-            self.wifi_dut.interfaces.wifi.ble_start_advertising()
             # Start scanning and connect to ble client
 
             if self.random_addr_on_dut:
@@ -792,3 +791,85 @@ def test_verify_ble_scanning_10240ms_DUT_connected_as_peripheral_C663250(wifi_du
         wifi_dut.interfaces.wifi.ble_stop_scanning()
         logger().info("stop advertising")
         wifi_dut.interfaces.wifi.ble_stop_advertising()
+
+def test_verify_BLE_central_connection_with_random_addr_peripheral_connection_with_public_addr_C663244(wifi_dut, ble_clients, sl_collections):
+    """1.Initilize the dut in (0,13) opermode
+              2.Start the ble in dut
+              3.Scan and advertise on dut
+              4.Enable the passive scan on dut
+              5.Scan with public address & Advertise with random address
+              6.Check scanning & advertising for 5mins"""
+
+    try:
+        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        ble_client1 = ble_clients[0]
+        ble_client2 = ble_clients[1]
+        logger().info("Initiate ble service in DUT")
+        bt_dut_address_random = "11:33:33:33:33:11"
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1)
+        assert bt_dut_address, "failed to initiate ble in dut"
+
+        ble_obj1 = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1, dual_role_dut_as_master=True, bt_dut_address=bt_dut_address, random_addr_on_dut=True)
+        ble_obj1.start()
+        ble_obj1.wait_for_exit()
+
+        time.sleep(10)
+
+        ble_obj2 = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client2, dual_role_dut_as_slave=True, bt_dut_address=bt_dut_address)
+        ble_obj2.start()
+        ble_obj2.wait_for_exit()
+
+        time.sleep(600)
+
+        ble_obj1.check_device_state_on_rasp()
+        ble_obj2.check_device_state_on_rasp()
+        logger().info("disconnecting from first raspi")
+        ble_client1.interfaces.bluetooth.disconnect(bt_dut_address_random)
+        logger().info("disconnecting from secondary raspi")
+        ble_client2.interfaces.bluetooth.disconnect(bt_dut_address)
+        # wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_obj1.ble_client_address)
+        # wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_obj2.ble_client_address)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+def test_verify_BLE_central_connection_with_public_addr_peripheral_connection_with_random_addr_C663243(wifi_dut, ble_clients, sl_collections):
+    """1.Initilize the dut in (0,13) opermode
+              2.Start the ble in dut
+              3.Scan and advertise on dut
+              4.Enable the passive scan on dut
+              5.Scan with public address & Advertise with random address
+              6.Check scanning & advertising for 5mins"""
+
+    try:
+        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        ble_client1 = ble_clients[0]
+        ble_client2 = ble_clients[1]
+        logger().info("Initiate ble service in DUT")
+        bt_dut_address_random = "11:33:33:33:33:11"
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1)
+        assert bt_dut_address, "failed to initiate ble in dut"
+
+        ble_obj1 = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1, dual_role_dut_as_master=True, bt_dut_address=bt_dut_address)
+        ble_obj1.start()
+        ble_obj1.wait_for_exit()
+
+        time.sleep(10)
+
+        ble_obj2 = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client2, dual_role_dut_as_slave=True, bt_dut_address=bt_dut_address, random_addr_on_dut=True)
+        ble_obj2.start()
+        ble_obj2.wait_for_exit()
+
+        time.sleep(600)
+
+        ble_obj1.check_device_state_on_rasp()
+        ble_obj2.check_device_state_on_rasp()
+        logger().info("disconnecting from first raspi")
+        ble_client1.interfaces.bluetooth.disconnect(bt_dut_address)
+        logger().info("disconnecting from secondary raspi")
+        ble_client2.interfaces.bluetooth.disconnect(bt_dut_address_random)
+        # wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_obj1.ble_client_address)
+        # wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_obj2.ble_client_address)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)

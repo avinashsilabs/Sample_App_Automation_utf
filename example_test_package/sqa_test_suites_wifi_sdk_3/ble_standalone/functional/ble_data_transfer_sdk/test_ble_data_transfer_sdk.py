@@ -24,6 +24,8 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingM
 from utf.utils.logger import get_logger
 from utf.utils.stopwatch import Stopwatch
 
+import os
+
 
 def logger():
     return get_logger(__name__)
@@ -81,13 +83,16 @@ class Ble_Data_Transfer:
         logger().info(f"Get local name : {status}")
         assert status == self.set_local_name, "Set local name and get local name not match"
 
-    def advertising_dut(self):
+    def advertising_dut(self, mtu_size=None):
         logger().info("***** Advertising from DUT *****")
         self.ble_dut.interfaces.wifi.ble_start_advertising()
         dut_state = int(self.ble_dut.interfaces.wifi.ble_get_device_state())
         logger().info(f"DUT Advertising Status :{dut_state}")
         assert dut_state == 1
         logger().info("***** DUT Advertising is Successful *****")
+        if mtu_size:
+            logger().info(f"*******Setting MTU {mtu_size}*******")
+            self.ble_dut.interfaces.wifi.ble_set_mtu(mtu_size=mtu_size)
 
     def stop_advertising_dut(self):
         logger().info("***** Stop advertising from DUT *****")
@@ -105,6 +110,7 @@ class Ble_Data_Transfer:
             logger().info(f"***** Start advertising from Remote with SMP and {service} service *****")
             self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
                 bt_dut_address=self.ble_dut_address, service_classes=[service])
+
 
         assert self.ble_client_address is not None, "Unable to fetch bluetooth address from Remote device"
         logger().info(f"Advertised remote BLE device")
@@ -156,7 +162,7 @@ class Ble_Data_Transfer:
 
         return self.ble_client_address
 
-    def scan_conn_from_dut_device(self):
+    def scan_conn_from_dut_device(self, mtu_size=None):
         self.scan_from_dut()
         self.power_save()
 
@@ -165,6 +171,8 @@ class Ble_Data_Transfer:
 
         for retry in range(retries):
             try:
+                if mtu_size:
+                    self.ble_dut.interfaces.wifi.ble_set_mtu(mtu_size=mtu_size)
                 logger().info(f"Initiating connection, this can take up to {timeout} seconds....")
                 self.ble_dut.interfaces.bluetooth.ble_connect(
                     ble_remote_dev_address=self.ble_client_address,
@@ -178,6 +186,31 @@ class Ble_Data_Transfer:
 
                 assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
                 logger().info("BLE Connection success")
+                if mtu_size:
+                    tw = Stopwatch()
+                    link_key = ""
+                    while tw.elapsed_sec < 120:
+                        events = self.ble_dut.interfaces.bluetooth.get_async_events()  # since_time=0)
+                        logger().info(f"---------------->Events: {events}")
+                        for event in events:
+                            logger().info(f"---------------->Event Data: {event.event_data}")
+                            if "link_key" in event.event_data:
+                                event_data = event.event_data
+                                link_key_data = re.findall("((?<=link_key:: ).*:)", event_data)[0]
+                                logger().info(f"link_key_data : {link_key_data}")
+                                link_key = '0x' + "".join(
+                                    [i.strip() if len(i.strip()) == 2 else '0' + i.strip() for i in
+                                     link_key_data.split(":")][:16])
+                            else:
+                                continue
+                        if link_key:
+                            break
+
+                    logger().info(f"**************Link Key Extracted: {link_key}***************")
+                    assert len(link_key) == 34, f"link key is not proper format"
+
+                    return link_key
+
                 break
 
             except Exception as ex:
@@ -193,7 +226,7 @@ class Ble_Data_Transfer:
         self.ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=self.ble_client_address)
         logger().info(f"Remote device found in scan results ,BLE scanning is successful")
 
-    def scan_conn_from_remote_device(self, service=None):
+    def scan_conn_from_remote_device(self, service=None, mtu_size=None):
         logger().info("***** Scan and Connect from Remote (raspi) *****")
 
         # Start Scan from Remote
@@ -246,8 +279,30 @@ class Ble_Data_Transfer:
 
                 if retry == retries - 1:
                     raise
+        if mtu_size:
+            tw = Stopwatch()
+            link_key = ""
+            while tw.elapsed_sec < 120:
+                events = self.ble_dut.interfaces.bluetooth.get_async_events()  # since_time=0)
+                logger().info(f"---------------->Events: {events}")
+                for event in events:
+                    logger().info(f"---------------->Event Data: {event.event_data}")
+                    if "link_key" in event.event_data:
+                        event_data = event.event_data
+                        link_key_data = re.findall("((?<=link_key:: ).*:)", event_data)[0]
+                        logger().info(f"link_key_data : {link_key_data}")
+                        link_key = '0x' + "".join(
+                            [i.strip() if len(i.strip()) == 2 else '0' + i.strip() for i in link_key_data.split(":")][:16])
+                    else:
+                        continue
+                if link_key:
+                    break
 
-        return self.ble_client_address
+            logger().info(f"**************Link Key Extracted: {link_key}***************")
+            assert len(link_key) == 34, f"link key is not proper format"
+
+        return self.ble_client_address, link_key
+
 
     def service_discovery_on_dut(self, service_uid=None, char_uid=None):
         time.sleep(3)
@@ -530,6 +585,7 @@ class Ble_Data_Transfer:
 
         logger().info("******************** ble_remove_service ***********************")
         self.ble_dut.interfaces.wifi.ble_remove_service()
+        return count
 
     def gatt_notify_rx(self, write_handle, enable_notify=None, data=None, notify_time=100, svc=None, charc=None):
         # enable notifications
@@ -592,6 +648,8 @@ class Ble_Data_Transfer:
         time.sleep(1)
         logger().info("******************** ble_remove_service ***********************")
         self.ble_dut.interfaces.wifi.ble_remove_service()
+
+        return indication_count
 
     def disconnect_form_dut(self):
         logger().info("\n\n\n ***** Disconnect from DUT ***** \n\n\n")
@@ -2294,3 +2352,716 @@ def test_wifi_sdk_ble_dut_as_master_tx_notification_240_bytes_C664695(ble_dut, b
         ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
         ble_client.interfaces.bluetooth.close()
         ble_obj.clear_dut(role="master")
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_verify_ble_tx_write_with_response_150bytes_MTU_size_dut_as_slave_role_C705948(ble_dut, ble_client,
+                                                                                       sl_collections, ble_sniffer):
+    bt_mon_log_file_name = (f"reports/test_verify_ble_tx_write_with_response_150bytes_MTU_size_dut_as_slave_role_C705948"
+                            f"C705948_{int(time.time())}.log")
+    try:
+        with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
+            ble_sniffer.interfaces.sniffer.init_sniffer()
+            ble_sniffer.interfaces.sniffer.start_capture(
+                capture_file="test_verify_ble_tx_write_with_response_150bytes_MTU_size_dut_as_slave_role_C705948")
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            # Initializing DUT BLE Device
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=0)
+            # Set DUT Local name
+            ble_obj.set_local_get_local_name_validation()
+            # Set DUT To Advertising
+            ble_obj.advertising_dut(mtu_size=150)
+            # Power Save Mode WLAN And BLE
+            ble_obj.power_save()
+            # Scan and Connect From Remote Device
+            ble_client_address, link_key = ble_obj.scan_conn_from_remote_device("HeartRateService", mtu_size=150)
+
+            logger().info(".... checking for ble connectivity stability ....")
+            time.sleep(60)
+            # get remote device profile
+            write_handle = ble_obj.service_discovery_on_remote(HeartRateService.UUID,
+                                                               HeartRateControlPointCharacteristic.UUID,
+                                                               HeartRateControlPointCharacteristic)
+            # Configure buffer mode
+            ble_obj.configure_buffer_mode(mode=1, count=2)
+            data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=150))
+            # Write and send BLE 232 bytes of write with response data using the below API
+            write_data_count = ble_obj.gatt_write_with_resp(write_handle=write_handle, data=data, write_time=200,
+                                                            data_length=150)
+
+        # Validating Write With Response Data
+        # write_count1 = ble_obj.validate_write_with_response(bt_mon_log_file=bt_mon_log_file_name, write_handle=write_handle,
+        #                                      data=data, write_data_count=write_data_count, mtu_size=150)
+
+        ble_obj.check_device_state_on_dut()
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", ble_dut_address)
+        ble_client_address_hex1 = re.split(":", ble_client_address)
+
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+
+        slave_address1 = "0x"
+        for hex_data_part in ble_client_address_hex1:
+            slave_address1 = slave_address1 + hex_data_part
+        logger().info(f"slave_address1:{slave_address1}")
+        ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1])
+        if link_key != "":
+            ble_sniffer.interfaces.sniffer.add_link_key(link_key.upper(), master_address, slave_address1)
+
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "ATT")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+
+        assert len(sniffer_data_df.loc[
+                       (sniffer_data_df['Role'] == "* P") & (
+                               sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
+                               sniffer_data_df['Opcode'] == "* ATT_WRITE_REQ") & (
+                               sniffer_data_df[
+                                   '+PDU Length (L2CAP)'] == 150)]) >= int(write_data_count/2), "No ATT_WRITE_REQ packets are present"
+        logger().info("ATT_WRITE_REQ packets are sent successfully")
+        # Disconnect from dut
+        ble_obj.disconnect_form_dut()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+    finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
+        ble_obj.clear_dut()
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_verify_ble_tx_write_with_response_200bytes_MTU_size_dut_as_slave_role_C705949(ble_dut, ble_client,
+                                                                                       sl_collections, ble_sniffer):
+    bt_mon_log_file_name = (f"reports/test_verify_ble_tx_write_with_response_150bytes_MTU_size_dut_as_slave_role_C705948"
+                            f"C705948_{int(time.time())}.log")
+    try:
+        with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
+            ble_sniffer.interfaces.sniffer.init_sniffer()
+            ble_sniffer.interfaces.sniffer.start_capture(
+                capture_file="test_verify_ble_tx_write_with_response_200bytes_MTU_size_dut_as_slave_role_C705949")
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            # Initializing DUT BLE Device
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=1)
+            # Set DUT Local name
+            ble_obj.set_local_get_local_name_validation()
+            # Set DUT To Advertising
+            ble_obj.advertising_dut(mtu_size=200)
+            # Power Save Mode WLAN And BLE
+            ble_obj.power_save()
+            # Scan and Connect From Remote Device
+            ble_client_address, link_key = ble_obj.scan_conn_from_remote_device("HeartRateService", mtu_size=200)
+
+            logger().info(".... checking for ble connectivity stability ....")
+            time.sleep(60)
+            # get remote device profile
+            write_handle = ble_obj.service_discovery_on_remote(HeartRateService.UUID,
+                                                               HeartRateControlPointCharacteristic.UUID,
+                                                               HeartRateControlPointCharacteristic)
+            # Configure buffer mode
+            ble_obj.configure_buffer_mode(mode=1, count=2)
+            data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
+            # Write and send BLE 232 bytes of write with response data using the below API
+            write_data_count = ble_obj.gatt_write_with_resp(write_handle=write_handle, data=data, write_time=200,
+                                                            data_length=200)
+
+        # Validating Write With Response Data
+        ble_obj.validate_write_with_response(bt_mon_log_file=bt_mon_log_file_name, write_handle=write_handle,
+                                             data=data, write_data_count=write_data_count, mtu_size=200)
+
+        ble_obj.check_device_state_on_dut()
+        # Mapping Master and Slave Address for Adding devices for sniffer
+        ble_dut_address_hex = re.split(":", ble_dut_address)
+        ble_client_address_hex1 = re.split(":", ble_client_address)
+
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+
+        slave_address1 = "0x"
+        for hex_data_part in ble_client_address_hex1:
+            slave_address1 = slave_address1 + hex_data_part
+        logger().info(f"slave_address1:{slave_address1}")
+        ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1])
+        if link_key != "":
+            ble_sniffer.interfaces.sniffer.add_link_key(link_key.upper(), master_address, slave_address1)
+
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        logger().info("Sniffer stop successful")
+        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+        time.sleep(30)
+        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "ATT")
+        for captured_file in captured_files:
+            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(captured_file)
+            assert file_size > 0
+        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(exported_csv_file)
+        assert file_size > 0
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+
+        assert len(sniffer_data_df.loc[
+                       (sniffer_data_df['Role'] == "* P") & (
+                               sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
+                               sniffer_data_df['Opcode'] == "* ATT_WRITE_REQ") & (
+                               sniffer_data_df[
+                                   '+PDU Length (L2CAP)'] == 200)]) >= int(
+            write_data_count / 2), "No ATT_WRITE_REQ packets are present"
+        logger().info("ATT_WRITE_REQ packets are sent successfully")
+        # Disconnect from dut
+        ble_obj.disconnect_form_dut()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+    finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
+        ble_obj.clear_dut()
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_verify_ble_tx_indication_50bytes_MTU_size_dut_as_slave_role_C705947(ble_dut, ble_client, sl_collections, ble_sniffer):
+    try:
+        bt_mon_log_file_name = (f"reports/test_verify_ble_tx_indication_50bytes_MTU_size_dut_as_slave_role_C705947_"
+                                f"_C705947_{int(time.time())}.log")
+        with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
+            ble_sniffer.interfaces.sniffer.init_sniffer()
+            ble_sniffer.interfaces.sniffer.start_capture(
+                capture_file="test_verify_ble_tx_indication_50bytes_MTU_size_dut_as_slave_role_C705947")
+            # Initializing DUT BLE Device
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            # Initializing DUT BLE Device
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=1)
+            service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+            char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
+            data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=50))
+
+            # Create Custom services on DUT
+            logger().info("Creating new custom gatt service in DUT")
+            ble_obj.add_service(service_uuid=0x1AA1)
+            logger().info("Adding custom characteristic declaration to the custom service")
+            ble_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1, permissions=34)
+            logger().info("Adding characteristic value attribute to the service")
+            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data="data")
+
+            # Set Local name
+            ble_obj.set_local_get_local_name_validation()
+
+            # Start advertising from dut
+            ble_obj.advertising_dut(mtu_size=50)
+
+            # Power save mode
+            ble_obj.power_save()
+
+            # Scan connect from remote device
+            ble_client_address, link_key = ble_obj.scan_conn_from_remote_device(mtu_size=50)
+
+            # Get All Profiles
+            char_path, char_props = ble_obj.service_discovery_on_dut(service_uid=service_uid, char_uid=char_uid)
+
+            # # Configure Buffer Mode
+            ble_obj.configure_buffer_mode(mode=1, count=2)
+
+            # Enable indication property in 1BB1 characteristic service in custom
+            # DUT will start sending indication data once the indication property is enabled.
+            indication_count = ble_obj.gatt_indication(char_path=char_path, char_uuid=char_uid, indication_time=100, data=data,
+                                    data_length=50)
+
+            ble_obj.check_device_state_on_dut()
+
+            # Mapping Master and Slave Address for Adding devices for sniffer
+            ble_dut_address_hex = re.split(":", ble_dut_address)
+            ble_client_address_hex1 = re.split(":", ble_client_address)
+            logger().info("--------DEVICE-ADDRESS-------")
+            master_address = "0x"
+            for hex_data_part in ble_dut_address_hex:
+                master_address = master_address + hex_data_part
+            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            slave_address1 = "0x"
+            for hex_data_part in ble_client_address_hex1:
+                slave_address1 = slave_address1 + hex_data_part
+            logger().info(f"slave_address:{slave_address1}")
+            ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1])
+            time.sleep(30)
+            if link_key != "":
+                ble_sniffer.interfaces.sniffer.add_link_key(link_key.upper(), master_address, slave_address1)
+            ble_sniffer.interfaces.sniffer.stop_capture()
+            logger().info("Sniffer stop successful")
+            captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+            time.sleep(30)
+            exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "ATT")
+            for captured_file in captured_files:
+                captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+                file_size = os.path.getsize(captured_file)
+                assert file_size > 0
+            exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(exported_csv_file)
+            assert file_size > 0
+            sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+            logger().info(sniffer_data_df.head())
+            assert len(sniffer_data_df.loc[
+                           (sniffer_data_df['Role'] == "* P") & (
+                                   sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
+                                   sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
+                                   sniffer_data_df['+PDU Length (L2CAP)'] == 50)]) >= int(
+                 indication_count/ 2), "No ATT_HANDLE_VALUE_IND packets are present"
+            logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
+
+
+            # disconnect from remote.
+            ble_obj.disconnect_from_remote()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+    finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
+        ble_obj.clear_dut()
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_verify_ble_tx_write_without_response_data_220bytes_MTU_size_dut_as_master_role_C705952(ble_dut, ble_client,
+                                                                                           sl_collections, ble_sniffer):
+    bt_mon_log_file_name = (f"reports/test_verify_ble_tx_write_without_response_data_220bytes_MTU_size_dut_as_master_role_C705952_"
+                            f"_C705952_{int(time.time())}.log")
+    try:
+        with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
+            ble_sniffer.interfaces.sniffer.init_sniffer()
+            ble_sniffer.interfaces.sniffer.start_capture(
+                capture_file="test_verify_ble_tx_write_without_response_data_220bytes_MTU_size_dut_as_master_role_C705952")
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            # Initializing DUT BLE Device
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=1)
+            # Adv Remote device
+            ble_client_address1 = ble_obj.advertising_remote("ImmediateAlertService")
+            # Start scan and connect from dut
+            link_key = ble_obj.scan_conn_from_dut_device(mtu_size=220)
+            logger().info(f"*************link key: {link_key}************")
+            time.sleep(15)
+            # get remote device profile
+            write_handle = ble_obj.service_discovery_on_remote(service_uuid=ImmediateAlertService.UUID,
+                                                               char_uuid=ImmediateAlertLevelCharacteristic.LLA_UUID,
+                                                               characteristic=ImmediateAlertLevelCharacteristic)
+            # Configure buffer mode
+            ble_obj.configure_buffer_mode(mode=1, count=2)
+            data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=220))
+            # Write and send BLE 232 bytes of write without response data using the below API
+            write_count = ble_obj.gatt_write_without_resp(write_handle=write_handle, data_length=220, data=data, write_time=100,
+                                            bt_mon_log_file_name=bt_mon_log_file_name, mtu_size=220, write_count=50)
+            ble_obj.check_device_state_on_dut()
+
+            # Mapping Master and Slave Address for Adding devices for sniffer
+            logger().info("after checking dev state")
+            ble_dut_address_hex = re.split(":", ble_dut_address)
+            ble_client_address_hex1 = re.split(":", ble_client_address1)
+            logger().info("--------DEVICE-ADDRESS-------")
+            master_address = "0x"
+            for hex_data_part in ble_dut_address_hex:
+                master_address = master_address + hex_data_part
+            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            slave_address1 = "0x"
+            for hex_data_part in ble_client_address_hex1:
+                slave_address1 = slave_address1 + hex_data_part
+            logger().info(f"slave_address:{slave_address1}")
+            ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1])
+            time.sleep(30)
+            if link_key != "":
+                ble_sniffer.interfaces.sniffer.add_link_key(link_key.upper(), master_address, slave_address1)
+            ble_sniffer.interfaces.sniffer.stop_capture()
+            logger().info("Sniffer stop successful")
+            captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+            time.sleep(30)
+            exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "ATT")
+            for captured_file in captured_files:
+                captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+                file_size = os.path.getsize(captured_file)
+                assert file_size > 0
+            exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(exported_csv_file)
+            assert file_size > 0
+            sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+            logger().info(sniffer_data_df.head())
+            assert len(sniffer_data_df.loc[
+                           (sniffer_data_df['Role'] == "* C") & (
+                                   sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
+                                   sniffer_data_df['Opcode'] == "* ATT_WRITE_CMD") & (
+                                   sniffer_data_df['+PDU Length (L2CAP)'] == 220)]) >= int(
+                write_count / 2), "No ATT_WRITE_CMD packets are present"
+            logger().info("ATT_WRITE_CMD packets are sent successfully")
+
+            # Disconnect from dut
+            ble_obj.disconnect_form_dut()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+    finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
+        ble_obj.clear_dut(role="master")
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_verify_ble_tx_write_without_response_data_200bytes_MTU_size_dut_as_master_role_C705953(ble_dut, ble_client,
+                                                                                           sl_collections, ble_sniffer):
+    bt_mon_log_file_name = (f"reports/test_verify_ble_tx_write_without_response_data_200bytes_MTU_size_dut_as_master_role_C705953"
+                            f"_C705952_{int(time.time())}.log")
+    try:
+        with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
+            ble_sniffer.interfaces.sniffer.init_sniffer()
+            ble_sniffer.interfaces.sniffer.start_capture(
+                capture_file="test_verify_ble_tx_write_without_response_data_200bytes_MTU_size_dut_as_master_role_C705953")
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            # Initializing DUT BLE Device
+            ble_dut_address = ble_obj.ble_gatt_init()
+            # Adv Remote device
+            ble_client_address1 = ble_obj.advertising_remote("ImmediateAlertService")
+            # Start scan and connect from dut
+            link_key = ble_obj.scan_conn_from_dut_device(mtu_size=200)
+            time.sleep(15)
+            # get remote device profile
+            write_handle = ble_obj.service_discovery_on_remote(service_uuid=ImmediateAlertService.UUID,
+                                                               char_uuid=ImmediateAlertLevelCharacteristic.LLA_UUID,
+                                                               characteristic=ImmediateAlertLevelCharacteristic)
+            # Configure buffer mode
+            ble_obj.configure_buffer_mode(mode=1, count=2)
+            data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
+            # Write and send BLE 232 bytes of write without response data using the below API
+            write_count = ble_obj.gatt_write_without_resp(write_handle=write_handle, data_length=200, data=data, write_time=60,
+                                            bt_mon_log_file_name=bt_mon_log_file_name, mtu_size=200, write_count=10)
+            ble_obj.check_device_state_on_dut()
+
+            # Mapping Master and Slave Address for Adding devices for sniffer
+            logger().info("after checking dev state")
+            ble_dut_address_hex = re.split(":", ble_dut_address)
+            ble_client_address_hex1 = re.split(":", ble_client_address1)
+            logger().info("--------DEVICE-ADDRESS-------")
+            master_address = "0x"
+            for hex_data_part in ble_dut_address_hex:
+                master_address = master_address + hex_data_part
+            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            slave_address1 = "0x"
+            for hex_data_part in ble_client_address_hex1:
+                slave_address1 = slave_address1 + hex_data_part
+            logger().info(f"slave_address:{slave_address1}")
+            ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1])
+            time.sleep(30)
+            if link_key != "":
+                ble_sniffer.interfaces.sniffer.add_link_key(link_key.upper(), master_address, slave_address1)
+            ble_sniffer.interfaces.sniffer.stop_capture()
+            logger().info("Sniffer stop successful")
+            captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+            time.sleep(30)
+            exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "ATT")
+            for captured_file in captured_files:
+                captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+                file_size = os.path.getsize(captured_file)
+                assert file_size > 0
+            exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(exported_csv_file)
+            assert file_size > 0
+            sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+            logger().info(sniffer_data_df.head())
+            assert len(sniffer_data_df.loc[
+                           (sniffer_data_df['Role'] == "* C") & (
+                                   sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
+                                   sniffer_data_df['Opcode'] == "* ATT_WRITE_CMD") & (
+                                   sniffer_data_df['+PDU Length (L2CAP)'] == 200)]) >= int(
+                write_count / 2), "No ATT_WRITE_CMD packets are present"
+            logger().info("ATT_WRITE_CMD packets are sent successfully")
+
+            # Disconnect from dut
+            ble_obj.disconnect_form_dut()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+    finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
+        ble_obj.clear_dut(role="master")
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_verify_ble_tx_notification_100bytes_MTU_size_dut_as_slave_role_C705946(ble_dut, ble_client, sl_collections, ble_sniffer):
+    bt_mon_log_file_name = (f"reports/test_verify_ble_tx_notification_100bytes_MTU_size_dut_as_slave_role_C705946_"
+                            f"_C705946_{int(time.time())}.log")
+    try:
+        with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
+            ble_sniffer.interfaces.sniffer.init_sniffer()
+            ble_sniffer.interfaces.sniffer.start_capture(
+                capture_file="test_verify_ble_tx_notification_100bytes_MTU_size_dut_as_slave_role_C705946")
+
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            # Initializing DUT BLE Device
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=1)
+            ble_dut.interfaces.bluetooth.ble_set_cap_data(remote_addr_type=0, smp_io_cap=0, smp_auth_req_bonding=1,
+                                                          smp_auth_req_mitm=1, smp_auth_req_sc=0,
+                                                          smp_max_enc_key_size=16,
+                                                          smp_local_oob_data_flag_not_present=0,
+                                                          smp_enc_key=1, smp_id_key=1, smp_sign_key=1)
+
+            service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+            char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
+            ble_dut.interfaces.wifi.ble_add_service(uid=0x1AA1)
+            ble_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1)
+            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1)
+
+            # Set DUT Local name
+            ble_obj.set_local_get_local_name_validation()
+            # Set DUT To Advertising
+            ble_obj.advertising_dut(mtu_size=100)
+            # Power Save Mode WLAN And BLE
+            ble_obj.power_save()
+            # Scan and Connect From Remote Device
+            ble_client_address, link_key = ble_obj.scan_conn_from_remote_device("HeartRateService", mtu_size=100)
+
+            logger().info(".... checking for ble connectivity stability ....")
+            time.sleep(100)
+            notification_count = ble_obj.gatt_notify_tx(k=100, service_uid=service_uid, char_uid=char_uid)
+
+            ble_obj.check_device_state_on_dut()
+            # Mapping Master and Slave Address for Adding devices for sniffer
+            ble_dut_address_hex = re.split(":", ble_dut_address)
+            ble_client_address_hex1 = re.split(":", ble_client_address)
+            logger().info("--------DEVICE-ADDRESS-------")
+            master_address = "0x"
+            for hex_data_part in ble_dut_address_hex:
+                master_address = master_address + hex_data_part
+            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            slave_address1 = "0x"
+            slave_address2 = "0x"
+            for hex_data_part in ble_client_address_hex1:
+                slave_address1 = slave_address1 + hex_data_part
+            logger().info(f"slave_address1:{slave_address1}")
+            ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1, slave_address2])
+            time.sleep(30)
+            if link_key != "":
+                ble_sniffer.interfaces.sniffer.add_link_key(link_key.upper(), master_address, slave_address1)
+            ble_sniffer.interfaces.sniffer.stop_capture()
+            logger().info("Sniffer stop successful")
+            captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+            time.sleep(30)
+            exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "ATT")
+            for captured_file in captured_files:
+                captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+                file_size = os.path.getsize(captured_file)
+                assert file_size > 0
+            exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(exported_csv_file)
+            assert file_size > 0
+            sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+            logger().info(sniffer_data_df.head())
+            assert len(sniffer_data_df.loc[
+                           (sniffer_data_df['Role'] == "* P") & (
+                                   sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
+                                   sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
+                                   sniffer_data_df['+PDU Length (L2CAP)'] == 100)]) >= int(
+                notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
+            logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
+
+            # Disconnect from dut
+            ble_obj.disconnect_form_dut()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+    finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
+        ble_obj.clear_dut()
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_verify_ble_tx_notification_50bytes_MTU_size_dut_as_master_role_C705950(ble_dut, ble_client, sl_collections, ble_sniffer):
+    bt_mon_log_file_name = (f"reports/test_verify_ble_tx_notification_50bytes_MTU_size_dut_as_master_role_C705950_"
+                            f"{int(time.time())}.log")
+    try:
+        with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
+            ble_sniffer.interfaces.sniffer.init_sniffer()
+            ble_sniffer.interfaces.sniffer.start_capture(
+                capture_file="test_verify_ble_tx_notification_50bytes_MTU_size_dut_as_master_role_C705950")
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            # Initializing DUT BLE Device
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=1)
+            ble_dut.interfaces.bluetooth.ble_set_cap_data(remote_addr_type=0, smp_io_cap=0, smp_auth_req_bonding=1,
+                                                          smp_auth_req_mitm=1, smp_auth_req_sc=0,
+                                                          smp_max_enc_key_size=16,
+                                                          smp_local_oob_data_flag_not_present=0,
+                                                          smp_enc_key=1, smp_id_key=1, smp_sign_key=1)
+
+            service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+            char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
+            ble_dut.interfaces.wifi.ble_add_service(uid=0x1AA1)
+            ble_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1)
+            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1)
+
+            # Adv Remote device
+            ble_client_address = ble_obj.advertising_remote("HeartRateService")
+            # Start scan and connect from dut
+            link_key = ble_obj.scan_conn_from_dut_device(mtu_size=50)
+
+            logger().info(".... checking for ble connectivity stability ....")
+            time.sleep(10)
+            notification_count = ble_obj.gatt_notify_tx(k=50, service_uid=service_uid, char_uid=char_uid)
+
+            ble_obj.check_device_state_on_dut()
+
+            # Mapping Master and Slave Address for Adding devices for sniffer
+            ble_dut_address_hex = re.split(":", ble_dut_address)
+            ble_client_address_hex1 = re.split(":", ble_client_address)
+            logger().info("--------DEVICE-ADDRESS-------")
+            master_address = "0x"
+            for hex_data_part in ble_dut_address_hex:
+                master_address = master_address + hex_data_part
+            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            slave_address1 = "0x"
+            slave_address2 = "0x"
+            for hex_data_part in ble_client_address_hex1:
+                slave_address1 = slave_address1 + hex_data_part
+            logger().info(f"slave_address1:{slave_address1}")
+            ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1, slave_address2])
+            time.sleep(30)
+            if link_key != "":
+                ble_sniffer.interfaces.sniffer.add_link_key(link_key.upper(), master_address, slave_address1)
+            ble_sniffer.interfaces.sniffer.stop_capture()
+            logger().info("Sniffer stop successful")
+            captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+            time.sleep(30)
+            exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "ATT")
+            for captured_file in captured_files:
+                captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+                file_size = os.path.getsize(captured_file)
+                assert file_size > 0
+            exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(exported_csv_file)
+            assert file_size > 0
+            sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+            logger().info(sniffer_data_df.head())
+            assert len(sniffer_data_df.loc[
+                           (sniffer_data_df['Role'] == "* C") & (
+                                   sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
+                                   sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
+                                   sniffer_data_df['+PDU Length (L2CAP)'] == 50)]) >= int(
+                notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
+            logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
+
+            # Disconnect From Remote Device
+            ble_obj.disconnect_from_remote()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+    finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
+        ble_obj.clear_dut(role="master")
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_verify_ble_tx_indication_100bytes_MTU_size_dut_as_master_role_C705951(ble_dut, ble_client, sl_collections, ble_sniffer):
+    bt_mon_log_file_name = (f"reports/test_verify_ble_tx_indication_100bytes_MTU_size_dut_as_master_role_C705951_"
+                            f"{int(time.time())}.log")
+    try:
+        with BleLogs(start_collecting_logs=True, bt_log_path=bt_mon_log_file_name):
+            ble_sniffer.interfaces.sniffer.init_sniffer()
+            ble_sniffer.interfaces.sniffer.start_capture(
+                capture_file="test_verify_ble_tx_indication_100bytes_MTU_size_dut_as_master_role_C705951")
+            ble_obj = Ble_Data_Transfer(ble_dut, ble_client, sl_collections)
+            # Initializing DUT BLE Device
+            ble_dut_address = ble_obj.ble_gatt_init(set_smp=1)
+
+            service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+            char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
+            data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+
+            # Create Custom services on DUT
+            logger().info("Creating new custom gatt service in DUT")
+            ble_obj.add_service(service_uuid=0x1AA1)
+            logger().info("Adding custom characteristic declaration to the custom service")
+            ble_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1, permissions=34)
+            logger().info("Adding characteristic value attribute to the service")
+            ble_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data="data")
+
+            # Adv Remote device
+            ble_client_address = ble_obj.advertising_remote()
+            # Start scan and connect from dut
+            link_key = ble_obj.scan_conn_from_dut_device(mtu_size=100)
+
+            # Get All Profiles
+            char_path, char_props = ble_obj.service_discovery_on_dut(service_uid=service_uid, char_uid=char_uid)
+
+            # # Configure Buffer Mode
+            ble_obj.configure_buffer_mode(mode=1, count=2)
+            # Enable indication property in 1BB1 characteristic service in custom
+            # DUT will start sending indication data once the indication property is enabled.
+            indication_count = ble_obj.gatt_indication(char_path=char_path, char_uuid=char_uid, indication_time=60, data=data,
+                                    data_length=100)
+
+            ble_obj.check_device_state_on_dut()
+
+            # Mapping Master and Slave Address for Adding devices for sniffer
+            ble_dut_address_hex = re.split(":", ble_dut_address)
+            ble_client_address_hex1 = re.split(":", ble_client_address)
+            master_address = "0x"
+            for hex_data_part in ble_dut_address_hex:
+                master_address = master_address + hex_data_part
+            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            slave_address1 = "0x"
+            for hex_data_part in ble_client_address_hex1:
+                slave_address1 = slave_address1 + hex_data_part
+            logger().info(f"slave_address1:{slave_address1}")
+            ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1])
+            time.sleep(30)
+            if link_key != "":
+                ble_sniffer.interfaces.sniffer.add_link_key(link_key.upper(), master_address, slave_address1)
+            ble_sniffer.interfaces.sniffer.stop_capture()
+            logger().info("Sniffer stop successful")
+            captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+            time.sleep(30)
+            exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "ATT")
+            for captured_file in captured_files:
+                captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+                file_size = os.path.getsize(captured_file)
+                assert file_size > 0
+            exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(exported_csv_file)
+            assert file_size > 0
+            sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+            logger().info(sniffer_data_df.head())
+            assert len(sniffer_data_df.loc[
+                           (sniffer_data_df['Role'] == "* P") & (
+                                   sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
+                                   sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
+                                   sniffer_data_df['+PDU Length (L2CAP)'] == 100)]) >= int(
+                indication_count / 2), "No ATT_HANDLE_VALUE_IND packets are present"
+            logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
+
+            # Disconnect From Remote Device
+            ble_obj.disconnect_from_remote()
+
+    except Exception as error:
+        logger().info(f"error message :{error}")
+        raise
+    finally:
+        ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
+        ble_obj.clear_dut(role="master")
+
