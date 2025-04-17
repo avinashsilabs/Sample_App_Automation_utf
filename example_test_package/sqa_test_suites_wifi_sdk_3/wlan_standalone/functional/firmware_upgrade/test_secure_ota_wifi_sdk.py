@@ -8,9 +8,6 @@ from utf.utils.thread_base import ThreadBase
 from utf.utils.iperf.iperf_utils import get_host_ip, ping
 from utf.utils.time_measurer import TimeMeasurer
 from utf_wiseconnect_3.tests.sl_status import SLStatus
-from utf.utils.stopwatch import Stopwatch
-from random import randint
-from utf.utils import get_tls_certificate_dir
 
 """This Test plan is validating Firmware version upgrade through  HTTP OTAF with encryption
 
@@ -74,7 +71,8 @@ def wifi_dut_marker(ca_cert=None):
 
 class WifiJoin(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, sl_collections=None, wifi_client=None,
-                 test_case=None, url=None, aws_s3=None, azure_blob=None, rps_path=None, http_server=None):
+                 test_case=None, url=None, aws_s3=None, azure_blob=None, rps_path=None, http_server=None,
+                 tcp_server=None, abort=False, power_save=False):
         super().__init__()
         self.host_ip = None
         self.wifi_dut = wifi_dut
@@ -94,6 +92,10 @@ class WifiJoin(ThreadBase):
         self.wifi_client = wifi_client
         self.http_server = http_server
         self.twelve_hour = 43200
+        self.tcp_server = tcp_server
+        self.dut_addr = None
+        self.abort = abort
+        self.power_save = power_save
 
     def fw_download_from_aws_server(self, aws_s3, rps_path):
 
@@ -132,6 +134,59 @@ class WifiJoin(ThreadBase):
                 channel=self.wifi_access_point.interfaces.wifi.channel)
             logger().info(" ====== Start capturing with Sniffer by giving the test case name as filename ====== ")
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_case)
+
+            if self.tcp_server:
+                fw_version_before_upgrade = self.wifi_dut.interfaces.wifi.version()
+                logger().info(f"*** DUT firmware version after upgrade = {fw_version_before_upgrade} ***")
+                self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut,
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         power_save=self.power_save, retry_count=3,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated)
+                logger().info("Starting TCP server...")
+                self.http_server.interfaces.server.start_server()
+                remote_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+                local_port = 5001
+                client_socket = self.wifi_dut.interfaces.wifi.socket(protocol="IPPROTO_TCP")
+                self.wifi_dut.interfaces.wifi.bind(socket_fd=client_socket, device_ip=self.dut_addr['device_ip'], ip_len=4,
+                                                   server_port=local_port, asynch=1)
+                self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=client_socket, server_ip=remote_ip, ip_len=4,
+                                                               server_port="5001")
+                if self.test_case == "540496" or self.test_case == "510727":
+                    self.wifi_dut.interfaces.wifi.update_firmware_over_tcp(timeout=60, expected_status=SLStatus.SL_STATUS_FAIL)
+                    return
+
+                if self.test_case == "510714":
+                    self.wifi_dut.interfaces.wifi.update_firmware_over_tcp(timeout=60,
+                                                                           expected_status=SLStatus.SL_STATUS_TIMEOUT)
+                    return
+
+                self.wifi_dut.interfaces.wifi.update_firmware_over_tcp(timeout=150)
+                if self.test_case == "559884":
+                    self.wifi_dut.interfaces.wifi.sl_si91x_fwup_abort()
+                    self.http_server.interfaces.server.stop_server()
+                    time.sleep(10)
+                    self.http_server.interfaces.server.start_server()
+                    client_socket = self.wifi_dut.interfaces.wifi.socket(protocol="IPPROTO_TCP")
+                    self.wifi_dut.interfaces.wifi.bind(socket_fd=client_socket, device_ip=self.dut_addr['device_ip'],
+                                                       ip_len=4, server_port=local_port, asynch=1)
+                    self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=client_socket, server_ip=remote_ip,
+                                                                   ip_len=4,
+                                                                   server_port="5001")
+                    self.wifi_dut.interfaces.wifi.update_firmware_over_tcp(timeout=150)
+                if self.abort:
+                    self.wifi_dut.interfaces.wifi.sl_si91x_fwup_abort()
+                    fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
+                    logger().info(f"*** DUT firmware version after upgrade = {fw_version_after_upgrade} ***")
+
+                    assert fw_version_after_upgrade == fw_version_before_upgrade, "Firmware version mismatch after upgrade"
+                    return
+                self.wifi_dut.interfaces.wifi.deinit()
+                self.wifi_dut.interfaces.wifi.init()
+                fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
+                logger().info(f"*** DUT firmware version after upgrade = {fw_version_after_upgrade} ***")
+                logger().info("Stopping Sniffer capture...")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                return
 
             if self.test_case not in ['510698', '510699', '510702']:
                 """ ******* SERVER CHECKS ******* """
@@ -677,3 +732,298 @@ def test_wifi_sdk_https_fw_upgrade_downgrade_overnight_c510707(firmware_loader, 
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
+@wifi_dut_marker()
+def test_wifi_sdk_tcp_fw_upgrade_with_full_security_mode_c510700(firmware_loader, wifi_client, sdk_server,
+                                                                 wifi_access_point, wifi_dut, wifi_sniffer,
+                                                                 sl_collections):
+    """Verify the TA firmware upgradation functionality using the TCP server (firmware update example) with
+    Full Security enabled"""
+
+    try:
+        test_case = '510700'
+        logger().info(f"***** Firmware file name: {sdk_server.interfaces.server.firmware_file_name} *****")
+        wlan_obj = WifiJoin(http_server=sdk_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+                            sl_collections=sl_collections, rps_path=sdk_server.interfaces.server.firmware_file_name,
+                            tcp_server=True, wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        sdk_server.interfaces.server.stop_server()
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
+@wifi_dut_marker()
+def test_wifi_sdk_tcp_fw_upgrade_with_full_security_mode_c510703(firmware_loader, wifi_client, sdk_server,
+                                                                 wifi_access_point, wifi_dut, wifi_sniffer,
+                                                                 sl_collections):
+    """	Verify DUT functionality with combined image using TCP server (firmware update example) with Full Security
+    and Sign enabled"""
+
+    try:
+        test_case = '510703'
+        logger().info(f"***** Firmware file name: {sdk_server.interfaces.server.firmware_file_name} *****")
+        wlan_obj = WifiJoin(http_server=sdk_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+                            sl_collections=sl_collections, rps_path=sdk_server.interfaces.server.firmware_file_name,
+                            tcp_server=True, wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        sdk_server.interfaces.server.stop_server()
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
+@wifi_dut_marker()
+def test_wifi_sdk_http_combine_image_download_c510704(firmware_loader, wifi_client, http_server, wifi_sniffer,
+                                                      wifi_access_point, wifi_dut, sl_collections, utf_constants):
+    """Verify DUT functionality with combined image using OTA (HTTP OTAF example) with Full Security and sign enabled"""
+
+    try:
+        test_case = '510696'
+        rps_path = utf_constants.get("combine_rps_filename")
+        wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer, wifi_client=wifi_client,
+                            sl_collections=sl_collections, rps_path=rps_path,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
+@pytest.mark.config("sdk_server", server={"firmware_file_name": "combined_ta_secure_m4_plain.rps"})
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
+@wifi_dut_marker()
+def test_wifi_sdk_tcp_combine_image_ta_secure_m4_plain_c510727(firmware_loader, wifi_client, sdk_server,
+                                                               wifi_access_point, wifi_dut, wifi_sniffer,
+                                                               sl_collections):
+    """Verify DUT functionality with combined image(TA full security + M4 Plain) using TCP server
+    (firmware update example) with Full Security enabled"""
+
+    try:
+        test_case = '510727'
+        logger().info(f"***** Firmware file name: {sdk_server.interfaces.server.firmware_file_name} *****")
+        wlan_obj = WifiJoin(http_server=sdk_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+                            sl_collections=sl_collections, rps_path=sdk_server.interfaces.server.firmware_file_name,
+                            tcp_server=True, wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        sdk_server.interfaces.server.stop_server()
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
+@wifi_dut_marker()
+def test_wifi_sdk_tcp_fw_abort_with_full_security_mode_c540475(firmware_loader, wifi_client, sdk_server,
+                                                               wifi_access_point, wifi_dut, wifi_sniffer,
+                                                               sl_collections):
+    """Verify fwup_abort after the TA rps download using firmware update via TCP with Full Security enabled"""
+
+    try:
+        test_case = '540475'
+        logger().info(f"***** Firmware file name: {sdk_server.interfaces.server.firmware_file_name} *****")
+        wlan_obj = WifiJoin(http_server=sdk_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+                            sl_collections=sl_collections, rps_path=sdk_server.interfaces.server.firmware_file_name,
+                            tcp_server=True, wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
+                            abort=True)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        sdk_server.interfaces.server.stop_server()
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
+@wifi_dut_marker()
+def test_wifi_sdk_tcp_fw_abort_m4_with_full_security_mode_c540476(firmware_loader, wifi_client, sdk_server,
+                                                                  wifi_access_point, wifi_dut, wifi_sniffer,
+                                                                  sl_collections, utf_constants):
+    """Verify fwup_abort after the TA rps download using firmware update via TCP with Full Security enabled"""
+
+    try:
+        test_case = '540476'
+        sdk_server.interfaces.server.firmware_file_name = utf_constants.get("m4_rps_filename")
+        logger().info(f"***** Firmware file name: {sdk_server.interfaces.server.firmware_file_name} *****")
+        wlan_obj = WifiJoin(http_server=sdk_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+                            sl_collections=sl_collections, rps_path=sdk_server.interfaces.server.firmware_file_name,
+                            tcp_server=True, wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
+                            abort=True)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        sdk_server.interfaces.server.stop_server()
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
+@wifi_dut_marker()
+def test_wifi_sdk_tcp_fw_abort_with_combine_image_c540477(firmware_loader, wifi_client, sdk_server,
+                                                          wifi_access_point, wifi_dut, wifi_sniffer,
+                                                          sl_collections, utf_constants):
+    """Verify fwup_abort after the TA rps download using firmware update via TCP with Full Security enabled"""
+
+    try:
+        test_case = '540475'
+        sdk_server.interfaces.server.firmware_file_name = utf_constants.get("combine_rps_filename")
+        logger().info(f"***** Firmware file name: {sdk_server.interfaces.server.firmware_file_name} *****")
+        wlan_obj = WifiJoin(http_server=sdk_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+                            sl_collections=sl_collections, rps_path=sdk_server.interfaces.server.firmware_file_name,
+                            tcp_server=True, wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
+                            abort=True)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        sdk_server.interfaces.server.stop_server()
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
+@wifi_dut_marker()
+def test_wifi_sdk_tcp_fw_upgrade_with_mic_encryption_sign_security_c540495(firmware_loader, wifi_client, sdk_server,
+                                                                           wifi_access_point, wifi_dut, wifi_sniffer,
+                                                                           sl_collections):
+    """Verify the TA firmware upgradation functionality using the TCP server (firmware update example) with
+    MIC + Encryption + Sign enabled"""
+
+    try:
+        test_case = '540495'
+        logger().info(f"***** Firmware file name: {sdk_server.interfaces.server.firmware_file_name} *****")
+        wlan_obj = WifiJoin(http_server=sdk_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+                            sl_collections=sl_collections, rps_path=sdk_server.interfaces.server.firmware_file_name,
+                            tcp_server=True, wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        sdk_server.interfaces.server.stop_server()
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
+@pytest.mark.config("sdk_server", server={"firmware_file_name": "mic_only_SiWG917-B.2.14.5.0.0.2.rps"})
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
+@wifi_dut_marker()
+def test_wifi_sdk_tcp_fw_upgrade_with_mic_only_security_mode_c540496(firmware_loader, wifi_client, sdk_server,
+                                                                     wifi_access_point, wifi_dut, wifi_sniffer,
+                                                                     sl_collections):
+    """Verify the TA firmware upgradation functionality using the TCP server (firmware update example) with
+    MIC + Encryption + Sign enabled"""
+
+    try:
+        test_case = '540496'
+        logger().info(f"***** Firmware file name: {sdk_server.interfaces.server.firmware_file_name} *****")
+        wlan_obj = WifiJoin(http_server=sdk_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+                            sl_collections=sl_collections, rps_path="mic_only_SiWG917-B.2.14.5.0.0.2.rps",
+                            tcp_server=True, wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        sdk_server.interfaces.server.stop_server()
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
+@wifi_dut_marker()
+def test_wifi_sdk_tcp_first_abort_then_upgrade_full_security_c559884(firmware_loader, wifi_client, sdk_server,
+                                                                     wifi_access_point, wifi_dut, wifi_sniffer,
+                                                                     sl_collections):
+    """	Verify DUT Functionality with fw abort in 1st iteration and without abort do firmware update in 2nd iteration"""
+
+    try:
+        test_case = '559884'
+        logger().info(f"***** Firmware file name: {sdk_server.interfaces.server.firmware_file_name} *****")
+        wlan_obj = WifiJoin(http_server=sdk_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+                            sl_collections=sl_collections, rps_path=sdk_server.interfaces.server.firmware_file_name,
+                            tcp_server=True, wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        sdk_server.interfaces.server.stop_server()
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
+@pytest.mark.config("sdk_server", server={"firmware_file_name": "combined_SiWG917-B.2.14.5.0.0.2_wrong_header.rps"})
+@pytest.mark.firmware_app("firmware_security_encrypted_1")
+@wifi_dut_marker()
+def test_wifi_sdk_tcp_combine_image_wrong_header_c510714(firmware_loader, wifi_client, sdk_server,
+                                                         wifi_access_point, wifi_dut, wifi_sniffer,
+                                                         sl_collections):
+    """Verify DUT functionality with combined(TA+M4) image wrong header format"""
+
+    try:
+        test_case = '510714'
+        logger().info(f"***** Firmware file name: {sdk_server.interfaces.server.firmware_file_name} *****")
+        wlan_obj = WifiJoin(http_server=sdk_server, wifi_client=wifi_client, wifi_sniffer=wifi_sniffer,
+                            sl_collections=sl_collections, rps_path=sdk_server.interfaces.server.firmware_file_name,
+                            tcp_server=True, wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        sdk_server.interfaces.server.stop_server()

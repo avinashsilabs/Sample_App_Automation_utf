@@ -688,6 +688,14 @@ devices:
                 tls_enabled: true
                 tls_ca_chain: 'ca-chain.cert.pem'
 
+    tcp_server:
+        interfaces:
+            server:
+                type: "wifi.sdk_server.sdk_server_linux"
+                server_name: "TCP"
+                firmware_file_name: "encrypted_1_SiWG917-B.2.14.5.0.0.2.rps"
+                server_binary_file_name: "tcp_server.bin"
+
     airpcap:
         interfaces:
             local_shell:
@@ -1205,6 +1213,8 @@ defaults:
 
     http_client: 'raspi_http_client'
 
+    sdk_server: 'tcp_server'
+
     rf_attenuator: '50pa500_attenuator'
     ssl_server: 'raspi_ssl_server'
     #ssl_server: 'raspi_ssl_server_static'
@@ -1465,6 +1475,8 @@ constants:
         value:  'secured_wifi_station_ping_soc.rps'
     m4_rps_plain:
         value: 'wifi_station_ping_soc.rps'
+    combine_rps_filename:
+        value: 'combined_ta_m4.rps'
     rejoin_time:
         value: 160
 
