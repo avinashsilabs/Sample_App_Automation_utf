@@ -18,7 +18,10 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xBLEFeatureBitMap,
     Si91xBLECustomFeatureBitMap,
     Cipher,
-    Si91xCryptoWrapMode
+    Si91xCryptoWrapMode,
+    Si91xCryptoKeyType,
+    Si91xPowerSaveModes,
+    Si91xPowerSaveProcedureTypes,
 )
 import string
 import random
@@ -29,6 +32,7 @@ from utf.utils.thread_base import ThreadBase
 from threading import Thread
 from utf.utils import get_tls_certificate_dir
 from utf.utils.logger import get_logger
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utils.stopwatch import Stopwatch
 
 """The testcases added in this file run below test steps for DUT-Si91x
@@ -57,7 +61,7 @@ def wifi_dut_marker(oper_mode=0,coex_mode=0,ca_cert=None, client_cert=None, clie
     Common method to generate wifi_dut marker for pytest.mark.config decorator.
     """
     config = {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
         "oper_mode": Si91xOperatingMode.WiFiClient | oper_mode,
         "coex_mode": Si91xCoexMode.WLANOnly | coex_mode,
         "features": Si91xFeatureBitMap.Default,
@@ -136,9 +140,82 @@ class WLanJoinThread(ThreadBase):
                                                                         iv=None,
                                                                         cert_index=index)
                         index = index + 1
-                elif self.test_case == '1163604' or self.test_case == '1163606':
-                    self.wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_TLS_PRIVATE_KEY_CBC_WRAP, cert_identifier=Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START)
+                elif self.test_case == '1163604' or self.test_case == '1163606' or self.test_case == '719588':
+                    self.wifi_dut.interfaces.wifi.clear_certificate(
+                        cert_type=Si91xCertificateType.SL_NET_TLS_PRIVATE_KEY_CBC_WRAP,
+                        cert_identifier=Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START)
                     self.sl_collections.load_tls_client_private_key(self.wifi_dut, cert_file=self.client_key)
+
+                elif self.test_case == '1163619':
+                    self.wifi_dut.interfaces.wifi.clear_certificate(
+                        cert_type=Si91xCertificateType.SL_NET_TLS_PRIVATE_KEY_CBC_WRAP,
+                        cert_identifier=Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START)
+                    # self.sl_collections.load_tls_client_private_key(self.wifi_dut, cert_file=self.client_key)
+
+                    cert_file = str(get_tls_certificate_dir().joinpath(self.client_key))
+                    with open(cert_file) as f:
+                        cert_contents = f.read()
+                    size = len(cert_contents)
+
+                    buffer_size = (512 * (int(size / 512))) + 512  # buffer_size should be more than size
+                    address = self.wifi_dut.interfaces.wifi.allocate_memory(size=buffer_size)
+                    self.wifi_dut.interfaces.wifi.load_memory(address, size=size, write_content=cert_contents)
+                    data = self.wifi_dut.interfaces.wifi.generate_wrap_key(address=address,
+                                                                           key_type=Si91xCryptoKeyType.SL_SI91X_TRANSPARENT_KEY,
+                                                                           wrap_iv_mode=Si91xCryptoWrapMode.SL_SI91X_WRAP_IV_ECB_MODE)
+                    data = data.decode()
+                    pattern = r"wrapped_private_key_address:(0x[0-9A-Fa-f]+)|key_length:(\d+)"
+                    # Find all matches using regular expression
+                    matches = re.findall(pattern, data)
+                    # Extract the address and key length from the matches
+                    key_address = matches[0][0]  # The address will be the first element in the first tuple
+                    length = matches[1][1]  # The key length will be the second element in the second tuple
+
+                    self.wifi_dut.interfaces.wifi.load_private_wrap_key(address=key_address,
+                                                                        cert_type=Si91xCertificateType.SL_NET_TLS_PRIVATE_KEY_CBC_WRAP,
+                                                                        cert_identifier=Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START,
+                                                                        cert_index=0,
+                                                                        iv="1234567890123456",
+                                                                        cert_length=length)
+                    self.wifi_dut.interfaces.wifi.memory_free(address)
+
+                elif self.test_case == '769668':
+                    self.wifi_dut.interfaces.wifi.clear_certificate(
+                        cert_type=Si91xCertificateType.SL_NET_TLS_PRIVATE_KEY_CBC_WRAP,
+                        cert_identifier=Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START)
+                elif self.test_case == '719579':
+                    self.wifi_dut.interfaces.wifi.clear_certificate(
+                        cert_type=Si91xCertificateType.SL_NET_TLS_PRIVATE_KEY_CBC_WRAP,
+                        cert_identifier=Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START)
+                    # self.sl_collections.load_tls_client_private_key(self.wifi_dut, cert_file=self.client_key)
+
+                    cert_file = str(get_tls_certificate_dir().joinpath(self.client_key))
+                    with open(cert_file) as f:
+                        cert_contents = f.read()
+                    size = len(cert_contents)
+
+                    buffer_size = (512 * (int(size / 512))) + 512  # buffer_size should be more than size
+                    address = self.wifi_dut.interfaces.wifi.allocate_memory(size=buffer_size)
+                    self.wifi_dut.interfaces.wifi.load_memory(address, size=size, write_content=cert_contents)
+                    data = self.wifi_dut.interfaces.wifi.generate_wrap_key(address=address,
+                                                                           key_type=Si91xCryptoKeyType.SL_SI91X_TRANSPARENT_KEY,
+                                                                           wrap_iv_mode=Si91xCryptoWrapMode.SL_SI91X_WRAP_IV_CBC_MODE,
+                                                                           iv="1234567890123457")
+                    data = data.decode()
+                    pattern = r"wrapped_private_key_address:(0x[0-9A-Fa-f]+)|key_length:(\d+)"
+                    # Find all matches using regular expression
+                    matches = re.findall(pattern, data)
+                    # Extract the address and key length from the matches
+                    key_address = matches[0][0]  # The address will be the first element in the first tuple
+                    length = matches[1][1]  # The key length will be the second element in the second tuple
+
+                    self.wifi_dut.interfaces.wifi.load_private_wrap_key(address=key_address,
+                                                                        cert_type=Si91xCertificateType.SL_NET_TLS_PRIVATE_KEY_CBC_WRAP,
+                                                                        cert_identifier=Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START,
+                                                                        cert_index=0,
+                                                                        iv="1234567890123456",
+                                                                        cert_length=length)
+                    self.wifi_dut.interfaces.wifi.memory_free(address)
 
                 elif self.test_case == '1163603' or self.test_case == '1163605' or self.test_case == '1163613' or self.test_case == '1163612':
                     self.wifi_dut.interfaces.wifi.clear_certificate(
@@ -162,6 +239,16 @@ class WLanJoinThread(ThreadBase):
                                                                          associated=self.wifi_dut.interfaces.wifi.associated,
                                                                          channel=self.wifi_access_point.interfaces.wifi.channel,
                                                                          retry_count=3)
+
+            if self.test_case == '769669':
+                self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+                self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                                   psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+                self.wifi_dut.interfaces.wifi.clear_certificate(
+                    cert_type=Si91xCertificateType.SL_NET_TLS_PRIVATE_KEY_CBC_WRAP,
+                    cert_identifier=Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START)
+                self.sl_collections.load_tls_client_private_key(self.wifi_dut, cert_file=self.client_key)
+
             if self.test_case == '1163608' or self.test_case == '1163607' or self.test_case == '1163614' or self.test_case == '1163615' or self.test_case == '1163624' or self.test_case == '1163621':
                 port1 = self.ssl_server.interfaces.ssl.config['device_port1']
                 port2 = self.ssl_server.interfaces.ssl.config['device_port2']
@@ -264,7 +351,7 @@ class WLanJoinThread(ThreadBase):
                     logger.info(f"Successfully closed socket_id '{sock_id}' in the DUT")
                 self.ssl_server.interfaces.ssl.stop_server()
 
-            elif self.test_case == '1163603' or self.test_case == '1163604' or self.test_case == '1163605' or self.test_case == '1163606' or self.test_case == '1163613' or self.test_case == '1163612':
+            elif self.test_case == '1163603' or self.test_case == '1163604' or self.test_case == '1163605' or self.test_case == '1163606' or self.test_case == '1163613' or self.test_case == '1163612' or self.test_case == '769669':
                 pkt_count = 10000
                 buffer_length = 1300
                 self.ssl_server.interfaces.ssl.start_server(server_cert='server_test1.crt',
@@ -328,6 +415,45 @@ class WLanJoinThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
                 logger().info("Successfully closed opened socket in the DUT")
                 self.ssl_server.interfaces.ssl.stop_server()
+
+
+
+            elif self.test_case == '1163619' or self.test_case == '719579' or self.test_case == '719588' or self.test_case == '769668':
+
+                self.ssl_server.interfaces.ssl.start_server(server_cert='server_test1.crt',
+                                                            server_key='server_test1.key',
+                                                            tls_client_enable=True, client_cert='ca_test1.crt')
+                server_ip = self.ssl_server.interfaces.ssl.server_ip
+                device_ip = self.dut_addr['device_ip']
+                port1 = self.ssl_server.interfaces.ssl.config['device_port1']
+                # Open ssl client socket in the DUT
+                sock = self.wifi_dut.interfaces.wifi.socket()
+                assert sock == 0, "Socket id received is wrong. expected is 0"
+                logger().info(
+                    f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+                logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
+                # Enable ssl option for socket opened
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+                # self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="SOL_TCP", option_val="SO_MAX_RETRANSMISSION_TIMEOUT_VALUE")
+                local_port = randint(5001, 60000)
+                # Socket binds at (device_ip, 5001) in DUT
+                self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port,
+                                                   timeout=15)
+                time.sleep(1)
+                try:
+                    # ssl socket opened in DUT connects to the server
+                    self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
+                                                                   server_port=port1,
+                                                                   expected_status=SLStatus.SL_STATUS_FAIL)
+                except:
+                    logger().info(
+                        f"DUT is able to connect to TLS server when wrong cert is loaded which is not expected")
+                    raise
+                finally:
+                    self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                    self.ssl_server.interfaces.ssl.stop_server()
+                    time.sleep(1)
+
             self.wifi_dut.interfaces.wifi.leave()
             logger().info("Stopping sniffer capture")
             self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -810,5 +936,188 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_ecdsa_c11636
 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@wifi_dut_marker(ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+                 client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                 tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
+                 ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("client_key", ['client_test1.key'])
+def test_wifi_sdk_ssl_neg_wrap_method_mismatch_c1163619(wifi_access_point, sniffer_filter, sl_collections,
+                                                        wifi_dut, ssl_server, utf_constants,
+                                                        wifi_sniffer, client_key, request):
+    """
+    ssl client connection and data transfer
+    """
+    capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='1163619',
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
+                                  capture_filename=capture_filename, client_key=client_key, ssl_server=ssl_server)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@wifi_dut_marker(ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+                 client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                 tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
+                 ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("client_key", ['client_test1.key'])
+def test_wifi_sdk_ssl_neg_wrap_method_wrong_iv_c719579(wifi_access_point, sniffer_filter, sl_collections,
+                                                       wifi_dut, ssl_server, utf_constants,
+                                                       wifi_sniffer, client_key, request):
+    """
+    ssl client connection and data transfer
+    """
+    capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='719579',
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
+                                  capture_filename=capture_filename, client_key=client_key, ssl_server=ssl_server)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@wifi_dut_marker(ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+                 client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                 tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
+                 ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("client_key", ['client_test2.key'])
+def test_wifi_sdk_ssl_neg_wrap_method_wrong_private_key_c719588(wifi_access_point, sniffer_filter, sl_collections,
+                                                                wifi_dut, ssl_server, utf_constants,
+                                                                wifi_sniffer, client_key, request):
+    """
+    ssl client connection and data transfer
+    """
+    capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='719588',
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
+                                  capture_filename=capture_filename, client_key=client_key, ssl_server=ssl_server)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@wifi_dut_marker(ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+                 client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                 tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
+                 ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("client_key", ['client_test1.key'])
+def test_wifi_sdk_ssl_neg_without_loading_wrapped_private_key_c769668(wifi_access_point, sniffer_filter, sl_collections,
+                                                                  wifi_dut, ssl_server, utf_constants,
+                                                                  wifi_sniffer, client_key, request):
+    """
+    ssl client connection and data transfer
+    """
+    capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='769668',
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
+                                  capture_filename=capture_filename, client_key=client_key, ssl_server=ssl_server)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@wifi_dut_marker(ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+                 client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                 tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
+                 ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("client_key", ['client_test1.key'])
+def test_wifi_sdk_ssl_load_wrapped_private_key_after_powersave_c769669(wifi_access_point, sniffer_filter,
+                                                                       sl_collections,
+                                                                       wifi_dut, ssl_server, utf_constants,
+                                                                       wifi_sniffer, client_key, request):
+    """
+    ssl client connection and data transfer
+    """
+    capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='769669',
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
+                                  capture_filename=capture_filename, client_key=client_key, ssl_server=ssl_server)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+        
+        
 
 
