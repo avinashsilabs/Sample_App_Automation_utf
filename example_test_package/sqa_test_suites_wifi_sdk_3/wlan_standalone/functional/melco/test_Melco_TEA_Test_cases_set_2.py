@@ -204,13 +204,13 @@ class AP11nParamsEnabled(ThreadBase):
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.capture_filename}.pcap")
         time.sleep(3)
 
-    def raspi_sta_assoc_to_dut_ap(self):
+    def raspi_sta_assoc_to_dut_ap(self, hidden_ssid=0):
         for i in range(0, self.no_of_clients):
             self.dut_add_dict = {}
             self.ping_count=10
             connected = False
             logger().info(f"RASPI-STA{i + 1}:'{self.wifi_clients[i].name}' is joining to DUT-AP")
-            self.wifi_clients[i].interfaces.wifi.join(scan_ssid=1)
+            self.wifi_clients[i].interfaces.wifi.join(scan_ssid=hidden_ssid)
             time.sleep(5)
             self.dut_add_dict['dut_ip'] = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
             logger().info(f"********* Dut IP **********: {self.dut_add_dict['dut_ip']}")
@@ -262,13 +262,19 @@ class AP11nParamsEnabled(ThreadBase):
         assert not self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count']
 
-    def check_beacons_from_aput(self):
+    def check_beacons_from_aput(self, expected_beacons=True):
         sa_addr = self.aput_mac_address()
         packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=sa_addr,
             filter_name="beacon")
-        logger().info(f"printing checking beacons_from_aput the vlaue of packet filter 1 {packet_filter1}")
-        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count']
+        if expected_beacons:
+            logger().info(f"printing checking beacons_from_aput the vlaue of packet filter 1 {packet_filter1}")
+            assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count']
+        else:
+            assert not self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
+                                                                          negative_test=True)['packet_count'], \
+                'found beacon frame  when stop ap enabled from DUT in Sniffer'
+            logger().info("Beacon frame not found in sniffer when stop ap enabled from DUT")
 
     def aput_beacon_11n_params_check(self):
         packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -372,6 +378,7 @@ class AP11nParamsEnabled(ThreadBase):
             self.ap_mac_in_ap_alone = self.wifi_dut.interfaces.wifi.get_mac_address(2)
         logger().info(f"printing aput mac address {self.ap_mac_in_ap_alone}")
         return self.ap_mac_in_ap_alone
+
 
     def aput_client_connection(self):
         self.sl_collections.configure_dut_in_static_ip(self.wifi_dut, static_ip="192.168.100.76",
@@ -587,7 +594,7 @@ def test_wifi_sdk_check_hidden_ssid_in_concurrent_mode_with_sta_tx_traffic_c6936
         ap_dut_obj.concurrent_sta()
         ap_dut_obj.aput_start()
         time.sleep(4)
-        ap_dut_obj.raspi_sta_assoc_to_dut_ap()
+        ap_dut_obj.raspi_sta_assoc_to_dut_ap(hidden_ssid=1)
         ap_dut_obj.run_traffic(protocol="TCP", traffic_type="TX", ip_version=6)
         wifi_sniffer.interfaces.capture.stop_capture()
         ap_dut_obj.check_hidden_ssid_aput_beacon()
@@ -639,7 +646,7 @@ def test_wifi_sdk_check_aput_probe_response_with_hidden_ssid_enabled_c693688(wif
                                         testcase_no=693688, channel=11, capture_filename="TC693688_Sniffer")
         ap_dut_obj.sniffer_capture_start()
         ap_dut_obj.aput_start()
-        ap_dut_obj.raspi_sta_assoc_to_dut_ap()
+        ap_dut_obj.raspi_sta_assoc_to_dut_ap(hidden_ssid=1)
         logger().info("Stop sniffer finally")
         time.sleep(30)
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -701,7 +708,7 @@ def test_wifi_sdk_check_beacon_stop_with_hidden_ssid_enabled_c693686(wifi_dut, w
         ap_dut_obj.check_no_beacons_from_aput()
         time.sleep(10)
         ap_dut_obj.sniffer_capture_start(capture_filename="TC693686_Sniffer_cap_2")
-        ap_dut_obj.raspi_sta_assoc_to_dut_ap()
+        ap_dut_obj.raspi_sta_assoc_to_dut_ap(hidden_ssid=1)
         ap_dut_obj.check_beacons_from_aput()
         ap_dut_obj.check_hidden_ssid_aput_beacon()
 
@@ -769,7 +776,7 @@ def test_wifi_sdk_check_hidden_ssid_in_concurrent_mode_with_sta_conn_c693687(wif
         ap_dut_obj.check_no_beacons_from_aput()
         time.sleep(4)
         ap_dut_obj.sniffer_capture_start(capture_filename="TC693687_Sniffer_2")
-        ap_dut_obj.raspi_sta_assoc_to_dut_ap()
+        ap_dut_obj.raspi_sta_assoc_to_dut_ap(hidden_ssid=1)
         wifi_sniffer.interfaces.capture.stop_capture()
         ap_dut_obj.check_beacons_from_aput()
         ap_dut_obj.check_hidden_ssid_aput_beacon()
@@ -837,7 +844,7 @@ def test_wifi_sdk_check_hidden_ssid_in_aput_prb_respnse_staut_prb_req_in_cncurnt
         ap_dut_obj.concurrent_sta()
         ap_dut_obj.aput_start()
         time.sleep(4)
-        ap_dut_obj.raspi_sta_assoc_to_dut_ap()
+        ap_dut_obj.raspi_sta_assoc_to_dut_ap(hidden_ssid=1)
         ap_dut_obj.remote_ipv6_address()
         wifi_sniffer.interfaces.capture.stop_capture()
         ap_dut_obj.check_beacons_from_aput()
@@ -969,7 +976,7 @@ def test_wifi_sdk_check_scan_in_staut_mode_with_3rd_part_sta_conn_with_aput_c693
 
         ap_dut_obj.sniffer_capture_start()
         ap_dut_obj.aput_start()
-        ap_dut_obj.raspi_sta_assoc_to_dut_ap()
+        ap_dut_obj.raspi_sta_assoc_to_dut_ap(hidden_ssid=1)
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=11)
         logger().info(scan_results)
         assert len(scan_results) > 0, "scan_list not found"
@@ -1027,7 +1034,7 @@ def test_wifi_sdk_check_disconnect_sta_from_3rdparty_ap_c693677(wifi_dut, wifi_s
                                                                 wifi_access_point):
     try:
         ap_dut_obj = AP11nParamsEnabled(wifi_dut=wifi_dut, wifi_clients=wifi_clients, wifi_sniffer=wifi_sniffer,
-                                        sl_collections=sl_collections, utf_constants=utf_constants,no_of_clients= 1,
+                                        sl_collections=sl_collections, utf_constants=utf_constants, no_of_clients=1,
                                         sniffer_filter=sniffer_filter, wifi_access_point=wifi_access_point,
                                         testcase_no=693687, channel=11, capture_filename="c693677_Sniffer",
                                         beacon_stop=0)
@@ -1043,7 +1050,7 @@ def test_wifi_sdk_check_disconnect_sta_from_3rdparty_ap_c693677(wifi_dut, wifi_s
         logger().info(f"Finally Block")
         wifi_dut.interfaces.wifi.stop_ap()
 
-@pytest.mark.skip()
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1054,7 +1061,8 @@ def test_wifi_sdk_check_disconnect_sta_from_3rdparty_ap_c693677(wifi_dut, wifi_s
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.HiddenSSID | Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
 
     },
 )
@@ -1077,6 +1085,7 @@ def test_wifi_sdk_check_disconnect_sta_from_3rdparty_ap_c693677(wifi_dut, wifi_s
         }
     }
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_sdk_check_aput_enabling_with_sl_net_init_deinit_c693690(wifi_dut, wifi_sniffer,
                                                                       sl_collections,
                                                                       wifi_clients,
@@ -1085,15 +1094,28 @@ def test_wifi_sdk_check_aput_enabling_with_sl_net_init_deinit_c693690(wifi_dut, 
                                                                       wifi_access_point):
     try:
         ap_dut_obj = AP11nParamsEnabled(wifi_dut=wifi_dut, wifi_clients=wifi_clients, wifi_sniffer=wifi_sniffer,
-                                        sl_collections=sl_collections, utf_constants=utf_constants,no_of_clients= 1,
+                                        sl_collections=sl_collections, utf_constants=utf_constants, no_of_clients=1,
                                         sniffer_filter=sniffer_filter, wifi_access_point=wifi_access_point,
                                         testcase_no=693687, channel=11, capture_filename="c693690_Sniffer",
                                         beacon_stop=0)
         ap_dut_obj.sniffer_capture_start()
         ap_dut_obj.aput_start()
-        wifi_dut.interfaces.wifi.sl_net_deinit(mode="ap")
-        ap_dut_obj.aput_start()
+        wifi_sniffer.interfaces.capture.stop_capture()
         ap_dut_obj.check_beacons_from_aput()
+
+        wifi_dut.interfaces.wifi.sl_net_down(mode="ap")
+        time.sleep(5)
+        ap_dut_obj.sniffer_capture_start()
+        time.sleep(10)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        ap_dut_obj.check_beacons_from_aput(expected_beacons=False)
+        ap_dut_obj.sniffer_capture_start()
+        ap_dut_obj.aput_start()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        ap_dut_obj.check_beacons_from_aput()
+        ap_dut_obj.sniffer_capture_start()
+        ap_dut_obj.raspi_sta_assoc_to_dut_ap(hidden_ssid=1)
+        wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as Ex:
         logger().info(f"Exception Block")
@@ -1103,7 +1125,7 @@ def test_wifi_sdk_check_aput_enabling_with_sl_net_init_deinit_c693690(wifi_dut, 
         logger().info(f"Finally Block")
         wifi_dut.interfaces.wifi.stop_ap()
 
-@pytest.mark.skip()
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1137,6 +1159,7 @@ def test_wifi_sdk_check_aput_enabling_with_sl_net_init_deinit_c693690(wifi_dut, 
         }
     }
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_sdk_check_aput_enabling_with_sl_net_init_deinit_with_beacon_stop_enabled_c693691(wifi_dut, wifi_sniffer,
                                                                                                sl_collections,
                                                                                                wifi_clients,
@@ -1145,23 +1168,23 @@ def test_wifi_sdk_check_aput_enabling_with_sl_net_init_deinit_with_beacon_stop_e
                                                                                                wifi_access_point):
     try:
         ap_dut_obj = AP11nParamsEnabled(wifi_dut=wifi_dut, wifi_clients=wifi_clients, wifi_sniffer=wifi_sniffer,
-                                        sl_collections=sl_collections, utf_constants=utf_constants,no_of_clients= 1,
+                                        sl_collections=sl_collections, utf_constants=utf_constants, no_of_clients=1,
                                         sniffer_filter=sniffer_filter, wifi_access_point=wifi_access_point,
                                         testcase_no=693691, channel=11, capture_filename="c693691_Sniffer",
                                         beacon_stop=1)
         ap_dut_obj.sniffer_capture_start()
         ap_dut_obj.aput_start()
         wifi_sniffer.interfaces.capture.stop_capture()
+        ap_dut_obj.check_beacons_from_aput(expected_beacons=False)
+        ap_dut_obj.sniffer_capture_start()
+        ap_dut_obj.raspi_sta_assoc_to_dut_ap()
+        wifi_sniffer.interfaces.capture.stop_capture()
         ap_dut_obj.check_beacons_from_aput()
-        ap_dut_obj.aput_client_connection()
-        ap_dut_obj.check_beacons_from_aput()
-        wifi_dut.interfaces.wifi.sl_net_deinit(mode="ap")
+        wifi_dut.interfaces.wifi.sl_net_down(mode="ap")
         ap_dut_obj.sniffer_capture_start()
         ap_dut_obj.aput_start()
-        ap_dut_obj.aput_client_connection()
+        ap_dut_obj.raspi_sta_assoc_to_dut_ap()
         ap_dut_obj.check_beacons_from_aput()
-
-
 
     except Exception as Ex:
         logger().info(f"Exception Block")
@@ -1171,7 +1194,6 @@ def test_wifi_sdk_check_aput_enabling_with_sl_net_init_deinit_with_beacon_stop_e
         logger().info(f"Finally Block")
         wifi_dut.interfaces.wifi.stop_ap()
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1182,7 +1204,8 @@ def test_wifi_sdk_check_aput_enabling_with_sl_net_init_deinit_with_beacon_stop_e
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.HiddenSSID | Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
 
     },
 )
@@ -1213,7 +1236,7 @@ def test_wifi_sdk_check_ssid_in_beacons_with_3rd_party_sta_disconn_c693698(wifi_
                                                                            wifi_access_point):
     try:
         ap_dut_obj = AP11nParamsEnabled(wifi_dut=wifi_dut, wifi_clients=wifi_clients, wifi_sniffer=wifi_sniffer,
-                                        sl_collections=sl_collections, utf_constants=utf_constants,no_of_clients= 1,
+                                        sl_collections=sl_collections, utf_constants=utf_constants, no_of_clients=1,
                                         sniffer_filter=sniffer_filter, wifi_access_point=wifi_access_point,
                                         testcase_no=693698, channel=11, capture_filename="c693698_Sniffer",
                                         beacon_stop=0)
@@ -1222,11 +1245,12 @@ def test_wifi_sdk_check_ssid_in_beacons_with_3rd_party_sta_disconn_c693698(wifi_
         wifi_sniffer.interfaces.capture.stop_capture()
         ap_dut_obj.check_hidden_ssid_aput_beacon()
         ap_dut_obj.sniffer_capture_start()
-        ap_dut_obj.aput_client_connection()
+        ap_dut_obj.raspi_sta_assoc_to_dut_ap(hidden_ssid=1)
         wifi_sniffer.interfaces.capture.stop_capture()
         ap_dut_obj.check_hidden_ssid_aput_beacon()
         ap_dut_obj.sniffer_capture_start()
-        wifi_clients.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.disconnect_ap_client(
+            client_mac=ap_dut_obj.dut_add_dict['rasp_mac_address'], deauth_option="deauth_client_unspecified")
         wifi_sniffer.interfaces.capture.stop_capture()
         ap_dut_obj.check_hidden_ssid_aput_beacon()
 
@@ -1237,6 +1261,8 @@ def test_wifi_sdk_check_ssid_in_beacons_with_3rd_party_sta_disconn_c693698(wifi_
     finally:
         logger().info(f"Finally Block")
         wifi_dut.interfaces.wifi.stop_ap()
+
+
 
 @pytest.mark.skip()
 @pytest.mark.config(
