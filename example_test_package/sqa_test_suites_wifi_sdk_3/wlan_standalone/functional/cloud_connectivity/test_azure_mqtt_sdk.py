@@ -1763,7 +1763,3 @@ def test_azure_functionality_with_different_hubs_562270(wifi_access_point, wifi_
     finally:
         azure_obj_2.azure_iot_disconnect()
         wifi_dut.interfaces.wifi.leave()
-
-
-
-
