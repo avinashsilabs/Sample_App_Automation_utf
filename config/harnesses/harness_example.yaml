@@ -269,7 +269,7 @@ devices:
                 vid: 0x0483
                 pid: 0x374b
 
-
+    
     # This represents an access point configuration.
     static_ap:
         interfaces:

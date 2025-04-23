@@ -191,6 +191,41 @@ devices:
                 type: 'cli.rs_sapi_rt595_commands'
                 src_dir: 'utf_wiseconnect'
 
+    nrf_53840_cli:
+        type: 'nrf53840'
+        subtype: 'nrf53840'
+        defaults:
+            cli_transport: 'uart'
+            gpio_transport: 'uart'
+        interfaces:
+            uart:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x1051
+                serial_number: 001050165832     # prefix zeros if digits are less than 12
+                b_interface_number : '00'       # this is the interface number of the device use to identify serial port, As multiple serial ports are available in the device
+            vcom:
+                type: 'serial'
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6010
+            wifi:
+                # the wifi interface type for the 9116 must be either
+                # 'cli.rs_at_commands' or 'cli.rs_sapi_commands'
+                # Both of these (or any interface of type 'cli') require a 'cli_transport' property
+                # to be defined in the defaults section for specifying the
+                # communication interface to the device
+                type: 'cli.nrf53840_cli_commands'
+                src_dir: 'utf_wiseconnect'
+
     efr32_4180b:
         type: 'efx32'
         subtype: 'efr32'
@@ -210,9 +245,22 @@ devices:
                 port: 'auto'
                 vid: 0x1fc9
                 pid: 0x0090
+                #options: "-u BSAYBQKQ" # this is the serial number of the device with -u as argument
+
         devices:
             rs9116:
                 <<: *rt595_device
+
+    nrf53840_board:
+        type: 'nrf53840'
+        subtype: 'nrf53840'
+        interfaces:
+            vcom:
+                type: 'serial'
+                port: 'auto'
+                vid: 0x0403
+                pid: 0x6001
+                options: "--chiperase --reset -s 1050165832"    # this is the serial number of the device with -s as argument
 
     dlink810_ap:
         interfaces:
@@ -752,6 +800,8 @@ defaults:
     efx32: 'efr32_4180b'
 
     rt595: 'rt595_board'
+
+    nrf53840: 'nrf53840_board'
 
     # List of devices on test bed, used for loading/upgrading firmware at test case level
     wiseconnect_duts:
