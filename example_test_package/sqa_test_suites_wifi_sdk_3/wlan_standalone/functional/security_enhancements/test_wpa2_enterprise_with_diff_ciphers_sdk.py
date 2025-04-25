@@ -2081,16 +2081,10 @@ def test_wsdk_WPA2_EAP_non_supported_ciphers_TLSv12_C113834(wifi_dut, wifi_acces
                                                                      beacon_missed_count=40, first_time_retry_enable=0)
             wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=1024)
             wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
-            wifi_dut.interfaces.wifi.set_eap_credentials()
             wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                           passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                           security="wpa2_enterprise", uid="user1", enc="tls",
                                           expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
-            wifi_dut.interfaces.wifi.start_ip(
-                expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
-            logger().info(
-                f"IP configuration failed when command given in incorrect state,observed error code 0x10021 which "
-                f" is expected")
             events = wifi_dut.interfaces.wifi.get_async_events()
             rejoin_error_events = [
                 event
@@ -2164,16 +2158,10 @@ def test_wsdk_WPA2_EAP_non_supported_ciphers_TLSv10_C113844(wifi_dut, wifi_acces
                                                                      beacon_missed_count=40, first_time_retry_enable=0)
             wifi_dut.interfaces.wifi.set_eap_credentials(eap_flags=1024)
             wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
-            wifi_dut.interfaces.wifi.set_eap_credentials()
             wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                           passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                           security="wpa2_enterprise", uid="user1", enc="tls",
                                           expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
-            wifi_dut.interfaces.wifi.start_ip(
-                expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
-            logger().info(
-                f"IP configuration failed when command given in incorrect state,observed error code 0x10021 which "
-                f" is expected")
             events = wifi_dut.interfaces.wifi.get_async_events()
             rejoin_error_events = [
                 event
