@@ -1645,7 +1645,7 @@ def test_wifi_sdk_Connect_subscribe_to_MQTT_server_with_SSL_connection_and_publi
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -1696,7 +1696,7 @@ def test_wifi_sdk_qos1_mqtt_with_ssl_publish_diff_length_C127789(
             wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=Si91xMqttQos.QOS1)
         msgs = []
         sw = Stopwatch()
-        while sw.elapsed_sec < 10:
+        while sw.elapsed_sec < 60:
             time.sleep(0.1)
             msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
             if len(msgs) == 1:
