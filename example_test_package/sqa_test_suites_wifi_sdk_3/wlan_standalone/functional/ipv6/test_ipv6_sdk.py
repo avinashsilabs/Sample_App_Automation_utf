@@ -49,11 +49,23 @@ import ipaddress
 import random
 
 
-def random_ipv6_addr(subnet):
-    network = ipaddress.ip_network(subnet)
-    max_value = int(network.network_address) + network.num_addresses - 1
-    random_ip = ipaddress.IPv6Address(random.randint(int(network.network_address), max_value))
-    return str(random_ip)
+
+def random_ipv6_addr(prefix: str) -> str:
+    # Ensure the prefix is interpreted as a /64 network
+    network = ipaddress.IPv6Network(f"{prefix}/64", strict=False)
+
+    # Generate a random 64-bit interface identifier
+    random_suffix = random.getrandbits(64)
+
+    # Combine the prefix and the random suffix
+    full_ip_int = int(network.network_address) | random_suffix
+    full_ip = ipaddress.IPv6Address(full_ip_int)
+
+    return str(full_ip)
+
+
+wan_ipv6_addr = random_ipv6_addr("2001:db8:abcd:0012::")
+wan_gateway = "2001:db8:abcd:0012::1"
 
 
 class WLanThread(ThreadBase):
@@ -62,7 +74,7 @@ class WLanThread(ThreadBase):
 
     def __init__(self, wifi_dut=None, wifi_sniffer=None, wifi_access_point=None, sl_collections=None, test_name=None,
                  wifi_client=None, test_id=None, ping_before_power_save=True, ping_after_power_save=True,
-                 ipv6_addr_type="global"):
+                 ipv6_addr_type="global", static_ipv6=None, ip_config_disable=False):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_sniffer = wifi_sniffer
@@ -74,6 +86,8 @@ class WLanThread(ThreadBase):
         self.ping_before_power_save = ping_before_power_save
         self.ping_after_power_save = ping_after_power_save
         self.ipv6_addr_type = ipv6_addr_type
+        self.static_ipv6 = static_ipv6
+        self.ip_config_disable = ip_config_disable
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
 
@@ -101,10 +115,37 @@ class WLanThread(ThreadBase):
                                                              ping_after_power_save=self.ping_after_power_save,
                                                              ipv6_type=self.ipv6_addr_type,
                                                              retry_count=3,
-                                                             power_save=self.power_save)
+                                                             power_save=False,
+                                                             ip_config_disable=self.ip_config_disable)
+
+        if self.test_id == 536194:
+            ip_config = self.wifi_dut.interfaces.wifi.start_ip(timeout=30, ip_version="ipv6", vid=0,
+                                                           static_ipv6_address=self.static_ipv6,
+                                                           ipv6_gw_address=self.static_ipv6,
+                                                           expected_status=SLStatus.SL_STATUS_SI91X_INVALID_COMMAND_OR_OPERATION)
+
+            return
+        if self.static_ipv6:
+
+            logger().info("********** Setting static_ipv6 value to DUT ")
+            ip_config = self.wifi_dut.interfaces.wifi.start_ip(timeout=30, ip_version="ipv6", vid=0,
+                                                               static_ipv6_address=self.static_ipv6,
+                                                               ipv6_gw_address=self.static_ipv6)
+            logger().info(f"ip_config:{ip_config}")
+            if self.ipv6_addr_type == 'global':
+                info_attr['device_ip'] = ip_config[1]
+            else:
+                info_attr['device_ip'] = ip_config[0]
+
+        if self.power_save:
+            self.wifi_dut.interfaces.wifi.set_performance_profile('power_save_low_latency')
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                               psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+            time.sleep(10)
+        else:
+            logger().info("skip power save mode configuration as in harness power_save flag is set to False")
 
         self.dut_info['ap_mac_address'] = self.wifi_access_point.interfaces.wifi.bssid
-
         remote_ip = self.wifi_client.interfaces.wifi.get_ip_address(version=6, addr_type=self.ipv6_addr_type)
         logger().info(f"remote_ip: {remote_ip}")
         ip_addr = ipaddress.ip_address(remote_ip)
@@ -115,10 +156,10 @@ class WLanThread(ThreadBase):
             ip_addr = ip_addr.compressed
         self.client_info['ip_address'] = ip_addr
 
-        if self.test_id in [119358, 119362, 119393, 119394, 119399, 119400]:
+        if self.test_id in [119358, 119362, 119393, 119394, 119399, 119400, 119360]:
             self.ping_async(ip_addr=ip_addr)
 
-        if self.test_id in [119359, 119402, 119403]:
+        if self.test_id in [119359, 119402, 119403, 119361, 537337, 537338]:
 
             device_ip = info_attr['device_ip']
             logger().info(f"device_ip : {device_ip}")
@@ -127,8 +168,24 @@ class WLanThread(ThreadBase):
                 interface = self.wifi_client.interfaces.wifi.config["interface"]
                 device_ip = f"{device_ip}%{interface}"
 
-            status = ping(device_ip, 10)
+            for count in range(0, 2):
+                logger().info(f"=======>>>>>Pinging the DUT from remote side....")
+                status = ping(device_ip, 10)
+                if status:
+                    break
+                else:
+                    client_interface = self.wifi_client.interfaces.wifi.config["interface"]
+                    logger().info(f"=======>>>>>DUT NOT RESPONDING FOR PING REQUEST......")
+                    logger().info(f"=======>>>>>Disabling the ethernet adaptor at remote side....")
+                    self.wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {client_interface} down")
+                    time.sleep(10)
+                    logger().info(f"=======>>>>>Enabling the ethernet adaptor at remote side....")
+                    self.wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {client_interface} up")
+                    self.wifi_client.interfaces.wifi.shell.execute(f"sudo ip6tables -F")
+                    time.sleep(20)
+
             assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+
 
         self.dut_info['mac_address'] = info_attr['dut_mac_address']
         self.dut_info['ip_address'] = info_attr['device_ip']
@@ -155,7 +212,9 @@ pytestmark = [
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
+                               "wan_ipv6_address": wan_ipv6_addr,
+                               "wan_ipv6_gateway": wan_gateway,
+                               "security": "Open"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -184,7 +243,8 @@ def test_wifi_sdk_ipv6_packet_from_dut_c119345(wifi_dut, wifi_access_point, wifi
 @pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"),
+                               "wan_ipv6_address": wan_ipv6_addr,
+                               "wan_ipv6_gateway": wan_gateway,
                                "security": "Open"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -224,10 +284,12 @@ def test_wifi_sdk_verify_stateless_dhcpv6_configuration_c119348(firmware_loader,
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+
+
 @pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "Open", "ipv6_state": "1",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
+                               "wan_ipv6_address": wan_ipv6_addr, "wan_ipv6_gateway": wan_gateway}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -277,7 +339,7 @@ def test_wifi_sdk_verify_stateful_dhcpv6_procedure_c119349(firmware_loader, wifi
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
+                               "wan_ipv6_address": wan_ipv6_addr, "wan_ipv6_gateway": wan_gateway, "security": "Open"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -306,7 +368,7 @@ def test_wifi_sdk_check_dut_ping_with_128_bit_ipv6_address_c119358(wifi_dut, wif
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
+                               "wan_ipv6_address": wan_ipv6_addr, "security": "Open"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -341,7 +403,7 @@ def test_wifi_sdk_check_ping_with_128_bit_ipv6_address_c119359(wifi_dut, wifi_sn
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
+                               "wan_ipv6_address": wan_ipv6_addr,"wan_ipv6_gateway": wan_gateway, "security": "Open"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -370,7 +432,8 @@ def test_wifi_sdk_check_dut_ping_with_possible_shortest_ipv6_address_c119362(wif
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
+                               "wan_ipv6_address": wan_ipv6_addr, "wan_ipv6_gateway": wan_gateway,
+                               "security": "Open"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -399,7 +462,8 @@ def test_wifi_sdk_ping_to_dut_stateless_dhcpv6_configuration_c119396(wifi_dut, w
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), "security": "Open"}
+                               "wan_ipv6_address": wan_ipv6_addr,"wan_ipv6_gateway": wan_gateway,
+                               "security": "Open"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -434,7 +498,8 @@ def test_wifi_sdk_ping_to_dut_stateful_dhcpv6_configuration_c119397(wifi_dut, wi
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0", "security": "Open",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
+                               "wan_ipv6_gateway": wan_gateway,
+                               "wan_ipv6_address": wan_ipv6_addr}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -473,7 +538,7 @@ def test_wifi_sdk_ping_to_AP_global_stateless_dhcpv6_configuration_C119393(wifi_
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1", "security": "Open",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
+                               "wan_ipv6_address": wan_ipv6_addr, "wan_ipv6_gateway": wan_gateway,}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -506,7 +571,7 @@ def test_wifi_sdk_ping_to_AP_global_stateful_dhcpv6_configuration_C119394(wifi_d
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0", "security": "Open",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
+                               "wan_ipv6_address": wan_ipv6_addr, "wan_ipv6_gateway": wan_gateway,}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -538,7 +603,7 @@ def test_wifi_sdk_ping_to_AP_linklocal_stateless_dhcpv6_configuration_C119399(wi
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1", "security": "Open",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
+                               "wan_ipv6_address": wan_ipv6_addr, "wan_ipv6_gateway": wan_gateway,}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -577,7 +642,7 @@ def test_wifi_sdk_ping_to_AP_linklocal_stateful_dhcpv6_configuration_C119400(wif
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0", "security": "Open",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
+                               "wan_ipv6_address": wan_ipv6_addr, "wan_ipv6_gateway": wan_gateway}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -611,7 +676,7 @@ def test_wifi_sdk_ping_to_DUT_linklocal_stateless_dhcpv6_configuration_C119402(w
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1", "security": "Open",
-                               "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
+                               "wan_ipv6_address": wan_ipv6_addr, "wan_ipv6_gateway": wan_gateway,}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -642,3 +707,231 @@ def test_wifi_sdk_ping_to_DUT_linklocal_stateful_dhcpv6_configuration_C119403(wi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.config(
+    "wifi_access_point", wifi={
+                                "ipv6_state": "1",
+                                "security": "Open",
+                                "passphrase": "12345678",
+                                "connection_type": "STATIC_IPV6",
+                                "wan_ipv6_address": wan_ipv6_addr,
+                                "wan_ipv6_gateway": wan_gateway,
+                                "wan_prefix_length": "64",
+                                "lan_ipv6_address": "2405:3520:cc11:1241:3213:a134:1334:1421",
+                                "lan_prefix_length": "64",
+                                "lan_ipv6_prefix": "2405:3520:cc11:1241::",
+                                "lan_ip_pool_start": "1000",
+                                "lan_ip_pool_end": "5000",
+                                "lan_lease_time": "86400",
+                               }
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_ping_of_dut_long_Hextet_stateful_dhcpv6_config_C119361(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                                              sl_collections, request, sniffer_filter,
+                                                                              wifi_client):
+    test_name = request.node.name
+    try:
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections, wifi_client=wifi_client,
+                              test_id=119361,
+                              ipv6_addr_type="global",
+                              ping_before_power_save=False, ping_after_power_save=False)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wlan_obj.sniffer_capture(mode='stop')
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_info["ip_address"],
+            da_addr=wlan_obj.client_info["ip_address"],
+            filter_name='echo_req_reply')
+        logger().info(f"Validating icmpv6 packets with filter :{packet_filter1}")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter1
+        )["packet_count"], "Sniffer: Unable to find icmpv6 packets in sniffer"
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={
+                                "ipv6_state": "1",
+                                "security": "Open",
+                                "passphrase": "12345678",
+                                "connection_type": "STATIC_IPV6",
+                                "wan_ipv6_address": wan_ipv6_addr,
+                                "wan_ipv6_gateway": wan_gateway,
+                                "wan_prefix_length": "64",
+                                "lan_ipv6_address": "2405:3520:cc11:1241:3213:a134:1334:1421",
+                                "lan_prefix_length": "64",
+                                "lan_ipv6_prefix": "2405:3520:cc11:1241::",
+                                "lan_ip_pool_start": "1000",
+                                "lan_ip_pool_end": "5000",
+                                "lan_lease_time": "86400",
+                               }
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_ping_of_dut_by_removing_the_lz_stateful_dhcpv6_C119360(wifi_dut, wifi_access_point,
+                                                                                       wifi_sniffer,
+                                                                                       sl_collections, request,
+                                                                                       sniffer_filter,
+                                                                                       wifi_client):
+    test_name = request.node.name
+    try:
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections, wifi_client=wifi_client,
+                              test_id=119360,
+                              ipv6_addr_type="global",
+                              ping_before_power_save=False, ping_after_power_save=False)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wlan_obj.sniffer_capture(mode='stop')
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_info["ip_address"],
+            da_addr=wlan_obj.client_info["ip_address"],
+            filter_name='echo_req_reply')
+        logger().info(f"Validating icmpv6 packets with filter :{packet_filter1}")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter1
+        )["packet_count"], "Sniffer: Unable to find icmpv6 packets in sniffer"
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={
+                                "ipv6_state": "1",
+                                "security": "Open",
+                                "passphrase": "12345678",
+                                "connection_type": "STATIC_IPV6",
+                                "wan_ipv6_address": wan_ipv6_addr,
+                                "wan_ipv6_gateway": wan_gateway,
+                                "wan_prefix_length": "64",
+                                "lan_ipv6_address": "2405:3520:cc11:1241:3213:a134:1334:1421",
+                                "lan_prefix_length": "64",
+                                "lan_ipv6_prefix": "2405:3520:cc11:1241::",
+                                "lan_ip_pool_start": "1000",
+                                "lan_ip_pool_end": "5000",
+                                "lan_lease_time": "86400",
+                               }
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_ping_Dut_LLA_Static_IP_1s_stateful_C537337(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                                              sl_collections, request, sniffer_filter,
+                                                                              wifi_client):
+    test_name = request.node.name
+    try:
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections, wifi_client=wifi_client,
+                              test_id=537337,
+                              ipv6_addr_type="link",
+                              ping_before_power_save=False, ping_after_power_save=False,
+                              static_ipv6="1111:1111:1111:1111:1111:1111:1111:1111",
+                              ip_config_disable=True)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wlan_obj.sniffer_capture(mode='stop')
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_info["ip_address"],
+            da_addr=wlan_obj.client_info["ip_address"],
+            filter_name='echo_req_reply')
+        logger().info(f"Validating icmpv6 packets with filter :{packet_filter1}")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter1
+        )["packet_count"], "Sniffer: Unable to find icmpv6 packets in sniffer"
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={
+                                "ipv6_state": "1",
+                                "security": "Open",
+                                "passphrase": "12345678",
+                                "connection_type": "STATIC_IPV6",
+                                "wan_ipv6_address": wan_ipv6_addr,
+                                "wan_ipv6_gateway": wan_gateway,
+                                "wan_prefix_length": "64",
+                                "lan_ipv6_address": "2405:3520:cc11:1241:3213:a134:1334:1421",
+                                "lan_prefix_length": "64",
+                                "lan_ipv6_prefix": "2405:3520:cc11:1241::",
+                                "lan_ip_pool_start": "1000",
+                                "lan_ip_pool_end": "5000",
+                                "lan_lease_time": "86400",
+                               }
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_ping_Dut_LLA_with_Static_IP_fs_statefl_DHCP_C537338(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                                     sl_collections, request, sniffer_filter,
+                                                                     wifi_client):
+    test_name = request.node.name
+    try:
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections, wifi_client=wifi_client,
+                              test_id=537338,
+                              ipv6_addr_type="link",
+                              ping_before_power_save=False, ping_after_power_save=False,
+                              static_ipv6="ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+                              ip_config_disable=True
+                              )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wlan_obj.sniffer_capture(mode='stop')
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_info["ip_address"],
+            da_addr=wlan_obj.client_info["ip_address"],
+            filter_name='echo_req_reply')
+        logger().info(f"Validating icmpv6 packets with filter :{packet_filter1}")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter1
+        )["packet_count"], "Sniffer: Unable to find icmpv6 packets in sniffer"
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={
+                                "ipv6_state": "1",
+                                "security": "WPA2",
+                                "passphrase": "12345678",
+                                "connection_type": "STATIC_IPV6",
+                                "wan_ipv6_address": wan_ipv6_addr,
+                                "wan_ipv6_gateway": wan_gateway,
+                                "wan_prefix_length": "64",
+                                "lan_ipv6_address": "2405:3520:cc11:1241:3213:a134:1334:1421",
+                                "lan_prefix_length": "64",
+                                "lan_ipv6_prefix": "2405:3520:cc11:1241::",
+                                "lan_ip_pool_start": "1000",
+                                "lan_ip_pool_end": "5000",
+                                "lan_lease_time": "86400",
+                               }
+                    )
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_assigning_static_ipv6_all_0s_to_dut_C536194(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                                sl_collections, request, sniffer_filter,
+                                                                wifi_client):
+    test_name = request.node.name
+    try:
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections, wifi_client=wifi_client,
+                              test_id=536194,
+                              ipv6_addr_type="link",
+                              ping_before_power_save=False, ping_after_power_save=False,
+                              static_ipv6="0000:0000:0000:0000:0000:0000:0000:0000",
+                              ip_config_disable=True)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wlan_obj.sniffer_capture(mode='stop')
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
