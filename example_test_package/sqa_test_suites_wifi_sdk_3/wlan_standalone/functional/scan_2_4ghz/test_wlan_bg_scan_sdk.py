@@ -2,6 +2,7 @@ import re
 import time
 from utf.utils.time_measurer import TimeMeasurer
 import pytest as pytest
+from utf.utils.iperf.iperf_utils import ping
 from utf import UtfDatabaseProperties
 from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.tcp_udp.test_wlan_data_rates_sdk \
     import SocketDataTransfer
@@ -58,7 +59,7 @@ def logger():
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None, 
                  ping_count=None, data_transfer=True, test_name=None, sl_collections=None, switch=None, wifi_client=None, net_perf_client=None,
-                 protocol=None):
+                 protocol=None, sniffer_filter=None, rejoin_time=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -71,7 +72,10 @@ class WLanThread(ThreadBase):
         self.sl_collections = sl_collections
         self.test_name = test_name
         self.switch = switch
+        self.socket_id = None
         self.dut_addr = None
+        self.rejoin_time = rejoin_time
+        self.sniffer_filter = sniffer_filter
         self.wifi_client = wifi_client
         self.net_perf_client = net_perf_client
         self.protocol = protocol
@@ -122,53 +126,89 @@ class WLanThread(ThreadBase):
             logger().info(f"\n\n **** Got exception in test case {self.test_case_no} thread: {str(e)} ****\n\n")
             raise e
 
-    def socket_data_transfer_recovery_in_rejoin(self):
-        logger().info(f"\n\nRunning tcp server on remote device \n\n")
-        self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-        logger().info(f"Remote device ip :{self.host_ip}")
-        self.net_perf_client.interfaces.net_perf.init_server(host_ip=self.host_ip, device_ip=
-        self.dut_addr['device_ip'], protocol=self.protocol)
-        self.net_perf_client.interfaces.net_perf.start()
-        end_time = 600
-        """ This method is responsible to validate socket data transfer recovery after rejoin event """
+    def infinite_data_recovery_in_rejoin(self, option_name=None, option_val=None, bsdSetSocketOpt=True,
+                                         data_transfer=False):
 
-        if isinstance(self.wifi_dut.interfaces.wifi, SLWifiCLI):
-            socket_id = self.wifi_dut.interfaces.wifi.socket(timeout=15)
-            if isinstance(socket_id, int):
-                logger().info(f"Socket open successfully : {socket_id}")
+        """ This method is responsible to validate socket data transfer recovery after Max TCP retransmission option """
+        if data_transfer:
+            end_time = 300
+            if isinstance(self.wifi_dut.interfaces.wifi, SLWifiCLI):
+                try:
+                    self.socket_id = self.wifi_dut.interfaces.wifi.socket(timeout=15)
+                    if isinstance(self.socket_id, int):
+                        logger().info(f"Socket open successfully : {self.socket_id}")
+                    else:
+                        logger().error(f"Unable to open socket id: {self.socket_id}")
+                        raise RuntimeError(self.socket_id)
+
+                    if bsdSetSocketOpt:
+                        self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd=self.socket_id, option_name=option_name,
+                                                                      option_val=option_val)
+
+                    logger().info(f"\nSocket bind in DUT for socket-id: {self.socket_id}")
+                    self.wifi_dut.interfaces.wifi.bind(socket_fd=self.socket_id, device_ip=self.dut_addr['device_ip'],
+                                                       timeout=15)
+                    logger().info(f"\nTrying to connect with server ")
+                    self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=self.socket_id, timeout=60)
+
+                    logger().info(f"\n **** Start validation of socket data transfer in rejoin scenario with AP turn "
+                                  f"off &"
+                                  f"Turn on again ****\n")
+
+                    sw = Stopwatch()
+                    check_flag = False
+                    while sw.elapsed_sec < end_time:
+                        send_bytes = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=self.socket_id,
+                                                                                 data=self.data,
+                                                                                 timeout=120)
+                        logger().info(f'SEND-Bytes = {send_bytes}')
+                        time.sleep(1)
+                        while sw.elapsed_sec < 20:
+                            send_bytes = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=self.socket_id,
+                                                                                     data=self.data,
+                                                                                     timeout=120)
+                            logger().info(f'SEND-Bytes = {send_bytes}')
+
+                        if check_flag is not True:
+                            logger().info('***** Turn off Access point *****')
+                            self.switch.interfaces.pdu_switch.turn_off(delay=10)
+                            packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                                sa_addr=self.dut_addr['dut_mac_address'],
+                                filter_name="probe_request")
+                            logger().info("\n\n Adding sleep for 20 sec \n")
+                            time.sleep(20)
+                            self.wifi_sniffer.interfaces.capture.stop_capture()
+                            assert \
+                            self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+                                'packet_count'], \
+                                'Unable to find Broadcast Probe request packet'
+
+                            # start sniffer before turn on acess point
+                            logger().info("\n\n *** Start sniffer configuration before turn on AP *** \n\n")
+                            self.wifi_sniffer.interfaces.capture.configure_interface(
+                                channel=self.wifi_access_point.interfaces.wifi.channel)
+                            logger().info("Start sniffer capture")
+                            self.wifi_sniffer.interfaces.capture.start_capture(capture_file="rejoin_event_start")
+
+                            logger().info(f'******* Turn on Access point with delay {self.rejoin_time} **********')
+                            self.switch.interfaces.pdu_switch.turn_on(delay=self.rejoin_time)
+                            check_flag = True
+                            logger().info('******* Trying to reconnect DUT and resume data transfer **********')
+                            # Initiate ping from third party wifi-client to DUT
+                            logger().info(f"\n\n *** Initiating ping from third party wifi-client to DUT after turn "
+                                          f"on the AP *** \n\n")
+                            logger().info(f"DUT IP address: {self.dut_addr['device_ip']}")
+
+                            status = ping(self.dut_addr['device_ip'], 20)
+                            assert status, "Failed to ping to DUT"
+                    self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.socket_id)
+                except Exception as e:
+                    logger().error(f"An error occurred: {str(e)}")
+                    raise
             else:
-                logger().error(f"Unable to open socket id: {socket_id}")
-                raise RuntimeError(socket_id)
-
-            server_port = self.net_perf_client.interfaces.net_perf.server_port
-            logger().info(f"\nSocket bind in DUT for socket-id: {socket_id}")
-            self.wifi_dut.interfaces.wifi.bind(socket_fd=socket_id, device_ip=self.dut_addr['device_ip'], timeout=15)
-            logger().info(f"\nTrying to connect with server")
-            self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=socket_id, server_ip=self.host_ip,
-                                                           server_port=server_port, timeout=60)
-            logger().info(f"\n **** Start validation of socket data transfer in rejoin scenario with AP turn off & "
-                          f"Turn on again ****\n")
-            sw = Stopwatch()
-            check_flag = False
-            while sw.elapsed_sec < end_time:
-                send_bytes = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=socket_id, data=self.data,
-                                                                         timeout=120)
-                logger().info(f'SEND-Bytes = {send_bytes}')
-                time.sleep(1)
-                while sw.elapsed_sec < 120:
-                    send_bytes = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=socket_id, data=self.data,
-                                                                             timeout=120)
-                    logger().info(f'SEND-Bytes = {send_bytes}')
-
-                    if check_flag is not True:
-                        logger().info('***** Turn off Access point *****')
-                        self.switch.interfaces.pdu_switch.turn_off(delay=20)
-
-                        logger().info('******* Turn on Access point **********')
-                        self.switch.interfaces.pdu_switch.turn_on(delay=60)
-                        check_flag = True
-
-            self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=socket_id, timeout=15)
+                logger().error("Invalid WiFi DUT interface. Expected SLWifiCLI")
+                raise RuntimeError("Invalid WiFi DUT interface")
+        self.wifi_sniffer.interfaces.capture.stop_capture()
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -291,17 +331,25 @@ def test_wifi_sdk_instant_bgscan_c19037(wifi_sniffer, wifi_access_point, wifi_du
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+        "interface": "eth1"
+    }
+)
 def test_wifi_sdk_bgscan_rejoin_infinite_retry_c19038(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                       sl_collections, sniffer_filter, switch, net_perf_client, protocol, wifi_client):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
+    rejoin_time = utf_constants.get("rejoin_time")
 
     '''Re-join with infinite retry when bgscan enable. Module should rejoin. If not module should attempt infinitely.
        If it successfully rejoin to AP bgscan should happen. '''
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
                           test_case_no=19038, sl_collections=sl_collections, switch=switch, data_transfer=False,
-                          protocol=protocol, net_perf_client=net_perf_client,wifi_client=wifi_client)
+                          protocol=protocol, net_perf_client=net_perf_client,wifi_client=wifi_client,
+                          sniffer_filter=sniffer_filter, rejoin_time=rejoin_time)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -313,7 +361,9 @@ def test_wifi_sdk_bgscan_rejoin_infinite_retry_c19038(wifi_sniffer, wifi_access_
         time.sleep(2)
         wifi_sniffer.interfaces.capture.start_capture(capture_file="test_rejoin_us_region")
         logger().info("\n\n ****** Access point is going to turn off  ******")
-        wlan_obj.socket_data_transfer_recovery_in_rejoin()
+        wlan_obj.infinite_data_recovery_in_rejoin(option_name='SO_MAX_RETRANSMISSION_TIMEOUT_VALUE',
+                                              option_val='128',
+                                              data_transfer=True)
         wifi_dut.interfaces.wifi.leave()
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
