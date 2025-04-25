@@ -49,7 +49,7 @@ def logger():
 
 class IoTSocketDataTransfer:
     def __init__(self, wifi_dut=None, dut_ip=None, time_period=None, data=None, data_transfer=True, switch=None,
-                 wifi_access_point=None):
+                 wifi_access_point=None, port=None):
         self.wifi_dut = wifi_dut
         self.dut_ip = dut_ip
         self.time_period = time_period
@@ -58,6 +58,7 @@ class IoTSocketDataTransfer:
         self.switch = switch
         self.socket_id = None
         self.wifi_access_point = wifi_access_point
+        self.port = port
 
     def socket_data_transfer(self, stream_type = 'stream', protocol = 'tcp'):
         if isinstance(self.wifi_dut.interfaces.wifi, SLWifiCLI):
@@ -67,12 +68,18 @@ class IoTSocketDataTransfer:
             else:
                 logger().error(f"Unable to open socket id: {self.socket_id}")
                 raise RuntimeError(self.socket_id)
-
-            logger().error(f"\n\n Socket bind in DUT for socket-id: {self.socket_id}")
-            self.wifi_dut.interfaces.wifi.iotSocketBind(socket=self.socket_id, client_ip=self.dut_ip)
-            time.sleep(5)
-            logger().error(f"\n\n Trying to connect with server ")
-            assert self.wifi_dut.interfaces.wifi.iotSocketConnect(socket=self.socket_id, timeout=30)
+            if self.port is not None:
+                logger().error(f"\n\n Socket bind in DUT for socket-id: {self.socket_id}")
+                self.wifi_dut.interfaces.wifi.iotSocketBind(socket=self.socket_id, client_ip=self.dut_ip, port=self.port)
+                time.sleep(5)
+                logger().error(f"\n\n Trying to connect with server ")
+                assert self.wifi_dut.interfaces.wifi.iotSocketConnect(socket=self.socket_id, timeout=30, port=self.port)
+            else:
+                logger().error(f"\n\n Socket bind in DUT for socket-id: {self.socket_id}")
+                self.wifi_dut.interfaces.wifi.iotSocketBind(socket=self.socket_id, client_ip=self.dut_ip)
+                time.sleep(5)
+                logger().error(f"\n\n Trying to connect with server ")
+                assert self.wifi_dut.interfaces.wifi.iotSocketConnect(socket=self.socket_id, timeout=30)
 
             if self.data_transfer:
                 sw = Stopwatch()
@@ -104,13 +111,16 @@ class WLanThread(ThreadBase):
         self.socket_server = socket_server
         self.net_perf_client = net_perf_client
         self.protocol = None
-        self.wifi_client=wifi_client
+        self.wifi_client = wifi_client
+        self.port = None
 
     def run(self):
         try:
             if self.test_case_no == 217772 or self.test_case_no == 217774:
                 self.stream_type = 'stream'
                 self.protocol = 'tcp'
+                if self.test_case_no == 217772:
+                    self.port = 8989
 
             if self.test_case_no == 217773 or self.test_case_no == 217775:
                 self.stream_type = 'dgram'
@@ -136,7 +146,7 @@ class WLanThread(ThreadBase):
                 self.iot_socket_obj = IoTSocketDataTransfer(wifi_dut=self.wifi_dut,
                                                             wifi_access_point=self.wifi_access_point,
                                                             time_period=self.time_period, data=self.data,
-                                                            dut_ip=self.dut_addr['device_ip'])
+                                                            dut_ip=self.dut_addr['device_ip'], port=self.port)
                 self.iot_socket_obj.socket_data_transfer(stream_type=self.stream_type, protocol=self.protocol)
 
         except Exception as e:
@@ -187,14 +197,14 @@ class ThreadC(ThreadBase):
                 logger().info(f"data = {result}")
 
 
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE, "host": {"TCP": {"port": 8989}}})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": { "wifi":{ "count": 1, "stack_len": 2048 }} ,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -238,7 +248,7 @@ def test_wifi_sdk_iot_socket_tcp_tx_c217772(wifi_access_point, wifi_dut, utf_con
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": { "wifi":{ "count": 1, "stack_len": 2048 }} ,
+        "thread_config": { "wifi":{ "count": 1, "stack_len": 2048}} ,
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
