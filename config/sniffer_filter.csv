@@ -219,4 +219,4 @@ ap_beacon_with_tkip_aes_mixed, (wlan.addr == {{ sa_addr }}), && (wlan.fc.type_su
 ap_probe_response_with_tkip_aes_mixed, (wlan.addr == {{ sa_addr }}), && (wlan.fc.type_subtype == 5 && (wlan.rsn.pcs.type == 4 && wlan.rsn.pcs.type == 2))
 eap_tls_alert_msg_verification_1_2,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (eap and tls.record.version == 0x0303) and (tls.record.content_type == 21) && (tls.alert_message.desc == 48)
 probe_req_ds_param, (wlan.sa == {{sa_addr}}), && (wlan.tag.number == 3)
-rx_window_size, (wlan.sa == {{sa_addr}}), && (tcp.window_size == 64128)
+rx_window_size, (wlan.addr == {{sa_addr}}, and tcp), && (tcp.window_size == 64128)

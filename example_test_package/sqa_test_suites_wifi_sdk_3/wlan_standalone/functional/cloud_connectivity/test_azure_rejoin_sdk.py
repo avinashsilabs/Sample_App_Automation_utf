@@ -63,8 +63,8 @@ def text_generator(size=200):
 class Azure_Thread():
     """This function is responsible for wi-fi connectivity"""
 
-    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, ping_count=None, test_case=None, switch=None,
-                 sl_collections=None, sniffer_filter=None, power_save=None, ap_mac_address=None, azure_iot_client=None,
+    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, ping_count=None, test_case=None, net_perf_client=None,switch=None,
+                 sl_collections=None, sniffer_filter=None, power_save=None, ap_mac_address=None, azure_iot_client=None, data=None,
                  wifi_client=None, test_type=None, disconnect=True, device_id="symmetric_device"):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -85,6 +85,7 @@ class Azure_Thread():
         self.device_id = device_id
         self.sock_id = None
         self.host_ip = None
+        self.second_time = 0
         self.switch=switch
         self.socket, self.init, self.subscribe = False, False, False
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
@@ -146,32 +147,17 @@ class Azure_Thread():
             recv_msg = self.receive_messages_from_dut()
             assert message == recv_msg, "Failed to receive published message in DUT"
             time.sleep(2)
-        if self.test_case == "c37599":
-            logger().info(f"closing socket of sock_id: {self.sock_id}")
-            self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.sock_id)
-            logger().info('***** Turn off Access point *****')
-            self.switch.interfaces.pdu_switch.turn_off(delay=10)
-            time.sleep(60)
 
-            logger().info('******* Turn on Access point **********')
-            self.switch.interfaces.pdu_switch.turn_on(delay=6)
-            self.second_time = 1
-            logger().info('******* Trying to reconnect DUT and resume data transfer **********')
-            # self.join_to_ap()
+    def rejoin_dut_to_ap(self):
+        logger().info('***** Turn off Access point *****')
+        self.switch.interfaces.pdu_switch.turn_off(delay=60)
+        # time.sleep(60)
 
-            self.join_to_ap()
-            self.azure_iot_init()
-            self.subscribe_from_dut()
-            self.connect_socket()
-
-            for i in range(count):
-                logger().info(f"Sending message from cloud to device :{message}")
-                self.azure_iot_client.interfaces.hub.send_message_to_device(
-                    self.device_id, message  # "{message} {count}"
-                )
-                recv_msg = self.receive_messages_from_dut()
-                assert message == recv_msg, "Failed to receive published message in DUT"
-                time.sleep(2)
+        logger().info('******* Turn on Access point **********')
+        self.switch.interfaces.pdu_switch.turn_on(delay=60)
+        # time.sleep(60)
+        self.second_time = 1
+        logger().info('******* Trying to reconnect DUT and resume data transfer **********')
 
     def send_msg_from_device(self, message="Sending_d2c_message", count=3, duration=60):
 
@@ -192,15 +178,10 @@ class Azure_Thread():
 
 
     def connect_socket(self):
-
+        if self.second_time == 1:
+            self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.sock_id, timeout=20)
         self.sock_id = self.wifi_dut.interfaces.wifi.socket("AF_INET", "SOCK_STREAM", "IPPROTO_TCP")
-
-        if self.test_case == "c37599":
-            self.wifi_dut.interfaces.wifi.bsdSetSocketOptAsync(socket_fd=self.sock_id,
-                                                               option_name=Si91xCustomSyncSockOptParms.SL_SI91X_SO_HIGH_PERFORMANCE_SOCKET,
-                                                               cert_index=128)
-        else:
-            self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(self.sock_id, "SOL_TCP", "TCP_ULP", "tls")
+        self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(self.sock_id, "SOL_TCP", "TCP_ULP", "tls")
         self.wifi_dut.interfaces.wifi.bsdSetSocketOption(socket_fd=self.sock_id, option_level='SOL_SOCKET',
                                                          option_name='SO_RCVTIMEO')
         self.wifi_dut.interfaces.wifi.bsdSocketConnect(self.sock_id, self.host_ip, 4, 8883)  # "40.78.196.98")
@@ -229,25 +210,23 @@ class Azure_Thread():
         if self.init:
             self.wifi_dut.interfaces.wifi.azure_iot_disconnect()
             self.init = False
-        if self.socket:
-            self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.sock_id)
+            self.wifi_dut.interfaces.wifi.leave()
             self.socket = False
         self.azure_iot_client.interfaces.device.disconnect()
         time.sleep(2)
 
     def join_to_ap(self):
-        if self.device_id == "symmetric_device":
-            if self.second_time == 1:
-                logger().info(f"dut isin rejoin state now")
-            else:
-                self.wifi_dut.interfaces.wifi.clear_certificate(cert_index=0,
-                                                                cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
-                                                                cert_identifier=Si91xCertIdentifier.
-                                                                SL_NET_TLS_CLIENT_CREDENTIAL_START)
-                self.wifi_dut.interfaces.wifi.clear_certificate(cert_index=0,
-                                                                cert_type=Si91xCertificateType.SL_NET_PRIVATE_KEY,
-                                                                cert_identifier=Si91xCertIdentifier.
-                                                                SL_NET_TLS_CLIENT_CREDENTIAL_START)
+        if self.second_time == 1:
+            logger().info(f"dut is in rejoin state now")
+        else:
+            self.wifi_dut.interfaces.wifi.clear_certificate(cert_index=0,
+                                                            cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
+                                                            cert_identifier=Si91xCertIdentifier.
+                                                            SL_NET_TLS_CLIENT_CREDENTIAL_START)
+            self.wifi_dut.interfaces.wifi.clear_certificate(cert_index=0,
+                                                            cert_type=Si91xCertificateType.SL_NET_PRIVATE_KEY,
+                                                            cert_identifier=Si91xCertIdentifier.
+                                                            SL_NET_TLS_CLIENT_CREDENTIAL_START)
 
         # self.wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
 
@@ -257,17 +236,25 @@ class Azure_Thread():
             wifi_access_point=self.wifi_access_point,
             retry_count=3,
             associated=self.wifi_dut.interfaces.wifi.associated,
-            power_save=self.power_save,
+            power_save=False,
         )
-        if self.second_time == 1:
-            logger().info(f"DUT is already connected to AP")
-        else:
-            self.dut_addr['ap_mac_address'] = self.wifi_access_point.interfaces.wifi.bssid
+        self.dut_addr['ap_mac_address'] = self.wifi_access_point.interfaces.wifi.bssid
 
+        if self.second_time == 1:
+            for i in range(0, 3):
+                result = self.wifi_dut.interfaces.wifi.dns_get(domain_name=self.host_name,
+                                                                   query_timeout=20000,
+                                                                   timeout=100)
+                self.host_ip = (result.decode()).strip()
+                if self.host_ip is not None:
+                    break
+        else:
             result = self.wifi_dut.interfaces.wifi.dns_get(domain_name=self.host_name,
                                                            query_timeout=20000,
                                                            timeout=100)
             self.host_ip = (result.decode()).strip()
+
+
 
     def azure_iot_test(self, socket=True, init=True, subscribe=True, publish=True, receive=True, disconnect=True):
 
@@ -326,7 +313,6 @@ def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None):
         config["client_key"] = client_key
     return pytest.mark.config("wifi_dut", wifi=config)
 
-@pytest.mark.skip("under validation")
 @pytest.mark.firmware_app("test_azure")
 @wifi_dut_marker(ca_cert=["silabs_dgcert_ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.config(
@@ -338,17 +324,16 @@ def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None):
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('c37599')
-def test_azure_mqtt_TCP_rx_window_size_64k_after_rejoin_c37599(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_TCP_rx_window_size_64k_after_rejoin_c37599(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                                       sl_collections, wifi_client, utf_constants, request, switch,
                                                       sniffer_filter):
     """
     Test Description:
-    This test case verifies Rx packet of window size as 64k after join & rejoin same using AZURE MQTT functionality.
+    Verify TCP Rx window size as 64K after join and  rejoin remains same  using AZURE MQTT application after rejoin functionality.
     """
 
     try:
         test_name = "c37599"
-        logger().info(f"testname is {test_name}")
         ping_count = utf_constants.get("ping_count")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel)
@@ -373,17 +358,21 @@ def test_azure_mqtt_TCP_rx_window_size_64k_after_rejoin_c37599(wifi_access_point
         azure_obj.connect_socket()
         azure_obj.azure_iot_init()
         azure_obj.subscribe_from_dut()
-        # azure_obj.send_msg_from_device(message=message)
+        azure_obj.send_msg_from_cloud(message=message)
+        azure_obj.rejoin_dut_to_ap()
+        azure_obj.azure_iot_disconnect()
+        wifi_access_point.interfaces.wifi.start_ap()
+        azure_obj.join_to_ap()
+        azure_obj.azure_iot_connect()
+        azure_obj.subscribe_from_dut()
         azure_obj.send_msg_from_cloud(message=message)
         azure_obj.azure_iot_disconnect()
-        wifi_dut.interfaces.wifi.leave()
 
         wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=azure_obj.dut_addr['dut_mac_address'],
                                                                                         filter_name="rx_window_size")
         logger().info(f"Validate window_size as 64k in rx request packet of DUT")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
-            'packet_count'], \
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1),\
             f'Unable to find window_size as 64k in rx request packet of DUT'
 
         logger().info(f"found window_size as 64k in rx request packet of DUT")
@@ -392,3 +381,6 @@ def test_azure_mqtt_TCP_rx_window_size_64k_after_rejoin_c37599(wifi_access_point
 
     finally:
         azure_iot_client.interfaces.device.disconnect()
+        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=0, timeout=20)
+        logger().info('******* Turn on Access point **********')
+        self.switch.interfaces.pdu_switch.turn_on(delay=60)
