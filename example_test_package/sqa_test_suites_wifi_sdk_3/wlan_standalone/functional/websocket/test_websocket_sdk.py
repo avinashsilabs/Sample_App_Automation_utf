@@ -235,9 +235,16 @@ class WLanJoinThread(ThreadBase):
                         higher_data_len=0, data=data)
                     time.sleep(2)
                     logger().info(f"data received on websocket server ->{ws_handler.message_received}")
-                    # assert ws_handler.message_received == data
+                    assert ws_handler.message_received == data
                 self.wifi_dut.interfaces.wifi.websocket_close()
                 self.wifi_dut.interfaces.wifi.websocket_deinit()
+
+                host_ip = self.http_server.interfaces.http.hostname_or_ip_address
+                logger().info(f"\r\n Starting Sniffer Validation \r\n")
+                assert int(self.wifi_sniffer.interfaces.capture.sniffer_validation(
+                    packet_filter1=f"websocket.opcode == 2 &&  ip.src == {self.dut_addr['device_ip']} && ip.dst == {host_ip}"
+                )['find_packet_num']) > 0, "OpCode 2(Binary) frame not captured in sniffer"
+
                 self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -1448,7 +1455,6 @@ def test_wifi_sdk_websocket_ssl_connect_disconnect_c37479(wifi_dut, wifi_access_
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
-@pytest.mark.skip()
 @wifi_dut_marker()
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.http_server("raspi_lighttpd")

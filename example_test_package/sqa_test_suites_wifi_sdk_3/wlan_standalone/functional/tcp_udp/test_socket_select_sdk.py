@@ -2092,6 +2092,114 @@ def test_wifi_sdk_ip_change_notification_c538012(wifi_sniffer, wifi_dut, wifi_ac
 
 @pytest.mark.config(
     "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(10),
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_rejoin_fail_notification_c538013(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory,
+                                                 logger, sl_collections, sniffer_filter, switch, request):
+    """
+    Steps:
+        1. Configure the Wi-Fi sniffer to capture packets on the same channel as the access point.
+        2. Start packet capture using the Wi-Fi sniffer.
+        3. Initialize the Wi-Fi DUT (Device Under Test) in client mode.
+        4. Enable advanced client configuration on the DUT to allow rejoin attempts with specific parameters.
+        5. Connect the DUT to the Wi-Fi network using the access point.
+        6. Simulate conditions that cause the DUT to lose connection and attempt to rejoin.
+        7. Verify that the DUT receives a rejoin failure notification.
+        8. Validate the captured packets to ensure expected behavior.
+        9. Handle any exceptions and clean up resources after the test.
+
+        Parameters:
+        - wifi_sniffer: Object to capture and analyze Wi-Fi packets.
+        :param wifi_sniffer:
+        :param wifi_dut:
+        :param wifi_access_point:
+        :param remote_socket_factory:
+        :param logger:
+        :param sl_collections:
+        :param request:
+        :param switch:
+        :param remote_socket:
+        :return:
+    """
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(
+            capture_file=request.node.name)
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+        wifi_dut.interfaces.wifi.init(mode="client")
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=5, scan_interval=1,
+                                                                      beacon_missed_count=40,
+                                                                      first_time_retry_enable=1)
+        dut_addr = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point,
+                                                       power_save=True,
+                                                       associated=wifi_dut.interfaces.wifi.associated)
+        device_ip, dut_mac_address = dut_addr['device_ip'], dut_addr['dut_mac_address']
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+
+        local_port = 6001
+        client_socket = remote_socket_factory.interfaces.socket.create_socket()
+        server_socket = wifi_dut.interfaces.wifi.Asyncsocket(protocol="IPPROTO_TCP")
+        wifi_dut.interfaces.wifi.bind(socket_fd=server_socket, device_ip=device_ip, ip_len=4, server_port=local_port,
+                                      asynch=1)
+        wifi_dut.interfaces.wifi.listen(socket_fd=server_socket, backlog=1, asynch=1)
+
+        ThreadBase.call_functions_simultaneously(
+            [(client_socket.connect_client_tcp, device_ip, local_port),
+             (wifi_dut.interfaces.wifi.bsdSocketAccept, server_socket, 1)], timeout=300)
+
+        logger.info("\r\n Initiating Socket Select Functionality with timeout as NULL \r\n")
+        wifi_dut.interfaces.wifi.bsdSocketSelect(numberOfFds=1, time=100, timeout_disable=1, async_timeout=300, expected_status=SLStatus.SL_STATUS_TIMEOUT)
+
+        logger.info(f"Turning off the switch for 20 seconds to simulate disconnection...")
+        switch.interfaces.pdu_switch.turn_off()
+        time.sleep(20)
+        rejoin_error_notification = False
+        with TimeMeasurer() as t:
+            logger.info("Waiting up to 180 seconds for rejoin error event...")
+            sw = Stopwatch()
+            while sw.elapsed_sec < 180:
+                events = wifi_dut.interfaces.wifi.get_async_events()
+                rejoin_error_events = [
+                    event
+                    for event in events
+                    if event.event_type == AsyncEventIdentifiers.REJOIN_EVENT
+                ]
+                if len(rejoin_error_events):
+                    rejoin_error_notification = True
+                    break
+                time.sleep(0.1)
+        assert rejoin_error_notification, "\n Rejoin error notification not received within the timeout period \n"
+        logger.info(f"Received rejoin error event after {t.duration:.2f}s")
+
+    except Exception as error:
+        wifi_dut.interfaces.wifi.is_dut_bad_state = True
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
+    finally:
+        switch.interfaces.pdu_switch.turn_on()
+        remote_socket_factory.interfaces.socket.close_all()
+
+@pytest.mark.config(
+    "wifi_dut",
     wifi={
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
