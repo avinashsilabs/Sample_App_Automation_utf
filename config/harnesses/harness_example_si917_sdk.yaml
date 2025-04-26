@@ -1018,6 +1018,24 @@ devices:
                 ca_file: 'wifi-user.pem'
 #                private_key_password: 12345678
 
+    raspi_radius_server_v2:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            radius_server:
+                type: 'radius_server.freeradius.freeradius_v3_2_linux'
+                shell: 'linux_shell'
+                ap_ip_address: '192.168.50.1/24'
+                ap_secret: '12345678'
+                username: 'user1'
+                password: '12345678'
+                tls_min_version: '1.0'
+                tls_max_version: '1.2'
+                private_key_file: 'wifi-user.pem'
+                certificate_file: 'wifi-user.pem'
+                ca_file: 'wifi-user.pem'
+                #private_key_password: 12345678
+
     static_radius_server:
         interfaces:
             ssh_shell:

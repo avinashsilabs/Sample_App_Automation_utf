@@ -640,3 +640,124 @@ def test_sdk_WPA2_EAP_tls_tcp_bypass_pmf_C113816(wifi_sniffer, wifi_access_point
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.TCPIPBypass
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp
+                           | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP
+                           | Si91xConfigFeatureBitMap.TLS_V1,
+        "eap_cert": ["fast_bin.pac", "SL_NET_PACK_FILE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
+
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
+                                         "ble_stop_adv", "clear_certs"])
+@pytest.mark.radius_server("raspi_radius_server_v2")
+def test_sdk_WPA2_EAP_fast_tcp_bypass_V1_C113810(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
+                                             sl_collections, radius_server, request, utf_constants):
+    """ This test case Verifies the wpa2 enterprise connectivity while using eap fast method with version 1.0 in tcp ip bypass mode"""
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        iter_count = utf_constants.get("iter_count")
+        for count in range(0, iter_count):
+            wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                         eap_type="fast", sl_collections=sl_collections,
+                                         test_name=test_name, test_type="ping", tcp_ip_bypass=True)
+            wifi_thread.join_to_ap_eap()
+            dut_mac_address = wifi_thread.dut_addr['dut_mac_address']
+            logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+            wifi_dut.interfaces.wifi.leave()
+
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(wifi_sniffer=wifi_sniffer,
+                                           wifi_access_point=wifi_access_point,
+                                           dut_mac_address=dut_mac_address,
+                                           ap_mac_address=ap_mac_address,
+                                           sniffer_filter=sniffer_filter,
+                                           sl_collections=sl_collections,
+                                           tcp_ip_bypass=True
+                                           )
+
+        sniffer_obj.verify_sniffer_validation_eap(eap_type="fast", tls_version="1.0")
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.TCPIPBypass
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp
+                           | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP
+                           | Si91xConfigFeatureBitMap.TLS_V2,
+        "eap_cert": ["fast_bin.pac", "SL_NET_PACK_FILE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
+
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
+                                         "ble_stop_adv", "clear_certs"])
+@pytest.mark.radius_server("raspi_radius_server_v2")
+def test_sdk_WPA2_EAP_fast_tcp_bypass_V12_C113814(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
+                                                  radius_server, sl_collections, request, utf_constants):
+    """ This test case Verifies the wpa2 enterprise connectivity while using eap fast method with version 1.2 in tcp ip bypass mode"""
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        iter_count = utf_constants.get("iter_count")
+        for count in range(0, iter_count):
+            wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                         eap_type="fast", sl_collections=sl_collections,
+                                         test_name=test_name, test_type="ping", tcp_ip_bypass=True)
+            wifi_thread.join_to_ap_eap()
+            dut_mac_address = wifi_thread.dut_addr['dut_mac_address']
+            logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+            wifi_dut.interfaces.wifi.leave()
+
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(wifi_sniffer=wifi_sniffer,
+                                           wifi_access_point=wifi_access_point,
+                                           dut_mac_address=dut_mac_address,
+                                           ap_mac_address=ap_mac_address,
+                                           sniffer_filter=sniffer_filter,
+                                           sl_collections=sl_collections,
+                                           tcp_ip_bypass=True
+                                           )
+        sniffer_obj.verify_sniffer_validation_eap(eap_type="fast", tls_version="1.2")
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
