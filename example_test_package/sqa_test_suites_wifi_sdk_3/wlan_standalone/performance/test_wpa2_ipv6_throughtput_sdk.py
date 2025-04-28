@@ -240,8 +240,7 @@ class WLanThread(ThreadBase):
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client
                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
-                          | Si91xTCPIPFeatureBitMap.IPv6Mode
-                          | Si91xTCPIPFeatureBitMap.DHCPv6Server,
+                          | Si91xTCPIPFeatureBitMap.IPv6Mode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
@@ -321,8 +320,7 @@ def test_sdk_WLAN_IPV6_TCP_TX_C119377(
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client
                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
-                          | Si91xTCPIPFeatureBitMap.IPv6Mode
-                          | Si91xTCPIPFeatureBitMap.DHCPv6Server,
+                          | Si91xTCPIPFeatureBitMap.IPv6Mode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
@@ -403,8 +401,7 @@ def test_sdk_WLAN_IPV6_TCP_RX_C119376(
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client
                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
-                          | Si91xTCPIPFeatureBitMap.IPv6Mode
-                          | Si91xTCPIPFeatureBitMap.DHCPv6Server,
+                          | Si91xTCPIPFeatureBitMap.IPv6Mode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
@@ -484,8 +481,7 @@ def test_sdk_WLAN_IPV6_UDP_TX_C119380(
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client
                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
-                          | Si91xTCPIPFeatureBitMap.IPv6Mode
-                          | Si91xTCPIPFeatureBitMap.DHCPv6Server,
+                          | Si91xTCPIPFeatureBitMap.IPv6Mode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
@@ -563,8 +559,7 @@ def test_sdk_WLAN_IPV6_UDP_RX_C119379(
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.SSL
                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
-                          | Si91xTCPIPFeatureBitMap.IPv6Mode
-                          | Si91xTCPIPFeatureBitMap.DHCPv6Server,
+                          | Si91xTCPIPFeatureBitMap.IPv6Mode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
@@ -637,8 +632,7 @@ def test_sdk_WLAN_SSL_IPV6_TX_C119382(
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.SSL
                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
-                          | Si91xTCPIPFeatureBitMap.IPv6Mode
-                          | Si91xTCPIPFeatureBitMap.DHCPv6Server,
+                          | Si91xTCPIPFeatureBitMap.IPv6Mode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
