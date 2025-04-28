@@ -6,6 +6,8 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingM
     Si91xCustomFeatureBitMap, \
     Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xRegion, Si91xRegionCode, Si91xModuleType
 from utf.utils.logger import get_logger
+from utf.interfaces.iperf.iperf_constants import IperfConstants
+from utf.utils import print_dict
 
 
 """
@@ -24,12 +26,13 @@ def logger():
     return get_logger(__name__)
 class AP11nParamsEnabled(ThreadBase):
     dut_add_dict = {}
-    def __init__(self, wifi_dut, wifi_clients, wifi_sniffer, sl_collections, utf_constants=None,  net_perf_client=None,
+    def __init__(self, wifi_dut=None, wifi_clients=None, wifi_sniffer=None, sl_collections=None, utf_constants=None,
+                 net_perf_client=None,
                  protocol=None, testcase_no=None, capture_filename=None, dtim_period=None, beacon=None,
                  traffic_type=None, leave=True, enable_data_rate=False, sniffer_stop=False, htcaps_enable=None,
                  ssid=None, security = None, password=None, dtim_count=None, beacon_interval=None, channel=None,
-                 no_of_clients=None, ht_caps=None,psk=None, ipv6_addr_type="global",wifi_client=None,
-                 wifi_access_point=None,beacon_stop=None, sniffer_filter=None):
+                 no_of_clients=1, ht_caps=None,psk=None, ipv6_addr_type="global",wifi_client=None,
+                 wifi_access_point=None,beacon_stop=None, sniffer_filter=None, net_perf_server=None):
         super().__init__()
         self.psk = psk
         self.wifi_dut = wifi_dut
@@ -61,6 +64,7 @@ class AP11nParamsEnabled(ThreadBase):
         self.ht_caps = ht_caps
         self.ipv6_addr_type=ipv6_addr_type
         self.beacon_stop = beacon_stop
+        self.net_perf_server = net_perf_server
 
     def sniffer_capture_start(self):
         logger().info("********** configuring the sniffer with access point channel **********")
@@ -142,6 +146,15 @@ class AP11nParamsEnabled(ThreadBase):
         if self.testcase_no in [557314, 557316]:
             self.staut_assoc_req_11ax_params_check()
 
+    def sniffer_validation(self):
+        packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=self.dut_aput_mac_addr_in_ap_alone_mode(),
+            filter_name="radio_mcs_index_7")
+        logger().info(
+            f"Validating the 11n mcs parameter {packet_filter1}")
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+
 
     def dut_ap_enable(self):
         ping_count = self.utf_constants.get("ping_count")
@@ -161,7 +174,6 @@ class AP11nParamsEnabled(ThreadBase):
     def raspi_sta_assoc_to_dut_ap(self):
         for i in range(0, self.no_of_clients):
             ping_count = self.utf_constants.get("ping_count")
-            self.dut_add_dict={}
             connected = False
             logger().info(f"RASPI-STA{i + 1}:'{self.wifi_clients[i].name}' is joining to DUT-AP")
             self.wifi_clients[i].interfaces.wifi.config['interface'] = "wlan0"
@@ -177,8 +189,8 @@ class AP11nParamsEnabled(ThreadBase):
                     logger().info(f"raspi_mac: {self.dut_add_dict['rasp_mac_address']}")
                     raspi_mac = self.dut_add_dict['rasp_mac_address']
                     logger().info(f"raspberry mac address: {raspi_mac}")
-                    self.dut_add_dict['client_ip'] = self.wifi_clients[i].interfaces.wifi.get_ip_address()
-                    logger().info(f"Client_ip: {self.dut_add_dict['client_ip']}")
+                    self.dut_add_dict[f'client{i + 1}_ip'] = self.wifi_clients[i].interfaces.wifi.get_ip_address()
+                    logger().info(f"Client{i + 1}_ip: {self.dut_add_dict[f'client{i + 1}_ip']}")
                     rc, stdout, stderr = self.wifi_clients[i].interfaces.wifi.shell.execute(
                         f"sudo ping -c {ping_count} {self.dut_add_dict['dut_ip']}")
                     assert rc == 0, f"RASPI-STA{i + 1} failed to ping DUT"
@@ -193,11 +205,14 @@ class AP11nParamsEnabled(ThreadBase):
         time.sleep(30)
         logger().info("Checking the connection stability after 30 seconds")
 
+        return self.dut_add_dict
+
     def aput_start(self):
         time.sleep(3)
         ping_count = self.utf_constants.get("ping_count")
         self.dut_ap_enable()
         self.raspi_sta_assoc_to_dut_ap()
+
 
     def concurrent_sta_mode(self):
         self.sl_collections.join_to_wifi_network(
@@ -223,11 +238,44 @@ class AP11nParamsEnabled(ThreadBase):
         assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
 
     def client_disconnect(self):
-        for i in range(0, 1):
+        for i in range(0, self.no_of_clients):
             logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
             self.wifi_clients[i].interfaces.wifi.leave()
     def dut_leave_ap(self):
         self.wifi_dut.interfaces.wifi.leave()
+
+    @staticmethod
+    def print_throughput(iperf_throughput: dict):
+        if iperf_throughput is not None:
+            print_dict("##     ", iperf_throughput)
+
+    def data_rate(self):
+        logger().info("********** enabling data rate *********")
+        self.wifi_dut.interfaces.wifi.set_transmit_rate(rate_protocol="802.11n", data_rate="72.2Mbps", interface="ap")
+
+    def run_traffic_between_two_clients(
+            self, net_perf_server, net_perf_client, server_ip, client_ip, protocol, iperf_time=30):
+
+        logger().info(f"***** Starting Iperf Server on {net_perf_server.name} *****")
+        net_perf_server.interfaces.net_perf.init_server(protocol=protocol, host_ip=client_ip,
+                                                        device_ip=server_ip, time_out=iperf_time)
+        net_perf_server.interfaces.net_perf.start()
+        server_port = net_perf_server.interfaces.net_perf.server_port
+        time.sleep(5)
+
+        logger().info(f"**** Starting Iperf Client on {net_perf_client.name} ****")
+        net_perf_client.interfaces.net_perf.init_client(host_ip=server_ip, device_ip=client_ip,
+                                                        protocol=protocol, time_out=iperf_time)
+
+        client_port = net_perf_client.interfaces.net_perf.client_port
+        args = net_perf_client.interfaces.net_perf.executable_arguments
+        args[args.index(str(client_port))] = str(server_port)
+        net_perf_client.interfaces.net_perf.start()
+        time.sleep(iperf_time + 5)
+        logger().info("Printing Throughput")
+        tp = net_perf_server.interfaces.net_perf.process_output()
+        assert tp is not None
+        self.print_throughput(tp)
 
 @pytest.mark.config(
     "wifi_dut",
@@ -697,5 +745,231 @@ def test_wifi_sdk_check_11n_params_in_aput_beacon_in_concurrent_mode_tc557316(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server
+                          | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+
+    },
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "917_Melco_ap",
+            "passphrase": "12345678",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "917_Melco_ap",
+            "passphrase": "12345678",
+            "channel": 11,
+        },
+    }
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_check_aggregation_during_traffic_bet_two_clients_apmode_TC557310(
+        wifi_dut, wifi_sniffer, sl_collections, wifi_clients, utf_constants, sniffer_filter, net_perf_client,
+        net_perf_server, protocol):
+
+    """Verify the WLAN Aggregation while running the Data traffic between two 3rd party STA's in AP Mode"""
+
+    try:
+        ap_dut_obj = AP11nParamsEnabled(
+            wifi_dut=wifi_dut, wifi_clients=wifi_clients, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+            utf_constants=utf_constants,sniffer_filter=sniffer_filter, channel=11,
+            capture_filename="TC557308_Sniffer", beacon_stop=0, ssid="917_Melco_ap", no_of_clients= 2, security="WPA2",
+            psk="12345678", ht_caps=1, net_perf_client=net_perf_client, net_perf_server=net_perf_server,
+            protocol=protocol)
+
+        ap_dut_obj.sniffer_capture_start()
+        ap_dut_obj.no_of_clients = 2
+        ap_dut_obj.dut_ap_enable()
+        dut_add_dict = ap_dut_obj.raspi_sta_assoc_to_dut_ap()
+        client_ip = dut_add_dict['client1_ip']
+        server_ip = dut_add_dict['client2_ip']
+        ap_dut_obj.run_traffic_between_two_clients(
+            net_perf_server, net_perf_client, server_ip, client_ip, protocol, iperf_time=60)
+        ap_dut_obj.client_disconnect()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        ap_dut_obj.sniffer_check()
+
+    except Exception as Ex:
+        logger().info(f"Exception Block")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server
+                          | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+
+    },
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "917_Melco_ap",
+            "passphrase": "12345678",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "917_Melco_ap",
+            "passphrase": "12345678",
+            "channel": 11,
+        },
+    }
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_check_data_rate_and_ping_traffic_bet_two_clients_apmode_TC557311(
+        wifi_dut, wifi_sniffer, sl_collections, wifi_clients, utf_constants, sniffer_filter, net_perf_client,
+        net_perf_server, protocol):
+
+    """Verify the 11n Data rate with Ping traffic on IPv4 and IPv6 between 3rd party STA's with 11n Parameters enabled"""
+
+    try:
+        ap_dut_obj = AP11nParamsEnabled(
+            wifi_dut=wifi_dut, wifi_clients=wifi_clients, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+            utf_constants=utf_constants,sniffer_filter=sniffer_filter, channel=11,
+            capture_filename="TC557308_Sniffer", beacon_stop=0, ssid="917_Melco_ap", no_of_clients= 2, security="WPA2",
+            psk="12345678", ht_caps=1, net_perf_client=net_perf_client, net_perf_server=net_perf_server,
+            protocol=protocol)
+
+        ap_dut_obj.sniffer_capture_start()
+        ap_dut_obj.no_of_clients = 2
+        ap_dut_obj.dut_ap_enable()
+        ap_dut_obj.data_rate()
+        dut_add_dict = ap_dut_obj.raspi_sta_assoc_to_dut_ap()
+        client_ip = dut_add_dict['client1_ip']
+        server_ip = dut_add_dict['client2_ip']
+        ap_dut_obj.run_traffic_between_two_clients(
+            net_perf_server, net_perf_client, server_ip, client_ip, protocol, iperf_time=60)
+        ap_dut_obj.client_disconnect()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        ap_dut_obj.sniffer_check()
+        ap_dut_obj.sniffer_validation()
+
+    except Exception as Ex:
+        logger().info(f"Exception Block")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv4Server |
+                          Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.DHCPv6Server
+                          | Si91xTCPIPFeatureBitMap.IPv6Mode | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+
+    },
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "917_Melco_ap",
+            "passphrase": "12345678",
+            "channel": 11,
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "917_Melco_ap",
+            "passphrase": "12345678",
+            "channel": 11,
+        },
+    }
+)
+@pytest.mark.config("wifi_access_point", wifi={'connection_type': 'STATIC_IPV6',
+                'wan_ipv6_address': "2401:4900:1cb3:3444:3223:3324:1235:1bca",
+                'wan_ipv6_gateway': "2401:4900:1cb3:3444::1",
+                'wan_prefix_length': 64,
+                'ipv6_state': "1", #0= "stateless" 1="stateful"
+                'lan_ipv6_address': "2401:3500:133c:1341:1134:2541:13cd:1134",
+                'lan_prefix_length': 64,
+                'lan_ipv6_prefix': "2401:3500:133c:1341::",
+                'lan_ip_pool_start': "1000",
+                'lan_ip_pool_end': "2000",
+                'lan_lease_time': 86400, "use_ipv6_web": True, "channel": 11, "standard": 'gnbax', "security": "WPA2",
+                "passphrase": "12345678"})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_check_data_rate_and_aggregation_traffic_bet_two_clients_conmode_TC557317(
+        wifi_dut, wifi_sniffer, sl_collections, wifi_clients, utf_constants, sniffer_filter, net_perf_client,
+        net_perf_server, protocol, wifi_access_point, wifi_client):
+
+    """Verify the 11n Data rates and Aggregation between two 3rd party STA's in Concurrent Mode when STAUT is doing
+    the Ping traffic from DUT to AP Backend Machine"""
+
+    try:
+        ap_dut_obj = AP11nParamsEnabled(
+            wifi_dut=wifi_dut, wifi_clients=wifi_clients, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+            utf_constants=utf_constants,sniffer_filter=sniffer_filter, channel=11, wifi_access_point=wifi_access_point,
+            capture_filename="TC557308_Sniffer", beacon_stop=0, ssid="917_Melco_ap", no_of_clients= 2, security="WPA2",
+            psk="12345678", ht_caps=1, net_perf_client=net_perf_client, net_perf_server=net_perf_server,
+            protocol=protocol, wifi_client=wifi_client)
+
+        ap_dut_obj.sniffer_capture_start()
+        ap_dut_obj.no_of_clients = 2
+        ap_dut_obj.concurrent_sta_mode()
+        ap_dut_obj.check_ping_status_ipv6()
+        ap_dut_obj.dut_ap_enable()
+        ap_dut_obj.data_rate()
+        dut_add_dict = ap_dut_obj.raspi_sta_assoc_to_dut_ap()
+        client_ip = dut_add_dict['client1_ip']
+        server_ip = dut_add_dict['client2_ip']
+        ap_dut_obj.run_traffic_between_two_clients(
+            net_perf_server, net_perf_client, server_ip, client_ip, protocol, iperf_time=60)
+        ap_dut_obj.client_disconnect()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        ap_dut_obj.sniffer_check()
+        ap_dut_obj.sniffer_validation()
+
+    except Exception as Ex:
+        logger().info(f"Exception Block")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
