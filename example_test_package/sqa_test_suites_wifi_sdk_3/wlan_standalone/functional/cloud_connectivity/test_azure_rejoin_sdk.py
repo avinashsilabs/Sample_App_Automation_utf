@@ -150,7 +150,7 @@ class Azure_Thread():
 
     def rejoin_dut_to_ap(self):
         logger().info('***** Turn off Access point *****')
-        self.switch.interfaces.pdu_switch.turn_off(delay=60)
+        self.switch.interfaces.pdu_switch.turn_off(delay=10)
         # time.sleep(60)
 
         logger().info('******* Turn on Access point **********')
@@ -359,6 +359,7 @@ def test_azure_mqtt_TCP_rx_window_size_64k_after_rejoin_c37599(firmware_loader, 
         azure_obj.azure_iot_init()
         azure_obj.subscribe_from_dut()
         azure_obj.send_msg_from_cloud(message=message)
+        azure_obj.send_msg_from_device(message=message)
         azure_obj.rejoin_dut_to_ap()
         azure_obj.azure_iot_disconnect()
         wifi_access_point.interfaces.wifi.start_ap()
@@ -366,13 +367,14 @@ def test_azure_mqtt_TCP_rx_window_size_64k_after_rejoin_c37599(firmware_loader, 
         azure_obj.azure_iot_connect()
         azure_obj.subscribe_from_dut()
         azure_obj.send_msg_from_cloud(message=message)
+        azure_obj.send_msg_from_device(message=message)
         azure_obj.azure_iot_disconnect()
 
         wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=azure_obj.dut_addr['dut_mac_address'],
                                                                                         filter_name="rx_window_size")
         logger().info(f"Validate window_size as 64k in rx request packet of DUT")
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1),\
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'],\
             f'Unable to find window_size as 64k in rx request packet of DUT'
 
         logger().info(f"found window_size as 64k in rx request packet of DUT")
