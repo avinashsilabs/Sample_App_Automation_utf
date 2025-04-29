@@ -189,13 +189,14 @@ class AwsConnection(ThreadBase):
             self.subscribe_from_raspi(self.aws_iot_client, self.topic, qos=self.qos)
 
             if self.test_name == 'test_wifi_sdk_c537911':
-                result = self.publish_from_dut(self.wifi_dut, self.topic, self.messages[0], qos=self.qos,
-                                               negative_case=True)
-                logger().info(f"Result of publish from DUT is: {result}")
-                if result == 0xffffffdf:
-                    logger().info("\n\n *** Publishing status from DUT on topic is failed error -33 observed as per "
+                logger().info(f"\nDUT is publishing message on topic:'{self.topic}' \nQOS:'{self.qos}'")
+                self.wifi_dut.interfaces.wifi.aws_iot_mqtt_publish_more(topic_name=self.topic, qos=self.qos,
+                                                                            payload=self.messages[0],
+                                                                            timeout=120,
+                                                                            expected_status=SLStatus.SL_STATUS_MQTT_TX_BUFFER_TOO_SHORT_ERROR
+                                                                            )
+                logger().info("\n\n *** Publishing status from DUT on topic is failed error -33 observed as per "
                                   "expectation *** \n\n\n\n")
-                    return True
 
             else:
                 for count, msg in enumerate(self.messages):
@@ -2896,6 +2897,9 @@ def test_wifi_sdk_aws_2000_bytes_tx_data_send_to_dut_c537911(wifi_sniffer, wifi_
             logger.info(f"Initiating aws test for iteration:{i + 1}")
             aws_obj.start()
             aws_obj.wait_for_exit()
+
+            logger.info("DUT is Unsubscribing on topic")
+            wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic_name='topic_' + test_name)
 
             logger.info("Initiating aws_iot_disconnect from DUT")
             wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
