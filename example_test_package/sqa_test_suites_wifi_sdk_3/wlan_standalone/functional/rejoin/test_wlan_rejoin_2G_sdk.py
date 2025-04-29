@@ -2951,16 +2951,11 @@ def test_wifi_sdk_wpa3_rejoin_transition_eap_security_with_pmf_c680007(wifi_dut,
                                                                        wifi_client):
     """Verify rejoin functionality in EAP-TLS mode with WPA3 security and PMF enabled"""
     test_name = request.node.name
-    wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
+    wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-        join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
-    wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
-    wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-                                                             beacon_missed_count=40, first_time_retry_enable=0)
+        join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
 
-    wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
-    wifi_dut.interfaces.wifi.set_eap_credentials()
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, test_case_no=680007, sl_collections=sl_collections,
                           switch=switch, wifi_client=wifi_client, net_perf_client=net_perf_client,

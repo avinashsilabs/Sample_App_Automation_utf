@@ -2386,7 +2386,7 @@ def test_wsdk_WPA3_EAP_AWS_shadow_connection_C686555(wifi_dut, wifi_access_point
         wifi_dut.interfaces.wifi.set_eap_credentials()
 
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
 
         wifi_thread = WPA3Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, test_name=test_name,
@@ -2486,7 +2486,7 @@ def test_wifi_sdk_mqtt_wpa3_transition_EAP_FAST_security_c680005(wifi_dut, wifi_
         wifi_dut.interfaces.wifi.set_eap_credentials()
 
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                       passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                       security="wpa3_transition_enterprise", uid="user1", enc="fast")
