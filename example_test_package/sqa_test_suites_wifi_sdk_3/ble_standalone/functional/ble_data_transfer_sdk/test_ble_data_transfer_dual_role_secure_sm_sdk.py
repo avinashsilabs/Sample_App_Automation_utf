@@ -60,6 +60,8 @@ class Ble_Data_Transfer:
         self.ble_dut_address = None
         self.ble_client_address = None
         self.scan_state = None
+        self.failed_master_conn = False
+        self.failed_slave_conn = False
 
     def ble_gatt_init(self, set_smp=1):
         # Initializing DUT BLE Device
@@ -148,10 +150,12 @@ class Ble_Data_Transfer:
                 logger().info(f"Initiating connection, this can take up to {timeout} seconds....")
                 self.ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=self.ble_client_address,
                                                               timeout=timeout, ble_scan_interval=50, ble_scan_window=50)
-                time.sleep(40)
+                time.sleep(60)
                 logger().info("Checking connection status of BLE")
                 state = self.ble_dut.interfaces.wifi.ble_get_device_state()
                 state_int = int(state) if state.isdigit() else -1
+                status = self.ble_client.interfaces.bluetooth.get_connection_status(self.ble_dut_address)
+                assert status == 1, "DUT BLE device is not in connected state"
                 assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
                 logger().info("BLE Connection success")
                 break
@@ -160,6 +164,8 @@ class Ble_Data_Transfer:
                 logger().info(f"Exception occurred while connecting to BLE device: {str(ex)}")
                 logger().info(f"BLE connection failed with retries {retry + 1}")
                 if retry == retries - 1:
+                    self.ble_dut.interfaces.wifi.is_dut_bad_state = True
+                    self.failed_master_conn = True
                     raise
 
     def scan_from_remote_devices(self):
@@ -209,9 +215,11 @@ class Ble_Data_Transfer:
         for retry in range(retries):
             try:
                 self.ble_client.interfaces.bluetooth.pair_and_connect(self.ble_dut.interfaces.wifi.ble_address)
-                time.sleep(40)
+                time.sleep(60)
                 # Check Connection Status
                 logger().info("Checking connection status of BLE")
+                status = self.ble_client.interfaces.bluetooth.get_connection_status(self.ble_dut_address)
+                assert status == 1, "DUT BLE device is not in connected state"
                 assert self.check_device_state_on_dut() == BLEDeviceState.Connected
                 break
 
@@ -219,6 +227,8 @@ class Ble_Data_Transfer:
                 logger().info(f"Exception occurred while connecting to BLE device: {str(ex)}")
                 logger().info(f"BLE connection failed with retries {retry + 1}")
                 if retry == retries - 1:
+                    self.ble_dut.interfaces.wifi.is_dut_bad_state = True
+                    self.failed_slave_conn = True
                     raise
 
         return self.ble_client_address
@@ -339,9 +349,7 @@ class Ble_Data_Transfer:
         link_key2 = ""
         while tw.elapsed_sec < 120:
             events = self.ble_dut.interfaces.bluetooth.get_async_events()#since_time=0)
-            logger().info(f"---------------->Events: {events}")
             for event in events:
-                logger().info(f"---------------->Event Data: {event.event_data}")
                 if "link_key" in event.event_data:
                     event_data = event.event_data
                     link_key_data = re.findall("(?<=link_key:: ).*:", event_data)[-1]
@@ -357,8 +365,6 @@ class Ble_Data_Transfer:
             if link_key1 != link_key2 and link_key2:
                 logger().info(f"LINK-GENERATED:{link_key2}")
                 break
-            logger().info(f"-------link_key--------:{link_key1}")
-            logger().info(f"Link Key Extracted:{link_key2}")
         logger().info(f"**************Link Key Extracted: {link_key2}***************")
         assert len(link_key2) == 34, f"link key is not proper format"
         return self.ble_client_address1, link_key2
@@ -703,11 +709,11 @@ def test_ble_dut_as_slave_and_master_235_bytes_write_without_response_C664697(bl
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -758,18 +764,24 @@ def test_ble_dut_as_slave_and_master_235_bytes_write_without_response_C664697(bl
     finally:
         if ble_obj2.scan_state:
             ble_dut.interfaces.bluetooth.ble_stop_scanning()
-        # Disconnect From Remote Device
-        ble_obj1.check_device_state_on_dut()
-        ble_obj1.disconnect_from_remote(ble_client=ble_client1)
-        # Disconnect from dut
-        ble_obj2.check_device_state_on_dut()
-        ble_obj2.disconnect_form_dut(ble_client=ble_client2)
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -887,18 +899,24 @@ def test_ble_dut_as_slave_and_master_235_bytes_write_with_response_C664699(ble_d
     finally:
         if ble_obj2.scan_state:
             ble_dut.interfaces.bluetooth.ble_stop_scanning()
-        # Disconnect From Remote Device
-        ble_obj1.check_device_state_on_dut()
-        ble_obj1.disconnect_from_remote(ble_client=ble_client1)
-        # Disconnect from dut
-        ble_obj2.check_device_state_on_dut()
-        ble_obj2.disconnect_form_dut(ble_client=ble_client2)
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -977,7 +995,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_indications_C664701(ble_dut, b
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -1038,16 +1056,24 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_indications_C664701(ble_dut, b
             ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         logger().info("******************** ble_remove_service ***********************")
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        # Disconnect From Remote Device
-        ble_obj1.disconnect_from_remote(ble_client=ble_client1)
-        # Disconnect from dut
-        ble_obj2.disconnect_form_dut(ble_client=ble_client2)
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -1129,11 +1155,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notifications_C664703(ble_dut,
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -1193,17 +1219,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notifications_C664703(ble_dut,
             # disable notifications
             ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
                                                            handle=(write_handle2 + 1), enable_notify=0)
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -1274,11 +1308,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_notifications_C664705(ble_dut,
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -1336,19 +1370,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_notifications_C664705(ble_dut,
         if char_path2:
             ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path2)
             ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        # Disconnect From Remote Device
-        ble_obj1.check_device_state_on_dut()
-        ble_obj1.disconnect_from_remote(ble_client=ble_client1)
-        # Disconnect from dut
-        ble_obj2.check_device_state_on_dut()
-        ble_obj2.disconnect_form_dut(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -1418,11 +1458,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_without_and_with_response_C
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -1470,15 +1510,24 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_without_and_with_response_C
     finally:
         if ble_obj2.scan_state:
             ble_dut.interfaces.bluetooth.ble_stop_scanning()
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -1555,11 +1604,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_and_tx_ind
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -1614,17 +1663,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_and_tx_ind
             logger().info(f'*********************** disabling and unsubscribe to notifications ***********************')
             ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path2)
             ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -1704,11 +1761,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_and_tx_not
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -1762,17 +1819,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_and_tx_not
             logger().info(f'*********************** disabling and unsubscribe to notifications ***********************')
             ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path2)
             ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -1851,11 +1916,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_and_rx_not
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -1909,17 +1974,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_and_rx_not
             # disable notifications
             ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
                                                            handle=(write_handle2 + 1), enable_notify=0)
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -1987,11 +2060,11 @@ def test_ble_dut_as_slave_and_master_200_bytes_write_with_response_C664718(ble_d
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -2037,16 +2110,24 @@ def test_ble_dut_as_slave_and_master_200_bytes_write_with_response_C664718(ble_d
     finally:
         if ble_obj2.scan_state:
             ble_dut.interfaces.bluetooth.ble_stop_scanning()
-        # Disconnect From Remote Device
-        ble_obj1.disconnect_from_remote(ble_client=ble_client1)
-        # Disconnect from dut
-        ble_obj2.disconnect_form_dut(ble_client=ble_client2)
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -2123,11 +2204,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_and_tx_indica
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -2181,15 +2262,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_and_tx_indica
             logger().info(f'*********************** disabling and unsubscribe to notifications ***********************')
             ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path2)
             ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -2267,11 +2358,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_and_tx_notifi
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -2324,16 +2415,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_and_tx_notifi
             logger().info(f'*********************** disabling and unsubscribe to notifications ***********************')
             ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path2)
             ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -2415,11 +2515,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_and_rx_notifi
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -2474,15 +2574,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_and_rx_notifi
             # disable notifications
             ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
                                                            handle=(write_handle2 + 1), enable_notify=0)
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -2561,11 +2671,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_indication_and_write_with_resp
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -2618,15 +2728,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_indication_and_write_with_resp
             logger().info(f'*********************** disabling and unsubscribe to notifications ***********************')
             ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
             ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -2705,11 +2825,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_indication_and_write_without_r
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -2763,15 +2883,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_indication_and_write_without_r
             logger().info(f'*********************** disabling and unsubscribe to notifications ***********************')
             ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
             ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -2845,11 +2975,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_indications_and_tx_notificatio
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -2906,15 +3036,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_indications_and_tx_notificatio
         if char_path2:
             ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path2)
             ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -2997,11 +3137,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_indications_and_rx_notificatio
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -3058,15 +3198,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_indications_and_rx_notificatio
             # disable notifications
             ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
                                                            handle=(write_handle2 + 1), enable_notify=0)
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -3145,11 +3295,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_notifications_and_write_with_r
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -3203,15 +3353,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_notifications_and_write_with_r
             logger().info(f'*********************** disabling and unsubscribe to notifications ***********************')
             ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
             ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        # Disconnect From Remote Device
-        ble_obj1.disconnect_from_remote(ble_client=ble_client1)
-        # Disconnect from dut
-        ble_obj2.disconnect_form_dut(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -3290,11 +3450,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_notifications_and_write_withou
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -3349,16 +3509,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_notifications_and_write_withou
             logger().info(f'*********************** disabling and unsubscribe to notifications ***********************')
             ble_client1.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path1)
             ble_client1.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-
-        # Disconnect From Remote Device
-        ble_obj1.disconnect_from_remote(ble_client=ble_client1)
-        # Disconnect from dut
-        ble_obj2.disconnect_form_dut(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -3436,11 +3605,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_notifications_and_tx_indicatio
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -3498,16 +3667,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_notifications_and_tx_indicatio
         if char_path2:
             ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path2)
             ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-
-        # Disconnect From Remote Device
-        ble_obj1.disconnect_from_remote(ble_client=ble_client1)
-        # Disconnect from dut
-        ble_obj2.disconnect_form_dut(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -3590,11 +3768,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notifications_and_rx_notificat
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -3652,17 +3830,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notifications_and_rx_notificat
             # disable notifications
             ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
                                                            handle=(write_handle2 + 1), enable_notify=0)
-        # Disconnect From Remote Device
-        ble_obj1.disconnect_from_remote(ble_client=ble_client1)
-        # Disconnect from dut
-        ble_obj2.disconnect_form_dut(ble_client=ble_client2)
-
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        # ble_dut.interfaces.bluetooth.deinit()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -3744,11 +3930,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notifications_and_write_with_r
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -3801,17 +3987,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notifications_and_write_with_r
             # disable notifications
             ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address1,
                                                            handle=(write_handle1 + 1), enable_notify=0)
-
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
-
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -3894,11 +4088,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notifications_and_write_withou
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -3952,14 +4146,24 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notifications_and_write_withou
             # disable notifications
             ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address1,
                                                            handle=(write_handle1 + 1), enable_notify=0)
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -4042,11 +4246,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notifications_and_tx_indicatio
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -4103,15 +4307,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notifications_and_tx_indicatio
             # disable notifications
             ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address1,
                                                            handle=(write_handle1 + 1), enable_notify=0)
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -4193,11 +4407,11 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notifications_and_tx_notificat
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -4256,16 +4470,25 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notifications_and_tx_notificat
             logger().info(f'*********************** disabling and unsubscribe to notifications ***********************')
             ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path2)
             ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -4340,11 +4563,11 @@ def test_ble_dut_as_slave_and_master_200_bytes_tx_notifications_C664747(ble_dut,
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -4401,17 +4624,25 @@ def test_ble_dut_as_slave_and_master_200_bytes_tx_notifications_C664747(ble_dut,
         if char_path2:
             ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path2)
             ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-
-        # Disconnect From Remote Device
-        ble_obj1.disconnect_from_remote(ble_client=ble_client1)
-        # Disconnect from dut
-        ble_obj2.disconnect_form_dut(ble_client=ble_client2)
-
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -4486,11 +4717,11 @@ def test_ble_dut_as_slave_and_master_200_bytes_rx_notifications_C664749(ble_dut,
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -4547,13 +4778,23 @@ def test_ble_dut_as_slave_and_master_200_bytes_rx_notifications_C664749(ble_dut,
         if write_handle2:
             ble_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=ble_client_address2,
                                                            handle=(write_handle2 + 1), enable_notify=0)
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -4630,11 +4871,11 @@ def test_ble_dut_as_slave_and_master_200_bytes_tx_indications_C664751(ble_dut, b
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -4692,15 +4933,25 @@ def test_ble_dut_as_slave_and_master_200_bytes_tx_indications_C664751(ble_dut, b
         if char_path2:
             ble_client2.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path2)
             ble_client2.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
         ble_dut.interfaces.bluetooth.ble_remove_service()
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -4765,11 +5016,11 @@ def test_ble_dut_as_slave_and_master_200_bytes_write_without_response_C664753(bl
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -4820,14 +5071,24 @@ def test_ble_dut_as_slave_and_master_200_bytes_write_without_response_C664753(bl
     finally:
         if ble_obj2.scan_state:
             ble_dut.interfaces.bluetooth.ble_stop_scanning()
-        # Disconnect from dut
-        ble_obj1.disconnect_form_dut(ble_client=ble_client1)
-        # Disconnect From Remote Device
-        ble_obj2.disconnect_from_remote(ble_client=ble_client2)
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
@@ -4896,11 +5157,11 @@ def test_ble_dut_as_slave_and_master_235_bytes_write_with_response_C664755(ble_d
             ble_dut_address_hex = re.split(":", ble_dut_address)
             ble_client_address_hex1 = re.split(":", ble_client_address1)
             ble_client_address_hex2 = re.split(":", ble_client_address2)
-            logger().info("--------DEVICE-ADDRESS-------")
+            
             master_address = "0x"
             for hex_data_part in ble_dut_address_hex:
                 master_address = master_address + hex_data_part
-            logger().info(f"----------MASTER-ADDRESS----------:{master_address}")
+            
             slave_address1 = "0x"
             slave_address2 = "0x"
             for hex_data_part in ble_client_address_hex1:
@@ -4946,11 +5207,21 @@ def test_ble_dut_as_slave_and_master_235_bytes_write_with_response_C664755(ble_d
     finally:
         if ble_obj2.scan_state:
             ble_dut.interfaces.bluetooth.ble_stop_scanning()
-        # Disconnect From Remote Device
-        ble_obj1.disconnect_from_remote(ble_client=ble_client1)
-        # Disconnect from dut
-        ble_obj2.disconnect_form_dut(ble_client=ble_client2)
-        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
-        if allocated_mem_addr:
-            ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        if ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj1.failed_slave_conn:
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        elif ble_dut.interfaces.bluetooth.is_dut_bad_state and ble_obj2.failed_master_conn:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_dut.interfaces.bluetooth.deinit_test_agent_threads()
+        else:
+            # Disconnect From Remote Device
+            ble_obj1.disconnect_from_remote(ble_client=ble_client1)
+            # Disconnect from dut
+            ble_obj2.disconnect_form_dut(ble_client=ble_client2)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            if allocated_mem_addr:
+                ble_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
