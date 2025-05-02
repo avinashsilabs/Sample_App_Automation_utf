@@ -761,7 +761,6 @@ def test_melco_sdk_STA_IPV6_TCP_TX_after_AP_off_C557342(sl_collections, wifi_dut
             con_obj.http_server_provisioning(sl_collections, wifi_dut, wifi_client, wiseconnect_web,
             webpage, ap_channel, wifi_access_point, ssid="TEST_C557342", security="WPA2",
             psk="Automation@123")
-
         logger().info("Power OFF  3rd party AP")
         wifi_access_point.interfaces.wifi.stop_ap()
         time.sleep(30)
@@ -836,6 +835,159 @@ def test_melco_sdk_STA_IPV6_TCP_TX_after_AP_off_C557342(sl_collections, wifi_dut
                                        ttl=60,
                                        throughput_type=1, qos=0,
                                        timeout=80, ip_version=6)
+        # # get and print throughput
+        tp = net_perf_client.interfaces.net_perf.process_output()
+        assert tp is not None, "Throughput not found"
+        logger().info("data transfer is successful")
+        net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+
+        dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(interface=2)
+        logger().info(f"dut_ap_mac_address: {dut_ap_mac_address}")
+
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Checking for Beacons from the DUT as AP in Sniffer")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.\
+            get_sniffer_filter(wlan_addr=dut_ap_mac_address,
+            radio_ch=wifi_access_point.interfaces.wifi.channel,
+            filter_name="beacon_ap_mode_us_region")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find beacon frame from DUT in Sniffer'
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+
+
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+        "security": "WPA2",
+        "ssid": "TEST_C557343",
+        "passphrase": "Automation@123",
+        "channel": 6,
+        # "interface": "wlan0",
+    }
+)
+@wifi_dut_marker()
+@pytest.mark.parametrize("ap_channel", [6])
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
+@pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_melco_sdk_STA_IPV6_TCP_TX_after_AP_off_C557343(sl_collections, wifi_dut, wifi_client, ap_channel,
+                                                 wifi_sniffer, sniffer_filter, wifi_access_point,
+                                                 wiseconnect_web, request, net_perf_client, protocol):
+    """
+    Check STAUT Connectivity to 3rd party AP with Credentials from HTTP Server in concurrent Mode.
+    """
+    try:
+        wifi_client = [wifi_client]
+        con_obj = ConcurrentMode()
+        test_name = request.node.name
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
+        ap_interface = wifi_client[0].interfaces.wifi.config["interface"]
+        wifi_client[0].interfaces.wifi.config['interface'] = "wlan0"
+        host_ipv6 = wifi_client[0].interfaces.wifi.get_ip_address(network_interface=ap_interface, version=6,
+                                                                  addr_type="link")
+
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+        wifi_dut.interfaces.wifi.init(mode="ap")
+
+        dut_sta_ip, dut_as_ap_ip, dut_sta_ipv6_global, dut_sta_ipv6_link =\
+            con_obj.http_server_provisioning(sl_collections, wifi_dut, wifi_client, wiseconnect_web,
+            webpage, ap_channel, wifi_access_point, ssid="TEST_C557343", security="WPA2",
+            psk="Automation@123")
+        sl_collections.run_traffic(
+            wifi_dut=wifi_dut,
+            net_perf_client=net_perf_client,
+            device_ip=dut_sta_ipv6_link,
+            host_ip=host_ipv6,
+            timeout=60,
+            traffic_type="TX",
+            protocol="UDP",
+            ip_version=6,
+            buffer_size_tcp=1380,
+            buffer_size_udp=1390,
+            async_socket=0,
+            bandwidth="60M",
+            ipv6_addr_type="link",
+            link_interface=ap_interface
+        )
+        logger().info("changing channel in AP")
+        wifi_access_point.interfaces.wifi.start_ap(channel=6)
+        time.sleep(30)
+        sw = Stopwatch()
+        end_time = 120
+        logger().info("waiting for disconnect event from DUT STA")
+        rejoin_failed = False
+        while sw.elapsed_sec < end_time:
+            events = wifi_dut.interfaces.wifi.get_async_events()
+            for event in events:
+                if event.event_type == AsyncEventIdentifiers.REJOIN_EVENT:
+                    rejoin_failed = True
+                    break
+            if rejoin_failed:
+                logger().info("Rejoin failed event received from DUT STA")
+                break
+        assert rejoin_failed, "Rejoin failed event not received from DUT STA"
+        logger().info("DUT STA disconnected from 3rd party AP")
+        wifi_dut.interfaces.wifi.http_server_stop()
+        wifi_dut.interfaces.wifi.http_server_deinit()
+        wifi_dut.interfaces.wifi.sl_net_deinit(mode="ap")
+        wifi_access_point.interfaces.wifi.start_ap()
+        wifi_dut.interfaces.wifi.sl_net_init(mode="client")
+
+        logger().info("Scanning all channels")
+        wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+
+        time.sleep(5)
+        con_obj.join_to_ap(wifi_dut, sl_collections, wifi_access_point.interfaces.wifi.ssid,
+                           wifi_access_point.interfaces.wifi.passphrase,
+                           wifi_access_point.interfaces.wifi.security.name.lower())
+        wifi_dut.interfaces.wifi.sl_net_init(mode="ap")
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface="client")
+
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C557342", security="WPA2",
+                                          psk="Automation@123",
+                                          channel=wifi_access_point.interfaces.wifi.channel,
+                                          dtim_beacon_count="1", beacon_interval="100")
+        channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface="ap")
+
+        wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        wifi_dut.interfaces.wifi.http_server_start()
+        time.sleep(30)
+        dut_as_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
+        wiseconnect_web.interfaces.wiseconnect_ui.connect(ip_address=dut_as_ap_ip, web_ui_port=80,
+                                                          ssid=wifi_access_point.interfaces.wifi.ssid,
+                                                          security=wifi_access_point.interfaces.wifi.security,
+                                                          passphrase=wifi_access_point.interfaces.wifi.passphrase)
+
+        sl_collections.run_traffic(
+            wifi_dut=wifi_dut,
+            net_perf_client=net_perf_client,
+            device_ip=dut_sta_ipv6_link,
+            host_ip=host_ipv6,
+            timeout=60,
+            traffic_type="TX",
+            protocol="TCP",
+            ip_version=6,
+            buffer_size_tcp=1380,
+            buffer_size_udp=1390,
+            async_socket=0,
+            bandwidth="60M",
+            ipv6_addr_type="link",
+            link_interface=ap_interface
+        )
         dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(interface=2)
         logger().info(f"dut_ap_mac_address: {dut_ap_mac_address}")
 

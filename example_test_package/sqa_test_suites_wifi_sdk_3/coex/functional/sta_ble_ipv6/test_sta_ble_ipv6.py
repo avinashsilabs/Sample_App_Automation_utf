@@ -397,7 +397,7 @@ class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, sl_collections=None, test_name=None,
                  wifi_client=None, test_id=None, test_type=None, ping_from="remote", ping_count=10, addr_type="global",
                  traffic_type=None, protocol=None, net_perf_client=None, timeout=60, http_server=None, index_path=None,
-                 http_client=None, https=False, address=None, ssl_server=None):
+                 http_client=None, https=False, address=None, ssl_server=None, ping_after_power_save=False, ping_before_power_save=True):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -420,6 +420,8 @@ class WLanThread(ThreadBase):
         self.index_path = index_path
         self.remote_ipv6 = None
         self.address = address
+        self.ping_after_power_save = ping_after_power_save
+        self.ping_before_power_save = ping_before_power_save
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
         self.remote_ip = None
@@ -477,8 +479,8 @@ class WLanThread(ThreadBase):
                                      wifi_access_point=self.wifi_access_point,
                                      associated=self.wifi_dut.interfaces.wifi.associated,
                                      ip_version='ipv6',
-                                     ping_after_power_save=False,
-                                     ping_before_power_save=True,
+                                     ping_after_power_save=self.ping_after_power_save,
+                                     ping_before_power_save=self.ping_before_power_save,
                                      power_save=self.power_save,
                                      ipv6_type=self.addr_type,
                                      retry_count=3
@@ -508,6 +510,87 @@ class WLanThread(ThreadBase):
         )
 
     def run(self):
+
+        if self.test_type == '538033' or self.test_type == '538026' or self.test_type == '538032':
+            #
+            # if self.addr_type == "link":
+            #     interface = self.wifi_client.interfaces.wifi.config["interface"]
+            #     device_ip = f"{self.dut_add_dict['device_ip']}%{interface}"
+
+            local_port = 5001
+
+            self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address(version=6,
+                                                                           addr_type=self.addr_type)
+            # if self.addr_type == "link":
+            #     interface = self.wifi_client.interfaces.wifi.config["interface"]
+                # self.host_ip = f"{self.host_ip}%{interface}"
+            logger().info(f".... Remote device ip :{self.host_ip} ....")
+
+            """ ***** Open ssl server socket in remote device(Raspberry pi or static device) ***** """
+            self.ssl_server.interfaces.ssl.start_server(port=local_port, ip_version=6, server_ip=self.host_ip)
+
+            sock = self.wifi_dut.interfaces.wifi.socket(domain="AF_INET6")
+            logger().info(f" ******************* Sock ID {sock} ******************** ")
+
+            """ ***** Enable ssl option for socket opened ***** """
+            self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(
+                socket_fd=sock, option_level="SOL_TCP", option_name="TCP_ULP", option_val="tls_1_2")
+
+            self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.dut_add_dict['device_ip'],
+                                               server_port=local_port, timeout=15,
+                                               ip_len=6, ip_version=6)
+
+            logger().info(" ***** DUT is connecting to server socket ***** ")
+            connect_status = False
+            for count in range(3):
+                try:
+                    self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=self.host_ip,
+                                                                   server_port=local_port, timeout=30, ip_len=6)
+                    connect_status = True
+                    break
+                except:
+                    logger().info(f"Socket connection failed in DUT...retry_count:{count + 1}")
+                    time.sleep(10)
+            assert connect_status, "Socket connection failed in DUT"
+            logger().info(" ***** Socket connection is successful ***** ")
+
+            if self.test_type == '538032':
+                sw = Stopwatch()
+                count = 0
+                while sw.elapsed_sec < 120:
+                    buffer_length = 100
+                    tx_buffer = "".join(choices(string.ascii_uppercase + string.digits, k=buffer_length))
+
+                    logger().info(f"DATA TRANSFER -----DUT SENDING DATA ON SOCKET ID : {tx_buffer}")
+                    data_length = len(tx_buffer)
+                    self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=tx_buffer)
+                    data_receive = self.ssl_server.interfaces.ssl.data_recv_content(socket_no=sock + 1,
+                                                                                    buffer_size=data_length)
+                    logger().info(f"Data received on remote socket opened is {data_receive}")
+                    assert tx_buffer == data_receive.decode(), "Data sent by DUT and received on server is matching"
+                    count += 1
+
+            if self.test_type == '538033' or self.test_type == '538026':
+                sw = Stopwatch()
+                count = 0
+                while sw.elapsed_sec < 120:
+                    buffer_length = 50
+                    tx_buffer = "".join(choices(string.ascii_uppercase + string.digits, k=buffer_length))
+                    pkt_count = 1
+                    logger().info(f"Sending data to DUT from remote: {tx_buffer}")
+                    self.ssl_server.interfaces.ssl.send_data(1, pkt_count, msg_length=50, message=tx_buffer)
+                    time.sleep(0.5)
+                    # buffer_rx = self.wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
+                    buffer_rx = self.wifi_dut.interfaces.wifi.bsdSocketReceive(socket_fd=sock, timeout=30)
+
+                    logger().info(f"Data received on socket id {sock} opened in the DUT is {buffer_rx} count:{count}")
+                    assert tx_buffer == buffer_rx, (f"buffer length sent by remote peer and received on the socket id"
+                                                    f" {sock} opened in the DUT is not matched ")
+                    count += 1
+
+            logger().info(f" ***************** Closing Socket From DUT Side **************** ")
+            self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+            self.ssl_server.interfaces.ssl.stop_server()
 
         if not self.wifi_dut.interfaces.wifi.associated:
             self.join_to_ap()
@@ -663,6 +746,8 @@ class BleThreadFunctionality(ThreadBase):
             gatt=False,
             service_class=None,
             conn_interval=160,
+            remote_adv_int_min="0x20 0x00",
+            remote_adv_int_max="0x20 0x00"
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -678,6 +763,8 @@ class BleThreadFunctionality(ThreadBase):
         self.service_class = service_class
         self.ble_client_address = None
         self.write_handle = None
+        self.remote_adv_int_min = remote_adv_int_min
+        self.remote_adv_int_max = remote_adv_int_max
 
         if self.gatt:
             # Set up DUT for BLE advertising
@@ -842,7 +929,9 @@ class BleThreadFunctionality(ThreadBase):
             ble_address=self.ble_dut_address,
             ble_scan_type=1,
             timeout=60,
-            services=self.service_class
+            services=self.service_class,
+            remote_adv_int_min=self.remote_adv_int_min,
+            remote_adv_int_max=self.remote_adv_int_max
         )
 
     def run(self):
@@ -932,15 +1021,15 @@ class BleThreadFunctionality(ThreadBase):
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
 def test_Coex_sdk_WLAN_ipv6_BLE_master_C156991(
-        wifi_sniffer,
-        wifi_access_point,
-        wifi_dut,
-        ble_client,
-        request,
-        utf_constants,
-        sl_collections,
-        wifi_client,
-        sniffer_filter,
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
 ):
     """
     Test Steps:
@@ -2928,7 +3017,8 @@ def test_Coex_sdk_WLAN_ipv6_http_download_BLE_adv_scan_C156993(
             sl_collections=sl_collections,
             ping_count=ping_count,
             test_type='ping',
-            test_name=test_name, addr_type="global"
+            test_name=test_name,
+            addr_type="global"
         )
 
         ble_obj = BleThreadFunctionality(
@@ -3026,17 +3116,17 @@ def test_Coex_sdk_WLAN_ipv6_http_download_BLE_adv_scan_C156993(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
 )
 def test_Coex_sdk_WLAN_ipv6_https_download_BLE_adv_scan_C156994(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    ble_client,
-    request,
-    utf_constants,
-    sl_collections,
-    wifi_client,
-    sniffer_filter,
-    index_path,
-    http_server
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        ble_client,
+        request,
+        utf_constants,
+        sl_collections,
+        wifi_client,
+        sniffer_filter,
+        index_path,
+        http_server
 ):
     """
     Test Steps:
@@ -3121,24 +3211,23 @@ def test_Coex_sdk_WLAN_ipv6_https_download_BLE_adv_scan_C156994(
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
-# Skipping the test case as there is a known issue for SSL socket connection
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4784")
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
-                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 4096, "priority": 8},
+                          "ble": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client
                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.IPv6Mode
-                          | Si91xTCPIPFeatureBitMap.DHCPv6Server
                           | Si91xTCPIPFeatureBitMap.SSL,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
@@ -3152,17 +3241,17 @@ def test_Coex_sdk_WLAN_ipv6_https_download_BLE_adv_scan_C156994(
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
-def test_Coex_sdk_WLAN_ipv6_ssl_rx_ble_tx_C538026(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    ble_client,
-    request,
-    utf_constants,
-    sl_collections,
-    wifi_client,
-    sniffer_filter,
-    ssl_server
+def test_Coex_sdk_WLAN_ipv6_ssl_rx_ble_rx_C538026(
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        ble_client,
+        request,
+        utf_constants,
+        sl_collections,
+        wifi_client,
+        sniffer_filter,
+        ssl_server
 ):
     ble_obj = ''
     try:
@@ -3175,28 +3264,38 @@ def test_Coex_sdk_WLAN_ipv6_ssl_rx_ble_tx_C538026(
         logger().info("start capturing with Sniffer by giving the test case name as filename")
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        host_ip = wifi_client.interfaces.wifi.get_ip_address()
-        logger().info(f".... Remote device ip :{host_ip} ....")
 
         wifi_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               wifi_client=wifi_client, sl_collections=sl_collections, ping_count=ping_count,
                               ssl_server=ssl_server, test_type='538026', addr_type="global")
 
-        ble_obj = BleThread(wifi_dut=wifi_dut,
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
             ble_client=ble_client,
             sl_collections=sl_collections,
-            ble_test_type="notify_tx",
+            ble_test_type="notifications",
             dev_state=8,
-            ble_pairing=1)
+            gatt=True,
+            service_class=["HeartRateService"],
+            ble_pairing=1,
+            remote_adv_int_min="0xA0 0x00",
+            remote_adv_int_max="0xA0 0x00"
+        )
 
+        ble_obj.check_scan_functionality()
         wifi_obj.join_to_ap()
+        ble_obj.connect_from_dut()
+        ble_obj.fetch_profiles()
         ble_obj.start()
-        ble_obj.wait_for_exit()
         wifi_obj.start()
-        time.sleep(20)
         wifi_obj.wait_for_exit()
+        ble_obj.wait_for_exit()
+
+        ble_obj.ble_disconnect(disconnect_from="dut")
+        wifi_dut.interfaces.wifi.leave()
         logger().info("..... stop capturing with Sniffer ......")
         wifi_sniffer.interfaces.capture.stop_capture()
+
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
@@ -3207,14 +3306,12 @@ def test_Coex_sdk_WLAN_ipv6_ssl_rx_ble_tx_C538026(
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
-# Skipping the test case as there is a known issue for SSL socket connection
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4784")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
-                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3052, "priority": 8},
+                          "ble": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
@@ -3224,9 +3321,11 @@ def test_Coex_sdk_WLAN_ipv6_ssl_rx_ble_tx_C538026(
                           | Si91xTCPIPFeatureBitMap.DHCPv6Server
                           | Si91xTCPIPFeatureBitMap.SSL,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default |
@@ -3238,8 +3337,8 @@ def test_Coex_sdk_WLAN_ipv6_ssl_rx_ble_tx_C538026(
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
-def test_Coex_WLAN_ipv6_ssl_tx_GUA_ble_tx_C538032(
-wifi_sniffer,
+def test_Coex_WLAN_ipv6_ssl_tx_GUA_ble_rx_C538032(
+    wifi_sniffer,
     wifi_access_point,
     wifi_dut,
     ble_client,
@@ -3268,21 +3367,36 @@ wifi_sniffer,
                               wifi_client=wifi_client, sl_collections=sl_collections, ping_count=ping_count,
                               ssl_server=ssl_server, test_type='538032', addr_type="global")
 
-        ble_obj = BleThread(wifi_dut=wifi_dut,
-                            ble_client=ble_client,
-                            sl_collections=sl_collections,
-                            ble_test_type="notify_tx",
-                            dev_state=8,
-                            ble_pairing=1)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="notifications",
+            dev_state=8,
+            gatt=True,
+            service_class=["HeartRateService"],
+            ble_pairing=1,
+            remote_adv_int_min="0xA0 0x00",
+            remote_adv_int_max="0xA0 0x00"
+        )
 
+        ble_obj.check_scan_functionality()
         wifi_obj.join_to_ap()
+
+        ble_obj.connect_from_dut()
+        ble_obj.fetch_profiles()
         ble_obj.start()
-        ble_obj.wait_for_exit()
+
         wifi_obj.start()
-        time.sleep(20)
         wifi_obj.wait_for_exit()
+
+        ble_obj.wait_for_exit()
+
+        ble_obj.ble_disconnect(disconnect_from="dut")
+        wifi_dut.interfaces.wifi.leave()
         logger().info("..... stop capturing with Sniffer ......")
         wifi_sniffer.interfaces.capture.stop_capture()
+
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
@@ -3293,23 +3407,23 @@ wifi_sniffer,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4784")
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
-                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 4096, "priority": 8},
+                          "ble": {"count": 1, "stack_len": 2048, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv6Client
                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.IPv6Mode
-                          | Si91xTCPIPFeatureBitMap.DHCPv6Server
                           | Si91xTCPIPFeatureBitMap.SSL,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
@@ -3324,16 +3438,15 @@ wifi_sniffer,
     }
 )
 def test_Coex_WLAN_ipv6_ssl_rx_LL_ble_tx_C538033(
-wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    ble_client,
-    request,
-    utf_constants,
-    sl_collections,
-    wifi_client,
-    sniffer_filter,
-    ssl_server
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        ble_client,
+        request,
+        utf_constants,
+        sl_collections,
+        wifi_client,
+        ssl_server
 ):
     ble_obj = ''
     try:
@@ -3346,28 +3459,43 @@ wifi_sniffer,
         logger().info("start capturing with Sniffer by giving the test case name as filename")
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        host_ip = wifi_client.interfaces.wifi.get_ip_address()
-        logger().info(f".... Remote device ip :{host_ip} ....")
 
         wifi_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               wifi_client=wifi_client, sl_collections=sl_collections, ping_count=ping_count,
-                              ssl_server=ssl_server, test_type='538033', addr_type="link")
+                              ssl_server=ssl_server, test_type='538033', addr_type="link",
+                              ping_before_power_save=False, ping_after_power_save=False
+                              )
 
-        ble_obj = BleThread(wifi_dut=wifi_dut,
-                            ble_client=ble_client,
-                            sl_collections=sl_collections,
-                            ble_test_type="notify_tx",
-                            dev_state=8,
-                            ble_pairing=1)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="notifications",
+            dev_state=8,
+            gatt=True,
+            service_class=["HeartRateService"],
+            ble_pairing=1,
+            remote_adv_int_min="0xA0 0x00",
+            remote_adv_int_max="0xA0 0x00"
+        )
 
+        ble_obj.check_scan_functionality()
         wifi_obj.join_to_ap()
+
+        ble_obj.connect_from_dut()
+        ble_obj.fetch_profiles()
         ble_obj.start()
-        ble_obj.wait_for_exit()
+
         wifi_obj.start()
-        time.sleep(20)
         wifi_obj.wait_for_exit()
+
+        ble_obj.wait_for_exit()
+
+        ble_obj.ble_disconnect(disconnect_from="dut")
+        wifi_dut.interfaces.wifi.leave()
         logger().info("..... stop capturing with Sniffer ......")
         wifi_sniffer.interfaces.capture.stop_capture()
+
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
@@ -3377,6 +3505,7 @@ wifi_sniffer,
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
+
 
 # Skipping the test case as there is a known issue for HTTPS download and BLE dual role
 @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4977 and Si91x-16219")
@@ -3393,7 +3522,7 @@ wifi_sniffer,
                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.IPv6Mode,
         "custom_features": Si91xCustomFeatureBitMap.NWP120MHz
-                    | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+                           | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
@@ -3408,7 +3537,6 @@ wifi_sniffer,
 
     }
 )
-
 @pytest.mark.config(
     "wifi_access_point",
     wifi={"security": "WPA3", "passphrase": "1234567890", "ipv6_state": "0"}
@@ -3421,17 +3549,17 @@ wifi_sniffer,
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
 )
 def test_Coex_sdk_WLAN_ipv6_https_download_ble_dual_role_140_on_c_240_on_p_C538030(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    ble_client,
-    request,
-    utf_constants,
-    sl_collections,
-    wifi_client,
-    sniffer_filter,
-    index_path,
-    http_server
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        ble_client,
+        request,
+        utf_constants,
+        sl_collections,
+        wifi_client,
+        sniffer_filter,
+        index_path,
+        http_server
 ):
     """
     Test Steps:
@@ -3535,6 +3663,7 @@ def test_Coex_sdk_WLAN_ipv6_https_download_ble_dual_role_140_on_c_240_on_p_C5380
                                        ble_dut_address=ble_obj.ble_dut_address)
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
+
 # Skipping the test case as there is a known issue for HTTPS download and BLE dual role
 @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4977 and Si91x-16219")
 @pytest.mark.config(
@@ -3550,7 +3679,7 @@ def test_Coex_sdk_WLAN_ipv6_https_download_ble_dual_role_140_on_c_240_on_p_C5380
                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.IPv6Mode,
         "custom_features": Si91xCustomFeatureBitMap.NWP120MHz
-                    | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+                           | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
@@ -3565,7 +3694,6 @@ def test_Coex_sdk_WLAN_ipv6_https_download_ble_dual_role_140_on_c_240_on_p_C5380
 
     }
 )
-
 @pytest.mark.config(
     "wifi_access_point",
     wifi={"security": "WPA3", "passphrase": "1234567890", "ipv6_state": "0"}
@@ -3578,17 +3706,17 @@ def test_Coex_sdk_WLAN_ipv6_https_download_ble_dual_role_140_on_c_240_on_p_C5380
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
 )
 def test_Coex_sdk_WLAN_ipv6_http_download_ble_dual_role_240_on_c_140_on_p_C538031(
-wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    ble_client,
-    request,
-    utf_constants,
-    sl_collections,
-    wifi_client,
-    sniffer_filter,
-    index_path,
-    http_server
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        ble_client,
+        request,
+        utf_constants,
+        sl_collections,
+        wifi_client,
+        sniffer_filter,
+        index_path,
+        http_server
 ):
     """
     Test Steps:
