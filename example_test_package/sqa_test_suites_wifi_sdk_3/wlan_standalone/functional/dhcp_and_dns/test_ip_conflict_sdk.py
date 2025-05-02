@@ -108,13 +108,6 @@ class Ip_Conflict(ThreadBase):
         self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
         self.wifi_dut.interfaces.wifi.join_ap(self.wifi_access_point)
 
-        if not self.ap_mode:
-            logger().info("Enabling power save Enhanced psp")
-            self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
-            time.sleep(10)
-            self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-            time.sleep(20)
         ap_client_ip = self.wifi_access_point.interfaces.wifi.read_ip_client_address(hostname)
         logger().info(f"****** ap_client_ip: {ap_client_ip}****** ")
         logger().info("****** Configuring static ip to DUT****** ")
@@ -126,6 +119,19 @@ class Ip_Conflict(ThreadBase):
         if self.static_ip:
             self.wifi_dut.interfaces.wifi.start_ip(static_ip=dut_ip, static_subnet=static_subnet,
                                                    static_gateway=wifi_client_gateway_ip, vid=0)
+        if not self.ap_mode:
+            logger().info(f"****** dut_ip: {dut_ip}****** ")
+            logger().info("....Pinging DUT before power-save....")
+            status = self.sl_collections.ping(device_ip=dut_ip, ping_count=10)
+            assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+            time.sleep(10)
+
+            logger().info("Enabling power save Enhanced psp")
+            self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+            time.sleep(10)
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                          psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+            time.sleep(20)
 
     def run(self):
         if self.mode == "static":
@@ -1041,7 +1047,7 @@ def test_wifi_sdk_ssl_tx_once_ip_conflict_resolved_in_static_ip_c101978(wifi_dut
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
@@ -1124,7 +1130,7 @@ def test_wifi_sdk_ssl_rx_once_ip_conflict_resolved_in_static_ip_c101979(wifi_dut
             pkt_count = 1
             tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=buffer_length))
             ssl_server.interfaces.ssl.send_data(1, pkt_count, buffer_length, message=tx_buffer)
-            buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
+            buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock, timeout=100, async_timeout=100)
             assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
         logger().info("Successfully closed opened socket in the DUT")
