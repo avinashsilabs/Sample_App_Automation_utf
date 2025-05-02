@@ -145,7 +145,7 @@ class AwsConnection(ThreadBase):
 
     @retry(Exception, delay=25, tries=3)
     def connect_to_aws_server_from_dut(self, wifi_dut=None, client_id=None, iscleansession=True, keep_alive=1200,
-                                       timeout=120, isWillMsgPresent="false", expected_status=SLStatus.SL_STATUS_OK,
+                                       timeout=120, isWillMsgPresent=None, expected_status=SLStatus.SL_STATUS_OK,
                                        port=8883, aws_iot_mqtt_rx_buf_len=1024):
         """
         @param wifi_dut: Fixture parameter to issue command in DUT.
