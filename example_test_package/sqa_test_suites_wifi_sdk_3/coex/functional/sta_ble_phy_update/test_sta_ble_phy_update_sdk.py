@@ -3,18 +3,17 @@ import time
 import re
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
-    Si91xOperatingMode, Si91xTCPIPFeatureBitMap, Si91xBTFeatureBitMap, Si91xBLEFeatureBitMap, \
+    Si91xTCPIPFeatureBitMap, Si91xBTFeatureBitMap, Si91xBLEFeatureBitMap, \
     Si91xBLECustomFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, \
     Si91xJoinFeatureBitMap
 from utf.utils.thread_base import ThreadBase
-from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
+from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf_wiseconnect_3.tests.devices.si91x import Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes
 from utf.utils.stopwatch import Stopwatch
 import string
 import random
 from utf.utf_config import UtfConfig
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
-from utf.utils.iperf.iperf_utils import ping
 from random import choices
 from utf.interfaces.bluetooth import BLEDeviceState
 
@@ -69,7 +68,8 @@ class WifiJoinThread(ThreadBase):
             host_ip=None,
             http_server=None,
             index_path=None,
-            ssl_server=None
+            ssl_server=None,
+            https=0
 
     ):
         super().__init__()
@@ -99,6 +99,7 @@ class WifiJoinThread(ThreadBase):
         self.http_server = http_server
         self.index_path = index_path
         self.ssl_server = ssl_server
+        self.https = https
 
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
@@ -114,58 +115,6 @@ class WifiJoinThread(ThreadBase):
                     device_ip=WifiJoinThread.dut_addr["device_ip"], host_ip=self.host_ip,
                     traffic_type=self.traffic_type,
                     timeout=self.timeout)
-
-            if self.test_type == '537937':
-                self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
-                logger().info("fetching server ip....")
-                self.host_ip = self.http_server.interfaces.http.hostname_or_ip_address
-                logger().info(f"http_server_ip: {self.host_ip}")
-
-                logger().info("pinging to http_server_ip....")
-                status = ping(self.host_ip, self.ping_count)
-                assert status, "unable to ping to http_server, check test line connection and interface in harness"
-
-                status = ""
-                for retry in range(0, 3):
-                    try:
-                        logger().info("checking weather server is running....")
-                        server_stat = self.http_server.interfaces.http.started
-                        if not server_stat:
-                            self.http_server.interfaces.http.start_server()
-                        logger().info(f'http server state is {self.http_server.interfaces.http.started}')
-
-                        tcp_socket_id = self.wifi_dut.interfaces.wifi.socket()
-                        logger().info(f"Socket open successfully : {tcp_socket_id}")
-                        logger().info(
-                            f"Successfully opened tcp client socket and socket id received is {tcp_socket_id} which is expected")
-                        bind_response = self.wifi_dut.interfaces.wifi.bind(
-                            socket_fd=tcp_socket_id, device_ip=self.device_ip, server_port=5001, timeout=5)
-
-                        logger().info(f"Bind socket successfully: {bind_response}")
-                        time.sleep(5)
-                        logger().info("DUT is connecting to server socket")
-                        self.wifi_dut.interfaces.wifi.bsdSocketConnect(
-                            socket_fd=tcp_socket_id, server_ip=self.host_ip,
-                            server_port=self.http_server.interfaces.http.port)
-                        time.sleep(5)
-                        if self.test_type == '537937':
-                            self.wifi_dut.interfaces.wifi.http_client_download(
-                                socket_id=tcp_socket_id, file_name=self.index_path, ip_address=self.host_ip, mode=0,
-                                timeout=300)
-                        if self.test_type == '537938':
-                            self.wifi_dut.interfaces.wifi.http_client_download(
-                                socket_id=tcp_socket_id, file_name=self.index_path, ip_address=self.host_ip, mode=1,
-                                timeout=300)
-                        status = True
-                        break
-                    except Exception as e:
-                        logger().info(f"Http download failed {e} retrying for 3 times")
-                        self.http_server.interfaces.http.stop_server()
-                        status = False
-                    assert status, f"Http download failed after 3 times"
-
-                    logger().info(f"Http download is successful")
-                    self.http_server.interfaces.http.stop_server()
 
             if self.test_type == '537939' or self.test_type == '537940':
                 local_port = 5001
@@ -214,7 +163,7 @@ class WifiJoinThread(ThreadBase):
 
                 if self.test_type == '537940':
                     sw = Stopwatch()
-                    while sw.elapsed_sec < 10:
+                    while sw.elapsed_sec < 30:
                         buffer_length = 50
                         tx_buffer = "".join(choices(string.ascii_uppercase + string.digits, k=buffer_length))
                         pkt_count = 1
@@ -233,7 +182,7 @@ class WifiJoinThread(ThreadBase):
         except Exception as e:
             self.sl_collections.exception_handling(wifi_dut=self.wifi_dut, exception=e)
 
-    def join_to_ap(self, skip_power_save=False):
+    def join_to_ap(self):
 
         if not self.wifi_dut.interfaces.wifi.associated:
             self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
@@ -255,7 +204,6 @@ class WifiJoinThread(ThreadBase):
             return self.dut_addr
 
     def set_power_save(self):
-
         if self.power_save:
 
             self.wifi_dut.interfaces.wifi.set_performance_profile(
@@ -267,6 +215,12 @@ class WifiJoinThread(ThreadBase):
             )
         else:
             logger().info("skipping power save beacause power save flag set to be false in harness")
+
+    def run_http_download(self):
+        logger().info("Method to run http download")
+        self.sl_collections.http_file_download(
+            wifi_dut=self.wifi_dut, http_server=self.http_server, index_path=self.index_path,
+            device_ip=self.dut_addr['device_ip'], https=self.https)
 
 
 class BleThreadFunctionality(ThreadBase):
@@ -319,7 +273,7 @@ class BleThreadFunctionality(ThreadBase):
                 self.remote_wiseconnect3.interfaces.wifi.ble_add_char_serv_att(uid=0x2a1e)
                 self.remote_wiseconnect3.interfaces.wifi.ble_add_char_val_att(uid=0x2a1e)
 
-            if self.test_case == '537935' or self.test_case == '537936' or self.test_case == '537937' or self.test_case == '537938' or self.test_case == '537940':
+            if self.test_case in [537935, 537936, 537937, 537938, 537940]:
                 self.service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
                 self.char_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
                 CUSTOM_NOTIFY_UUID = '0x1aa1'
@@ -328,7 +282,7 @@ class BleThreadFunctionality(ThreadBase):
                 self.wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1AA1)
                 self.wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1)
 
-            if self.test_case == '537935' or self.test_case == '537939':
+            if self.test_case in [537935, 537939]:
                 self.remote_wiseconnect3.interfaces.wifi.ble_start_advertising()
 
                 logger().info("******************** start scanning in dut ********************")
@@ -350,7 +304,7 @@ class BleThreadFunctionality(ThreadBase):
                 state_int = int(state) if state.isdigit() else -1
                 assert state_int == BLEDeviceState.Connected, "Remote DUT BLE device is not in connected state"
 
-            if self.test_case == '537936' or self.test_case == '537937' or self.test_case == '537938' or self.test_case == '537940':
+            if self.test_case in [537936, 537937, 537938, 537940]:
                 self.wifi_dut.interfaces.wifi.ble_start_advertising()
 
                 self.remote_wiseconnect3.interfaces.wifi.ble_start_scanning(
@@ -373,7 +327,7 @@ class BleThreadFunctionality(ThreadBase):
                 state_int = int(state) if state.isdigit() else -1
                 assert state_int == BLEDeviceState.Connected, "Remote DUT BLE device is not in connected state"
 
-            if self.test_case == '537935' or self.test_case == '537936' or self.test_case == '537937' or self.test_case == '537938' or self.test_case == '537940':
+            if self.test_case in [537935, 537936, 537937, 537938, 537940]:
                 logger().info(f"******************** get all profiles ********************")
                 uuids = self.remote_wiseconnect3.interfaces.wifi.ble_get_profiles_async(
                     ble_remote_dev_address=self.ble_dut_address)
@@ -468,7 +422,7 @@ class BleThreadFunctionality(ThreadBase):
             for event in events:
                 if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
                     logger().info(f"************** BLE EVENT DATA IS : {event.event_data} **************")
-                    if self.test_case == '537935' or self.test_case == '537940':
+                    if self.test_case == 537935 or self.test_case == 537940:
                         received_data = re.findall(r"(\b[A-Z0-9]{20}\b)", event.event_data)
                         logger().info(f"******* Received Data on DUT : {received_data} ********")
                         assert received_data == [self.data], "data mismatched"
@@ -486,31 +440,17 @@ class BleThreadFunctionality(ThreadBase):
 
     def ble_data_transfer_rx(self):
         sw = Stopwatch()
-
         while sw.elapsed_sec < 60:
-            since_time = time.perf_counter_ns()
             self.remote_wiseconnect3.interfaces.wifi.ble_notify_custom_value(
-                ble_remote_dev_address=self.ble_dut_address, data=self.data)
-            time.sleep(3)
-            found = False
-            tw = Stopwatch()
-            while tw.elapsed_sec < 10:
-                events = self.wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
-                for event in events:
-                    if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
-                        logger().info(f"************** BLE EVENT DATA IS : {event.event_data} **************")
-                        received_data = re.findall(r"(\b[A-Z0-9]{20}\b)", event.event_data)
-                        logger().info(f"******* Received Data on DUT : {received_data} ********")
-                        assert received_data == [self.data], "data mismatched"
-                        if self.data in event.event_data:
-                            found = True
-                            break
-                if found:
-                    break
-            if not found:
-                raise Exception("No data received on DUT")
-
-        time.sleep(1)
+                ble_remote_dev_address=self.ble_dut_address, data=self.data, data_address=self.address)
+            time.sleep(1)
+            events = self.wifi_dut.interfaces.wifi.get_async_events()
+            for event in events:
+                if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
+                    logger().info(f"************** BLE EVENT DATA IS : {event.event_data} **************")
+                    received_data = re.findall(r"(\b[A-Z0-9]{20}\b)", event.event_data)
+                    logger().info(f"******* Received Data on DUT : {received_data} ********")
+                    assert received_data == [self.data], "data mismatched"
 
         self.ble_dut.interfaces.bluetooth.ble_set_att_value(
             ble_remote_dev_address=self.ble_client_address, handle=(self.write_handle + 1), enable_notify=0)
@@ -544,7 +484,8 @@ class BleThreadFunctionality(ThreadBase):
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default |
@@ -567,7 +508,8 @@ class BleThreadFunctionality(ThreadBase):
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default |
@@ -612,7 +554,7 @@ def test_wifi_sdk_ble_tx_with_1m_phy_and_iperf_c537935(
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, set_smp=1,
                                          ble_dut=ble_dut, ble_client=ble_client, utf_constants=utf_constants,
                                          remote_wiseconnect3=remote_wiseconnect3, data=data, tx_phy=1, rx_phy=1,
-                                         coded_phy=2, test_case='537935', address=address2)
+                                         coded_phy=2, test_case=537935, address=address2)
 
         wifi_obj.join_to_ap()
         wifi_obj.set_power_save()
@@ -635,7 +577,6 @@ def test_wifi_sdk_ble_tx_with_1m_phy_and_iperf_c537935(
         ble_obj.ble_cleanup()
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -649,13 +590,15 @@ def test_wifi_sdk_ble_tx_with_1m_phy_and_iperf_c537935(
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_GATT_INIT | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES,
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_GATT_INIT |
+                                   Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES,
     }
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
@@ -672,23 +615,26 @@ def test_wifi_sdk_ble_tx_with_1m_phy_and_iperf_c537935(
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_GATT_INIT | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES,
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_GATT_INIT |
+                                   Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES,
     }
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ble_rx_with_phy_and_iperf_c537936(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_client, protocol, net_perf_client, remote_wiseconnect3):
     """Verify CoEx functionality when BLE Tx as peripheral(DLE ON) with PHY Rates (Tx=1Mbps Rx=1Mbps with LR=500) while
      WLAN UDP Rx data is running"""
+    ble_obj = None
     try:
         test_name = request.node.name
 
@@ -710,12 +656,15 @@ def test_wifi_sdk_ble_rx_with_phy_and_iperf_c537936(
                                   net_perf_client=net_perf_client, host_ip=host_ip, traffic_type="RX",
                                   test_type='537936')
 
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
+
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, set_smp=0,
                                          ble_dut=ble_dut, ble_client=ble_client, utf_constants=utf_constants,
                                          remote_wiseconnect3=remote_wiseconnect3, tx_phy=1, rx_phy=1,
-                                         coded_phy=1, data=data, test_case='537936')
+                                         coded_phy=1, data=data, test_case=537936, address=address2)
 
-        wifi_obj.join_to_ap(skip_power_save=True)
+        wifi_obj.join_to_ap()
         wifi_obj.set_power_save()
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -728,11 +677,14 @@ def test_wifi_sdk_ble_rx_with_phy_and_iperf_c537936(
         logger().info("..... stop capturing with Sniffer ......")
         wifi_sniffer.interfaces.capture.stop_capture()
 
+        wifi_dut.interfaces.wifi.memory_free(address2)
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        ble_obj.ble_cleanup()
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -742,19 +694,19 @@ def test_wifi_sdk_ble_rx_with_phy_and_iperf_c537936(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
                                | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_SET_SCAN_RESP_DATA_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_DISABLE_CODED_PHY_FROM_HOST |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_GATT_INIT,
     }
 )
@@ -768,30 +720,31 @@ def test_wifi_sdk_ble_rx_with_phy_and_iperf_c537936(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
                                | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_SET_SCAN_RESP_DATA_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_DISABLE_CODED_PHY_FROM_HOST |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_GATT_INIT,
     }
 )
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"10MB.htm"})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ble_phy_with_http_download_c537937(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_client, remote_wiseconnect3, http_server, index_path):
     """Verify CoEx functionality when BLE Tx as Peripheral with PHY Rates (Tx=2Mbps Rx=2Mbps with LR=125) while file
     download through WLAN HTTP"""
+    ble_obj = None
     try:
         test_name = request.node.name
 
@@ -809,32 +762,36 @@ def test_wifi_sdk_ble_phy_with_http_download_c537937(
 
         wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                   wifi_client=wifi_client, sl_collections=sl_collections, sniffer_filter=sniffer_filter,
-                                  utf_constants=utf_constants, ping_count=ping_count, host_ip=host_ip,
+                                  utf_constants=utf_constants, ping_count=ping_count, host_ip=host_ip, https=0,
                                   http_server=http_server, index_path=index_path, test_type='537937')
+
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
 
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=1,
                                          ble_dut=ble_dut, ble_client=ble_client, utf_constants=utf_constants,
                                          remote_wiseconnect3=remote_wiseconnect3, tx_phy=2, rx_phy=2,
-                                         coded_phy=2, data=data, test_case='537937')
+                                         coded_phy=2, data=data, test_case=537937, address=address2)
 
-        wifi_obj.join_to_ap(skip_power_save=True)
+        wifi_obj.join_to_ap()
         wifi_obj.set_power_save()
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.set_phy_update()
-        wifi_obj.start()
-        time.sleep(40)
+        wifi_obj.run_http_download()
         ble_obj.ble_data_transfer_tx()
-        wifi_obj.wait_for_exit()
         ble_obj.ble_disconnect()
         logger().info("..... stop capturing with Sniffer ......")
         wifi_sniffer.interfaces.capture.stop_capture()
 
+        wifi_dut.interfaces.wifi.memory_free(address2)
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        ble_obj.ble_cleanup()
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -844,12 +801,14 @@ def test_wifi_sdk_ble_phy_with_http_download_c537937(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
                                | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default |
@@ -871,12 +830,14 @@ def test_wifi_sdk_ble_phy_with_http_download_c537937(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
                                | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default |
@@ -888,7 +849,7 @@ def test_wifi_sdk_ble_phy_with_http_download_c537937(
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
-@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"10MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_ble_phy_with_https_download_c537938(
@@ -896,6 +857,8 @@ def test_wifi_sdk_ble_phy_with_https_download_c537938(
         ble_dut, utf_constants, ble_client, remote_wiseconnect3, http_server, index_path):
     """Verify CoEx functionality when BLE Tx as Peripheral(DLE ON) with PHY Rates (Tx=2Mbps Rx=2Mbps with LR=500)
     while file download through WLAN HTTPS"""
+
+    ble_obj = None
     try:
         test_name = request.node.name
 
@@ -913,29 +876,29 @@ def test_wifi_sdk_ble_phy_with_https_download_c537938(
 
         wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                   wifi_client=wifi_client, sl_collections=sl_collections, sniffer_filter=sniffer_filter,
-                                  utf_constants=utf_constants, ping_count=ping_count, host_ip=host_ip,
+                                  utf_constants=utf_constants, ping_count=ping_count, host_ip=host_ip, https=1,
                                   http_server=http_server, index_path=index_path, test_type='537938')
 
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=1,
                                          ble_dut=ble_dut, ble_client=ble_client, utf_constants=utf_constants,
                                          remote_wiseconnect3=remote_wiseconnect3, tx_phy=2, rx_phy=2,
-                                         coded_phy=1, data=data, test_case='537938')
+                                         coded_phy=1, data=data, test_case=537938)
 
-        wifi_obj.join_to_ap(skip_power_save=True)
+        wifi_obj.join_to_ap()
         wifi_obj.set_power_save()
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.set_phy_update()
-        wifi_obj.start()
-        time.sleep(40)
+        wifi_obj.run_http_download()
         ble_obj.ble_data_transfer_tx()
-        wifi_obj.wait_for_exit()
         ble_obj.ble_disconnect()
         logger().info("..... stop capturing with Sniffer ......")
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        ble_obj.ble_cleanup()
 
 
 @pytest.mark.skip()
@@ -948,19 +911,19 @@ def test_wifi_sdk_ble_phy_with_https_download_c537938(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.SSL,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
                                | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_SET_SCAN_RESP_DATA_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_DISABLE_CODED_PHY_FROM_HOST |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_GATT_INIT,
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
@@ -975,19 +938,19 @@ def test_wifi_sdk_ble_phy_with_https_download_c537938(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.SSL,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
                                | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_SET_SCAN_RESP_DATA_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_DISABLE_CODED_PHY_FROM_HOST |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_GATT_INIT,
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
@@ -997,6 +960,7 @@ def test_wifi_sdk_ble_phy_with_ssl_tx_c537939(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_client, remote_wiseconnect3, ssl_server):
     """Verify CoEx functionality when BLE Rx as Central with PHY Rates (TX=LR ,Rx=LR with LR=500) while WLAN SSL Tx"""
+    ble_obj = None
     try:
         test_name = request.node.name
 
@@ -1009,6 +973,8 @@ def test_wifi_sdk_ble_phy_with_ssl_tx_c537939(
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
         data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+
+        logger().info(f".... Input data is :{data} ....")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f".... Remote device ip :{host_ip} ....")
 
@@ -1017,29 +983,35 @@ def test_wifi_sdk_ble_phy_with_ssl_tx_c537939(
                                   utf_constants=utf_constants, ping_count=ping_count, host_ip=host_ip,
                                   ssl_server=ssl_server, test_type='537939')
 
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
+
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=1,
                                          ble_dut=ble_dut, ble_client=ble_client, utf_constants=utf_constants,
                                          remote_wiseconnect3=remote_wiseconnect3, tx_phy=4, rx_phy=4,
-                                         coded_phy=1, data=data, test_case='537939')
+                                         coded_phy=1, data=data, test_case=537939, address=address2)
 
-        wifi_obj.join_to_ap(skip_power_save=True)
+        wifi_obj.join_to_ap()
         wifi_obj.set_power_save()
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.set_phy_update()
         wifi_obj.start()
-        time.sleep(45)
+        time.sleep(60)
         ble_obj.ble_data_transfer_rx()
         wifi_obj.wait_for_exit()
         ble_obj.ble_disconnect()
         logger().info("..... stop capturing with Sniffer ......")
         wifi_sniffer.interfaces.capture.stop_capture()
 
+        wifi_dut.interfaces.wifi.memory_free(address2)
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        ble_obj.ble_cleanup()
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1049,19 +1021,19 @@ def test_wifi_sdk_ble_phy_with_ssl_tx_c537939(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.SSL,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
                                | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_SET_SCAN_RESP_DATA_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_DISABLE_CODED_PHY_FROM_HOST |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_GATT_INIT,
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
@@ -1076,19 +1048,19 @@ def test_wifi_sdk_ble_phy_with_ssl_tx_c537939(
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.SSL,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
                                | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_SET_SCAN_RESP_DATA_FROM_HOST |
-                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_DISABLE_CODED_PHY_FROM_HOST |
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_GATT_INIT,
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
@@ -1099,6 +1071,7 @@ def test_wifi_sdk_ble_phy_with_ssl_rx_c537940(
         ble_dut, utf_constants, ble_client, remote_wiseconnect3, ssl_server):
     """Verify CoEx functionality when BLE Tx as Peripheral with PHY Rates (TX=LR ,Rx=LR with LR=125) while WLAN SSL
     Rx """
+    ble_obj = None
     try:
         test_name = request.node.name
 
@@ -1119,23 +1092,30 @@ def test_wifi_sdk_ble_phy_with_ssl_rx_c537940(
                                   utf_constants=utf_constants, ping_count=ping_count, host_ip=host_ip,
                                   ssl_server=ssl_server, test_type='537940')
 
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
+
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=1,
                                          ble_dut=ble_dut, ble_client=ble_client, utf_constants=utf_constants,
                                          remote_wiseconnect3=remote_wiseconnect3, tx_phy=4, rx_phy=4,
-                                         coded_phy=2, data=data, test_case='537940')
+                                         coded_phy=2, data=data, test_case=537940, address=address2)
 
-        wifi_obj.join_to_ap(skip_power_save=True)
+        wifi_obj.join_to_ap()
         wifi_obj.set_power_save()
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.set_phy_update()
         wifi_obj.start()
-        time.sleep(45)
+        time.sleep(30)
         ble_obj.ble_data_transfer_tx()
         wifi_obj.wait_for_exit()
         ble_obj.ble_disconnect()
         logger().info("..... stop capturing with Sniffer ......")
         wifi_sniffer.interfaces.capture.stop_capture()
 
+        wifi_dut.interfaces.wifi.memory_free(address2)
+
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        ble_obj.ble_cleanup()
