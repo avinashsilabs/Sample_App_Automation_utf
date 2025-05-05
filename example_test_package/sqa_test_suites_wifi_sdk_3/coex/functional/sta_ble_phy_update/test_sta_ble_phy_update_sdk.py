@@ -106,6 +106,12 @@ class WifiJoinThread(ThreadBase):
 
     def run(self):
         try:
+            if self.test_type == '537937' or self.test_type == '537938':
+                logger().info("Method to run http download")
+                self.sl_collections.http_file_download(
+                    wifi_dut=self.wifi_dut, http_server=self.http_server, index_path=self.index_path,
+                    device_ip=self.dut_addr['device_ip'], https=self.https)
+
             if self.test_type == '537935' or self.test_type == '537936':
                 self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f".... Remote device ip :{self.host_ip} ....")
@@ -224,7 +230,7 @@ class WifiJoinThread(ThreadBase):
 
 
 class BleThreadFunctionality(ThreadBase):
-    def __init__(self, wifi_dut=None, ble_client=None, sl_collections=None, test_case=None,
+    def __init__(self, wifi_dut=None, ble_client=None, sl_collections=None, test_case=None, enable_set_smp=1,
                  ble_dut=None, ble_pairing=0, utf_constants=None, ble_dut_address=None, ble_client_address=None,
                  ble_clients=None, char_uid=None, char_path=None, service_uid=None, remote_wiseconnect3=None,
                  write_handle=None, data=None, tx_phy=1, rx_phy=1, coded_phy=2, address=None, set_smp=0):
@@ -251,6 +257,7 @@ class BleThreadFunctionality(ThreadBase):
         self.data = data
         self.address = address
         self.set_smp = set_smp
+        self.enable_set_smp = enable_set_smp
 
         """ **************** Set up DUT for BLE advertising **************** """
         self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=self.set_smp)
@@ -259,7 +266,7 @@ class BleThreadFunctionality(ThreadBase):
         time.sleep(5)
 
         logger().info(" ======= start ble remote secondary DUT")
-        address = self.remote_wiseconnect3.interfaces.wifi.ble_gatt_start(set_smp=self.set_smp)
+        address = self.remote_wiseconnect3.interfaces.wifi.ble_gatt_start(set_smp=self.enable_set_smp)
         self.ble_client_address = re.search(r'([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})', address).group(0)
         assert self.ble_client_address, "failed to initiate ble in remote dut"
         logger().info(f" BLE CLIENT ADDRESS : {self.ble_client_address}")
@@ -457,7 +464,7 @@ class BleThreadFunctionality(ThreadBase):
 
     def set_phy_update(self):
         self.ble_dut.interfaces.bluetooth.ble_set_phy(
-            remote_dev_addr=self.ble_client_address, tx_phy=1, rx_phy=1, coded_phy=2)
+            remote_dev_addr=self.ble_client_address, tx_phy=self.tx_phy, rx_phy=self.rx_phy, coded_phy=self.coded_phy)
         time.sleep(120)
         self.ble_dut.interfaces.bluetooth.ble_read_phy(remote_dev_addr=self.ble_client_address)
 
@@ -554,7 +561,7 @@ def test_wifi_sdk_ble_tx_with_1m_phy_and_iperf_c537935(
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, set_smp=1,
                                          ble_dut=ble_dut, ble_client=ble_client, utf_constants=utf_constants,
                                          remote_wiseconnect3=remote_wiseconnect3, data=data, tx_phy=1, rx_phy=1,
-                                         coded_phy=2, test_case=537935, address=address2)
+                                         coded_phy=2, test_case=537935, address=address2, enable_set_smp=0)
 
         wifi_obj.join_to_ap()
         wifi_obj.set_power_save()
@@ -662,7 +669,7 @@ def test_wifi_sdk_ble_rx_with_phy_and_iperf_c537936(
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, set_smp=0,
                                          ble_dut=ble_dut, ble_client=ble_client, utf_constants=utf_constants,
                                          remote_wiseconnect3=remote_wiseconnect3, tx_phy=1, rx_phy=1,
-                                         coded_phy=1, data=data, test_case=537936, address=address2)
+                                         coded_phy=1, data=data, test_case=537936, address=address2, enable_set_smp=1)
 
         wifi_obj.join_to_ap()
         wifi_obj.set_power_save()
@@ -768,18 +775,20 @@ def test_wifi_sdk_ble_phy_with_http_download_c537937(
         address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
         wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
 
-        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=1,
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, set_smp=0,
                                          ble_dut=ble_dut, ble_client=ble_client, utf_constants=utf_constants,
                                          remote_wiseconnect3=remote_wiseconnect3, tx_phy=2, rx_phy=2,
-                                         coded_phy=2, data=data, test_case=537937, address=address2)
+                                         coded_phy=2, data=data, test_case=537937, address=address2, enable_set_smp=1)
 
         wifi_obj.join_to_ap()
         wifi_obj.set_power_save()
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.set_phy_update()
-        wifi_obj.run_http_download()
+        wifi_obj.start()
+        time.sleep(30)
         ble_obj.ble_data_transfer_tx()
+        wifi_obj.wait_for_exit()
         ble_obj.ble_disconnect()
         logger().info("..... stop capturing with Sniffer ......")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -879,21 +888,28 @@ def test_wifi_sdk_ble_phy_with_https_download_c537938(
                                   utf_constants=utf_constants, ping_count=ping_count, host_ip=host_ip, https=1,
                                   http_server=http_server, index_path=index_path, test_type='537938')
 
-        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=1,
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
+
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, set_smp=0,
                                          ble_dut=ble_dut, ble_client=ble_client, utf_constants=utf_constants,
                                          remote_wiseconnect3=remote_wiseconnect3, tx_phy=2, rx_phy=2,
-                                         coded_phy=1, data=data, test_case=537938)
+                                         coded_phy=1, data=data, test_case=537938, enable_set_smp=1, address=address2)
 
         wifi_obj.join_to_ap()
         wifi_obj.set_power_save()
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.set_phy_update()
-        wifi_obj.run_http_download()
+        wifi_obj.start()
+        time.sleep(30)
         ble_obj.ble_data_transfer_tx()
+        wifi_obj.wait_for_exit()
         ble_obj.ble_disconnect()
         logger().info("..... stop capturing with Sniffer ......")
         wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_dut.interfaces.wifi.memory_free(address2)
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1095,10 +1111,10 @@ def test_wifi_sdk_ble_phy_with_ssl_rx_c537940(
         address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
         wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
 
-        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=1,
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, set_smp=0,
                                          ble_dut=ble_dut, ble_client=ble_client, utf_constants=utf_constants,
                                          remote_wiseconnect3=remote_wiseconnect3, tx_phy=4, rx_phy=4,
-                                         coded_phy=2, data=data, test_case=537940, address=address2)
+                                         coded_phy=2, data=data, test_case=537940, address=address2, enable_set_smp=1)
 
         wifi_obj.join_to_ap()
         wifi_obj.set_power_save()
