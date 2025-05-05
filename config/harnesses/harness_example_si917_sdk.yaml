@@ -537,6 +537,19 @@ devices:
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
 
+    raspi_mosquitto_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 1883
+                interface: 'eth1'
+                tls_enabled: false
+                ip_version: 6
+
     # this represents an MQTT broker running on the raspberry pi on port 1883 with authentication enabled
     raspi_mosquitto_auth:
         interfaces:
@@ -586,6 +599,30 @@ devices:
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
+
+
+    raspi_mosquitto_tls_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0.0.0.0'
+                # port must be set to 8883 for TLS to be enabled
+                port: 8883
+                interface: 'eth1'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: true
+                # If TLS is enabled, the properties below must be specified and contain the names
+                # of files within the utils/tls_certificates directory containing the TLS private key,
+                # certificate, and CA certificate chain
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+                ip_version: 6
+
 
     raspi_mosquitto_tls_ecdsa:
         interfaces:
