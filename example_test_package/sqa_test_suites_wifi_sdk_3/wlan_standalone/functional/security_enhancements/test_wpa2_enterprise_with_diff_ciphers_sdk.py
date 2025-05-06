@@ -4973,14 +4973,14 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_with_wrong_private_key_C113886(wifi_du
     "wifi_dut",
     wifi=
     {
-        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "thread_config": {"wifi": {"count": 2, "stack_len": 4096}},
         "oper_mode": Si91xOperatingMode.EAPWiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
                     Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
                           Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
@@ -5030,6 +5030,20 @@ def test_wsdk_WPA2_EAP_Conn_TLS_when_server_inter_root_ca_with_invalid_algorithm
         logger().info(
             f"IP configuration failed when command given in incorrect state,observed error code 0x10021 which "
             f" is expected")
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        error_events = [
+            event
+            for event in events
+            if event.event_type == AsyncEventIdentifiers.WIFICONNECTIONLOGEVENTASYNC
+        ]
+        for event in error_events:
+            logger().info(f"event type is {event.event_type} and event data is: {event.event_data}")
+            output = event.event_data
+        logger().info(f"\n\n Event data is: {output} \n\n")
+        result = output.strip().split(':')[1].lstrip()
+        logger().info(f"\n\n Reason code:{result} \n\n")
+        assert result == '43', "Unable to get expected reason code hence test is failed"
+        logger().info(f"Observed Expected Error Code, Hence test cases is passed")
         dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
