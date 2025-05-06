@@ -2028,7 +2028,7 @@ def test_wifi_sdk_wlan_get_stats_wpa2_enterprise_c113800(wifi_dut, wifi_access_p
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_dut.interfaces.wifi.leave()
 
-        packet_filter = f'(wlan.ssid == {wifi_access_point.interfaces.wifi.ssid}) and (wlan.fc.type_subtype == 0x008)'
+        packet_filter = f'(wlan.ssid == "{wifi_access_point.interfaces.wifi.ssid}") and (wlan.fc.type_subtype == 0x0008)'
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter, packet_filter3)[
             'packet_count']
 

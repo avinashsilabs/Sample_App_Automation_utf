@@ -262,7 +262,7 @@ def test_power_mode_switching_before_assoc_C19500(wifi_sniffer, wifi_access_poin
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wifi_dut, wifi_sniffer, rs_helper,
-                                                           sl_collections):
+                                                           sniffer_filter, sl_collections):
     """
     Power save disable functionality when module is in power save
     """

@@ -1031,10 +1031,10 @@ def test_wsdk_WPA3_EAP_Conn_TLS_conn_with_sha384_C680012(wifi_dut, wifi_access_p
         packet_filter6 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wifi_thread.dut_add_dict['dut_mac_address'],
             da_addr=ap_mac_address,
-            filter_name='eap_tls_cert_verification_1_0')
-        logger().info(f"Validating EAP frames TLS version 1.0 in sniffer")
+            filter_name='eap_tls_cert_verification_1_2')
+        logger().info(f"Validating EAP frames TLS version 1.2 in sniffer")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter6)['packet_count'], \
-            'Unable to find EAP frames with TLS version 1.0 sent'
+            'Unable to find EAP frames with TLS version 1.2 sent'
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1122,10 +1122,10 @@ def test_wsdk_WPA3_EAP_Conn_TLS_conn_with_sha512_C680014(wifi_dut, wifi_access_p
         packet_filter6 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wifi_thread.dut_add_dict['dut_mac_address'],
             da_addr=ap_mac_address,
-            filter_name='eap_tls_cert_verification_1_0')
-        logger().info(f"Validating EAP frames TLS version 1.0 in sniffer")
+            filter_name='eap_tls_cert_verification_1_2')
+        logger().info(f"Validating EAP frames TLS version 1.2 in sniffer")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter6)['packet_count'], \
-            'Unable to find EAP frames with TLS version 1.0 sent'
+            'Unable to find EAP frames with TLS version 1.2 sent'
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
