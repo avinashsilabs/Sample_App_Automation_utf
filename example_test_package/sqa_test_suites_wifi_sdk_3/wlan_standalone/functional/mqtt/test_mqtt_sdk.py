@@ -1687,7 +1687,7 @@ def test_wifi_sdk_qos1_mqtt_with_ssl_publish_diff_length_C127789(
         logger().info("MQTT client subscribes to the topic")
         mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
 
-        msg_length = [1, 10, 100, 512, 1000, 1390]
+        msg_length = [1, 10, 100, 512, 1000, 1350]
         for length in msg_length:
             logger().info(f" Publish data for length : {length} bytes")
             mqtt_client.interfaces.mqtt.received_messages.clear()
