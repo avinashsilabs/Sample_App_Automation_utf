@@ -2710,6 +2710,24 @@ def test_wifi_sdk_DUTAP_wlan_disconnect_while_sending_data_C551124(wifi_sniffer,
         "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,"channel": 11
     }
 )
+@pytest.mark.net_perf_clients(["raspi_iperf", "secondary_raspi_iperf"])
+@pytest.mark.config(
+    "net_perf_clients",
+     net_perf={
+        0: {
+        "type": 'iperf',
+        "zip_results": 'Y',
+        "host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        },
+       1: {
+        "type": 'iperf',
+        "zip_results": 'Y',
+        "host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        },
+        }
+)
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -2895,6 +2913,24 @@ def test_verify_one_TCP_TX_and_UDP_RX_using_multithread_C689593(wifi_dut, wifi_c
         "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,"channel": 11
     }
 )
+@pytest.mark.net_perf_clients(["raspi_iperf", "secondary_raspi_iperf"])
+@pytest.mark.config(
+    "net_perf_clients",
+     net_perf={
+        0: {
+        "type": 'iperf',
+        "zip_results": 'Y',
+        "host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        },
+       1: {
+        "type": 'iperf',
+        "zip_results": 'Y',
+        "host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        },
+        }
+)
 @pytest.mark.config(
     'wifi_access_point',
     wifi={
@@ -3008,6 +3044,24 @@ def test_verify_one_TCP_TX_and_TCP_RX_using_multithread_C689594(wifi_dut, wifi_c
                }
          }
 )
+@pytest.mark.net_perf_clients(["raspi_iperf", "secondary_raspi_iperf"])
+@pytest.mark.config(
+    "net_perf_clients",
+     net_perf={
+        0: {
+        "type": 'iperf',
+        "zip_results": 'Y',
+        "host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        },
+       1: {
+        "type": 'iperf',
+        "zip_results": 'Y',
+        "host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        },
+        }
+)
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 def test_verify_one_TCP_RX_and_UDP_TX_using_multithread_C689595(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
@@ -3086,6 +3140,24 @@ def test_verify_one_TCP_RX_and_UDP_TX_using_multithread_C689595(wifi_dut, wifi_c
         "ble_custom_ext_features": 0,
         "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,"channel": 11
     }
+)
+@pytest.mark.net_perf_clients(["raspi_iperf", "secondary_raspi_iperf"])
+@pytest.mark.config(
+    "net_perf_clients",
+     net_perf={
+        0: {
+        "type": 'iperf',
+        "zip_results": 'Y',
+        "host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        },
+       1: {
+        "type": 'iperf',
+        "zip_results": 'Y',
+        "host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        },
+        }
 )
 @pytest.mark.config(
     "wifi_clients",
@@ -3283,6 +3355,24 @@ def test_verify_one_UDP_TX_and_UDP_RX_using_multithread_C689600(wifi_dut, wifi_c
                }
          }
 )
+@pytest.mark.net_perf_clients(["raspi_iperf", "secondary_raspi_iperf"])
+@pytest.mark.config(
+    "net_perf_clients",
+     net_perf={
+        0: {
+        "type": 'iperf',
+        "zip_results": 'Y',
+        "host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        },
+       1: {
+        "type": 'iperf',
+        "zip_results": 'Y',
+        "host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        },
+        }
+)
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 def test_verify_one_UDP_RX_and_UDP_TX_using_multithread_C689597(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
@@ -3374,6 +3464,24 @@ def test_verify_one_UDP_RX_and_UDP_TX_using_multithread_C689597(wifi_dut, wifi_c
                 "interface": "wlan0",
                }
          }
+)
+@pytest.mark.net_perf_clients(["raspi_iperf", "secondary_raspi_iperf"])
+@pytest.mark.config(
+    "net_perf_clients",
+     net_perf={
+        0: {
+        "type": 'iperf',
+        "zip_results": 'Y',
+        "host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        },
+       1: {
+        "type": 'iperf',
+        "zip_results": 'Y',
+        "host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        },
+        }
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
