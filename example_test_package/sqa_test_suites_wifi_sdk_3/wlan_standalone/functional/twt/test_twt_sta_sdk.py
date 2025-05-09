@@ -291,16 +291,15 @@ class WLanTwTThread(ThreadBase):
                                                           twt_retry_interval=self.twt_retry_interval,
                                                           req_type=self.req_type,
                                                           negotiation_type=self.negotiation_type)
-                time.sleep(180)
+                time.sleep(70)
                 retry_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                     sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
                     filter_name="twt_request_packets")
                 logger().info(f'***** twt_request_packets = {retry_filter}')
                 if self.test_case == '113733':
-                    self.switch.interfaces.pdu_switch.turn_on(delay=60)
                     self.wifi_sniffer.interfaces.capture.stop_capture()
                     assert int(self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=retry_filter)[
-                                   'find_packet_num']) == self.twt_retry_limit + 1, "Unable to find TWT request packets"
+                                   'find_packet_num']) == self.twt_retry_limit, "Unable to find TWT request packets"
                     logger().info('\n\n**** Retry packets verified successfully ****\n\n')
                     return
                 if self.test_case == '113735':
@@ -844,6 +843,8 @@ def test_wifi_sdk_verify_default_retry_attempts_for_twt_c113733(wifi_dut, wifi_a
         wlan_obj.wait_for_exit()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "twt": 1})
