@@ -5,6 +5,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xConfigFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap,
 )
 from utf.utils.logger import get_logger
+from utf.utils.stopwatch import Stopwatch
 import string
 import random
 from utf.utils.thread_base import ThreadBase
@@ -98,7 +99,7 @@ class WifiJoin(ThreadBase):
         method = "GET"
         current_time = time.time()
 
-        if self.test_case == '19235' or self.test_case == '528822' or self.test_case == '641388':
+        if self.test_case == '19235' or self.test_case == '528822' or self.test_case == '641388' or self.test_case == '708786':
             self.wifi_dut.interfaces.wifi.http_server_init()
 
         if self.test_case == '564051':
