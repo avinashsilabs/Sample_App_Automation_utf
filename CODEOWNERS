@@ -1,10 +1,13 @@
-@@@sqa_team siriteja.chakravadhanula@silabs.com vinod.gaddampally@silabs.com swathi.pathuri@silabs.com vivek.verma@silabs.com
-@@@utf_team joe.savage@silabs.com rama.kathare@silabs.com jeevan.gaddam@silabs.com sivaprasad.machani@silabs.com hidayathulla.buramdin@silabs.com ravikumar.baddireddi@silabs.com ravishankar.pendyala@silabs.com amiya.santra@silabs.com aiswarya.kumar@silabs.com pavithra.n@silabs.com teja.vunnam@silabs.com
+# CODEOWNERS file disabled
+# Original contents have been commented out
 
-* @@sqa_team @@utf_team
+# @@@sqa_team siriteja.chakravadhanula@silabs.com vinod.gaddampally@silabs.com swathi.pathuri@silabs.com vivek.verma@silabs.com
+# @@@utf_team joe.savage@silabs.com rama.kathare@silabs.com jeevan.gaddam@silabs.com sivaprasad.machani@silabs.com hidayathulla.buramdin@silabs.com ravikumar.baddireddi@silabs.com ravishankar.pendyala@silabs.com amiya.santra@silabs.com aiswarya.kumar@silabs.com pavithra.n@silabs.com teja.vunnam@silabs.com
 
-CODEOWNERS.destination_branch_pattern release/
-CODEOWNERS.destination_branch_pattern develop
+# * @@sqa_team @@utf_team
 
-AllGroupsCheck(1)
-OverallCheck(2)
+# CODEOWNERS.destination_branch_pattern release/
+# CODEOWNERS.destination_branch_pattern develop
+
+# AllGroupsCheck(1)
+# OverallCheck(2)
