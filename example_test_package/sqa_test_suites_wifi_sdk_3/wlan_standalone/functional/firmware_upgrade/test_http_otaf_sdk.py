@@ -455,7 +455,7 @@ def test_sdk_fw_upgrade_failure_when_STA_is_not_connected_c19779(http_server, wi
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN,
+        "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default
