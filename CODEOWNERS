@@ -5,5 +5,4 @@
 
 CODEOWNERS.destination_branch_pattern release/
 
-AllGroupsCheck(0)
 OverallCheck(1)
