@@ -483,7 +483,7 @@ def test_wifi_sdk_https_fw_upgrade_using_azure_server_498663(azure_blob, wifi_sn
                                                              wifi_access_point, wifi_dut, sl_collections,
                                                              utf_constants):
     """Wi-Fi - M4 Firmware Update functionality using azure server """
-    rps_path = utf_constants.get("m4_rps_plain")
+    rps_path = utf_constants.get("m4_rps_filename")
     try:
         test_case = '498663'
         wlan_obj = WifiJoin(azure_blob=azure_blob, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,

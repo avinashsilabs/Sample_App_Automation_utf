@@ -724,7 +724,7 @@ def test_sdk_http_fw_upgrade_using_c498660(http_server, wifi_sniffer, wifi_acces
     ''' Verify M4 firmware update functionality using HTTP otaf (port 80)with local apache server  '''
     capture_filename = request.node.name
     try:
-        rps_path = utf_constants.get("m4_rps_plain")
+        rps_path = utf_constants.get("m4_rps_filename")
         logger().info(f"******** AP MAC ADD *******")
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"***** Start get IP address ******")

@@ -764,7 +764,7 @@ def test_wifi_sdk_m4_fw_upgrade_using_https_c498661(wifi_client, http_server,
 
     try:
         test_case = '498661'
-        rps_path = utf_constants.get("m4_rps_plain")
+        rps_path = utf_constants.get("m4_rps_filename")
         wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer, wifi_client=wifi_client,
                             sl_collections=sl_collections, rps_path=rps_path,
                             wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
