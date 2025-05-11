@@ -256,7 +256,7 @@ def test_terminate_ap_while_running_sta_C148303(wifi_dut, wifi_access_point, wif
             'Unable to find Assoc Req with HE information in sniffer'
 
         logger().info(" Terminate the AP")
-        wifi_dut.interfaces.wifi.sl_net_down(mode="ap")
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
         logger().info("\n\nChecking DUT STA connectivity")
         logger().info(f"********* Dut STA IP **********: {dut_sta_ip}")
