@@ -848,8 +848,7 @@ def test_wifi_sdk_apmode_connectivity_with_wrong_psk_cli_c19437(wifi_sniffer, sn
         },
     }
 )
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["set_default_region"])
+
 def test_wifi_sdk_ap_mode_tx_rules_jp_region_c19456(wifi_dut, sniffer_filter,
                                                     wifi_sniffer,
                                                     wifi_clients, sl_collections, utf_constants):
@@ -876,6 +875,14 @@ def test_wifi_sdk_ap_mode_tx_rules_jp_region_c19456(wifi_dut, sniffer_filter,
 
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+        time.sleep(10)
+        wifi_dut.interfaces.wifi.reset()
+        time.sleep(30)
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        wifi_dut.interfaces.wifi.init(load_certificate=False)
+        wifi_dut.interfaces.wifi.initialize_thread()
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+        wifi_dut.interfaces.wifi.set_wifi_region(region_code=Si91xRegionCode.US, timeout=10)
 
 
 @pytest.mark.config(
@@ -931,8 +938,6 @@ def test_wifi_sdk_ap_mode_tx_rules_jp_region_c19456(wifi_dut, sniffer_filter,
         },
     }
 )
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["set_default_region"])
 def test_wifi_sdk_ap_mode_tx_rules_eu_region_c19455(wifi_dut, wifi_sniffer,
                                                     wifi_clients, sl_collections, utf_constants, sniffer_filter):
     """Verify whether DUT is obeying transmission rules(Transmitting with only given power as per channel) according to
@@ -944,6 +949,9 @@ def test_wifi_sdk_ap_mode_tx_rules_eu_region_c19455(wifi_dut, wifi_sniffer,
                                              testcase_no=19456)
         ap_dut_obj.start()
         ap_dut_obj.wait_for_exit()
+        for i in range(0, 4):
+            logger().info(f'RASPI-STA{i + 1} Disconnecting from DUT-AP')
+            wifi_clients[i].interfaces.wifi.leave()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             wlan_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'], radio_ch=ap_dut_obj.channel, beacon=100,
             filter_name="beacon_ap_mode_eu_region")
@@ -956,6 +964,14 @@ def test_wifi_sdk_ap_mode_tx_rules_eu_region_c19455(wifi_dut, wifi_sniffer,
 
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+        time.sleep(10)
+        wifi_dut.interfaces.wifi.reset()
+        time.sleep(30)
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        wifi_dut.interfaces.wifi.init(load_certificate=False)
+        wifi_dut.interfaces.wifi.initialize_thread()
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+        wifi_dut.interfaces.wifi.set_wifi_region(region_code=Si91xRegionCode.US, timeout=10)
 
 
 @pytest.mark.config(

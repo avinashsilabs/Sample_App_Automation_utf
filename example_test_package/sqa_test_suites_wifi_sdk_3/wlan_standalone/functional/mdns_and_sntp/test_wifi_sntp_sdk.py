@@ -297,7 +297,7 @@ def test_wifi_sdk_sntp_ludp_coexit_c19017(wifi_sniffer, wifi_dut, wifi_client, w
 
     data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
     remote_socket.interfaces.socket.start_server(socket_type=1, port=123)
-    server_ip = remote_socket.interfaces.socket.hostname_or_ip_address(ip_version=4)
+    server_ip = remote_socket.interfaces.socket.hostname_or_ip_address()
     logger().info(f"Server IP is: {server_ip}")
     time.sleep(3)
     socket_id = wifi_dut.interfaces.wifi.socket(stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP")
