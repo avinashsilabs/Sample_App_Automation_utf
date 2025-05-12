@@ -1769,8 +1769,9 @@ def test_wifi_sdk_ssl_tx_with_tls_v1_2_in_when_2_clients_connected_in_conc_mode_
         sock_opened.clear()
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        if con_discon_thread.is_alive():
-            con_discon_thread.join()
+        if con_discon_thread is not None:
+            if con_discon_thread.is_alive():
+                con_discon_thread.join()
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -1920,9 +1921,17 @@ def test_wifi_sdk_ssl_tx_with_tls_v1_0_rejoin_when_two_clients_connected_in_conc
         sock_opened.clear()
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        if con_discon_thread.is_alive():
-            con_discon_thread.join()
+        if con_discon_thread is not None:
+            if con_discon_thread.is_alive():
+                con_discon_thread.join()
         wifi_dut.interfaces.wifi.stop_ap()
+        time.sleep(10)
+        wifi_dut.interfaces.wifi.reset()
+        time.sleep(30)
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        wifi_dut.interfaces.wifi.init(load_certificate=False)
+        wifi_dut.interfaces.wifi.initialize_thread()
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
 
 
 @pytest.mark.config(
@@ -2070,8 +2079,9 @@ def test_wifi_sdk_ssl_rx_with_tls_v1_2_in_when_4_clients_connected_in_conc_mode_
         sock_opened.clear()
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        if con_discon_thread.is_alive():
-            con_discon_thread.join()
+        if con_discon_thread is not None:
+            if con_discon_thread.is_alive():
+                con_discon_thread.join()
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -2218,8 +2228,9 @@ def test_wifi_sdk_ssl_tx_with_rejoin_when_2_clients_connected_in_conc_mode_c1485
         sock_opened.clear()
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        if con_discon_thread.is_alive():
-            con_discon_thread.join()
+        if con_discon_thread is not None:
+            if con_discon_thread.is_alive():
+                con_discon_thread.join()
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -2331,8 +2342,9 @@ def test_wifi_sdk_https_post_func_when_2_clients_connected_in_conc_mode_c148563(
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        if con_discon_thread.is_alive():
-            con_discon_thread.join()
+        if con_discon_thread is not None:
+            if con_discon_thread.is_alive():
+                con_discon_thread.join()
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -2482,8 +2494,9 @@ def test_wifi_sdk_mqtt_with_qos0_when_3_clients_connected_in_conc_mode_c148579(w
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        if con_discon_thread.is_alive():
-            con_discon_thread.join()
+        if con_discon_thread is not None:
+            if con_discon_thread.is_alive():
+                con_discon_thread.join()
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -2631,8 +2644,9 @@ def test_wifi_sdk_mqtt_with_qos1_when_3_clients_connected_in_conc_mode_c148580(w
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        if con_discon_thread.is_alive():
-            con_discon_thread.join()
+        if con_discon_thread is not None:
+            if con_discon_thread.is_alive():
+                con_discon_thread.join()
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -2774,8 +2788,9 @@ def test_wifi_sdk_tcp_tx_when_4_clients_connected_in_conc_mode_c148569(sl_collec
         sock_opened.clear()
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        if con_discon_thread.is_alive():
-            con_discon_thread.join()
+        if con_discon_thread is not None:
+            if con_discon_thread.is_alive():
+                con_discon_thread.join()
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -2922,8 +2937,9 @@ def test_wifi_sdk_tcp_rx_when_4_clients_connected_in_conc_mode_c148571(sl_collec
         sock_opened.clear()
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        if con_discon_thread.is_alive():
-            con_discon_thread.join()
+        if con_discon_thread is not None:
+            if con_discon_thread.is_alive():
+                con_discon_thread.join()
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -3054,8 +3070,9 @@ def test_wifi_sdk_ssl_tx_with_tls_v1_0_when_two_clients_connected_in_conc_mode_c
         sock_opened.clear()
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        if con_discon_thread.is_alive():
-            con_discon_thread.join()
+        if con_discon_thread is not None:
+            if con_discon_thread.is_alive():
+                con_discon_thread.join()
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -3389,6 +3406,7 @@ def test_wifi_sdk_http_put_func_when_2_clients_connected_in_conc_mode_c148565(sl
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        if con_discon_thread.is_alive():
-            con_discon_thread.join()
+        if con_discon_thread is not None:
+            if con_discon_thread.is_alive():
+                con_discon_thread.join()
         wifi_dut.interfaces.wifi.stop_ap()
