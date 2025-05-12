@@ -671,7 +671,7 @@ def test_dut_send_mpdu_with_same_receiver_addr_c148322(
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
-        packet_filter3 = f'(wlan.sa == {wifi_obj.dut_addr["dut_mac_address"]}) || (wlan.ra == {wifi_obj.ap_mac_address}) and (wlan.qos.priority == 1)'
+        packet_filter3 = f'(wlan.sa == {wifi_obj.dut_addr["dut_mac_address"]}) and (wlan.ra == {wifi_obj.ap_mac_address}) and (wlan.qos.priority == 1)'
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(
             packet_filter1=packet_filter3, packet_filter2=packet_filter4)['packet_count']
 
