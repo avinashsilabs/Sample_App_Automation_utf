@@ -56,6 +56,35 @@ def logger():
 def text_generator(size=2000):
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
 
+class http_thread(ThreadBase):
+    """
+    Thread to get http data from webpage for some time """
+    def __init__(self, wifi_dut=None,  wifi_access_point=None, http_server=None, keep_alive_time=None,
+                 http_client=None, sl_collections=None, utf_constants=None, index_path=None,
+                 test_case=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.http_server = http_server
+        self.http_client = http_client
+        self.sl_collections = sl_collections
+        self.utf_constants = utf_constants
+        self.index_path = index_path
+        self.keep_alive_time = keep_alive_time
+        self.dut_addr = None
+
+    def start(self):
+        status = self.wifi_dut.interfaces.wifi.http_client_init(https_enable=True)
+        if status == SLStatus.SL_STATUS_OK:
+            logger().info(f"*** http_client is initialized successfull")
+
+    def http_functionality(self, http_server=None):
+        status_dut, content_dut = self.wifi_dut.interfaces.wifi.http_get(http_server.interfaces.http, self.index_path, server_port=443)
+
+        assert not status_dut, "failed to fetch the https data"
+        logger().info(f"**** http_get fetched data is {content_dut}")
+    def disconncet(self):
+        self.wifi_dut.interfaces.wifi.http_client_deinit()
 
 class aws_publish_message_Thread(ThreadBase):
     """
@@ -4188,3 +4217,98 @@ def test_wifi_sdk_aws_ca1_cert_tx_with_internal_clk_c703343(wifi_sniffer, wifi_a
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584, "priority": 8}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        # # "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
+                             "disassociated", "clear_certs"])
+def test_wifi_sdk_aws_connect_sub_publish_and_http_c537900(wifi_sniffer, wifi_access_point, wifi_dut, logger, http_server, index_path,
+                                                 sniffer_filter, sl_collections, aws_iot_client, utf_constants):
+    """
+    Connect to AWS MQTT server subscribe to topic and publish message on the same topic in one thread and http_get in 2nd thread. Initiate disconnection and
+    check the connection stability .
+    """
+    client_id = 'client_c537900'
+    topic = "topic_c537900"
+    iterations = utf_constants.get('iter_count')
+    try:
+        wifi_dut.interfaces.wifi.set_ssl_certificate(
+            str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem")),
+            Si91xCertificateType.SL_NET_SIGNING_CERTIFICATE,
+            Si91xCertIdentifier.SL_NET_TLS_SERVER_CREDENTIAL_START,
+            cert_index=1)
+        for iter_count in range(iterations):
+            logger.info(f"Initiating aws test for iteration:{iter_count + 1}")
+            messages = []
+            for i in range(10):
+                messages.append(text_generator(size=10))
+            logger.info(f"Messages are:{messages}")
+
+            capture_filename = "test_wifi_sdk_C537900"
+            channel = wifi_access_point.interfaces.wifi.channel
+            wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+            result = sl_collections.join_to_wifi_network_with_rejoin(wifi_dut, wifi_access_point, [0, 4, 40, 0])
+            dut_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+            ap_bssid = wifi_access_point.interfaces.wifi.bssid
+            logger.info(f'AP BSSID = {ap_bssid}')
+            logger.info(f"Device mac address: {dut_mac_address}")
+
+            aws_obj = AwsConnection()
+
+            http_obj = http_thread(index_path=index_path, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, keep_alive_time=300, http_server=http_server,
+                                   sl_collections=sl_collections, utf_constants=utf_constants)
+            logger.info("Initiating aws connect from DUT")
+            assert aws_obj.connect_to_aws_server_from_dut(wifi_dut, client_id), "Failed to connect aws server from DUT"
+            logger.info("Connecting to AWS server from DUT is successful")
+            aws_obj.subscribe_from_dut(wifi_dut, topic, qos=Si91xAwsQos.QOS0)
+            aws_obj.connect_to_aws_server_from_raspi(aws_iot_client)
+            aws_obj.subscribe_from_raspi(aws_iot_client, topic, qos=Si91xAwsQos.QOS0)
+            http_obj.start()
+
+            for count, msg in enumerate(messages):
+                logger.info(f"\nDUT is publishing message{count + 1} on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS0}'"
+                            f"\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
+                aws_obj.publish_from_dut(wifi_dut, topic, msg, qos=Si91xAwsQos.QOS0)
+                http_obj.http_functionality(http_server=http_server)
+                time.sleep(3)
+            aws_obj.validate_aws_messages_from_raspi(aws_iot_client, topic, Si91xAwsQos.QOS0, messages)
+            # http_obj.disconncet()
+
+            logger.info("Stop Sniffer finally")
+            wifi_sniffer.interfaces.capture.stop_capture()
+            sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                                   sniffer_filter)
+            logger.info(f"Iteration '{iter_count + 1}' completed")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        wifi_dut.interfaces.wifi.http_client_deinit()
