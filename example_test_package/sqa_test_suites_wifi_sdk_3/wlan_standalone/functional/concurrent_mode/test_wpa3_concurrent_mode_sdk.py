@@ -802,7 +802,7 @@ def test_wifi_sdk_wpa3_when_sta_doing_udp_tx_C463707(wifi_sniffer, wifi_access_p
         static_gateway = "192.168.100.76"
         ip_version = 'ipv4'
         remote_wiseconnect3.interfaces.sapi.join(ssid=ssid,
-                                                 security="wpa3_transition",
+                                                 security="wpa3",
                                                  passphrase=password,
                                                  channel=channel, timeout=60)
         remote_wiseconnect3.interfaces.sapi.start_ip(ip_version=ip_version, static_ip=static_ip,
