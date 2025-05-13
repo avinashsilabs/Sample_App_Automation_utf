@@ -544,8 +544,7 @@ def test_wifi_sdk_ap_mode_scan_with_PASSIVE_SCAN_TYPE_C688244(wifi_dut, wifi_acc
         "region_code": Si91xRegionCode.US
     }
 )
-@pytest.mark.config("wifi_client", wifi={"country": "US", "channel": "11"})
-@pytest.mark.start_state("wifi_dut", wifi=["net_init_stats"])
+@pytest.mark.config("wifi_client", wifi={"country": "US", "channel": "11", "interface": "wlan0"})
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
