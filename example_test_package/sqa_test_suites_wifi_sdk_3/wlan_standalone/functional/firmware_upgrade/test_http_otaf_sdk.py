@@ -148,7 +148,7 @@ class WifiJoin(ThreadBase):
             if self.test_case_no == 19798:
                 logger().info("performing fw upgrade on dut by using excel xls file....")
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip,
-                                                               host_name=host_ip, http_url='/excel.xlsx',
+                                                               host_name=host_ip, http_url='/excel_file.xlsx',
                                                                expected_status=SLStatus.SL_STATUS_SI91X_CORRUPTED_RPS_HEADER)
                 time.sleep(5)
                 self.get_firmware_status()

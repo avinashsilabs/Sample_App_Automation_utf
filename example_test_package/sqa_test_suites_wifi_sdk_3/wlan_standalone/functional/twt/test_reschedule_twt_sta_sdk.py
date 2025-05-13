@@ -100,7 +100,7 @@ class RescheduleTwTThread(ThreadBase):
     def run(self):
         try:
             if self.test_case == '540490':
-                self.wifi_dut.interfaces.wifi.twt_auto_config(estimated_extra_wake_duration_percent=50,
+                self.wifi_dut.interfaces.wifi.twt_auto_config(twt_enable=1, estimated_extra_wake_duration_percent=50,
                                                               average_tx_throughput=10000,
                                                               expected_status=SLStatus.SL_STATUS_TWT_SESSION_NOT_FEASIBLE)
                 logger().info('***** Getting 0x10074 status which is expected *****')
