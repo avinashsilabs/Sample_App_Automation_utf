@@ -682,7 +682,7 @@ def test_wifi_sdk_mqtt_qos1_connect_subscribe_publish_TC127757(
     """QOS1: Subscribe to MQTT server with TCP connection and publish data oversubscribed topic"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127757"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
         capture_filename = request.node.name
 
@@ -749,7 +749,7 @@ def test_wifi_sdk_mqtt_qos0_connect_publish_max_data_C127827(
     """QOS0: Subscribe to MQTT server with TCP connection and publish maximum data of 1000 bytes oversubscribed topic"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127827"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1000))
         capture_filename = request.node.name
 
@@ -820,7 +820,7 @@ def test_wifi_sdk_mqtt_retain_with_qos1_TC127826(
     """QOS1: Subscribe to MQTT server with TCP connection by enabling retain bit and publish data"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127826"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
         capture_filename = request.node.name
 
@@ -1017,7 +1017,7 @@ def test_wifi_sdk_qos1_mqtt_with_tcp_publish_diff_length_C127792(
     """QOS1: Subscribe to MQTT server with TCP connection and publish data with different lengths"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127792"
         capture_filename = request.node.name
 
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename,
@@ -1104,7 +1104,7 @@ def test_wifi_sdk_mqtt_keep_alive_disable_with_qos1_TC127794(
     keep alive period is 0"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127794"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
         capture_filename = request.node.name
 
@@ -1193,7 +1193,7 @@ def test_wifi_sdk_mqtt_keep_alive_60_with_qos0_TC127761(wifi_sniffer, mqtt_serve
     when keep alive period configured for 60 seconds"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127761"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
         capture_filename = request.node.name
 
@@ -1284,7 +1284,7 @@ def test_wifi_sdk_mqtt_keep_alive_120_with_qos1_TC127784(wifi_sniffer, mqtt_serv
     when keep alive period configured for 120 seconds"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127784"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=250))
         capture_filename = request.node.name
 
@@ -1475,7 +1475,7 @@ def test_wifi_sdk_mqtt_server_with_ssl_conn_enable_retain_bit_publish_data_C1277
     """QOS0: Subscribe to MQTT server with SSL connection by enabling retain bit and publish data"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127759"
         capture_filename = request.node.name
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=550))
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
@@ -1564,13 +1564,13 @@ def test_wifi_sdk_mqtt_server_with_ssl_conn_enable_retain_bit_publish_data_C1277
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","wifi_powersave_disable"])
 def test_wifi_sdk_Connect_subscribe_to_MQTT_server_with_SSL_connection_and_publish_data_C127803(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections):
     """QOS1: Connect/subscribe to MQTT server with SSL connection and publish data"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127803"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=400))
         capture_filename = request.node.name
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
@@ -1667,7 +1667,7 @@ def test_wifi_sdk_qos1_mqtt_with_ssl_publish_diff_length_C127789(
     """QOS1: Subscribe to MQTT server with SSL connection and publish data with different lengths"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127789"
         capture_filename = request.node.name
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
                             wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
@@ -1767,7 +1767,7 @@ def test_wifi_sdk_qos0_mqtt_with_ssl_publish_diff_length_C127790(
     """QOS0: Subscribe to MQTT server with SSL connection and publish data with different lengths"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127790"
         capture_filename = request.node.name
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
                             wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
@@ -1872,7 +1872,7 @@ def test_wifi_sdk_mqtt_keep_alive_180_ssl_connection_with_qos0_TC127786(
 
     try:
         packet_filter2 = '    Type/Subtype: QoS Data (0x0028)'
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127786"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=400))
         capture_filename = request.node.name
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
@@ -1977,7 +1977,7 @@ def test_wifi_sdk_mqtt_keep_alive_disable_ssl_connection_with_qos0_TC127795(
 
     try:
         packet_filter2 = 'Application Data Protocol (Application Data)'
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127795"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=400))
         capture_filename = request.node.name
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
@@ -2073,14 +2073,14 @@ def test_wifi_sdk_mqtt_keep_alive_disable_ssl_connection_with_qos0_TC127795(
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","unassociated", "wifi_powersave_disable"])
 def test_wifi_sdk_connect_subscribe_publish_mqtt_with_ssl_qos1_for_30_min_C127798(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections):
     """QOS1: Subscribe to MQTT server with SSL connection and publish data , initiate WLAN disconnection and
     do in a loop from scan/connect/ipconfig/subscribe/publish/disconnect for 30 minutes in loop"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127798"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=400))
         loop_watch = Stopwatch()
         while loop_watch.elapsed_sec < 1800:
@@ -2188,14 +2188,14 @@ def test_wifi_sdk_connect_subscribe_publish_mqtt_with_ssl_qos1_for_30_min_C12779
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","unassociated", "wifi_powersave_disable"])
 def test_wifi_sdk_subscribe_mqtt_qos0_with_ssl_subscribe_unscribe_for_30_min_C127788(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections):
     """QOS0: Subscribe to MQTT server with SSL connection and publish data. Unsubscribe from the subscribed topic and
     do the same Subscribe/Unsubscribe for 30 minutes in loop"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127788"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=400))
         loop_watch = Stopwatch()
         while loop_watch.elapsed_sec < 1800:
@@ -2301,13 +2301,13 @@ def test_wifi_sdk_subscribe_mqtt_qos0_with_ssl_subscribe_unscribe_for_30_min_C12
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","unassociated", "wifi_powersave_disable"])
 def test_wifi_sdk_qos1_subscribe_publish_disconnect_and_subscribe_again_30_min_C127796(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections):
     """QOS1:Subscribe to MQTT server with TCP connection and publish data, disconnect from the topic and connect back"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127796"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1000))
         loop_watch = Stopwatch()
         while loop_watch.elapsed_sec < 1800:
@@ -2401,13 +2401,13 @@ def test_wifi_sdk_qos1_subscribe_publish_disconnect_and_subscribe_again_30_min_C
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","unassociated", "wifi_powersave_disable"])
 def test_wifi_sdk_qos0_subscribe_publish_disconnect_and_subscribe_again_for_30_min_C127793(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections):
     """QOS0: Subscribe to MQTT server with TCP connection and publish 1300 bytes of data for 30 minutes continuously"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127793"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1300))
         loop_watch = Stopwatch()
         while loop_watch.elapsed_sec < 1800:
@@ -2509,7 +2509,7 @@ def test_wifi_sdk_mqtt_keep_alive_60_and_12_hours_with_qos0_TC127797(
     when keep alive period configured for 60 seconds"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127797"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
         capture_filename = request.node.name
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
@@ -2595,7 +2595,7 @@ def test_wifi_sdk_mqtt_keep_alive_60_and_12_hours_with_qos0_TC127797(
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c127799(switch, wifi_sniffer, mqtt_server,
                                                                                    mqtt_client, wifi_access_point,
                                                                                    wifi_dut, request, sl_collections):
@@ -2604,7 +2604,7 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1277
     disconnecting from AP
     """
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127799"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=600))
         capture_filename = request.node.name
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
@@ -2710,7 +2710,7 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1277
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c127828(switch, wifi_sniffer, mqtt_server,
                                                                                    mqtt_client, wifi_access_point,
                                                                                    wifi_dut, request, sl_collections):
@@ -2719,7 +2719,7 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1278
     and check the DUT behavior.
     """
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127828"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1351))
         capture_filename = request.node.name
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
@@ -2823,7 +2823,7 @@ def test_wifi_sdk_connect_subscribe_MQTT_server_with_SSL_connection_rejoin_c1278
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+                       wifi=["mqtt_disconnect","wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_wifi_sdk_mqtt_qos0_connect_publish_rejoin_TC127758(switch, wifi_sniffer, sniffer_filter, mqtt_client, request,
                                                             wifi_access_point, mqtt_server, wifi_dut, sl_collections):
     """
@@ -2832,7 +2832,7 @@ def test_wifi_sdk_mqtt_qos0_connect_publish_rejoin_TC127758(switch, wifi_sniffer
     """
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C127758"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=800))
         capture_filename = request.node.name
 
@@ -2920,7 +2920,7 @@ def test_wifi_sdk_mqtt_command_type_response_check_C37583(
     """Command Type Response for MQTT Client Functionality"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C37583"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
         capture_filename = request.node.name
 
@@ -3733,7 +3733,7 @@ def test_wifi_sdk_mqtt_with_qos_last_will_and_retained_will_to_zero_C537960(
     """Verify whether DUT is able to connect to MQTT server or when QOS_OF_LAST_WILL & IS_LAST_WILL_RETAINED set 0"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C537960("
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
         capture_filename = request.node.name
 
@@ -4295,7 +4295,7 @@ def test_wifi_sdk_qos0_mqtt_ssl_simultaneous_with_two_topic_length_C537955(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
+                       wifi=["mqtt_disconnect","unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_qos1_mqtt_ssl_simultaneous_with_two_topic_length_C537953(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter,
         utf_constants):
@@ -4554,7 +4554,7 @@ def test_wifi_sdk_mqtt_client_id_more_than_61_bytes_C463961(
     """QOS1:  If client id length is given more than 61 bytes error code 0x21 should be seen"""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C463961"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
         client_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=63))
         capture_filename = request.node.name
@@ -4698,7 +4698,7 @@ def test_wifi_sdk_dut_hit_mqtt_disconnect_handler_C537967(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
+                       wifi=["mqtt_disconnect","unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_qos0_mqtt_two_topic_and_three_condition_C498669(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter,
         utf_constants):
@@ -4809,7 +4809,7 @@ def test_wifi_sdk_qos0_mqtt_two_topic_and_three_condition_C498669(
                                                                   "username": "myusernamewithdifferentlengthmyusernamewithdifferentlengthmyus",
                                                                   "password": "FROM_TEST_3"}]})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_mqtt_ssl_username_diff_length_with_diff_bytes_C463960(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter,
         utf_constants):
@@ -4946,7 +4946,7 @@ def test_wifi_sdk_mqtt_ssl_username_diff_length_with_diff_bytes_C463960(
                                                                    "username": "myusernamewithdifferentlengthmyusernamewithdifferentlengthmyus",
                                                                    "password": "FROM_TEST_3"}]})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_mqtt_username_diff_length_with_diff_bytes_C465838(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter,
         utf_constants):
@@ -5048,7 +5048,7 @@ def test_wifi_sdk_mqtt_username_diff_length_with_diff_bytes_C465838(
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_wifi_sdk_qos0_two_topic_with_SSL_connection_rejoin_c537956(
         switch, wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections,
         sniffer_filter):
@@ -5168,7 +5168,7 @@ def test_wifi_sdk_qos0_two_topic_with_SSL_connection_rejoin_c537956(
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3', "protected_management_frame": "Capable"})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_wifi_sdk_qos1_two_topic_with_SSL_connection_rejoin_c537959(
         switch, wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections,
         sniffer_filter):
@@ -5280,7 +5280,7 @@ def test_wifi_sdk_qos1_two_topic_with_SSL_connection_rejoin_c537959(
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3', "protected_management_frame": "Capable"})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_wifi_sdk_qos1_two_topic_with_SSL_connection_rejoin_failed_c537957(
         switch, wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections,
         sniffer_filter):
@@ -5447,7 +5447,7 @@ def test_wifi_sdk_qos1_two_topic_with_SSL_connection_rejoin_failed_c537957(
 )
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_mqtt_wild_char_one_topic_with_single_multiple_c537972(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
     """Verify DUT functionality with MQTT subscription topic used combination of single level(+) and multilevel
@@ -5529,7 +5529,7 @@ def test_wifi_sdk_mqtt_wild_char_one_topic_with_single_multiple_c537972(
 )
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_mqtt_wild_char_two_topic_single_and_multiple_c537973(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
     """Verify whether DUT is able to subscribe 2 topics with single and multi level wild card and receive the data on
@@ -5638,7 +5638,7 @@ def test_wifi_sdk_mqtt_wild_char_two_topic_single_and_multiple_c537973(
 )
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_mqtt_wild_char_two_topic_dollar_c537977(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
     """Verify DUT functionality with MQTT subscription Topics beginning with $ in the topic name and receive the
@@ -5742,7 +5742,7 @@ def test_wifi_sdk_mqtt_wild_char_two_topic_dollar_c537977(
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3', "protected_management_frame": "Capable"})
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_qos1_wifi_init_mqtt_simultaneous_publish_subscribe_deinit_c586178(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter,
         utf_constants):
@@ -5864,7 +5864,7 @@ def test_wifi_sdk_qos1_tcp_tx_mqtt_simultaneously_C537965(
         protocol, net_perf_client, traffic, qos, wifi_client):
     """QOS1:Verify whether DUT is able to connect to TCP and MQTT connection simultaneously in STA mode"""
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C537965"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
         capture_filename = request.node.name
 
@@ -5985,7 +5985,7 @@ def test_wifi_sdk_mqtt_null_topic_C537970(
 # @pytest.mark.end_state("wifi_dut",
 #                        wifi=["mqtt_disconnect", "unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
+                       wifi=["mqtt_disconnect","unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_qos0_mqtt_ssl_http_post_simultaneously_C563985(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter,
         utf_constants, http_server, http_client, index_path):
@@ -6099,7 +6099,7 @@ def test_wifi_sdk_qos0_mqtt_ssl_http_post_simultaneously_C563985(
 @pytest.mark.start_state("wifi_dut", wifi=['reset','init'])
 # @pytest.mark.end_state("wifi_dut",
 #                        wifi=["mqtt_disconnect", "unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_qos0_mqtt_ssl_http_put_simultaneously_C563986(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter,
         utf_constants, http_server, http_client, index_path):
@@ -6212,7 +6212,7 @@ def test_wifi_sdk_dut_null_username_password_c641389(wifi_sniffer, mqtt_server, 
     """Negative case:Verify whether DUT is throwing an 85 error or not while connecting to MQTT server with
     empty/nothing mentioned in username and password("")"""
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C641389"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
         capture_filename = request.node.name
 
@@ -6319,7 +6319,7 @@ def test_wifi_sdk_mqtt_qos2_connection_failed_c537968(
     TCP connection and publish data over subscribed topic."""
 
     try:
-        topic = "mytesttopic"
+        topic = "mytesttopic_C537968"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
         capture_filename = request.node.name
 
@@ -6406,7 +6406,7 @@ def test_wifi_sdk_verify_multithread_using_https_and_mqtt_over_ssl_c563984(
         """
     try:
         iter_count=5
-        topic = "mytesttopic"
+        topic = "mytesttopic_C563984"
         index_path = "index.html"
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=30))
         capture_filename = request.node.name
