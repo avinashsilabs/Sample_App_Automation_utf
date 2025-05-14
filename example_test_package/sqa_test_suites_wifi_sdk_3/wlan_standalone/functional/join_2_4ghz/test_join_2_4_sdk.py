@@ -864,6 +864,8 @@ def test_wifi_sdk_wlan_get_stats_ap_c19176(wifi_dut, wifi_sniffer, sl_collection
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
 @pytest.mark.config(
     "wifi_dut",
