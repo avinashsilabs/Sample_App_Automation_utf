@@ -31,12 +31,12 @@ class AP11nParamsEnabled(ThreadBase):
     def __init__(self, wifi_dut, wifi_clients, wifi_sniffer,
                  sl_collections, utf_constants, net_perf_client=None, protocol=None,
                  testcase_no=None, capture_filename=None, dtim_period=None, beacon=None,
-                 traffic_type=None, leave=True, enable_data_rate=False,network_interface=None,
-                 sniffer_stop=False, htcaps_enable=None, ssid=None, security=None,device_ip=None,
-                 password=None, dtim_count=None, beacon_interval=None,remote_ip=None,
-                 channel=None, no_of_clients=None, ht_caps=None, timeout=None,
+                 traffic_type=None, leave=True, enable_data_rate=False, network_interface=None,
+                 sniffer_stop=False, htcaps_enable=None, ssid=None, security=None, device_ip=None,
+                 password=None, dtim_count=None, beacon_interval=None, remote_ip=None,
+                 channel=None, no_of_clients=None, ht_caps=None, timeout=60,
                  ipv6_addr_type="global", wifi_client=None, wifi_access_point=None, beacon_stop=None,
-                 sniffer_filter=None,dut_addr_dict=None):
+                 sniffer_filter=None, dut_addr_dict=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.device_ip = device_ip
@@ -538,11 +538,11 @@ def test_wifi_sdk_check_aput_beacons_with_hidden_ssid_enabled_c693684(wifi_dut, 
         logger().info(f"Finally Block")
         wifi_dut.interfaces.wifi.stop_ap()
 
-@pytest.mark.skip()
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
         "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
@@ -552,7 +552,8 @@ def test_wifi_sdk_check_aput_beacons_with_hidden_ssid_enabled_c693684(wifi_dut, 
                           | Si91xTCPIPFeatureBitMap.DHCPv4Client,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.HiddenSSID | Si91xCustomFeatureBitMap.Default,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
 
     },
 )

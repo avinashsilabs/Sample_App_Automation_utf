@@ -195,7 +195,7 @@ devices:
                 protected_management_frame: 'Disable'
                 #ipv6 configuration
                 connection_type: 'STATIC_IPV6'
-                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1bc"
+                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1234"
                 wan_ipv6_gateway: "2401:4900:1cb3:3444::1"
                 wan_prefix_length: "64"
                 ipv6_state: "1" #0= "stateless" 1="stateful"
@@ -321,6 +321,15 @@ devices:
                 standard: 'n'
                 ip_address: '192.168.0.1'
                 region: 'Japan'
+            wiseconnect_ui:
+                type: web.wiseconnect_web_login
+                src_dir: 'utf_wiseconnect'
+                mode: 'Client'
+                band: '2.4'
+                is_security_enable: True
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
 
     raspi_wifi_ssh:
         interfaces:
@@ -339,6 +348,16 @@ devices:
                 interface: 'wlan0'
                 standard: 'n'
                 ip_address: '192.168.0.152'
+
+            wiseconnect_ui:
+                type: web.wiseconnect_web_login
+                src_dir: 'utf_wiseconnect'
+                mode: 'Client'
+                band: '2.4'
+                is_security_enable: True
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
 
     raspi_ble_client:
         interfaces:

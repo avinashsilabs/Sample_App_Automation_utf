@@ -1038,11 +1038,12 @@ def test_melco_sdk_Con_HTTP_server_4_clients_cred_C693682(sl_collections, wifi_d
                                                           sniffer_filter,
                                                           http_client, request, utf_constants,
                                                           wifi_clients,
-                                                          wiseconnect_web,
                                                           wifi_access_point):
 
     try:
 
+        assert len(wifi_clients) >= 4, "Minimum 4 clients required"
+        wifi_clients = wifi_clients[:4]
         iter_count = utf_constants.get("iter_count")
         con_obj = ConcurrentMode()
         test_name = request.node.name
@@ -1069,26 +1070,26 @@ def test_melco_sdk_Con_HTTP_server_4_clients_cred_C693682(sl_collections, wifi_d
         assert result.status_code == 200, f"Failed to get HTTP response from DUT as AP"
         logger().info(f"HTTP Response Content:\n{result.content}\n")
 
-        # dut_as_ap_ip = self.connect_clients_to_dut_as_ap(wifi_client, wifi_dut, ping_count=20)['dut_ip']
-        wiseconnect_web.interfaces.wiseconnect_ui.connect(ip_address=dut_as_ap_ip, web_ui_port=80,
-                                                          ssid=wifi_access_point.interfaces.wifi.ssid,
-                                                          security=wifi_access_point.interfaces.wifi.security,
-                                                          passphrase=wifi_access_point.interfaces.wifi.passphrase)
-        data = wifi_dut.interfaces.wifi.http_server_get_credentials_from_webpage(timeout=30)
+        credentials = [wifi_access_point.interfaces.wifi.ssid, wifi_access_point.interfaces.wifi.security,
+                       wifi_access_point.interfaces.wifi.passphrase]
 
-        logger().info(f"credenatils from webpage: {data}")
-        con_obj.credentials = re.search(r'ssid:(\w+),password:(\w+),security:(\w+)', data.decode())
-        logger().info(f"credenatils: {con_obj.credentials}")
-        assert con_obj.credentials, "Unable to fetch 3rd party AP details from DUT"
-        # wifi_dut.interfaces.wifi.http_server_deinit()
-        # wifi_dut.interfaces.wifi.http_server_stop()
-        # wifi_dut.interfaces.wifi.sl_net_deinit(mode="ap")
-        # wifi_dut.interfaces.wifi.sl_net_init(mode="client", timeout=20)
+        for index in range(len(wifi_clients)):
+            wifi_clients[index].interfaces.wiseconnect_ui.connect(ip_address=dut_as_ap_ip,
+                                                                  web_ui_port=80,
+                                                                  ssid=credentials[0],
+                                                                  security=credentials[1],
+                                                                  passphrase=credentials[2])
+            data = wifi_dut.interfaces.wifi.http_server_get_credentials_from_webpage(timeout=30)
+
+            logger().info(f"credenatils from webpage: {data}")
+            con_obj.credentials = re.search(r'ssid:(\w+),password:(\w+),security:(\w+)', data.decode())
+            logger().info(f"credenatils: {con_obj.credentials}")
+            assert con_obj.credentials, "Unable to fetch 3rd party AP details from DUT"
         con_obj.join_to_ap(wifi_dut, sl_collections,
                            con_obj.credentials[1],
                            con_obj.credentials[2],
                            con_obj.credentials[3].lower())
-
+        wifi_dut.interfaces.wifi.leave()
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -1136,11 +1137,12 @@ def test_melco_sdk_Con_HTTP_server_4_clients_cred_C693683(sl_collections, wifi_d
                                                           sniffer_filter,
                                                           http_client, request, utf_constants,
                                                           wifi_clients,
-                                                          wiseconnect_web,
-                                                          wifi_access_point):
+                                                          wifi_access_point,
+                                                          wiseconnect_web):
 
     try:
-
+        assert len(wifi_clients) >= 4, "Minimum 4 clients required"
+        wifi_clients = wifi_clients[:4]
         iter_count = utf_constants.get("iter_count")
         con_obj = ConcurrentMode()
         test_name = request.node.name
@@ -1149,11 +1151,26 @@ def test_melco_sdk_Con_HTTP_server_4_clients_cred_C693683(sl_collections, wifi_d
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
         wifi_dut.interfaces.wifi.is_sl_net_enabled = True
         wifi_dut.interfaces.wifi.init(mode="ap")
-        con_obj.http_server_provisioning(sl_collections, wifi_dut, wifi_clients,
-                                         wiseconnect_web,
-                                         webpage, channel, wifi_access_point,
-                                         ssid="TEST_C693683", security="WPA2",
-                                         psk="Automation@123")
+        dut_sta_ip, dut_as_ap_ip = con_obj.http_server_provisioning(sl_collections, wifi_dut, wifi_clients,
+                                                                    wiseconnect_web,
+                                                                    webpage, channel, wifi_access_point,
+                                                                    ssid="TEST_C693683", security="WPA2",
+                                                                    psk="Automation@123")
+        credentials = [wifi_access_point.interfaces.wifi.ssid, wifi_access_point.interfaces.wifi.security,
+                       wifi_access_point.interfaces.wifi.passphrase]
+
+        for index in range(len(wifi_clients)):
+            wifi_clients[index].interfaces.wiseconnect_ui.connect(ip_address=dut_as_ap_ip,
+                                                                  web_ui_port=80,
+                                                                  ssid=credentials[0],
+                                                                  security=credentials[1],
+                                                                  passphrase=credentials[2])
+            data = wifi_dut.interfaces.wifi.http_server_get_credentials_from_webpage(timeout=30)
+
+            logger().info(f"credenatils from webpage: {data}")
+            con_obj.credentials = re.search(r'ssid:(\w+),password:(\w+),security:(\w+)', data.decode())
+            logger().info(f"credenatils: {con_obj.credentials}")
+            assert con_obj.credentials, "Unable to fetch 3rd party AP details from DUT"
 
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
