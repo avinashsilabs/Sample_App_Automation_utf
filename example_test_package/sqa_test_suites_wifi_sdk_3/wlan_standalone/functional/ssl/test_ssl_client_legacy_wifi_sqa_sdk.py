@@ -746,7 +746,7 @@ def test_wifi_sdk_ssl_client_rx_while_rejoining_c19135(switch, wifi_dut, wifi_ac
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.check
+
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated",

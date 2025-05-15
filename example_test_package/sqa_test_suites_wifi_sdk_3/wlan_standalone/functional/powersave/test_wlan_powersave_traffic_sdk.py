@@ -404,7 +404,7 @@ def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wi
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.end_state("wifi_dut", wifi=["multicast_leave", "disassociated", "clear_certs"])
+@pytest.mark.end_state("wifi_dut", wifi=["multicast_leave", "disassociated"])
 def test_send_multicast_broadcast_data_sdk_C19507(multicast_client, net_perf_client, protocol,
                                                   wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, utf_constants,
                                                   sl_collections, sniffer_filter):

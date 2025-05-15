@@ -418,6 +418,7 @@ def test_wifi_sdk_ssl_server_connect_non_ssl_client_testcase_TC19112(
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
     }
 )
 @pytest.mark.end_state("wifi_dut",
@@ -530,6 +531,7 @@ def test_wifi_sdk_ssl_server_1_2version_client_1_0_testcase_TC19116(
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
     }
 )
 @pytest.mark.end_state("wifi_dut",

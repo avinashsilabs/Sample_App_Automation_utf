@@ -2729,7 +2729,7 @@ def test_wifi_sdk_https_post_negative_c37540(http_server, wifi_dut, http_client,
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
@@ -2900,7 +2900,7 @@ def test_wifi_sdk_https_get_post_c537879(http_server, wifi_dut, http_client, wif
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
