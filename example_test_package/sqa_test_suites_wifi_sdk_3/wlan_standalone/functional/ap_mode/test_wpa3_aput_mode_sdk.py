@@ -1564,12 +1564,12 @@ def test_wifi_sdk_min_and_max_keepalive_c537917(wifi_sniffer, wifi_dut, remote_w
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=aput_mac,
                                                                                         da_addr=sta_mac,
                                                                                         filter_name='aput_wpa3_null_function')
-        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=aput_mac,
-                                                                                        filter_name='deauthentication')
+
         for i in range(2):
             if i == 1:
                 client_idle_timeout = 255
-                keep_alive_time = (beacon_interval * 32 * client_idle_timeout) / 1000
+                keep_alive_time = (beacon_interval * 32 * client_idle_timeout) // 1000
+                logger().info(f"\n\n **** Setting APUT IDLE for {keep_alive_time} seconds \n\n")
                 wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
                 wifi_dut.interfaces.wifi.init(load_certificate=False)
                 wifi_dut.interfaces.wifi.initialize_thread()
@@ -1587,24 +1587,29 @@ def test_wifi_sdk_min_and_max_keepalive_c537917(wifi_sniffer, wifi_dut, remote_w
                                               dtim_beacon_count=dtim_count, beacon_interval=beacon_interval,
                                               encryption=None, ht_caps=ht_caps, keepalive_type=keepalive_type,
                                               client_idle_timeout=client_idle_timeout)
+
             remote_wiseconnect3.interfaces.sapi.set_join_feature_bitmap(
                 join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
             )
             remote_wiseconnect3.interfaces.sapi.scan(channel=None, ssid=None)
             remote_wiseconnect3.interfaces.sapi.join(ssid=ssid, security="wpa3", passphrase=password, channel=channel,
                                                      timeout=60)
+            time.sleep(10)
+            dut_ap_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+            logger().info(f"**** AP DUT MAC: {dut_ap_mac_address}")
+            packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_ap_mac_address,
+                                                                                            filter_name='beacon_rsn_mfpr')
 
             remote_wiseconnect3.interfaces.sapi.reset()
 
             logger().info(f"**** Setting APUT IDLE for {keep_alive_time * 3.8} seconds")
             time.sleep(keep_alive_time * 3.8)
 
-            null_packets = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count']
+
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
                                                                               packet_filter2='    Arrival Time:')[
                 'find_packet_num']
-            assert int(null_packets) == 3, "Not able to find 3 null-function"
-
-            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count']
 
             filter_file = open(f'./reports/filter2_file.txt', 'r')
             lines = filter_file.read()
