@@ -464,8 +464,6 @@ def test_wifi_sdk_ssl_socket_func_when_network_is_not_stable_c37577(wifi_sniffer
     SSL Socket Functionality when the User Turn OFF/ON the Network.
     """
     try:
-        ap_wan_interface = wifi_access_point.interfaces.wifi.config.get('wan_interface')
-        assert ap_wan_interface, "Please mention wan_interface in ap section of harness file"
         domain_name = "a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com"
         capture_filename = "test_wifi_sdk_ssl_socket_func_c37577"
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -474,51 +472,57 @@ def test_wifi_sdk_ssl_socket_func_when_network_is_not_stable_c37577(wifi_sniffer
                                                                  power_save=False)
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
-        shell = wifi_access_point.interfaces.wifi._create_shell()
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
         time.sleep(10)
 
-        socks = []
         error_code = 0
         server_port = 8883
+        local_port = random.randint(40001, 60000)
+        server_ip = wifi_dut.interfaces.wifi.dns_get(domain_name, query_timeout=120000, timeout=60).strip().decode()
+        logger.info(f"aws_server_ip --> {server_ip}")
+        sock = wifi_dut.interfaces.wifi.socket()
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
+        time.sleep(10)
         for count in range(2):
-            local_port = random.randint(40001, 60000)
-            server_ip = wifi_dut.interfaces.wifi.dns_get(domain_name, query_timeout=120000, timeout=60).strip().decode()
-            logger.info(f"aws_server_ip --> {server_ip}")
-            sock = wifi_dut.interfaces.wifi.socket()
-            socks.append(sock)
-            wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
             if count == 1:
                 wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=server_port)
                 logger.info("Successfully connected to aws server")
             else:
                 logger.info("**************** Turning off AP's internet ****************")
-                shell.execute(f'ifconfig {ap_wan_interface} down', wifi_access_point.interfaces.wifi.prompt)
-                time.sleep(5)
+                logger.info(f"\n\n *** Unplugging internet cable from AP *** \n\n")
+                wifi_access_point.interfaces.wifi.enable_block_all_devices_internet_access()
+                logger.info("\n\n Successfully turned off AP's internet for 10 sec ........\n\n")
+                time.sleep(10)
                 try:
+                    # First try to ping aws_server_ip from DUT
+                    logger.info(f"Trying to ping aws_server_ip {server_ip} from DUT")
+                    wifi_dut.interfaces.wifi.ping(server_ip, 20, 5)
                     wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
-                                                              server_port=server_port, timeout=30)
+                                                              server_port=server_port, timeout=100)
                 except Exception as err:
                     error_match = re.search("status:(.*)", str(err))
                     if error_match: error_code = error_match.group()
                     logger.info(f"error_code: {error_code}")
                 assert error_code, ("DUT did not send error code when trying to connect aws server when internet is "
                                     "turned off, which is not expected")
+
                 logger.info("DUT sent error code when trying to connect aws server when internet is turned off,"
                             " which is expected as per the test step\n")
                 logger.info("**************** Turning on AP's internet again ****************")
-                shell.execute(f'ifconfig {ap_wan_interface} up', wifi_access_point.interfaces.wifi.prompt)
-                time.sleep(30)
-        for sock_id in socks:
-            logger.info(f"Closing socket_id --> {sock_id}")
-            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
+                wifi_access_point.interfaces.wifi.disable_block_all_devices_internet_access()
+                logger.info(f"\n\n Sleep for 50 second \n\n")
+                time.sleep(50)
+
         logger.info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
         sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
                                                sniffer_filter)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        wifi_access_point.interfaces.wifi.disable_block_all_devices_internet_access()
+        wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
 
 
 @pytest.mark.config(
