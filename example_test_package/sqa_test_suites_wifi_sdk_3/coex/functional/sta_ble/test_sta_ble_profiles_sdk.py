@@ -80,7 +80,7 @@ class BleGattThread(ThreadBase):
         ble_pairing=0,
         service_class=None,
         gatt=True,
-        bond_info=1
+        bond_info=0
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -307,7 +307,7 @@ def test_Coex_sdk_read_char_uuid_wlan_conn_C133434(
             sl_collections=sl_collections,
             ble_test_type="master",
             ble_pairing=0,
-            bond_info=1,
+            bond_info=0,
             service_class=["HeartRateService"]
 
         )
@@ -666,7 +666,7 @@ def test_Coex_sdk_supported_particular_profile_wlan_conneced_C133558(
             sl_collections=sl_collections,
             ble_test_type="master",
             ble_pairing=0,
-            bond_info=1,
+            bond_info=0,
             service_class=["BatteryService", "HeartRateService", "HealthThermometerService"]
         )
 
