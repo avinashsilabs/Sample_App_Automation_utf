@@ -116,6 +116,7 @@ class Ip_Conflict(ThreadBase):
                                                expected_status=SLStatus.SL_STATUS_SI91X_IP_CONFLICT_ERROR)
         logger().info(
             f" DUT unable tp configure ip address due to ip conflict, observed error code 0x1ff75 which is expected")
+        time.sleep(10)
         if self.static_ip:
             self.wifi_dut.interfaces.wifi.start_ip(static_ip=dut_ip, static_subnet=static_subnet,
                                                    static_gateway=wifi_client_gateway_ip, vid=0)
