@@ -412,7 +412,10 @@ def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None):
         config["client_key"] = client_key
     return pytest.mark.config("wifi_dut", wifi=config)
 
-@pytest.mark.firmware_app("test_azure")
+# ********************************************************************************************************************
+pytestmark = [pytest.mark.firmware_app("test_azure")]
+# ********************************************************************************************************************
+
 @wifi_dut_marker(ca_cert=["silabs_dgcert_ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "password": "12345678"}
@@ -486,7 +489,7 @@ def test_azure_mqtt_subscribe_publish_C19515(firmware_loader, wifi_access_point,
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19516')
-def test_azure_mqtt_subscribe_recv_C19516(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_subscribe_recv_C19516(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                              sl_collections, wifi_client, request, utf_constants, sniffer_filter):
     """
     Test Description:
@@ -548,7 +551,7 @@ def test_azure_mqtt_subscribe_recv_C19516(wifi_access_point, wifi_dut, wifi_snif
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19517')
-def test_azure_mqtt_socket_close_C19517(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_socket_close_C19517(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                         sl_collections, wifi_client, request, utf_constants, sniffer_filter):
     """
     Test Description:
@@ -609,7 +612,7 @@ def test_azure_mqtt_socket_close_C19517(wifi_access_point, wifi_dut, wifi_sniffe
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19518')
-def test_azure_mqtt_after_disconn_reconnect_AP_C19518(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_after_disconn_reconnect_AP_C19518(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                                       sl_collections, wifi_client, request, utf_constants,
                                                       sniffer_filter):
     """
@@ -673,7 +676,7 @@ def test_azure_mqtt_after_disconn_reconnect_AP_C19518(wifi_access_point, wifi_du
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19535')
-def test_azure_mqtt_iot_hub_symmetic_C19535(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_iot_hub_symmetic_C19535(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                             sl_collections, wifi_client, request, utf_constants, sniffer_filter):
     """
     Test Description:
@@ -733,7 +736,7 @@ def test_azure_mqtt_iot_hub_symmetic_C19535(wifi_access_point, wifi_dut, wifi_sn
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19524')
-def test_azure_mqtt_receive_with_diff_sizes_C19524(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_receive_with_diff_sizes_C19524(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                              sl_collections, wifi_client, request, utf_constants, sniffer_filter):
 
     """
@@ -794,7 +797,7 @@ def test_azure_mqtt_receive_with_diff_sizes_C19524(wifi_access_point, wifi_dut, 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.test_src_map_id('C19537')
-def test_azure_mqtt_device_id_missing_C19537(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_device_id_missing_C19537(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                              sl_collections, wifi_client, request, utf_constants, sniffer_filter):
 
     """
@@ -864,7 +867,7 @@ def test_azure_mqtt_device_id_missing_C19537(wifi_access_point, wifi_dut, wifi_s
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19541')
-def test_azure_mqtt_disconnect_C19541(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_disconnect_C19541(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                       sl_collections, wifi_client, request, utf_constants, sniffer_filter):
 
     """
@@ -929,7 +932,7 @@ def test_azure_mqtt_disconnect_C19541(wifi_access_point, wifi_dut, wifi_sniffer,
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19523')
-def test_azure_mqtt_publish_with_diff_sizes_C19523(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_publish_with_diff_sizes_C19523(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                              sl_collections, wifi_client, request, utf_constants, sniffer_filter):
 
     """
@@ -991,7 +994,7 @@ def test_azure_mqtt_publish_with_diff_sizes_C19523(wifi_access_point, wifi_dut, 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.test_src_map_id('C19538')
-def test_azure_mqtt_wrong_sharedkey_C19538(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_wrong_sharedkey_C19538(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                            sl_collections, wifi_client, request, utf_constants, sniffer_filter):
 
     """
@@ -1059,7 +1062,7 @@ def test_azure_mqtt_wrong_sharedkey_C19538(wifi_access_point, wifi_dut, wifi_sni
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.test_src_map_id('C19530')
-def test_azure_mqtt_wrong_cert_C19530(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_wrong_cert_C19530(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                            sl_collections, wifi_client, request, utf_constants, sniffer_filter):
 
     """
@@ -1127,7 +1130,7 @@ def test_azure_mqtt_wrong_cert_C19530(wifi_access_point, wifi_dut, wifi_sniffer,
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19539')
-def test_azure_mqtt_send_20_telemetry_messages_C19539(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_send_20_telemetry_messages_C19539(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                              sl_collections, wifi_client, request, utf_constants, sniffer_filter):
 
     """
@@ -1208,7 +1211,7 @@ def test_azure_mqtt_send_20_telemetry_messages_C19539(wifi_access_point, wifi_du
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19514')
-def test_azure_mqtt_ssl_auth_C19514(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_ssl_auth_C19514(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                     sl_collections, wifi_client, request, utf_constants, sniffer_filter):
     """
     Test Description:
@@ -1286,7 +1289,7 @@ def test_azure_mqtt_ssl_auth_C19514(wifi_access_point, wifi_dut, wifi_sniffer, a
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19536')
-def test_azure_iot_x_509_self_signed_C19536(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_iot_x_509_self_signed_C19536(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                     sl_collections, wifi_client, request, utf_constants, sniffer_filter):
     """
     Test Description:
@@ -1367,7 +1370,7 @@ def test_azure_iot_x_509_self_signed_C19536(wifi_access_point, wifi_dut, wifi_sn
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19543')
-def test_azure_iot_ssl_auth_send_recv_C19543(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_iot_ssl_auth_send_recv_C19543(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                     sl_collections, wifi_client, request, utf_constants, sniffer_filter):
     """
     Test Description:
@@ -1432,7 +1435,7 @@ def test_azure_iot_ssl_auth_send_recv_C19543(wifi_access_point, wifi_dut, wifi_s
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19540')
-def test_azure_mqtt_recv_timeout_C19540(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_recv_timeout_C19540(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                              sl_collections, wifi_client, request, utf_constants, sniffer_filter):
     """
     Test Description:
@@ -1507,7 +1510,7 @@ def test_azure_mqtt_recv_timeout_C19540(wifi_access_point, wifi_dut, wifi_sniffe
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19522')
-def test_azure_mqtt_subscribe_publish_30m_C19522(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_subscribe_publish_30m_C19522(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                              sl_collections, wifi_client, request, utf_constants, sniffer_filter):
 
     """
@@ -1570,7 +1573,7 @@ def test_azure_mqtt_subscribe_publish_30m_C19522(wifi_access_point, wifi_dut, wi
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19531')
-def test_azure_mqtt_subscribe_publish_24hrs_C19531(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_subscribe_publish_24hrs_C19531(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                              sl_collections, wifi_client, request, utf_constants, sniffer_filter):
 
     """
@@ -1651,7 +1654,7 @@ def test_azure_mqtt_subscribe_publish_24hrs_C19531(wifi_access_point, wifi_dut, 
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19532')
-def test_azure_mqtt_subscribe_recv_24hrs_C19532(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
+def test_azure_mqtt_subscribe_recv_24hrs_C19532(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                              sl_collections, wifi_client, request, utf_constants, sniffer_filter):
 
     """
@@ -1716,7 +1719,7 @@ def test_azure_mqtt_subscribe_recv_24hrs_C19532(wifi_access_point, wifi_dut, wif
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.test_src_map_id('C562270')
-def test_azure_functionality_with_different_hubs_562270(wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_clients,
+def test_azure_functionality_with_different_hubs_562270(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_clients,
                                              sl_collections, wifi_client, request, utf_constants, sniffer_filter):
 
     """

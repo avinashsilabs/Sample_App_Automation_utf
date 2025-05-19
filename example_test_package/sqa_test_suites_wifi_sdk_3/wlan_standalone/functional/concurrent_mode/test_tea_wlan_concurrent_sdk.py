@@ -518,11 +518,12 @@ def test_wifi_sdk_ssl_socket_func_when_network_is_not_stable_c37577(wifi_sniffer
         wifi_sniffer.interfaces.capture.stop_capture()
         sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
                                                sniffer_filter)
+        wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
         wifi_access_point.interfaces.wifi.disable_block_all_devices_internet_access()
-        wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
+
 
 
 @pytest.mark.config(
