@@ -225,7 +225,7 @@ def test_wifi_sdk_mdns_neg_multicast_socket_in_open_state_C19008(
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_mdns_cmd_type_resp_C37585(
         wifi_sniffer, wifi_access_point, wifi_dut, sl_collections, request, utf_constants):
