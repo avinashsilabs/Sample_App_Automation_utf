@@ -30,7 +30,10 @@ from utf.utils.logger import get_logger
 from random import randint
 from test_sta_ble_sdk import BleThreadFunctionality, SnifferValidationProcess, ScanTime_JoinTime, WifiJoinThread
 from test_sta_ble_multi_raspi_sdk import BleDualRoleThreadFunctionality
-
+import uuid
+from datetime import datetime
+from typing import Dict
+import re
 
 
 def logger():
@@ -43,6 +46,8 @@ def logger():
         2. EFR32
         3. Raspberry PI4
         4. Access Point -dlink (Third Party AP's)
+        5. Copy the shared wlantest application to /usr/local/bin in NUC for decrypting the packets.
+        6. Give the permissions to wlantest application.
 
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -83,6 +88,184 @@ class wifi_ssl_connection:
         self.server_cert = server_cert
         self.server_key = server_key
         self.device_ip, self.dut_mac_address, self.ap_bssid, expected_cipher = None, None, None, None
+
+    def ssl_packet_decryption(self, wifi_sniffer, decryption_key, decrypt_layers: list,
+                              capture_filename, ap_bssid=None, mode=0, handshake_pkt=False, get_cipher=False) -> Dict[str, int]:
+        """
+        This function is responsible to decrypt and validate ssl related packets in sniffer.
+        :param wifi_sniffer: Sniffer fixture to access the sniffer device.
+        :param decryption_key: Decryption key value which is required to decrypt packets, ex: passphrase_value:ssid_name
+        :param dut_mac_address: Mac address of the DUT.
+        :param decrypt_layers: List of layer name that needs to be decrypted, ex: ['ntp', 'tls', 'tcp'].
+        :param capture_filename: Name of the sniffer capture file.
+        :param ap_bssid: BSSID of wifi_access_point used in test.
+        :param mode: Depend on test case requirement, value can be 0 or 1.
+        :param handshake_pkt: Depend on test case requirement, Boolean value to display handshake packet captures.
+        :param get_cipher: Depend on test case requirement, Boolean value to get cipher list if required.
+        :return: result{'ntp': List, 'tls': List, 'tcp': List, 'cipher': List}.
+        """
+        logger().info("\n\n ***** SSL Packet decryption start ***** \n\n")
+
+        current_time = time.time()
+        updated_capture_file = 'filter_' + capture_filename + '_' + str(
+            datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+        file_name = f'./reports/{updated_capture_file}.pcap'
+        local_capture_file = file_name
+        wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+        packet_filter1 = f'(wlan.addr == {self.dut_mac_address}) && (wlan.addr == {self.wifi_access_point.interfaces.wifi.bssid})'
+        wifi_sniffer.interfaces.capture.shell(
+            f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{packet_filter1}' -T fields -e "
+            f"frame.number -w "
+            f"{wlan_filter_file}")
+        with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+            sftp.get(wlan_filter_file, local_capture_file)
+        wlan_filter_file2 = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+        wifi_sniffer.interfaces.capture.shell(
+            f"wlantest -r {wifi_sniffer.interfaces.capture.remote_capture_file} "
+            f"-p {self.wifi_access_point.interfaces.wifi.passphrase} "
+            f"-w {wlan_filter_file2}")
+        with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+            sftp.get(wlan_filter_file2, local_capture_file)
+        cipher_count = 0
+        source_ip = ""
+        destination_ip = ""
+        ta_address = ""
+        result = {'ntp': [], 'tls': [], 'tcp': [], 'cipher': [], 'ftp': [], 'igmp': [], 'websocket': []}
+        for packet in wifi_sniffer.interfaces.capture.iter_packets(
+                decrypt_packets=True,
+                encryption_type="WPA-PWD",
+                decryption_key=decryption_key,
+                capture_file_filter=local_capture_file):
+            for layer in packet.layers:
+                layer_name = str(layer.layer_name.lower())
+
+                # To get http related packets
+                if layer_name == "http" and layer_name in decrypt_layers:
+                    http_layer = str(layer)
+                    logger().info(f"http layer {http_layer}")
+
+                if "websocket" in decrypt_layers and layer_name == "ip":
+                    ip_layer = str(layer)
+                    layer_ip = ip_layer.split("\n")
+                    for count in layer_ip:
+                        if "Source" in count:
+                            source_ip = count.split(":")[1].strip()
+                        if "Destination" in count:
+                            destination_ip = count.split(":")[1].strip()
+                if layer_name == "websocket" and layer_name in decrypt_layers:
+                    websocket_layer = str(layer)
+                    result['websocket'].append(
+                        tuple([websocket_layer, packet.sniff_timestamp, source_ip, destination_ip]))
+
+                # To get tls related packets
+                if layer_name == "wlan":
+                    mac_layer = str(layer)
+                    for count in mac_layer.split("\n"):
+                        if "Transmitter address" in count:
+                            ta_address = count.split(": ")[1].strip()
+                if layer_name == "tls" and layer_name in decrypt_layers:
+                    tls_layer = str(layer)
+                    filtered_packet = str(packet)
+                    filtered_packet = filtered_packet.split("Layer ")
+                    tls_layer_pkt = ""
+                    ra_address = ""
+                    ta_address = ""
+                    if handshake_pkt:
+                        for layerp in filtered_packet:
+                            if ((re.search(".*Receiver address:", layerp) and re.search(".*Transmitter address:",
+                                                                                        layerp))
+                                    or (re.search(".*TLS:", layerp))):
+                                if re.search(".*TLS:", layerp):
+                                    tls_layer_pkt = layerp
+                                if (re.search(".*Receiver address:", layerp) and re.search(".*Transmitter address:",
+                                                                                           layerp)):
+                                    received = re.compile(r'Receiver address: (([0-9a-fA-F]:?){12})')
+                                    receiver_address = re.search(received, layerp).group()
+                                    ra_address = (re.search(received, layerp).group(1)).lower()
+                                    transmit = re.compile(r'transmitter address: (([0-9a-fA-F]:?){12})')
+                                    transmitter_address = re.search(transmit, layerp).group()
+                                    ta_address = (re.search(transmit, layerp).group(1)).lower()
+                                    dut_mac_address_mod = self.dut_mac_address.lower()
+                                    ap_bssid_mod = ap_bssid.lower()
+                                if ((ra_address == dut_mac_address_mod or ra_address == ap_bssid_mod) and (
+                                        ta_address == dut_mac_address_mod or ta_address == ap_bssid_mod)) and tls_layer_pkt:
+                                    logger().info(f">>>>>>{receiver_address}>>>>>>{transmitter_address}")
+                                    logger().info(f"TLS HANDSHAKE PACKET{tls_layer_pkt}")
+                                    result['tls'].append(tls_layer_pkt)
+                    else:
+                        tls_layer = str(layer)
+                        if not ((re.search(".*Application Data Protocol:", tls_layer)) or (
+                                re.search(".*Ignored Unknown Record", tls_layer))):
+                            if (re.search(".*Receiver address:", mac_layer) and re.search(".*Transmitter address:",
+                                                                                          mac_layer)):
+                                received = re.compile(r'Receiver address: (([0-9a-fA-F]:?){12})')
+                                receiver_address = re.search(received, mac_layer).group()
+                                transmit = re.compile(r'Transmitter address: (([0-9a-fA-F]:?){12})')
+                                transmitter_address = re.search(transmit, mac_layer).group()
+                                logger().info(f">>>>>>{receiver_address}>>>>>>{transmitter_address}")
+                            result['tls'].append(tls_layer)
+                            logger().info(f"******************{tls_layer}")
+
+                    if get_cipher:
+                        if "Client Hello" not in tls_layer:
+                            if mode == 0:
+                                break
+                        else:
+                            for mac_addr in mac_layer.split("\n"):
+                                if "Transmitter address" in mac_addr:
+                                    ta_address = mac_addr.split(": ")[1].strip()
+                            if ta_address == self.dut_mac_address:
+                                logger().info(f"Cleint hello pkt sent by DUT {self.dut_mac_address}-> {tls_layer}")
+                                cipher_suite_temp = []
+                                tls_layer = tls_layer.split("\n")
+                                for line in tls_layer:
+                                    if "Cipher Suite:" in line:
+                                        cipher_suite_temp.append(
+                                            line.split("Cipher Suite:")[1].strip().split("(")[0].strip())
+                                cipher_count = cipher_count + 1
+                                result['cipher'].append(tuple([cipher_count, cipher_suite_temp]))
+                                if mode == 0:
+                                    break
+
+                # To get tcp related packets
+                if layer_name == "tcp" and layer_name in decrypt_layers:
+                    tcp_layer = str(layer)
+                    if (re.search(".*Receiver address:", mac_layer) and re.search(".*Transmitter address:",
+                                                                                  mac_layer)):
+                        receiver_address = re.search(r'Receiver address: (([0-9a-fA-F]:?){12})', mac_layer).group()
+                        transmitter_address = re.search(r'Transmitter address: (([0-9a-fA-F]:?){12})',
+                                                        mac_layer).group()
+                        logger().info(f">>>>>>{receiver_address}>>>>>>{transmitter_address}")
+                        logger().info(tcp_layer)
+                        result['tcp'].append(tuple([tcp_layer, ta_address, packet.sniff_timestamp]))
+
+                # To get ntp related packets
+                if "ntp" in decrypt_layers and layer_name == "ip":
+                    ip_layer = str(layer)
+                    layer_ip = ip_layer.split("\n")
+                    for count in layer_ip:
+                        if "Source" in count:
+                            source_ip = count.split(":")[1].strip()
+                        if "Destination" in count:
+                            destination_ip = count.split(":")[1].strip()
+                if layer_name == "ntp" and layer_name in decrypt_layers:
+                    ntp_layer = str(layer)
+                    result['ntp'].append(tuple([ntp_layer, packet.sniff_timestamp, source_ip, destination_ip]))
+
+                # To get igmp packets
+                if layer_name == "igmp" and layer_name in decrypt_layers:
+                    if ta_address == self.dut_mac_address:
+                        igmp_layer = str(layer)
+                        logger().info(
+                            f"As per sniffer capture IGMP packets sent by DUT..{ta_address}  ->  {igmp_layer}")
+                        result['igmp'].append(tuple([igmp_layer, packet.sniff_timestamp]))
+
+                # To get ftp packets
+                if layer_name == "ftp" and layer_name in decrypt_layers:
+                    if ta_address == self.dut_mac_address:
+                        ftp_layer = str(layer)
+                        result['ftp'].append(tuple([ftp_layer, packet.sniff_timestamp]))
+        return result
 
     def join_get_ip(self):
 
@@ -190,7 +373,7 @@ class wifi_ssl_connection:
         decryption_key = f"{self.wifi_access_point.interfaces.wifi.passphrase}:{self.wifi_access_point.interfaces.wifi.ssid}"
         logger().info(f"DECRYPTION_KEY --> {decryption_key}")
         logger().info("SSL Packet Decryption is going to start, This may take some time")
-        cipher_suite = self.sl_collections.ssl_packet_decryption(self.wifi_sniffer, decryption_key, self.dut_mac_address, ["tls"],
+        cipher_suite = self.ssl_packet_decryption(self.wifi_sniffer, decryption_key, ["tls"],
                                                                  self.capture_filename, self.ap_bssid, self.mode,
                                                                  get_cipher=True)['cipher']
         if not len(cipher_suite):
@@ -262,7 +445,7 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
-@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256']])
+@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 
 def test_Coex_sdk_ssl_tx_cipher_C575153(
@@ -344,7 +527,7 @@ def test_Coex_sdk_ssl_tx_cipher_C575153(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
-@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256']])
+@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
 def test_Coex_sdk_ssl_tx_cipher_C575154(
         wifi_sniffer,
@@ -428,7 +611,7 @@ def test_Coex_sdk_ssl_tx_cipher_C575154(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
-@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384']])
+@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
 def test_Coex_sdk_ssl_tx_cipher_C575155(
         wifi_sniffer,
@@ -509,7 +692,7 @@ def test_Coex_sdk_ssl_tx_cipher_C575155(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
-@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256']])
+@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
 @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4365")
 def test_Coex_sdk_ssl_tx_cipher_dual_role_C575156(
@@ -591,7 +774,7 @@ def test_Coex_sdk_ssl_tx_cipher_dual_role_C575156(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
-@pytest.mark.parametrize("cipher_list", [['TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256']])
+@pytest.mark.parametrize("cipher_list", [['TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
 def test_Coex_sdk_ssl_tx_cipher_C575157(
         wifi_sniffer,
@@ -660,5 +843,3 @@ def test_Coex_sdk_ssl_tx_cipher_C575157(
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-
-
