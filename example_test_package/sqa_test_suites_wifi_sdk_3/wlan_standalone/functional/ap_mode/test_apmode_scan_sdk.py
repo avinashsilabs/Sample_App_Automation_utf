@@ -596,7 +596,7 @@ def test_wifi_sdk_ap_mode_verify_DUT_able_to_send_stats_responce_or_not_C689175(
         "region_code": Si91xRegionCode.US
     }
 )
-@pytest.mark.config("wifi_client", wifi={"country": "US", "channel": "11"})
+@pytest.mark.config("wifi_client", wifi={"country": "US", "channel": "11", "interface": "wlan0"})
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 11, "region": 'US'})
 def test_wifi_sdk_ap_mode_verify_DUT_able_to_send_probe_response_or_not_when_STA_is_in_other_channel_C689553(wifi_dut,
                                                                                                              wifi_access_point,
