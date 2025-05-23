@@ -1033,6 +1033,7 @@ class WLanThread(ThreadBase):
 
                     packet_filter1 = (self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter
                                       (sa_addr=ap_bssid,
+                                       hidden_ssid="\"\"",
                                        filter_name="hidden_ssid"))
 
                     logger().info("Stop Sniffer finally")
@@ -1250,6 +1251,8 @@ class WLanThread(ThreadBase):
         # Validation for T and NT based MBSSID in DUT scan list & sniffer capture
         packet_filter2 = "                    SSID:"
         ssid_list = self.find_ssid_list_from_dut_scan(scan_type=scan_type)
+        # Check the ssid list from DUT scan list
+        assert len(ssid_list) > 0, "DUT scan list is empty"
         time.sleep(2)
         packet_filter1 = (
             self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(

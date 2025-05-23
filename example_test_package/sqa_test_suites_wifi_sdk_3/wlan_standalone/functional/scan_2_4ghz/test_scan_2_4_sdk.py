@@ -57,7 +57,8 @@ class WifiJoinThread(ThreadBase):
     def run(self):
         try:
             logger().info(" ====== configuring the Sniffer with access point channel ====== ")
-            self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
+            self.wifi_sniffer.interfaces.capture.configure_interface(
+                channel=self.wifi_access_point.interfaces.wifi.channel)
             logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_case)
 
@@ -286,10 +287,10 @@ def test_wifi_sdk_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wifi_a
         logger().info(f"configuring the Sniffer with the channel : {wifi_access_point.interfaces.wifi.channel}")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
-                                                                                        da_addr=da_addr,
-                                                                                        filter_name="hidden_ssid_probe_req")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=sa_addr,
+            hidden_ssid="\"\"",
+            filter_name="hidden_ssid_probe_request_packet")
         logger().info("Setting DUT in wlan power save...")
         wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
         logger().info("Enabling rejoin...")
@@ -846,8 +847,10 @@ def test_wifi_sdk_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_acces
             assert len(scan_results) >= 1
 
             wifi_sniffer.interfaces.capture.stop_capture()
-            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
-                                                                                            filter_name="hidden_ssid_probe_req")
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=sa_addr,
+                hidden_ssid="\"\"",
+                filter_name="hidden_ssid_probe_request_packet")
             logger().info(f"Validate Probe req(Broadcast)")
             output = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count']
             if bool(output) is False:
@@ -1075,7 +1078,8 @@ def test_wifi_sdk_scan_all_channels_in_korea_region_c477822(wifi_sniffer, wifi_d
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'Korea'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_wifi_sdk_scan_in_korea_region_for_channel_14_c477824(wifi_access_point, wifi_dut, wifi_sniffer, request, sl_collections):
+def test_wifi_sdk_scan_in_korea_region_for_channel_14_c477824(wifi_access_point, wifi_dut, wifi_sniffer, request,
+                                                              sl_collections):
     """Verify Whether DUT is throwing error or not when scan in 14 channel and DUT is configured in Korea Region"""
     try:
         test_name = request.node.name
@@ -1123,6 +1127,11 @@ def test_wifi_sdk_scan_with_deep_sleep_c537999(wifi_dut, request, wifi_sniffer, 
                                                sl_collections):
     """Verify wlan scan with deep sleep(It should contain TA should go
        to deep sleep and M4 should wake up based on alarm or periodic)"""
+    if (wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 20)) and (
+            wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 21)):
+        # If this condition is true, the device is NCP, and the test case should be skipped
+        logger().info("NCP Device detected. Skipping the test case.")
+        pytest.skip("Test case is not applicable for NCP device")
 
     try:
         test_name = request.node.name
@@ -1209,29 +1218,35 @@ def test_wifi_sdk_scan_with_deep_sleep_c537999(wifi_dut, request, wifi_sniffer, 
 def test_wifi_sdk_scan_when_config_ap_is_not_available_c538001(wifi_dut, wifi_access_point, request, wifi_sniffer,
                                                                sniffer_filter, sl_collections):
     """Trigger scan command when configured access point
-       is not available(DUT should throw 0x10003 error(No AP found)))"""
+       is not available(DUT should throw 0x10003 error(No AP found))"""
 
     try:
-        wifi_access_point.interfaces.wifi.stop_ap()
-        time.sleep(20)
-        test_name = request.node.name
+        if (wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 20)) and (
+                wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 21)):
+            # If this condition is true, the device is NCP, and the test case should be skipped
+            logger().info("NCP Device detected. Skipping the test case.")
+            pytest.skip("Test case is not applicable for NCP device")
+        else:
+            wifi_access_point.interfaces.wifi.stop_ap()
+            time.sleep(20)
+            test_name = request.node.name
 
-        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
-        time.sleep(2)
+            logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
+            time.sleep(2)
 
-        logger().info("Initiating m4 ta secure_handshake...")
-        wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
+            logger().info("Initiating m4 ta secure_handshake...")
+            wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
 
-        logger().info("Initiating scan from dut...")
-        wifi_dut.interfaces.wifi.scan(ssid="None", scan_bitmap_2_4=0, scan_type=0, bg_scan_periodicity=10,
-                                      expected_status=SLStatus.SL_STATUS_SI91X_NO_AP_FOUND)
-        logger().info(f"\n\n Observed the expected error code: 0x10003 (SL_STATUS_SI91X_NO_AP_FOUND) \n\n")
-        time.sleep(20)
+            logger().info("Initiating scan from dut...")
+            wifi_dut.interfaces.wifi.scan(ssid="None", scan_bitmap_2_4=0, scan_type=0, bg_scan_periodicity=10,
+                                          expected_status=SLStatus.SL_STATUS_SI91X_NO_AP_FOUND)
+            logger().info(f"\n\n Observed the expected error code: 0x10003 (SL_STATUS_SI91X_NO_AP_FOUND) \n\n")
+            time.sleep(20)
 
-        logger().info(" ====== Going to stop the sniffer capture ====== ")
-        wifi_sniffer.interfaces.capture.stop_capture()
+            logger().info(" ====== Going to stop the sniffer capture ====== ")
+            wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1262,6 +1277,11 @@ def test_wifi_sdk_scan_when_config_ap_is_not_available_c538001(wifi_dut, wifi_ac
 def test_wifi_sdk_verify_scan_possible_error_code_c538002(wifi_dut, wifi_access_point, request, wifi_sniffer,
                                                           sniffer_filter, sl_collections):
     """Verify WLAN scan possible error codes)))"""
+    if (wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 20)) and (
+            wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 21)):
+        # If this condition is true, the device is NCP, and the test case should be skipped
+        logger().info("NCP Device detected. Skipping the test case.")
+        pytest.skip("Test case is not applicable for NCP device")
 
     try:
         wifi_access_point.interfaces.wifi.stop_ap()
@@ -1314,6 +1334,11 @@ def test_wifi_sdk_verify_scan_possible_error_code_c538002(wifi_dut, wifi_access_
 def test_wifi_sdk_verify_dut_scan_spe_char_ssid_or_not_c538003(wifi_dut, wifi_access_point, request, wifi_sniffer,
                                                                sniffer_filter, sl_collections):
     """Verify whether DUT is able to scan special characters SSID or not"""
+    if (wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 20)) and (
+            wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 21)):
+        # If this condition is true, the device is NCP, and the test case should be skipped
+        logger().info("NCP Device detected. Skipping the test case.")
+        pytest.skip("Test case is not applicable for NCP device")
 
     try:
         test_name = request.node.name
@@ -1607,6 +1632,7 @@ def test_wifi_sdk_scan_type_extended_enabled_c653150(wifi_sniffer, wifi_dut, wif
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.skip("Test case is not automatable marked manually as skip.")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1724,6 +1750,11 @@ def test_wifi_sdk_passive_scan_in_worldwide_domain_c538000(wifi_sniffer, wifi_ac
 def test_wifi_sdk_scan_with_high_beacon_length_c538006(wifi_access_point, wifi_dut, request, wifi_sniffer,
                                                        sniffer_filter, sl_collections):
     """Verify WLAN scan with a third-party AP configured with a high beacon length (max 512 bytes)."""
+    if (wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 20)) and (
+            wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 21)):
+        # If this condition is true, the device is NCP, and the test case should be skipped
+        logger().info("NCP Device detected. Skipping the test case.")
+        pytest.skip("Test case is not applicable for NCP device")
     try:
         test_name = request.node.name
         packet_filter2 = '    Frame Length:'
@@ -1872,8 +1903,8 @@ def test_wifi_sdk_verify_11b_rates_channel14_c19073(wifi_dut, remote_wiseconnect
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.test_src_map_id('C653152')
-def test_wifi_sdk_scan_with_mbssid_extended_scan_c653152(wifi_access_point, wifi_dut, request, wifi_sniffer, sniffer_filter, sl_collections):
-
+def test_wifi_sdk_scan_with_mbssid_extended_scan_c653152(wifi_access_point, wifi_dut, request, wifi_sniffer,
+                                                         sniffer_filter, sl_collections):
     """Verified wherther DUT is able scan MBSSID AP,
        when SL_WIFI_SCAN_TYPE_EXTENDED is enabled."""
 
@@ -1917,10 +1948,12 @@ def test_wifi_sdk_scan_with_mbssid_extended_scan_c653152(wifi_access_point, wifi
         "region_code": "korea"
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "region": 'Korea', "channel": 13, "ssid": 'Azeez456'})
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2', "region": 'Korea', "channel": 13, "ssid": 'Azeez456'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_wifi_sdk_setup_dut_sta_mode_korea_region_conn_ap_chan_13_c477830(wifi_access_point, wifi_dut, wifi_sniffer, request,
-                                                            sniffer_filter, sl_collections):
+def test_wifi_sdk_setup_dut_sta_mode_korea_region_conn_ap_chan_13_c477830(wifi_access_point, wifi_dut, wifi_sniffer,
+                                                                          request,
+                                                                          sniffer_filter, sl_collections):
     """Setup the DUT in STA operating mode, set the region to korea
        and connect to AP which is in Korea region and operating in 13th channel."""
     try:
@@ -1971,7 +2004,7 @@ def test_wifi_sdk_setup_dut_sta_mode_korea_region_conn_ap_chan_13_c477830(wifi_a
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_sdk_wifi_scan_no_ap_in_closed_room_c687827(wifi_dut, wifi_access_point, request, wifi_sniffer,
-                                                               sniffer_filter, sl_collections):
+                                                         sniffer_filter, sl_collections):
     """Verify Wi-Fi scan results when there is no AP available in the envirnoment(Closed room))))"""
 
     try:
@@ -2044,8 +2077,8 @@ def test_wifi_sdk_wifi_scan_no_ap_in_closed_room_c687827(wifi_dut, wifi_access_p
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_wifi_sdk_do_scan_in_channel_12_13_14_c19072(wifi_dut, remote_wiseconnect3, request, wifi_sniffer, sl_collections):
-
+def test_wifi_sdk_do_scan_in_channel_12_13_14_c19072(wifi_dut, remote_wiseconnect3, request, wifi_sniffer,
+                                                     sl_collections):
     """ Do scan in channels 12,13,14 in JP region """
     try:
         test_name = request.node.name
@@ -2110,7 +2143,8 @@ def test_wifi_sdk_do_scan_in_channel_12_13_14_c19072(wifi_dut, remote_wiseconnec
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_sdk_Verify_DS_param_in_EU_region_c719887(wifi_sniffer, wifi_dut, wifi_access_point, sniffer_filter, request, sl_collections):
+def test_wifi_sdk_Verify_DS_param_in_EU_region_c719887(wifi_sniffer, wifi_dut, wifi_access_point, sniffer_filter,
+                                                       request, sl_collections):
     """ Verify DS param in probe request of DUT in EU region"""
     try:
         test_name = request.node.name
