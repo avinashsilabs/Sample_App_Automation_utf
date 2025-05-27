@@ -249,7 +249,7 @@ def test_wifi_sdk_connectivity_with_hidden_mode_ap_c19708(wifi_dut, wifi_access_
                                   sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case=test_case,
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
 
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_mac_address,
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_mac_address, hidden_ssid="\"\"",
                                                                                         filter_name='hidden_ssid')
 
         wlan_obj.start()

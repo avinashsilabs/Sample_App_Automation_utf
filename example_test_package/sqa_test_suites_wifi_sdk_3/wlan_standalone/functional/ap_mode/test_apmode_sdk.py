@@ -2463,7 +2463,7 @@ def test_wifi_sdk_sta_association_to_ap_hidden_ssid_c586186(wifi_sniffer, wifi_d
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=dut_mac_address, filter_name='hidden_ssid')
+            sa_addr=dut_mac_address,  hidden_ssid="\"\"", filter_name='hidden_ssid')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
                                                                   packet_filter2=packet_filter2), "not found beacon from DUT "
         logger().info('********** Validating Beacon interval **********')
