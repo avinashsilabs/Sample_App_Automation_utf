@@ -11,7 +11,7 @@ pipeline {
                 [   // send notifications to 'IOT Infra SW - HYD - Alerts' channel for failures only
                     name: 'utf-dev-team-hyd-jenkins-alerts', notifyBackToNormal: true, notifyFailure: true, notifyNotBuilt: true,
                     notifyRepeatedFailure: true, notifyUnstable: true,  notifyAborted: true,
-                    url: 'https://silabs.webhook.office.com/webhookb2/8b1f6858-1a20-4ed5-9358-a7182e6bbeb2@54dbd822-5231-4b20-944d-6f4abcd541fb/JenkinsCI/0c96b07b0334491c8f1990c97220058e/5ed37d9b-6818-4972-a549-6cd1c3ad5a31'
+                    url: 'https://silabs.webhook.office.com/webhookb2/8b1f6858-1a20-4ed5-9358-a7182e6bbeb2@54dbd822-5231-4b20-944d-6f4abcd541fb/JenkinsCI/0c96b07b0334491c8f1990c97220058e/5ed37d9b-6818-4972-a549-6cd1c3ad5a31/V2HYNpnbDrC6zwmcJMwWvg_ZEdZCdFJVvmtX3KGMpTeVI1'
                 ]
             ]
         )
