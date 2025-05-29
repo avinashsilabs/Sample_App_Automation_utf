@@ -107,43 +107,41 @@ class DataTransfer:
         self.rcv_data = 0
 
     def send_and_receive_data_socket(
-            self, remote_socket, no_of_pkts, data_size, time_interval, wifi_dut, server_sock, local_port, server_ip,
+            self, thread_no, remote_socket, no_of_pkts, data_size, time_interval, wifi_dut, server_sock, local_port, server_ip,
             proto_type=0):
 
         bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(
             socket_id=server_sock, pkt_length=data_size, no_of_pkts=no_of_pkts, time_interval=time_interval,
             server_ip=server_ip, server_port=local_port)
 
-        logger().info(f"Number of bytes sent by dut {bytes_sent}")
-
-        fail_count = 0
+        logger().info(f"\n **** Sending {bytes_sent} on Thread {thread_no} \n")
+        timeout = 2
         if proto_type == 0:
-            remote_socket.set_recv_timeout(socket_type=0)
+            remote_socket.set_recv_timeout(socket_type=0, timeout=timeout)
         else:
-            remote_socket.set_recv_timeout(socket_type=1, use_client_socket=True)
+            remote_socket.set_recv_timeout(socket_type=1, use_client_socket=True, timeout=timeout)
         for i in range(0, no_of_pkts):
             if proto_type == 0:
-                data = remote_socket.recv_data_tcp(data_size)
-                logger().info(f' Received TCP data : {data}')
+                data = remote_socket.recv_data_tcp(data_size, timeout=timeout)
+                logger().info(f' ---- TCP RX on Thread {thread_no} is : {data} ---- ')
             else:
-                data, address = remote_socket.recv_data_udp(data_size)
-                logger().info(f' Received UDP data : {data}')
+                data, address = remote_socket.recv_data_udp(data_size, timeout=timeout)
+                logger().info(f' ---- UDP RX on Thread {thread_no} is : {data} ---- ')
             if not isinstance(data, str):
-                fail_count = fail_count + 1
-                if fail_count == 2:
-                    break
-                else:
-                    continue
+                logger().info(f"\n **** Unable to Receive on Socket: {server_sock} **** \n")
+                break
             self.rcv_data = self.rcv_data + len(data)
-
             if self.rcv_data == len(bytes_sent):
                 break
 
         remote_socket.socket_close_indication(1)
-        logger().info(f"Total bytes received on socket opened remotely -> {self.rcv_data}")
-
-        assert self.rcv_data == int(
-            bytes_sent), f"Data transfer failed. Expected {bytes_sent} bytes but received {self.rcv_data} bytes"
+        logger().info(f"Total bytes received on Socket {server_sock} and Thread {thread_no} opened remotely is -> {self.rcv_data}")
+        if proto_type == 0:
+            assert self.rcv_data == int(
+                bytes_sent), f"Data transfer failed. Expected {bytes_sent} bytes but received {self.rcv_data} bytes"
+        else:
+            logger().info(f"Data transfer Successful. Sent {bytes_sent} bytes and received {self.rcv_data} bytes on thread : {thread_no}, "
+                          f"the observed UDP packet loss is {100 - (int(self.rcv_data) * 100 / int(bytes_sent))}%")
 
 
 class WifiJoinThread(ThreadBase):
@@ -321,12 +319,12 @@ class WifiJoinThread(ThreadBase):
 
             socket_threads.append(Thread(target=data_transfer_objs[count].send_and_receive_data_socket,
                                          args=(
-                                             client_sockets[count], no_of_pkts, pkt_length, time_interval,
+                                             count+1, client_sockets[count], no_of_pkts, pkt_length, time_interval,
                                              self.wifi_dut,
                                              server_socks[count], local_port, server_ip, 1), daemon=True))
 
             socket_threads[count].start()
-            time.sleep(2)
+            socket_threads[count].join()
 
         for sock in server_socks:
             logger().info(f"Closing socket_id->{sock}")
@@ -512,7 +510,7 @@ class WifiJoinThread(ThreadBase):
                                              server_socks[count], local_port, server_ip, prototype), daemon=True))
 
             socket_threads[count].start()
-            time.sleep(2)
+            socket_threads[count].join()
 
         for sock in server_socks:
             logger().info(f"Closing socket_id->{sock}")
@@ -600,7 +598,7 @@ class WifiJoinThread(ThreadBase):
 def test_wifi_sdk_tcp_open_send_close_socket_c19347(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client):
-    """This test case Verfies the tcp client socket is open, send data,close functionality"""
+    """This test case Verifies the tcp client socket is open, send data,close functionality"""
     try:
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -671,7 +669,7 @@ def test_wifi_sdk_tcp_open_send_close_socket_c19347(
 def test_wifi_sdk_udp_open_send_data_close_socket_c19348(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client):
-    """This test case Verfies the udp client socket is open, send data,close functionality"""
+    """This test case Verifies the udp client socket is open, send data,close functionality"""
     try:
 
         test_name = request.node.name
@@ -802,6 +800,9 @@ def test_wifi_sdk_udp_socket_dut_client_c19350(
         wifi_thread.wait_for_exit()
 
         wifi_thread.udp_multiple_socket_dut_client()
+
+        remote_socket_factory.interfaces.socket.close_all()
+        remote_socket_factory.interfaces.socket.sockets = []
 
         dut_mac_address = wifi_thread.dut_addr['dut_mac_address']
         logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
@@ -953,8 +954,7 @@ def test_wifi_sdk_socket_tcp_Data_Transfer_mss_c19356(wifi_access_point, wifi_du
             wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=tx_buffer, higher_data_len=1, timeout=60)
         tp = net_perf_client.interfaces.net_perf.process_output()
         assert tp is not None, "Throughput not found"
-        net_perf_client.interfaces.net_perf.close_files()
-        net_perf_client.interfaces.net_perf.iperf_process.stop(10)
+        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
         logger().info(f"Successfully closed socket_id '{sock}' in the DUT")
 
         logger().info("Stop Sniffer finally")
@@ -966,9 +966,11 @@ def test_wifi_sdk_socket_tcp_Data_Transfer_mss_c19356(wifi_access_point, wifi_du
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)[
             'packet_count'], "Unable to find configured MSS value in sniffer packets"
     except Exception as e:
+        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+        net_perf_client.interfaces.net_perf.close_files()
+        net_perf_client.interfaces.net_perf.iperf_process.stop(10)
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1031,6 +1033,7 @@ def test_wifi_sdk_tcp_TX_with_message_size_greater_size_than_tcp_window_size_c19
         Raises:
             Exception: If any step in the test case fails.
         """
+    sock = 0
     try:
         tcp_window_size = 1000
         tcp_message_size = 1460
@@ -1062,8 +1065,6 @@ def test_wifi_sdk_tcp_TX_with_message_size_greater_size_than_tcp_window_size_c19
         status, data = wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=tx_buffer, higher_data_len=1, timeout=60, expected_status=BSDErrnoStatus.EMSGSIZE)
         tp = net_perf_client.interfaces.net_perf.process_output()
         assert tp is not None, "Throughput not found"
-        net_perf_client.interfaces.net_perf.close_files()
-        net_perf_client.interfaces.net_perf.iperf_process.stop(10)
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
         logger().info(f"Successfully closed socket_id '{sock}' in the DUT")
 
@@ -1078,6 +1079,10 @@ def test_wifi_sdk_tcp_TX_with_message_size_greater_size_than_tcp_window_size_c19
     except Exception as e:
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        net_perf_client.interfaces.net_perf.close_files()
+        net_perf_client.interfaces.net_perf.iperf_process.stop(10)
+
 
 
 @pytest.mark.config(
@@ -1246,13 +1251,14 @@ def test_wifi_sdk_udp_receive_c19361(wifi_sniffer, wifi_dut, wifi_access_point, 
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count']
         assert snif_pkt_count, "Unable to find PS POLL Packets"
-
-    except Exception as error:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
-
-    finally:
         remote_socket.interfaces.socket.stop()
         wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
+
+    except Exception as error:
+        remote_socket.interfaces.socket.stop()
+        wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+
 
 
 @pytest.mark.config(
@@ -1533,8 +1539,10 @@ def test_wifi_sdk_multi_tcp_socket_dut_server_c19351(
             wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
 
     except Exception as e:
+        for sock_id in tcp_socks:
+            logger().info(f"Closing socket_id->{sock_id}")
+            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
     finally:
         remote_socket_factory.interfaces.socket.close_all()
         remote_socket_factory.interfaces.socket.sockets = []
@@ -1679,7 +1687,13 @@ def test_wifi_sdk_5tcp_5udp_dut_server_socket_c19353(
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as e:
+        for socket in udp_socks:
+            logger().info(f"Closing socket_id->{socket}")
+            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=socket)
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        remote_socket_factory.interfaces.socket.close_all()
+        remote_socket_factory.interfaces.socket.sockets = []
 
 
 @pytest.mark.config(
@@ -2337,8 +2351,8 @@ def test_wifi_socket_limit_C19359(wifi_sniffer, wifi_dut, wifi_access_point, req
     """ Open more than one socket when only one socket is selected in opermode command."""
 
     try:
-        local_port = 5001
-        device_port = 5002
+        local_port = 8001
+        device_port = 8002
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
