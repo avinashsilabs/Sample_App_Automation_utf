@@ -66,6 +66,11 @@ class Ip_Conflict(ThreadBase):
         self.wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,
                                                               dhcp_lease="3600")
         time.sleep(30)
+        if self.sl_collections.check_device_active(self.wifi_access_point.interfaces.wifi.ip_address, timeout=30):
+            logger().info(f"Access Point is active")
+        else:
+            raise ValueError("Access Point is not active, please check the connection")
+
         logger().info(f" dhcp_start value {dhcp_start} and dhcp_end value {dhcp_end}")
 
     def wifi_client_join(self, dhcp_start=None, dhcp_end=None):
@@ -120,13 +125,13 @@ class Ip_Conflict(ThreadBase):
         if self.static_ip:
             self.wifi_dut.interfaces.wifi.start_ip(static_ip=dut_ip, static_subnet=static_subnet,
                                                    static_gateway=wifi_client_gateway_ip, vid=0)
-        if not self.ap_mode:
             logger().info(f"****** dut_ip: {dut_ip}****** ")
             logger().info("....Pinging DUT before power-save....")
             status = self.sl_collections.ping(device_ip=dut_ip, ping_count=10)
             assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
             time.sleep(10)
 
+        if not self.ap_mode:
             logger().info("Enabling power save Enhanced psp")
             self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
             time.sleep(10)
