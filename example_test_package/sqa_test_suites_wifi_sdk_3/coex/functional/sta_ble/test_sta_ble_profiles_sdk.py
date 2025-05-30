@@ -354,6 +354,7 @@ def test_Coex_sdk_read_char_uuid_wlan_conn_C133434(
                 disconnect_from="dut",
                 ble_client_address=ble_obj.ble_client_address,
             )
+            time.sleep(5)
 
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
@@ -494,7 +495,7 @@ def test_Coex_sdk_BLE_services_wlan_connected_C133446(
             disconnect_from="dut",
             ble_client_address=ble_obj.ble_client_address,
         )
-
+        time.sleep(5)
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
@@ -602,6 +603,7 @@ def test_Coex_sdk_supported_profiles_wlan_conneced_C133557(
                 disconnect_from="dut",
                 ble_client_address=ble_obj.ble_client_address,
             )
+            time.sleep(5)
 
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
@@ -719,7 +721,7 @@ def test_Coex_sdk_supported_particular_profile_wlan_conneced_C133558(
                 disconnect_from="dut",
                 ble_client_address=ble_obj.ble_client_address,
             )
-
+            time.sleep(5)
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
@@ -849,7 +851,7 @@ def test_Coex_sdk_BLE_link_loss_TCP_TX_C133439(
             disconnect_from="dut",
             ble_client_address=ble_obj.ble_client_address,
         )
-
+        time.sleep(5)
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
@@ -971,6 +973,7 @@ def test_Coex_sdk_BLE_query_att_desc_remote_while_TCP_TX_C133435(
             disconnect_from="dut",
             ble_client_address=ble_obj.ble_client_address,
         )
+        time.sleep(5)
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
@@ -1091,7 +1094,7 @@ def test_Coex_sdk_BLE_query_att_desc_value_remote_while_TCP_TX_C133436(
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
-
+        time.sleep(5)
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
@@ -1212,6 +1215,7 @@ def test_Coex_sdk_BLE_link_loss_master_TCP_TX_C133561(
             disconnect_from="dut",
             ble_client_address=ble_obj.ble_client_address,
         )
+        time.sleep(5)
 
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
