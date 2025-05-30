@@ -716,6 +716,10 @@ class BleThreadFunctionality(ThreadBase):
             bond_info=0,
             client_capability="NoInputNoOutput",
             pin_code="4321",
+            adv_int_min=160,
+            adv_int_max=320,
+            scan_interval=160,
+            scan_window=50,
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -732,6 +736,10 @@ class BleThreadFunctionality(ThreadBase):
         self.bond_info = bond_info
         self.client_capability = client_capability
         self.pin_code = pin_code
+        self.adv_int_min = adv_int_min
+        self.adv_int_max = adv_int_max
+        self.scan_interval = scan_interval
+        self.scan_window = scan_window
 
         # Set up DUT for BLE advertising
         if self.gatt:
@@ -797,7 +805,10 @@ class BleThreadFunctionality(ThreadBase):
 
     def advertise_dut(self):
         logger().info(f"Advertising the DUT")
-        self.wifi_dut.interfaces.wifi.ble_start_advertising(timeout=20)
+        self.wifi_dut.interfaces.wifi.ble_start_advertising(
+            ble_adv_int_min=int(self.adv_int_min / 0.625),
+            ble_adv_int_max=int(self.adv_int_max / 0.625),
+            timeout=20)
 
     def check_scan_functionality_of_dut(self):
         self.ble_client_address = self.sl_collections.check_ble_scan_functionality(
@@ -808,6 +819,8 @@ class BleThreadFunctionality(ThreadBase):
             timeout=60,
             client_capability=self.client_capability,
             pin_code=self.pin_code,
+            ble_scan_interval=int(self.scan_interval / 0.625),
+            ble_scan_window=int(self.scan_window / 0.625)
         )
 
     def scan_and_connect_from_remote(self):
@@ -3134,7 +3147,6 @@ def test_Coex_sdk_BLE_master_WLAN_conn_disconn_C133556(
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-
 
 
 
