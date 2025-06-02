@@ -872,6 +872,9 @@ def test_wifi_sdk_verify_configured_retry_attempts_for_twt_c113734(wifi_dut, wif
         wlan_obj.wait_for_exit()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "twt": 1})
@@ -898,6 +901,9 @@ def test_wifi_sdk_verify_default_retry_interval_for_twt_c113735(wifi_dut, wifi_a
         wlan_obj.wait_for_exit()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "twt": 1})
@@ -1345,6 +1351,9 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_twt_after_rejoin_c113754(wifi
         wlan_obj.wait_for_exit()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'Open', "twt": 1})

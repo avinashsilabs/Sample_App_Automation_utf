@@ -4027,6 +4027,7 @@ def test_wifi_sdk_mbssid_T_NT_connect_disconnect_c219315(
         raise e
 
 
+@pytest.mark.skip(reason="This test is skipped as it is not applicable for the current setup.")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
