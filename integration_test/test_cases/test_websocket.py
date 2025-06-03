@@ -1,6 +1,10 @@
 import time
 import pytest
 from typing import Union
+from websocket_server import (
+    OPCODE_PING,
+    OPCODE_PONG,
+)
 
 # Mark all tests in this module with 'framework_integration_test'
 pytestmark = [
@@ -54,6 +58,19 @@ def test_websocket_server_and_linux_client(
     data = http_client.interfaces.http.websocket_receive()
     time.sleep(0.1)
     assert data == "Hello!"
+
+    http_server.interfaces.http.send_opcode_to_websocket_clients(OPCODE_PING)
+    time.sleep(0.1)
+    data = http_client.interfaces.http.websocket_receive()
+    time.sleep(0.1)
+    assert data == OPCODE_PING
+
+    http_server.interfaces.http.send_opcode_to_websocket_clients(OPCODE_PONG)
+    time.sleep(0.1)
+    data = http_client.interfaces.http.websocket_receive()
+    time.sleep(0.1)
+    assert data == OPCODE_PONG
+
 
     http_client.interfaces.http.websocket_close()
     time.sleep(0.1)
