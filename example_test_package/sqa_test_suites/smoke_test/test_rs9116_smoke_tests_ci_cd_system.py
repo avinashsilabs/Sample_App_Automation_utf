@@ -142,7 +142,7 @@ def test_ble_connect_testcase_id_19(wifi_dut, ble_client):
         if wifi_dut.interfaces.wifi.ble_address in ble_client.interfaces.bluetooth.get_devices():
             break
     else:
-        logger.error(f"Unable to find device {wifi_dut.interfaces.wifi.ble_address} within 30 sec.")
+        logger().error(f"Unable to find device {wifi_dut.interfaces.wifi.ble_address} within 30 sec.")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     # See that we found our device
@@ -190,7 +190,7 @@ def test_wifi_ble_connect_testcase_id_27(wifi_dut, wifi_access_point, ble_client
         if wifi_dut.interfaces.wifi.ble_address in ble_client.interfaces.bluetooth.get_devices():
             break
     else:
-        logger.error(f"Unable to find device {wifi_dut.interfaces.wifi.ble_address} within 30 sec.")
+        logger().error(f"Unable to find device {wifi_dut.interfaces.wifi.ble_address} within 30 sec.")
     ble_client.interfaces.bluetooth.stop_scanning()
 
     time.sleep(2)
