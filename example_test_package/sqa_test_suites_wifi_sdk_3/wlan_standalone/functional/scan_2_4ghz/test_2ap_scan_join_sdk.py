@@ -297,6 +297,10 @@ def test_wifi_sdk_scan_and_connect_in_world_domain_c19075(wifi_dut, utf_constant
         wifi_dut.interfaces.wifi.join_ap(wifi_access_points[1])
         ip_config = wifi_dut.interfaces.wifi.start_ip()
         device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"Initiating ping to DUT ip {device_ip} before power save")
+        status = ping(device_ip, ping_count)
+        assert status is True, "DUT is not responding to ping request from third party device"
+        logger().info(f"ping is successful before power save")
 
         logger().info(f"....Applying performance profile mode : {mode}")
         wifi_dut.interfaces.wifi.set_performance_profile(mode)
@@ -376,6 +380,11 @@ def test_wifi_sdk_scan_and_connect_in_world_domain_c19078(wifi_dut, utf_constant
         wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
         ip_config = wifi_dut.interfaces.wifi.start_ip()
         device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"Initiating ping to DUT ip {device_ip} before power save")
+        status = ping(device_ip, ping_count)
+        assert status is True, "DUT is not responding to ping request from third party device"
+        logger().info(f"ping is successful before power save")
+
         wifi_dut.interfaces.wifi.set_performance_profile(mode=mode)
         wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                       psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
