@@ -72,3 +72,18 @@ firmware_applications:
       - device_type: 'efx32'
         device_subtype: 'efr32'
         filename: '917_ncp/coex_custom_test_agent.hex'
+
+    test_twt_sta:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ncp/test_agent_ncp_3.5.0-RC4_TWT_15MAY_25.hex'
+
+    test_ipv6:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ncp/test_agent_ncp_3.5.0-RC4_IPV6_15MAY_25.hex'
+
+    test_azure:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ncp/test_agent_ncp_3.5.0-RC4_AZURE_15MAY_25_NO_HTTP_SERVER.hex'
