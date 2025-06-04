@@ -1077,7 +1077,8 @@ def test_wifi_sdk_tcp_TX_with_message_size_greater_size_than_tcp_window_size_c19
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)[
             'packet_count'], "Unable to find configured MSS value in sniffer packets"
     except Exception as e:
-        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+        if sock in wifi_dut.interfaces.wifi.sockets_info["sync_sockets"]:
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         net_perf_client.interfaces.net_perf.close_files()
@@ -1462,7 +1463,7 @@ def test_wifi_sdk_tcp_udp_data_tx_WPA_TKIP_c19365(
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.SSL,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(2),
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
         "bt_features": 0,
         "ble_features": 0,
@@ -1559,7 +1560,7 @@ def test_wifi_sdk_multi_tcp_socket_dut_server_c19351(
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.SSL,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(2),
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
         "bt_features": 0,
         "ble_features": 0,

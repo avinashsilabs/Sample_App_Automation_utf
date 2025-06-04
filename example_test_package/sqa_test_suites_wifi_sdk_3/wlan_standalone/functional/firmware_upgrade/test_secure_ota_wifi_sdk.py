@@ -301,7 +301,6 @@ class WifiJoin(ThreadBase):
                     extended_header='""',
                     username='""',
                     password='""',
-                    post_data='""',
                     http_url='rps_path',
                     async_timeout=500)
 
@@ -314,7 +313,6 @@ class WifiJoin(ThreadBase):
                     extended_header='""',
                     username='""',
                     password='""',
-                    post_data='""',
                     http_url='firmware/rps_path',
                     async_timeout=500)
 

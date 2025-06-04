@@ -85,11 +85,12 @@ class ssl_connection:
 class SocketDataTransfer:
     def __init__(self):
         self.connected = False
+        self.sock = None
 
     @retry(Exception, delay=1, tries=5)
     def open_socket_and_data_transfer(self, wifi_dut, remote_socket, dut_ip, numberOfFds=0, close_socket=True,
                                       test_run_time=30):
-        sock = 0
+        self.sock = 0
         try:
             if not self.connected:
                 local_port = randint(20001, 40000)
@@ -97,11 +98,11 @@ class SocketDataTransfer:
                 remote_socket.interfaces.socket.time_limit = 3600
                 remote_socket.interfaces.socket.start_server(socket_type=0, port=server_port)  # 0-TCP, 1-UDP
                 server_ip = remote_socket.interfaces.socket.server_ip
-                sock = wifi_dut.interfaces.wifi.socket()
+                self.sock = wifi_dut.interfaces.wifi.socket()
                 logger().info(
-                    f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
-                wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=dut_ip, server_port=local_port, timeout=15)
-                wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=server_port)
+                    f"Successfully opened tcp client socket and socket id received is {self.sock} which is expected")
+                wifi_dut.interfaces.wifi.bind(socket_fd=self.sock, device_ip=dut_ip, server_port=local_port, timeout=15)
+                wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=self.sock, server_ip=server_ip, server_port=server_port)
                 self.connected = True
                 if numberOfFds:
                     wifi_dut.interfaces.wifi.bsdAsyncSocketSelect(numberOfFds=numberOfFds, time=60)
@@ -109,17 +110,17 @@ class SocketDataTransfer:
             sw = Stopwatch()
             while sw.elapsed_sec <= test_run_time:
                 tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=100))
-                logger().info(f"Remote peer sending data over socket {sock} and data:{tx_buffer}")
+                logger().info(f"Remote peer sending data over socket {self.sock} and data:{tx_buffer}")
                 remote_socket.interfaces.socket.send_data_tcp(tx_buffer, use_server_socket=True)
                 time.sleep(1)
                 wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
-                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock, async_timeout=40, timeout=40)
+                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=self.sock, async_timeout=40, timeout=40)
                 assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id " \
-                                               f"{sock} opened in the DUT is not matched"
+                                               f"{self.sock} opened in the DUT is not matched"
                 logger().info("Data sent by remote peer and received on DUT is matching")
             if close_socket:
-                self.close_socket(wifi_dut, sock, remote_socket)
-            return sock
+                self.close_socket(wifi_dut, self.sock, remote_socket)
+            return self.sock
         except Exception as error:
             if "0x1" in str(error) or "0x7" in str(error):
                 logger().error(f"*********** Data Receive failed due to AP-Power Off ************")
@@ -522,7 +523,7 @@ def test_wifi_sdk_socket_select_tcp_c19331(switch, wifi_sniffer, wifi_dut, wifi_
             time.sleep(25)
             if count == 1:
                 logger.info("\n\nTurning off the AP")
-                switch.interfaces.pdu_switch.turn_off(delay=5)
+                switch.interfaces.pdu_switch.turn_off(delay=15)
                 logger.info("Successfully powered off AP")
 
                 # logger.info("\n\nDisabling Wireless in AP")
@@ -545,7 +546,7 @@ def test_wifi_sdk_socket_select_tcp_c19331(switch, wifi_sniffer, wifi_dut, wifi_
                 logger.info("Rejoin Error Received from DUT")
 
                 logger.info("\n\nAgain turning on the AP")
-                switch.interfaces.pdu_switch.turn_on(delay=60)
+                switch.interfaces.pdu_switch.turn_on(delay=100)
                 logger.info("Successfully powered on AP")
 
                 # logger.info("\n\nEnabling Wireless in AP")
@@ -554,6 +555,8 @@ def test_wifi_sdk_socket_select_tcp_c19331(switch, wifi_sniffer, wifi_dut, wifi_
                 # logger.info("Enabled Wireless in AP")
             trf_thread.join()
             logger.info(f"Iteration '{count}' completed\n\n")
+            logger.info(f"Closing socket_id->{socket_obj.sock}")
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=socket_obj.sock)
 
         logger.info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -2377,6 +2380,7 @@ def test_wifi_sdk_verify_remote_socket_termination_c538011(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.skip("This testcase is not announced yet")
 def test_wifi_sdk_verify_socket_select_functionality_ssl_tx_rx_with_16k_length_c538018(
     wifi_sniffer,
     wifi_dut,
