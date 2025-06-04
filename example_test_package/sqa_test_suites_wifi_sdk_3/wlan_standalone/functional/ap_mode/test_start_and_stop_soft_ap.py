@@ -1088,6 +1088,9 @@ def test_wifi_sdk_dut_soft_start_and_stop_ap_in_multiple_iterations_C191363(wifi
             conc_obj.wait_for_exit()
             logger().info(f"********Disconnection**********")
             wifi_dut.interfaces.wifi.leave()
+            if i is not 4:
+                logger().info(f"Stop the Ap for 2nd time")
+                wifi_dut.interfaces.wifi.stop_soft_ap_interface()
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
