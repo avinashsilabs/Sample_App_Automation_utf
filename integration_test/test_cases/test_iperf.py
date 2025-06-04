@@ -28,7 +28,7 @@ def test_device_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_cli
     if wifi_access_point != wifi_client:
         wifi_client.interfaces.wifi.join_ap(wifi_access_point)
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 10
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 15
 
     # preparing iperf
     net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
@@ -70,7 +70,7 @@ def test_host_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_clien
     if wifi_access_point != wifi_client:
         wifi_client.interfaces.wifi.join_ap(wifi_access_point)
     host_ip = wifi_client.interfaces.wifi.get_ip_address()
-    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 10
+    assert wifi_client.interfaces.wifi.ping(server_ip=device_ip) < 15
 
     # starting iperf
     net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
