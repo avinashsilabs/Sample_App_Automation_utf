@@ -269,7 +269,6 @@ class WifiJoin(ThreadBase):
                     extended_header='""',
                     username='""',
                     password='""',
-                    post_data='""',
                     http_url='rps_path',
                     async_timeout=500)
             if self.test_case == '652581':
@@ -281,7 +280,6 @@ class WifiJoin(ThreadBase):
                     extended_header='HTTPS_SUPPORT',
                     username='""',
                     password='""',
-                    post_data='""',
                     http_url='rps_path',
                     async_timeout=500)
             if self.test_case == '500496' or self.test_case == '500495':
@@ -297,7 +295,6 @@ class WifiJoin(ThreadBase):
                     extended_header='""',
                     username='""',
                     password='""',
-                    post_data='""',
                     http_url=self.new_url,
                     async_timeout=500)
             if self.test_case == '500497' or self.test_case == '510789' or self.test_case == '500499':
@@ -313,7 +310,6 @@ class WifiJoin(ThreadBase):
                     extended_header='""',
                     username='""',
                     password='""',
-                    post_data='""',
                     http_url=self.new_url,
                     async_timeout=500,
                     expected_status=SLStatus.SL_STATUS_SI91X_ERROR_IN_LEN_OF_THE_COMMAND)
@@ -330,7 +326,6 @@ class WifiJoin(ThreadBase):
                     extended_header='""',
                     username='""',
                     password='""',
-                    post_data='""',
                     http_url=self.new_url,
                     async_timeout=500)
             if self.test_case == '500498':
@@ -346,7 +341,6 @@ class WifiJoin(ThreadBase):
                     extended_header='""',
                     username='""',
                     password='""',
-                    post_data='""',
                     http_url=self.new_url,
                     async_timeout=500,
                     expected_status=SLStatus.SL_STATUS_HAS_OVERFLOWED)
@@ -359,7 +353,6 @@ class WifiJoin(ThreadBase):
                     extended_header='""',
                     username='""',
                     password='""',
-                    post_data='""',
                     http_url='firmware/rps_path',
                     async_timeout=500)
 
