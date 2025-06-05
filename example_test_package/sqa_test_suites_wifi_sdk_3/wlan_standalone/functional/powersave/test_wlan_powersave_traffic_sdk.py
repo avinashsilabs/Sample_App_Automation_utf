@@ -788,7 +788,7 @@ def test_TCP_UDP_bidi_in_powersave_mode2_ulp_sdk_C19494(wifi_sniffer, remote_soc
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 def test_powersave_functionality_after_rejoin_sdk_C19508(switch, wifi_sniffer, wifi_dut, wifi_access_point,
-                                                         utf_constants,
+                                                         utf_constants, sniffer_filter,
                                                          sl_collections):
     # def test_powersave_functionality_after_rejoin_sdk_C19508(wifi_sniffer, wifi_dut, wifi_access_point,utf_constants,sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -840,12 +840,12 @@ def test_powersave_functionality_after_rejoin_sdk_C19508(switch, wifi_sniffer, w
             time.sleep(5)
 
             logger().info("***** Turn off Access Point *****")
-            switch.interfaces.pdu_switch.turn_off(delay=100)
+            switch.interfaces.pdu_switch.turn_off(delay=20)
             # wifi_access_point.interfaces.wifi.stop_ap()
             # time.sleep(60)
 
             logger().info("***** Turn on Access Point *****")
-            switch.interfaces.pdu_switch.turn_on(delay=60)
+            switch.interfaces.pdu_switch.turn_on(delay=100)
 
             logger().info("Pinging to DUT to check rejoin process is completed or not")
             status = sl_collections.ping(device_ip, 30, 5)
@@ -877,6 +877,7 @@ def test_powersave_functionality_after_rejoin_sdk_C19508(switch, wifi_sniffer, w
 
 
 # Need two evk harness
+@pytest.mark.skip("Not announced yet")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("remote_wiseconnect3")
 @pytest.mark.config(
