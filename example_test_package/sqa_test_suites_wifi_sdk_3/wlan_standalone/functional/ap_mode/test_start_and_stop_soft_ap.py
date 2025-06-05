@@ -191,7 +191,7 @@ class ConcurrentFun(ThreadBase):
     def concurrent_connections(self):
         if self.test_type == 641351:
             for i in range(0, 3):
-                self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+                self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address("eth1")
                 logger().info(f"******** HOST IP {self.host_ip} *******")
                 logger().info(f"Start the AP")
                 self.ap_mode_connection()
