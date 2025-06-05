@@ -86,13 +86,16 @@ class ssl_connection:
             logger().info("\n\nEnabling Wireless in AP")
             self.wifi_access_point.interfaces.wifi.start_ap()
             time.sleep(sleep_time)
+            time.sleep(80)
             return
         logger().info("Turning off the AP")
         switch.interfaces.pdu_switch.turn_off()
         logger().info("Successfully powered off AP")
+        time.sleep(10)
         time.sleep(sleep_time)
         logger().info("Again turning on the AP")
         switch.interfaces.pdu_switch.turn_on()
+        time.sleep(80)
 
 
 class SocketDataTransfer:
@@ -249,6 +252,9 @@ def test_wifi_sdk_ssl_three_sockets_receive_data_testcase_C19153(wifi_sniffer, w
         wifi_dut.interfaces.wifi.leave()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
 
 @pytest.mark.config(
@@ -337,7 +343,7 @@ def test_wifi_sdk_ssl_three_openssl_sockets_set_16k_record_C19164(wifi_sniffer, 
 
                     ssl_server.interfaces.ssl.send_data(socket, pkt_count, buffer_length, message=tx_buffer)
                     sock = (socket - 1)
-                    buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
+                    buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock, timeout=120, async_timeout=120)
 
                     assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
 
@@ -347,6 +353,9 @@ def test_wifi_sdk_ssl_three_openssl_sockets_set_16k_record_C19164(wifi_sniffer, 
         wifi_dut.interfaces.wifi.leave()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
 
 @pytest.mark.config(
@@ -454,6 +463,9 @@ def test_wifi_sdk_ssl_three_sockets_tx_rx_data_testcase_C19201(wifi_sniffer, wif
         wifi_dut.interfaces.wifi.leave()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
 
 @pytest.mark.config(
@@ -2137,7 +2149,7 @@ def test_wifi_sdk_ssl_three_sockets_data_tx_after_rejoin_testcase_c19156(wifi_sn
             ssl_server.interfaces.ssl.stop_server()
 
             logger.info("\n\nTurning off the AP")
-            switch.interfaces.pdu_switch.turn_off(delay=5)
+            switch.interfaces.pdu_switch.turn_off(delay=15)
             logger.info("Successfully powered off AP")
 
             # logger.info("\n\nDisabling Wireless in AP")
@@ -2160,7 +2172,7 @@ def test_wifi_sdk_ssl_three_sockets_data_tx_after_rejoin_testcase_c19156(wifi_sn
             logger.info("Rejoin Error Received from DUT")
 
             logger.info("\n\nAgain turning on the AP")
-            switch.interfaces.pdu_switch.turn_on(delay=60)
+            switch.interfaces.pdu_switch.turn_on(delay=100)
             logger.info("Successfully powered on AP")
 
             # logger.info("\n\nEnabling Wireless in AP")
