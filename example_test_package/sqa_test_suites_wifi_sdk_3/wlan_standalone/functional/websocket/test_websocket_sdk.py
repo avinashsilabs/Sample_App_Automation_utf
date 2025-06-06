@@ -18,6 +18,8 @@ import ipaddress
 from threading import Thread
 import time
 from utf.utils.stopwatch import Stopwatch
+import ipaddress
+import random
 
 
 def logger():
@@ -71,6 +73,24 @@ def logger():
     return get_logger(__name__)
 
 
+def random_ipv6_addr(prefix: str) -> str:
+    # Ensure the prefix is interpreted as a /64 network
+    network = ipaddress.IPv6Network(f"{prefix}/64", strict=False)
+
+    # Generate a random 64-bit interface identifier
+    random_suffix = random.getrandbits(64)
+
+    # Combine the prefix and the random suffix
+    full_ip_int = int(network.network_address) | random_suffix
+    full_ip = ipaddress.IPv6Address(full_ip_int)
+
+    return str(full_ip)
+
+
+wan_ipv6_addr = random_ipv6_addr("2001:db8:abcd:0012::")
+wan_gateway = "2001:db8:abcd:0012::1"
+
+
 def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None, tcpip_feat=0, ext_custom_feat=0, ext_tcpip_feat=0):
     """
     Common method to generate wifi_dut marker for pytest.mark.config decorator.
@@ -88,7 +108,7 @@ def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None, tcpip_feat=
         "ble_features": 0,
         "ble_custom_ext_features": 0,
 
-        }
+    }
     if ca_cert:
         config["ca_cert"] = ca_cert
     if client_cert:
@@ -1528,10 +1548,22 @@ def test_wifi_sdk_websocket_remote_terminate_c687979(wifi_dut, wifi_access_point
 
 @pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
-    "wifi_access_point", wifi={"ipv6_state": "0",
-                               "wan_ipv6_address": WLanJoinThread().random_ipv6_addr("2401:4900:1cb3::/48"),
-                               "security": "Open"}
-    )
+    "wifi_access_point", wifi={"connection_type": "STATIC_IPV6",
+                               "wan_ipv6_address": wan_ipv6_addr,
+                               "wan_ipv6_gateway": wan_gateway,
+                               "wan_prefix_length": "64",
+                               "ipv6_state": "0",
+                               "security": "Open",
+                               "lan_ipv6_address": "2401:3500:133c:1341:1134:ffed:13cd:1134",
+                               "lan_prefix_length": "64",
+                               "lan_ipv6_prefix": "2401:3500:133c:1341::",
+                               "lan_ip_pool_start": "1000",
+                               "lan_ip_pool_end": "2000",
+                               "lan_lease_time": "86400",
+                               "use_ipv6_web": True,
+                               "enable_ipv6": True,
+                               }
+)
 @wifi_dut_marker(tcpip_feat=Si91xTCPIPFeatureBitMap.DHCPv6Client
                             | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode
                             | Si91xTCPIPFeatureBitMap.DHCPv6Server,
@@ -1545,6 +1577,13 @@ def test_wifi_sdk_websocket_with_ipv6_stateless_c687503(firmware_loader, wifi_du
     capture_filename = request.node.name
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    # Fetching web_ui_port flag from ASUS configuration and its value should be 8443
+    web_port = wifi_access_point.interfaces.wifi.config.get('web_ui_port')
+    if web_port != 8443:
+        pytest.skip(f"Skipping test as web_ui_port is not 8443, found {web_port}.")
+    else:
+        logger().info("web_ui_port is 8443, proceeding with the test.")
 
     ap_mac_address = wifi_access_point.interfaces.wifi.bssid
     logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
@@ -1565,10 +1604,22 @@ def test_wifi_sdk_websocket_with_ipv6_stateless_c687503(firmware_loader, wifi_du
 
 @pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
-    "wifi_access_point", wifi={"ipv6_state": "1",
-                               "wan_ipv6_address": WLanJoinThread().random_ipv6_addr("2401:4900:1cb3::/48"),
-                               "security": "Open"}
-    )
+    "wifi_access_point", wifi={"connection_type": "STATIC_IPV6",
+                               "wan_ipv6_address": wan_ipv6_addr,
+                               "wan_ipv6_gateway": wan_gateway,
+                               "wan_prefix_length": "64",
+                               "ipv6_state": "1",
+                               "security": "Open",
+                               "lan_ipv6_address": "2401:3500:133c:1341:1134:ffed:13cd:1134",
+                               "lan_prefix_length": "64",
+                               "lan_ipv6_prefix": "2401:3500:133c:1341::",
+                               "lan_ip_pool_start": "1000",
+                               "lan_ip_pool_end": "2000",
+                               "lan_lease_time": "86400",
+                               "use_ipv6_web": True,
+                               "enable_ipv6": True,
+                               }
+)
 @wifi_dut_marker(tcpip_feat=Si91xTCPIPFeatureBitMap.DHCPv6Client
                             | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode
                             | Si91xTCPIPFeatureBitMap.DHCPv6Server,
@@ -1582,6 +1633,13 @@ def test_wifi_sdk_websocket_with_ipv6_stateful_c687502(firmware_loader, wifi_dut
     capture_filename = request.node.name
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    # Fetching web_ui_port flag from ASUS configuration and its value should be 8443
+    web_port = wifi_access_point.interfaces.wifi.config.get('web_ui_port')
+    if web_port != 8443:
+        pytest.skip(f"Skipping test as web_ui_port is not 8443, found {web_port}.")
+    else:
+        logger().info("web_ui_port is 8443, proceeding with the test.")
 
     ap_mac_address = wifi_access_point.interfaces.wifi.bssid
     logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
