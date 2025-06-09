@@ -3447,6 +3447,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_C113792(wifi_dut, wifi_access_point, w
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.radius_server("raspi_radius_server_v2")
 def test_wifi_sdk_wpa2_enterprise_eap_fast_tls_1_0_c113778(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                       radius_server, sl_collections, request, utf_constants,
                                                       net_perf_client, wifi_client, protocol):
@@ -3477,6 +3478,12 @@ def test_wifi_sdk_wpa2_enterprise_eap_fast_tls_1_0_c113778(wifi_dut, wifi_access
                                        local_ip=device_ip, remote_ip=host_ip,
                                        remote_port=net_perf_client.interfaces.net_perf.client_port,
                                        size=1460, ttl=30, throughput_type=3, qos=0, async_socket=0)
+        time.sleep(5)
+        tp = net_perf_client.interfaces.net_perf.process_output()
+        assert tp is not None, "Throughput not found"
+        logger().info("data transfer is successful")
+        net_perf_client.interfaces.net_perf.close_files()
+        net_perf_client.interfaces.net_perf.iperf_process.stop(10)
         wifi_dut.interfaces.wifi.leave()
         sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                         wifi_access_point=wifi_access_point,
@@ -3529,6 +3536,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_fast_tls_1_0_c113778(wifi_dut, wifi_access
                        wifi=["multicast_leave", "unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.radius_server("raspi_radius_server_v2")
 def test_wifi_sdk_wpa2_enterprise_eap_fast_multicast_tx_11w_c679995(multicast_client, wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                        radius_server, sl_collections, request, utf_constants,
                                                        net_perf_client, wifi_client, protocol):
@@ -3655,6 +3663,8 @@ def test_wifi_sdk_wpa2_enterprise_eap_fast_manual_provisioning_1_2_c113768(wifi_
         tp = net_perf_client.interfaces.net_perf.process_output()
         assert tp is not None, "Throughput not found"
         logger().info("data transfer is successful")
+        net_perf_client.interfaces.net_perf.close_files()
+        net_perf_client.interfaces.net_perf.iperf_process.stop(10)
         wifi_dut.interfaces.wifi.leave()
         sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                         wifi_access_point=wifi_access_point,
@@ -3743,6 +3753,8 @@ def test_wifi_sdk_wpa2_enterprise_eap_fast_auto_provisioning_1_2_c113769(wifi_du
         tp = net_perf_client.interfaces.net_perf.process_output()
         assert tp is not None, "Throughput not found"
         logger().info("data transfer is successful")
+        net_perf_client.interfaces.net_perf.close_files()
+        net_perf_client.interfaces.net_perf.iperf_process.stop(10)
         wifi_dut.interfaces.wifi.leave()
         sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                         wifi_access_point=wifi_access_point,
