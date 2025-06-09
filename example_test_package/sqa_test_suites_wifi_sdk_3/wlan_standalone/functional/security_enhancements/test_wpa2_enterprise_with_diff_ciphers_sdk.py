@@ -285,13 +285,19 @@ class iperfThread(ThreadBase):
                                         protocol=self.protocol, device_ip=self.device_ip,
                                         host_ip=self.host_ip, timeout=60, traffic_type="TX")
 
+
 class disconnectThread(ThreadBase):
-    def __init__(self, wifi_access_point):
+    def __init__(self, wifi_access_point, dut_ip_address):
+        super().__init__()
         self.wifi_access_point = wifi_access_point
+        self.dut_ip_address = dut_ip_address
 
     def run(self):
         logger().info("AP Disconnecting")
-        self.wifi_access_point.interfaces.wifi.stop_ap()
+        self.wifi_access_point.interfaces.wifi.get_associated_devices()
+        self.wifi_access_point.interfaces.wifi.disconnect_devices(self.dut_ip_address)
+        time.sleep(1)
+        self.wifi_access_point.interfaces.wifi.get_associated_devices()
 
 
 @pytest.mark.config(
@@ -1934,7 +1940,8 @@ def test_wsdk_WPA2_EAP_footer_removed_TLSv12_C113863(wifi_dut, wifi_access_point
             result = output.strip().split(':')[1].lstrip()
             logger().info(f"\n\n Reason code:{result} \n\n")
             assert (result == '4E' or result == '53'), "Unable to get expected reason code hence test is failed"
-            logger().info(f"Observed Expected Error Code {result}, which means PEM Footer error and hence test cases is passed")
+            logger().info(
+                f"Observed Expected Error Code {result}, which means PEM Footer error and hence test cases is passed")
             dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
             logger().info(f"Mac Address of DUT: {dut_mac_address}")
             ap_mac_address = wifi_access_point.interfaces.wifi.bssid
@@ -4070,17 +4077,18 @@ def test_wsdk_WPA2_EAP_ap_disconn_during_data_transfer_C113887(wifi_dut, wifi_ac
                                                           channel=wifi_access_point.interfaces.wifi.channel,
                                                           retry_count=3)
             logger().info(f"device_ip, device_mac : {dut_addr['device_ip']}, {dut_addr['dut_mac_address']}")
+            dut_ip_address = dut_addr['device_ip']
             time.sleep(2)
             host_ip = wifi_client.interfaces.wifi.get_ip_address()
             logger().info(f"Remote device ip :{host_ip}")
             t1 = iperfThread(net_perf_client, wifi_dut, host_ip, device_ip=dut_addr['device_ip'], protocol="TCP",
                              sl_collections=sl_collections)
+            t2 = disconnectThread(wifi_access_point, dut_ip_address)
             t1.start()
             time.sleep(20)
-            t2 = disconnectThread(wifi_access_point)
             t2.start()
-            t2.wait_for_exit(True)
-            t1.wait_for_exit(True)
+            t2.wait_for_exit()
+            t1.wait_for_exit()
 
             events = wifi_dut.interfaces.wifi.get_async_events()
             rejoin_error_events = [
@@ -4095,7 +4103,7 @@ def test_wsdk_WPA2_EAP_ap_disconn_during_data_transfer_C113887(wifi_dut, wifi_ac
                     new = re.search("Wi-Fi disconnections (\d)\n\nReason code : (\d+)", event.event_data)
                     logger().info(f"Reason code is : {new.group(2)}")
                     result = new.group(2)
-                    assert (result == '10' or result == '83'), "Unable to get expected reason code hence test is failed"
+                    assert (result == '10' or result == '87'), "Unable to get expected reason code hence test is failed"
                 else:
                     assert "Event not received"
 
