@@ -1218,6 +1218,24 @@ devices:
                 certificate_file: 'wifi-user.pem'
                 ca_file: 'wifi-user.pem'
 
+    raspi_radius_server_v2:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            radius_server:
+                type: 'radius_server.freeradius.freeradius_v3_2_linux'
+                shell: 'linux_shell'
+                ap_ip_address: '192.168.50.1/24'
+                ap_secret: '12345678'
+                username: 'user1'
+                password: '12345678'
+                tls_min_version: '1.0'
+                tls_max_version: '1.2'
+                private_key_file: 'wifi-user.pem'
+                certificate_file: 'wifi-user.pem'
+                ca_file: 'wifi-user.pem'
+                #private_key_password: 12345678
+
     static_radius_server:
         interfaces:
             ssh_shell:
@@ -1658,7 +1676,7 @@ defaults:
         stop_after_elapsed_time: false
 
     thread_params:
-        buffer_len: 128
+        buffer_len: 1600
 # The logger section is optional and can be used to modify the logging level for different modules
 logger:
     DLink810AccessPoint: DEBUG
@@ -1680,6 +1698,8 @@ constants:
         value: 30
     time_duration:
         value: 5
+    long_duration:
+        value: 1800
     ping_count:
         value: 10
     iter_count:
