@@ -993,7 +993,7 @@ class WifiJoinThread(ThreadBase):
         return
 
 
-@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 3584}})
+@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 2500}})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": 12345678}
@@ -1071,7 +1071,7 @@ def test_wifi_sdk_verify_one_tcp_tx_and_udp_tx_multi_thread_socket_functionality
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 3584}})
+@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 2500}})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": 12345678}
@@ -1149,7 +1149,7 @@ def test_wifi_sdk_verify_one_tcp_tx_and_udp_rx_multi_thread_socket_functionality
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 3584}})
+@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 2500}})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": 12345678}
@@ -1227,7 +1227,7 @@ def test_wifi_sdk_verify_one_tcp_tx_and_tcp_rx_multi_thread_socket_functionality
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 3584}})
+@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 2500}})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": 12345678}
@@ -1305,7 +1305,7 @@ def test_wifi_sdk_verify_one_tcp_rx_and_udp_tx_multi_thread_socket_functionality
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 3584}})
+@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 2500}})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": 12345678}
@@ -1383,7 +1383,7 @@ def test_wifi_sdk_verify_one_tcp_rx_and_udp_rx_multi_thread_socket_functionality
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 3584}})
+@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 2500}})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": 12345678}
@@ -1461,7 +1461,7 @@ def test_wifi_sdk_verify_one_udp_rx_and_udp_tx_multi_thread_socket_functionality
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 3584}})
+@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 2500}})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": 12345678}
@@ -1540,7 +1540,7 @@ def test_wifi_sdk_verify_one_udp_rx_and_tcp_rx_multi_thread_socket_functionality
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 3584}})
+@wifi_dut_marker(thread_config={"wifi": {"count": 3, "stack_len": 2500}})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": 12345678}
@@ -1778,7 +1778,7 @@ def test_wifi_sdk_verify_two_udp_tx_and_udp_rx_multi_thread_socket_functionality
 
 
 @wifi_dut_marker(
-    thread_config={"wifi": {"count": 3, "stack_len": 3584}},
+    thread_config={"wifi": {"count": 3, "stack_len": 2500}},
     ca_cert=[
         "ca-chain.cert.pem",
         "SL_NET_SIGNING_CERTIFICATE",
@@ -1949,7 +1949,7 @@ def test_wifi_sdk_verify_udp_tx_and_udp_rx_tcp_tx_and_tcp_rx_tls_tx_and_tls_rx_c
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2500, "priority": 8}},
         "oper_mode": 0,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.OpenMode
