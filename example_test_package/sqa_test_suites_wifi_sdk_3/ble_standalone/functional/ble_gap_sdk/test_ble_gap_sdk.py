@@ -1,6 +1,7 @@
 import re
 import pytest
 import time
+import os
 import datetime
 from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 from utf.utils.stopwatch import Stopwatch

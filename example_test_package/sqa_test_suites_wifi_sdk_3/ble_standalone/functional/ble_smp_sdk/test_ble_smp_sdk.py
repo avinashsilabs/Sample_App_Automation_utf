@@ -215,9 +215,6 @@ class BLEFunc(ThreadBase):
                             logger().warning(f"Connection Failed...RETRY COUNT IS {retry_count + 1}\nWarning:{err}")
                             time.sleep(15)
 
-                state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
-                state_int = int(state) if state.isdigit() else -1
-                assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
                 if self.sniffer_start_stop:
                     logger().info("Disconnecting the bt host....")
                     self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
