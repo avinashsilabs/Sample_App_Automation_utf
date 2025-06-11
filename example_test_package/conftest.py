@@ -209,7 +209,7 @@ def reset_on_test_mode_change(request, wiseconnect_duts, harness):
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_teardown(item, nextitem):
+def pytest_runtest_protocol(item, nextitem):
     if is_publish_test_results_enabled() and is_test_results_source_api_enabled():
         module_name = UtfConfig.instance().defaults.get("dut")
         settings = EnvironSettings()
