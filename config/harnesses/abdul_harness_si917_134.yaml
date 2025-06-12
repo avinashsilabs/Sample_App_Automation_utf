@@ -198,7 +198,7 @@ devices:
                 protected_management_frame: 'Disable'
                 #ipv6 configuration
                 connection_type: 'STATIC_IPV6'
-                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1bc"
+                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1234"
                 wan_ipv6_gateway: "2401:4900:1cb3:3444::1"
                 wan_prefix_length: "64"
                 ipv6_state: "1" #0= "stateless" 1="stateful"
@@ -321,6 +321,7 @@ devices:
                 supports: [ 'wifi_ap', 'wifi_client' ]
 #                interface: 'wlan0'
                 interface: 'eth1'
+                v6_interface: "eth1"
                 standard: 'n'
                 ip_address: '192.168.0.1'
                 region: 'Japan'
@@ -475,6 +476,7 @@ devices:
                 image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
                 username: pi
                 password: 'raspberry'
+                skip_rabbitmq_check: True
 
             # these are the RPC-enabled interfaces that will forward all method and property access
             # calls over to the respective instance on the server
@@ -535,6 +537,7 @@ devices:
                 image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
                 username: pi
                 password: 'raspberry'
+                skip_rabbitmq_check: True
             shell:
                 type: 'rpc.rpc_client'
                 # the 'forward_to' property specifies the destination device and interface on the server
@@ -634,6 +637,19 @@ devices:
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
 
+    raspi_mosquitto_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 1883
+                interface: 'eth1'
+                tls_enabled: false
+                ip_version: 6
+
     # this represents an MQTT broker running on the raspberry pi on port 1883 with authentication enabled
     raspi_mosquitto_auth:
         interfaces:
@@ -673,9 +689,9 @@ devices:
                 server_listen_address: '0.0.0.0'
                 # port must be set to 8883 for TLS to be enabled
                 port: 8883
-                interface: 'eth1'
-#                username: 'testuser'
-#                password: 'testpassword'
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
                 tls_enabled: true
                 # If TLS is enabled, the properties below must be specified and contain the names
                 # of files within the utils/tls_certificates directory containing the TLS private key,
@@ -683,6 +699,30 @@ devices:
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
+
+
+    raspi_mosquitto_tls_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0.0.0.0'
+                # port must be set to 8883 for TLS to be enabled
+                port: 8883
+                interface: 'eth1'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: true
+                # If TLS is enabled, the properties below must be specified and contain the names
+                # of files within the utils/tls_certificates directory containing the TLS private key,
+                # certificate, and CA certificate chain
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+                ip_version: 6
+
 
     raspi_mosquitto_tls_ecdsa:
         interfaces:
@@ -785,13 +825,21 @@ devices:
                 tls_enabled: true
                 tls_ca_chain: 'ca-chain.cert.pem'
 
+    tcp_server:
+        interfaces:
+            server:
+                type: "wifi.sdk_server.sdk_server_linux"
+                server_name: "TCP"
+                firmware_file_name: "encrypted_1_SiWG917-B.2.14.5.0.0.2.rps"
+                server_binary_file_name: "tcp_server.bin"
+
     airpcap:
         interfaces:
             local_shell:
                 type: 'shell.ssh_shell'
-                remote: 10.208.70.9  # configure sniffer NUC IP
-                username: test       # sniffer NUC username
-                password: test123    # sniffer NUC password
+                remote: 10.208.70.38  # configure sniffer NUC IP
+                username: svc_sqa_automation       # sniffer NUC username
+                password: Silicon@20242025    # sniffer NUC password
                 use_paramiko_expect: false
                 timeout: 30
             capture:
@@ -801,7 +849,7 @@ devices:
                 interface: 'wlp0s20f3'
 #                interface: 'wlx00c0cab57c2a'
             live_capture:
-                host_address: 10.208.70.9
+                host_address: 10.208.70.38
                 type: 'wifi.sniffer.pyshark_live_sniffer'
                 shell: 'local_shell'
                 interface: 'wlp0s20f3'
@@ -1061,9 +1109,9 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
                 # host machine details where iperf is configuered
-                host_ip: "10.208.70.9"
-                host_username: "test"
-                host_password: "test123"
+                host_ip: "10.208.70.38"
+                host_username: "svc_sqa_automation"
+                host_password: "Silicon@20242025"
 
     raspi_ftp_server:
         interfaces:
@@ -1107,14 +1155,33 @@ devices:
                 private_key_file: 'wifi-user.pem'
                 certificate_file: 'wifi-user.pem'
                 ca_file: 'wifi-user.pem'
+#                private_key_password: 12345678
+
+    raspi_radius_server_v2:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            radius_server:
+                type: 'radius_server.freeradius.freeradius_v3_2_linux'
+                shell: 'linux_shell'
+                ap_ip_address: '192.168.50.1/24'
+                ap_secret: '12345678'
+                username: 'user1'
+                password: '12345678'
+                tls_min_version: '1.0'
+                tls_max_version: '1.2'
+                private_key_file: 'wifi-user.pem'
+                certificate_file: 'wifi-user.pem'
+                ca_file: 'wifi-user.pem'
+                #private_key_password: 12345678
 
     static_radius_server:
         interfaces:
             ssh_shell:
                 type: 'shell.ssh_shell'
-                remote: '10.208.70.9'  # configure Free Radius Server NUC IP
-                username: test       # NUC username
-                password: test123    # NUC password
+                remote: '10.208.70.38'  # configure Free Radius Server NUC IP
+                username: svc_sqa_automation       # NUC username
+                password: Silicon@20242025    # NUC password
                 use_paramiko_expect: false
             radius_server:
                 type: 'radius_server.freeradius.static'
@@ -1312,6 +1379,8 @@ defaults:
 
     http_client: 'raspi_http_client'
 
+    sdk_server: 'tcp_server'
+
     rf_attenuator: '50pa500_attenuator'
     ssl_server: 'raspi_ssl_server'
     #ssl_server: 'raspi_ssl_server_static'
@@ -1331,8 +1400,8 @@ defaults:
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
         baud: 115200
-        data_chunk_read_elapsed_time: 5
-        data_chunk_read_dealy: 0.05
+        data_chunk_read_elapsed_time: 0.9
+        data_chunk_read_dealy: 0.03
 
     ble_vulnerability_sniffer: 'ble_sweyntooth'
     bt_vulnerability_sniffer: 'bt_braktooth'
@@ -1350,7 +1419,7 @@ defaults:
         disable_sniffer_validation: false
 
         # firmware path for http/https otaf
-        http_url: '/SiWG917-B.2.13.2.0.0.3.rps'
+        http_url: '/secure_SiWG917-B.2.14.5.0.0.9.rps'
 
         pll_mode: 0
         rf_type: 1
@@ -1419,7 +1488,7 @@ defaults:
         address_family: 'ipv4'
         port: '8007'
         ip_len: 4
-        server_ip: '192.168.50.5'
+        server_ip: '192.168.50.55'
         stream_type: 'stream'
 
     sntp_server:
@@ -1545,7 +1614,7 @@ constants:
     time_duration:
         value: 5
     long_duration:
-        value: 30
+        value: 360
     ping_count:
         value: 10
     iter_count:
@@ -1567,11 +1636,15 @@ constants:
     wreck_password:
         value: 'test123'
     rps_filename:
-        value:  'secured_SiWG917-B.2.13.2.0.0.3.rps'
+        value:  'secure_SiWG917-B.2.14.5.0.0.9.rps'
     m4_rps_filename:
-        value:  'secured_wifi_station_ping_soc.rps'
+        value:  'secure_test_agent_soc-http-otaf-fix.rps'
     m4_rps_plain:
         value: 'wifi_station_ping_soc.rps'
+    combine_rps_filename:
+        value: 'combined_ta_m4.rps'
+    rejoin_time:
+        value: 160
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
 

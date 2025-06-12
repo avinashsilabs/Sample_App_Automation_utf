@@ -76,6 +76,7 @@ devices:
         type: 'rs911x'
         subtype: 'rs9117'
         src_dir: 'utf_wiseconnect'
+        commander_options: '--serialno 000440318568 --device Si917' #configure primary EVK serial number
 
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
         defaults:
@@ -99,6 +100,7 @@ devices:
                 port: 'auto'
                 vid: 0x1366
                 pid: 0x0105
+                serial_number: '000440318568' # configure primary evk serial number
 
             # 'firmware_uart' is a special interface that indicates which UART is used
             # when loading firmware on the device
@@ -118,24 +120,51 @@ devices:
                 # communication interface to the device
                 type: 'sl_wifi_test_agent_cli'
                 src_dir: 'utf_wiseconnect_3.tests'
+                commander_options: '--serialno 000440318568 --device Si917' #configure primary EVK serial number
                 thread_config:
                     wifi:
                         count: 2
                         stack_len: 2048
                     ble:
-                        count: 0
+                        count: 2
                         stack_len: 2048
+
+    remote_wiseconnect3:
+        type: 'efx32'
+        subtype: 'efr32'
+        commander_options: '--serialno 000440318552 --device Si917' #configure secondary EVK serial number
+        defaults:
+            cli_transport: 'serial'
+        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
+        interfaces:
+            serial:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440318552' # configure secondary evk serial number
+            wifi:
+                type: 'sl_wifi_test_agent_cli'
+                src_dir: 'utf_wiseconnect_3.tests'
+                commander_options: '--serialno 000440318552 --device Si917' #configure secondary EVK serial number
 
     efr32_4180b_Si917:
         type: 'efx32'
         subtype: 'efr32'
-        commander_options: "--device Si917"
+        commander_options: "--serialno 000440318568 --device Si917"
         interfaces:
             vcom:
                 type: 'serial'
                 port: 'auto'
                 vid: 0x1366
                 pid: 0x0105
+                serial_number: '000440318568'
 
     #EFR32 configuration
     efr32_4180b:
@@ -198,7 +227,7 @@ devices:
                 protected_management_frame: 'Disable'
                 #ipv6 configuration
                 connection_type: 'STATIC_IPV6'
-                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1bcz"
+                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1234"
                 wan_ipv6_gateway: "2401:4900:1cb3:3444::1"
                 wan_prefix_length: "64"
                 ipv6_state: "1" #0= "stateless" 1="stateful"
@@ -211,8 +240,25 @@ devices:
                 ap_test_ip: '192.168.50.1' #AP LOGIN IP (TEST IP)
                 skip_assertion_failure: True
                 # radius server configuration
-                radius_ip: "10.207.17.220"
+                radius_ip: "10.207.18.227"
                 radius_port: "1812"
+#                guest_networks:
+#                    - band: "2g"
+#                      index: "1"
+#                      ssid: "ASUS_B0_2G_Guest"
+#                      passphrase: '123456789'
+#                      security: WPA2
+#                    - band: "2g"
+#                      index: "2"
+#                      ssid: "ASUS_B0_2G_Guest2"
+#                      passphrase: '123456789'
+#                      security: WPA2
+#                    - band: "2g"
+#                      index: "3"
+#                      ssid: "ASUS_B0_2G_Guest3"
+#                      passphrase: '123456789'
+#                      security: WPA2
+
     switched_ap:
         interfaces:
             wifi:
@@ -302,8 +348,8 @@ devices:
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
                 supports: [ 'wifi_ap', 'wifi_client' ]
-#                interface: 'wlan0'
                 interface: 'eth1'
+                v6_interface: "eth1"
                 standard: 'n'
                 ip_address: '192.168.0.1'
                 region: 'Japan'
@@ -330,7 +376,7 @@ devices:
         interfaces:
             linux_shell:
                 type: 'shell.ssh_shell'
-                remote: 10.207.18.227
+                remote: 10.207.17.220
                 username: pi
                 password: raspberry
                 use_paramiko_expect: false
@@ -458,6 +504,7 @@ devices:
                 image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
                 username: pi
                 password: 'raspberry'
+                skip_rabbitmq_check: True
 
             # these are the RPC-enabled interfaces that will forward all method and property access
             # calls over to the respective instance on the server
@@ -514,10 +561,11 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '10.207.18.227'
+                ip_address: '10.207.17.220'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
                 username: pi
                 password: 'raspberry'
+                skip_rabbitmq_check: True
             shell:
                 type: 'rpc.rpc_client'
                 # the 'forward_to' property specifies the destination device and interface on the server
@@ -617,6 +665,19 @@ devices:
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
 
+    raspi_mosquitto_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 1883
+                interface: 'eth1'
+                tls_enabled: false
+                ip_version: 6
+
     # this represents an MQTT broker running on the raspberry pi on port 1883 with authentication enabled
     raspi_mosquitto_auth:
         interfaces:
@@ -635,6 +696,13 @@ devices:
                 #            Defaults to authentication disabled
                 username: 'testuser'
                 password: 'testpassword'
+                accounts:
+                    - username: 'testuser1'
+                      password: 'password1'
+                    - username: 'testuser2'
+                      password: 'password2'
+                    - username: 'testuser3'
+                      password: 'password3'
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
 
@@ -649,9 +717,9 @@ devices:
                 server_listen_address: '0.0.0.0'
                 # port must be set to 8883 for TLS to be enabled
                 port: 8883
-                interface: 'eth1'
-#                username: 'testuser'
-#                password: 'testpassword'
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
                 tls_enabled: true
                 # If TLS is enabled, the properties below must be specified and contain the names
                 # of files within the utils/tls_certificates directory containing the TLS private key,
@@ -659,6 +727,30 @@ devices:
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
+
+
+    raspi_mosquitto_tls_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0.0.0.0'
+                # port must be set to 8883 for TLS to be enabled
+                port: 8883
+                interface: 'eth1'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: true
+                # If TLS is enabled, the properties below must be specified and contain the names
+                # of files within the utils/tls_certificates directory containing the TLS private key,
+                # certificate, and CA certificate chain
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+                ip_version: 6
+
 
     raspi_mosquitto_tls_ecdsa:
         interfaces:
@@ -736,6 +828,16 @@ devices:
                 tls_certificate: 'server-cert.pem'
                 tls_ca_chain: 'ca-cert.pem'
 
+    python_http_server:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            http:
+                type: 'http.server.python_http'
+                shell: 'linux_shell'
+                port: 80
+                interface: 'wlan0'
+
     raspi_http_client:
         interfaces:
             http:
@@ -751,27 +853,35 @@ devices:
                 tls_enabled: true
                 tls_ca_chain: 'ca-chain.cert.pem'
 
+    tcp_server:
+        interfaces:
+            server:
+                type: "wifi.sdk_server.sdk_server_linux"
+                server_name: "TCP"
+                firmware_file_name: "encrypted_1_SiWG917-B.2.14.5.0.0.9.rps"
+                server_binary_file_name: "tcp_server.bin"
+
     airpcap:
         interfaces:
             local_shell:
                 type: 'shell.ssh_shell'
-                remote: 10.207.18.208  # configure sniffer NUC IP
-                username: test       # sniffer NUC username
-                password: test123    # sniffer NUC password
+                remote: 10.207.18.208 # configure sniffer NUC IP
+                username: svc_sqa_automation       # sniffer NUC username
+                password: Silicon@20242025    # sniffer NUC password
                 use_paramiko_expect: false
                 timeout: 30
             capture:
                 default:
                 type: 'wifi.sniffer.tshark'
                 shell: 'local_shell'
-                interface: 'wlp0s20f3'
-#                interface: 'wlx00c0ca9911aa'
+#                interface: 'wlp0s20f3'
+                interface: 'wlx00c0cab57c2a'
             live_capture:
                 host_address: 10.207.18.208
                 type: 'wifi.sniffer.pyshark_live_sniffer'
                 shell: 'local_shell'
-                interface: 'wlp0s20f3'
-#                interface: 'wlx00c0ca9911aa'
+#                interface: 'wlp0s20f3'
+                interface: 'wlx00c0cab57c2a'
 
     saleae_logic_analyzer:
         interfaces:
@@ -793,7 +903,7 @@ devices:
 
     keysight_benchvue_power_analyzer_win_rm:
         interfaces:
-            windows_shell: 
+            windows_shell:
                 type: 'rem_mgmt.win_rm'
                 host_ip: '10.207.19.185'
                 username: 'test'
@@ -832,6 +942,7 @@ devices:
                 private_key: 'private-key.key'
                 client_cert: 'client-certificate.crt'
                 root_ca: 'start_field.pem'
+
     azure_iot:
         interfaces:
             hub:
@@ -851,14 +962,57 @@ devices:
                 cert_file: 'mydevkitcertificate.pem'
                 key_file: 'mydevkitkey.pem'
 
+    azure_iot_1:
+        interfaces:
+            hub:
+                type: 'azure_iot.azure_iot_hub'
+                connection_string_hub: 'HostName=SilabsHYDAzure.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=hN6vCGNtCvRXg7Uhre8OwR360cL8az8FBCObXSES4fI='
+                hostname: 'SilabsHYDAzure.azure-devices.net'
+                event_hub_connection_string: "Endpoint=sb://iothub-ns-silabshyda-25118973-20f98fa458.servicebus.windows.net/;SharedAccessKeyName=iothubowner;SharedAccessKey=hN6vCGNtCvRXg7Uhre8OwR360cL8az8FBCObXSES4fI=;EntityPath=silabshydazure"
+                event_hub_name: "silabshydazure"
+                consumer_group: "$Default"
+
+            device:
+                type: 'azure_iot.azure_iot_device'
+                connection_string_device: 'HostName=SilabsHYDAzure.azure-devices.net;DeviceId=symmetric_device;SharedAccessKey=Vn0P8z6gqR5ShVvv6ouQOT0eAcQFQB9GLfG0teX+ZpI='
+                device_type: 'symmetric_device'
+                hostname: 'SilabsHYDAzure.azure-devices.net'
+                device_id: 'symmetric_device'
+                cert_file: 'mydevkitcertificate.pem'
+                key_file: 'mydevkitkey.pem'
+    azure_iot_2:
+        interfaces:
+            hub:
+                type: 'azure_iot.azure_iot_hub'
+                connection_string_hub: 'HostName=WIFISDK-IOT-HUB.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=hN6vCGNtCvRXg7Uhre8OwR360cL8az8FBCObXSES4fI='
+                hostname: 'SilabsAzureIOT.azure-devices.net'
+                event_hub_connection_string: "Endpoint=sb://iothub-ns-silabsazur-24347843-f827db8d8a.servicebus.windows.net/;SharedAccessKeyName=iothubowner;SharedAccessKey=jZId6j3qgLt4NYlnJR62ntjOTcZq99bXEjCAf3KiUVI=;EntityPath=silabsazureiot"
+                event_hub_name: "silabsazureiot"
+                consumer_group: "$Default"
+
+            device:
+                type: 'azure_iot.azure_iot_device'
+                connection_string_device: 'HostName=SilabsAzureIOT.azure-devices.net;DeviceId=Silabs_Device_Azure_IOT;SharedAccessKey=VQyjs8oXxYL25PgZo6cIgLYw/fL++vLfrNh2dOdL9dk='
+                device_type: 'symmetric_device'
+                hostname: 'SilabsAzureIOT.azure-devices.net'
+                device_id: 'Silabs_Device_Azure_IOT'
+                cert_file: 'mydevkitcertificate.pem'
+                key_file: 'mydevkitkey.pem'
+
+    azure_blob:
+        interfaces:
+            blob:
+                type: 'azure_blob'
+                connection_string_blob: "DefaultEndpointsProtocol=https;AccountName=httpotaf;AccountKey=mr7Rg12ZPUlKoVK6hq9VLAEBJ6rZutXKiuwZRaaCVFp6XmRaI1NFjZ5PIx4izLTaNpYjzfr1FIvH+AStsGAn4w==;EndpointSuffix=core.windows.net"
+                container_name: "firmware"
 
     aws_s3_boto3:
         interfaces:
             s3:
                 type: 'aws_s3.boto3'
-                aws_access_key_id: "AKIAQFAKKP7UIDS6GHE7"
-                aws_secret_access_key: "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"
-                region: "us-east-1"
+                aws_access_key_id: "AKIAQRVCCU6GZ2FJ4QX7"
+                aws_secret_access_key: "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"
+                region_name: "us-east-2"
 
 
     50pa500_attenuator:
@@ -946,6 +1100,18 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
 
+    raspi_iperf2:
+        interfaces:
+            net_perf:
+                type: 'iperf'
+                # to zip all the iperf output files
+                zip_results: 'Y'
+                host:
+                    TCP:
+                        port: 5201
+                    UDP:
+                        port: 5202
+
     sniffer_filter:
         interfaces:
             ws_sniffer_filter:
@@ -960,7 +1126,7 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
                 # host machine details where iperf is configuered
-                host_ip: "10.207.17.220"
+                host_ip: "10.207.18.227"
                 host_username: "pi"
                 host_password: "raspberry"
 
@@ -972,8 +1138,8 @@ devices:
                 zip_results: 'Y'
                 # host machine details where iperf is configuered
                 host_ip: "10.207.18.208"
-                host_username: "test"
-                host_password: "test123"
+                host_username: "svc_sqa_automation"
+                host_password: "Silicon@20242025"
 
     raspi_ftp_server:
         interfaces:
@@ -1017,14 +1183,33 @@ devices:
                 private_key_file: 'wifi-user.pem'
                 certificate_file: 'wifi-user.pem'
                 ca_file: 'wifi-user.pem'
+                private_key_password: 12345678
+
+    raspi_radius_server_v2:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            radius_server:
+                type: 'radius_server.freeradius.freeradius_v3_2_linux'
+                shell: 'linux_shell'
+                ap_ip_address: '192.168.50.1/24'
+                ap_secret: '12345678'
+                username: 'user1'
+                password: '12345678'
+                tls_min_version: '1.0'
+                tls_max_version: '1.2'
+                private_key_file: 'wifi-user.pem'
+                certificate_file: 'wifi-user.pem'
+                ca_file: 'wifi-user.pem'
+                private_key_password: 12345678
 
     static_radius_server:
         interfaces:
             ssh_shell:
                 type: 'shell.ssh_shell'
                 remote: '10.207.18.208'  # configure Free Radius Server NUC IP
-                username: test       # NUC username
-                password: test123    # NUC password
+                username: svc_sqa_automation       # NUC username
+                password: Silicon@20242025    # NUC password
                 use_paramiko_expect: false
             radius_server:
                 type: 'radius_server.freeradius.static'
@@ -1131,6 +1316,15 @@ devices:
                 shell: 'linux_shell'
                 interface: 'eth1'
 
+    # This represents the service_discovery configuration
+    avahi_daemon_linux:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            sd:
+                type: "service_discovery.avahi_daemon_linux"
+                shell: 'linux_shell'
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1139,6 +1333,8 @@ defaults:
     dut: 'si917_sl_wifi'
 
     efx32: 'efr32_4180b_Si917'
+
+    remote_wiseconnect3: 'remote_wiseconnect3'
 
 #    # List of devices on test bed, used for loading/upgrading firmware at test case level
     wiseconnect_duts:
@@ -1164,6 +1360,12 @@ defaults:
     aws_iot_client: 'python_aws_iot_thing'
 
     azure_iot_client: 'azure_iot'
+
+    azure_iot_clients:
+        - 'azure_iot_1'
+        - 'azure_iot_2'
+
+    azure_blob: 'azure_blob'
 
     wifi_clients:
         - 'raspi_wifi'
@@ -1207,6 +1409,8 @@ defaults:
 
     http_client: 'raspi_http_client'
 
+    sdk_server: 'tcp_server'
+
     rf_attenuator: '50pa500_attenuator'
     ssl_server: 'raspi_ssl_server'
     #ssl_server: 'raspi_ssl_server_static'
@@ -1245,7 +1449,7 @@ defaults:
         disable_sniffer_validation: false
 
         # firmware path for http/https otaf
-        http_url: '/SiWG917-B.2.10.1.0.0.6.bin'
+        http_url: '/secure_SiWG917-B.2.14.5.0.0.9.rps'
 
         pll_mode: 0
         rf_type: 1
@@ -1257,6 +1461,8 @@ defaults:
         power_save: True
 
     wiseconnect_web: 'wiseconnect_web'
+
+    service_discovery: 'avahi_daemon_linux'
 
     net_perf_server: 'secondary_raspi_iperf'
 
@@ -1278,9 +1484,9 @@ defaults:
         screenshot_file_name: 'wiseconnect_screenshot'
 
     s3:
-        aws_access_key_id: "AKIAQFAKKP7UIDS6GHE7"
-        aws_secret_access_key: "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"
-        region: "us-east-1"
+        aws_access_key_id: "AKIAQRVCCU6GZ2FJ4QX7"
+        aws_secret_access_key: "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"
+        region: "us-east-2"
 
     openssl_config:
         certfile: "mosquitto-utf.silabs.com.cert.pem"
@@ -1312,7 +1518,7 @@ defaults:
         address_family: 'ipv4'
         port: '8007'
         ip_len: 4
-        server_ip: '192.168.50.210'
+        server_ip: '192.168.50.101'
         stream_type: 'stream'
 
     sntp_server:
@@ -1427,8 +1633,11 @@ start_state:
     wifi_access_point:
         wifi: 'ap_enabled'
     wifi_dut:
-        device: 'reset'
+#        device: 'reset'
         wifi: 'init'
+    remote_wiseconnect3:
+        device: 'reset'
+        sapi: 'init'
 
 #end_state:
 #    wifi_access_point:
@@ -1436,7 +1645,9 @@ start_state:
 
 constants:
     time_duration:
-        value: 300
+        value: 5
+    long_duration:
+        value: 360
     ping_count:
         value: 10
     iter_count:
@@ -1449,5 +1660,24 @@ constants:
         value: 30
     hostname:
         value: 'rs9116test'
+    wreck_host_name:
+        value: '192.168.50.175'
+    wreck_port:
+        value: 22
+    wreck_username:
+        value: 'test'
+    wreck_password:
+        value: 'test123'
+    rps_filename:
+        value:  'secure_SiWG917-B.2.14.5.0.0.9.rps'
+    m4_rps_filename:
+        value:  'secure_test_agent_soc-http-otaf-fix.rps'
+    m4_rps_plain:
+        value: 'wifi_station_ping_soc.rps'
+    combine_rps_filename:
+        value: 'combined_ta_m4.rps'
+    rejoin_time:
+        value: 160
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
+
