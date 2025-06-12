@@ -1437,7 +1437,7 @@ def test_ble_adv_10250ms_interva_C663366(ble_dut, sl_collections):
         ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_int_min=16400, ble_adv_int_max=16400,
                                                            test_scenario="none")
     except Exception as e:
-        assert '19986' in str(e), f"\n****** Testcase failed with {e}******"
+        assert '0x4e12' in str(e), f"\n****** Testcase failed with {e}******"
         logger().info("******observed error code 0x4E12 which is expected. Hence Testcase passed******")
 
 
@@ -1450,7 +1450,7 @@ def test_ble_adv_2ms_interva_C663370(ble_dut, sl_collections):
         logger().info("Set DUT in advertise mode")
         ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_int_min=2, ble_adv_int_max=2, test_scenario="none")
     except Exception as e:
-        assert '19986' in str(e), f"\n****** Testcase failed with {e}******"
+        assert '0x4e12' in str(e), f"\n****** Testcase failed with {e}******"
         logger().info("******observed error code 0x4E12 which is expected. Hence Testcase passed******")
 
 
@@ -1594,8 +1594,8 @@ def test_ble_scan_window_greter_than_scan_interval_C663369(ble_dut, sl_collectio
         logger().info("Start scanning....")
         ble_dut.interfaces.bluetooth.ble_start_scanning(ble_scan_interval=80, ble_scan_window=160)
     except Exception as e:
-        assert "19986" in str(e), f"\n****** Testcase failed with {e}******"
-        logger().info("******observed error code 0x4E12 which is expected.Hence Testcase passed******")
+        assert '0x4046' in str(e), f"\n****** Testcase failed with {e}******"
+        logger().info("******observed error code 0x4046 which is expected.Hence Testcase passed******")
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1606,7 +1606,7 @@ def test_ble_scan_with_random_addr_C663406(ble_dut, sl_collections):
         logger().info("Start scanning....")
         ble_dut.interfaces.bluetooth.ble_start_scanning(ble_address_type=1)
     except Exception as e:
-        assert "19986" in str(e), f"\n****** Testcase failed with {e}******"
+        assert '0x4e12' in str(e), f"\n****** Testcase failed with {e}******"
         logger().info("******observed error code 0x4E12 which is expected.Hence Testcase passed******")
 
 
@@ -1619,7 +1619,7 @@ def test_ble_adv_with_random_addr_C663407(ble_dut, sl_collections):
         logger().info("Set DUT in advertise mode")
         ble_dut.interfaces.bluetooth.ble_start_advertising(own_addr_type=1)
     except Exception as e:
-        assert "19986" in str(e), f"\n****** Testcase failed with {e}******"
+        assert '0x4e12' in str(e), f"\n****** Testcase failed with {e}******"
         logger().info("******observed error code 0x4E12 which is expected.Hence Testcase passed******")
 
 
