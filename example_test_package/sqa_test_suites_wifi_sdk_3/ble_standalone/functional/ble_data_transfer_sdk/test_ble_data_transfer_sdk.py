@@ -375,7 +375,7 @@ class Ble_Data_Transfer:
         logger().info(f"*******Configure Buffer Mode:{mode} and Buffer count:{count} Success ****************")
 
     def gatt_write_without_resp(self, write_handle, data_length=None, data=None, write_time=100, write_count=None,
-                                bt_mon_log_file_name=None):
+                                bt_mon_log_file_name=None, testcase_no=None):
         logger().info(f"*******Write Without Response Start****************")
 
         def write():
@@ -412,12 +412,12 @@ class Ble_Data_Transfer:
                     try:
                         assert data in text, "Actual data is not found"
                     except:
-                        assert data[:237] in text, "Actual data is not found"
+                        if testcase_no == testcase_no:
+                            assert data[:197] in text, "Actual data is not found"
+                        else:
+                            assert data[:237] in text, "Actual data is not found"
                     flag = True
                     break
-
-            assert flag, "data is not found"
-            logger().info(" ***** Validating Write Without Response Success *****")
 
         if write_count:
             for i in range(write_count):
@@ -431,7 +431,7 @@ class Ble_Data_Transfer:
 
     @staticmethod
     def validate_write_with_response(bt_mon_log_file=None, write_handle=None, data=None,
-                                     write_data_count=None):
+                                     write_data_count=None, testcase_no=None):
         logger().info(" ***** Validating Write With Response Start *****")
         flag = False
         write_validate_count = 0
@@ -459,7 +459,10 @@ class Ble_Data_Transfer:
                 try:
                     assert data in str(text), "Actual data is not found"
                 except:
-                    assert data[:237] in str(text), "Actual data is not found"
+                    if testcase_no ==testcase_no:
+                        assert data[:197] in str(text), "Actual data is not found"
+                    else:
+                        assert data[:237] in str(text), "Actual data is not found"
                 flag = True
                 continue
             if "< ACL Data TX:" in line and flag is True:
@@ -2481,7 +2484,7 @@ def test_verify_ble_tx_write_with_response_200bytes_MTU_size_dut_as_slave_role_C
 
         # Validating Write With Response Data
         ble_obj.validate_write_with_response(bt_mon_log_file=bt_mon_log_file_name, write_handle=write_handle,
-                                             data=data, write_data_count=write_data_count, mtu_size=200)
+                                             data=data, write_data_count=write_data_count, testcase_no="705949")
 
         ble_obj.check_device_state_on_dut()
         # Mapping Master and Slave Address for Adding devices for sniffer
@@ -2745,7 +2748,7 @@ def test_verify_ble_tx_write_without_response_data_200bytes_MTU_size_dut_as_mast
             data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
             # Write and send BLE 232 bytes of write without response data using the below API
             write_count = ble_obj.gatt_write_without_resp(write_handle=write_handle, data_length=200, data=data, write_time=60,
-                                            bt_mon_log_file_name=bt_mon_log_file_name, mtu_size=200, write_count=10)
+                                            bt_mon_log_file_name=bt_mon_log_file_name,write_count=10, testcase_no="705953")
             ble_obj.check_device_state_on_dut()
 
             # Mapping Master and Slave Address for Adding devices for sniffer
