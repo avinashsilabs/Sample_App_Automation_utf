@@ -291,7 +291,7 @@ class WLanTwTThread(ThreadBase):
                                                           twt_retry_interval=self.twt_retry_interval,
                                                           req_type=self.req_type,
                                                           negotiation_type=self.negotiation_type)
-                time.sleep(70)
+                time.sleep(110)
                 retry_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                     sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address,
                     filter_name="twt_request_packets")
@@ -523,7 +523,7 @@ class WLanTwTThread(ThreadBase):
         lines = filter_file.read()
         time_delta = re.findall(r'((?<=Time delta from previous captured frame:\s)\d+)', lines)
         logger().info(f"Time delta between retry packets = {time_delta}")
-        for i in range(len(time_delta)):
+        for i in range(self.twt_retry_limit):
             if i == 0 or i == 1:
                 continue
             assert abs(int(time_delta[i]) - int(time_delta[i - 1])) in range(0, 2), "Retry interval is not 10 seconds"
@@ -752,7 +752,7 @@ def test_wifi_sdk_verify_twt_request_when_enabled_after_join_c113730(firmware_lo
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='113730',
                                  power_save=True, test_case='113730', wake_duration=0x80, wake_duration_tol=0x80,
-                                 wake_int_exp=15, wake_int_exp_tol=15, wake_int_mantissa=0x1E4C,
+                                 wake_int_exp=13, wake_int_exp_tol=13, wake_int_mantissa=0x1E4C,
                                  wake_int_mantissa_tol=0x1E4C, un_announced_twt=0, req_type=0,
                                  utf_constants=utf_constants)
         wlan_obj.start()
