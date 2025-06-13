@@ -2309,9 +2309,9 @@ def test_wifisdk_DUTAP_open_5_UDP_client_sockets_tx_5_TCP_server_socket_send_rx_
             client_ips.append(dut_addr_dict['client_ip'])
             local_port = server_port_base + count
             logger().info(f'Server port = {local_port}')
-            client_socket = remote_socket_factory.interfaces.socket.create_socket()
+            client_socket = remote_socket_factory.interfaces.socket.create_socket(interface="wlan0")
             udp_sockets.append(client_socket)
-            client_socket.start_server(port=local_port)
+            client_socket.start_server(port=local_port, socket_type=1)
             udp_socket_id = wifi_dut.interfaces.wifi.socket(stream_type="SOCK_DGRAM",
                                                             protocol="IPPROTO_UDP")
             udp_socks.append(udp_socket_id)
@@ -2332,7 +2332,7 @@ def test_wifisdk_DUTAP_open_5_UDP_client_sockets_tx_5_TCP_server_socket_send_rx_
                                           asynch=1)
             wifi_dut.interfaces.wifi.listen(socket_fd=sock, backlog=1, asynch=1)
             time.sleep(3)
-            server_socks.append(remote_socket_factory.interfaces.socket.create_socket())
+            server_socks.append(remote_socket_factory.interfaces.socket.create_socket(interface="wlan0"))
             ThreadBase.call_functions_simultaneously(
                 [(server_socks[count].connect_client_tcp, dut_addr_dict['dut_ip'], server_port),
                  (wifi_dut.interfaces.wifi.bsdSocketAccept, sock, 1)], timeout=10)
@@ -2346,7 +2346,7 @@ def test_wifisdk_DUTAP_open_5_UDP_client_sockets_tx_5_TCP_server_socket_send_rx_
             data_transfer_objs.append(data_transfer())
             socket_threads.append(Thread(target=data_transfer_objs[count].send_and_receive_data_socket,
                                          args=(udp_sockets[count], no_of_pkts, pkt_length, time_interval, wifi_dut,
-                                               server_socks[count], local_port, client_ips[0], 1), daemon=True))
+                                               udp_socks[count], local_port, client_ips[0], 1), daemon=True))
             logger().info(f"***** UDP_TX is running now in {count} ******")
             socket_threads[count].start()
             time.sleep(2)
@@ -2360,7 +2360,7 @@ def test_wifisdk_DUTAP_open_5_UDP_client_sockets_tx_5_TCP_server_socket_send_rx_
             while sw.elapsed_sec <= 60:
                 logger().info(f"Remote peer sending data over socket {sock_no} and data:{tx_buffer}")
                 server_socks[count].send_data_tcp(tx_buffer)
-                time.sleep(1)
+                time.sleep(5)
                 buffer_rx = ""
                 for retry in range(3):
                     try:
