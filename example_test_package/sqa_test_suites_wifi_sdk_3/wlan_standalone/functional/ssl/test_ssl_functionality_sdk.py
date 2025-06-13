@@ -3361,6 +3361,7 @@ def test_wifi_sdk_ssl_three_sockets_load_remove_certs_connection_c19163(wifi_sni
         sl_collections.exception_handling(wifi_dut, error)
 
 
+@pytest.mark.skip("Skipped since https server feature is not available")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
