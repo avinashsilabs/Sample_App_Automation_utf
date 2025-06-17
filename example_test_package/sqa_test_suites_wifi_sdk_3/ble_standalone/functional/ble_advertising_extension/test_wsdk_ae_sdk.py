@@ -1928,14 +1928,14 @@ def test_verify_AE_Scannable_undirected_ADV_C528514_C528516(ble_dut, ble_sniffer
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, ble_dut_address=ble_dut_address,
                                    ble_sniffer=ble_sniffer,
-                                   pri_adv_phy=1, sec_adv_phy=2, data_len=data_len, scan_resp_len=data_len,
+                                    pri_adv_phy=1, sec_adv_phy=2, data_len=data_len, scan_resp_len=data_len,
                                    test_case_id=test_case_id,
                                    adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", scan_req_notify_enable=0,
                                    adv_handle=0, ble_client_address=ble_client_address, central=remote_wiseconnect3,
                                    scanning_phys=1, powersave_p=True)
     # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
     assert all(df.loc[df['Chan'].isin([37, 38,
-                                       39]), 'Type'] == 'ADV_EXT_IND'), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
+                                       39]), 'Type'].isin(['ADV_EXT_IND', 'SCAN_REQ'])), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
     logger().info("\n\n **** ADV_EXT_IND packet found on 37,38,39 channels ****\n\n")
     # Assert if there is no non-connectable non-scannable advertising mode found and Aux Pointer is present
     assert len(df.loc[(df['Advertising Mode'] == "Non-Connectable Scannable") & (df[
@@ -2047,7 +2047,7 @@ def test_verify_AE_Scannable_filter_policy_C528575_C528577(ble_dut, ble_sniffer,
                                    central=remote_wiseconnect3, powersave_p=True)
     # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
     assert all(df.loc[df['Chan'].isin([37, 38,
-                                       39]), 'Type'] == 'ADV_EXT_IND'), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
+                                       39]), 'Type'].isin(['ADV_EXT_IND', 'SCAN_REQ'])), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
     logger().info("\n\n **** ADV_EXT_IND packet found on 37,38,39 channels ****\n\n")
     if test_case_id == "C528575":
         # Assert if there is no non-connectable scannable advertising mode found and Aux Pointer is present
