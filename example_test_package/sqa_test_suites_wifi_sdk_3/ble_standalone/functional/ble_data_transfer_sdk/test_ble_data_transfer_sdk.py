@@ -300,8 +300,8 @@ class Ble_Data_Transfer:
 
             logger().info(f"**************Link Key Extracted: {link_key}***************")
             assert len(link_key) == 34, f"link key is not proper format"
-
-        return self.ble_client_address, link_key
+            return self.ble_client_address, link_key
+        return self.ble_client_address
 
 
     def service_discovery_on_dut(self, service_uid=None, char_uid=None):
@@ -418,6 +418,8 @@ class Ble_Data_Transfer:
                             assert data[:237] in text, "Actual data is not found"
                     flag = True
                     break
+            assert flag, "data is not found"
+            logger().info(" ***** Validating Write Without Response Success *****")
 
         if write_count:
             for i in range(write_count):
