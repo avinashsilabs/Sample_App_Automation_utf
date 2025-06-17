@@ -639,6 +639,9 @@ def test_ble_sdk_passive_scanning_with_random_address_advertising_with_public_ad
         wifi_dut.interfaces.wifi.ble_stop_advertising()
         logger().info(f"***************Testcase passed successfully***************")
 
+
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_verify_dual_role_connection_using_conn_interval_100_200_ms_C663245(wifi_dut, ble_clients, sl_collections):
     """1.Initilize the dut in (0,13) opermode
               2.Start the ble in dut
@@ -675,13 +678,22 @@ def test_verify_dual_role_connection_using_conn_interval_100_200_ms_C663245(wifi
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
+
     finally:
-        logger().info("stop scanning")
-        wifi_dut.interfaces.wifi.ble_stop_scanning()
-        logger().info("stop advertising")
-        wifi_dut.interfaces.wifi.ble_stop_advertising()
+        state = wifi_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        logger().info(f"Dut-STATE:{state_int}")
+        if state_int == 2:
+            logger().info("stop scanning")
+            wifi_dut.interfaces.wifi.ble_stop_scanning()
+
+        if state_int == 1:
+            logger().info("stop advertising")
+            wifi_dut.interfaces.wifi.ble_stop_advertising()
 
 
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_verify_dual_role_connection_using_conn_interval_500_1280_ms_C663246(wifi_dut, ble_clients, sl_collections):
     """1.Initilize the dut in (0,13) opermode
               2.Start the ble in dut
