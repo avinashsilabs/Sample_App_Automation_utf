@@ -1036,7 +1036,7 @@ def test_ble_master_rx_230_bytes_C19921(ble_dut, ble_client, sl_collections, wif
                 while sw.elapsed_sec < notify_time:
                     since_time = time.perf_counter_ns()
                     ble_client.interfaces.bluetooth.send_gatt_charc_notification(svc, charc, data)
-                    time.sleep(0.3)
+                    time.sleep(3)
                     found = False
                     tw = Stopwatch()
                     while tw.elapsed_sec < 10:
@@ -1181,7 +1181,7 @@ def test_ble_master_rx_230_bytes_duty_cycle_C19927(ble_dut, ble_client, sl_colle
                 while sw.elapsed_sec < notify_time:
                     since_time = time.perf_counter_ns()
                     ble_client.interfaces.bluetooth.send_gatt_charc_notification(svc, charc, data)
-                    time.sleep(0.3)
+                    time.sleep(3)
                     found = False
                     tw = Stopwatch()
                     while tw.elapsed_sec < 10:
