@@ -2127,44 +2127,6 @@ def test_ble_smp_pairing_Initiator_keyboard_display_responder_display_yes_or_no_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_smp_just_works_pairing_Initiator_No_input_No_output_responder_keyboard_display_using_random_addr_C663352(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
-    """Verify JustWorks Pairing method for IOCap, Initiator : No input No output and Responder : keyboard Display with random addr"""
-    ble_obj = None
-    try:
-        ble_obj = BLEFunc(wifi_dut=wifi_dut,nrf_ble_client=nrf_ble_client, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"], capture_filename="frontline_capture_C663352",  smp_io_capability=4, passkey_state=0,cap_on_dongle=NRFBLEIoCapabilities.NONE,nrf_dongle_as_master=True, random_addr_on_dut=True)
-        ble_obj.start()
-        ble_obj.wait_for_exit()
-        assert len(ble_obj.sniffer_data_df_1.loc[
-                       (ble_obj.sniffer_data_df_1['Control Pkt'] == "LL_ENC_REQ")]), "unable to find encryption request"
-        assert len(ble_obj.sniffer_data_df_1.loc[(
-                ble_obj.sniffer_data_df_1['Control Pkt'] == "LL_ENC_RSP")]), "unable to find encryption response"
-        assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Request") & (
-                ble_obj.sniffer_data_df_2['IO Capabilities'] == "NoInputNoOutput") & (ble_obj.sniffer_data_df_2[
-                                                                                       'MITM'] == "MITM Protection:  Yes") & (
-                                                         ble_obj.sniffer_data_df_2[
-                                                             'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
-        assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
-                ble_obj.sniffer_data_df_2['IO Capabilities'] == "KeyboardDisplay") & (ble_obj.sniffer_data_df_2[
-                                                                                       'MITM'] == "MITM Protection:  Yes") & (
-                                                         ble_obj.sniffer_data_df_2[
-                                                             'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
-        logger().info(f"**************Testcase passed****************")
-
-    except Exception as error:
-        sl_collections.exception_handling(wifi_dut, error)
-        time.sleep(3)
-
-    finally:
-        sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                   ble_client_address=ble_obj.ble_client_address,
-                                   ble_dut_address=ble_obj.ble_dut_address)
-        nrf_ble_client.interfaces.bluetooth.stop_scanning()
-        nrf_ble_client.interfaces.bluetooth.delete_bonding_data()
-
-
-
-@pytest.mark.ble_sniffer("frontline_sniffer")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_smp_just_works_pairing_Initiator_No_input_No_output_responder_keyboard_display_using_random_addr_C664804(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : No input No output and Responder : keyboarddisplay with random addr"""
     ble_obj = None
