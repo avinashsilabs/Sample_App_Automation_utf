@@ -1,7 +1,6 @@
 import re
 from logging import exception
 from unittest import expectedFailure
-
 import pytest
 import time
 import datetime
@@ -18,6 +17,7 @@ from utf.utf_config import UtfConfig
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utils.thread_base import ThreadBase
 import os
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 
 
 def logger():
@@ -36,9 +36,7 @@ def logger():
         2. Enable advertising on DUT with with different adv type and channel
         3. Verify the ble adv type and channel in sniffer capture.
 
-
-
-    Author: Hussain korra
+    Author: Hussain korra, Vishakha
 """
 
 '''=================== Ble-gap IO test cases ===================== '''
@@ -149,6 +147,48 @@ class connectasmaster:
             self.ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
 
 
+def adv_channel_map(ble_sniffer=None, ble_dut=None, ble_adv_type=None, ble_adv_channel_map=None, capture_file=None):
+    logger().info("Sniffer Capturing started")
+    ble_sniffer.interfaces.sniffer.init_sniffer()
+    ble_sniffer.interfaces.sniffer.start_capture(capture_file=capture_file)
+    logger().info("Initiate ble service in DUT")
+    ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+    assert ble_dut_address, "failed to initiate ble in dut"
+
+    logger().info("Set DUT in advertise mode")
+    ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=ble_adv_type,
+                                                       ble_adv_channel_map=ble_adv_channel_map)
+    logger().info("======= enable wifi power save mode on DUT")
+    ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
+
+    logger().info("======= enable BT power save mode on DUT")
+    ble_dut.interfaces.bluetooth.enable_bt_power_save(
+        psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+        psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+    time.sleep(60)
+    # Mapping Slave Address for Adding devices for sniffer
+    ble_dut_address_hex = re.split(":", ble_dut_address)
+    slave_address = "0x"
+    for hex_data_part in ble_dut_address_hex:
+        slave_address = slave_address + hex_data_part
+    ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
+    ble_sniffer.interfaces.sniffer.stop_capture()
+    captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+
+    time.sleep(30)
+    exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
+    for captured_file in captured_files:
+        captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+        file_size = os.path.getsize(captured_file)
+        assert file_size > 0
+
+    exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+    file_size = os.path.getsize(exported_csv_file)
+    assert file_size > 0
+    sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+    logger().info(sniffer_data_df.head())
+
+
 pytestmark = [
     pytest.mark.config(
         "wifi_dut",
@@ -186,96 +226,9 @@ pytestmark = [
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_undir_adv_with_adv_channel_map_0x01_C664393(ble_dut, sl_collections, ble_sniffer):
+def test_ble_undir_adv_with_adv_channel_map_0x01_C663393(ble_dut, sl_collections, ble_sniffer):
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664393")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=128, ble_adv_channel_map=1)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
-
-    except Exception as error:
-        sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
-
-
-@pytest.mark.ble_sniffer("frontline_sniffer")
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_dir_adv_with_adv_channel_map_0x01_C664394(ble_dut, sl_collections, ble_sniffer):
-    try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664394")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=129, ble_adv_channel_map=1)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(5)
-        # ble_dut.interfaces.bluetooth.ble_stop_advertising()
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
-
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=128, ble_adv_channel_map=1, capture_file="C663393")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -283,46 +236,9 @@ def test_ble_dir_adv_with_adv_channel_map_0x01_C664394(ble_dut, sl_collections, 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_scannable_adv_with_adv_channel_map_0x01_C664395(ble_dut, sl_collections, ble_sniffer):
+def test_ble_dir_adv_with_adv_channel_map_0x01_C663394(ble_dut, sl_collections, ble_sniffer):
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664395")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=130, ble_adv_channel_map=1)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=129, ble_adv_channel_map=1, capture_file="C663394")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -330,46 +246,9 @@ def test_ble_scannable_adv_with_adv_channel_map_0x01_C664395(ble_dut, sl_collect
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_noncon_adv_with_adv_channel_map_0x01_C664396(ble_dut, sl_collections, ble_sniffer):
+def test_ble_scannable_adv_with_adv_channel_map_0x01_C663395(ble_dut, sl_collections, ble_sniffer):
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664396")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=131, ble_adv_channel_map=1)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=130, ble_adv_channel_map=1, capture_file="C663395")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -377,93 +256,9 @@ def test_ble_noncon_adv_with_adv_channel_map_0x01_C664396(ble_dut, sl_collection
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_undir_adv_with_adv_channel_map_0x03_C664397(ble_dut, sl_collections, ble_sniffer):
+def test_ble_noncon_adv_with_adv_channel_map_0x01_C663396(ble_dut, sl_collections, ble_sniffer):
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664397")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=128, ble_adv_channel_map=3)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
-    except Exception as error:
-        sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
-
-
-@pytest.mark.ble_sniffer("frontline_sniffer")
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_dir_adv_with_adv_channel_map_0x03_C664398(ble_dut, sl_collections, ble_sniffer):
-    try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664398")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=129, ble_adv_channel_map=3)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(5)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=131, ble_adv_channel_map=1, capture_file="C663396")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -471,46 +266,29 @@ def test_ble_dir_adv_with_adv_channel_map_0x03_C664398(ble_dut, sl_collections, 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_scannable_adv_with_adv_channel_map_0x03_C664399(ble_dut, sl_collections, ble_sniffer):
+def test_ble_undir_adv_with_adv_channel_map_0x03_C663397(ble_dut, sl_collections, ble_sniffer):
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664399")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=128, ble_adv_channel_map=3, capture_file="C663397")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=130, ble_adv_channel_map=3)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
 
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_dir_adv_with_adv_channel_map_0x03_C663398(ble_dut, sl_collections, ble_sniffer):
+    try:
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=129, ble_adv_channel_map=3, capture_file="C663398")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
 
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_scannable_adv_with_adv_channel_map_0x03_C663399(ble_dut, sl_collections, ble_sniffer):
+    try:
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=130, ble_adv_channel_map=3, capture_file="C663399")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -520,44 +298,7 @@ def test_ble_scannable_adv_with_adv_channel_map_0x03_C664399(ble_dut, sl_collect
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_noncon_adv_with_adv_channel_map_0x03_C663400(ble_dut, sl_collections, ble_sniffer):
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C663400")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=131, ble_adv_channel_map=3)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=131, ble_adv_channel_map=3, capture_file="C663400")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -567,91 +308,17 @@ def test_ble_noncon_adv_with_adv_channel_map_0x03_C663400(ble_dut, sl_collection
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_undir_adv_with_adv_channel_map_0x02_C664340(ble_dut, sl_collections, ble_sniffer):
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664340")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=128, ble_adv_channel_map=2)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=128, ble_adv_channel_map=2, capture_file="C664340")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_dir_adv_with_adv_channel_map_0x02_C664341(ble_dut, sl_collections, ble_sniffer):
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664341")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=129, ble_adv_channel_map=2)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(5)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=129, ble_adv_channel_map=2, capture_file="C664341")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -661,44 +328,7 @@ def test_ble_dir_adv_with_adv_channel_map_0x02_C664341(ble_dut, sl_collections, 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_scannable_adv_with_adv_channel_map_0x02_C664342(ble_dut, sl_collections, ble_sniffer):
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664342")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=130, ble_adv_channel_map=2)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=130, ble_adv_channel_map=2, capture_file="C664342")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -708,45 +338,7 @@ def test_ble_scannable_adv_with_adv_channel_map_0x02_C664342(ble_dut, sl_collect
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_noncon_adv_with_adv_channel_map_0x02_C664343(ble_dut, sl_collections, ble_sniffer):
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664343")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=131, ble_adv_channel_map=2)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
-
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=131, ble_adv_channel_map=2, capture_file="C664343")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -761,51 +353,14 @@ def test_ble_undirected_adv_with_adv_channel_map_0x04_C664344(ble_dut, sl_collec
     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664344")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=128, ble_adv_channel_map=4)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=128, ble_adv_channel_map=4, capture_file="C664344")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_dir_adv_with_adv_channel_map_0x04_C664345(ble_dut, sl_collections, ble_sniffer):
     """
     est -Validate BLE undirected advertisement in specific channels
@@ -813,44 +368,7 @@ def test_ble_dir_adv_with_adv_channel_map_0x04_C664345(ble_dut, sl_collections, 
     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664345")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=129, ble_adv_channel_map=4)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(5)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=129, ble_adv_channel_map=4, capture_file="C664345")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -865,44 +383,7 @@ def test_ble_scan_adv_with_adv_channel_map_0x04_C664346(ble_dut, sl_collections,
     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664346")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=130, ble_adv_channel_map=4)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=130, ble_adv_channel_map=4, capture_file="C664346")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -917,44 +398,7 @@ def test_ble_noncon_adv_with_adv_channel_map_0x04_C664347(ble_dut, sl_collection
     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664347")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=131, ble_adv_channel_map=4)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=131, ble_adv_channel_map=4, capture_file="C664347")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -969,51 +413,14 @@ def test_ble_undirected_adv_with_adv_channel_map_0x06_C664348(ble_dut, sl_collec
     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664348")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=128, ble_adv_channel_map=6)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=128, ble_adv_channel_map=6, capture_file="C664348")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_dir_adv_with_adv_channel_map_0x06_C664349(ble_dut, sl_collections, ble_sniffer):
     """
     est -Validate BLE undirected advertisement in specific channels
@@ -1021,44 +428,7 @@ def test_ble_dir_adv_with_adv_channel_map_0x06_C664349(ble_dut, sl_collections, 
     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664349")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=129, ble_adv_channel_map=6)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(5)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=129, ble_adv_channel_map=6, capture_file="C664349")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -1073,44 +443,7 @@ def test_ble_scan_adv_with_adv_channel_map_0x06_C664350(ble_dut, sl_collections,
     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664350")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=130, ble_adv_channel_map=6)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=130, ble_adv_channel_map=6, capture_file="C664350")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -1125,44 +458,7 @@ def test_ble_noncon_adv_with_adv_channel_map_0x06_C664351(ble_dut, sl_collection
     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664351")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=131, ble_adv_channel_map=6)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=131, ble_adv_channel_map=6, capture_file="C664351")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -1177,51 +473,14 @@ def test_ble_undirected_adv_with_adv_channel_map_0x05_C664352(ble_dut, sl_collec
     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664352")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=128, ble_adv_channel_map=5)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=128, ble_adv_channel_map=5, capture_file="C664352")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_dir_adv_with_adv_channel_map_0x05_C664353(ble_dut, sl_collections, ble_sniffer):
     """
     est -Validate BLE undirected advertisement in specific channels
@@ -1229,44 +488,7 @@ def test_ble_dir_adv_with_adv_channel_map_0x05_C664353(ble_dut, sl_collections, 
     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664353")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=129, ble_adv_channel_map=5)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(5)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=129, ble_adv_channel_map=5, capture_file="C664353")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -1281,44 +503,7 @@ def test_ble_scan_adv_with_adv_channel_map_0x05_C664354(ble_dut, sl_collections,
     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664354")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=130, ble_adv_channel_map=5)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(60)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=130, ble_adv_channel_map=5, capture_file="C664354")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
@@ -1333,50 +518,13 @@ def test_ble_noncon_adv_with_adv_channel_map_0x05_C664355(ble_dut, sl_collection
     :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
     """
     try:
-        logger().info("Sniffer Capturing started")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(capture_file="C664355")
-        logger().info("Initiate ble service in DUT")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "failed to initiate ble in dut"
-
-        logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=131, ble_adv_channel_map=5)
-        logger().info("======= enable wifi power save mode on DUT")
-        ble_dut.interfaces.bluetooth.set_performance_profile(mode='power_save_low_latency')
-
-        logger().info("======= enable BT power save mode on DUT")
-        ble_dut.interfaces.bluetooth.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        time.sleep(5)
-        # Mapping Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        slave_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            slave_address = slave_address + hex_data_part
-        ble_sniffer.interfaces.sniffer.select_bt_devices([slave_address])
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
+        adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=131, ble_adv_channel_map=5, capture_file="C664355")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_noncon_adv_and_conn_C663373(ble_dut, ble_client, sl_collections):
     try:
         logger().info(" ======= set local name")
@@ -1407,10 +555,7 @@ def test_ble_noncon_adv_and_conn_C663373(ble_dut, ble_client, sl_collections):
 
         found_devices = ble_client.interfaces.bluetooth.get_devices()
         assert ble_dut.interfaces.bluetooth.ble_address in found_devices
-        assert (
-                found_devices[ble_dut.interfaces.wifi.ble_address]
-                == ble_dut.interfaces.bluetooth.ble_advertising_data
-        )
+        assert (found_devices[ble_dut.interfaces.wifi.ble_address]== ble_dut.interfaces.bluetooth.ble_advertising_data)
         logger().info("connect to dut from remote le device....")
         try:
             ble_client.interfaces.bluetooth.connect(ble_dut_address)
@@ -1425,33 +570,44 @@ def test_ble_noncon_adv_and_conn_C663373(ble_dut, ble_client, sl_collections):
         time.sleep(5)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
+    finally:
+        if state_int == 1:
+            ble_dut.interfaces.wifi.ble_stop_advertising()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_ble_adv_10250ms_interva_C663366(ble_dut, sl_collections):
+def test_ble_adv_10250ms_interval_C663366(ble_dut):
     try:
         logger().info("Initiate ble service in DUT")
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
         assert ble_dut_address, "failed to initiate ble in dut"
         logger().info("Set DUT in advertise mode")
         ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_int_min=16400, ble_adv_int_max=16400,
-                                                           test_scenario="none")
+                                                           test_scenario="none",
+                                                           expected_status=SLStatus.SL_STATUS_BT_INVALID_PARAMETER)
+        logger().info(f" observed error code as 0x4E12 which is expected")
     except Exception as e:
-        assert '0x4e12' in str(e), f"\n****** Testcase failed with {e}******"
-        logger().info("******observed error code 0x4E12 which is expected. Hence Testcase passed******")
+        logger().info(f"\n****** Testcase failed with {e}******")
+        raise e
+    finally:
+        ble_dut.interfaces.wifi.ble_stop_advertising()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_ble_adv_2ms_interva_C663370(ble_dut, sl_collections):
+def test_ble_adv_2ms_interval_C663370(ble_dut):
     try:
         logger().info("Initiate ble service in DUT")
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
         assert ble_dut_address, "failed to initiate ble in dut"
         logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_int_min=2, ble_adv_int_max=2, test_scenario="none")
+        ble_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_int_min=2, ble_adv_int_max=2, test_scenario="none",
+                                                           expected_status=SLStatus.SL_STATUS_BT_INVALID_PARAMETER)
+        logger().info(f" observed error code as 0x4E12 which is expected")
     except Exception as e:
-        assert '0x4e12' in str(e), f"\n****** Testcase failed with {e}******"
-        logger().info("******observed error code 0x4E12 which is expected. Hence Testcase passed******")
+        logger().info(f"\n****** Testcase failed with {e}******")
+        raise e
+    finally:
+        ble_dut.interfaces.wifi.ble_stop_advertising()
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1563,64 +719,123 @@ def test_ble_master_conn_with_4500ms_C663371(ble_dut, ble_client, sl_collections
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_ble_scan_with_2ms_C663368(ble_dut, sl_collections):
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan"])
+def test_ble_scan_with_2ms_C663368(ble_dut, ble_client, sl_collections):
+    try:
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+        assert ble_dut_address, "ble initialization failed in dut"
+        logger().info(f"Configure Remote LE device in advertising mode")
+        ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+            bt_dut_address=ble_dut_address,
+            hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
+                           "0x40 0x00 "  # Advertising_Interval_Max
+                           "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                           "0x00 "  # Own_Address_Type
+                           "0x00 "  # Peer_Address_Type
+                           "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                           "0x07 "  # Advertising_Channel_Map
+                           "0x00"  # Advertising_Filter_Policy
+            , scan_resp_data="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
+                             "0x66 0x69 0x5f 0x74 0x65 0x73 " \
+                             "0x74 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+                             "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
+        )
+        assert ble_client_address, "failed to initiate ble in remote device"
+        logger().info("Start scanning....")
+        ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address,ble_scan_interval=2,
+                                                        ble_scan_window=2, timeout=120)
+        time.sleep(180)
+        logger().info("stop scanning")
+        ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        time.sleep(2)
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
+    finally:
+        logger().info("stop advertising")
+        ble_client.interfaces.bluetooth.stop_advertising()
+        time.sleep(2)
+        ble_client.interfaces.bluetooth.close()
+
+
+# test agent dependant JIRA WIFI_BT_UTFHELP-5412: once the jira is fixed increase the sleep time to 180 seconds
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan"])
+def test_ble_scan_with_10250ms_C663367(ble_dut, ble_client, sl_collections):
+    try:
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+        assert ble_dut_address, "ble initialization failed in dut"
+        logger().info(f"Configure Remote LE device in advertising mode")
+        ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+            bt_dut_address=ble_dut_address,
+            hci_adv_params="0x40 0x00 "  # Advertising_Interval_Min
+                           "0x40 0x00 "  # Advertising_Interval_Max
+                           "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                           "0x00 "  # Own_Address_Type
+                           "0x00 "  # Peer_Address_Type
+                           "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                           "0x07 "  # Advertising_Channel_Map
+                           "0x00"  # Advertising_Filter_Policy
+            , scan_resp_data="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
+                             "0x66 0x69 0x5f 0x74 0x65 0x73 " \
+                             "0x74 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+                             "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
+        )
+        assert ble_client_address, "failed to initiate ble in remote device"
+        logger().info("Start scanning....")
+        ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address, ble_scan_interval=16400,
+                                                        ble_scan_window=16400, timeout=120)
+        # time.sleep(180)
+        logger().info("stop scanning")
+        ble_dut.interfaces.bluetooth.ble_stop_scanning(timeout=30)
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
+    finally:
+        logger().info("stop advertising")
+        ble_client.interfaces.bluetooth.stop_advertising()
+        time.sleep(2)
+        ble_client.interfaces.bluetooth.close()
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_ble_scan_window_greater_than_scan_interval_C663369(ble_dut):
     try:
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
         assert ble_dut_address, "ble initialization failed in dut"
         logger().info("Start scanning....")
-        ble_dut.interfaces.bluetooth.ble_start_scanning(ble_scan_interval=2, ble_scan_window=2)
+        ble_dut.interfaces.bluetooth.ble_start_scanning(ble_scan_interval=80, ble_scan_window=160,
+                                                        expected_status=SLStatus.SL_STATUS_SI91X_ERR_BT_INVALID_ARGS)
+        logger().info(f" observed error code as 0x4046 which is expected")
     except Exception as e:
-        assert "19986" in str(e), f"\n****** Testcase failed with {e}******"
-        logger().info("******observed error code 0x4E12 which is expected.Hence Testcase passed******")
+        logger().info(f"\n****** Testcase failed with {e}******")
+        raise e
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_ble_scan_with_10250ms_C663367(ble_dut, sl_collections):
+def test_ble_scan_with_random_addr_C663406(ble_dut):
     try:
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
         assert ble_dut_address, "ble initialization failed in dut"
         logger().info("Start scanning....")
-        ble_dut.interfaces.bluetooth.ble_start_scanning(ble_scan_interval=16400, ble_scan_window=16400)
+        ble_dut.interfaces.bluetooth.ble_start_scanning(ble_address_type=1,
+                                                        expected_status=SLStatus.SL_STATUS_BT_INVALID_PARAMETER)
+        logger().info(f" observed error code as 0x4E12 which is expected")
     except Exception as e:
-        assert "19986" in str(e), f"\n****** Testcase failed with {e}******"
-        logger().info("******observed error code 0x4E12 which is expected.Hence Testcase passed******")
+        logger().info(f"\n****** Testcase failed with {e}******")
+        raise e
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_ble_scan_window_greter_than_scan_interval_C663369(ble_dut, sl_collections):
-    try:
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "ble initialization failed in dut"
-        logger().info("Start scanning....")
-        ble_dut.interfaces.bluetooth.ble_start_scanning(ble_scan_interval=80, ble_scan_window=160)
-    except Exception as e:
-        assert '0x4046' in str(e), f"\n****** Testcase failed with {e}******"
-        logger().info("******observed error code 0x4046 which is expected.Hence Testcase passed******")
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_ble_scan_with_random_addr_C663406(ble_dut, sl_collections):
-    try:
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
-        assert ble_dut_address, "ble initialization failed in dut"
-        logger().info("Start scanning....")
-        ble_dut.interfaces.bluetooth.ble_start_scanning(ble_address_type=1)
-    except Exception as e:
-        assert '0x4e12' in str(e), f"\n****** Testcase failed with {e}******"
-        logger().info("******observed error code 0x4E12 which is expected.Hence Testcase passed******")
-
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_ble_adv_with_random_addr_C663407(ble_dut, sl_collections):
+def test_ble_adv_with_random_addr_C663407(ble_dut):
     try:
         logger().info("Initiate ble service in DUT")
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
         assert ble_dut_address, "failed to initiate ble in dut"
         logger().info("Set DUT in advertise mode")
-        ble_dut.interfaces.bluetooth.ble_start_advertising(own_addr_type=1)
+        ble_dut.interfaces.bluetooth.ble_start_advertising(own_addr_type=1,
+                                                           expected_status=SLStatus.SL_STATUS_BT_INVALID_PARAMETER)
+        logger().info(f" observed error code as 0x4E12 which is expected")
     except Exception as e:
-        assert '0x4e12' in str(e), f"\n****** Testcase failed with {e}******"
-        logger().info("******observed error code 0x4E12 which is expected.Hence Testcase passed******")
-
-
-
+        logger().info(f"\n****** Testcase failed with {e}******")
+        raise e
+    finally:
+        ble_dut.interfaces.wifi.ble_stop_advertising()
