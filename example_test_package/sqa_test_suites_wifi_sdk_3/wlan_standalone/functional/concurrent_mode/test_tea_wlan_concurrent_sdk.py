@@ -27,6 +27,8 @@ from threading import Thread
 from random import randint
 from utf.interfaces.socket import SOCKET_TYPE_TCP
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
+from utf.utils import print_dict
 
 lock = threading.Lock()
 
@@ -46,6 +48,10 @@ lock = threading.Lock()
 
 def logger():
     return get_logger(__name__)
+
+def __print_throughput(iperf_throughput: dict):
+    if iperf_throughput is not None:
+        print_dict("##     ", iperf_throughput)
 
 
 class ConcurrentMode:
@@ -599,3 +605,80 @@ def test_wifi_sdk_connect_correct_psk_C694555(
     finally:
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.Ping | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT |
+                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={'security': 'WPA2', 'channel': 11})
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "TEST_C122789",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0",
+        },
+    }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_tcp_tx_both_sta_and_ap_in_conc_mode_c766509(
+        wifi_clients, wifi_access_point, sl_collections, wifi_dut, net_perf_client, protocol, wifi_client):
+    """
+    Verify TCP Tx in both STA and AP Mode in Concurrent scenario
+    """
+    try:
+        wifi_clients = wifi_clients[:1]
+        con_obj = ConcurrentMode()
+        host_ip = wifi_client.interfaces.wifi.get_ip_address(network_interface='eth1')
+
+        result = sl_collections.join_to_wifi_network(
+            wifi_dut, wifi_access_point, associated=wifi_dut.interfaces.wifi.associated, power_save=False)
+
+        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=result['device_ip'],
+                                                        protocol=protocol, tos_value='0xc8')
+        logger().info(f"***** starting iperf ******")
+        net_perf_client.interfaces.net_perf.start()
+        logger().info(f"***** send traffic  ******")
+        wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                       local_port=net_perf_client.interfaces.net_perf.server_port,
+                                       local_ip=result['device_ip'], remote_ip=host_ip,
+                                       remote_port=net_perf_client.interfaces.net_perf.server_port,
+                                       size=1460, ttl=30, throughput_type=1, qos=0)
+        logger().info(f"***** get and print throughput ******")
+        tp = net_perf_client.interfaces.net_perf.process_output()
+        assert tp, "failed to get throughput..."
+        __print_throughput(tp)
+        logger().info("data transfer is successful")
+
+        sl_collections.configure_dut_in_static_ip(
+            wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0", static_gateway="192.168.100.76")
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="TEST_C122789", security="WPA2", psk="Automation@123",
+                                          channel=11, dtim_beacon_count="1", beacon_interval="100")
+        logger().info("DUT as an AP is started")
+        dut_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut, dut_ip=con_obj.dut_ap_ip)['dut_ip']
+
+        sl_collections.run_traffic(
+            wifi_dut=wifi_dut, net_perf_client=net_perf_client, protocol=protocol, device_ip='192.168.100.76',
+            host_ip='192.168.100.77', timeout=40, traffic_type="TX")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()

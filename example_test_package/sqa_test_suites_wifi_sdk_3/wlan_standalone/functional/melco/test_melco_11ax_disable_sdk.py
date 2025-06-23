@@ -73,7 +73,7 @@ class WLanThread(ThreadBase):
                  wifi_client=None, test_id=None, ping_before_power_save=True, ping_after_power_save=True,
                  ipv6_addr_type="global", addr_type = "global",  wifi_clients=None, channel=None, security=None, password=None,
                  dtim_count=None, beacon_interval=None, ping_count=None, no_of_clients=None, sniffer_filter=None,
-                 leave=None, network_interface=None):
+                 leave=None, network_interface=None, switch=None):
         super().__init__()
         self.sniffer_filter = sniffer_filter
         self.addr_type=addr_type
@@ -97,6 +97,7 @@ class WLanThread(ThreadBase):
         self.ping_before_power_save = ping_before_power_save
         self.ping_after_power_save = ping_after_power_save
         self.ipv6_addr_type = ipv6_addr_type
+        self.switch = switch
         self.dut_add_dict = {}
         self.info_attr = {}
         self.security_dict = {
@@ -490,6 +491,35 @@ class WLanThread(ThreadBase):
                     ssid=vap_list[0], passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0]["passphrase"],
                     security=self.wifi_access_point.interfaces.wifi.guest_networks[0]["security"].name.lower())
 
+    def join_to_wifi_network(self):
+        self.dut_add_dict = self.sl_collections.join_to_wifi_network(
+        self.wifi_dut, wifi_access_point=self.wifi_access_point, associated=self.wifi_dut.interfaces.wifi.associated,
+        power_save=False, retry_count=3, ping_before_power_save=False, ping_after_power_save=False)
+
+        ip_status, ip_config = self.sl_collections.configure_ip(
+            self.wifi_dut, ip_status=False, retry_count=1, ip_version="ipv6")
+        logger().info(f"printing device ip {ip_config[1]}")
+
+    def rejoin_ping_success(self):
+        # Step 1: Ping the DUT
+        logger().info("Pinging the DUT to check initial connectivity...")
+        status = self.sl_collections.ping(self.dut_add_dict['device_ip'], 30, 5)
+        assert status, "Initial ping to DUT failed. DUT is not reachable."
+
+        logger().info("Turning off the AP")
+        self.switch.interfaces.pdu_switch.turn_off(delay=20)
+        logger().info("Successfully powered off AP")
+
+        logger().info("Again turning on the AP")
+        self.switch.interfaces.pdu_switch.turn_on(delay=100)
+        logger().info("Successfully powered on AP")
+
+        time.sleep(25)
+
+        logger().info("Pinging to DUT to check rejoin process is completed or not")
+        status = self.sl_collections.ping(self.dut_add_dict['device_ip'], 30, 5)
+        assert status, "Pinging to DUT is failed, DUT not rejoined to AP"
+
 #
 # | Si91xFeatureBitMap.SL_SI91X_FEAT_DISABLE_11AX_SUPPORT
 pytestmark = [
@@ -779,3 +809,88 @@ def test_wifi_sdk_mbssid_NT_profile_c557307(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "917_AP",
+            "passphrase": "12345678",
+            "channel": 11,
+            "interface": "wlan0",
+        }
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "12345678", "channel": 11, "standard": 'bgnax'})
+def test_wifi_sdk_rejoin_11ax_disable_for_staut_conc_mode_C557305(
+        wifi_dut, wifi_access_point, wifi_sniffer, sl_collections, request, sniffer_filter, wifi_client, switch,
+        wifi_clients):
+
+    """Check the WLAN Re- Connectivity to 11ax AP with 11ax Disabled for STAUT in Concurrent Mode"""
+
+    test_name = request.node.name
+    try:
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections, test_id=557301,
+                              wifi_client=wifi_client, sniffer_filter = sniffer_filter, switch=switch,
+                              wifi_clients=wifi_clients)
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wlan_obj.sniffer_capture(mode='start')
+
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f'ap mac address is :{ap_mac_address}')
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f'ap mac address is :{dut_mac_address}')
+
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
+            max_retry_attempts=0, scan_interval=4, beacon_missed_count=40, first_time_retry_enable=0)
+
+        wlan_obj.dut_ap_conn()
+        wlan_obj.join_to_wifi_network()
+        wlan_obj.rejoin_ping_success()
+        wlan_obj.sniffer_capture(mode='stop')
+
+        logger().info(f"Checking for the HE Params Assoc Req packets in the sniffer.")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address, filter_name='assoc_req_he_info')
+
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert not snif_pkt_count, "packets are not captured in the sniffer"
+
+        logger().info(f"Checking for the HE Params Assoc Resp packets in the sniffer.")
+        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=ap_mac_address, da_addr=dut_mac_address, filter_name='assoc_response_he_info')
+
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)[
+            'packet_count']
+        assert not snif_pkt_count, "packets are not captured in the sniffer"
+
+        logger().info(f"Checking for the HE Params Probe Req packets in the sniffer.")
+        packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address, filter_name='probe_req_he_info')
+
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)[
+            'packet_count']
+        assert not snif_pkt_count, "packets are not captured in the sniffer"
+
+        logger().info(f"Checking for the HE Params Probe Resp packets in the sniffer.")
+        packet_filter4 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            ap_mac=ap_mac_address, da_addr=dut_mac_address, filter_name='probe_response_he_info')
+
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter4)[
+            'packet_count']
+        assert snif_pkt_count, "packets are not captured in the sniffer"
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        logger().info("**** finally turning on the AP ****")
+        switch.interfaces.pdu_switch.turn_on(delay=100)
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
