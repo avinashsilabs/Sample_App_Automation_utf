@@ -544,10 +544,19 @@ def test_wifi_sdk_concurrent_mode_sta_ap_c19321(wifi_access_point, wifi_dut, wif
         wifi_dut.interfaces.wifi.sl_net_leave_multicast_address(interface=16)
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
-        ap_bssid = wifi_access_point.interfaces.wifi.bssid
-        logger().info(f"AP bssid {ap_bssid}")
+
+        ap_addr = dut_mac_address.split(":")
+        try:
+            # Safely increment the last part of the MAC address
+            last_octet = int(ap_addr[-1], 16) + 1
+            ap_addr[-1] = f"{last_octet:02x}"  # Format as two-digit hexadecimal
+            dut_ap_mac_addr = ":".join(ap_addr)
+            logger().info(f"Updated AP MAC Address: {dut_ap_mac_addr}")
+        except (IndexError, ValueError) as e:
+            logger.error(f"Error processing MAC address: {dut_mac_address}, {e}")
+
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=ap_bssid,
+            sa_addr=dut_ap_mac_addr,
             filter_name='beacon')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find  beacon in Sniffer'
