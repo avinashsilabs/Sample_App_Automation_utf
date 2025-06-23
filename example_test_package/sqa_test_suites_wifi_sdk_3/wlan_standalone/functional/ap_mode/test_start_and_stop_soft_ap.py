@@ -1224,7 +1224,7 @@ def test_wifi_sdk_dut_restart_start_ap_beacon_params_C191346(wifi_sniffer, wifi_
     """Verify the Required parameters of APUT Beacons in sniffer for every start and stop"""
     try:
         beacon_obj = FilterPacket()
-        packet_filter2 = '    Type/Subtype: Beacon (0x0008)'
+        packet_filter2 = '    Type/Subtype: Beacon frame (0x0008)'
         logger().info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=channel)
@@ -1282,7 +1282,7 @@ def test_wifi_sdk_dut_restart_start_ap_beacon_params_C191346(wifi_sniffer, wifi_
         wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
-            filter_name='No_beacon')
+            filter_name='beacon')
         Validate_no_beacon = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count']
         assert Validate_no_beacon == False, f"found beacon frame after stoping the ap"
@@ -1470,7 +1470,7 @@ def test_wifi_sdk_dut_able_to_restart_with_different_securities_C191348(wifi_sni
         wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
-            filter_name='No_beacon')
+            filter_name='beacon')
         validate_no_beacon = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count']
         assert validate_no_beacon == False, f"found beacon frame after stoping the ap"
@@ -1944,7 +1944,7 @@ def test_wifi_sdk_restart_with_different_securities_concurrent_C191361(wifi_snif
         wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
-            filter_name='No_beacon')
+            filter_name='beacon')
         validate_no_beacon = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count']
         assert validate_no_beacon == False, f"found beacon frame after stoping the ap"
@@ -2104,7 +2104,7 @@ def test_wifi_sdk_restart_beacon_params_concurrent_C191358(wifi_sniffer, wifi_du
     """Verify the required parameters in sniffer for AP Start_Stop with RSI_STA Connected to AP"""
     try:
         beacon_obj = FilterPacket()
-        packet_filter2 = '    Type/Subtype: Beacon (0x0008)'
+        packet_filter2 = '    Type/Subtype: Beacon frame (0x0008)'
         logger().info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=channel)
@@ -2172,7 +2172,7 @@ def test_wifi_sdk_restart_beacon_params_concurrent_C191358(wifi_sniffer, wifi_du
         wifi_sniffer.interfaces.capture.stop_capture()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_mac_address,
-            filter_name='No_beacon')
+            filter_name='beacon')
         validate_no_beacon = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count']
         assert validate_no_beacon == False, f"found beacon frame after stoping the ap"
@@ -2203,7 +2203,7 @@ def test_wifi_sdk_restart_beacon_params_concurrent_C191358(wifi_sniffer, wifi_du
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find  rsi_apmode in Sniffer'
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=ap_dut_obj.dut_mac_address, ssid="SILABS_AP_MODE",
+            sa_addr=ap_dut_obj.dut_mac_address, ssid='"SILABS_AP_MODE"',
             filter_name='SSID_apmode')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find  soft_ap_ssid_check in Sniffer'
