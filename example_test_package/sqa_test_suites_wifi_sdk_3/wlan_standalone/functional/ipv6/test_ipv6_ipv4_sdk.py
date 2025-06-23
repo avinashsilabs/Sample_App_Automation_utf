@@ -406,7 +406,7 @@ class WLanThread(ThreadBase):
 
         if self.test_id in [156971, 206918]:
 
-            self.static_ipv6 = random_ipv6_addr("2401:3500:133c:1341::/64")
+            self.static_ipv6 = random_ipv6_addr("2401:3500:133c:1341::")
             self.remote_ipv6 = self.wifi_client.interfaces.wifi.get_ip_address(version=6, addr_type=self.ipv6_addr_type)
             logger().info(f"remote_ipv6: {self.remote_ipv6}")
 
