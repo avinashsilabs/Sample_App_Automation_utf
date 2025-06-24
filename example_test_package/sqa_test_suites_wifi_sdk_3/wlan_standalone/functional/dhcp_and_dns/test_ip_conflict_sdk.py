@@ -243,7 +243,7 @@ def test_wifi_sdk_static_ip_assignment_to_DUT_c101963(wifi_dut, wifi_access_poin
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         wifi_thread = Ip_Conflict(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
-                                  mode=mode, start_ap=False, static_ip=False, ap_mode=False)
+                                  mode=mode, sl_collections=sl_collections, start_ap=False, static_ip=False, ap_mode=False)
         wifi_thread.start()
         wifi_thread.wait_for_exit()
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
@@ -373,7 +373,7 @@ def test_wifi_sdk_static_ip_assignment_when_dut_in_concurrent_mode_c101967(wifi_
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         wifi_thread = Ip_Conflict(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_client=wifi_client,
-                                  mode=mode, start_ap=True, static_ip=False, ap_mode=False)
+                                  mode=mode, sl_collections=sl_collections, start_ap=True, static_ip=False, ap_mode=False)
         wifi_thread.start()
         wifi_thread.wait_for_exit()
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
