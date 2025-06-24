@@ -312,7 +312,7 @@ class WLanJoinThread(ThreadBase):
             elif self.test_case == '688097':
                 self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, server_port=80,
                                                              client_port=5001, host_name_null=1, resource_name_null=1)
-                self.wifi_dut.interfaces.wifi.websocket_connect()
+                self.wifi_dut.interfaces.wifi.websocket_connect(timeout=30)
                 time.sleep(0.1)
                 assert ws_handler.client_connected
                 iter_count = 10
@@ -333,7 +333,7 @@ class WLanJoinThread(ThreadBase):
             elif self.test_case == '688098':
                 self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, server_port=80,
                                                              client_port=5001, host_name='""', resource_name='""')
-                self.wifi_dut.interfaces.wifi.websocket_connect()
+                self.wifi_dut.interfaces.wifi.websocket_connect(timeout=30)
                 time.sleep(0.1)
                 assert ws_handler.client_connected
                 iter_count = 10
@@ -753,6 +753,10 @@ class WLanJoinThread(ThreadBase):
                     time.sleep(ap_turn_off_time)
 
                 for count in range(0, 2):
+                    if count == 1:
+                        self.wifi_dut.interfaces.wifi.websocket_close()
+                        time.sleep(0.1)
+
                     self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=20,
                                                                                   scan_interval=6,
                                                                                   beacon_missed_count=40,
@@ -764,10 +768,11 @@ class WLanJoinThread(ThreadBase):
                                                                              channel=self.wifi_access_point.interfaces.wifi.channel,
                                                                              retry_count=3)
 
-                    self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, "example.com",
-                                                                 "/websocket",
-                                                                 80, 5001)
-                    self.wifi_dut.interfaces.wifi.websocket_connect()
+                    self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http,
+                                                                 host_name="example.com",
+                                                                 resource_name="/websocket",
+                                                                 server_port=80, client_port=5001)
+                    self.wifi_dut.interfaces.wifi.websocket_connect(timeout=30)
                     time.sleep(0.1)
                     assert ws_handler.client_connected
 
@@ -803,11 +808,14 @@ class WLanJoinThread(ThreadBase):
                                     logger().info(f"rejoin error event after turning off AP {rejoin_error_event}")
                                     break
                     logger().info(f"Turn on AP")
-                    self.switch.interfaces.pdu_switch.turn_on(delay=60)
+                    self.switch.interfaces.pdu_switch.turn_on(delay=60) 
+                    time.sleep(60)
                     assert rejoin_error_event == 1, "Rejoin failure event not received"
 
-                # self.wifi_dut.interfaces.wifi.websocket_close()
-                # self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.websocket_close()
+                time.sleep(2)
+                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                time.sleep(2)
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
                 time.sleep(5)
@@ -1701,7 +1709,7 @@ def test_wifi_sdk_sec_wpa3_websocket_connection_close_in_loop_c687276(wifi_dut, 
 @wifi_dut_marker()
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 def test_wifi_sdk_websocket_data_transfer_while_rejoin_688067(switch, wifi_dut, wifi_access_point, wifi_sniffer,
                                                               http_server,
                                                               utf_constants,
