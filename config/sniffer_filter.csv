@@ -219,4 +219,9 @@ ap_probe_response_with_tkip_aes_mixed, (wlan.addr == {{ sa_addr }}), && (wlan.fc
 eap_tls_alert_msg_verification_1_2,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (eap and tls.record.version == 0x0303) and (tls.record.content_type == 21) && (tls.alert_message.desc == 48),
 probe_req_ds_param, (wlan.sa == {{sa_addr}}), && (wlan.tag.number == 3),
 rx_window_size, (wlan.addr == {{sa_addr}}, and (tcp.window_size == 64128)), and (tcp.flags == 0x0012),
-channel_switch_announcement, (wlan.sa == {{sa_addr}}, and (wlan.fc.type_subtype == 0x000d) and (wlan.tag.number == 37))
+channel_switch_announcement, (wlan.sa == {{sa_addr}}, and (wlan.fc.type_subtype == 0x000d) and (wlan.tag.number == 37)),
+dtls,(ip.src == {{ sa_addr }}) and (ip.dst == {{ da_addr }}), and dtls and (udp.port == {{ port }}),
+dtls1_0,(ip.src == {{ sa_addr }}) and (ip.dst == {{ da_addr }}), and dtls and (udp.port == {{ port }}) and dtls.record.version == 0xfeff,
+dtls1_2,(ip.src == {{ sa_addr }}) and (ip.dst == {{ da_addr }}), and dtls and (udp.port == {{ port }}) and dtls.record.version == 0xfefd,
+dtls_sni, (ip.src == {{ sa_addr }} and ip.dst == {{ da_addr }}), and (dtls.handshake.extension.type == 0),
+dtls_alpn, (ip.src == {{ sa_addr }} and ip.dst == {{ da_addr }}), and (dtls.handshake.extension.type == 16),
