@@ -55,6 +55,8 @@ import random
 
 def random_ipv6_addr(prefix: str) -> str:
     # Ensure the prefix is interpreted as a /64 network
+    if '/' in prefix:
+        prefix = prefix.split('/')[0]  # Remove any existing netmask from the prefix
     network = ipaddress.IPv6Network(f"{prefix}/64", strict=False)
 
     # Generate a random 64-bit interface identifier
