@@ -1452,7 +1452,40 @@ class WLanThread(ThreadBase):
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "security": "WPA2"})
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
+)
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
@@ -1519,7 +1552,40 @@ def test_wifi_sdk_mbssid_c219284(
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "security": "WPA2"})
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
+)
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
@@ -1582,7 +1648,40 @@ def test_wifi_sdk_mbssid_scan_all_vap_c219285(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "security": "Open"})
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "Open",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "Open",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "Open",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "Open",
+                "channel": 3,
+            },
+        ],
+    }
+)
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
@@ -1646,7 +1745,40 @@ def test_wifi_sdk_mbssid_T_open_sec_c219286(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "security": "WPA2"})
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
+)
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
@@ -1713,6 +1845,7 @@ def test_wifi_sdk_mbssid_T_wpa2_psk_c219287(
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
+        "channel": 3,
         "standard": "gnbax",
         "security": "WPA2",
         "guest_networks": [
@@ -2054,7 +2187,38 @@ def test_wifi_sdk_mbssid_NT_wpa3_c219290(
     },
 )
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2Enterprise",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
 )
 @pytest.mark.end_state(
     "wifi_dut",
@@ -2219,7 +2383,40 @@ def test_wifi_sdk_mbssid_NT_wpa2_enterprise_c219292(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "security": "Open"})
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "Open",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "Open",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "Open",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "Open",
+                "channel": 3,
+            },
+        ],
+    }
+)
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
@@ -2298,7 +2495,40 @@ def test_wifi_sdk_mbssid_rejoin_T_open_sec_c219293(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "security": "WPA2"})
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
+)
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
@@ -2377,6 +2607,7 @@ def test_wifi_sdk_mbssid_rejoin_T_wpa2_c219294(
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
+        "channel": 3,
         "standard": "gnbax",
         "security": "WPA2",
         "guest_networks": [
@@ -2486,7 +2717,40 @@ def test_wifi_sdk_mbssid_rejoin_NT_wpa2_c219295(
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_access_point", wifi={"security": "WPA3"})
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA3",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA3",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA3",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA3",
+                "channel": 3,
+            },
+        ],
+    }
+)
 @pytest.mark.config(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
@@ -2574,6 +2838,7 @@ def test_wifi_sdk_mbssid_rejoin_T_wpa3_c219296(
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
+        "channel": 3,
         "standard": "gnbax",
         "security": "WPA3",
         "guest_networks": [
@@ -2687,7 +2952,40 @@ def test_wifi_sdk_mbssid_rejoin_NT_wpa3_c219297(
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "security": "WPA2"})
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
+)
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
@@ -2748,7 +3046,40 @@ def test_wifi_sdk_mbssid_c219298(
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "security": "WPA2"})
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
+)
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
@@ -2811,6 +3142,7 @@ def test_wifi_sdk_mbssid_negative_c219299(
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
+        "channel": 3,
         "standard": "gnbax",
         "security": "WPA2",
         "guest_networks": [
@@ -2889,7 +3221,40 @@ def test_wifi_sdk_mbssid_connection_failure_c219300(
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "security": "WPA2"})
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
+)
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
@@ -3327,6 +3692,7 @@ def test_wifi_sdk_mbssid_c219321(
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
+        "channel": 3,
         "standard": "gnbax",
         "security": "Open",
         "guest_networks": [
@@ -3425,6 +3791,7 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_open_sec_c219307(
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
+        "channel": 3,
         "standard": "gnbax",
         "security": "Open",
         "guest_networks": [
@@ -3526,10 +3893,37 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_open_sec_c219308(
     "wifi_access_point",
     wifi={
         "ssid": "Concurent_ap",
+        "standard": "gnbax",
         "security": "WPA2",
         "passphrase": "test1234",
         "channel": 3,
-    },
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -3603,22 +3997,16 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_wpa2_sec_c219309(
         }
     },
 )
-@pytest.mark.config(
-    "wifi_access_point",
-    wifi={
-        "ssid": "Concurent_ap",
-        "security": "WPA2",
-        "passphrase": "123456789",
-        "channel": 3,
-    },
-)
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
+        "ssid": "MBSSID_AP",
+        "channel": 3,
         "standard": "gnbax",
         "security": "WPA2",
+        "passphrase": "123456789",
         "guest_networks": [
             {
                 "index": "1",
@@ -4038,6 +4426,7 @@ def test_wifi_sdk_mbssid_T_NT_connect_disconnect_c219315(
     "wifi_access_points",
     wifi={
         0: {
+            "channel": 3,
             "standard": "gnbax",
             "security": "WPA2",
             "guest_networks": [
@@ -4163,8 +4552,41 @@ def test_wifi_sdk_mbssid_T_NT_connect_disconnect_c535828(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "security": "WPA2",
-                                               "broadcast_ssid": False})
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2",
+        "channel": 3,
+        "broadcast_ssid": False,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
+)
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
@@ -4233,6 +4655,7 @@ Check the connection with hidden MBSSID AP with WPA2 security enabled in AP"""
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
+        "channel": 7,
         "standard": "gnbax",
         "security": "WPA2",
         "guest_networks": [
