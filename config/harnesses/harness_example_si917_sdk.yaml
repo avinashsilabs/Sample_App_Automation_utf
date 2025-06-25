@@ -1109,6 +1109,27 @@ devices:
                 password: '12345678'
                 tls_min_version: '1.0'
                 tls_max_version: '1.2'
+    raspi_dtls_server:
+        interfaces:
+            dtls_server:
+                type: 'dtls.dtls_server'
+                dtls_psk_identity: 'psk_identity'
+                dtls_psk_key: 'psk_key'
+                validate_certificates: True
+                dtls_server_ip: "0.0.0.0"
+                dtls_server_port: 5001
+
+    raspi_dtls_client:
+        interfaces:
+            dtls_client:
+                type: 'dtls.dtls_client'
+                dtls_psk_identity: 'psk_identity'
+                dtls_psk_key: 'psk_key'
+                validate_certificates: True
+                dtls_server_port: 5001
+                dtls_client_ip: "127.0.0.1"
+
+
 
     openssl_socket:
         interfaces:
@@ -1257,6 +1278,8 @@ defaults:
     wifi_sniffer: 'airpcap'
 
     sniffer_filter: 'sniffer_filter'
+    dtls_server: 'raspi_dtls_server'
+    dtls_client: 'raspi_dtls_client'
 
     openssl: 'openssl_socket'
 

@@ -1564,7 +1564,7 @@ defaults:
         data_log_stop_after_elapsed_time: 60
         data_log_source: 'Software'
         data_log_sample_period: 'Custom'
-        data_log_custom_sample_period: 1.00309
+        data_log_custom_sample_period: 0.1024
         data_log_enable_min_max_logging: false
         data_log_is_avg_enabled: true
         data_log_is_min_enabled: true
