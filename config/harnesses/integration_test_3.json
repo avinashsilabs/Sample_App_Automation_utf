@@ -489,7 +489,7 @@
             "baud": 115200
          },
          "wifi": {
-            "ssid": "TESTZESTTEST_3",
+            "ssid": "TESTZEST-DLIN_3",
             "security": "WPA2",
             "channel": 1,
             "passphrase": "thisisatestnetwork",
