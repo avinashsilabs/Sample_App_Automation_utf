@@ -4280,7 +4280,10 @@ Raises:
     Exception: If any step in the test fails or an unexpected error occurs.
     """
     try:
-        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2", dhcp_end="192.168.50.100",
+        lan_ipv4_address = wifi_access_point.interfaces.wifi.lan_ipv4_address
+        dhcp_start = re.sub(r'\.[^\.]+$', '.2', lan_ipv4_address)
+        dhcp_end = re.sub(r'\.[^\.]+$', '.254', lan_ipv4_address)
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,
                                                          dhcp_lease="240")
         time.sleep(60)
 
@@ -4324,7 +4327,9 @@ Raises:
         sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
                                                sniffer_filter)
 
-        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.101", dhcp_end="192.168.50.200",
+        dhcp_start = re.sub(r'\.[^\.]+$', '.101', lan_ipv4_address)
+        dhcp_end = re.sub(r'\.[^\.]+$', '.200', lan_ipv4_address)
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start=dhcp_start, dhcp_end=dhcp_end,
                                                          dhcp_lease="120")
         time.sleep(62)
         ip_change_notification = None
