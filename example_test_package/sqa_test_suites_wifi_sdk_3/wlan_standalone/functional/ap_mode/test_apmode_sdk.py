@@ -1441,9 +1441,16 @@ def test_wifi_sdk_dutap_fixed_data_rate_c19441(wifi_sniffer, wifi_dut,
         packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'], da_addr=ap_dut_obj.dut_addr_dict['rasp_mac_address'],
             radio_ch=ap_dut_obj.channel,
-            filter_name='mgmt_data_rates_data_rate_24mbps_apmode')
+            filter_name='mgmt_data_rates_24mbps')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
             'Unable to find any packets for Data/Qos/Null packet for 24 Mbps data rates'
+
+        packet_filter4 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=ap_dut_obj.dut_addr_dict['dut_mac_address'], da_addr=ap_dut_obj.dut_addr_dict['rasp_mac_address'],
+            radio_ch=ap_dut_obj.channel,
+            filter_name='mgmt_data_rate_except_24mbps')
+        result = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter4)['packet_count']
+        assert not result, 'Sniffer: Not Found any packets other than 24 Mbps for Data/Qos/Null packets'
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
