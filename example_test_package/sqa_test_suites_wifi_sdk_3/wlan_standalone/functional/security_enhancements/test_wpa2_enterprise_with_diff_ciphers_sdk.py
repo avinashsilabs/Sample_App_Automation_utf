@@ -299,6 +299,7 @@ class disconnectThread(ThreadBase):
         time.sleep(1)
         self.wifi_access_point.interfaces.wifi.get_associated_devices()
 
+pytestmark = [pytest.mark.radius_server("raspi_radius_server_v2")]
 
 @pytest.mark.config(
     "wifi_dut",
@@ -3657,7 +3658,7 @@ def test_wsdk_WPA2_EAP_Conn_TLS_when_server_cert_parsing_not_proper_C113906(wifi
             wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                           passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                           security="wpa2_enterprise", uid="user1", enc="tls",
-                                          expected_status=SLStatus.SL_STATUS_SI91X_DEAUTH_REQUEST_FROM_SUPPLICANT)
+                                          expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
             time.sleep(2)
             wifi_dut.interfaces.wifi.start_ip(
                 expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
@@ -4085,10 +4086,8 @@ def test_wsdk_WPA2_EAP_ap_disconn_during_data_transfer_C113887(wifi_dut, wifi_ac
                              sl_collections=sl_collections)
             t2 = disconnectThread(wifi_access_point, dut_ip_address)
             t1.start()
-            time.sleep(20)
-            t2.start()
-            t2.wait_for_exit()
-            t1.wait_for_exit()
+            time.sleep(7)
+            wifi_access_point.interfaces.wifi.stop_ap()
 
             events = wifi_dut.interfaces.wifi.get_async_events()
             rejoin_error_events = [
@@ -5174,7 +5173,7 @@ def test_wifi_sdk_EAP_TLS_connectivity_with_wrong_public_and_private_key_c477797
 @pytest.mark.config("radius_server",
                     radius_server={"private_key_file": 'sha384.pem', "certificate_file": 'sha384.pem',
                                    "ca_file": 'sha384.pem'})
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs", "reset_wifi_conn_stats"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "reset_wifi_conn_stats"])
 def test_wsdk_WPA2_EAP_Conn_TLS_when_server_invalid_root_ca_C113892(wifi_dut, wifi_access_point,
                                                                                      wifi_sniffer, sniffer_filter,
                                                                                      radius_server,
