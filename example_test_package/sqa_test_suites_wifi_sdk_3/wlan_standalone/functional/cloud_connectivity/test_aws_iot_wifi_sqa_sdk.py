@@ -332,7 +332,7 @@ class AwsConnection(ThreadBase):
             try:
                 time.sleep(wait_time)
                 recv_msg = wifi_dut.interfaces.wifi.aws_select_socket(expected_status=expected_status)
-                logger().info(f"Received message from DUT is: '{recv_msg[-1].payload.decode()}'")
+                logger().info(f"Received message from DUT is: '{recv_msg}'")
                 assert len(recv_msg), "Failed to receive published message in DUT"
                 return recv_msg[-1]
             except Exception as err:
