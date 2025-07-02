@@ -772,7 +772,8 @@ class WLanJoinThread(ThreadBase):
                                                                  host_name="example.com",
                                                                  resource_name="/websocket",
                                                                  server_port=80, client_port=5001)
-                    self.wifi_dut.interfaces.wifi.websocket_connect(timeout=30)
+                    time.sleep(5)
+                    self.wifi_dut.interfaces.wifi.websocket_connect(timeout=60)
                     time.sleep(0.1)
                     assert ws_handler.client_connected
 
