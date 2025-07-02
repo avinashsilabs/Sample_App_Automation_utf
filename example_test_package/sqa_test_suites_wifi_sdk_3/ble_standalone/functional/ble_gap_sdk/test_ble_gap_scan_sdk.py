@@ -10,7 +10,7 @@ from utf.utils.time_measurer import TimeMeasurer
 from utf.interfaces.bluetooth import BLEDeviceState
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
 from utf.utils.stopwatch import Stopwatch
-
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 
 def logger():
     return get_logger(__name__)
@@ -1095,3 +1095,346 @@ def test_wrong_rssi_value_in_passive_scan_C206387(ble_dut, ble_client, sl_collec
         logger().info(f"time taken for test {t.duration}")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
+
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_passive_scan_when_multiple_devices_adv_C663361(ble_dut, ble_client, sl_collections, ble_sniffer):
+    """
+    Configure DUT in Master and verify multiple devices with different adv type in passive scan
+    :param ble_dut:  Fixture parameter to issue command in DUT.
+    :param ble_client:  Fixture parameter to issue command in Remote Raspi BLE device
+    """
+    try:
+        with TimeMeasurer() as t:
+            ble_sniffer.interfaces.sniffer.init_sniffer()
+            ble_sniffer.interfaces.sniffer.start_capture(capture_file="passive_scan_C663361")
+            logger().info(f"Start DUT")
+            ble_dut_address = ble_dut.interfaces.wifi.ble_start()
+            assert ble_dut_address, "failed to initiate ble in dut"
+
+            logger().info(f"Configure Remote LE device in undirected connectable advertising mode")
+            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+                bt_dut_address=ble_dut_address,
+                hci_adv_params="0xA0 0x05 "  # Advertising_Interval_Min
+                               "0xA0 0x05 "  # Advertising_Interval_Max
+                               "0x00 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                               "0x00 "  # Own_Address_Type
+                               "0x00 "  # Peer_Address_Type
+                               "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                               "0x07 "  # Advertising_Channel_Map
+                               "0x00"  # Advertising_Filter_Policy
+                , scan_resp_data="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
+                                 "0x66 0x69 0x5f 0x74 0x65 0x73 " \
+                                 "0x74 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+                                 "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
+            )
+            assert ble_client_address, "failed to initiate ble in remote device"
+
+            logger().info("Start scanning....")
+            ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address, ble_scan_type=0,
+                                                            timeout=120)
+            logger().info(f"\n\n ****Enabling Wlan and BLE power save**** \n\n")
+            ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+            ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                         psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+            time.sleep(60)
+            sw = Stopwatch()
+            while sw.elapsed_sec < 60:
+                events = ble_dut.interfaces.bluetooth.get_async_events()
+                time_status = True
+                for event in events:
+                    if event.event_type == AsyncEventIdentifiers.ADVERTISE:
+                        if time_status:
+                            start_time = time.time()
+                            logger().info(f"Start time: {start_time}")
+                            time_status = False
+                        else:
+                            if "rsi_ble_simple_central_on_adv_report_event" in event.event_data:
+                                logger().info(f" event data : {event.event_data}")
+                                scan_result = event.event_data
+                                logger().info(f"*************** scan result : {scan_result}")
+                                end_time = time.time()
+                                logger().info(f"End time: {end_time}")
+                            assert (end_time - start_time) < 4, f"scan responses of the remote device is " \
+                                                                f"({end_time - start_time}) more than 4 sec, Hence testcase failed"
+                        if not time_status:
+                            break
+            logger().info(f"undirected connectable advertising mode - ble_client_address: {ble_client_address}")
+            logger().info("stop advertising")
+            ble_client.interfaces.bluetooth.stop_advertising()
+            ble_client.interfaces.bluetooth.close()
+
+            logger().info(f"Start DUT")
+            ble_dut_address = ble_dut.interfaces.wifi.ble_start()
+            assert ble_dut_address, "failed to initiate ble in dut"
+            logger().info(f"Configure Remote LE device in scannable advertising mode")
+            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+                bt_dut_address=ble_dut_address,
+                hci_adv_params="0xA0 0x05 "  # Advertising_Interval_Min
+                               "0xA0 0x05 "  # Advertising_Interval_Max
+                               "0x02 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                               "0x00 "  # Own_Address_Type
+                               "0x00 "  # Peer_Address_Type
+                               "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                               "0x07 "  # Advertising_Channel_Map
+                               "0x00"  # Advertising_Filter_Policy
+                , scan_resp_data="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
+                                 "0x66 0x69 0x5f 0x74 0x65 0x73 " \
+                                 "0x74 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+                                 "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
+            )
+            assert ble_client_address, "failed to initiate ble in remote device"
+            sw = Stopwatch()
+            while sw.elapsed_sec < 60:
+                events = ble_dut.interfaces.bluetooth.get_async_events()
+                time_status = True
+                for event in events:
+                    if event.event_type == AsyncEventIdentifiers.ADVERTISE:
+                        if time_status:
+                            start_time = time.time()
+                            logger().info(f"Start time: {start_time}")
+                            time_status = False
+                        else:
+                            if "rsi_ble_simple_central_on_adv_report_event" in event.event_data:
+                                logger().info(f" event data : {event.event_data}")
+                                scan_result = event.event_data
+                                logger().info(f"*************** scan result : {scan_result}")
+                                end_time = time.time()
+                                logger().info(f"End time: {end_time}")
+                            assert (end_time - start_time) < 4, f"scan responses of the remote device is " \
+                                                                f"({end_time - start_time}) more than 4 sec, Hence testcase failed"
+                        if not time_status:
+                            break
+            logger().info(f"Scannable advertising mode - ble_client_address: {ble_client_address}")
+            time.sleep(60)
+            logger().info("stop advertising")
+            ble_client.interfaces.bluetooth.stop_advertising()
+            ble_client.interfaces.bluetooth.close()
+
+            logger().info(f"Start DUT")
+            ble_dut_address = ble_dut.interfaces.wifi.ble_start()
+            assert ble_dut_address, "failed to initiate ble in dut"
+            logger().info(f"Configure Remote LE device in Non-connectable advertising mode")
+            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv_with_hci_tool(
+                bt_dut_address=ble_dut_address,
+                hci_adv_params="0xA0 0x05 "  # Advertising_Interval_Min
+                               "0xA0 0x05 "  # Advertising_Interval_Max
+                               "0x03 "  # Advertising_Type 0x00-ADV_IND, 1-ADV_DIRECT_IND, 2-ADV_SCAN_IND, 3-ADV_NONCONN_IND
+                               "0x00 "  # Own_Address_Type
+                               "0x00 "  # Peer_Address_Type
+                               "0x00 0x00 0x00 0x00 0x00 0x00 "  # Peer_Address
+                               "0x07 "  # Advertising_Channel_Map
+                               "0x00"  # Advertising_Filter_Policy
+                , scan_resp_data="0x0f 0x0e 0x09 0x75 0x74 0x66 0x5f 0x77 0x69 "
+                                 "0x66 0x69 0x5f 0x74 0x65 0x73 " \
+                                 "0x74 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 "
+                                 "0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00"
+            )
+            assert ble_client_address, "failed to initiate ble in remote device"
+            sw = Stopwatch()
+            while sw.elapsed_sec < 60:
+                events = ble_dut.interfaces.bluetooth.get_async_events()
+                time_status = True
+                for event in events:
+                    if event.event_type == AsyncEventIdentifiers.ADVERTISE:
+                        if time_status:
+                            start_time = time.time()
+                            logger().info(f"Start time: {start_time}")
+                            time_status = False
+                        else:
+                            if "rsi_ble_simple_central_on_adv_report_event" in event.event_data:
+                                logger().info(f" event data : {event.event_data}")
+                                scan_result = event.event_data
+                                logger().info(f"*************** scan result : {scan_result}")
+                                end_time = time.time()
+                                logger().info(f"End time: {end_time}")
+                            assert (end_time - start_time) < 4, f"scan responses of the remote device is " \
+                                                                f"({end_time - start_time}) more than 4 sec, Hence testcase failed"
+                        if not time_status:
+                            break
+            logger().info(f"Non-connectable advertising mode - ble_client_address: {ble_client_address}")
+            time.sleep(60)
+            logger().info("stop scanning")
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+            logger().info("stop advertising")
+            ble_client.interfaces.bluetooth.stop_advertising()
+
+            # Mapping Master and Slave Address for Adding devices for sniffer
+            ble_dut_address_hex = re.split(":", ble_dut_address)
+            ble_client_address_hex = re.split(":", ble_client_address)
+            master_address = "0x"
+            for hex_data_part in ble_dut_address_hex:
+                master_address = master_address + hex_data_part
+            slave_address = "0x"
+            for hex_data_part in ble_client_address_hex:
+                slave_address = slave_address + hex_data_part
+            ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address])
+
+            logger().info("close ble client")
+            ble_client.interfaces.bluetooth.close()
+            ble_sniffer.interfaces.sniffer.stop_capture()
+            logger().info("Sniffer stop successful")
+            captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+            time.sleep(30)
+            exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
+            for captured_file in captured_files:
+                captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+                file_size = os.path.getsize(captured_file)
+                assert file_size > 0
+            exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+            file_size = os.path.getsize(exported_csv_file)
+            assert file_size > 0
+            sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+            logger().info(sniffer_data_df.head())
+            assert sniffer_data_df is not None
+        logger().info(f"time taken for test {t.duration}")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
+    finally:
+        sl_collections.cleanup_ble(ble_dut=ble_dut, ble_client=ble_client, ble_client_address=ble_client_address,
+                                   ble_dut_address=ble_dut_address)
+
+
+@pytest.mark.skip() # test agent jira dependency WIFI_BT_UTFHELP-5454
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_Master_role_MTU_request_error_size_15bytes_C705944(ble_dut, ble_client, ble_sniffer, sl_collections):
+    try:
+        with TimeMeasurer() as t:
+            ble_sniffer.interfaces.sniffer.init_sniffer()
+            ble_sniffer.interfaces.sniffer.start_capture(capture_file="MTU_request_15bytes_C705944")
+            logger().info(f"Start DUT")
+            ble_dut_address = ble_dut.interfaces.wifi.ble_start()
+            assert ble_dut_address, "failed to initiate ble in dut"
+
+            logger().info("***** Advertising from Remote (raspi) *****")
+            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address)
+            assert ble_client_address is not None, "Unable to fetch bluetooth address from Remote device"
+            logger().info(f"Advertised remote BLE device")
+
+            logger().info("Start scanning....")
+            ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address)
+            time.sleep(30)
+            events = ble_dut.interfaces.bluetooth.get_async_events()
+            for event in events:
+                if event.event_type == AsyncEventIdentifiers.ADVERTISE:
+                    if "rsi_ble_simple_central_on_adv_report_event" in event.event_data:
+                        scan_result = event.event_data
+
+            logger().info("Verifying client address is available in scan list...")
+            assert str(ble_client_address) in str(scan_result), "Failed to find client BT address in scan list...."
+            logger().info(f"Found BLE client address: {ble_client_address}")
+            logger().info("Remote device found in scan results, BLE scanning is successful")
+            time.sleep(2)
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+
+            logger().info("***** Wlan and BLE Power Save from DUT *****")
+            ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+            ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                         psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+
+            logger().info(f"*******Setting MTU*******")
+            ble_dut.interfaces.wifi.ble_set_mtu(mtu_size=15)
+            logger().info(f"observed error code as 0x4E62 which is expected")
+
+            logger().info(f"Initiating ble connection...")
+            ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=ble_client_address)
+            time.sleep(60)
+            logger().info("Checking connection status of BLE")
+            state = ble_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
+            logger().info("BLE Connection success")
+
+            sw = Stopwatch()
+            exp_error = False
+            while sw.elapsed_sec < 120:
+                events = ble_dut.interfaces.bluetooth.get_async_events()
+                logger().info(f" events inside while : {events}")
+                for event in events:
+                    logger().info(f" events inside for : {event.event_data}")
+            #         if "20066" in event.event_data:
+            #             exp_error=True
+            #             break
+            #         # logger().info(f" event data : {event.event_data}")
+            # assert exp_error, "Expected error 20066 not found"
+
+            logger().info("DUT is not disconnected from BLE")
+            ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
+            ble_client.interfaces.bluetooth.close()
+            ble_sniffer.interfaces.sniffer.stop_capture()
+            logger().info("Sniffer stop successful")
+        logger().info(f"time taken for test {t.duration}")
+    except Exception as e:
+        logger().info(f"\n****** Testcase failed with {e}******")
+        raise e
+    finally:
+        sl_collections.cleanup_ble(ble_dut=ble_dut, ble_client=ble_client, ble_client_address=ble_client_address,
+                                   ble_dut_address=ble_dut_address)
+
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_Master_role_MTU_request_error_size_245bytes_C705945(ble_dut, ble_client, ble_sniffer, sl_collections):
+    try:
+        with TimeMeasurer() as t:
+            ble_sniffer.interfaces.sniffer.init_sniffer()
+            ble_sniffer.interfaces.sniffer.start_capture(capture_file="MTU_request_245bytes_C705945")
+            logger().info(f"Start DUT")
+            ble_dut_address = ble_dut.interfaces.wifi.ble_start()
+            assert ble_dut_address, "failed to initiate ble in dut"
+
+            logger().info("***** Advertising from Remote (raspi) *****")
+            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address)
+            assert ble_client_address is not None, "Unable to fetch bluetooth address from Remote device"
+            logger().info(f"Advertised remote BLE device")
+
+            logger().info("Start scanning....")
+            ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address)
+            time.sleep(30)
+            events = ble_dut.interfaces.bluetooth.get_async_events()
+            for event in events:
+                if event.event_type == AsyncEventIdentifiers.ADVERTISE:
+                    if "rsi_ble_simple_central_on_adv_report_event" in event.event_data:
+                        scan_result = event.event_data
+
+            logger().info("Verifying client address is available in scan list...")
+            assert str(ble_client_address) in str(scan_result), "Failed to find client BT address in scan list...."
+            logger().info(f"Found BLE client address: {ble_client_address}")
+            logger().info("Remote device found in scan results, BLE scanning is successful")
+            time.sleep(2)
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+
+            logger().info("***** Wlan and BLE Power Save from DUT *****")
+            ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+            ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                         psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+
+            logger().info(f"*******Setting MTU*******")
+            ble_dut.interfaces.wifi.ble_set_mtu(mtu_size=245)
+
+            logger().info(f"Initiating ble connection...")
+            ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=ble_client_address)
+            time.sleep(60)
+            logger().info("Checking connection status of BLE")
+            state = ble_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
+            logger().info("BLE Connection success")
+
+            logger().info("DUT is not disconnected from BLE")
+            ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
+            ble_client.interfaces.bluetooth.close()
+            ble_sniffer.interfaces.sniffer.stop_capture()
+            logger().info("Sniffer stop successful")
+        logger().info(f"time taken for test {t.duration}")
+    except Exception as e:
+        logger().info(f"\n****** Testcase failed with {e}******")
+        raise e
+    finally:
+        sl_collections.cleanup_ble(ble_dut=ble_dut, ble_client=ble_client, ble_client_address=ble_client_address,
+                                   ble_dut_address=ble_dut_address)
