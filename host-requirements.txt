@@ -6,3 +6,4 @@ pydantic
 black
 flake8
 colored_traceback
+boto3==1.35.60
