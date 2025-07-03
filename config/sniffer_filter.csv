@@ -221,6 +221,7 @@ eap_tls_alert_msg_verification_1_2,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{
 probe_req_ds_param, (wlan.sa == {{sa_addr}}), && (wlan.tag.number == 3),
 rx_window_size, (wlan.addr == {{sa_addr}}, and (tcp.window_size == 64128)), and (tcp.flags == 0x0012),
 channel_switch_announcement, (wlan.sa == {{sa_addr}}, and (wlan.fc.type_subtype == 0x000d) and (wlan.tag.number == 37)),
+csa_rejoin_packet, (wlan.sa == {{sa_addr}}, and (wlan.fc.type_subtype == 0x000d) and (wlan.fc.type_subtype == 0x0004 || wlan.fc.type_subtype == 0x0000 || wlan.fc.type_subtype == 0x0001 || wlan.fc.type_subtype == 0x000b || wlan.fc.type_subtype== 0x000c)),
 dtls,(ip.src == {{ sa_addr }}) and (ip.dst == {{ da_addr }}), and dtls and (udp.port == {{ port }}),
 dtls1_0,(ip.src == {{ sa_addr }}) and (ip.dst == {{ da_addr }}), and dtls and (udp.port == {{ port }}) and dtls.record.version == 0xfeff,
 dtls1_2,(ip.src == {{ sa_addr }}) and (ip.dst == {{ da_addr }}), and dtls and (udp.port == {{ port }}) and dtls.record.version == 0xfefd,

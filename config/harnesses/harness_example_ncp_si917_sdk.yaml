@@ -1717,7 +1717,7 @@ constants:
     supervision_timeout:
         value: 2000
     hostname:
-        value: 'LAB0018026' #'rs9116test'    
+        value: 'LAB0018026' #'rs9116test'
     wreck_host_name:
         value: '192.168.50.175'
     wreck_port:
