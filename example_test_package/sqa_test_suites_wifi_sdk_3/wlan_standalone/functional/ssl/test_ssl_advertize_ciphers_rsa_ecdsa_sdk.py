@@ -288,7 +288,8 @@ def test_wifi_sdk_advertise_all_ciphers_ssl_rx_c19605(wifi_sniffer, wifi_access_
                                           'TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256',
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
-                                          'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
+                                          'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256',
+                                          'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_tx_c19606(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
                                                   request, sl_collections, sniffer_filter, ca_cert):
@@ -311,7 +312,8 @@ def test_wifi_sdk_advertise_ciphers_ssl_tx_c19606(wifi_sniffer, wifi_access_poin
                                           'TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256',
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
-                                          'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
+                                          'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256',
+                                          'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_rx_c19607(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
                                                   request, sl_collections, sniffer_filter, ca_cert):
@@ -328,7 +330,7 @@ def test_wifi_sdk_advertise_ciphers_ssl_rx_c19607(wifi_sniffer, wifi_access_poin
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
-                         [['TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384']])
+                         [['TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_tx_c19608(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
                                                   request, sl_collections, sniffer_filter, ca_cert):
@@ -345,7 +347,7 @@ def test_wifi_sdk_advertise_ciphers_ssl_tx_c19608(wifi_sniffer, wifi_access_poin
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
-                         [['TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384']])
+                         [['TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_rx_c19609(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
                                                   request, sl_collections, sniffer_filter, ca_cert):
@@ -362,7 +364,7 @@ def test_wifi_sdk_advertise_ciphers_ssl_rx_c19609(wifi_sniffer, wifi_access_poin
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
-                         [['TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256']])
+                         [['TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_tx_c19610(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
                                                   request, sl_collections, sniffer_filter, ca_cert):
@@ -379,7 +381,7 @@ def test_wifi_sdk_advertise_ciphers_ssl_tx_c19610(wifi_sniffer, wifi_access_poin
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
-                         [['TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256']])
+                         [['TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_rx_c19611(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
                                                   request, sl_collections, sniffer_filter, ca_cert):
@@ -396,7 +398,7 @@ def test_wifi_sdk_advertise_ciphers_ssl_rx_c19611(wifi_sniffer, wifi_access_poin
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
-                         [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384']])
+                         [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_tx_c19612(wifi_sniffer, wifi_dut, wifi_access_point, openssl, wifi_client,
                                                   cipher_list, request, sl_collections, sniffer_filter, ca_cert):
@@ -413,7 +415,7 @@ def test_wifi_sdk_advertise_ciphers_ssl_tx_c19612(wifi_sniffer, wifi_dut, wifi_a
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
-                         [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384']])
+                         [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_rx_c19613(wifi_sniffer, wifi_access_point, wifi_dut, openssl, wifi_client,
                                                   cipher_list, request, sl_collections, sniffer_filter, ca_cert):
@@ -430,7 +432,7 @@ def test_wifi_sdk_advertise_ciphers_ssl_rx_c19613(wifi_sniffer, wifi_access_poin
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
-                         [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256']])
+                         [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_tx_c19614(wifi_sniffer, wifi_dut, wifi_access_point, openssl, wifi_client,
                                                   cipher_list, request, sl_collections, sniffer_filter, ca_cert):
@@ -447,7 +449,7 @@ def test_wifi_sdk_advertise_ciphers_ssl_tx_c19614(wifi_sniffer, wifi_dut, wifi_a
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list",
-                         [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256']])
+                         [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_advertise_ciphers_ssl_rx_c19615(wifi_sniffer, wifi_access_point, wifi_dut, openssl, wifi_client,
                                                   cipher_list, request, sl_collections, sniffer_filter, ca_cert):
@@ -469,7 +471,7 @@ def test_wifi_sdk_advertise_ciphers_ssl_rx_c19615(wifi_sniffer, wifi_access_poin
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
 @pytest.mark.parametrize("cipher_list",
-                         [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
+                         [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 def test_wifi_sdk_advertise_ciphers_ssl_tx_c19616(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
                                                   request, cert, sl_collections, sniffer_filter):
     try:
@@ -488,7 +490,7 @@ def test_wifi_sdk_advertise_ciphers_ssl_tx_c19616(wifi_sniffer, wifi_access_poin
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
 @pytest.mark.parametrize("cipher_list",
-                         [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
+                         [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 def test_wifi_sdk_advertise_ciphers_ssl_rx_c19617(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
                                                   request, cert, sl_collections, sniffer_filter):
     try:
@@ -502,7 +504,7 @@ def test_wifi_sdk_advertise_ciphers_ssl_rx_c19617(wifi_sniffer, wifi_access_poin
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
-@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256']])
+@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 def test_wifi_sdk_advertise_ciphers_ssl_tx_c564188(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
@@ -521,7 +523,7 @@ def test_wifi_sdk_advertise_ciphers_ssl_tx_c564188(wifi_sniffer, wifi_access_poi
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
-@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384']])
+@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 def test_wifi_sdk_advertise_ciphers_ssl_tx_c564189(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
@@ -540,7 +542,7 @@ def test_wifi_sdk_advertise_ciphers_ssl_tx_c564189(wifi_sniffer, wifi_access_poi
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
-@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256']])
+@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 def test_wifi_sdk_advertise_cipher_ssl_tx_c564193(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
@@ -559,7 +561,7 @@ def test_wifi_sdk_advertise_cipher_ssl_tx_c564193(wifi_sniffer, wifi_access_poin
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("cert", ["ca-chain.cert.pem"])
-@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256']])
+@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 def test_wifi_sdk_advertise_cipher_ssl_tx_c564190(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
@@ -669,7 +671,7 @@ def test_wifi_sdk_ssl_1_3_with_all_ciphers_c537928(wifi_sniffer, wifi_access_poi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
-@pytest.mark.parametrize("cipher_list", [['TLS13_AES_128_GCM_SHA256']])
+@pytest.mark.parametrize("cipher_list", [['TLS13_AES_128_GCM_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537933(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                          cipher_list, sl_collections, request, sniffer_filter, ca_cert):
@@ -688,7 +690,7 @@ def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537933(wifi_sniffer, wifi_acce
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
-@pytest.mark.parametrize("cipher_list", [['TLS13_AES_256_GCM_SHA384']])
+@pytest.mark.parametrize("cipher_list", [['TLS13_AES_256_GCM_SHA384', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537934(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                          cipher_list, sl_collections, request, sniffer_filter, ca_cert):
@@ -707,7 +709,7 @@ def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537934(wifi_sniffer, wifi_acce
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
-@pytest.mark.parametrize("cipher_list", [['TLS13_CHACHA20_POLY1305_SHA256']])
+@pytest.mark.parametrize("cipher_list", [['TLS13_CHACHA20_POLY1305_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 
 def test_wifi_sdk_ssl_1_3_with_particular_cipher_c537941(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
