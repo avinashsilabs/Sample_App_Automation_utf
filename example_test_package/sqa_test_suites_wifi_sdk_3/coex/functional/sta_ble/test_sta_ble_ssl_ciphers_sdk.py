@@ -29,7 +29,7 @@ import string
 from utf.utils.logger import get_logger
 from random import randint
 from test_sta_ble_sdk import BleThreadFunctionality, SnifferValidationProcess, ScanTime_JoinTime, WifiJoinThread
-from test_sta_ble_multi_raspi_sdk import BleDualRoleThreadFunctionality
+from test_sta_ble_dle_sdk import BleThread
 import uuid
 from datetime import datetime
 from typing import Dict
@@ -269,11 +269,13 @@ class wifi_ssl_connection:
 
     def join_get_ip(self):
 
-        result = self.sl_collections.join_to_wifi_network_with_rejoin(self.wifi_dut, self.wifi_access_point,
-                                                                      [0, 6, 40, 0])
-        self.device_ip, self.dut_mac_address = result['device_ip'], result['dut_mac_address']
-        self.ap_bssid = self.wifi_access_point.interfaces.wifi.bssid
-        logger().info(f"AP BSSID : {self.ap_bssid}")
+        if not self.wifi_dut.interfaces.wifi.associated:
+
+            result = self.sl_collections.join_to_wifi_network_with_rejoin(self.wifi_dut, self.wifi_access_point,
+                                                                          [0, 6, 40, 0])
+            self.device_ip, self.dut_mac_address = result['device_ip'], result['dut_mac_address']
+            self.ap_bssid = self.wifi_access_point.interfaces.wifi.bssid
+            logger().info(f"AP BSSID : {self.ap_bssid}")
 
     def set_cipher(self, ca_cert=None):
 
@@ -694,7 +696,6 @@ def test_Coex_sdk_ssl_tx_cipher_C575155(
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4365")
 def test_Coex_sdk_ssl_tx_cipher_dual_role_C575156(
         wifi_sniffer,
         wifi_access_point,
@@ -717,7 +718,8 @@ def test_Coex_sdk_ssl_tx_cipher_dual_role_C575156(
         4. Enable the wlan and bt power save mode in dut after the connection
         5. Initiate ping from the dut
     """
-    ble_dut_addr = ""
+    ble_dut_address = None
+    ble_clients_address = []
     try:
         test_name = request.node.name
         time_duration = utf_constants.get("time_duration")
@@ -739,17 +741,54 @@ def test_Coex_sdk_ssl_tx_cipher_dual_role_C575156(
                                       server_cert=cert[1], server_key=cert[2],
                                       mode="TX", test_run_time=duration)
         ssl_obj.set_cipher(ca_cert=cert[0])
-        ble_obj = BleDualRoleThreadFunctionality(
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(
+            set_smp=0)
+
+        ble_obj1 = BleThread(
             wifi_dut=wifi_dut,
-            ble_clients=ble_clients,
+            ble_client=ble_clients[0],
             sl_collections=sl_collections,
-            ble_test_type="slave_and_master",
-            testcase=test_name,
+            ble_test_type="slave",
+            dev_state=8,
+            ble_pairing=1,
+            ble_init_required=False,
+            ble_dut_address=ble_dut_address,
         )
-        ble_obj.start()
-        ble_obj.wait_for_exit()
+        ble_obj2 = BleThread(
+            wifi_dut=wifi_dut,
+            ble_client=ble_clients[1],
+            sl_collections=sl_collections,
+            ble_test_type="master",
+            dev_state=8,
+            ble_pairing=1,
+            ble_init_required=False,
+            ble_dut_address=ble_dut_address,
+        )
+        ssl_obj.join_get_ip()
+        ble_obj1.start()
+        ble_obj1.wait_for_exit()
+        ble_clients_address.append(ble_obj1.ble_client_address)
+        wifi_dut.interfaces.wifi.ble_set_smp(set_smp=1)
+        ble_obj2.start()
+        ble_obj2.wait_for_exit()
+        ble_clients_address.append(ble_obj2.ble_client_address)
         ssl_obj.ssl_connection_tx_rx()
-        ble_obj.dual_role_disconnect()
+        for i in range(0, len(ble_clients)):
+            status = ble_clients[i].interfaces.bluetooth.get_connection_status(
+                ble_dut_address
+            )
+            logger().info(
+                f"Connection status in remote device '{ble_clients[i].name}' is:{status}"
+            )
+            assert (
+                status
+            ), f"Remote device '{ble_clients[i].name}' is not connected to DUT"
+            wifi_dut.interfaces.wifi.ble_disconnect(
+                ble_remote_dev_address=ble_clients_address[i]
+            )
+            ble_clients[i].interfaces.bluetooth.close()
+            time.sleep(10)
+
         wifi_sniffer.interfaces.capture.stop_capture()
         ssl_obj.sniffer_validation_ssl()
         logger().info("sniffer validation is successful")
@@ -757,13 +796,17 @@ def test_Coex_sdk_ssl_tx_cipher_dual_role_C575156(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        ble_clients[0].interfaces.bluetooth.close()
-        ble_clients[1].interfaces.bluetooth.close()
-        if ble_obj is not None:
-            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
-                                       ble_client_address=ble_obj.ble_clients_address[0],
-                                       ble_dut_address=ble_obj.ble_dut_address)
+        try:
+            if ble_dut_address is not None:
+                for ble_client in ble_clients:
+                    ble_client.interfaces.bluetooth.remove_device(ble_dut_address)
+                    ble_client.interfaces.bluetooth.close()
+                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients,
+                                           ble_client_address=ble_clients_address,
+                                           ble_dut_address=ble_dut_address)
+        except Exception as e:
 
+            wifi_dut.interfaces.wifi.is_dut_bad_state = True
 
 
 @pytest.mark.config(

@@ -1776,11 +1776,8 @@ def test_Coex_sdk_BLE_RSSI_WLAN_HTTP_download_C133563(
                                        ble_dut_address=ble_obj.ble_dut_address)
 
 
-
-
-
-@wifi_dut_marker()
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4422")
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.DNSClient
+                              | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP)
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
 def test_Coex_sdk_WLAN_DNS_static_dns_server_BLE_slave_C133479(wifi_dut, wifi_access_point,
@@ -1815,6 +1812,7 @@ def test_Coex_sdk_WLAN_DNS_static_dns_server_BLE_slave_C133479(wifi_dut, wifi_ac
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="slave",
+            ble_pairing=1
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -1847,8 +1845,8 @@ def test_Coex_sdk_WLAN_DNS_static_dns_server_BLE_slave_C133479(wifi_dut, wifi_ac
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
-        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], decryption_key, ["dns"],
-                                     test_name)
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], wifi_access_point,
+                                    decryption_key, ["dns"], test_name)
         assert len(
             capture_list) > 0, "DNS packets  are not captured in the sniffer"
 
@@ -1856,8 +1854,10 @@ def test_Coex_sdk_WLAN_DNS_static_dns_server_BLE_slave_C133479(wifi_dut, wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
     finally:
-        ble_client.interfaces.bluetooth.close()
+
         if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
