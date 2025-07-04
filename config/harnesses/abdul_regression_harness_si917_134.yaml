@@ -76,7 +76,6 @@ devices:
         type: 'rs911x'
         subtype: 'rs9117'
         src_dir: 'utf_wiseconnect'
-        commander_options: '--serialno 000440318552 --device Si917' #configure primary EVK serial number
 
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
         defaults:
@@ -100,7 +99,6 @@ devices:
                 port: 'auto'
                 vid: 0x1366
                 pid: 0x0105
-                serial_number: '000440318552' # configure primary evk serial number
 
             # 'firmware_uart' is a special interface that indicates which UART is used
             # when loading firmware on the device
@@ -119,102 +117,26 @@ devices:
                 # to be defined in the defaults section for specifying the
                 # communication interface to the device
                 type: 'sl_wifi_test_agent_cli'
+#                type: 'sl_wifi_at_cli'
                 src_dir: 'utf_wiseconnect_3.tests'
-                commander_options: '--serialno 000440318552 --device Si917' #configure primary EVK serial number
                 thread_config:
                     wifi:
                         count: 2
                         stack_len: 2048
                     ble:
-                        count: 2
+                        count: 0
                         stack_len: 2048
-
-    remote_wiseconnect3:
-        type: 'efx32'
-        subtype: 'efr32'
-        commander_options: '--serialno 000440328378 --device Si917' #configure secondary EVK serial number
-        defaults:
-            cli_transport: 'serial'
-        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
-        interfaces:
-            serial:
-                # The type attribute is mandatory and specifies the module within the interfaces folder
-                # used to create the interface object
-                type: 'serial'
-                # Other attributes are specific to the interface type; some may be optional or mandatory
-                # For a serial uart device connected via USB, you can enable autodetection of the port
-                # by specifying the vid and pid of the device.
-                # In the below example, the vid and pid represent the USB connection to the WSTK
-                port: 'auto'
-                vid: 0x1366
-                pid: 0x0105
-                serial_number: '000440328378' # configure secondary evk serial number
-            wifi:
-                type: 'sl_wifi_test_agent_cli'
-                src_dir: 'utf_wiseconnect_3.tests'
-                commander_options: '--serialno 000440328378 --device Si917' #configure secondary EVK serial number
-
-    remote_wiseconnect3_1:
-        type: 'efx32'
-        subtype: 'efr32'
-        commander_options: '--serialno 000440318552 --device Si917' #configure secondary EVK serial number
-        defaults:
-            cli_transport: 'serial'
-        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
-        interfaces:
-            serial:
-                # The type attribute is mandatory and specifies the module within the interfaces folder
-                # used to create the interface object
-                type: 'serial'
-                # Other attributes are specific to the interface type; some may be optional or mandatory
-                # For a serial uart device connected via USB, you can enable autodetection of the port
-                # by specifying the vid and pid of the device.
-                # In the below example, the vid and pid represent the USB connection to the WSTK
-                port: 'auto'
-                vid: 0x1366
-                pid: 0x0105
-                serial_number: '000440318552' # configure secondary evk serial number
-            wifi:
-                type: 'sl_wifi_test_agent_cli'
-                src_dir: 'utf_wiseconnect_3.tests'
-                commander_options: '--serialno 000440318552 --device Si917' #configure secondary EVK serial number
-
-    remote_wiseconnect3_2:
-        type: 'efx32'
-        subtype: 'efr32'
-        commander_options: '--serialno 000440318552 --device Si917' #configure secondary EVK serial number
-        defaults:
-            cli_transport: 'serial'
-        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
-        interfaces:
-            serial:
-                # The type attribute is mandatory and specifies the module within the interfaces folder
-                # used to create the interface object
-                type: 'serial'
-                # Other attributes are specific to the interface type; some may be optional or mandatory
-                # For a serial uart device connected via USB, you can enable autodetection of the port
-                # by specifying the vid and pid of the device.
-                # In the below example, the vid and pid represent the USB connection to the WSTK
-                port: 'auto'
-                vid: 0x1366
-                pid: 0x0105
-                serial_number: '000440318552' # configure secondary evk serial number
-            wifi:
-                type: 'sl_wifi_test_agent_cli'
-                src_dir: 'utf_wiseconnect_3.tests'
-                commander_options: '--serialno 000440318552 --device Si917' #configure secondary EVK serial number
 
     efr32_4180b_Si917:
         type: 'efx32'
         subtype: 'efr32'
-        commander_options: "--serialno 000440318552 --device Si917"
+        commander_options: "--device Si917"
         interfaces:
             vcom:
                 type: 'serial'
                 port: 'auto'
                 vid: 0x1366
                 pid: 0x0105
-                serial_number: '000440318552'
 
     #EFR32 configuration
     efr32_4180b:
@@ -266,18 +188,18 @@ devices:
         interfaces:
             wifi:
                 type: 'wifi.access_points.asus_rt_ax3000'
-                ip_address: '10.207.18.207'
-                admin_password: 'admin@1234'
+                ip_address: '10.207.18.135'
+                admin_password: 'admin@12345'
                 ssh_port: 22
                 ssid: "Azeez123"
                 passphrase: '12345678'
-                channel: 11
+                channel: 1
                 web_ui_port: 8443
                 standard: 'bgnax'
                 protected_management_frame: 'Disable'
                 #ipv6 configuration
                 connection_type: 'STATIC_IPV6'
-                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1bc"
+                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1234"
                 wan_ipv6_gateway: "2401:4900:1cb3:3444::1"
                 wan_prefix_length: "64"
                 ipv6_state: "1" #0= "stateless" 1="stateful"
@@ -290,24 +212,27 @@ devices:
                 ap_test_ip: '192.168.50.1' #AP LOGIN IP (TEST IP)
                 skip_assertion_failure: True
                 # radius server configuration
-                radius_ip: "10.207.17.220"
+                radius_ip: "10.207.18.185"
                 radius_port: "1812"
-                guest_networks:
-                    - band: "2g"
-                      index: "1"
-                      ssid: "ASUS_B0_2G_Guest"
-                      passphrase: '123456789'
-                      security: WPA2
-                    - band: "2g"
-                      index: "2"
-                      ssid: "ASUS_B0_2G_Guest2"
-                      passphrase: '123456789'
-                      security: WPA2
-                    - band: "2g"
-                      index: "3"
-                      ssid: "ASUS_B0_2G_Guest3"
-                      passphrase: '123456789'
-                      security: WPA2
+#                guest_networks:
+#                    - band: "2g"
+#                      index: "1"
+#                      ssid: "ASUS_B0_2G_Guest6"
+#                      passphrase: '123456789'
+#                      security: WPA2
+#                      channel: 11
+#                    - band: "2g"
+#                      index: "2"
+#                      ssid: "ASUS_B0_2G_Guest7"
+#                      passphrase: '123456789'
+#                      security: WPA2
+#                      channel: 11
+#                    - band: "2g"
+#                      index: "3"
+#                      ssid: "ASUS_B0_2G_Guest8"
+#                      passphrase: '123456789'
+#                      security: WPA2
+#                      channel: 11
 
     switched_ap:
         interfaces:
@@ -321,11 +246,11 @@ devices:
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
-                hostname: '10.207.18.136'
+                hostname: '10.207.18.167'
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
-                outlet: 8
+                outlet: 7
                 # use_persistent_state: true will set a persistent state, that the outlet will revert
                 # to after reboot or power cycle
                 # use_persistent_state: false will set a transient state only, and the outlet will revert
@@ -344,11 +269,11 @@ devices:
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
-                hostname: '10.207.18.136'
+                hostname: '10.207.18.167'
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
-                outlet: 8
+                outlet: 7
                 # use_persistent_state: true will set a persistent state, that the outlet will revert
                 # to after reboot or power cycle
                 # use_persistent_state: false will set a transient state only, and the outlet will revert
@@ -367,11 +292,11 @@ devices:
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
-                hostname: '10.207.18.136'
+                hostname: '10.207.18.167'
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
-                outlet: 8
+                outlet: 7
                 # use_persistent_state: true will set a persistent state, that the outlet will revert
                 # to after reboot or power cycle
                 # use_persistent_state: false will set a transient state only, and the outlet will revert
@@ -408,7 +333,7 @@ devices:
         interfaces:
             linux_shell:
                 type: 'shell.ssh_shell'
-                remote: 10.207.17.219
+                remote: 10.207.18.184
                 username: pi
                 password: raspberry
                 use_paramiko_expect: false
@@ -426,7 +351,7 @@ devices:
         interfaces:
             linux_shell:
                 type: 'shell.ssh_shell'
-                remote: 10.207.18.227
+                remote: 10.207.18.249
                 username: pi
                 password: raspberry
                 use_paramiko_expect: false
@@ -444,7 +369,7 @@ devices:
         interfaces:
             linux_shell:
                 type: 'shell.ssh_shell'
-                remote: 10.207.18.4
+                remote: 10.207.18.185
                 username: pi
                 password: raspberry
                 use_paramiko_expect: false
@@ -550,7 +475,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '10.207.18.4'
+                ip_address: '10.207.18.184'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
                 username: pi
                 password: 'raspberry'
@@ -610,10 +535,11 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '10.207.18.227'
+                ip_address: '10.207.18.249'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
                 username: pi
                 password: 'raspberry'
+                skip_rabbitmq_check: True
             shell:
                 type: 'rpc.rpc_client'
                 # the 'forward_to' property specifies the destination device and interface on the server
@@ -640,7 +566,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '10.207.17.219'
+                ip_address: '10.207.18.184'
                 image: 'utfsilabs/rpi_ubuntu_secondary'
                 username: pi
                 password: 'raspberry'
@@ -670,7 +596,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '10.207.18.4'
+                ip_address: '10.207.18.185'
                 image: 'utfsilabs/rpi_ubuntu_secondary'
                 username: pi
                 password: 'raspberry'
@@ -713,6 +639,19 @@ devices:
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
 
+    raspi_mosquitto_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0:0:0:0:0:0:0:0'
+                port: 1883
+                interface: 'eth1'
+                tls_enabled: false
+                ip_version: 6
+
     # this represents an MQTT broker running on the raspberry pi on port 1883 with authentication enabled
     raspi_mosquitto_auth:
         interfaces:
@@ -752,9 +691,9 @@ devices:
                 server_listen_address: '0.0.0.0'
                 # port must be set to 8883 for TLS to be enabled
                 port: 8883
-                interface: 'eth1'
-#                username: 'testuser'
-#                password: 'testpassword'
+                interface: 'wlan0'
+                username: 'testuser'
+                password: 'testpassword'
                 tls_enabled: true
                 # If TLS is enabled, the properties below must be specified and contain the names
                 # of files within the utils/tls_certificates directory containing the TLS private key,
@@ -762,6 +701,30 @@ devices:
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
+
+
+    raspi_mosquitto_tls_ipv6:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            mqtt:
+                type: 'mqtt.server.mosquitto_linux'
+                shell: 'linux_shell'
+                server_listen_address: '0.0.0.0'
+                # port must be set to 8883 for TLS to be enabled
+                port: 8883
+                interface: 'eth1'
+                username: 'testuser'
+                password: 'testpassword'
+                tls_enabled: true
+                # If TLS is enabled, the properties below must be specified and contain the names
+                # of files within the utils/tls_certificates directory containing the TLS private key,
+                # certificate, and CA certificate chain
+                tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                tls_ca_chain: 'ca-chain.cert.pem'
+                ip_version: 6
+
 
     raspi_mosquitto_tls_ecdsa:
         interfaces:
@@ -864,27 +827,35 @@ devices:
                 tls_enabled: true
                 tls_ca_chain: 'ca-chain.cert.pem'
 
+    tcp_server:
+        interfaces:
+            server:
+                type: "wifi.sdk_server.sdk_server_linux"
+                server_name: "TCP"
+                firmware_file_name: "encrypted_1_SiWG917-B.2.14.5.0.0.2.rps"
+                server_binary_file_name: "tcp_server.bin"
+
     airpcap:
         interfaces:
             local_shell:
                 type: 'shell.ssh_shell'
-                remote: 10.207.18.208  # configure sniffer NUC IP
-                username: test       # sniffer NUC username
-                password: test123    # sniffer NUC password
+                remote: 10.208.70.38  # configure sniffer NUC IP
+                username: svc_sqa_automation       # sniffer NUC username
+                password: Silicon@20242025    # sniffer NUC password
                 use_paramiko_expect: false
                 timeout: 30
             capture:
                 default:
                 type: 'wifi.sniffer.tshark'
                 shell: 'local_shell'
-#                interface: 'wlp0s20f3'
-                interface: 'wlx00c0cab57c2a'
+                interface: 'wlp0s20f3'
+#                interface: 'wlx00c0cab57c2a'
             live_capture:
-                host_address: 10.207.18.208
+                host_address: 10.208.70.38
                 type: 'wifi.sniffer.pyshark_live_sniffer'
                 shell: 'local_shell'
-#                interface: 'wlp0s20f3'
-                interface: 'wlx00c0cab57c2a'
+                interface: 'wlp0s20f3'
+#                interface: 'wlx00c0cab57c2a'
 
     saleae_logic_analyzer:
         interfaces:
@@ -945,6 +916,7 @@ devices:
                 private_key: 'private-key.key'
                 client_cert: 'client-certificate.crt'
                 root_ca: 'start_field.pem'
+
     azure_iot:
         interfaces:
             hub:
@@ -1128,7 +1100,7 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
                 # host machine details where iperf is configuered
-                host_ip: "10.207.17.220"
+                host_ip: "10.207.18.185"
                 host_username: "pi"
                 host_password: "raspberry"
 
@@ -1139,9 +1111,9 @@ devices:
                 # to zip all the iperf output files
                 zip_results: 'Y'
                 # host machine details where iperf is configuered
-                host_ip: "10.207.18.208"
-                host_username: "test"
-                host_password: "test123"
+                host_ip: "10.208.70.38"
+                host_username: "svc_sqa_automation"
+                host_password: "Silicon@20242025"
 
     raspi_ftp_server:
         interfaces:
@@ -1176,7 +1148,7 @@ devices:
             radius_server:
                 type: 'radius_server.freeradius.freeradius_linux'
                 shell: 'linux_shell'
-                ap_ip_address: '10.207.18.207'
+                ap_ip_address: '10.207.18.135'
                 ap_secret: '12345678'
                 username: 'user1'
                 password: '12345678'
@@ -1186,18 +1158,36 @@ devices:
                 certificate_file: 'wifi-user.pem'
                 ca_file: 'wifi-user.pem'
 
+    raspi_radius_server_v2:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            radius_server:
+                type: 'radius_server.freeradius.freeradius_v3_2_linux'
+                shell: 'linux_shell'
+                ap_ip_address: '10.207.18.135'
+                ap_secret: '12345678'
+                username: 'user1'
+                password: '12345678'
+                tls_min_version: '1.0'
+                tls_max_version: '1.2'
+                private_key_file: 'wifi-user.pem'
+                certificate_file: 'wifi-user.pem'
+                ca_file: 'wifi-user.pem'
+                #private_key_password: 12345678
+
     static_radius_server:
         interfaces:
             ssh_shell:
                 type: 'shell.ssh_shell'
-                remote: '10.207.18.208'  # configure Free Radius Server NUC IP
-                username: test       # NUC username
-                password: test123    # NUC password
+                remote: '10.208.70.38'  # configure Free Radius Server NUC IP
+                username: svc_sqa_automation       # NUC username
+                password: Silicon@20242025    # NUC password
                 use_paramiko_expect: false
             radius_server:
                 type: 'radius_server.freeradius.static'
                 shell: 'ssh_shell'
-                ap_ip_address: '10.207.18.207'
+                ap_ip_address: '10.207.18.135'
                 ap_secret: '12345678'
                 username: 'user1'
                 password: '12345678'
@@ -1299,6 +1289,15 @@ devices:
                 shell: 'linux_shell'
                 interface: 'eth1'
 
+    # This represents the service_discovery configuration
+    avahi_daemon_linux:
+        interfaces:
+            linux_shell:
+                type: 'shell.shell'
+            sd:
+                type: "service_discovery.avahi_daemon_linux"
+                shell: 'linux_shell'
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1307,12 +1306,6 @@ defaults:
     dut: 'si917_sl_wifi'
 
     efx32: 'efr32_4180b_Si917'
-
-    remote_wiseconnect3: 'remote_wiseconnect3'
-
-    remote_wiseconnect3s:
-        - 'remote_wiseconnect3_1'
-        - 'remote_wiseconnect3_2'
 
 #    # List of devices on test bed, used for loading/upgrading firmware at test case level
     wiseconnect_duts:
@@ -1351,7 +1344,6 @@ defaults:
         - 'raspi_wifi_ssh_1'
         - 'raspi_wifi_ssh_2'
 
-
     wifi_sniffer: 'airpcap'
 
     sniffer_filter: 'sniffer_filter'
@@ -1387,6 +1379,8 @@ defaults:
 
     http_client: 'raspi_http_client'
 
+    sdk_server: 'tcp_server'
+
     rf_attenuator: '50pa500_attenuator'
     ssl_server: 'raspi_ssl_server'
     #ssl_server: 'raspi_ssl_server_static'
@@ -1406,8 +1400,8 @@ defaults:
     # The entries below define the defaults for the interface types corresponding to the entry name
     serial:
         baud: 115200
-        data_chunk_read_elapsed_time: 5
-        data_chunk_read_dealy: 0.05
+        data_chunk_read_elapsed_time: 0.9
+        data_chunk_read_dealy: 0.03
 
     ble_vulnerability_sniffer: 'ble_sweyntooth'
     bt_vulnerability_sniffer: 'bt_braktooth'
@@ -1425,7 +1419,7 @@ defaults:
         disable_sniffer_validation: false
 
         # firmware path for http/https otaf
-        http_url: '/SiWG917-B.2.13.2.0.0.3.rps'
+        http_url: '/SiWG917-B.2.13.4.1.0.2.rps'
 
         pll_mode: 0
         rf_type: 1
@@ -1437,6 +1431,8 @@ defaults:
         power_save: True
 
     wiseconnect_web: 'wiseconnect_web'
+
+    service_discovery: 'avahi_daemon_linux'
 
     net_perf_server: 'secondary_raspi_iperf'
 
@@ -1477,7 +1473,7 @@ defaults:
         bt_pin_code: "4321"
 
     iop_sockets:
-        server_ip: '10.207.18.220'
+        server_ip: '10.207.18.134'
         server_port: '8007'
         att_channel: 1
         db_value: 2
@@ -1492,7 +1488,7 @@ defaults:
         address_family: 'ipv4'
         port: '8007'
         ip_len: 4
-        server_ip: '192.168.50.210'
+        server_ip: '192.168.50.55'
         stream_type: 'stream'
 
     sntp_server:
@@ -1528,7 +1524,7 @@ defaults:
         stop_capture_on: ["crash", "error", "exception", "oops", "Target is not responding"]
         bt_exploit_type: "au_rand_flooding"
         script: ""
-    
+
     plotter: 'power_meter_plotter'
 
     net_perf:
@@ -1559,11 +1555,11 @@ defaults:
                 # bytes, number of bytes we want device to send to server (host) in each iteration
                 data_len: 1472
         tos_value: '0xC8'
-    
+
     power_meter_keysight_benchvue:
         data_log_file_name: 'UTF_DataLog_'
         data_log_file_name_is_append_date:  true
-        data_log_file_name_is_append_time: true 
+        data_log_file_name_is_append_time: true
         data_log_folder_location: 'C:\\UTF\\data_log'
         data_log_start: 'DatalogRunButton'
         data_log_stop: 'AfterElapsedTime'
@@ -1574,7 +1570,7 @@ defaults:
         data_log_enable_min_max_logging: false
         data_log_is_avg_enabled: true
         data_log_is_min_enabled: true
-        data_log_is_max_enabled: true 
+        data_log_is_max_enabled: true
         data_log_is_peak_to_peak_enabled: true
         data_log_is_charge_c_enabled: true
         data_log_is_charge_ah_enabled: true
@@ -1609,9 +1605,6 @@ start_state:
     wifi_dut:
         device: 'reset'
         wifi: 'init'
-    remote_wiseconnect3:
-        device: 'reset'
-        sapi: 'init'
 
 #end_state:
 #    wifi_access_point:
@@ -1621,7 +1614,7 @@ constants:
     time_duration:
         value: 5
     long_duration:
-        value: 36000
+        value: 30
     ping_count:
         value: 10
     iter_count:
@@ -1643,11 +1636,15 @@ constants:
     wreck_password:
         value: 'test123'
     rps_filename:
-        value:  'secured_SiWG917-B.2.13.2.0.0.3.rps'
+        value:  'RS9117_WC_SI_7kppm.rps'
     m4_rps_filename:
         value:  'secured_wifi_station_ping_soc.rps'
     m4_rps_plain:
         value: 'wifi_station_ping_soc.rps'
+    combine_rps_filename:
+        value: 'combined_ta_m4.rps'
+    rejoin_time:
+        value: 160
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
 
