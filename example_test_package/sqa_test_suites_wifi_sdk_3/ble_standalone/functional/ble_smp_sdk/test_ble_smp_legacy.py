@@ -2556,7 +2556,7 @@ def test_verify_Rand_memset_0_for_encryption_using_STK_C557279(wifi_dut, nrf_ble
     """Verify EDIV/Rand memset 0 for encryption using STK"""
     ble_obj = None
     try:
-        ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, sniffer_check=True, layer_name=["LE LL", "SMP"], smp_sc=0, smp_io_capability=1, cap_on_dongle=NRFBLEIoCapabilities.KEYBOARD_ONLY, nrf_dongle_as_master=True, lesc_disabled=True, gatt_init=False, link_key=False)
+        ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, sniffer_check=True, layer_name=["LE LL", "SMP"], smp_sc=0, smp_io_capability=1, cap_on_dongle=NRFBLEIoCapabilities.KEYBOARD_ONLY, nrf_connect_to_dut=True, testcase_no  = 664576, lesc_disabled=True, gatt_init=False, link_key=False, passkey_entry=True)
         ble_obj.start()
         ble_obj.wait_for_exit()
         assert len(ble_obj.sniffer_data_df_1.loc[
@@ -2564,12 +2564,12 @@ def test_verify_Rand_memset_0_for_encryption_using_STK_C557279(wifi_dut, nrf_ble
         assert len(ble_obj.sniffer_data_df_1.loc[(
                 ble_obj.sniffer_data_df_1['Control Pkt'] == "LL_ENC_RSP")]), "unable to find encryption response"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Request") & (
-                ble_obj.sniffer_data_df_2['IO Capabilities'] == "KeyboardOnly") & (ble_obj.sniffer_data_df_2[
+                ble_obj.sniffer_data_df_2['IO Capabilities'] == "DisplayYesNo") & (ble_obj.sniffer_data_df_2[
                                                                                        'MITM'] == "MITM Protection:  Yes") & (
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "No")]), "unable to find the packets in sniffer"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
-                ble_obj.sniffer_data_df_2['IO Capabilities'] == "DisplayYesNo") & (ble_obj.sniffer_data_df_2[
+                ble_obj.sniffer_data_df_2['IO Capabilities'] == "KeyboardOnly") & (ble_obj.sniffer_data_df_2[
                                                                                        'MITM'] == "MITM Protection:  Yes") & (
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "No")]), "unable to find the packets in sniffer"
