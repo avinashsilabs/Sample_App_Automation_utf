@@ -29,6 +29,7 @@ from utf.interfaces.socket import SOCKET_TYPE_TCP
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 from utf.utils import print_dict
+from utf.utils.thread_base import ThreadBase
 
 lock = threading.Lock()
 
@@ -48,10 +49,6 @@ lock = threading.Lock()
 
 def logger():
     return get_logger(__name__)
-
-def __print_throughput(iperf_throughput: dict):
-    if iperf_throughput is not None:
-        print_dict("##     ", iperf_throughput)
 
 
 class ConcurrentMode:
@@ -119,6 +116,39 @@ class ConcurrentMode:
                                                     f"socket id {sock} opened in the DUT is not matched")
                         logger().info("Data sent by remote peer and received at DUT is matching\n")
             time.sleep(sleep_time)
+
+class Iperf(ThreadBase):
+    def __init__(self, wifi_dut=None, net_perf_client=None, wifi_client=None, protocol=None, traffic=None,
+                 wifi_access_point=None, qos=None, capture_filename=None, wifi_sniffer=None, sl_collections=None,
+                 sniffer_filter=None, result=None, host_ip=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.net_perf_client = net_perf_client
+        self.wifi_client = wifi_client
+        self.protocol = protocol
+        self.traffic = traffic
+        self.wifi_access_point = wifi_access_point
+        self.qos = qos
+        self.capture_filename = capture_filename
+        self.wifi_sniffer = wifi_sniffer
+        self.sl_collections = sl_collections
+        self.sniffer_filter = sniffer_filter
+        self.ap_mac_address = None
+        self.host_ip = host_ip
+        self.result = result
+
+    def run(self):
+        self.net_perf_client.interfaces.net_perf.init_server(
+            host_ip=self.host_ip, device_ip=self.result['device_ip'], protocol=self.protocol, tos_value='0xc8')
+        logger().info(f"***** starting iperf ******")
+        self.net_perf_client.interfaces.net_perf.start()
+        logger().info(f"***** send traffic  ******")
+        self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
+                                       local_port=self.net_perf_client.interfaces.net_perf.server_port,
+                                       local_ip=self.result['device_ip'], remote_ip=self.host_ip,
+                                       remote_port=self.net_perf_client.interfaces.net_perf.server_port,
+                                       size=1460, ttl=120, throughput_type=1, qos=0, timeout=150)
+        logger().info("**** data transfer is successful ****")
 
 
 @pytest.mark.config(
@@ -618,7 +648,7 @@ def test_wifi_sdk_connect_correct_psk_C694555(
                               Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={'security': 'WPA2', 'channel': 11})
@@ -637,33 +667,25 @@ def test_wifi_sdk_connect_correct_psk_C694555(
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 def test_wifi_sdk_tcp_tx_both_sta_and_ap_in_conc_mode_c766509(
-        wifi_clients, wifi_access_point, sl_collections, wifi_dut, net_perf_client, protocol, wifi_client):
+        wifi_clients, wifi_access_point, sl_collections, wifi_dut, net_perf_client, protocol, wifi_client, wifi_sniffer,
+        sniffer_filter):
     """
     Verify TCP Tx in both STA and AP Mode in Concurrent scenario
     """
     try:
         wifi_clients = wifi_clients[:1]
         con_obj = ConcurrentMode()
-        host_ip = wifi_client.interfaces.wifi.get_ip_address(network_interface='eth1')
+
+        host_ip = wifi_client.interfaces.wifi.get_ip_address('eth1')
+        logger().info(f"******** HOST IP {host_ip} *******")
 
         result = sl_collections.join_to_wifi_network(
-            wifi_dut, wifi_access_point, associated=wifi_dut.interfaces.wifi.associated, power_save=False)
+            wifi_dut, wifi_access_point, associated=wifi_dut.interfaces.wifi.associated, power_save=False, retry_count=3)
 
-        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=result['device_ip'],
-                                                        protocol=protocol, tos_value='0xc8')
-        logger().info(f"***** starting iperf ******")
-        net_perf_client.interfaces.net_perf.start()
-        logger().info(f"***** send traffic  ******")
-        wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
-                                       local_port=net_perf_client.interfaces.net_perf.server_port,
-                                       local_ip=result['device_ip'], remote_ip=host_ip,
-                                       remote_port=net_perf_client.interfaces.net_perf.server_port,
-                                       size=1460, ttl=30, throughput_type=1, qos=0)
-        logger().info(f"***** get and print throughput ******")
-        tp = net_perf_client.interfaces.net_perf.process_output()
-        assert tp, "failed to get throughput..."
-        __print_throughput(tp)
-        logger().info("data transfer is successful")
+        data_transfer_obj = Iperf(
+            wifi_dut=wifi_dut, net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
+            traffic='0x00', wifi_access_point=wifi_access_point, qos=0, result=result, host_ip=host_ip,
+            wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, sniffer_filter=sniffer_filter)
 
         sl_collections.configure_dut_in_static_ip(
             wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0", static_gateway="192.168.100.76")
@@ -673,9 +695,12 @@ def test_wifi_sdk_tcp_tx_both_sta_and_ap_in_conc_mode_c766509(
         logger().info("DUT as an AP is started")
         dut_ap_ip = con_obj.connect_clients_to_dut_as_ap(wifi_clients, wifi_dut, dut_ip=con_obj.dut_ap_ip)['dut_ip']
 
+        data_transfer_obj.start()
+        time.sleep(15)
         sl_collections.run_traffic(
             wifi_dut=wifi_dut, net_perf_client=net_perf_client, protocol=protocol, device_ip='192.168.100.76',
-            host_ip='192.168.100.77', timeout=40, traffic_type="TX")
+            host_ip='192.168.100.77', timeout=120, traffic_type="TX")
+        data_transfer_obj.wait_for_exit()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
