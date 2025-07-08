@@ -191,6 +191,22 @@ class WLanThread(ThreadBase):
         addr = ipaddress.IPv6Address(addr_int.to_bytes(16, byteorder="big"))
         return addr
 
+def ran_ipv6_addr(prefix: str) -> str:
+    # Ensure the prefix is interpreted as a /64 network
+    network = ipaddress.IPv6Network(f"{prefix}/64", strict=False)
+
+    # Generate a random 64-bit interface identifier
+    random_suffix = random.getrandbits(64)
+
+    # Combine the prefix and the random suffix
+    full_ip_int = int(network.network_address) | random_suffix
+    full_ip = ipaddress.IPv6Address(full_ip_int)
+
+    return str(full_ip)
+
+
+wan_ipv6_addr = ran_ipv6_addr("2001:db8:abcd:0012::")
+wan_gateway = "2001:db8:abcd:0012::1"
 
 @pytest.mark.config(
     "wifi_dut",
@@ -454,9 +470,21 @@ def test_wifi_sdk_http_put_without_extended_header_c37573(http_server, wifi_dut,
 
 @pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.config(
-    "wifi_access_point", wifi={"ipv6_state": "1",
-                               "wan_ipv6_address": WLanThread().random_ipv6_addr("2401:4900:1cb3::/48"),
-                               "security": "Open"}
+    "wifi_access_point", wifi={"connection_type": "STATIC_IPV6",
+                               "wan_ipv6_address": wan_ipv6_addr,
+                               "wan_ipv6_gateway": wan_gateway,
+                               "wan_prefix_length": "64",
+                               "ipv6_state": "1",
+                               "security": "Open",
+                               "lan_ipv6_address": "2401:3500:133c:1341:1134:ffed:13cd:1134",
+                               "lan_prefix_length": "64",
+                               "lan_ipv6_prefix": "2401:3500:133c:1341::",
+                               "lan_ip_pool_start": "1000",
+                               "lan_ip_pool_end": "2000",
+                               "lan_lease_time": "86400",
+                               "use_ipv6_web": True,
+                               "enable_ipv6": True,
+                               }
 )
 @pytest.mark.config(
     "wifi_dut",
