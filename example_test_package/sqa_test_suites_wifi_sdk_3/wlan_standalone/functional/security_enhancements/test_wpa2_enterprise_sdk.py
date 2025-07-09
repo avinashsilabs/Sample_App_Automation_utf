@@ -3445,7 +3445,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_C113792(wifi_dut, wifi_access_point, w
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.radius_server("raspi_radius_server_v2")
 def test_wifi_sdk_wpa2_enterprise_eap_fast_tls_1_0_c113778(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
@@ -3470,14 +3470,14 @@ def test_wifi_sdk_wpa2_enterprise_eap_fast_tls_1_0_c113778(wifi_dut, wifi_access
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
-        net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
+        net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=device_ip, protocol=protocol)
         net_perf_client.interfaces.net_perf.start()
         logger().info("sending data from DUT")
         wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
-                                       local_port=net_perf_client.interfaces.net_perf.client_port,
+                                       local_port=net_perf_client.interfaces.net_perf.server_port,
                                        local_ip=device_ip, remote_ip=host_ip,
-                                       remote_port=net_perf_client.interfaces.net_perf.client_port,
-                                       size=1460, ttl=30, throughput_type=3, qos=0, async_socket=0)
+                                       remote_port=net_perf_client.interfaces.net_perf.server_port,
+                                       size=1460, ttl=30, throughput_type=1, qos=0, async_socket=0)
         time.sleep(5)
         tp = net_perf_client.interfaces.net_perf.process_output()
         assert tp is not None, "Throughput not found"
