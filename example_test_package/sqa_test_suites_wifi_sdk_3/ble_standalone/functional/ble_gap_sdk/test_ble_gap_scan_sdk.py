@@ -52,6 +52,7 @@ def ble_adv_and_scan(ble_dut=None, ble_client=None, ble_sniffer=None, capture_fi
     ble_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, ble_scan_type=ble_scan_type,
                                                ble_scan_interval=ble_scan_interval, ble_scan_window=ble_scan_window,
                                                timeout=timeout)
+    time.sleep(3)
 
     if ((test_case==19811) or (test_case==19812) or (test_case==19813) or (test_case==19814) or (test_case==19815) or
         (test_case==19816) or (test_case==19817) or (test_case==19818) or (test_case==537345) or (test_case==663401) or
