@@ -373,7 +373,7 @@ class Active_TX(ThreadBase):
 
         pm_obj = Power_Measurement_Thread(power_meter=self.power_meter)
 
-        self.wifi_dut.interfaces.wifi.set_antenna(interface="client", antenna=5)
+        self.wifi_dut.interfaces.wifi.set_antenna(interface="client", antenna=4)
         logger().info(f"setting the wireless antenna ")
 
         logger().info(f"configuring dut with diff power:{self.power}")
@@ -641,7 +641,7 @@ def test_wlan_standby_associated_DTIM_10_RC_CLK_Enabled_C537579(firmware_loader,
 # ********************************************************************************************************************
 
 
-@pytest.mark.parametrize("power", [10])
+@pytest.mark.parametrize("power", [8])
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -657,7 +657,7 @@ def test_wlan_standby_associated_DTIM_10_RC_CLK_Enabled_C537579(firmware_loader,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
-        "region_code": Si91xRegionCode.Default,
+        "region_code": Si91xRegionCode.Worldwide,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
