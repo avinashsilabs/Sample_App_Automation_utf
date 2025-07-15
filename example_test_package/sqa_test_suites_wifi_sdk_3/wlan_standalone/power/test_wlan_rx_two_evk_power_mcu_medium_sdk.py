@@ -399,6 +399,8 @@ def test_wlan_active_rx_72mbps_HP_CHAIN_C20646(firmware_loader, power_meter, rem
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "enable_feature_frame_request": 1,
+        "wireless_mode": 12,
         "region":1,
         "region_code": Si91xRegionCode.Worldwide,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
