@@ -853,17 +853,15 @@ def test_wifi_sdk_aws_tx_after_rejoin_qos1_c19556(switch, wifi_sniffer, wifi_acc
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 5})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("iterations", [2])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
-                             "disassociated"])
+                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect"])
 def test_wifi_sdk_aws_check_rejoin_failure_functionality_of_dut_c19549(wifi_sniffer, switch,
                                                                        sniffer_filter, sl_collections, aws_iot_client,
                                                                        logger, wifi_dut, wifi_access_point, iterations):
+    """Connect to AWS MQTT server, check rejoin failure functionality after connecting to AP second time."""
     client_id = 'client_c19549'
     topic = "topic_c19549"
     try:
@@ -913,11 +911,6 @@ def test_wifi_sdk_aws_check_rejoin_failure_functionality_of_dut_c19549(wifi_snif
             switch.interfaces.pdu_switch.turn_off(delay=5)
             logger.info("Successfully powered off AP")
 
-            # logger.info("\n\nDisabling Wireless in AP")
-            # wifi_access_point.interfaces.wifi.stop_ap()
-            # time.sleep(5)
-            # logger.info("Disabled Wireless in AP")
-
             logger.info("Checking for rejoin fail event from dut, this may take some time....")
             sw = Stopwatch()
             rejoin_msg = 0
@@ -930,16 +923,14 @@ def test_wifi_sdk_aws_check_rejoin_failure_functionality_of_dut_c19549(wifi_snif
                     break
             if not rejoin_msg:
                 wifi_dut.interfaces.wifi.is_dut_bad_state = True
-            assert rejoin_msg == 1, f"Rejoin Error not found from DUT even after AP is switched off for 300 seconds for iteration:'{iteration + 1}'"
+            assert rejoin_msg == 1, (f"Rejoin Error not found from DUT even after AP is switched off for 300 seconds "
+                                     f"for iteration:'{iteration + 1}'")
             logger.info("Rejoin Error Received from DUT")
 
             logger.info("\n\nAgain turning on the AP")
             switch.interfaces.pdu_switch.turn_on(delay=60)
             logger.info("Successfully powered on AP")
 
-            # logger.info("\n\nEnabling Wireless in AP")
-            # wifi_access_point.interfaces.wifi.start_ap()
-            # time.sleep(60)
             logger.info(f"Iteration '{iteration + 1}' completed")
 
         logger.info("Stop Sniffer finally")
