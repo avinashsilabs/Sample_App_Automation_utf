@@ -262,16 +262,13 @@ class WLANCSAThread(ThreadBase):
         Depending on the test case ID, it performs data transfer (TX or RX)
         and initiates CSA on the access point.
         """
-        self.wifi_sniffer.interfaces.capture.configure_interface(
-            channel=(
-                self.channel
-                if self.sniff_in_csa_channel
-                else self.wifi_access_point.interfaces.wifi.channel
-            ),
-        )
-        self.wifi_sniffer.interfaces.capture.start_capture(
-            capture_file=self.request.node.name
-        )
+        if not self.sniff_in_csa_channel:
+            self.wifi_sniffer.interfaces.capture.configure_interface(
+                channel=(self.wifi_access_point.interfaces.wifi.channel)
+            )
+            self.wifi_sniffer.interfaces.capture.start_capture(
+                capture_file=self.request.node.name
+            )
         if self.testcase_id == 776235:
             self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
                 join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
@@ -287,6 +284,7 @@ class WLANCSAThread(ThreadBase):
                     if self.testcase_id == 776236
                     else "wpa2_enterprise"
                 ),
+                channel=self.wifi_access_point.interfaces.wifi.channel,
             )
         else:
             self.dut_addr = self.sl_collections.join_to_wifi_network(
@@ -294,7 +292,11 @@ class WLANCSAThread(ThreadBase):
                 wifi_access_point=self.wifi_access_point,
                 associated=self.wifi_dut.interfaces.wifi.associated,
                 power_save=False,
+                channel=self.wifi_access_point.interfaces.wifi.channel,
             )
+        if self.sniff_in_csa_channel:
+            self.wifi_sniffer.interfaces.capture.configure_interface(self.channel)
+            self.wifi_sniffer.interfaces.capture.start_capture(self.request.node.name)
         if self.testcase_id == 776228:
             data_transfer_obj = DataTransfer(
                 wifi_dut=self.wifi_dut,
@@ -710,7 +712,7 @@ def test_wifi_sdk_csa_with_rx_data_transfer_c776228(
             channel=channel,
             testcase_id=776228,
             sniffer_filter=sniffer_filter,
-            sniff_in_csa_channel=True
+            sniff_in_csa_channel=True,
         )
         csa_thread_object.start()
         csa_thread_object.wait_for_exit()
@@ -790,7 +792,7 @@ def test_wifi_sdk_csa_with_min_switch_count_c776230(
             testcase_id=776230,
             beacon_count=beacon_count,
             sniffer_filter=sniffer_filter,
-            sniff_in_csa_channel=True
+            sniff_in_csa_channel=True,
         )
         csa_thread_object.start()
         csa_thread_object.wait_for_exit()
@@ -1111,10 +1113,13 @@ def test_wifi_sdk_csa_with_wpa3_personal_security_c776235(
         | Si91xFeatureBitMap.PSKSecurity
         | Si91xFeatureBitMap.Aggregation
         | Si91xFeatureBitMap.ULPGPIOHandshake,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default
-        | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
+        | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+        | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower
+        | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
+        | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
         | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
         | Si91xExtCustomFeatureBitMap.IEEE802_11W,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
@@ -1123,6 +1128,10 @@ def test_wifi_sdk_csa_with_wpa3_personal_security_c776235(
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp
         | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP
         | Si91xConfigFeatureBitMap.TLS_V2,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
         "eap_cert": [
             "wifi-user.pem",
             "SL_NET_CERTIFICATE",
@@ -1130,13 +1139,15 @@ def test_wifi_sdk_csa_with_wpa3_personal_security_c776235(
         ],
     },
 )
-@pytest.mark.radius_server("raspi_radius_server_v2")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config(
-    "wifi_access_point", wifi={"channel": 6, "security": "WPA2Enterprise", "passphrase": '12345678'}
+    "wifi_access_point",
+    wifi={"channel": 1, "security": "WPA2Enterprise", "passphrase": "12345678"},
 )
 @pytest.mark.parametrize("channel", [2])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "clear_certs"])
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "clear_certs"]
+)
 def test_wifi_sdk_csa_with_wpa3_enterprise_security_c776236(
     wifi_dut,
     wifi_access_point,
@@ -1186,7 +1197,7 @@ def test_wifi_sdk_csa_with_wpa3_enterprise_security_c776236(
 @wifi_dut_fixture()
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config("wifi_access_point", wifi={"channel": 6, "security": "open"})
-@pytest.mark.parametrize("channel_sequence", [[8 ,1, 6, 2, 3, 7, 11, 10, 4, 5, 9]])
+@pytest.mark.parametrize("channel_sequence", [[8, 1, 6, 2, 3, 7, 11, 10, 4, 5, 9]])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_sdk_frequent_csa_changes_c776237(
     wifi_dut,
@@ -1260,7 +1271,7 @@ def test_wifi_sdk_frequent_csa_changes_c776237(
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
         "oper_mode": Si91xOperatingMode.EAPWiFiClient,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.WPSSupportDisabled
         | Si91xFeatureBitMap.PSKSecurity
         | Si91xFeatureBitMap.Aggregation
@@ -1276,7 +1287,8 @@ def test_wifi_sdk_frequent_csa_changes_c776237(
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
         | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp
-        | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP
+        | Si91xConfigFeatureBitMap.TLS_V2,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1288,10 +1300,10 @@ def test_wifi_sdk_frequent_csa_changes_c776237(
         ],
     },
 )
-@pytest.mark.radius_server("raspi_radius_server_v2")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config(
-    "wifi_access_point", wifi={"channel": 6, "security": "WPA2Enterprise"}
+    "wifi_access_point",
+    wifi={"channel": 1, "security": "WPA2Enterprise", "passphrase": "12345678"},
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
@@ -1663,8 +1675,7 @@ def test_wifi_sdk_csa_with_bgscan_during_rx_data_transfer_c779701(
         wifi_dut.interfaces.wifi.set_advanced_scan_configuration(
             adv_active_channel_time=15,
             adv_passive_channel_time=20,
-            adv_enable_instant_scan=1,
-            adv_trigger_level=-100,
+            adv_trigger_level=20,
             adv_trigger_level_change=50,
         )
         logger().info("\n *** Enable BGscan *** \n")
