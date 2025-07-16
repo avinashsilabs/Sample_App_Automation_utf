@@ -31,7 +31,8 @@ def test_capture_power_meter_data_points_to_file(power_meter):
     file_size = os.path.getsize(captured_file_name)
     assert file_size > 0
 
-def test_power_meter_keysight_benchvue_win_wcf(power_meter):
+@pytest.mark.power_analyzer("power_analyzer_wlan")
+def test_power_meter_keysight_benchvue_win_wcf(power_meter, power_analyzer):
     # Init power meter by specifying module name as datalogger or scope
     power_meter.interfaces.power_meter.init_power_meter(data_log_file_name="UTF1_Data_Log")
     # Init power meter module 
@@ -51,6 +52,8 @@ def test_power_meter_keysight_benchvue_win_wcf(power_meter):
     parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
     __print_throughput(parsed_result)
     assert parsed_result["Output"] is not None
+    csvfile = str(parsed_result["Dlg File Name"]).replace(".dlg",".csv")
+    power_analyzer.interfaces.power_analyzer.generate_report(csvfile)
     
 @pytest.mark.power_meter("keysight_benchvue_power_analyzer_win_rm")
 def test_power_meter_keysight_benchvue_win_rm(power_meter):

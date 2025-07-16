@@ -1318,6 +1318,13 @@ devices:
             sd:
                 type: "service_discovery.avahi_daemon_linux"
                 shell: 'linux_shell'
+
+    # This represents the sniffer filter configuration
+    power_analyzer_wlan:
+        interfaces:
+            power_analyzer:
+                type: 'power_analyzer.wlan_power_analyzer'
+                src_dir: 'utf_wiseconnect'
  
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -1524,6 +1531,8 @@ defaults:
     sdk_server: 'tcp_server'
     
     service_discovery: 'avahi_daemon_linux'
+
+    power_analyzer: 'power_analyzer_wlan'
 
     net_perf:
         server_options:
