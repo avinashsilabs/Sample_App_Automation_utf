@@ -1390,6 +1390,8 @@ defaults:
     # device under test in the "devices" section
     dut: 'si917_ncp_sl_wifi'
 
+    power_test: false
+
     efx32: 'efr32_4180b'
 
     stm32: 'stm32_nucleo_f411re'
