@@ -4,6 +4,7 @@ import re
 from datetime import datetime, date
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants
+from utf.utils.iperf.iperf_utils import ping
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xOperatingMode, Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xPowerSaveModes, Si91xJoinFeatureBitMap,\
     Si91xPowerSaveProcedureTypes
@@ -97,6 +98,37 @@ class WLanJoinThread(ThreadBase):
                                                       expected_status=SLStatus.SL_STATUS_SI91X_SSID_NOT_PRESENT_FOR_PMK_GENERATION)
                 logger().info(
                     "Try to generate PMK without SSID, getting error code 0x1003A, which is expected")
+            elif '770031' in self.test_case or '770028' in self.test_case:
+                scan_results = self.wifi_dut.interfaces.wifi.scan()
+                assert len(scan_results) > 0, f"\n No scan results found \n"
+                self.wifi_dut.interfaces.wifi.join(ssid=self.wifi_access_point.interfaces.wifi.ssid,
+                                              passphrase=self.wifi_access_point.interfaces.wifi.passphrase, security="wpa" if '770031' in self.test_case else "wpa2",
+                                              channel=self.wifi_access_point.interfaces.wifi.channel)
+                device_ip  = self.wifi_dut.interfaces.wifi.start_ip()
+                device_ip =  self.wifi_dut.interfaces.wifi.get_device_ip(device_ip)
+                logger().info(f"\n **** Device IP Address: {device_ip} ****\n")
+                if self.power_save:
+                    self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+                    self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                                  psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+                wireless_info = self.wifi_dut.interfaces.wifi.sl_wifi_get_wireless_info()
+                pattern = r"(?:\n)?([0-9A-Za-z]{32})"
+                # Find all matches
+                matches = re.findall(pattern, wireless_info)
+                logger().info(f"Pattern are {matches}")
+                if matches:
+                    assert any(char != '0' for char in matches[0]) == False, f"\n PSK Information not Hidden \n"
+                else:
+                    assert False, "\n Wireless Info Doesn't contain PSK Data \n"
+
+                status = ping(host=device_ip, count=10)
+                assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+                logger().info(f"\n Wireless DUT Stats: {wireless_info} \n")
+                self.wifi_dut.interfaces.wifi.leave()
+                time.sleep(2)
+                self.sl_collections.join_sniffer_validation(self.wifi_access_point, self.wifi_sniffer,
+                                                            self.wifi_dut.interfaces.wifi.get_mac_address(), self.wifi_access_point.interfaces.wifi.bssid,
+                                                            self.sniffer_filter, power_save=self.power_save)
 
             else:
                 logger().info(" ====== configuring the Sniffer with access point channel ====== ")
@@ -1694,3 +1726,95 @@ def test_wifi_sdk_connection_in_world_region_C782628(wifi_sniffer, wifi_access_p
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HidePSKCredentials,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"ssid": "TEST-WPA2", "security": "WPA2", "passphrase": "test12345678"})
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_connectivity_with_wpa2_security_hidden_psk_c770028(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                                      utf_constants, sl_collections, sniffer_filter, request):
+        
+    """Test WiFi connectivity with WPA2 security and hidden PSK credentials.
+    Verifies that the DUT can successfully connect to a WPA2-secured access point
+    when PSK credentials are hidden from wireless information output. The test
+    configures sniffer capture, joins the network, and validates connectivity.
+    """
+
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    """This test case verifies connectivity with WPA2 mode AP"""
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+    try:
+        test_case = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case=test_case,
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HidePSKCredentials,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"ssid": "TEST-MIXED", "security": "WPAWPA2MixedMode", "passphrase": "test12345678"})
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_connectivity_with_wpa_wpa2_mixed_hidden_psk_c770031(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                                      utf_constants, sl_collections, sniffer_filter, request):
+
+    """Test WiFi connectivity with WPA/WPA2 mixed mode security and hidden PSK credentials.
+    
+    Verifies that the DUT can successfully connect to a WPA/WPA2 mixed mode access point
+    when PSK credentials are hidden from wireless information output. The test configures
+    sniffer capture, joins the network, and validates connectivity with mixed security mode.
+    """
+    
+    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    """This test case verifies connectivity with WPA/WPA2 Mixed mode AP with hidden SSID"""
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+    try:
+        test_case = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case=test_case,
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
