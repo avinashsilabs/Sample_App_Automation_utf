@@ -138,7 +138,7 @@ class ApModeClientConnections(ThreadBase):
             self.beacon_interval = "100"
             self.no_of_clients = 4
 
-        if self.testcase_no == 551267:
+        if self.testcase_no == 551267 or self.testcase_no == 793715:
             self.ssid = "SILABS_AP_MODE"
             self.security = "WPA2"
             self.password = "Automation@123"
@@ -2688,6 +2688,81 @@ def test_wifi_sdk_dutap_region_china_data_transfer_2clients_c662092(wifi_sniffer
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
         time.sleep(2)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.DISABLE_SHORT_GI,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
+            "channel": "11",
+            "interface": "wlan0",
+            "standard": 'n',
+        }
+    }
+
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 11})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_APUT_disabling_short_GI_C793715(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
+                                                  sl_collections, sniffer_filter, request, wifi_clients):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan AP mode
+        2. Disable the short GI
+        2. Configure the Static IP to DUT and connect station to APUT
+        4. Initiate ping from the Station to DUT
+        5. Initiate ping from DUT to AP
+        5. Do sniffer Validation for Short GI disabled
+    """
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    """This test case verifies the connectivity with 11n only mode with ap """
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        ap_dut_obj = ApModeClientConnections(wifi_dut, wifi_clients, wifi_sniffer, sl_collections,
+                                             utf_constants, capture_filename="test_C793715",
+                                             testcase_no=793715, sniffer_stop=False, leave=False)
+        ap_dut_obj.start()
+        ap_dut_obj.wait_for_exit()
+
+        logger().info("========= Initiate the PING from APUT to Station =========")
+        host_ip = wifi_clients[0].interfaces.wifi.get_ip_address()
+        wifi_dut.interfaces.wifi.ping(server_ip=host_ip)
+
+        sl_collections.ap_sniffer_validation(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                             dut_mac_address=ap_dut_obj.dut_addr_dict['dut_mac_address'],
+                                             rasp_mac_address=wifi_clients[0].interfaces.wifi.get_mac_address())
+
+        logger().info("========= Verify the sniffer packets with short GI disabled =========")
+        dut_mac_address = ap_dut_obj.dut_addr_dict['dut_mac_address']
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                        filter_name='disable_sgi_ping_APUT')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'unable to find the ping packets with short GI disabled'
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
 def test_wifi_sdk_dutap_singapore_unsupported_region_c793717(wifi_dut, wifi_sniffer, sl_collections):

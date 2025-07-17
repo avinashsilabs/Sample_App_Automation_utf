@@ -502,3 +502,196 @@ def test_wifi_sdk_sta_korea_region_ap_c477831(wifi_sniffer, wifi_dut,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Aggregation,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "security": "WPA2", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+    },
+)
+def test_wifi_sdk_wpa2_deauth_based_keep_alive_c551269(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
+                                                  sl_collections):
+    """Verify APUT Keep alive functionality with DEAUTH_BASED_KEEP_ALIVE configuration in WPA2"""
+    ssid = "Concurent_ap"
+    security = "wpa2"
+    password = "Automation@Silabs"
+    channel = "1"
+    dtim_count = "1"
+    beacon_interval = 100
+    ht_caps = 1
+    keepalive_type = 1
+    static_ip = "192.168.100.77"
+    static_subnet = "255.255.255.0"
+    static_gateway = "192.168.100.76"
+    client_idle_timeout = 10
+    keep_alive_time = (beacon_interval * 32 * client_idle_timeout) / 1000
+    try:
+        aput_mac = wifi_dut.interfaces.wifi.get_mac_address()
+        sta_mac = remote_wiseconnect3.interfaces.sapi.get_mac_address()
+        logger().info(f"**** APUT MAC: {aput_mac} and STA MAC: {sta_mac}")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=aput_mac,
+                                                                                        filter_name='deauthentication')
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="463729")
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip=static_ip,
+                                                  static_subnet=static_subnet,
+                                                  static_gateway=static_gateway)
+        wifi_dut.interfaces.wifi.start_ap(ssid=ssid, security=security, channel=channel, psk=password,
+                                          dtim_beacon_count=dtim_count, beacon_interval=beacon_interval,
+                                          encryption=None, ht_caps=ht_caps, keepalive_type=keepalive_type,
+                                          client_idle_timeout=client_idle_timeout)
+        remote_wiseconnect3.interfaces.sapi.scan(channel=None, ssid=None)
+        remote_wiseconnect3.interfaces.sapi.join(ssid=ssid, security="wpa2", passphrase=password, channel=channel, timeout=60)
+
+        remote_wiseconnect3.interfaces.sapi.reset()
+
+        logger().info(f"**** Setting APUT IDLE for {keep_alive_time*2} seconds")
+        time.sleep(keep_alive_time*2)
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count']
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Aggregation,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "security": "WPA2", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+    },
+)
+def test_wifi_sdk_wpa2_null_based_keep_alive_C551270(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
+                                                sl_collections):
+    """Verify APUT Keep alive functionality with NULL_BASED_KEEP_ALIVE configuration in WPA2 mode"""
+    ssid = "Concurent_ap"
+    security = "wpa2"
+    password = "Automation@Silabs"
+    channel = "1"
+    dtim_count = "1"
+    beacon_interval = 100
+    ht_caps = 1
+    keepalive_type = 3
+    static_ip = "192.168.100.77"
+    static_subnet = "255.255.255.0"
+    static_gateway = "192.168.100.76"
+    client_idle_timeout = 10
+    keep_alive_time = (beacon_interval * 32 * client_idle_timeout)/1000
+    try:
+        aput_mac = wifi_dut.interfaces.wifi.get_mac_address()
+        sta_mac = remote_wiseconnect3.interfaces.sapi.get_mac_address()
+        logger().info(f"**** APUT MAC: {aput_mac} and STA MAC: {sta_mac}")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=aput_mac,
+                                                                                        da_addr=sta_mac,
+                                                                                        filter_name='aput_wpa3_null_function')
+        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=aput_mac,
+                                                                                        filter_name='deauthentication')
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="463728")
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip=static_ip,
+                                                  static_subnet=static_subnet,
+                                                  static_gateway=static_gateway)
+        wifi_dut.interfaces.wifi.start_ap(ssid=ssid, security=security, channel=channel, psk=password,
+                                          dtim_beacon_count=dtim_count, beacon_interval=beacon_interval,
+                                          encryption=None, ht_caps=ht_caps, keepalive_type=keepalive_type,
+                                          client_idle_timeout=client_idle_timeout)
+        remote_wiseconnect3.interfaces.sapi.scan(channel=None, ssid=None)
+        remote_wiseconnect3.interfaces.sapi.join(ssid=ssid, security="wpa2", passphrase=password, channel=channel, timeout=60)
+
+        remote_wiseconnect3.interfaces.sapi.reset()
+
+        logger().info(f"**** Setting APUT IDLE for {keep_alive_time*4} seconds")
+        time.sleep(keep_alive_time*4.2)
+
+        null_packets = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1, packet_filter2='    Arrival Time:')['find_packet_num']
+        assert int(null_packets) == 4, "Not able to find 4 null-function"
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count']
+
+        filter_file = open(f'./reports/filter2_file.txt', 'r')
+        lines = filter_file.read()
+        time_delta = re.findall(r'((?<=Time delta from previous displayed frame:\s)\d+)', lines)
+        time_delta = set([int(i) for i in time_delta])
+        for i in time_delta:
+            assert i == 0 or i == keep_alive_time, "Getting different keep_alive interval"
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
