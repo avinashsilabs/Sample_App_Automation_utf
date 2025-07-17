@@ -258,7 +258,10 @@ class M4_Sleep_Thread(ThreadBase):
             self.wifi_dut.interfaces.wifi.m4_power_manager_deep_sleep(state=0,
                                                                       sleep_time=self.m4_sleep_time)
         else:
-            self.wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=self.m4_sleep_time)
+            self.wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=self.m4_sleep_time, timeout=150)
+        time.sleep(2)
+        self.wifi_dut.interfaces.wifi.leave()
+        logger().info(f'DUT is leaving the AP')
             
 class Power_Measurement_Thread(ThreadBase, Power_Device):
 
@@ -426,10 +429,9 @@ pytestmark = [pytest.mark.firmware_app("test_480K_M4SS_192K")]
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_standby_associated_DTIM_1_C20638(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
     stdby_obj.start()
@@ -459,10 +461,9 @@ def test_wlan_standby_associated_DTIM_1_C20638(firmware_loader, power_meter, wif
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_standby_associated_DTIM_3_C20631(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
     stdby_obj.start()
@@ -492,10 +493,9 @@ def test_wlan_standby_associated_DTIM_3_C20631(firmware_loader, power_meter, wif
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_standby_associated_DTIM_6_C537577(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
     stdby_obj.start()
@@ -525,10 +525,9 @@ def test_wlan_standby_associated_DTIM_6_C537577(firmware_loader, power_meter, wi
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_standby_associated_DTIM_10_C20632(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
     stdby_obj.start()
@@ -559,10 +558,9 @@ def test_wlan_standby_associated_DTIM_10_C20632(firmware_loader, power_meter, wi
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_1mbps_listen_rx_C20641_C20642(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, dtim):
     test_name = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
@@ -595,10 +593,9 @@ def test_wlan_1mbps_listen_rx_C20641_C20642(firmware_loader, power_meter, wifi_a
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_standby_associated_DTIM_3_RC_CLK_Enabled_C537578(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
     stdby_obj.start()
@@ -628,10 +625,9 @@ def test_wlan_standby_associated_DTIM_3_RC_CLK_Enabled_C537578(firmware_loader, 
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_standby_associated_DTIM_10_RC_CLK_Enabled_C537579(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
     stdby_obj.start()
@@ -661,8 +657,7 @@ def test_wlan_standby_associated_DTIM_10_RC_CLK_Enabled_C537579(firmware_loader,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 def test_wlan_active_tx_10dBm_C20643(firmware_loader, power_meter, wifi_dut, power):
     active_obj = Active_TX(power=power, wifi_dut=wifi_dut, power_meter=power_meter)
     active_obj.start()
@@ -692,8 +687,7 @@ def test_wlan_active_tx_10dBm_C20643(firmware_loader, power_meter, wifi_dut, pow
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 def test_wlan_active_tx_20dBm_C20644(firmware_loader, power_meter, wifi_dut, power):
     active_obj = Active_TX(power=power, wifi_dut=wifi_dut, power_meter=power_meter)
     active_obj.start()
@@ -723,11 +717,10 @@ def test_wlan_active_tx_20dBm_C20644(firmware_loader, power_meter, wifi_dut, pow
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1, "dtim": 200,
                                                "beacon_interval": 300})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_standby_associated_sleep_C20639(firmware_loader, power_meter, wifi_access_point, wifi_dut, dtim, sl_collections):
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
     stdby_obj.start()
@@ -807,10 +800,9 @@ def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wi
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_standby_associated_DTIM_1_broadcast_filter_disable_C537581(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False)
     stdby_obj.start()
@@ -840,10 +832,9 @@ def test_wlan_standby_associated_DTIM_1_broadcast_filter_disable_C537581(firmwar
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_standby_associated_DTIM_3_broadcast_filter_disable_C537580(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False)
     stdby_obj.start()
@@ -873,10 +864,9 @@ def test_wlan_standby_associated_DTIM_3_broadcast_filter_disable_C537580(firmwar
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_standby_associated_DTIM_6_broadcast_filter_disable_C537583(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False)
     stdby_obj.start()
@@ -906,10 +896,9 @@ def test_wlan_standby_associated_DTIM_6_broadcast_filter_disable_C537583(firmwar
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_standby_associated_DTIM_10_broadcast_filter_disable_C537582(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False)
     stdby_obj.start()
@@ -940,7 +929,7 @@ def test_wlan_standby_associated_DTIM_10_broadcast_filter_disable_C537582(firmwa
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_associated_LI_Novus_C69407(firmware_loader, power_meter, wifi_access_point, wifi_dut, dtim, wifi_sniffer, sl_collections, request, remote_socket):
@@ -977,7 +966,7 @@ def test_wlan_standby_associated_LI_Novus_C69407(firmware_loader, power_meter, w
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C564139(firmware_loader, power_meter, wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, dtim, request, remote_socket):
@@ -1013,10 +1002,9 @@ def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C564139(firmware_loader, po
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_standby_associated_scan_and_connect_to_ap_timeline_C510792(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
     dut = UtfConfig.instance().defaults.get("dut", {})
     logger().info(f"dut: {dut}")

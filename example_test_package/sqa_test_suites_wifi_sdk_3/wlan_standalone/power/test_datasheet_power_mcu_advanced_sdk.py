@@ -261,7 +261,10 @@ class M4_Sleep_Thread(ThreadBase):
                                                                       timeout=400
                                                                       )
         else:
-            self.wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=self.m4_sleep_time)
+            self.wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=self.m4_sleep_time, timeout=150)
+        time.sleep(2)
+        self.wifi_dut.interfaces.wifi.leave()
+        logger().info(f'DUT is leaving the AP')
             
 class Power_Measurement_Thread(ThreadBase, Power_Device):
 
@@ -425,7 +428,7 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_associated_DTIM_10_C20637(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, wifi_sniffer, request):
@@ -463,7 +466,7 @@ def test_wlan_standby_associated_DTIM_10_C20637(firmware_loader, power_meter, wi
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C20637(firmware_loader, power_meter, wifi_access_point, wifi_sniffer, request, wifi_dut, sl_collections, dtim, remote_socket):
@@ -496,7 +499,7 @@ def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C20637(firmware_loader, pow
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wifi_dut):
     
     dut = UtfConfig.instance().defaults.get("dut", {})
@@ -552,10 +555,9 @@ def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wi
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_1mbps_listen_rx_C20641_C20642(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, dtim):
     test_name = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
@@ -591,7 +593,7 @@ def test_wlan_1mbps_listen_rx_C20641_C20642(firmware_loader, power_meter, wifi_a
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )                           
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 def test_wlan_active_1mbps_tx_C652608(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request):
     test_name = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
@@ -633,7 +635,7 @@ def test_wlan_active_1mbps_tx_C652608(firmware_loader, power_meter, wifi_dut, po
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 def test_wlan_active_tx_ht_mcs0_C652609(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request):
     test_name = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
@@ -675,7 +677,7 @@ def test_wlan_active_tx_ht_mcs0_C652609(firmware_loader, power_meter, wifi_dut, 
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 def test_wlan_active_tx_ht_mcs7_C652610(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request):
     test_name = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
@@ -717,7 +719,7 @@ def test_wlan_active_tx_ht_mcs7_C652610(firmware_loader, power_meter, wifi_dut, 
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 def test_wlan_active_tx_he_mcs0_C652611(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request):
     test_name = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
@@ -759,7 +761,7 @@ def test_wlan_active_tx_he_mcs0_C652611(firmware_loader, power_meter, wifi_dut, 
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 def test_wlan_active_tx_he_mcs7_C652612(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request):
     test_name = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)

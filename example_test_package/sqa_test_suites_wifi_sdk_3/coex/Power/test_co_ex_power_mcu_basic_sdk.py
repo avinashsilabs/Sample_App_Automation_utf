@@ -227,7 +227,10 @@ class M4_Sleep_Thread(ThreadBase):
             self.wifi_dut.interfaces.wifi.m4_power_manager_deep_sleep(state=0,
                                                                       sleep_time=self.m4_sleep_time)
         else:
-            self.wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=self.m4_sleep_time)
+            self.wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=self.m4_sleep_time, timeout=150)
+        time.sleep(2)
+        self.wifi_dut.interfaces.wifi.leave()
+        logger().info(f'DUT is leaving the AP')
 
 
 class Power_Measurement_Thread(ThreadBase, Power_Device):
@@ -455,10 +458,9 @@ pytestmark = [pytest.mark.firmware_app("test_480K_M4SS_192K")]
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_conn_with_DTIM_10_ble_adv_C20649(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                sl_collections, dtim, ):
     stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
@@ -499,10 +501,9 @@ def test_wlan_conn_with_DTIM_10_ble_adv_C20649(firmware_loader, power_meter, wif
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_conn_with_DTIM_10_ble_conn_C20650(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                 sl_collections, dtim, ble_client):
     stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
@@ -543,10 +544,9 @@ def test_wlan_conn_with_DTIM_10_ble_conn_C20650(firmware_loader, power_meter, wi
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 def test_wlan_conn_with_DTIM_10_ble_conn_rc_clock_C537358(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                           sl_collections, dtim, ble_client):
     stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,

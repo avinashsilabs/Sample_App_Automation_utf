@@ -183,7 +183,7 @@ class M4_Sleep_Thread(ThreadBase):
             self.wifi_dut.interfaces.wifi.m4_power_manager_deep_sleep(state=0,
                                                                       sleep_time=self.m4_sleep_time)
         else:
-            self.wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=self.m4_sleep_time)
+            self.wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=self.m4_sleep_time, timeout=150)
 
 class Power_Measurement_Thread(ThreadBase, Power_Device):
 
