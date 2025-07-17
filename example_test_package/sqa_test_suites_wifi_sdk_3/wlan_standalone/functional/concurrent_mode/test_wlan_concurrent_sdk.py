@@ -2582,3 +2582,108 @@ def test_wifi_sdk_concurrent_mode_sta_ap_http_put_c148565(
 
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.SL_SI91X_FEAT_LONG_ICMP_PACKET,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "OPEN", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 11
+    },
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "OPEN",
+                "ssid": "SILABS_AP_MODE",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'ssid': 'Concurent_ap',
+        'security': 'OPEN',
+        'passphrase': 'test1234',
+        'channel': 11,
+    }
+)
+def test_wifi_sdk_concurrent_mode_large_ping_ipv4_c770037(wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, sniffer_filter, utf_constants, sl_collections, request):
+    ssid = "SILABS_AP_MODE"
+    security = "OPEN"
+    password = "Automation@123"
+    channel = 11
+    ping_count = 3
+    packet_length = 1472
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=channel)
+        logger().info(" ******* Start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{request.node.name}.pcap")
+        sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                                 wifi_access_point=wifi_access_point,
+                                                                 power_save=False,
+                                                                 ping_after_power_save=False, retry_count=3,
+                                                                 associated=wifi_dut.interfaces.wifi.associated
+                                                                 )
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        logger().info(" ********** Starting DUT as an Access Point ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="OPEN", channel=channel,
+                                          dtim_beacon_count=1,
+                                          beacon_interval=100)
+        logger().info(" ********** Raspberry pi Client connecting to DUT-AP as STA  ********* ")
+        wifi_clients[0].interfaces.wifi.join(ssid="SILABS_AP_MODE", security=SecurityMode.Open)
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f"********* Dut IP **********: {dut_ip}")
+        client_ip = wifi_clients[0].interfaces.wifi.get_ip_address()
+        logger().info(f"Client_ip: {client_ip}")
+        logger().info(f" **** Initiating PING traffic from AP Backend to DUT with 1472 bytes **** ")
+        rc, stdout, stderr = wifi_clients[0].interfaces.wifi.shell.execute(
+            f"sudo ping -c {ping_count} -s {packet_length} {dut_ip}")
+        assert rc == 0, f"\n RASPI-STA failed to ping DUT \n"
+        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+        logger().info(f'RASPI-STA Disconnecting from DUT-AP')
+        device_ip = wifi_dut.interfaces.wifi.get_ip_address()
+        client_ip = wifi_clients[0].interfaces.wifi.get_ip_address()
+        icmp_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=client_ip,
+            da_addr=device_ip,
+            type=8,
+            length=1400,
+            filter_name='icmpv4_custom_len'
+        )
+        # Validate that ICMP packets were captured
+        wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=icmp_filter,
+                                                           packet_filter2="        Tag: Internet Control Message Protocol")
+        with open("./reports/filter2_file.txt", "r") as file:
+            data = file.read()
+            pattern = r"Data \((\d+) bytes\)"
+            match = re.search(pattern, data)
+            if match:
+                data_length = int(match.group(1))
+                logger().info(f"Data length: {data_length} bytes")
+            else:
+                logger().info("Data length not found.")
+
+        logger().info(f" **** Adding ICMP Header Size: 8 Bytes to Captured Packet Length on-Air, Length: {data_length+8}**** ")
+        assert data_length + 8 == 1472, f"\n ICMP Ping Packet Length isn't matching \n"
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_clients[0].interfaces.wifi.leave()
+
+    except Exception as Ex:
+            sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()

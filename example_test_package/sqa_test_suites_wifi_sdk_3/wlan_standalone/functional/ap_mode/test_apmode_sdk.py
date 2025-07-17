@@ -13,7 +13,7 @@ from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingMode, Si91xFeatureBitMap, Si91xTCPIPFeatureBitMap, \
     Si91xCustomFeatureBitMap, \
     Si91xCustomFeatureBitMap, \
-    Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xRegion, Si91xRegionCode, Si91xModuleType
+    Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xRegion, Si91xRegionCode, Si91xModuleType, Si91xConfigFeatureBitMap
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
@@ -2703,3 +2703,83 @@ def test_wifi_sdk_dutap_singapore_unsupported_region_c793717(wifi_dut, wifi_snif
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.HidePSKCredentials,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.Ping,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "security": "OPEN", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "beacon": 100,
+        "region": 1,
+        "region_code": "us"
+    }
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+                "ssid": "SILABS_AP_MODE",
+                "channel": 11,
+                "interface": "wlan0",
+         }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_long_icmp_packet_functionality_ipv4_c770034(wifi_dut, wifi_sniffer,
+                                                         sl_collections, sniffer_filter, request, wifi_client):
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    try:
+        channel = 11
+        packet_length = 1472
+        ping_count = 3
+        # Configure sniffer to monitor ICMP traffic
+        logger().info(" ====== configuring the Sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+
+        # Configure the DUT in Static IP
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        logger().info(" ********** Starting DUT as an Access Point ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_MODE", security="OPEN", channel=channel,
+                                          dtim_beacon_count=1,
+                                          beacon_interval=100)
+        logger().info(" ********** Raspberry pi Client connecting to DUT-AP as STA  ********* ")
+        wifi_client.interfaces.wifi.join(ssid="SILABS_AP_MODE", security=SecurityMode.Open)
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f"********* Dut IP **********: {dut_ip}")
+        client_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Client_ip: {client_ip}")
+        logger().info(f" **** Initiating PING traffic from AP Backend to DUT with 1472 bytes **** ")
+        rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute(
+            f"sudo ping -c {ping_count} -s {packet_length} {dut_ip}")
+        assert rc == 0, f"\n RASPI-STA failed to ping DUT \n"
+        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+        logger().info(f'RASPI-STA Disconnecting from DUT-AP')
+        wifi_client.interfaces.wifi.leave()
+
+        icmp_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=client_ip,
+            da_addr=device_ip,
+            type=8,
+            length=1400,
+            filter_name='icmpv4_custom_len'
+        )
+
+        wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=icmp_filter,
+                                                           packet_filter2="        Tag: Internet Control Message Protocol")
+        logger().info(" ====== Long ICMP packet test completed successfully ====== ")
+        logger().info(" ====== No packet drops or errors detected in device logs ====== ")
+
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)

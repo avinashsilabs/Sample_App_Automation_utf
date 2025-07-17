@@ -6442,5 +6442,323 @@ def test_wifi_sdk_verify_multithread_using_https_and_mqtt_over_ssl_c563984(
     finally:
         wifi_dut.interfaces.wifi.clear_certificate(cert_index=1)
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default
+        | Si91xTCPIPFeatureBitMap.SSL
+        | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default
+        | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
+        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": [
+            "ca-chain.cert.pem",
+            "SL_NET_SIGNING_CERTIFICATE",
+            "SL_NET_TLS_SERVER_CREDENTIAL_START",
+        ],
+    },
+)
+@pytest.mark.config("wifi_access_point", wifi={"channel": 11, "security": "OPEN"})
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"]
+)
+@pytest.mark.parametrize("keep_alive_time, idle_time", [(1200, 43200)])
+def test_wifi_sdk_mqtt_long_run_keep_alive_1200_ssl_qos1_TC127787(
+    wifi_sniffer,
+    mqtt_server,
+    mqtt_client,
+    wifi_access_point,
+    wifi_dut,
+    request,
+    keep_alive_time,
+    idle_time,
+    sl_collections,
+):
+    """QOS1: Subscribe to MQTT server with SSL connection and publish data. Check MQTT keep alive functionality
+    when keep alive period is 1200"""
+
+    try:
+        packet_filter2 = "    Type/Subtype: QoS Data (0x0028)"
+        topic = "mytesttopic_C127787"
+        message = "".join(random.choices(string.ascii_uppercase + string.digits, k=950))
+        capture_filename = request.node.name
+        wifi_obj = WifiJoin(
+            wifi_dut=wifi_dut,
+            capture_filename=capture_filename,
+            wifi_access_point=wifi_access_point,
+            wifi_sniffer=wifi_sniffer,
+            mqtt_server=mqtt_server,
+            mqtt_client=mqtt_client,
+            sl_collections=sl_collections,
+            topic=topic,
+            message=message,
+        )
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        wifi_obj.keep_alive_time = keep_alive_time
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        logger().info("Both DUT and third-party mqtt client connects to MQTT server")
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client",
+            keep_alive_interval=keep_alive_time,
+            server_port=8883,
+            is_connection_encrypted=True,
+        )
+        logger().info("Both DUT and third-party mqtt client connects to MQTT server")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(
+            server=mqtt_server.interfaces.mqtt
+        )
+        time.sleep(25)
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(
+            server=mqtt_server.interfaces.mqtt
+        )
+        time.sleep(5)
+        wifi_obj.subscribe_and_publish(qos=Si91xMqttQos.QOS1)
+        msgs = []
+        sw = Stopwatch()
+        while sw.elapsed_sec < 10:
+            time.sleep(0.1)
+            msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+            if len(msgs) == 1:
+                break
+        assert len(msgs) == 1, "No message is received by mqtt-client"
+        assert (
+            msgs[0].topic == topic
+        ), "No message received by mqtt-client on subscribed topic"
+        assert msgs[0].payload.decode() == message, (
+            "No message is received by mqtt-client on subscribed topic or message"
+            "received is wrong"
+        )
+        assert (
+            msgs[0].qos == Si91xMqttQos.QOS1
+        ), "mqtt-client received message with wrong QOS. expected is QOS0"
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP BSSID = {ap_bssid}")
+        logger().info("Stopping the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(1)
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        ssl_pkt, tcp_pkt = wifi_obj.ssl_tcp_packet_check(
+            decryption_key,
+            wifi_obj.dut_addr["dut_mac_address"],
+            ap_bssid,
+            ["tls", "tcp"],
+            capture_filename,
+        )
+        assert (
+            message for message in ssl_pkt if "Client Hello" in ssl_pkt
+        ), "Unable to find 'Client Hello' message"
+        assert (
+            message for message in ssl_pkt if "Server Hello" in ssl_pkt
+        ), "Unable to find 'Server Hello' message"
+        assert (
+            message for message in ssl_pkt if "Client Key Exchange" in ssl_pkt
+        ), "Unable to find 'Client Key Exchange' message"
+        assert (
+            message for message in ssl_pkt if "Encrypted Handshake Message" in ssl_pkt
+        ), "Unable to find 'Encrypted Handshake Message' "
+        assert (
+            message for message in ssl_pkt if "Change Cipher Spec" in ssl_pkt
+        ), "Unable to find 'Change Cipher Spec' message"
+        logger().info(
+            f"===== TCP Packet decryption and check SYN, FIN, ACK, FIN ACK ======"
+        )
+        assert (
+            message for message in tcp_pkt if "Flags: 0x002 (SYN)" in message
+        ), f"Unable to find SYN packet "
+        assert (
+            message for message in tcp_pkt if "Flags: 0x012 (SYN, ACK)" in message
+        ), "Unable to find SYN ACK"
+        assert (
+            message for message in tcp_pkt if "Flags: 0x010 (ACK)" in message
+        ), "Unable to find ACK"
+        assert (
+            message for message in tcp_pkt if "Flags: 0x011 (FIN, ACK)" in message
+        ), "Unable to find FIN ACK "
+
+        packet_filter1 = f'(wlan.sa == {wifi_obj.dut_addr["dut_mac_address"]}) && tls'
+        logger().info(
+            f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}"
+        )
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(
+            capture_file=f"{capture_filename}.pcap"
+        )
+        logger().info(f"Wait for {idle_time} seconds")
+        time.sleep(idle_time)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter1, packet_filter2=packet_filter2
+        )["packet_count"]
+        assert snif_pkt_count, "Unable to find Application Data Protocol packets"
+
+        logger().info("Unsubscribe from the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        time.sleep(1)
+        wifi_obj.delta_between_tls_packet()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default
+        | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
+        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"]
+)
+def test_wifi_sdk_mqtt_recovery_after_ip_failure_c562244(
+    wifi_sniffer,
+    mqtt_server,
+    mqtt_client,
+    wifi_access_point,
+    wifi_dut,
+    request,
+    sl_collections,
+):
+    lan_ipv4_address = wifi_access_point.interfaces.wifi.lan_ipv4_address
+    dhcp_start = re.sub(r"\.[^\.]+$", ".2", lan_ipv4_address)
+    dhcp_end = re.sub(r"\.[^\.]+$", ".254", lan_ipv4_address)
+    try:
+        dhcp_restrict_address = re.sub(r"\.[^\.]+$", ".100", lan_ipv4_address)
+        logger().info(
+            f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}"
+        )
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(
+            capture_file=f"{request.node.name}.pcap"
+        )
+        topic = "mytesttopic_C562244"
+        message = "".join(random.choices(string.ascii_uppercase + string.digits, k=300))
+        qos = 1
+        capture_filename = request.node.name
+
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
+            max_retry_attempts=0,
+            scan_interval=4,
+            beacon_missed_count=40,
+            first_time_retry_enable=0,
+        )
+        dut_addr = sl_collections.join_to_wifi_network(
+            wifi_dut,
+            wifi_access_point,
+            associated=wifi_dut.interfaces.wifi.associated,
+            ip_config_disable=True,
+        )
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(
+            dhcp_start=dhcp_restrict_address,
+            dhcp_end=dhcp_restrict_address,
+            dhcp_lease="3600",
+        )
+        time.sleep(30)
+        logger().info(f"\n ....DHCP SHOULD FAIL ITERATIVELY.... \n")
+        for _ in range(3):
+            wifi_dut.interfaces.wifi.start_ip(
+                expected_status=SLStatus.SL_STATUS_SI91X_DHCP_HANDSHAKE_FAILURE
+            )
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client", qos=1
+        )
+        logger().info(".....DUT connects to MQTT server.....")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(
+            server=mqtt_server.interfaces.mqtt,
+            expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE,
+        )
+        time.sleep(5)
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(
+            dhcp_start=dhcp_start, dhcp_end=dhcp_end, dhcp_lease="3600"
+        )
+        time.sleep(30)
+        ip_config = wifi_dut.interfaces.wifi.start_ip()
+        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"\n The Device ip is: {device_ip} \n")
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client", qos=1
+        )
+        logger().info(".....DUT connects to MQTT server.....")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(
+            server=mqtt_server.interfaces.mqtt
+        )
+        logger().info(".....MQTT Client connects to MQTT server.....")
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(
+            server=mqtt_server.interfaces.mqtt
+        )
+        time.sleep(5)
+        logger().info("MQTT Client subscribes to the topic")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=qos)
+
+        logger().info("DUT subscribes to the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=qos)
+
+        time.sleep(5)
+
+        logger().info("DUT publishes message over the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_publish(
+            topic=topic, message=message, qos=qos, timeout=20
+        )
+        time.sleep(5)
+
+        msgs = []
+        sw = Stopwatch()
+        while sw.elapsed_sec < 10:
+            time.sleep(0.1)
+            msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+            if len(msgs) == 1:
+                break
+        assert len(msgs) == 1, "No message is received by mqtt-client"
+        assert (
+            msgs[0].topic == topic
+        ), "No message received by mqtt-client on subscribed topic"
+        assert (
+            msgs[0].qos == Si91xMqttQos.QOS1
+        ), "DUT sent message with wrong QOS. expected is QOS1"
+        assert msgs[0].payload.decode() == message, (
+            "No message is received by mqtt-client on subscribed topic or "
+            "message received is wrong"
+        )
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        time.sleep(1)
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(
+            dhcp_start=dhcp_start, dhcp_end=dhcp_end, dhcp_lease="3600"
+        )

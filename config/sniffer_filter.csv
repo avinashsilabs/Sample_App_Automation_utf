@@ -220,6 +220,8 @@ ap_probe_response_with_tkip_aes_mixed, (wlan.addr == {{ sa_addr }}), && (wlan.fc
 eap_tls_alert_msg_verification_1_2,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (eap and tls.record.version == 0x0303) and (tls.record.content_type == 21) && (tls.alert_message.desc == 48),
 probe_req_ds_param, (wlan.sa == {{sa_addr}}), && (wlan.tag.number == 3),
 rx_window_size, (wlan.addr == {{sa_addr}}, and (tcp.window_size == 64128)), and (tcp.flags == 0x0012),
+icmpv4_custom_len,(ip.src == {{ sa_addr }}) and (ip.dst == {{ da_addr }}), and (icmp.type == {{ type }}) and (data.len >= {{ length }}),
+icmpv6_custom_len,(ipv6.src == {{ sa_addr }}) and (ipv6.dst == {{ da_addr }}), and (icmpv6.type == {{ type }}) and (data.len >= {{ length }}),
 channel_switch_announcement, (wlan.sa == {{sa_addr}}, and (wlan.fc.type_subtype == 0x000d) and (wlan.tag.number == 37)),
 csa_rejoin_packet, (wlan.sa == {{sa_addr}}, and (wlan.fc.type_subtype == 0x0004 || wlan.fc.type_subtype == 0x0000 || wlan.fc.type_subtype == 0x0001 || wlan.fc.type_subtype == 0x000b || wlan.fc.type_subtype== 0x000c)),
 dtls,(ip.src == {{ sa_addr }}) and (ip.dst == {{ da_addr }}), and dtls and (udp.port == {{ port }}),

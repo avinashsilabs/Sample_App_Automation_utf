@@ -1818,3 +1818,236 @@ def test_wifi_sdk_connectivity_with_wpa_wpa2_mixed_hidden_psk_c770031(wifi_dut, 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.SL_SI91X_FEAT_LONG_ICMP_PACKET,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.Ping,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"ssid": 'sta_mode_ssid', "passphrase": '12345678', "security": 'open'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_long_icmp_packet_functionality_ipv4_c770033(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                         sl_collections, sniffer_filter, request, wifi_client):
+    """
+        Test Case: C770033 - Verify functionality of long ICMP packets in IPv4.
+
+        Description:
+            This test validates the ability of the Device Under Test (DUT) to handle long ICMP packets
+            with the SL_SI91X_FEAT_LONG_ICMP_PACKET feature enabled. It ensures proper transmission
+            and reception of long ICMP packets without errors.
+
+        Parameters:
+            wifi_dut: DUT interface for Wi-Fi operations.
+            wifi_access_point: Access point interface for testing.
+            wifi_sniffer: Network sniffer for capturing packets.
+            utf_constants: Constants for test configuration.
+            sl_collections: Utilities for test execution.
+            sniffer_filter: Filter configuration for sniffer.
+            request: Pytest request object for test-specific configurations.
+            wifi_client: Client interface for Wi-Fi operations.
+
+        Expected Outcome:
+            DUT successfully sends and receives long ICMP packets without errors.
+        """
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    """This test case verifies the device can handle long ICMP packets with SL_SI91X_FEAT_LONG_ICMP_PACKET feature enabled"""
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        test_case = request.node.name
+
+        logger().info(" ====== configuring the Sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
+
+        dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                       wifi_access_point=wifi_access_point,
+                                                       power_save=power_save,
+                                                       ping_before_power_save=False,
+                                                       ping_after_power_save=False,
+                                                       associated=wifi_dut.interfaces.wifi.associated)
+
+        device_ip = dut_addr['device_ip']
+        logger().info(f"\n **** Device IP Address: {device_ip} ****\n")
+
+        client_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(" ====== Sending ping packets from DUT with 300 bytes ====== ")
+        wifi_dut.interfaces.wifi.ping(server_ip=client_ip,
+                                      num_ping_attempts=5,
+                                      ping_timeout=10,
+                                      ip_version='ipv4',
+                                      ping_size=300)
+
+        logger().info(f" ====== Sending large ping from AP backend with size 1472 bytes ====== ")
+        sl_collections.ping_with_custom_size(device_ip=device_ip,
+                                             ping_counts=3,
+                                             byte_size=1472)
+
+        logger().info(" ====== Checking device logs for errors ====== ")
+        wireless_info = wifi_dut.interfaces.wifi.sl_wifi_get_wireless_info()
+        logger().info(f"\n Wireless DUT Stats: {wireless_info} \n")
+
+        logger().info("disconnecting to ap.....")
+        wifi_dut.interfaces.wifi.leave()
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        icmp_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=client_ip,
+            da_addr=device_ip,
+            type=8,
+            length=1400,
+            filter_name='icmpv4_custom_len'
+        )
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=icmp_filter,
+                                                           packet_filter2="        Tag: Internet Control Message Protocol")['packet_count'], "\n ICMP Ping Packet not captured \n"
+        with open("./reports/filter2_file.txt", "r") as file:
+            data = file.read()
+            pattern = r"Data \((\d+) bytes\)"
+            match = re.search(pattern, data)
+            if match:
+                data_length = int(match.group(1))
+                logger().info(f"Data length: {data_length} bytes")
+            else:
+                logger().info("Data length not found.")
+
+        logger().info(
+            f" **** Adding ICMP Header Size: 8 Bytes to Captured Packet Length on-Air, Length: {data_length + 8}**** ")
+        assert data_length + 8 == 1472, f"\n ICMP Ping Packet Length isn't matching \n"
+
+        logger().info(" ====== Long ICMP packet test completed successfully ====== ")
+        logger().info(" ====== No packet drops or errors detected in device logs ====== ")
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.firmware_app("test_ipv6")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.SL_SI91X_FEAT_LONG_ICMP_PACKET,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.Ping | Si91xTCPIPFeatureBitMap.IPv6Mode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"ssid": 'sta_mode_ssid', "passphrase": '12345678', "security": 'open'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_long_icmp_packet_functionality_ipv6_c770035(firmware_loader, wifi_dut, wifi_access_point,
+                                                              wifi_sniffer,
+                                                              sl_collections, sniffer_filter, request, wifi_client):
+    """
+        Test Case: C770035 - Verify functionality of long ICMP packets in IPv6.
+
+        Description:
+            This test validates the ability of the Device Under Test (DUT) to handle long ICMP packets
+            in IPv6 mode with the SL_SI91X_FEAT_LONG_ICMP_PACKET feature enabled. It ensures proper
+            transmission and reception of long ICMP packets without errors.
+
+        Parameters:
+            firmware_loader: Interface for loading firmware onto the DUT.
+            wifi_dut: DUT interface for Wi-Fi operations.
+            wifi_access_point: Access point interface used for testing.
+            wifi_sniffer: Network sniffer for capturing packets.
+            utf_constants: Constants for test configuration.
+            sl_collections: Utilities for test execution and validation.
+            sniffer_filter: Filter configuration for the network sniffer.
+            request: Pytest request object for accessing test-specific configurations.
+            wifi_client: Client interface for Wi-Fi operations.
+
+        Expected Outcome:
+            DUT successfully sends and receives long ICMP packets in IPv6 mode without errors,
+            and the sniffer captures the expected packets.
+        """
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    """This test case verifies the device can handle long ICMP packets with SL_SI91X_FEAT_LONG_ICMP_PACKET feature enabled"""
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        test_case = request.node.name
+
+        logger().info(" ====== Step 1: Initializing wireless module and configuring sniffer ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
+
+        logger().info(" ====== Step 2: Configuring device with network parameters and joining WiFi network ====== ")
+        dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                       wifi_access_point=wifi_access_point,
+                                                       ip_version='ipv6',
+                                                       power_save=power_save,
+                                                       ping_before_power_save=False,
+                                                       ping_after_power_save=False,
+                                                       associated=wifi_dut.interfaces.wifi.associated)
+
+        device_ip = dut_addr['device_ip']
+        logger().info(f"\n **** Device IP Address: {device_ip} ****\n")
+
+        client_ip = wifi_client.interfaces.wifi.get_ip_address(version=6)
+        logger().info(f"\n **** Client IP Address: {client_ip} ****\n")
+        logger().info(" ====== Step 4: Sending ping packets from DUT with 1452 bytes ====== ")
+        wifi_dut.interfaces.wifi.ping(server_ip=client_ip,
+                                      num_ping_attempts=5,
+                                      ping_timeout=10,
+                                      ip_version='ipv6',
+                                      ping_size=300)
+
+        logger().info(" ====== Step 5: Sending large ICMP packet (1452 bytes) from AP backend ====== ")
+        sl_collections.ping_with_custom_size(device_ip=device_ip,
+                                             ping_counts=3,
+                                             byte_size=1452)
+
+        icmp_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=device_ip,
+            da_addr=client_ip,
+            type=129,
+            length=1400,
+            filter_name='icmpv6_custom_len'
+        )
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=icmp_filter,
+                                                           packet_filter2="        Tag: Internet Control Message Protocol")["packet_count"], f" ICMP Packet not Captured "
+        with open("./reports/filter2_file.txt", "r") as file:
+            data = file.read()
+            pattern = r"Data \((\d+) bytes\)"
+            match = re.search(pattern, data)
+            if match:
+                data_length = int(match.group(1))
+                logger().info(f"Data length: {data_length} bytes")
+            else:
+                logger().info("Data length not found.")
+
+        logger().info(
+            f" **** Adding ICMP Header Size: 8 Bytes to Captured Packet Length on-Air**** ")
+        assert data_length == 1452, f"\n ICMP Ping Packet Length isn't matching \n"
+
+        logger().info(" ====== Long ICMP packet test completed successfully ====== ")
+        logger().info(" ====== No packet drops or errors detected in device logs ====== ")
+        logger().info(
+            " ====== Device successfully handled long ICMP packets with SL_SI91X_FEAT_LONG_ICMP_PACKET feature ====== ")
+
+    except Exception as EX:
+        logger().error(f" ====== Error during long ICMP packet test: {str(EX)} ====== ")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
