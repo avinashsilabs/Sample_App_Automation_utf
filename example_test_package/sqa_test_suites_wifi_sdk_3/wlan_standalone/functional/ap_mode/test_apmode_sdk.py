@@ -17,7 +17,7 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingM
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
-
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 
 """Test Author = Jyothi Nagireddy
         1. Start the sniffer before connection
@@ -2688,3 +2688,18 @@ def test_wifi_sdk_dutap_region_china_data_transfer_2clients_c662092(wifi_sniffer
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
         time.sleep(2)
+
+
+def test_wifi_sdk_dutap_singapore_unsupported_region_c793717(wifi_dut, wifi_sniffer, sl_collections):
+    """Try to configure unsupported region Country singapore in AP with  and check the DUT behavior"""
+    try:
+        logger().info("AP initialization using SG region")
+        wifi_dut.interfaces.wifi.set_wifi_config(oper_mode=Si91xOperatingMode.AccessPoint,
+                                                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                                                 region=1,
+                                                 region_code=Si91xRegionCode.Singapore)
+        wifi_dut.interfaces.wifi.init(expected_status= SLStatus.SL_STATUS_SI91X_FEATURE_NOT_AVAILABLE)
+        logger().info("Expected error code 0x1FF82 received, marking the test case passed")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
