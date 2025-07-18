@@ -1525,3 +1525,59 @@ def test_wifi_sdk_http_abort_functionality_c19228(http_server, wifi_dut, http_cl
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_https_get_no_file_on_remote_c510834(http_server, wifi_dut, wifi_access_point,
+                                                      wifi_sniffer, sl_collections):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http get for http content
+        5. Verify the negative http get response
+    """
+    http_client_initialized = False
+    try:
+        test_name = '19209'
+        index_path = "unsupported.htm"
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        logger().info("\n\n***Fetching the data on https using get method***\n\n")
+        wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path, server_port=443,
+                                          skip_http_data_print=1)
+
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        status = wifi_dut.interfaces.wifi.http_client_deinit()
+        if status == SLStatus.SL_STATUS_OK:
+            http_client_initialized = False
+        time.sleep(5)
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()

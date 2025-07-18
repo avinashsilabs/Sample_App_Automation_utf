@@ -229,6 +229,7 @@ dtls1_0,(ip.src == {{ sa_addr }}) and (ip.dst == {{ da_addr }}), and dtls and (u
 dtls1_2,(ip.src == {{ sa_addr }}) and (ip.dst == {{ da_addr }}), and dtls and (udp.port == {{ port }}) and dtls.record.version == 0xfefd,
 dtls_sni, (ip.src == {{ sa_addr }} and ip.dst == {{ da_addr }}), and (dtls.handshake.extension.type == 0),
 dtls_alpn, (ip.src == {{ sa_addr }} and ip.dst == {{ da_addr }}), and (dtls.handshake.extension.type == 16),
+deauth_based_keepalive, (wlan.sa == {{sa_addr}}) and (wlan.da == {{da_addr}}), and wlan.fc.retry==0 and (wlan.fc.type_subtype == 32 or wlan.fc.type_subtype == 12),
 disable_sgi_ping, (wlan.addr == {{sa_addr}}, and (wlan_radio.11n.short_gi == False)),
 disable_sgi_ping_APUT, (wlan.addr == {{sa_addr}}, and (radiotap.flags.shortgi == 0)),
 disable_sgi_assoc_pkt, (wlan.addr == {{sa_addr}}, and (wlan.ht.capabilities.short20 == 0)),

@@ -11,13 +11,15 @@ from utf.interfaces.wifi import WlanError
 from utf.utils import print_dict
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingMode, Si91xFeatureBitMap, Si91xTCPIPFeatureBitMap, \
-    Si91xCustomFeatureBitMap, \
-    Si91xCustomFeatureBitMap, \
-    Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xRegion, Si91xRegionCode, Si91xModuleType, Si91xConfigFeatureBitMap
+    Si91xCustomFeatureBitMap, Si91xConfigFeatureBitMap,\
+    Si91xCustomFeatureBitMap, Si91xPowerSaveProcedureTypes,\
+    Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xRegion, Si91xRegionCode, Si91xModuleType,Si91xPowerSaveModes
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+
+from utf_wifi.utf_core.src.utf.interfaces.wifi.fixtures import remote_wiseconnect3
 
 """Test Author = Jyothi Nagireddy
         1. Start the sniffer before connection
@@ -2689,6 +2691,7 @@ def test_wifi_sdk_dutap_region_china_data_transfer_2clients_c662092(wifi_sniffer
         wifi_dut.interfaces.wifi.stop_ap()
         time.sleep(2)
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -2858,3 +2861,101 @@ def test_wifi_sdk_long_icmp_packet_functionality_ipv4_c770034(wifi_dut, wifi_sni
 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "config_features":0,
+        "ext_tcpip_features": 0,
+        "security": "OPEN", "ssid": "SILABS_AP", "passphrase": "Automation@123", "channel": 11,
+        "region": Si91xRegion.FromUser,
+        "region_code": Si91xRegionCode.US
+    },
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               },
+           1: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               }
+         },
+)
+@pytest.mark.start_state("wifi_dut", wifi=["reset", "init"])
+@pytest.mark.end_state("wifi_dut", wifi="reset")
+def test_wifi_sdk_sta_inactive_for_5_minutes_c19439(wifi_sniffer, wifi_dut, wifi_clients,
+                                                    sl_collections, sniffer_filter, switch):
+    """APUT's functionality when the station is inactive for 5 minutes"""
+    try:
+        logger().info("********** configuring the sniffer with APUT channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c19439")
+        time.sleep(3)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP", security="WPA2", psk="Automation@123", channel=11,
+                                          dtim_beacon_count=1, keepalive_type=1,
+                                          beacon_interval=100, client_idle_timeout=93,
+                                          ht_caps=0)
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+
+        da_addr = wifi_clients[1].interfaces.wifi.get_mac_address()
+        wifi_clients[1].interfaces.wifi.join()
+
+        logger().info("***** Turn off client *****")
+        switch.interfaces.pdu_switch.turn_off(delay=10)
+
+        time.sleep(360)
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=sa_addr, da_addr=da_addr,
+            filter_name="deauth_based_keepalive")
+        logger().info(f"packet_filter1: {packet_filter1}")
+        wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1, packet_filter2="    Type/Subtype:")
+
+        filter_file = open(f'./reports/filter2_file.txt', 'r')
+        lines = filter_file.read()
+        time_delta = re.findall(r'((?<=Time delta from previous displayed frame:\s)\d+\.\d+)', lines)
+        logger().info(f"Time delta: {time_delta}")
+
+        time_delta = [float(x) for x in time_delta]
+
+        assert 320 > time_delta[-1] >= 300, "Keep-alive time is not in specified time limit"
+        logger().info("**** Keep-alive functionality verified successfully ****")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+        time.sleep(20)

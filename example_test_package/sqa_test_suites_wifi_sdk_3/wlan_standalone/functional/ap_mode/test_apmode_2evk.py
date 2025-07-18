@@ -11,7 +11,7 @@ from utf.interfaces.wifi import WlanError
 from utf.utils import print_dict
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingMode, Si91xFeatureBitMap, Si91xTCPIPFeatureBitMap, \
-    Si91xCustomFeatureBitMap, \
+    Si91xCustomFeatureBitMap, Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes,\
     Si91xExtCustomFeatureBitMap, Si91xConfigFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xRegion, Si91xRegionCode, Si91xModuleType, Si91xJoinFeatureBitMap
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants
@@ -695,3 +695,223 @@ def test_wifi_sdk_wpa2_null_based_keep_alive_C551270(wifi_sniffer, wifi_dut, rem
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
         wifi_sniffer.interfaces.capture.stop_capture()
 
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "config_features":0,
+        "ext_tcpip_features": 0,
+        "security": "OPEN", "ssid": "SILABS_AP", "passphrase": "Automation@123", "channel": 11,
+        "region": Si91xRegion.FromUser,
+        "region_code": Si91xRegionCode.US
+    },
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               },
+         },
+)
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi="reset")
+def test_wifi_sdk_ping_from_nonps_to_ps_device_c19459(wifi_sniffer, wifi_dut, wifi_clients, remote_wiseconnect3,
+                                                      sl_collections, sniffer_filter):
+    """APUT's functionality when the station is inactive for 5 minutes"""
+    try:
+        logger().info("********** configuring the sniffer with APUT channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c19439")
+        time.sleep(3)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP", security="WPA2", psk="Automation@123", channel=11,
+                                          dtim_beacon_count=1,
+                                          beacon_interval=100,
+                                          ht_caps=0)
+        wifi_clients[0].interfaces.wifi.join()
+        non_ps_device_ip = wifi_clients[0].interfaces.wifi.get_ip_address()
+
+        rc, stdout, stderr = wifi_clients[0].interfaces.wifi.shell.execute(
+            f"sudo ping -c 10 192.168.100.76")
+        assert rc == 0, "Failed to ping to APUT"
+
+        remote_wiseconnect3.interfaces.sapi.scan(channel=None, ssid=None)
+        remote_wiseconnect3.interfaces.sapi.join(ssid="SILABS_AP", security="wpa2", passphrase="Automation@123",
+                                                 channel=11,
+                                                 timeout=60)
+        ps_device_ip = remote_wiseconnect3.interfaces.sapi.start_ip(static_gateway="192.168.100.76").ip.decode()
+        remote_wiseconnect3.interfaces.sapi.ping(server_ip="192.168.100.76")
+
+        logger().info("....Applying performance profile mode : power_save_low_latency")
+        remote_wiseconnect3.interfaces.wifi.set_performance_profile('power_save_low_latency', 0, 0, 0, 0)
+        remote_wiseconnect3.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        rc, stdout, stderr = wifi_clients[0].interfaces.wifi.shell.execute(
+            f"sudo ping -c 10 -i 2 {ps_device_ip}")
+        assert rc == 0, "Failed to ping to APUT"
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "config_features":0,
+        "ext_tcpip_features": 0,
+        "security": "OPEN", "ssid": "SILABS_AP", "passphrase": "Automation@123", "channel": 11,
+        "region": Si91xRegion.FromUser,
+        "region_code": Si91xRegionCode.US
+    },
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+           0: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               },
+           1: {
+                "security": "WPA2",
+                "ssid": "SILABS_AP",
+                "passphrase": "Automation@123",
+                "channel": 11,
+                "interface": "wlan0",
+               },
+         },
+)
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi="reset")
+def test_wifi_sdk_ping_between_nonps_devices_while_ps_device_is_connected_c19460(wifi_sniffer, wifi_dut, wifi_clients,
+                                                                                 remote_wiseconnect3, sl_collections,
+                                                                                 sniffer_filter):
+    """Connect one power save enabled station to module.Connect two power save disabled stations to module and start
+    sending from one power save disable station to another power save disabled station."""
+    try:
+        logger().info("********** configuring the sniffer with APUT channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=11)
+        logger().info(" ******* start capturing with Sniffer by giving the test case name as filename ******* ")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c19439")
+        time.sleep(3)
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP", security="WPA2", psk="Automation@123", channel=11,
+                                          dtim_beacon_count=1,
+                                          beacon_interval=100,
+                                          ht_caps=0)
+        wifi_clients[0].interfaces.wifi.join()
+        non_ps_device_ip1 = wifi_clients[0].interfaces.wifi.get_ip_address()
+
+        rc, stdout, stderr = wifi_clients[0].interfaces.wifi.shell.execute(
+            f"sudo ping -c 10 192.168.100.76")
+        assert rc == 0, "Failed to ping to APUT"
+
+        wifi_clients[1].interfaces.wifi.join()
+
+        non_ps_device_ip2 = wifi_clients[1].interfaces.wifi.get_ip_address()
+
+        rc, stdout, stderr = wifi_clients[1].interfaces.wifi.shell.execute(
+            f"sudo ping -c 10 192.168.100.76")
+        assert rc == 0, "Failed to ping to APUT"
+
+        remote_wiseconnect3.interfaces.sapi.scan(channel=None, ssid=None)
+        remote_wiseconnect3.interfaces.sapi.join(ssid="SILABS_AP", security="wpa2", passphrase="Automation@123",
+                                                 channel=11,
+                                                 timeout=60)
+        ps_device_ip = remote_wiseconnect3.interfaces.sapi.start_ip(static_gateway="192.168.100.76").ip.decode()
+        remote_wiseconnect3.interfaces.sapi.ping(server_ip="192.168.100.76")
+
+        logger().info("....Applying performance profile mode : power_save_low_latency")
+        remote_wiseconnect3.interfaces.wifi.set_performance_profile('power_save_low_latency', 0, 0, 0, 0)
+        remote_wiseconnect3.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        rc, stdout, stderr = wifi_clients[1].interfaces.wifi.shell.execute(
+            f"sudo ping -c 10 {non_ps_device_ip1}")
+        assert rc == 0, "Failed to ping to APUT"
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

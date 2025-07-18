@@ -144,6 +144,52 @@ class ConcurrentMode:
                                                                ping_count=10)['dut_ip']
 
 
+class PingBetween2Clients(ThreadBase):
+    """
+    Thread to ping between two clients connected to DUT in concurrent mode
+    """
+
+    def __init__(self, wifi_clients, ping_count=10):
+        super().__init__()
+        self.wifi_clients = wifi_clients
+        self.ping_count = ping_count
+
+    def run(self):
+        logger().info("********** Ping between two clients started **********")
+        try:
+            client1 = self.wifi_clients[0]
+            client2 = self.wifi_clients[1]
+            sw = Stopwatch()
+            while sw.elapsed_sec <180:
+                logger().info(f"Initiating ping from {client1.name} to {client2.name}")
+                rc, stdout, stderr = client1.interfaces.wifi.shell.execute(
+                    f"sudo ping -c {self.ping_count} {client2.interfaces.wifi.get_ip_address()}")
+                assert rc == 0, f"failed to ping second client from first client"
+                logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+        except Exception as error:
+            logger().info(f"Error during ping between clients: {error}")
+
+
+class ConnectDisconnectSTA(ThreadBase):
+    """
+    Thread to connect and disconnect STA interface to AP in concurrent mode
+    """
+
+    def __init__(self, wifi_access_point, wifi_dut):
+        super().__init__()
+        self.wifi_access_point = wifi_access_point
+        self.wifi_dut = wifi_dut
+
+    def run(self):
+        sw = Stopwatch()
+        while sw.elapsed_sec < 180:
+            self.wifi_dut.interfaces.wifi.leave()
+
+            self.wifi_dut.interfaces.wifi.join(ssid=self.wifi_access_point.interfaces.wifi.ssid,
+                                               security="wpa2", passphrase=self.wifi_access_point.interfaces.wifi.passphrase,
+                                               channel=self.wifi_access_point.interfaces.wifi.channel, timeout=60)
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -3410,3 +3456,86 @@ def test_wifi_sdk_http_put_func_when_2_clients_connected_in_conc_mode_c148565(sl
             if con_discon_thread.is_alive():
                 con_discon_thread.join()
         wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.Default
+                           | Si91xTCPIPFeatureBitMap.DNSClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    }
+)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        'security': 'WPA2',
+        'channel': 11,
+        'standard': 'n'
+    }
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0",
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0",
+        }
+    }
+)
+def test_wifi_sdk_ping_bw_2_3rd_party_client_when_sta_is_connecting_disconnecting_c463708(sl_collections,
+                                                                                          wifi_sniffer, wifi_dut,
+                                                                                          wifi_access_point,
+                                                                                          wifi_clients):
+    """Check Ping connectivity between two 3rd party STA's connected to APUT when STAUT is disconnecting and connecting
+    to Associated 3rd party AP(Use 11n AP)"""
+    try:
+        wifi_clients = wifi_clients[:2]
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=11)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c463708")
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
+                                                  static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP", security="WPA2", psk="Automation@123",
+                                          channel=11, dtim_beacon_count="1", beacon_interval="100")
+        logger().info("DUT as an AP is started")
+        wifi_clients[0].interfaces.wifi.join()
+        logger().info("Joining 1st client to DUT as an AP")
+        wifi_clients[1].interfaces.wifi.join()
+        logger().info("Joining 2nd client to DUT as an AP")
+
+        sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False,
+                                            retry_count=3, associated=False)
+
+        ping_between_clients = PingBetween2Clients(wifi_clients)
+        join_leave = ConnectDisconnectSTA(wifi_access_point, wifi_dut)
+
+        ping_between_clients.start()
+        join_leave.start()
+        join_leave.wait_for_exit()
+        ping_between_clients.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        wifi_dut.interfaces.wifi.reset()
