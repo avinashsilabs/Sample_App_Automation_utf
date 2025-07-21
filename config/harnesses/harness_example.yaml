@@ -401,6 +401,17 @@ devices:
                 admin_password: 'password'
                 ssid: "TEST_LINKSYS"
                 security: WPA2
+
+    android_ap:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.mi_android_hotspot_ap'
+                port: 4723                      # Appium Server port
+                device_id: 'aa6teesghu7h994p'   # Android device ID
+                ssid: "Test_Android_AP"
+                password: 'testpassword'
+                security_type: WPA2
+                band_type: TwoPointFourGHz
     
     switched_ap:
         interfaces:

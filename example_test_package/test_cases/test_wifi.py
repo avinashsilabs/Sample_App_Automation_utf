@@ -152,3 +152,13 @@ def test_parse_verion_from_web_server(http_server, http_client):
     assert status == 200
     version = extract_version(content)
     assert version == '1610.2.5.0.0.4'
+
+@pytest.mark.wifi_access_point("android_ap")
+def test_access_point_android(wifi_access_point):
+    """
+    Test to check connectivity to the access point
+    """
+    logger().info("Access point started successfully")
+    time.sleep(5)
+    config = wifi_access_point.interfaces.wifi.get_hotspot_config()
+    logger().info(f"Access point configuration: {config}")
