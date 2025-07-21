@@ -1298,7 +1298,6 @@ def test_ble_sdk_passive_scan_when_multiple_devices_adv_C663361(ble_dut, ble_cli
                                    ble_dut_address=ble_dut_address)
 
 
-@pytest.mark.skip() # test agent jira dependency WIFI_BT_UTFHELP-5454
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
@@ -1307,9 +1306,10 @@ def test_ble_sdk_Master_role_MTU_request_error_size_15bytes_C705944(ble_dut, ble
         with TimeMeasurer() as t:
             ble_sniffer.interfaces.sniffer.init_sniffer()
             ble_sniffer.interfaces.sniffer.start_capture(capture_file="MTU_request_15bytes_C705944")
-            logger().info(f"Start DUT")
-            ble_dut_address = ble_dut.interfaces.wifi.ble_start()
-            assert ble_dut_address, "failed to initiate ble in dut"
+            logger().info("start ble GATT service in DUT")
+            ble_dut_address = ble_dut.interfaces.wifi.ble_gatt_start(set_smp=0)
+            logger().info(f"DUT BLE Address :{ble_dut_address}")
+            assert ble_dut_address, "Unable to find ble_dut_address"
 
             logger().info("***** Advertising from Remote (raspi) *****")
             ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address)
@@ -1339,32 +1339,18 @@ def test_ble_sdk_Master_role_MTU_request_error_size_15bytes_C705944(ble_dut, ble
 
             logger().info(f"*******Setting MTU*******")
             ble_dut.interfaces.wifi.ble_set_mtu(mtu_size=15)
-            logger().info(f"observed error code as 0x4E62 which is expected")
 
             logger().info(f"Initiating ble connection...")
             ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=ble_client_address)
-            time.sleep(60)
-            logger().info("Checking connection status of BLE")
-            state = ble_dut.interfaces.wifi.ble_get_device_state()
-            state_int = int(state) if state.isdigit() else -1
-            assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
-            logger().info("BLE Connection success")
+            time.sleep(30)
 
-            sw = Stopwatch()
-            exp_error = False
-            while sw.elapsed_sec < 120:
-                events = ble_dut.interfaces.bluetooth.get_async_events()
-                logger().info(f" events inside while : {events}")
-                for event in events:
-                    logger().info(f" events inside for : {event.event_data}")
-            #         if "20066" in event.event_data:
-            #             exp_error=True
-            #             break
-            #         # logger().info(f" event data : {event.event_data}")
-            # assert exp_error, "Expected error 20066 not found"
+            events = ble_dut.interfaces.bluetooth.get_async_events()
+            for event in events:
+                if event.event_type == AsyncEventIdentifiers.BLE_CONNECT:
+                    if "0x4E62" in event.event_data:
+                        exp_error = event.event_data
+            assert exp_error, "Expected error 0x4E62 not found"
 
-            logger().info("DUT is not disconnected from BLE")
-            ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
             ble_client.interfaces.bluetooth.close()
             ble_sniffer.interfaces.sniffer.stop_capture()
             logger().info("Sniffer stop successful")
