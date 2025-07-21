@@ -13,6 +13,8 @@ from utf.utils.test_management.test_definition_utils import (
 )
 from utf_wiseconnect.interfaces.web.fixtures import *  # NOSONAR
 from utf_wiseconnect.interfaces.sniffer_filter.fixtures import * # NOSONAR
+from utf_wiseconnect.interfaces.power_analyzer.fixtures import * # NOSONAR
+
 import pytest
 import os
 from utf.utils.firmware_manager import FirmwareManager
