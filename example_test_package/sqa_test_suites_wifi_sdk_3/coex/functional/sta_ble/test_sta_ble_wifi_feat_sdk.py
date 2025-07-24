@@ -2525,4 +2525,909 @@ def test_azure_mqtt_subscribe_publish_ble_adv_scan_C133584(firmware_loader, wifi
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.HTTPClient)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
+)
+def test_Coex_sdk_WLAN_http_get_BLE_slave_CI_30ms_C783412(http_server, wifi_dut, http_client, wifi_access_point,
+                                                          index_path,
+                                                          utf_constants, wifi_sniffer, sl_collections, sniffer_filter,
+                                                          ble_client, request):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        3. Advertise BLE DUT
+        4. Scan from remote BLE device and connect to DUT
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http get for http content
+        5. Verify the http get response
+    """
+    http_client_status = False
+    ble_obj = None
+    try:
+        test_name = "test_Coex_sdk_WLAN_http_get_BLE_slave_C783412"
+        ping_count = utf_constants.get("ping_count")
+        iter_count = utf_constants.get("iter_count")
+        test_type = "ping"
+
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="slave",
+            conn_int=30
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+        wifi_obj.join_to_ap()
+
+        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.wifi.http_client_init()
+
+        logger().info(f"iteration count configured in harness :{iter_count}")
+        for index in range(0, iter_count):
+            logger().info("\n\n***Fetching the data on http using get method***\n\n")
+            status_dut, content_dut = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path,
+                                                                        server_port=80, timeout=50)
+            http_client_status = True
+            status_client, content_client = http_client.interfaces.http.http_get(http_server.interfaces.http,
+                                                                                 index_path)
+
+            assert not status_dut, "failed to fetch the http data"
+            assert status_client, "failed to load the http data"
+
+            logger().info(f"content_dut: {content_dut}")
+            logger().info(f"content_client: {content_client}")
+            assert content_dut == content_client, "fetched data is not same as expected data"
+
+        wifi_dut.interfaces.wifi.http_client_deinit()
+        http_client_status = False
+
+        logger().info("Checking the stability for 60 secs")
+        time.sleep(60)
+        wifi_obj.disconnect()
+        ble_obj.ble_disconnect()
+
+        logger().info("Stopping sniffer capture")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        http_server.interfaces.http.stop_server()
+        ble_client.interfaces.bluetooth.close()
+        if http_client_status:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.HTTPClient)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
+)
+def test_Coex_sdk_WLAN_http_get_BLE_slave_CI_80ms_C783413(http_server, wifi_dut, http_client, wifi_access_point,
+                                                          index_path,
+                                                          utf_constants, wifi_sniffer, sl_collections, sniffer_filter,
+                                                          ble_client, request):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        3. Advertise BLE DUT
+        4. Scan from remote BLE device and connect to DUT
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http get for http content
+        5. Verify the http get response
+    """
+    http_client_status = False
+    ble_obj = None
+    try:
+        test_name = "test_Coex_sdk_WLAN_http_get_BLE_slave_C783413"
+        ping_count = utf_constants.get("ping_count")
+        iter_count = utf_constants.get("iter_count")
+        test_type = "ping"
+
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="slave",
+            conn_int=80
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+        wifi_obj.join_to_ap()
+
+        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.wifi.http_client_init()
+
+        logger().info(f"iteration count configured in harness :{iter_count}")
+        for index in range(0, iter_count):
+            logger().info("\n\n***Fetching the data on http using get method***\n\n")
+            status_dut, content_dut = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path,
+                                                                        server_port=80, timeout=50)
+            http_client_status = True
+            status_client, content_client = http_client.interfaces.http.http_get(http_server.interfaces.http,
+                                                                                 index_path)
+
+            assert not status_dut, "failed to fetch the http data"
+            assert status_client, "failed to load the http data"
+
+            logger().info(f"content_dut: {content_dut}")
+            logger().info(f"content_client: {content_client}")
+            assert content_dut == content_client, "fetched data is not same as expected data"
+
+        wifi_dut.interfaces.wifi.http_client_deinit()
+        http_client_status = False
+
+        logger().info("Checking the stability for 60 secs")
+        time.sleep(60)
+        wifi_obj.disconnect()
+        ble_obj.ble_disconnect()
+
+        logger().info("Stopping sniffer capture")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        http_server.interfaces.http.stop_server()
+        ble_client.interfaces.bluetooth.close()
+        if http_client_status:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.HTTPClient)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
+)
+def test_Coex_sdk_WLAN_http_get_BLE_slave_CI_150ms_C783414(http_server, wifi_dut, http_client, wifi_access_point,
+                                                           index_path,
+                                                           utf_constants, wifi_sniffer, sl_collections, sniffer_filter,
+                                                           ble_client, request):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        3. Advertise BLE DUT
+        4. Scan from remote BLE device and connect to DUT
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http get for http content
+        5. Verify the http get response
+    """
+    http_client_status = False
+    ble_obj = None
+    try:
+        test_name = "test_Coex_sdk_WLAN_http_get_BLE_slave_C783414"
+        ping_count = utf_constants.get("ping_count")
+        iter_count = utf_constants.get("iter_count")
+        test_type = "ping"
+
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="slave",
+            conn_int=150
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+        wifi_obj.join_to_ap()
+
+        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.wifi.http_client_init()
+
+        logger().info(f"iteration count configured in harness :{iter_count}")
+        for index in range(0, iter_count):
+            logger().info("\n\n***Fetching the data on http using get method***\n\n")
+            status_dut, content_dut = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path,
+                                                                        server_port=80, timeout=50)
+            http_client_status = True
+            status_client, content_client = http_client.interfaces.http.http_get(http_server.interfaces.http,
+                                                                                 index_path)
+
+            assert not status_dut, "failed to fetch the http data"
+            assert status_client, "failed to load the http data"
+
+            logger().info(f"content_dut: {content_dut}")
+            logger().info(f"content_client: {content_client}")
+            assert content_dut == content_client, "fetched data is not same as expected data"
+
+        wifi_dut.interfaces.wifi.http_client_deinit()
+        http_client_status = False
+
+        logger().info("Checking the stability for 60 secs")
+        time.sleep(60)
+        wifi_obj.disconnect()
+        ble_obj.ble_disconnect()
+
+        logger().info("Stopping sniffer capture")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        http_server.interfaces.http.stop_server()
+        ble_client.interfaces.bluetooth.close()
+        if http_client_status:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.DNSClient)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
+def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_CI_30ms_C783409(wifi_dut, wifi_access_point,
+                                                                      wifi_sniffer, sl_collections,
+                                                                      sniffer_filter, utf_constants, ble_client,
+                                                                      request):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Advertise BLE DUT
+        3. Scan from remote BLE device and connect to DUT
+        4. Scan and Join the access point and enable the dhcp
+        5. Enable the wlan and bt power save mode in dut after the connection
+        6. Verify dns get with wrong server
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="slave",
+            conn_int=30
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+
+        wifi_obj.join_to_ap()
+
+        result = wifi_dut.interfaces.wifi.dns_get(domain_name="www.abcd.com",
+                                                  query_timeout=120000,
+                                                  expected_status=SLStatus.SL_STATUS_SI91X_SMTP_DNS_QUERY_FAILED,
+                                                  timeout=120)
+        logger().info("Checking the stability for 60 secs")
+        time.sleep(60)
+        wifi_obj.disconnect()
+        ble_obj.ble_disconnect()
+        logger().info("Stopping sniffer capture")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], wifi_access_point,
+                                    decryption_key, ["dns"], test_name)
+        assert len(
+            capture_list) > 0, "DNS packets  are not captured in the sniffer"
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.DNSClient)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
+def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_CI_80ms_C783410(wifi_dut, wifi_access_point,
+                                                                      wifi_sniffer, sl_collections,
+                                                                      sniffer_filter, utf_constants, ble_client,
+                                                                      request):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Advertise BLE DUT
+        3. Scan from remote BLE device and connect to DUT
+        4. Scan and Join the access point and enable the dhcp
+        5. Enable the wlan and bt power save mode in dut after the connection
+        6. Verify dns get with wrong server
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="slave",
+            conn_int=80
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+
+        wifi_obj.join_to_ap()
+
+        result = wifi_dut.interfaces.wifi.dns_get(domain_name="www.abcd.com",
+                                                  query_timeout=120000,
+                                                  expected_status=SLStatus.SL_STATUS_SI91X_SMTP_DNS_QUERY_FAILED,
+                                                  timeout=120)
+        logger().info("Checking the stability for 60 secs")
+        time.sleep(60)
+        wifi_obj.disconnect()
+        ble_obj.ble_disconnect()
+        logger().info("Stopping sniffer capture")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], wifi_access_point,
+                                    decryption_key, ["dns"], test_name)
+        assert len(
+            capture_list) > 0, "DNS packets  are not captured in the sniffer"
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.DNSClient)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
+def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_CI_150ms_C783411(wifi_dut, wifi_access_point,
+                                                                       wifi_sniffer, sl_collections,
+                                                                       sniffer_filter, utf_constants, ble_client,
+                                                                       request):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Advertise BLE DUT
+        3. Scan from remote BLE device and connect to DUT
+        4. Scan and Join the access point and enable the dhcp
+        5. Enable the wlan and bt power save mode in dut after the connection
+        6. Verify dns get with wrong server
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="slave",
+            conn_int=150
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+
+        wifi_obj.join_to_ap()
+
+        result = wifi_dut.interfaces.wifi.dns_get(domain_name="www.abcd.com",
+                                                  query_timeout=120000,
+                                                  expected_status=SLStatus.SL_STATUS_SI91X_SMTP_DNS_QUERY_FAILED,
+                                                  timeout=120)
+        logger().info("Checking the stability for 60 secs")
+        time.sleep(60)
+        wifi_obj.disconnect()
+        ble_obj.ble_disconnect()
+        logger().info("Stopping sniffer capture")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.sniffer_validation_join()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], wifi_access_point,
+                                    decryption_key, ["dns"], test_name)
+        assert len(
+            capture_list) > 0, "DNS packets  are not captured in the sniffer"
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+                 ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+                 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_CI_30ms_C783415(wifi_dut, wifi_access_point,
+                                                        wifi_sniffer, sl_collections,
+                                                        sniffer_filter, utf_constants,
+                                                        ble_client, ssl_server,
+                                                        request):
+    """
+    Verify WiFi SSL Tx functionality and stability after BLE connection
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="slave",
+            conn_int=30
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+
+        wifi_obj.join_to_ap()
+        port1 = ssl_server.interfaces.ssl.config['device_port1']
+        ssl_server.interfaces.ssl.start_server()
+        server_ip = ssl_server.interfaces.ssl.server_ip
+        logger().info(f"SSL server started with server ip:{server_ip}")
+
+        # Open ssl client socket in the DUT
+        sock = wifi_dut.interfaces.wifi.socket()
+        assert sock == 0, "Socket id received is wrong. expected is 0"
+        # Enable ssl option for socket opened
+        wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+        # Socket binds at (device_ip, port) in DUT
+        local_port = randint(5001, 60000)
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=wifi_obj.device_ip, server_port=port1, timeout=15)
+        # ssl socket opened in DUT connects to the server
+        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
+                                                  server_port=port1)
+        sw = Stopwatch()
+        while sw.elapsed_sec < 120:
+            # The api returns 100 bytes of random data
+            data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+            logger().info(f"Sending data {data} over socket_no->{sock}")
+            # DUT sends 100 bytes of data over ssl socket
+            wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=data)
+            time.sleep(1)
+            # SSL server receives the data over ssl socket
+            server_socket_no = 1
+            data_receive = ssl_server.interfaces.ssl.data_recv_content(server_socket_no, buffer_size=len(data))
+            logger().info(f"Data received on remote socket opened is {data_receive}")
+            assert data == data_receive.decode(), "Data sent by DUT and received on server is not matching"
+            logger().info("Data sent by DUT and received on server is matching\n\n")
+
+        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+        logger().info("Successfully closed opened socket in the DUT")
+        ssl_server.interfaces.ssl.stop_server()
+        logger().info("Initiating wlan disconnect from DUT")
+        wifi_dut.interfaces.wifi.leave()
+        ble_obj.ble_disconnect()
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.sniffer_validation_join()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], wifi_access_point,
+                                    decryption_key, ["tls"], test_name)
+        assert len(
+            capture_list) > 0, "SSL packets or one of the 4-way handshake packets are not captured in the sniffer"
+        logger().info(f"Validating ssl frames")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+                 ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+                 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_CI_80ms_C783416(wifi_dut, wifi_access_point,
+                                                        wifi_sniffer, sl_collections,
+                                                        sniffer_filter, utf_constants,
+                                                        ble_client, ssl_server,
+                                                        request):
+    """
+    Verify WiFi SSL Tx functionality and stability after BLE connection
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="slave",
+            conn_int=80
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+
+        wifi_obj.join_to_ap()
+        port1 = ssl_server.interfaces.ssl.config['device_port1']
+        ssl_server.interfaces.ssl.start_server()
+        server_ip = ssl_server.interfaces.ssl.server_ip
+        logger().info(f"SSL server started with server ip:{server_ip}")
+
+        # Open ssl client socket in the DUT
+        sock = wifi_dut.interfaces.wifi.socket()
+        assert sock == 0, "Socket id received is wrong. expected is 0"
+        # Enable ssl option for socket opened
+        wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+        # Socket binds at (device_ip, port) in DUT
+        local_port = randint(5001, 60000)
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=wifi_obj.device_ip, server_port=port1, timeout=15)
+        # ssl socket opened in DUT connects to the server
+        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
+                                                  server_port=port1)
+        sw = Stopwatch()
+        while sw.elapsed_sec < 120:
+            # The api returns 100 bytes of random data
+            data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+            logger().info(f"Sending data {data} over socket_no->{sock}")
+            # DUT sends 100 bytes of data over ssl socket
+            wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=data)
+            time.sleep(1)
+            # SSL server receives the data over ssl socket
+            server_socket_no = 1
+            data_receive = ssl_server.interfaces.ssl.data_recv_content(server_socket_no, buffer_size=len(data))
+            logger().info(f"Data received on remote socket opened is {data_receive}")
+            assert data == data_receive.decode(), "Data sent by DUT and received on server is not matching"
+            logger().info("Data sent by DUT and received on server is matching\n\n")
+
+        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+        logger().info("Successfully closed opened socket in the DUT")
+        ssl_server.interfaces.ssl.stop_server()
+        logger().info("Initiating wlan disconnect from DUT")
+        wifi_dut.interfaces.wifi.leave()
+        ble_obj.ble_disconnect()
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.sniffer_validation_join()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], wifi_access_point,
+                                    decryption_key, ["tls"], test_name)
+        assert len(
+            capture_list) > 0, "SSL packets or one of the 4-way handshake packets are not captured in the sniffer"
+        logger().info(f"Validating ssl frames")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+                 ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+                 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["close_sockets", "bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_CI_150ms_C783417(wifi_dut, wifi_access_point,
+                                                         wifi_sniffer, sl_collections,
+                                                         sniffer_filter, utf_constants,
+                                                         ble_client, ssl_server,
+                                                         request):
+    """
+    Verify WiFi SSL Tx functionality and stability after BLE connection
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="slave",
+            conn_int=150
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+
+        wifi_obj.join_to_ap()
+        port1 = ssl_server.interfaces.ssl.config['device_port1']
+        ssl_server.interfaces.ssl.start_server()
+        server_ip = ssl_server.interfaces.ssl.server_ip
+        logger().info(f"SSL server started with server ip:{server_ip}")
+
+        # Open ssl client socket in the DUT
+        sock = wifi_dut.interfaces.wifi.socket()
+        assert sock == 0, "Socket id received is wrong. expected is 0"
+        # Enable ssl option for socket opened
+        wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+        # Socket binds at (device_ip, port) in DUT
+        local_port = randint(5001, 60000)
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=wifi_obj.device_ip, server_port=port1, timeout=15)
+        # ssl socket opened in DUT connects to the server
+        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
+                                                  server_port=port1)
+        sw = Stopwatch()
+        while sw.elapsed_sec < 120:
+            # The api returns 100 bytes of random data
+            data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+            logger().info(f"Sending data {data} over socket_no->{sock}")
+            # DUT sends 100 bytes of data over ssl socket
+            wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=data)
+            time.sleep(1)
+            # SSL server receives the data over ssl socket
+            server_socket_no = 1
+            data_receive = ssl_server.interfaces.ssl.data_recv_content(server_socket_no, buffer_size=len(data))
+            logger().info(f"Data received on remote socket opened is {data_receive}")
+            assert data == data_receive.decode(), "Data sent by DUT and received on server is not matching"
+            logger().info("Data sent by DUT and received on server is matching\n\n")
+
+        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+        logger().info("Successfully closed opened socket in the DUT")
+        ssl_server.interfaces.ssl.stop_server()
+        logger().info("Initiating wlan disconnect from DUT")
+        wifi_dut.interfaces.wifi.leave()
+        ble_obj.ble_disconnect()
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.sniffer_validation_join()
+        decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
+        capture_list = get_pkt_list(wifi_sniffer, wifi_obj.dut_addr['dut_mac_address'], wifi_access_point,
+                                    decryption_key, ["tls"], test_name)
+        assert len(
+            capture_list) > 0, "SSL packets or one of the 4-way handshake packets are not captured in the sniffer"
+        logger().info(f"Validating ssl frames")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
 
