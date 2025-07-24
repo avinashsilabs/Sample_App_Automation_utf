@@ -479,8 +479,6 @@ class mqtt_sniffer_validation:
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -562,8 +560,6 @@ def test_wifi_sdk_aws_connect_sub_publish_c19548(wifi_sniffer, wifi_access_point
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 2})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -653,8 +649,6 @@ def test_wifi_sdk_aws_publish_message_in_thread1_and_receive_message_in_thread2_
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 3})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -753,8 +747,6 @@ def test_wifi_sdk_aws_tx_after_rejoin_qos0_C19555(switch, wifi_sniffer, wifi_acc
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 4})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -966,8 +958,6 @@ def test_wifi_sdk_aws_check_rejoin_failure_functionality_of_dut_c19549(wifi_snif
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 6})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("test_run_time", [1800])
@@ -1054,8 +1044,6 @@ def test_wifi_sdk_aws_publish_a_message_on_the_topic_for_every_10_minutes_c19567
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 # Jira: WIFI_BT_UTFHELP-3000 [aws_iot: Unable to publish message with size 1390 bytes]
 @pytest.mark.config('wifi_access_point', wifi={"channel": 7})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1141,8 +1129,6 @@ def test_wifi_sdk_aws_publish_data_with_different_length_c19553(wifi_sniffer, wi
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 8})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -1231,8 +1217,6 @@ def test_wifi_sdk_aws_connect_disconnect_sequence_c19552(wifi_sniffer, wifi_acce
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 9})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -1293,12 +1277,10 @@ def test_wifi_sdk_aws_connection_when_client_id_is_null_c19558(wifi_sniffer, wif
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 10})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "#aws_unsubscribe", "aws_disconnect",
+                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 def test_wifi_sdk_aws_tcp_shutdown_c19546(wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client,
                                           logger, sl_collections, sniffer_filter, utf_constants):
@@ -1381,8 +1363,6 @@ def test_wifi_sdk_aws_tcp_shutdown_c19546(wifi_sniffer, wifi_access_point, wifi_
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 # Jira: WIFI_BT_UTFHELP-3100 [aws_iot: Unable to receive message with size more than 100 bytes]
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1464,8 +1444,6 @@ def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_different_lengths_
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -1570,8 +1548,6 @@ def test_wifi_sdk_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(switch, 
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 5})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -1666,8 +1642,6 @@ def test_wifi_sdk_aws_receive_func_while_receiving_100_msgs_continuously_c19561(
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 3})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("total_bytes", [20])
@@ -1770,8 +1744,6 @@ def test_wifi_sdk_aws_receive_100_mqtt_messages_over_2_subscribed_topics_c19563(
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 4})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("iterations", [1])
@@ -1879,8 +1851,6 @@ def test_wifi_sdk_aws_data_integrity_check_after_sending_1mb_of_data_c19564(wifi
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 5})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.parametrize("iterations", [1])
@@ -1988,8 +1958,6 @@ def test_wifi_sdk_aws_data_integrity_check_after_receiving_1mb_of_data_c19562(wi
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.skip("Testcase is not present in master project")
 @pytest.mark.config('wifi_access_point', wifi={"channel": 6})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -2076,8 +2044,6 @@ def test_wifi_sdk_aws_connect_after_wifi_reconnection_c4053(wifi_sniffer, wifi_a
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.skip("Testcase is not present in master project")
 @pytest.mark.config('wifi_access_point', wifi={"channel": 7})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -2328,8 +2294,6 @@ def test_wifi_sdk_aws_server_not_respond_c4062(wifi_sniffer, wifi_access_point, 
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -2461,8 +2425,6 @@ def test_wifi_sdk_aws_internet_connection_disconntion_c537615(wifi_sniffer, wifi
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
@@ -2587,13 +2549,10 @@ def test_wifi_sdk_aws_internet_connection_disconnection_c537713(wifi_sniffer, wi
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
-                             "disassociated"])
+                       wifi=["wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_aws_connect_will_message_negative_c537896(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                             sniffer_filter, sl_collections, aws_iot_client,
                                                             utf_constants):
@@ -2617,7 +2576,7 @@ def test_wifi_sdk_aws_connect_will_message_negative_c537896(wifi_sniffer, wifi_a
         logger.info("Initiating aws connect from DUT")
         assert aws_obj.connect_to_aws_server_from_dut(wifi_dut=wifi_dut, isWillMsgPresent="true", client_id=client_id,
                                                       expected_status=SLStatus.SL_STATUS_AWS_WILL_CONNECTION_FAILURE), "Failed to connect aws server " \
-                                                                   "from DUT"
+                                                                                                                       "from DUT"
         logger.info("As per expectation connection to AWS server from DUT should be unsuccessful")
 
         logger.info("Stop Sniffer finally")
@@ -2652,13 +2611,10 @@ def test_wifi_sdk_aws_connect_will_message_negative_c537896(wifi_sniffer, wifi_a
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "aws_unsubscribe",
-                             "disassociated"])
+                       wifi=["wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_aws_change_port_number_negative_c537897(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                           sl_collections):
     """
@@ -2718,13 +2674,10 @@ def test_wifi_sdk_aws_change_port_number_negative_c537897(wifi_sniffer, wifi_acc
         "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
-
-
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
-                             "disassociated"])
+                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect", "disassociated"])
 def test_wifi_sdk_aws_connection_tcp_data_transfer_c537899(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                            sl_collections, aws_iot_client):
     """
@@ -2789,8 +2742,7 @@ def test_wifi_sdk_aws_connection_tcp_data_transfer_c537899(wifi_sniffer, wifi_ac
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
-                             "disassociated"])
+                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect", "disassociated"])
 def test_wifi_sdk_aws_2000_bytes_rx_data_send_to_dut_c537910(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                              sl_collections, aws_iot_client):
     """
@@ -2840,13 +2792,13 @@ def test_wifi_sdk_aws_2000_bytes_rx_data_send_to_dut_c537910(wifi_sniffer, wifi_
                         f"\nMessage{send_count} with length:'{len(messages[i])} bytes'\nMessage{send_count} is:'{messages[i]}'")
             aws_obj.publish_from_raspi(aws_iot_client, topic, messages[i], qos=Si91xAwsQos.QOS1)
             time.sleep(10)
-            error_code = aws_obj.publish_from_dut(wifi_dut, topic, messages1[i], qos=Si91xAwsQos.QOS1, negative_case=True)
+            error_code = aws_obj.publish_from_dut(wifi_dut, topic, messages1[i], qos=Si91xAwsQos.QOS1,
+                                                  negative_case=True)
             assert error_code == 4294967264, f"Failed to Verify error -32= {error_code}"
             signed_number = aws_obj.to_signed_32_bit(error_code)
-            logger.info(f"Verify error -32 observed when 2000bytes of RX data sent to DUT and publish from DUT side ={signed_number}")
+            logger.info(
+                f"Verify error -32 observed when 2000bytes of RX data sent to DUT and publish from DUT side ={signed_number}")
 
-
-        logger.info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as error:
@@ -3045,10 +2997,9 @@ def test_wifi_sdk_aws_change_port_number_443_tx_c661500(wifi_sniffer, wifi_acces
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA3', "region": 'Korea', "channel": 13})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
-                             "disassociated"])
+                       wifi=["wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_aws_change_port_number_443_rx_c661501(wifi_sniffer, wifi_access_point, wifi_dut, logger,
-                                                     sl_collections, aws_iot_client, utf_constants):
+                                                        sl_collections, aws_iot_client, utf_constants):
     """
     Connect to AWS server with port 443 and check whether Rx functionality
     """
@@ -3116,6 +3067,14 @@ def test_wifi_sdk_aws_change_port_number_443_rx_c661501(wifi_sniffer, wifi_acces
                         f"************ Successfully received all {len(messages)} published messages ************\n")
                 logger.info(f"Iteration '{iter_count + 1}' completed")
 
+            time.sleep(20)
+            if wifi_dut.interfaces.wifi.is_aws_connected():
+                wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic_name=topic)
+                wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
+                time.sleep(10)
+            else:
+                logger.warning("DUT is not connected to AWS, skipping unsubscribe.")
+
         logger.info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -3150,8 +3109,7 @@ def test_wifi_sdk_aws_change_port_number_443_rx_c661501(wifi_sniffer, wifi_acces
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
-                             "disassociated"])
+                       wifi=["wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_aws_wake_on_wireless_C537912(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                sl_collections, aws_iot_client, utf_constants):
     """
@@ -3222,7 +3180,12 @@ def test_wifi_sdk_aws_wake_on_wireless_C537912(wifi_sniffer, wifi_access_point, 
                     logger.info(
                         f"************ Successfully received all {len(messages)} published messages ************\n")
                 logger.info(f"Iteration '{iter_count + 1}' completed")
-
+            time.sleep(20)
+            if wifi_dut.interfaces.wifi.is_aws_connected():
+                wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic_name=topic_1)
+                wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic_name=topic_2)
+                logger.info("Initiating aws_iot_disconnect from DUT")
+                wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
         logger.info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -3333,6 +3296,12 @@ def test_wifi_sdk_aws_2_subscribers_rx_c537894(wifi_sniffer, wifi_access_point, 
                 logger.info(
                     f"************ Successfully received all {len(messages)} published messages ************\n")
             logger.info(f"Iteration '{iter_count + 1}' completed")
+
+            if wifi_dut.interfaces.wifi.is_aws_connected():
+                wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic_name=topic_1)
+                wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic_name=topic_2)
+            else:
+                logger.warning("DUT is not connected to AWS, skipping unsubscribe.")
 
             logger.info("Initiating aws_iot_disconnect from DUT")
             wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
@@ -3776,7 +3745,6 @@ def test_wifi_sdk_aws_ca1_cert_rx_c687530(wifi_sniffer, wifi_access_point, wifi_
 
         sw = Stopwatch()
         while sw.elapsed_sec < 300:
-
             message = text_generator(size=100)
             logger.info(
                 f"\naws_iot_client publishing message on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS1}'"
@@ -3873,7 +3841,6 @@ def test_wifi_sdk_aws_ca3_cert_rx_c688521(wifi_sniffer, wifi_access_point, wifi_
 
         sw = Stopwatch()
         while sw.elapsed_sec < 300:
-
             message = text_generator(size=100)
             logger.info(
                 f"\naws_iot_client publishing message on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS1}'"
@@ -3970,7 +3937,6 @@ def test_wifi_sdk_aws_combined_cert_rx_c688528(wifi_sniffer, wifi_access_point, 
 
         sw = Stopwatch()
         while sw.elapsed_sec < 300:
-
             message = text_generator(size=100)
             logger.info(
                 f"\naws_iot_client publishing message on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS1}'"
@@ -4162,7 +4128,7 @@ def test_wifi_sdk_aws_two_client_with_same_client_id_c537898(wifi_sniffer, wifi_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_aws_ca1_cert_tx_with_internal_clk_c703343(wifi_sniffer, wifi_access_point, wifi_dut, logger,
-                                                            sl_collections,aws_iot_client):
+                                                            sl_collections, aws_iot_client):
     """
     Connect to AWS server with root CA1 certificate and check whether Tx functionality using with Internal RC clk
     """
