@@ -272,6 +272,7 @@ def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_C133461(
     utf_constants,
 ):
     """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
     try:
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -356,6 +357,7 @@ def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_C133462(
     utf_constants,
 ):
     """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
     try:
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -440,6 +442,7 @@ def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_C133463(
     utf_constants,
 ):
     """This test case Verifies the wpa2 enterprise connectivity while using eap peap method"""
+    ble_obj = None
     try:
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -540,6 +543,7 @@ def test_Coex_sdk_WLAN_throughput_EAP_TLS_BLE_Central_C133451(
         6. Enable wlan and bt power save mode in dut after the connection
         7. Do Wi-Fi data transfer TCP-TX ,TCP-RX, UDP-TX, UDP-RX
     """
+    ble_obj = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -649,6 +653,7 @@ def test_Coex_sdk_WLAN_throughput_EAP_TTLS_BLE_Central_C133452(
         6. Enable wlan and bt power save mode in dut after the connection
         7. Do Wi-Fi data transfer TCP-TX ,TCP-RX, UDP-TX, UDP-RX
     """
+    ble_obj = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -742,6 +747,7 @@ def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_tcp_bypass_C133497(
     utf_constants,
 ):
     """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
     try:
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -827,6 +833,7 @@ def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_tcp_bypass_C133498(
     utf_constants,
 ):
     """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
     try:
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -913,6 +920,7 @@ def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_C133499(
     utf_constants,
 ):
     """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
     try:
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -1002,7 +1010,7 @@ def test_Coex_sdk_all_channels_scan_time_BLE_adv_bypass_C133489(
         3. Scan from remote BLE device and connect to DUT
         4. Wlan Scan in all channels from DUT and calculate time taken to scan in all channels
     """
-
+    ble_obj = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1084,7 +1092,7 @@ def test_Coex_sdk_sel_chan_scan_time_BLE_slave_bypass_C133490(
         3. Scan from remote BLE device and connect to DUT
         4. Wlan Scan in all channels from DUT and calculate time taken to scan in all channels
     """
-
+    ble_obj = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1164,7 +1172,7 @@ def test_Coex_sdk_join_time_WPA2_AES_BLE_ADV_bypass_C133494(
         4. WLAN scan and connect to AP with PMK and enable power save
         4. Caluculate the time taken to connect to AP
     """
-
+    ble_obj = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1237,7 +1245,7 @@ def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_bypass_C133496(
         4. Scan from remote BLE device and connect to DUT
         5. Caluculate the time taken to connect to AP
     """
-
+    ble_obj = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1276,6 +1284,2726 @@ def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_bypass_C133496(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_AI_50ms_C780256(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=50,
+            adv_int_min=50,
+        )
+
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="tls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+        )
+        wifi_thread.join_to_ap_eap()
+        wifi_thread.start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_thread.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        wifi_dut.interfaces.wifi.leave()
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_AI_80ms_C780257(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=80,
+            adv_int_min=80,
+        )
+
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="tls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+        )
+        wifi_thread.join_to_ap_eap()
+        wifi_thread.start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_thread.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        wifi_dut.interfaces.wifi.leave()
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_AI_120ms_C780258(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=120,
+            adv_int_min=120,
+        )
+
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="tls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+        )
+        wifi_thread.join_to_ap_eap()
+        wifi_thread.start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_thread.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        wifi_dut.interfaces.wifi.leave()
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_AI_50ms_C780260(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=50,
+            adv_int_min=50
+        )
+
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="ttls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+        )
+        wifi_thread.join_to_ap_eap()
+        wifi_thread.start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_thread.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_AI_80ms_C780261(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=80,
+            adv_int_min=80,
+        )
+
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="ttls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+        )
+        wifi_thread.join_to_ap_eap()
+        wifi_thread.start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_thread.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_AI_120ms_C780262(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=120,
+            adv_int_min=120,
+        )
+
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="ttls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+        )
+        wifi_thread.join_to_ap_eap()
+        wifi_thread.start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_thread.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_AI_50ms_C780263(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap peap method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=50,
+            adv_int_min=50
+        )
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="peap",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+        )
+        wifi_thread.join_to_ap_eap()
+        wifi_thread.start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_thread.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_AI_80ms_C780264(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap peap method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=80,
+            adv_int_min=80
+        )
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="peap",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+        )
+        wifi_thread.join_to_ap_eap()
+        wifi_thread.start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_thread.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_AI_120ms_C780265(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap peap method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=120,
+            adv_int_min=120
+        )
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="peap",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+        )
+        wifi_thread.join_to_ap_eap()
+        wifi_thread.start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_thread.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "disassociated",
+    ],
+)
+def test_Coex_sdk_WLAN_throughput_EAP_TLS_BLE_Central_CI_30ms_C780266(
+    radius_server,
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+    net_perf_client,
+    protocol,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure AP on open security
+        3. Advertise remote device
+        4. Scan from DUT device and connect to Remote device
+        5. Join the access point and enable the dhcp
+        6. Enable wlan and bt power save mode in dut after the connection
+        7. Do Wi-Fi data transfer TCP-TX ,TCP-RX, UDP-TX, UDP-RX
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="master",
+            conn_int=30,
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="tls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="throughput",
+            wifi_client=wifi_client,
+            net_perf_client=net_perf_client,
+            protocol=protocol,
+        )
+        wifi_thread.join_to_ap_eap()
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        ble_obj.ble_disconnect()
+        wifi_dut.interfaces.wifi.leave()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("sniffer validation is successful")
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "disassociated",
+    ],
+)
+def test_Coex_sdk_WLAN_throughput_EAP_TLS_BLE_Central_CI_80ms_C780267(
+    radius_server,
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+    net_perf_client,
+    protocol,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure AP on open security
+        3. Advertise remote device
+        4. Scan from DUT device and connect to Remote device
+        5. Join the access point and enable the dhcp
+        6. Enable wlan and bt power save mode in dut after the connection
+        7. Do Wi-Fi data transfer TCP-TX ,TCP-RX, UDP-TX, UDP-RX
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="master",
+            conn_int=80,
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="tls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="throughput",
+            wifi_client=wifi_client,
+            net_perf_client=net_perf_client,
+            protocol=protocol,
+        )
+        wifi_thread.join_to_ap_eap()
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        ble_obj.ble_disconnect()
+        wifi_dut.interfaces.wifi.leave()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("sniffer validation is successful")
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "disassociated",
+    ],
+)
+def test_Coex_sdk_WLAN_throughput_EAP_TLS_BLE_Central_CI_150ms_C780268(
+    radius_server,
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+    net_perf_client,
+    protocol,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure AP on open security
+        3. Advertise remote device
+        4. Scan from DUT device and connect to Remote device
+        5. Join the access point and enable the dhcp
+        6. Enable wlan and bt power save mode in dut after the connection
+        7. Do Wi-Fi data transfer TCP-TX ,TCP-RX, UDP-TX, UDP-RX
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="master",
+            conn_int=150,
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="tls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="throughput",
+            wifi_client=wifi_client,
+            net_perf_client=net_perf_client,
+            protocol=protocol,
+        )
+        wifi_thread.join_to_ap_eap()
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        ble_obj.ble_disconnect()
+        wifi_dut.interfaces.wifi.leave()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("sniffer validation is successful")
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+    ],
+)
+def test_Coex_sdk_WLAN_throughput_EAP_TTLS_BLE_Central_CI_30ms_C780269(
+    radius_server,
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+    net_perf_client,
+    protocol,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure AP on open security
+        3. Advertise remote device
+        4. Scan from DUT device and connect to Remote device
+        5. Join the access point and enable the dhcp
+        6. Enable wlan and bt power save mode in dut after the connection
+        7. Do Wi-Fi data transfer TCP-TX ,TCP-RX, UDP-TX, UDP-RX
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="master",
+            conn_int=30
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="ttls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="throughput",
+            wifi_client=wifi_client,
+            net_perf_client=net_perf_client,
+            protocol=protocol,
+        )
+        wifi_thread.join_to_ap_eap()
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        ble_obj.ble_disconnect(disconnect_from="dut")
+        wifi_dut.interfaces.wifi.leave()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("sniffer validation is successful")
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+    ],
+)
+def test_Coex_sdk_WLAN_throughput_EAP_TTLS_BLE_Central_CI_80ms_C780270(
+    radius_server,
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+    net_perf_client,
+    protocol,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure AP on open security
+        3. Advertise remote device
+        4. Scan from DUT device and connect to Remote device
+        5. Join the access point and enable the dhcp
+        6. Enable wlan and bt power save mode in dut after the connection
+        7. Do Wi-Fi data transfer TCP-TX ,TCP-RX, UDP-TX, UDP-RX
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="master",
+            conn_int=80
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="ttls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="throughput",
+            wifi_client=wifi_client,
+            net_perf_client=net_perf_client,
+            protocol=protocol,
+        )
+        wifi_thread.join_to_ap_eap()
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        ble_obj.ble_disconnect(disconnect_from="dut")
+        wifi_dut.interfaces.wifi.leave()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("sniffer validation is successful")
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+    ],
+)
+def test_Coex_sdk_WLAN_throughput_EAP_TTLS_BLE_Central_CI_150ms_C780271(
+    radius_server,
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+    net_perf_client,
+    protocol,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure AP on open security
+        3. Advertise remote device
+        4. Scan from DUT device and connect to Remote device
+        5. Join the access point and enable the dhcp
+        6. Enable wlan and bt power save mode in dut after the connection
+        7. Do Wi-Fi data transfer TCP-TX ,TCP-RX, UDP-TX, UDP-RX
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="master",
+            conn_int=150
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="ttls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="throughput",
+            wifi_client=wifi_client,
+            net_perf_client=net_perf_client,
+            protocol=protocol,
+        )
+        wifi_thread.join_to_ap_eap()
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        ble_obj.ble_disconnect(disconnect_from="dut")
+        wifi_dut.interfaces.wifi.leave()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("sniffer validation is successful")
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+                 tcp_feat_bit=Si91xTCPIPFeatureBitMap.TCPIPBypass)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_tcp_bypass_AI_50ms_C780272(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=50,
+            adv_int_min=50
+        )
+
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="tls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+            tcp_ip_bypass=True,
+        )
+        wifi_thread.join_to_ap_eap()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+            tcp_ip_bypass=True,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+                 tcp_feat_bit=Si91xTCPIPFeatureBitMap.TCPIPBypass)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_tcp_bypass_AI_80ms_C780273(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=80,
+            adv_int_min=80
+        )
+
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="tls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+            tcp_ip_bypass=True,
+        )
+        wifi_thread.join_to_ap_eap()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+            tcp_ip_bypass=True,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+                 tcp_feat_bit=Si91xTCPIPFeatureBitMap.TCPIPBypass)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_tcp_bypass_AI_120ms_C780274(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=120,
+            adv_int_min=120
+        )
+
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="tls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+            tcp_ip_bypass=True,
+        )
+        wifi_thread.join_to_ap_eap()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+            tcp_ip_bypass=True,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+                 tcp_feat_bit=Si91xTCPIPFeatureBitMap.TCPIPBypass)
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_tcp_bypass_AI_50ms_C780275(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=50,
+            adv_int_min=50
+        )
+
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="ttls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+            tcp_ip_bypass=True,
+        )
+        wifi_thread.join_to_ap_eap()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+            tcp_ip_bypass=True,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+                 tcp_feat_bit=Si91xTCPIPFeatureBitMap.TCPIPBypass)
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_tcp_bypass_AI_80ms_C780276(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=80,
+            adv_int_min=80
+        )
+
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="ttls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+            tcp_ip_bypass=True,
+        )
+        wifi_thread.join_to_ap_eap()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+            tcp_ip_bypass=True,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+                 tcp_feat_bit=Si91xTCPIPFeatureBitMap.TCPIPBypass)
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_tcp_bypass_AI_120ms_C780277(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=120,
+            adv_int_min=120
+        )
+
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="ttls",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+            tcp_ip_bypass=True,
+        )
+        wifi_thread.join_to_ap_eap()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+            tcp_ip_bypass=True,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+                 tcp_feat_bit=Si91xTCPIPFeatureBitMap.TCPIPBypass)
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_AI_50ms_C780278(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=50,
+            adv_int_min=50
+        )
+
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="peap",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+            tcp_ip_bypass=True,
+        )
+        wifi_thread.join_to_ap_eap()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+            tcp_ip_bypass=True,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+                 tcp_feat_bit=Si91xTCPIPFeatureBitMap.TCPIPBypass)
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_AI_80ms_C780279(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=80,
+            adv_int_min=80
+        )
+
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="peap",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+            tcp_ip_bypass=True,
+        )
+        wifi_thread.join_to_ap_eap()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+            tcp_ip_bypass=True,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(opermode=Si91xOperatingMode.EAPWiFiClient,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+                 tcp_feat_bit=Si91xTCPIPFeatureBitMap.TCPIPBypass)
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": "12345678"}
+)
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "unassociated",
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "clear_certs",
+    ],
+)
+def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_AI_120ms_C780280(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    sniffer_filter,
+    radius_server,
+    sl_collections,
+    request,
+    utf_constants,
+):
+    """This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=120,
+            adv_int_min=120
+        )
+
+        ble_obj.advertise_dut()
+        wifi_thread = WPA2Enterprise(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            eap_type="peap",
+            sl_collections=sl_collections,
+            test_name=test_name,
+            test_type="ping",
+            tcp_ip_bypass=True,
+        )
+        wifi_thread.join_to_ap_eap()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+        dut_mac_address = wifi_thread.dut_addr["dut_mac_address"]
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_obj = SnifferValidationEAP(
+            wifi_sniffer=wifi_sniffer,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=dut_mac_address,
+            ap_mac_address=ap_mac_address,
+            sniffer_filter=sniffer_filter,
+            sl_collections=sl_collections,
+            tcp_ip_bypass=True,
+        )
+
+        sniffer_obj.verify_sniffer_validation_eap()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.TCPIPBypass)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "disassociated",
+    ],
+)
+def test_Coex_sdk_all_channels_scan_time_BLE_adv_bypass_AI_50ms_C780282(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz in bypass mode
+        2. Advertise BLE DUT
+        3. Scan from remote BLE device and connect to DUT
+        4. Wlan Scan in all channels from DUT and calculate time taken to scan in all channels
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "scan_time"
+        all_channel_2_4 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=50,
+            adv_int_min=50
+        )
+        wifi_obj = ScanTime_JoinTime(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            test_type=test_type,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            all_channel_2_4=all_channel_2_4,
+        )
+
+        ble_obj.advertise_dut()
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.TCPIPBypass)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "disassociated",
+    ],
+)
+def test_Coex_sdk_all_channels_scan_time_BLE_adv_bypass_AI_80ms_C780283(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz in bypass mode
+        2. Advertise BLE DUT
+        3. Scan from remote BLE device and connect to DUT
+        4. Wlan Scan in all channels from DUT and calculate time taken to scan in all channels
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "scan_time"
+        all_channel_2_4 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=80,
+            adv_int_min=80
+        )
+        wifi_obj = ScanTime_JoinTime(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            test_type=test_type,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            all_channel_2_4=all_channel_2_4,
+        )
+
+        ble_obj.advertise_dut()
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.TCPIPBypass)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "disassociated",
+    ],
+)
+def test_Coex_sdk_all_channels_scan_time_BLE_adv_bypass_AI_120ms_C780284(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz in bypass mode
+        2. Advertise BLE DUT
+        3. Scan from remote BLE device and connect to DUT
+        4. Wlan Scan in all channels from DUT and calculate time taken to scan in all channels
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "scan_time"
+        all_channel_2_4 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=120,
+            adv_int_min=120
+        )
+        wifi_obj = ScanTime_JoinTime(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            test_type=test_type,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            all_channel_2_4=all_channel_2_4,
+        )
+
+        ble_obj.advertise_dut()
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.TCPIPBypass)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "disassociated",
+    ],
+)
+def test_Coex_sdk_join_time_WPA2_AES_BLE_ADV_bypass_AI_50ms_C780285(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+    net_perf_client,
+    protocol,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz in bypass mode
+        2. Advertise BLE DUT
+        3. Scan from remote BLE device and connect to DUT
+        4. WLAN scan and connect to AP with PMK and enable power save
+        4. Caluculate the time taken to connect to AP
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "join_time"
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=50,
+            adv_int_min=50
+        )
+        wifi_obj = ScanTime_JoinTime(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            test_type=test_type,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+        )
+        ble_obj.advertise_dut()
+        wifi_obj.join_to_ap(tcp_ip_bypass=True)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.TCPIPBypass)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "disassociated",
+    ],
+)
+def test_Coex_sdk_join_time_WPA2_AES_BLE_ADV_bypass_AI_80ms_C780286(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+    net_perf_client,
+    protocol,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz in bypass mode
+        2. Advertise BLE DUT
+        3. Scan from remote BLE device and connect to DUT
+        4. WLAN scan and connect to AP with PMK and enable power save
+        4. Caluculate the time taken to connect to AP
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "join_time"
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=80,
+            adv_int_min=80
+        )
+        wifi_obj = ScanTime_JoinTime(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            test_type=test_type,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+        )
+        ble_obj.advertise_dut()
+        wifi_obj.join_to_ap(tcp_ip_bypass=True)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.TCPIPBypass)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "wifi_powersave_disable",
+        "bt_powersave_disable",
+        "disassociated",
+    ],
+)
+def test_Coex_sdk_join_time_WPA2_AES_BLE_ADV_bypass_AI_120ms_C780287(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_dut,
+    ble_client,
+    request,
+    utf_constants,
+    sl_collections,
+    wifi_client,
+    sniffer_filter,
+    net_perf_client,
+    protocol,
+):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz in bypass mode
+        2. Advertise BLE DUT
+        3. Scan from remote BLE device and connect to DUT
+        4. WLAN scan and connect to AP with PMK and enable power save
+        4. Caluculate the time taken to connect to AP
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "join_time"
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+            adv_int_max=120,
+            adv_int_min=120
+        )
+        wifi_obj = ScanTime_JoinTime(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            test_type=test_type,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+        )
+        ble_obj.advertise_dut()
+        wifi_obj.join_to_ap(tcp_ip_bypass=True)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_adv_scan()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
