@@ -3923,7 +3923,8 @@ def test_Coex_sdk_WLAN_ipv6_BLE_slave_CI_30ms_C780403(
             gatt=True,
             conn_interval=30,
             service_class=["HeartRateService"],
-            adv_int=50
+            adv_int_max=50,
+            adv_int_min=50,
         )
 
         ble_obj.advertise_dut()
@@ -4043,7 +4044,8 @@ def test_Coex_sdk_WLAN_ipv6_BLE_slave_CI_80ms_C780404(
             gatt=True,
             conn_interval=80,
             service_class=["HeartRateService"],
-            adv_int=80
+            adv_int_max=80,
+            adv_int_min=80,
         )
 
         ble_obj.advertise_dut()
@@ -4163,7 +4165,8 @@ def test_Coex_sdk_WLAN_ipv6_BLE_slave_CI_150ms_C780405(
             gatt=True,
             conn_interval=150,
             service_class=["HeartRateService"],
-            adv_int=120
+            adv_int_max=120,
+            adv_int_min=120,
         )
 
         ble_obj.advertise_dut()
@@ -4290,7 +4293,8 @@ def test_Coex_sdk_WLAN_ipv6_WPA3_BLE_adv_scan_AI_50ms_SI_60ms_SW_20ms_C780406(
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="advertise",
-            adv_int=50
+            adv_int_max=50,
+            adv_int_min=50,
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -4427,7 +4431,8 @@ def test_Coex_sdk_WLAN_ipv6_WPA3_BLE_adv_scan_AI_80ms_SI_300ms_SW_100ms_C780407(
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="advertise",
-            adv_int=80
+            adv_int_min=80,
+            adv_int_max=80,
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -4564,7 +4569,8 @@ def test_Coex_sdk_WLAN_ipv6_WPA3_BLE_adv_scan_AI_120ms_SI_900ms_SW_300ms_C780408
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="advertise",
-            adv_int=120
+            adv_int_max=120,
+            adv_int_min=120,
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -4708,7 +4714,8 @@ def test_Coex_sdk_WLAN_IPV6_TCP_TX_BLE_adv_scan_AI_50ms_SI_60ms_SW_20ms_C780409(
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="scan",
-            adv_int=50,
+            adv_int_max=50,
+            adv_int_min=50,
             scan_interval=60,
             scan_window=20,
         )
@@ -4840,7 +4847,8 @@ def test_Coex_sdk_WLAN_IPV6_TCP_TX_BLE_adv_scan_AI_80ms_SI_300ms_SW_100ms_C78041
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="scan",
-            adv_int=80,
+            adv_int_max=80,
+            adv_int_min=80,
             scan_interval=300,
             scan_window=100,
         )
@@ -4972,7 +4980,8 @@ def test_Coex_sdk_WLAN_IPV6_TCP_TX_BLE_adv_scan_AI_120ms_SI_900ms_SW_300ms_C7804
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="scan",
-            adv_int=120,
+            adv_int_max=120,
+            adv_int_min=120,
             scan_interval=900,
             scan_window=300,
         )
@@ -5107,7 +5116,8 @@ def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_CI_30ms_C780412(
             ble_test_type="scan_and_connect_from_remote",
             ble_pairing=1,
             conn_interval=30,
-            adv_int=50
+            adv_int_max=50,
+            adv_int_min=50
         )
         ble_obj.advertise_dut()
         wlan_obj.join_to_ap()
@@ -5234,7 +5244,8 @@ def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_CI_80ms_C780413(
             ble_test_type="scan_and_connect_from_remote",
             ble_pairing=1,
             conn_interval=80,
-            adv_int=80
+            adv_int_max=80,
+            adv_int_min=80
         )
         ble_obj.advertise_dut()
         wlan_obj.join_to_ap()
@@ -5361,7 +5372,8 @@ def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_CI_150ms_C780414(
             ble_test_type="scan_and_connect_from_remote",
             ble_pairing=1,
             conn_interval=150,
-            adv_int=120
+            adv_int_max=120,
+            adv_int_min=120
         )
         ble_obj.advertise_dut()
         wlan_obj.join_to_ap()
@@ -5488,7 +5500,8 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_CI_30ms_C780415(
             sl_collections=sl_collections,
             ble_test_type="scan_and_connect_from_remote",
             conn_interval=30,
-            adv_int=50
+            adv_int_max=50,
+            adv_int_min=50
         )
         ble_obj.advertise_dut()
         wlan_obj.join_to_ap()
@@ -5614,7 +5627,8 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_CI_80ms_C780416(
             sl_collections=sl_collections,
             ble_test_type="scan_and_connect_from_remote",
             conn_interval=80,
-            adv_int=80
+            adv_int_max=80,
+            adv_int_min=80
         )
         ble_obj.advertise_dut()
         wlan_obj.join_to_ap()
@@ -5671,6 +5685,8 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_CI_80ms_C780416(
         },
     },
 )
+
+
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460", "ipv6_state": "1",
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")}
@@ -5740,7 +5756,8 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_CI_150ms_C780417(
             sl_collections=sl_collections,
             ble_test_type="scan_and_connect_from_remote",
             conn_interval=30,
-            adv_int=120
+            adv_int_max=120,
+            adv_int_min=120
         )
         ble_obj.advertise_dut()
         wlan_obj.join_to_ap()
@@ -5869,7 +5886,8 @@ def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_AI_50ms_scan_SI_60ms_SW_20ms_C7
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="advertise",
-            adv_int=50,
+            adv_int_max=50,
+            adv_int_min=50,
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -6015,7 +6033,8 @@ def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_AI_80ms_scan_SI_300ms_SW_100ms_
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="advertise",
-            adv_int=80,
+            adv_int_max=80,
+            adv_int_min=80,
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -6161,7 +6180,8 @@ def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_AI_120ms_scan_SI_900ms_SW_300ms
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="advertise",
-            adv_int=120,
+            adv_int_max=120,
+            adv_int_min=120,
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -6300,7 +6320,8 @@ def test_Coex_sdk_WLAN_ipv6_https_download_BLE_adv_AI_50ms_scan_SI_60ms_SW_20ms_
             ble_test_type="advertise",
             scan_interval=60,
             scan_window=20,
-            adv_int=50,
+            adv_int_max=50,
+            adv_int_min=50,
         )
         ble_obj.start()
         logger().info("\n\n **** advertise started **** \n\n")
@@ -6448,7 +6469,8 @@ def test_Coex_sdk_WLAN_ipv6_https_download_BLE_adv_AI_80ms_scan_SI_300ms_SW_100m
             ble_test_type="advertise",
             scan_interval=300,
             scan_window=100,
-            adv_int=80,
+            adv_int_max=80,
+            adv_int_min=80,
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
@@ -6594,7 +6616,8 @@ def test_Coex_sdk_WLAN_ipv6_https_download_BLE_adv_AI_120ms_scan_SI_900ms_SW_300
             ble_test_type="advertise",
             scan_interval=900,
             scan_window=300,
-            adv_int=120
+            adv_int_max=120,
+            adv_int_min=120,
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
