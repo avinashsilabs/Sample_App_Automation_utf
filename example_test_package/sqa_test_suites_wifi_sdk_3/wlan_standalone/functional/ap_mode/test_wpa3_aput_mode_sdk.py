@@ -80,7 +80,7 @@ class WifiConnectionThread(ThreadBase):
             beacon_interval = "100"
             ht_caps = 1
         if self.test_case_no == 468602 or self.test_case_no == 468523 or self.test_case_no == 468525 or \
-                self.test_case_no == 468526 or self.test_case_no == 468604:
+                self.test_case_no == 468526 or self.test_case_no == 468604 or self.test_case_no == 468622:
             ssid = "Concurent_ap"
             security = "wpa3_transition"
             password = "Automation@Silabs"
@@ -147,6 +147,23 @@ class WifiConnectionThread(ThreadBase):
         self.remote_wiseconnect3.interfaces.sapi.ping(server_ip=static_gateway, num_ping_attempts=self.ping_count,
                                            ping_timeout=10,  ip_version='ipv4', ping_size=64)
         time.sleep(2)
+
+        if self.test_case_no == 468622:
+            for i in range(1, 10):
+                logger().info(f"============ iteration {i} : disconnect AP and connect again to AP ============")
+                self.remote_wiseconnect3.interfaces.sapi.leave()
+                time.sleep(10)
+                self.remote_wiseconnect3.interfaces.sapi.join(ssid=ssid,
+                                                              security="wpa3_transition",
+                                                              passphrase=password,
+                                                              channel=channel, timeout=60)
+                self.remote_wiseconnect3.interfaces.sapi.start_ip(ip_version=ip_version, static_ip=static_ip,
+                                                                  static_subnet=static_subnet,
+                                                                  static_gateway=static_gateway, timeout=10)
+                self.remote_wiseconnect3.interfaces.sapi.ping(server_ip=static_gateway,
+                                                              num_ping_attempts=self.ping_count,
+                                                              ping_timeout=10, ip_version='ipv4', ping_size=64)
+
         if self.test_case_no == 468525 or self.test_case_no == 468526 or self.test_case_no == 468604:
             logger().info(f" Leave will happen at end of the test case")
         else:
@@ -1673,7 +1690,7 @@ def test_wifi_sdk_rejoin_functionality_c463734(wifi_sniffer, wifi_dut, remote_wi
                                                sl_collections):
     """Verify rejoin functionality with APUT WPA3 H2E mode"""
     ssid = "Concurent_ap"
-    security = "open"
+    security = "wpa3"
     password = "Automation@Silabs"
     channel = "1"
     dtim_count = "1"
@@ -1712,15 +1729,82 @@ def test_wifi_sdk_rejoin_functionality_c463734(wifi_sniffer, wifi_dut, remote_wi
 
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
-        time.sleep(10)
+        time.sleep(30)
 
+        sl_collections.configure_dut_in_static_ip(wifi_dut, static_ip=static_ip, static_subnet=static_subnet,
+                                                  static_gateway=static_gateway)
         wifi_dut.interfaces.wifi.start_ap(ssid=ssid, security=security, channel=channel, psk=password,
                                           dtim_beacon_count=dtim_count, beacon_interval=beacon_interval,
                                           encryption=None, ht_caps=ht_caps, keepalive_type=keepalive_type,
                                           client_idle_timeout=client_idle_timeout)
-        time.sleep(20)
+        time.sleep(30)
 
         remote_wiseconnect3.interfaces.sapi.ping(server_ip=static_ip)
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Aggregation,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+    },
+)
+def test_wifi_sdk_APUT_wpa3_functionality_client_interface_up_down_c468622(wifi_sniffer, wifi_dut, remote_wiseconnect3,
+                                                                           sniffer_filter, request, utf_constants,
+                                                                           sl_collections):
+    test_name = request.node.name
+    ping_count = utf_constants.get("ping_count")
+    try:
+        aput_mac = wifi_dut.interfaces.wifi.get_mac_address()
+        sta_mac = remote_wiseconnect3.interfaces.sapi.get_mac_address()
+        logger().info(f"**** APUT MAC: {aput_mac} and STA MAC: {sta_mac}")
+        sec_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_sniffer=wifi_sniffer, test_name=test_name,
+                                       test_case_no=468622, remote_wiseconnect3=remote_wiseconnect3,
+                                       sl_collections=sl_collections, ping_count=ping_count)
+        sec_obj.start()
+        sec_obj.wait_for_exit()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
