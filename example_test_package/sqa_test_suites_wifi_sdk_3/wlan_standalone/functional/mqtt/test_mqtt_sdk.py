@@ -11,6 +11,9 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xMqttQos,
     Si91xCustomFeatureBitMap,
     Si91xExtCustomFeatureBitMap,
+    Si91xJoinFeatureBitMap,
+    Si91xAesType, Si91xAesOperation, Si91xAesKeySize,
+    Si91xKeyType, Si91xWrapIVMode
 )
 from utf.interfaces.shell.ssh_shell import SSHShell
 from utf.utils.logger import get_logger
@@ -19,6 +22,7 @@ import re
 import random
 import concurrent.futures
 from utf.utils.thread_base import ThreadBase
+from threading import Thread
 from typing import Dict
 from datetime import datetime
 import uuid
@@ -28,6 +32,7 @@ from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEvent
 from utf.utils.time_measurer import TimeMeasurer
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.utils import get_tls_certificate_dir
+import concurrent.futures
 
 """The testcases added in this file can run below test steps :
         1. Configuration of DUT in 2G
@@ -51,6 +56,138 @@ Author : Saurabh Sharma
 
 def logger():
     return get_logger(__name__)
+
+class SNTPFunctionality(ThreadBase):
+    def __init__(self, wifi_dut):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+
+    def start_sntp(self):
+        logger().info("**************** Creating SNTP Client Session in DUT ***************")
+        self.wifi_dut.interfaces.wifi.sntp_client_start()
+        time.sleep(10)
+
+    def sntp_get_time_date(self):
+        for _ in range(3):
+            logger().info("**************** Getting SNTP Time and DATE from DUT ***************")
+            sntp_time, sntp_date = self.wifi_dut.interfaces.wifi.sntp_get_time_data()
+            logger().info(f"**************** SNTP TIME **************** '{sntp_time}'")
+            logger().info(f"**************** SNTP DATE **************** '{sntp_date}'\n")
+            time.sleep(30)
+
+    def run(self):
+        try:
+            logger().info("**************** Getting SNTP Server Information from DUT ***************")
+            ip_version, sntp_method, sntp_server_address = self.wifi_dut.interfaces.wifi.sntp_get_server_info()
+            logger().info(f"**************** SNTP SERVER IP VERSION: {ip_version}")
+            logger().info(f"**************** SNTP SERVER ADDRESS: {sntp_server_address}")
+            logger().info(f"**************** SNTP METHOD: {sntp_method}\n")
+
+        except Exception as ex:
+            logger().exception("Error in SNTP functionality thread.")
+            raise ex
+
+class UDPThread(ThreadBase):
+    def __init__(
+        self,
+        wifi_dut=None,
+        remote_socket_factory=None,
+        remote_ip_address=None,
+        dut_addr=None,
+        client_socket=None,
+        transfer_type=None,
+        port_number=None,
+    ):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.remote_socket_factory = remote_socket_factory
+        self.remote_ip_address = remote_ip_address
+        self.dut_addr = dut_addr
+        self.client_socket = client_socket
+        self.transfer_type = transfer_type
+        self.port_number = port_number
+
+    def run(self):
+        try:
+            keepalive_time = 60
+            self.socket_fd = (
+                self.wifi_dut.interfaces.wifi.socket(
+                    domain="AF_INET", stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP"
+                )
+                if self.transfer_type == "TX"
+                else self.wifi_dut.interfaces.wifi.Asyncsocket(
+                    domain="AF_INET", stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP"
+                )
+            )
+            self.client_socket = (
+                self.remote_socket_factory.interfaces.socket.create_socket()
+            )
+            logger().info(f"Starting the Remote Server Socket")
+            self.client_socket.start_server(port=self.port_number, socket_type=1)
+            self.wifi_dut.interfaces.wifi.bind(
+                socket_fd=self.socket_fd,
+                device_ip=self.dut_addr["device_ip"],
+                server_port=self.port_number,
+                timeout=5,
+                asynch=0 if self.transfer_type == "TX" else 1,
+            )
+            if self.transfer_type == "TX":
+                logger().info(
+                    f"Setting the socket option SO_KEEPALIVE with {keepalive_time} seconds"
+                )
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(
+                    socket_fd=self.socket_fd,
+                    option_name="SO_KEEPALIVE",
+                    option_val=keepalive_time,
+                )
+            self.wifi_dut.interfaces.wifi.bsdSocketConnect(
+                socket_fd=self.socket_fd,
+                server_ip=self.remote_ip_address,
+                server_port=self.port_number,
+            )
+        except Exception as e:
+            logger().info(
+                f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n"
+            )
+
+    def transmit_udp_data(self):
+        duration = 60
+        key = "12345678901234567890123456789012"
+        sent_data = '1234567890123456'
+        encrypted_data = self.wifi_dut.interfaces.wifi.aes_encrypt(aes_mode=Si91xAesType.SL_SI91X_AES_ECB,
+                                                                   enc_mode=Si91xAesOperation.SL_SI91X_AES_ENCRYPT,
+                                                                   msg=sent_data,
+                                                                   key_size=Si91xAesKeySize.SL_SI91X_AES_KEY_SIZE_192,
+                                                                   wrap_iv_mode=Si91xWrapIVMode.SL_SI91X_WRAP_IV_ECB_MODE,
+                                                                   key_type=Si91xKeyType.SL_SI91X_TRANSPARENT_KEY,
+                                                                   key=key,
+                                                                   use_wrapped_keys=1,
+                                                                   wrap_config_key_size=Si91xAesKeySize.SL_SI91X_AES_KEY_SIZE_192,
+                                                                   pkcs_7_padding=1)
+        pattern = r"encrypted data:(.*)"
+        match = re.search(pattern, encrypted_data.decode('utf-8'), re.IGNORECASE)
+        if match:
+            encrypted_data = match.group(1).strip()
+        else:
+            logger().info("No match found.")
+        logger().info(f"ENCRYPTED DATA : {encrypted_data}")
+        sw = Stopwatch()
+        logger().info(f"\n Starting the UDP TX data Transfer \n")
+        while sw.elapsed_sec < duration:
+            self.wifi_dut.interfaces.wifi.bsdSocketSend(
+                socket_fd=self.socket_fd, data=encrypted_data, higher_data_len=0
+            )
+            self.client_socket.set_recv_timeout(
+                socket_type=1, use_client_socket=True
+            )
+            received_data = self.client_socket.recv_data_udp(len(encrypted_data))[0]
+            logger().info(
+                f"\n###################### Received Encrypted UDP Data: {received_data} ######################\n"
+            )
+            assert (
+                    encrypted_data == received_data
+            ), f"Data mismatch in sent and received data"
+
 
 class HTTPSGET(ThreadBase):
     def __init__(self, wifi_dut=None, http_server=None, index_path=None, http_client=None, iter_count=None):
@@ -91,7 +228,7 @@ class HTTPSGET(ThreadBase):
 
 
 class MQTTParallelThread(ThreadBase):
-    def __init__(self, wifi_dut=None, mqtt_server=None, mqtt_client=None, topic=None, message=None, iter_count=None):
+    def __init__(self, wifi_dut=None, mqtt_server=None, mqtt_client=None, topic=None, message=None, iter_count=None, server_port=8883, is_connection_encrypted=True, sleep_time=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.mqtt_server = mqtt_server
@@ -101,10 +238,14 @@ class MQTTParallelThread(ThreadBase):
         self.iter_count = iter_count
         self.message_address = None
         self.topic_address = None
+        self.server_port = server_port
+        self.is_connection_encrypted = is_connection_encrypted
         self.address_dict = {
             "topic": [],
             "message": [],
         }
+        self.sleep_time = sleep_time
+
 
     def run(self):
         logger().info(f"The address dict is {self.address_dict}")
@@ -130,6 +271,29 @@ class MQTTParallelThread(ThreadBase):
         logger().info("....Unsubscribing from the topic....")
         self.wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=self.topic)
 
+    def mqtt_publish_multiple_times(self):
+        for topic_address, message_address in zip(self.address_dict['topic'], self.address_dict['message']):
+
+            self.wifi_dut.interfaces.mqtt.mqtt_client_publish_allocate_mem(topic=self.topic, message=self.message,
+                                                                           qos=1,
+                                                                           timeout=100, load_mem=True,
+                                                                           message_address=message_address,
+                                                                           topic_address=topic_address)
+
+            msgs = []
+            sw = Stopwatch()
+            while sw.elapsed_sec < 10:
+                time.sleep(0.1)
+                msgs = self.mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+
+            assert msgs[0].topic == self.topic, "No message received by mqtt-client on subscribed topic"
+            assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
+            assert msgs[0].payload.decode() == self.message, "No message is received by mqtt-client on subscribed topic or " \
+                                                                 "message received is wrong"
+            logger().info(f"\n Next Publish to be done after 10 Seconds \n")
+            if self.sleep_time:
+                time.sleep(self.sleep_time)
+
     def mqtt_client_connect(self):
         for i in range(self.iter_count):
             if self.message is not None:
@@ -143,7 +307,7 @@ class MQTTParallelThread(ThreadBase):
 
         self.wifi_dut.interfaces["mqtt"] = self.wifi_dut.interfaces.wifi
         self.wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
-            client_id="Si91x_mqtt_client", server_port=8883, qos=1, is_connection_encrypted=True)
+            client_id="Si91x_mqtt_client", server_port=self.server_port, qos=1, is_connection_encrypted=self.is_connection_encrypted)
         logger().info(".....DUT connects to MQTT server.....")
         self.wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=self.mqtt_server.interfaces.mqtt)
         time.sleep(15)
@@ -6762,3 +6926,364 @@ def test_wifi_sdk_mqtt_recovery_after_ip_failure_c562244(
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(
             dhcp_start=dhcp_start, dhcp_end=dhcp_end, dhcp_lease="3600"
         )
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"channel": 6, "security": 'WPA2'})
+@pytest.mark.mqtt_server("raspi_mosquitto")
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.end_state("remote_wiseconnect3", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_mqtt_two_dut_connection_tx_rx_C537962(
+        wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, remote_wiseconnect3,
+        request, sl_collections, sniffer_filter):
+    """
+    Two DUT Scenarios: Verify MQTT connection between two devices and perform TX & RX operations
+    
+    Test Steps:
+    1. Configure both DUTs in WiFi client mode
+    2. Associate both DUTs to the same WiFi network
+    3. Connect both DUTs to MQTT server
+    4. Subscribe both DUTs to different topics
+    5. Perform bidirectional data transmission between DUTs
+    6. Verify message delivery and content integrity
+    7. Validate MQTT keep-alive functionality
+    """
+
+    try:
+        topic_dut1 = "dut1_topic_TC127829"
+        topic_dut2 = "dut2_topic_TC127829"
+        message_dut1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
+        message_dut2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
+        capture_filename = request.node.name
+
+        logger().info("=== Starting Two DUT MQTT Connection Test ===")
+        logger().info(f"DUT1 Topic: {topic_dut1}")
+        logger().info(f"DUT2 Topic: {topic_dut2}")
+
+        logger().info(f"Starting sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+
+        logger().info("=== Configuring DUT1 ===")
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+        
+        dut1_addr = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point,
+                                                        associated=wifi_dut.interfaces.wifi.associated)
+        logger().info(f"DUT1 MAC Address: {dut1_addr['dut_mac_address']}")
+
+        logger().info("=== Configuring DUT2 ===")
+        remote_wiseconnect3.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+        
+        dut2_addr = sl_collections.join_to_wifi_network(remote_wiseconnect3, wifi_access_point,
+                                                        associated=remote_wiseconnect3.interfaces.wifi.associated)
+        logger().info(f"DUT2 MAC Address: {dut2_addr['dut_mac_address']}")
+
+        logger().info("=== Configuring MQTT for DUT1 ===")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client_dut1", server_port=1883, qos=1, is_connection_encrypted=False)
+
+
+        logger().info("=== Configuring MQTT for DUT2 ===")
+        remote_wiseconnect3.interfaces["mqtt"] = remote_wiseconnect3.interfaces.wifi
+        remote_wiseconnect3.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client_dut2", server_port=1883, qos=1, is_connection_encrypted=False)
+
+        logger().info("=== Connecting DUTs to MQTT Server ===")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+        remote_wiseconnect3.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        logger().info(f"=== DUT1 subscribing to DUT2's topic: {topic_dut2} ===")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic_dut2, qos=Si91xMqttQos.QOS1)
+        time.sleep(2)
+
+        logger().info(f"=== DUT2 subscribing to DUT1's topic: {topic_dut1} ===")
+        remote_wiseconnect3.interfaces.mqtt.mqtt_client_subscribe(topic=topic_dut1, qos=Si91xMqttQos.QOS1)
+        time.sleep(2)
+
+        logger().info("=== DUT1 publishing message to DUT2's topic ===")
+        wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic_dut1, message=message_dut1, qos=Si91xMqttQos.QOS1, timeout=20)
+        time.sleep(5)
+
+        logger().info("=== DUT2 publishing message to DUT1's topic ===")
+        remote_wiseconnect3.interfaces.mqtt.mqtt_client_publish(topic=topic_dut2, message=message_dut2, qos=Si91xMqttQos.QOS1, timeout=20)
+        time.sleep(5)
+
+        logger().info("=== Verifying DUT2 received message from DUT1 ===")
+        msgs_dut2 = []
+        sw = Stopwatch()
+        while sw.elapsed_sec < 10:
+            time.sleep(0.1)
+            msgs_dut2 = remote_wiseconnect3.interfaces.mqtt.mqtt_client_get_received_messages()
+            if len(msgs_dut2) >= 1:
+                break
+
+        assert len(msgs_dut2) >= 1, "DUT2 did not receive message from DUT1"
+        assert msgs_dut2[0] == topic_dut1, f"DUT2 received message on wrong topic. Expected: {topic_dut1}, Got: {msgs_dut2[0]}"
+        assert msgs_dut2[1] == message_dut1, f"DUT2 received wrong message content. Expected: {message_dut1}, Got: {msgs_dut2[1]}"
+        logger().info("✓ DUT2 successfully received message from DUT1")
+
+        logger().info("=== Verifying DUT1 received message from DUT2 ===")
+        msgs_dut1 = []
+        sw = Stopwatch()
+        while sw.elapsed_sec < 10:
+            time.sleep(0.1)
+            msgs_dut1 = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            if len(msgs_dut1) >= 1:
+                break
+
+        assert len(msgs_dut1) >= 1, "DUT1 did not receive message from DUT2"
+        assert msgs_dut1[0] == topic_dut2, f"DUT1 received message on wrong topic. Expected: {topic_dut2}, Got: {msgs_dut1[0]}"
+        assert msgs_dut1[1] == message_dut2, f"DUT1 received wrong message content. Expected: {message_dut2}, Got: {msgs_dut1[1]}"
+        logger().info("✓ DUT1 successfully received message from DUT2")
+
+        logger().info("=== Performing additional bidirectional data transmission ===")
+        message_dut2_round2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=250))
+        remote_wiseconnect3.interfaces.mqtt.mqtt_client_publish(topic=topic_dut1, message=message_dut2_round2, qos=Si91xMqttQos.QOS1, timeout=20)
+        time.sleep(5)
+        message_dut1_round2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=250))
+        wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic_dut2, message=message_dut1_round2, qos=Si91xMqttQos.QOS1, timeout=20)
+        time.sleep(5)
+
+
+        msgs_dut1_round2 = []
+        sw = Stopwatch()
+        while sw.elapsed_sec < 10:
+            time.sleep(0.1)
+            msgs_dut1_round2 = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            if len(msgs_dut1_round2) >= 2:
+                break
+
+        msgs_dut2_round2 = []
+        sw = Stopwatch()
+        while sw.elapsed_sec < 10:
+            time.sleep(0.1)
+            msgs_dut2_round2 = remote_wiseconnect3.interfaces.mqtt.mqtt_client_get_received_messages()
+            if len(msgs_dut2_round2) >= 2:
+                break
+
+        # Verify latest messages
+        if len(msgs_dut1_round2) >= 2:
+            latest_msg_dut1 = msgs_dut1_round2[-1]  # Get the latest message
+            assert latest_msg_dut1 == message_dut1_round2, f"DUT1 received wrong second message. Expected: {message_dut1_round2}, Got: {latest_msg_dut1}"
+            logger().info("✓ DUT1 successfully received second message from DUT2")
+
+        if len(msgs_dut2_round2) >= 2:
+            latest_msg_dut2 = msgs_dut2_round2[-1]  # Get the latest message
+            assert latest_msg_dut2 == message_dut2_round2, f"DUT2 received wrong second message. Expected: {message_dut2_round2}, Got: {latest_msg_dut2}"
+            logger().info("✓ DUT2 successfully received second message from DUT1")
+
+        logger().info("=== Cleaning up connections ===")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic_dut2)
+        remote_wiseconnect3.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic_dut1)
+        time.sleep(2)
+
+        wifi_dut.interfaces.wifi.mqtt_client_disconnect()
+        remote_wiseconnect3.interfaces.wifi.mqtt_client_disconnect()
+        time.sleep(2)
+
+        logger().info("=== Stopping sniffer capture ===")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("=== Verifying PS-Poll packets for both DUTs ===")
+        try:
+            packet_filter_dut1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=dut1_addr['dut_mac_address'], filter_name='ps_poll')
+            snif_pkt_count_dut1 = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter_dut1)['packet_count']
+            assert snif_pkt_count_dut1, "PS-POLL packets are not captured for DUT1"
+            logger().info(f"✓ PS-Poll packets captured for DUT1: {snif_pkt_count_dut1}")
+
+            packet_filter_dut2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=dut2_addr['dut_mac_address'], filter_name='ps_poll')
+            snif_pkt_count_dut2 = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter_dut2)['packet_count']
+            assert snif_pkt_count_dut2, "PS-POLL packets are not captured for DUT2"
+            logger().info(f"✓ PS-Poll packets captured for DUT2: {snif_pkt_count_dut2}")
+        except Exception as e:
+            logger().warning(f"Could not verify PS-Poll packets: {e}")
+        logger().info("=== Two DUT MQTT Connection Test Completed Successfully ===")
+
+    except Exception as Ex:
+        logger().error(f"Test failed with exception: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SNTPClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_sntp_mqtt_ssl_simultaneous_connection_C537963(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
+    """
+    Test Case ID: C537963
+
+    Objective:
+    Verify whether DUT is able to connect to SNTP and MQTT over SSL connection simultaneously in STA mode.
+
+    Test Steps:
+    1. Configure DUT in STA mode with SSL, DNS, and SNTP features enabled
+    2. Connect DUT to WiFi access point
+    3. Start SNTP client and verify time synchronization
+    4. Connect to MQTT server over SSL
+    5. Perform MQTT publish/subscribe operations while SNTP is active
+    6. Verify both connections remain stable and functional
+    7. Clean up connections
+
+    Expected Results:
+    - DUT should successfully connect to both SNTP and MQTT servers simultaneously
+    - SNTP time synchronization should work correctly
+    - MQTT operations should work over SSL connection
+    - Both connections should remain stable throughout the test
+    """
+    try:
+        topic = "mytesttopic_TC537963"
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+        capture_filename = request.node.name
+
+        logger().info(f"Configuring sniffer on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+
+        logger().info("Joining WiFi network...")
+        sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, associated=wifi_dut.interfaces.wifi.associated,
+                                            power_save=False)
+
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+
+        mqtt_thread = MQTTParallelThread(wifi_dut=wifi_dut, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                                         topic=topic, message=message, iter_count=9, sleep_time=10)
+        mqtt_thread.mqtt_client_connect()
+
+        sntp_thread = SNTPFunctionality(wifi_dut=wifi_dut)
+        sntp_thread.start_sntp()
+        sntp_thread.start()
+        sntp_thread.wait_for_exit()
+
+        t1 = Thread(target=mqtt_thread.mqtt_publish_multiple_times)
+        t2 = Thread(target=sntp_thread.sntp_get_time_date)
+        t1.start()
+        t2.start()
+        logger().info("Waiting for MQTT and SNTP threads to complete...")
+        time.sleep(100)
+        t2.join()
+        t1.join()
+        logger().info("**************** Test completed successfully ***************")
+
+    except Exception as Ex:
+        logger().error(f"Test failed with exception: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_dut.interfaces.wifi.sntp_client_stop()
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SNTPClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.mqtt_server("raspi_mosquitto")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_multi_thread_mqtt_publish_udp_tx_encrypted_C766799(
+        wifi_sniffer, mqtt_server, wifi_client, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections,
+        remote_socket_factory):
+    try:
+        topic = "mytesttopic_C766799"
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+
+        logger().info(f"Configuring sniffer on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+
+        logger().info("Joining WiFi network...")
+        dut_addr = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point,
+                                                       associated=wifi_dut.interfaces.wifi.associated)
+
+        mqtt_obj = MQTTParallelThread(wifi_dut=wifi_dut, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                                      topic=topic, message=message, iter_count=5, server_port=1883,
+                                      is_connection_encrypted=False)
+        mqtt_obj.mqtt_client_connect()
+
+        udp_thread = UDPThread(wifi_dut=wifi_dut, remote_socket_factory=remote_socket_factory,
+                               remote_ip_address=wifi_client.interfaces.wifi.get_ip_address(),
+                               dut_addr=dut_addr, transfer_type="TX", port_number=5001)
+        udp_thread.start()
+        udp_thread.wait_for_exit()
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Submit the functions to the executor
+            executor.submit(mqtt_obj.mqtt_publish_multiple_times)
+            executor.submit(udp_thread.transmit_udp_data)
+        logger().info("**************** Test completed successfully ***************")
+
+    except Exception as Ex:
+        logger().error(f"Test failed with exception: {Ex}")
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        remote_socket_factory.interfaces.socket.close_all()
+

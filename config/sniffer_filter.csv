@@ -85,6 +85,7 @@ assoc_req_resp_eapol_4_wpa3_eap_trans_pmf_cap,(wlan.addr == {{ sa_addr }}) and (
 assoc_req_wpa2_eap_with_pmf_req, (wlan.sa == {{ sa_addr }} and (wlan.fc.type_subtype == 0)), and (wlan.rsn.capabilities.mfpr == True and wlan.rsn.capabilities.mfpc == True),
 assoc_req_wpa2_eap_with_pmf_cap, (wlan.sa == {{ sa_addr }} and (wlan.fc.type_subtype == 0)), and (wlan.rsn.capabilities.mfpc == True),
 wpa3_confirm_commit_message,(wlan.addr == {{ wlan_addr }}), and (wlan.fixed.sae_message_type == 1) or (wlan.fixed.sae_message_type == 2),
+wpa3_confirm_commit_message_with_addr, (wlan.addr == {{ sa_addr }}) or (wlan.addr == {{ da_addr }}), and ((wlan.fixed.sae_message_type == 1) or (wlan.fixed.sae_message_type == 2)),
 wpa3_4_way_handshake_message,(wlan.addr == {{ wlan_addr }}), and !(wlan.fc.type_subtype == 0x0008) and (wlan.tag.number == 45 ) or (wlan.fc.type_subtype == 0x0000) or eapol or (wlan.fixed.sae_message_type == 1) or (wlan.fixed.sae_message_type == 2),
 dhcp_renewal,(wlan.addr == {{ wlan_addr }}), and (!(ip.dst == 255.255.255.255) and (dhcp.option.dhcp == 3)) and wlan.fc.retry == 0,
 WMM/Qos,,,

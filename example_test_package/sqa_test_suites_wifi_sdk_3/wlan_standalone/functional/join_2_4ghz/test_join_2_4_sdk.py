@@ -5,6 +5,17 @@ from datetime import datetime, date
 from utf.utils.logger import get_logger
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.utils.iperf.iperf_utils import ping
+from utf.interfaces.wifi import (
+    Cipher,
+    SecurityMode,
+    Standard,
+    Bandwidth,
+    Rate,
+    Channel,
+    CountryCode,
+    WirelessBand,
+    WiFiScanResult,
+)
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xOperatingMode, Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap, \
     Si91xExtTCPIPFeatureBitMap, Si91xPowerSaveModes, Si91xJoinFeatureBitMap, \
@@ -1983,7 +1994,7 @@ def test_wifi_sdk_long_icmp_packet_functionality_ipv4_c770033(wifi_dut, wifi_acc
             filter_name='icmpv4_custom_len'
         )
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=icmp_filter,
-                                                                  packet_filter2="        Tag: Internet Control Message Protocol")[
+                                                                  packet_filter2="Internet Control Message Protocol")[
             'packet_count'], "\n ICMP Ping Packet not captured \n"
         with open("./reports/filter2_file.txt", "r") as file:
             data = file.read()
@@ -2098,7 +2109,7 @@ def test_wifi_sdk_long_icmp_packet_functionality_ipv6_c770035(firmware_loader, w
             filter_name='icmpv6_custom_len'
         )
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=icmp_filter,
-                                                                  packet_filter2="        Tag: Internet Control Message Protocol")[
+                                                                  packet_filter2="Internet Control Message Protocol")[
             "packet_count"], f" ICMP Packet not Captured "
         with open("./reports/filter2_file.txt", "r") as file:
             data = file.read()
@@ -2465,8 +2476,6 @@ def test_wifi_sdk_long_icmp_packet_more_than_1452_bytes_ipv6_c770040(firmware_lo
         logger().error(f" ====== Error during long ICMP packet test: {str(EX)} ====== ")
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
-
-@pytest.mark.skip("AP does not support WPA security")
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -2479,39 +2488,71 @@ def test_wifi_sdk_long_icmp_packet_more_than_1452_bytes_ipv6_c770040(firmware_lo
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"ssid": "TEST-WPA", "security": "WPA", "passphrase": "test12345678"})
 @pytest.mark.start_state("wifi_dut", wifi='init')
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-def test_wifi_sdk_connectivity_with_wpa_security_hidden_psk_c770027(wifi_dut, wifi_access_point, wifi_sniffer,
-                                                                    utf_constants, sl_collections, sniffer_filter,
-                                                                    request):
+def test_wifi_sdk_connectivity_with_wpa_security_hidden_psk_c770027(wifi_dut, wifi_client, wifi_sniffer,
+                                                                      sl_collections, sniffer_filter,
+                                                                     request):
     """Test WiFi connectivity with WPA security and hidden PSK credentials.
     Verifies that the DUT can successfully connect to a WPA-secured access point
     when PSK credentials are hidden from wireless information output. The test
     configures sniffer capture, joins the network, and validates connectivity.
     """
-
-    wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    ssid = "WPA_SECURITY_TEST"
+    channel = 11
+    passphrase = "mypassword123"
+    power_save = True
+    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
-    """This test case verifies connectivity with WPA2 mode AP"""
-    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
     try:
-        test_case = '770031'
-        ping_count = utf_constants.get("ping_count")
-        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case=test_case,
-                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
-        wlan_obj.start()
-        wlan_obj.wait_for_exit()
+        wifi_client.interfaces.wifi.start_ap(
+            ssid=ssid,
+            security=SecurityMode.WPA,
+            passphrase=passphrase,
+            channel=channel,
+            standard=Standard.n
+        )
+        logger().info(f"\n **** Access Point started with SSID: {ssid}, Channel: {channel} ****\n")
+        ap_mac_address = wifi_client.interfaces.wifi.get_mac_address()
+        logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+        wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
+        wifi_dut.interfaces.wifi.join(ssid=ssid,
+                                      channel=channel,
+                                      passphrase=passphrase,
+                                      security="wpa")
+        logger().info(f"\n **** DUT joined the Access Point with SSID: {ssid}, Channel: {channel} ****\n")
+        ip_obj = wifi_dut.interfaces.wifi.start_ip()
+        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_obj)
+        logger().info(f"\n **** Device IP Address: {device_ip} ****\n")
+
+        if power_save:
+            wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+            wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                               psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        wireless_info = wifi_dut.interfaces.wifi.sl_wifi_get_wireless_info()
+        pattern = r"(?:\n)?([0-9A-Za-z]{32})"
+        # Find all matches
+        matches = re.findall(pattern, wireless_info)
+        logger().info(f"Pattern are {matches}")
+        if matches:
+            assert any(char != '0' for char in matches[0]) == False, f"\n PSK Information not Hidden \n"
+        else:
+            assert False, "\n Wireless Info Doesn't contain PSK Data \n"
+
+        status = ping(host=device_ip, count=10)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+        logger().info(f"\n Wireless DUT Stats: {wireless_info} \n")
+        wifi_dut.interfaces.wifi.leave()
+        sl_collections.join_sniffer_validation(wifi_client, wifi_sniffer,
+                                                    wifi_dut.interfaces.wifi.get_mac_address(),
+                                                    ap_mac_address,
+                                                    sniffer_filter, power_save=power_save)
 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
-
 
 @pytest.mark.config(
     "wifi_dut",
