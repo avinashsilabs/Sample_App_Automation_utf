@@ -39,7 +39,8 @@ def logger():
 
 
 class WifiConnectionThread(ThreadBase):
-    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, remote_wiseconnect3=None, sniffer_filter=None,
+    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, remote_wiseconnect3=None,
+                 sniffer_filter=None,
                  data=None, ping_count=None, data_transfer=True, test_name=None, sl_collections=None, wifi_client=None,
                  traffic_type=None, dut_leave=True, protocol=None, net_perf_client=None, test_case_no=None,
                  device_ip=None):
@@ -68,7 +69,7 @@ class WifiConnectionThread(ThreadBase):
         self.wifi_client.interfaces.wifi.get_ip_address(version=4)
         logger().info(f"Initiate ping from third party wifi-client to DUT")
         self.wifi_dut.interfaces.wifi.ping(server_ip='192.168.50.5', ip_version=4, ping_size=64,
-                                              num_ping_attempts=45)
+                                           num_ping_attempts=45)
         time.sleep(2)
 
     def Secondary_SDK_Conn(self):
@@ -414,6 +415,7 @@ class Start_stop(ThreadBase):
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("remote_wiseconnect3", sapi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3', "channel": 1})
@@ -471,8 +473,9 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463706(wifi_sniffer, wifi_access
         sec_sdk_mac = remote_wiseconnect3.interfaces.sapi.get_mac_address()
         logger().info(f"DUT MAC is : {sec_sdk_mac}")
         primary_sdk = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, test_name=test_name,
-                                    wifi_sniffer=wifi_sniffer, ping_count=ping_count, sl_collections=sl_collections,
-                                    test_case_no=463706, remote_wiseconnect3=remote_wiseconnect3)
+                                           wifi_sniffer=wifi_sniffer, ping_count=ping_count,
+                                           sl_collections=sl_collections,
+                                           test_case_no=463706, remote_wiseconnect3=remote_wiseconnect3)
         primary_sdk.start()
         primary_sdk.wait_for_exit()
         packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -495,7 +498,7 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463706(wifi_sniffer, wifi_access
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 1})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
@@ -562,7 +565,7 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463710(wifi_sniffer, wifi_access
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "channel": 1})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
@@ -628,7 +631,7 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463711(wifi_sniffer, wifi_access
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 1})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
@@ -818,7 +821,7 @@ def test_wifi_sdk_wpa3_when_sta_doing_udp_tx_C463707(wifi_sniffer, wifi_access_p
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2', "passphrase": "Automation@Silabs", "ssid": 'Concurent_ap', "channel": 1})
@@ -935,7 +938,7 @@ APUT but security in WPA2 after STA gets connected with APUT stop AP and check w
         remote_wiseconnect3.interfaces.sapi.leave()
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2', "passphrase": "Automation@Silabs", "ssid": 'Concurent_ap', "channel": 1})
@@ -1052,7 +1055,7 @@ def test_wifi_sdk_wpa3_in_conc_mode_with_tdi_disable_C468529(wifi_sniffer, wifi_
         remote_wiseconnect3.interfaces.sapi.leave()
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA3', "passphrase": "Automation@Silabs", "ssid": 'Concurent_ap', "channel": 1})
@@ -1135,7 +1138,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C468633(wifi_sniffer, wifi_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA3', "passphrase": "Automation@Silabs", "ssid": 'Concurent_ap', "channel": 1})
@@ -1218,7 +1221,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C468634(wifi_sniffer, wifi_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA3', "passphrase": "Automation@Silabs", "ssid": 'Concurent_ap', "channel": 1})
@@ -1301,7 +1304,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C463720(wifi_sniffer, wifi_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA3', "passphrase": "Automation@Silabs", "ssid": 'Concurent_ap', "channel": 1})
@@ -1466,10 +1469,12 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C463722(wifi_sniffer, wifi_
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+
+@pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPA3', "passphrase": "Automation@Silabs", "ssid": 'Station_STA_AP', "channel": 1})
+                    wifi={"security": 'WPA3', "passphrase": "Automation@Silabs", "ssid": 'Station_STA_AP',
+                          "channel": 1})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config(
@@ -1588,10 +1593,11 @@ def test_wifi_sdk_wpa3_conc_listen_based_ps_enabled_C463714(wifi_sniffer, wifi_a
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPA3', "passphrase": "Automation@Silabs", "ssid": 'Station_STA_AP', "channel": 1})
+                    wifi={"security": 'WPA3', "passphrase": "Automation@Silabs", "ssid": 'Station_STA_AP',
+                          "channel": 1})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config(
@@ -1710,10 +1716,11 @@ def test_wifi_sdk_wpa3_conc_dtim_based_ps_enabled_C463715(wifi_sniffer, wifi_acc
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPA3', "passphrase": "Automation@Silabs", "ssid": 'STA_Concurrent_AP', "channel": 1})
+                    wifi={"security": 'WPA3', "passphrase": "Automation@Silabs", "ssid": 'STA_Concurrent_AP',
+                          "channel": 1})
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1811,7 +1818,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_restart_C463719(wifi_sniffer, wifi
         logger().info("Stop Sniffer finally")
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA3', "passphrase": "Automation@Silabs", "ssid": 'STA-CONC-MODE', "channel": 1})
