@@ -3,6 +3,7 @@ import pytest
 import string
 import random
 import re
+import threading
 from utf.utf_config import UtfConfig
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xOperatingMode,
@@ -23,6 +24,8 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xPowerSaveProcedureTypes,
     Si91xAwsQos
 )
+
+lock = threading.Lock()
 from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
 from test_sta_ble_sdk import BleThreadFunctionality, SnifferValidationProcess, ScanTime_JoinTime, WifiJoinThread
@@ -159,6 +162,79 @@ class WifiThread(ThreadBase):
     def run(self):
         if self.test_type == "join":
             self.join_to_ap()
+
+
+class WriteWithoutResponseFunctionality:
+    def __init__(self, ble_dut=None, ble_clients=None, ble_client_address=None, data_list=None, data_length=None,
+                 write_handle=None, write_time=None, write_count=None, allocated_mem_addr_list=None):
+        self.ble_dut = ble_dut
+        self.ble_clients = ble_clients
+        self.ble_client_address = ble_client_address
+        self.data_list = data_list
+        self.data_length = data_length
+        self.write_handle = write_handle
+        self.write_time = write_time
+        self.write_count = write_count
+        self.allocated_mem_addr_list = allocated_mem_addr_list
+        self.allocated_mem_addr = None
+        self.data = None
+
+    def run(self):
+        logger().info(f"*******Write Without Response Start****************")
+
+        for i in range(0, len(self.data_list)):
+            bt_mon_log_file_name = (f"reports/write_without_response_"
+                                    f"buffer_{i}_{int(time.time())}.log")
+            time.sleep(2)
+            self.data = self.data_list[i]
+            self.allocated_mem_addr = self.allocated_mem_addr_list[i]
+            logger().info(f"data:{self.data} allocated_mem_addr:{self.allocated_mem_addr}")
+            with BleLogs(start_collecting_logs=True,
+                         bt_log_path=bt_mon_log_file_name):
+                self.ble_dut.interfaces.wifi.ble_set_att_cmd(ble_remote_dev_address=self.ble_client_address,
+                                                         handle=self.write_handle, data_length=self.data_length[i],
+                                                         data=self.data, data_address=self.allocated_mem_addr)
+                time.sleep(2)
+            flag = False
+            logger().info(" ***** Validating Write Without Response Start *****")
+            with open(bt_mon_log_file_name, "r") as file_p:
+                lines = file_p.readlines()
+                logger().info(f"lines:{lines}")
+
+            acl_data_flag = att_flag = handle_flag = False
+            for line in lines:
+                if "> ACL Data RX: Handle" in line:
+                    acl_data_flag = True
+                    logger().info(f"acl_data_flag:{acl_data_flag}")
+                    continue
+                if "ATT: Write Command" in line and acl_data_flag is True:
+                    att_flag = True
+                    logger().info(f"att_flag:{att_flag}")
+                    continue
+                if "Handle:" in line:
+                    if f"0x{self.write_handle:04X}" in line and att_flag is True:
+                        handle_flag = True
+                        logger().info(f"handle_flag:{handle_flag}")
+                    continue
+                if "Data:" in line and acl_data_flag is True and att_flag is True and handle_flag is True:
+                    data_match = re.search(r'Data:(.*)', line)
+                    logger().info(f"data_match:{data_match}")
+                    hex_string = data_match.group(1) if data_match else ""
+                    logger().info(f"hex_string:{hex_string}")
+                    byte_array = bytes.fromhex(hex_string)
+                    logger().info(f"byte_array:{byte_array}")
+                    text = byte_array.decode('unicode_escape')
+                    logger().info(f"text:{text}")
+                    logger().info(f"Actual data :{self.data}  Expected data:{text}")
+                    try:
+                        assert self.data in text, "Actual data is not found"
+                    except:
+                        logger().info(f"Actual data :{self.data}  Expected data:{text}")
+                        raise AssertionError("Actual data is not found")
+                    flag = True
+                    break
+            assert flag, "data is not found"
+
 
 
 # this thread used for sta+ble as a slave
@@ -647,9 +723,9 @@ def test_sta_ble_sdk_ble_conn_wlan_conn_dhcp_C540347(wifi_sniffer, wifi_access_p
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -774,9 +850,9 @@ def test_sta_ble_sdk_ble_whitelist_UDP_TX_C535084(wifi_sniffer, wifi_access_poin
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -915,9 +991,9 @@ def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -1029,9 +1105,9 @@ def test_sta_ble_sdk_wlan_scan_ble_master_rx_C538010(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -1180,9 +1256,9 @@ def test_sta_ble_sdk_tcp_tx_ble_slave_C133549(wifi_sniffer, wifi_access_point, w
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -1232,7 +1308,6 @@ def test_sta_ble_sdk_tcp_tx_ble_slave_C133549(wifi_sniffer, wifi_access_point, w
         "disassociated",
     ],
 )
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4985")
 def test_sta_ble_sdk_set_att_value_diff_length_tcp_tx_ble_slave_C133437(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                         ble_client,
                                                                         request, utf_constants, sl_collections,
@@ -1272,7 +1347,7 @@ def test_sta_ble_sdk_set_att_value_diff_length_tcp_tx_ble_slave_C133437(wifi_sni
             protocol=protocol,
             timeout=300
         )
-        notify_size_list = [1, 20, 50]  # , 230]
+        notify_size_list = [1, 230]  # , 230]
         notify_size_list.extend(random.sample(range(2, 229), 5))
         addr_list = []
         data_list = []
@@ -1287,7 +1362,7 @@ def test_sta_ble_sdk_set_att_value_diff_length_tcp_tx_ble_slave_C133437(wifi_sni
             wifi_dut=wifi_dut,
             ble_client=ble_client,
             sl_collections=sl_collections,
-            ble_test_type="gatt_write_without_resp",
+            ble_test_type="slave",
             dev_state=8,
             service_class=["ImmediateAlertService"],
             gatt=True,
@@ -1312,30 +1387,34 @@ def test_sta_ble_sdk_set_att_value_diff_length_tcp_tx_ble_slave_C133437(wifi_sni
         ble_obj.scan_and_connect_from_remote()
         ble_obj.service_discovery_on_dut()
         # Configure Buffer Mode
-        ble_obj.configure_buffer_mode(mode=0, count=2)
-        for i in range(0, len(notify_size_list)):
-            ble_obj.gatt_write_without_resp(ble_obj.write_handle, data_length=notify_size_list[i], data=data_list[i],
-                                            address=addr_list[i],
-                                            bt_mon_log_file_name=(
-                                                f"reports/test_sta_ble_sdk_set_att_value_diff_length_tcp_tx_ble_slave_C133437"
-                                                f"{int(time.time())}.log")
-                                            )
+        ble_obj.configure_buffer_mode(mode=1, count=2)
+        ble_obj2 = WriteWithoutResponseFunctionality(ble_dut=wifi_dut, ble_clients=ble_client,
+                                                     ble_client_address=ble_obj.ble_client_address,
+                                                     write_handle=ble_obj.write_handle, data_length=notify_size_list,
+                                                     data_list=data_list,
+                                                     write_count=50, allocated_mem_addr_list=addr_list)
+
+        thread1 = threading.Thread(target=ble_obj2.run)
+        thread1.start()
+        time.sleep(2)
+        thread1.join()
         ble_obj.ble_disconnect()
         ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
         wifi_obj.wait_for_exit()
         wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
+        for i in range(len(addr_list)):
+            wifi_dut.interfaces.wifi.memory_free(addr_list[i])
         logger().info("******************** ble_remove_service ***********************")
-        wifi_dut.interfaces.wifi.ble_remove_service(timeout=10)
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -1481,9 +1560,9 @@ def test_sta_ble_sdk_http_dle_ble_periodic_tx_C537979(wifi_sniffer, wifi_access_
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -1630,9 +1709,9 @@ def test_sta_ble_sdk_http_dl_ble_periodic_tx_dle_C537980(wifi_sniffer, wifi_acce
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -1786,9 +1865,9 @@ def test_coex_sdk_httpget_url_2048_ble_smp_tx_C476959(http_server, wifi_dut, htt
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -1932,9 +2011,9 @@ def test_coex_sdk_https_get_url_2048_ble_RX_C476960(http_server, wifi_dut, http_
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -2069,9 +2148,9 @@ def test_coex_sdk_httpsget_url_1536_ble_smp_C476963(http_server, wifi_dut, http_
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
@@ -2226,9 +2305,9 @@ def test_coex_sdk_httpget_url_1536_ble_smp_tx_C476964(http_server, wifi_dut, htt
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        ble_client.interfaces.bluetooth.close()
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)

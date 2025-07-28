@@ -627,7 +627,8 @@ devices:
             mqtt:
                 type: 'mqtt.server.mosquitto_linux'
                 shell: 'linux_shell'
-                server_listen_address: '0.0.0.0'
+#                server_listen_address: '0.0.0.0'
+                server_listen_address: "::"
                 # port must be set to 8883 for TLS to be enabled
                 port: 8883
                 interface: 'eth1'
@@ -641,7 +642,6 @@ devices:
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
                 ip_version: 6
-
 
     raspi_mosquitto_tls_ecdsa:
         interfaces:

@@ -6,6 +6,7 @@ import ipaddress
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xTCPIPFeatureBitMap,
     Si91xExtTCPIPFeatureBitMap,
+    Si91xCustomFeatureBitMap,
     Si91xCoexMode,
     Si91xPowerSaveModes,
     Si91xFeatureBitMap,
@@ -135,12 +136,8 @@ class MqttThread(ThreadBase):
         self.wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=self.mqtt_server.interfaces.mqtt)
         logger().info(".....MQTT Client connects to MQTT server.....")
         self.mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=self.mqtt_server.interfaces.mqtt)
-        time.sleep(5)
-
+        time.sleep(15)
         self.subscribe()
-
-
-
         time.sleep(5)
         sw = Stopwatch()
         while sw.elapsed_sec <= 60:
@@ -319,6 +316,48 @@ class IperfThraed(ThreadBase):
         self.run_traffic()
 
 
+
+
+class SocketDataTransfer(ThreadBase):
+    def __init__(self, wifi_dut, remote_socket, utf_constants, dut_ip=None, data=None, interval=0, ip_version=4):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.remote_socket = remote_socket
+        self.utf_constants = utf_constants
+        self.dut_ip = dut_ip
+        self.data = data
+        self.interval = interval
+        self.ip_version = ip_version
+
+    def run_udp_rx_traffic(self):
+        local_port = 6001
+        server_ip = self.remote_socket.interfaces.socket.hostname_or_ip_address(ip_version=self.ip_version)
+
+        self.remote_socket.interfaces.socket.start_server(socket_type=1, ip_version=self.ip_version)
+        sock = self.wifi_dut.interfaces.wifi.Asyncsocket(stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP")
+        assert sock == 0, f"socket id received is wrong, expected is 0"
+        logger().info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+        self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.dut_ip,
+                                           server_port=local_port, asynch=1, ip_version=self.ip_version,
+                                           ip_len=self.ip_version)
+        self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, ip_len=self.ip_version,
+                                                       server_port=local_port)
+
+        sw = Stopwatch()
+        while sw.elapsed_sec < 60:
+            tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=50))
+            buffer_length = len(tx_buffer)
+            self.remote_socket.interfaces.socket.send_data_udp(tx_buffer, self.dut_ip, local_port)
+            time.sleep(2)
+            self.wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
+            buffer_rx = self.wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
+            logger().info(f"###################### Buffer Data  {buffer_rx}  ######################")
+            logger().info(f"###################### Buffer Data Length  {buffer_length}  ######################")
+            assert buffer_length == len(
+                buffer_rx), f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+
+
+
 class WLanThread(ThreadBase):
     """
     Thread class for WLAN operations.
@@ -384,7 +423,7 @@ class WLanThread(ThreadBase):
                     time.sleep(10)
                     logger().info(f"=======>>>>>Enabling the ethernet adaptor at remote side....")
                     self.wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {client_interface} up")
-                    self.wifi_client.interfaces.wifi.shell.execute(f"sudo ip6tables -F")
+                    self.wifi_client.interfaces.wifi.shell.execute(f"sudo iptables -F")
                     time.sleep(20)
 
             assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
@@ -397,6 +436,8 @@ class WLanThread(ThreadBase):
         """
         Runs the thread.
         """
+        self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
         self.dut_add_dict = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                      wifi_access_point=self.wifi_access_point,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated,
@@ -2107,5 +2148,212 @@ def test_wifi_sdk_mqtt_on_ipv6_stateful_dhcp_QOS1_TC119387(wifi_dut,
                                                   test_name, wlan_obj.dut_add_dict['ap_mac_address'])
 
         assert result['ipv6_state'] == 1, "IPV6 stateful configuration is not set in AP"
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+
+# @pytest.mark.skip()
+@wifi_dut_marker(thread_count=1,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 ext_tcp_ip_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
+                                | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                 tcp_ip_bit=Si91xTCPIPFeatureBitMap.SSL,
+                 ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE",
+                            "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+                 )
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2",
+                               "passphrase": "12345678",
+                               "channel": 8,
+                               "ipv6_state": "1",
+                               "wan_ipv6_address": wan_ipv6_addr,
+                               "wan_ipv6_gateway": wan_gateway,
+                               }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.mqtt_server("raspi_mosquitto_tls_ipv6")
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_mqtt_functionality_on_ipv6_stateful_dhcp_with_QOS1_TC119391(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, utf_constants,
+        sniffer_filter, wifi_client):
+    """QOS1: Subscribe to MQTT server with TCP connection and publish data oversubscribed topic"""
+
+    try:
+        topic = "mytesttopic"
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
+        address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(topic) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(topic), write_content=topic)
+
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(message) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(message), write_content=message)
+
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                              ping_count=ping_count, wifi_client=wifi_client,
+                              ping_before_power_save=False,
+                              ping_after_power_save=False,
+                              )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        mqtt_obj = MqttThread(wifi_dut=wifi_dut,
+                              wifi_client=wifi_client, mqtt_client=mqtt_client,
+                              mqtt_server=mqtt_server, topic=topic, message=message, topic_address=address1,
+                              msg_address=address2, ip_version=6, qos=Si91xMqttQos.QOS1,
+                              encryption=True, server_port=8883)
+        mqtt_obj.start()
+        mqtt_obj.wait_for_exit()
+
+        logger().info("Unsubscribing from the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.memory_free(address1)
+        wifi_dut.interfaces.wifi.memory_free(address2)
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+
+@pytest.mark.skip(reason="WIFI_BT_UTFHELP-5460")
+@wifi_dut_marker(thread_count=2, stack_len=4096)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
+                               "ipv6_state": "0",  "wan_ipv6_address": wan_ipv6_addr,
+                                "wan_ipv6_gateway": wan_gateway,}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+def test_wifi_sdk_udp_socket_async_port_ipv6_622353(wifi_dut, wifi_access_point,
+                                                    wifi_sniffer,
+                                                    sl_collections,
+                                                    request,
+                                                    sniffer_filter,
+                                                    utf_constants, wifi_client,
+                                                    net_perf_clients,
+                                                    remote_socket):
+    """
+        Test Steps:
+            1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+            2. Configure AP on WPA3 security with ipv6 stateful dhcpv6
+            3. Join the access point and enable the dhcpv4 and dhcpv6
+            4. Enable wlan and bt power save mode in dut after the connection
+            5. Ping from remote to DUT IPV6 address
+            6. Start TCP TX from DUT to remote IPV4 address
+            7. Start TCP RX from remote to DUT IPV6 address
+            8. Both should run simultaneously
+
+        """
+    test_name = request.node.name
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                              ping_count=ping_count, wifi_client=wifi_client,
+                              ping_before_power_save=False,
+                              ping_after_power_save=False,
+                              )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        socket_obj = SocketDataTransfer(wifi_dut, remote_socket, utf_constants,
+                                        dut_ip=wlan_obj.dut_add_dict['device_ipv6_global'],
+                                        data="Thisisfromtcpclient",
+                                        ip_version=6)
+        socket_obj.run_udp_rx_traffic()
+        time.sleep(20)
+        wifi_dut.interfaces.wifi.config_socket_metadata()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+@pytest.mark.skip(reason="WIFI_BT_UTFHELP-5460")
+@wifi_dut_marker(thread_count=2, stack_len=3584)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
+                               "ipv6_state": "0",  "wan_ipv6_address": wan_ipv6_addr,
+                                "wan_ipv6_gateway": wan_gateway,}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_udp_socket_async_port_ipv4_622354(wifi_dut, wifi_access_point,
+                                                    wifi_sniffer,
+                                                    sl_collections,
+                                                    request,
+                                                    sniffer_filter,
+                                                    utf_constants, wifi_client,
+                                                    remote_socket):
+
+    test_name = request.node.name
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                              test_name=test_name, sl_collections=sl_collections, test_type="ping",
+                              ping_count=ping_count, wifi_client=wifi_client,
+                              ping_before_power_save=False,
+                              ping_after_power_save=False,
+                              )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(20)
+        local_port = 5001
+
+        remote_socket.interfaces.socket.start_server(socket_type=1, port=local_port, ip_version=4)
+        server_ip = remote_socket.interfaces.socket.hostname_or_ip_address(ip_version=4)
+        # sock = wifi_dut.interfaces.wifi.Asyncsocket(stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP")
+        sock = wifi_dut.interfaces.wifi.async_sdk_socket(domain="AF_INET", stream_type="SOCK_DGRAM",
+                                                         protocol="IPPROTO_UDP")
+        assert sock == 0, f"socket id received is wrong, expected is 0"
+        logger().info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=wlan_obj.dut_add_dict['device_ip'],
+                                      server_port=local_port, asynch=1)
+        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, ip_len=4, server_port=local_port)
+
+        sw = Stopwatch()
+
+        while sw.elapsed_sec < 20:
+            tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=50))
+            buffer_length = len(tx_buffer)
+            remote_socket.interfaces.socket.send_data_udp(tx_buffer, wlan_obj.dut_add_dict['device_ip'], local_port)
+            time.sleep(2)
+            # wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
+            wifi_dut.interfaces.wifi.config_socket_metadata(socket_metadata=1)
+            time.sleep(10)
+            # meta_thread = Thread(target=
+            #                      args=(1))
+            # meta_thread.start()
+            # meta_thread.join()
+            # buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
+            # wifi_dut.interfaces.wifi.config_socket_metadata(socket_metadata=1)
+            # logger().info(f"###################### Buffer Data  {buffer_rx}  ######################")
+            # logger().info(f"###################### Buffer Data Length  {buffer_length}  ######################")
+            # assert buffer_length == len(
+            #     buffer_rx), f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+
+        wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
