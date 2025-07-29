@@ -652,7 +652,7 @@ pytestmark = [
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_only_responder_keyboard_display_664778(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_only_responder_keyboard_display_C664778(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify Passkey Entry Pairing method for IOCap, Initiator : Keyboard Only and Responder : Keyboard Display"""
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
@@ -712,7 +712,7 @@ pytestmark = [
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_only_responder_display_only_using_random_664783(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_only_responder_display_only_using_random_C664783(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify Passkey Entry Pairing method for IOCap, Initiator : Keyboard Only and Responder : Display Only using random address"""
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
@@ -773,7 +773,7 @@ pytestmark = [
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_display_responder_display_only_using_random_664785(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_display_responder_display_only_using_random_C664785(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify Passkey Entry Pairing method for IOCap, Initiator : Keyboard Display and Responder : Display Only using random address"""
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
@@ -834,7 +834,7 @@ pytestmark = [
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_only_responder_display_yesno_using_random_664788(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_only_responder_display_yesno_using_random_C664788(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify Passkey Entry Pairing method for IOCap, Initiator : Keyboard Only and Responder : Display YesNo using random address"""
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
@@ -956,7 +956,7 @@ pytestmark = [
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_only_responder_keyboard_display_using_random_664803(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_only_responder_keyboard_display_using_random_C664803(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify Passkey Entry Pairing method for IOCap, Initiator : Keyboard Only and Responder : Keyboard Display using random address"""
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
@@ -1017,7 +1017,7 @@ pytestmark = [
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_smp_just_works_pairing_Initiator_keyboard_display_responder_keyboard_only_664770(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+def test_ble_smp_just_works_pairing_Initiator_keyboard_display_responder_keyboard_only_C664770(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify Just works Pairing method for IOCap, Initiator : Keyboard Display and Responder : Keyboard Only"""
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
@@ -1078,7 +1078,7 @@ pytestmark = [
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_smp_just_works_pairing_Initiator_keyboard_display_responder_keyboard_only_using_random_664795(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
+def test_ble_smp_just_works_pairing_Initiator_keyboard_display_responder_keyboard_only_using_random_C664795(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify Just works Pairing method for IOCap, Initiator : Keyboard Display and Responder : Keyboard Only using
     random address"""
     try:
