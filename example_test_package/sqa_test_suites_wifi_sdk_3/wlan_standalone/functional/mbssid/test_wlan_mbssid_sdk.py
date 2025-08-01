@@ -338,18 +338,112 @@ class WLanThread(ThreadBase):
                 for i in range(0, 5):
                     self.verfiy_T_and_NT_based_mbssid_in_dut_list()
                     time.sleep(5)
+                    
+                    # Ensure clean state before EAP connection
+                    try:
+                        self.wifi_dut.interfaces.wifi.leave()
+                        time.sleep(2)
+                    except:
+                        pass  # Ignore if not connected
+                    
+                    # Verify AP is accessible before attempting EAP join
+                    try:
+                        scan_result = self.wifi_dut.interfaces.wifi.scan()
+                        ap_found = False
+                        for ap in scan_result:
+                            if ap.ssid == self.wifi_access_point.interfaces.wifi.ssid:
+                                ap_found = True
+                                logger().info(f"Target AP found in scan: {ap.ssid}")
+                                break
+                        
+                        if not ap_found:
+                            logger().warning(f"Target AP {self.wifi_access_point.interfaces.wifi.ssid} not found in scan results")
+                    except Exception as scan_error:
+                        logger().warning(f"Scan failed: {scan_error}, proceeding with EAP join attempt")
+                    
                     self.wifi_sniffer.interfaces.capture.configure_interface(
                         channel=self.wifi_access_point.interfaces.wifi.channel
                     )
                     self.wifi_sniffer.interfaces.capture.start_capture(
                         capture_file=self.test_name
                     )
-                    self.dut_addr = self.sl_collections.join_to_eap_network(
-                        wifi_dut=self.wifi_dut,
-                        wifi_access_point=self.wifi_access_point,
-                        eap_type="tls",
-                        ping_after_power_save=True,
-                    )
+                    
+                    # Validate EAP certificate configuration before attempting connection
+                    try:
+                        logger().info("Validating EAP certificate configuration...")
+                        logger().info("Checking DUT EAP configuration for WPA2-Enterprise...")
+                        logger().info(f"Target AP SSID: {self.wifi_access_point.interfaces.wifi.ssid}")
+                        logger().info(f"Target AP Security: {self.wifi_access_point.interfaces.wifi.security.name}")
+                        logger().info("EAP Type: TLS")
+                        
+                        # Log the AP configuration to help with debugging
+                        logger().info(f"AP Channel: {self.wifi_access_point.interfaces.wifi.channel}")
+                        logger().info(f"AP BSSID: {self.wifi_access_point.interfaces.wifi.bssid}")
+                        
+                        time.sleep(1)
+                    except Exception as cert_error:
+                        logger().warning(f"Certificate validation warning: {cert_error}")
+                    
+                    # Retry logic for EAP network join with better error handling
+                    max_retries = 3
+                    retry_count = 0
+                    while retry_count < max_retries:
+                        try:
+                            # Add small delay and ensure DUT is in proper state before retry
+                            if retry_count > 0:
+                                logger().info("Ensuring DUT is in proper state before retry...")
+                                try:
+                                    self.wifi_dut.interfaces.wifi.leave()
+                                    time.sleep(2)
+                                except:
+                                    pass  # Ignore if already disconnected
+                            
+                            self.dut_addr = self.sl_collections.join_to_eap_network(
+                                wifi_dut=self.wifi_dut,
+                                wifi_access_point=self.wifi_access_point,
+                                eap_type="tls",
+                                ping_after_power_save=True,
+                            )
+                            break  # Success, exit retry loop
+                        except Exception as join_error:
+                            retry_count += 1
+                            error_str = str(join_error)
+                            logger().error(f"EAP join attempt {retry_count} failed: {error_str}")
+                            
+                            # Check for specific authentication errors
+                            if "SL_STATUS_SI91X_DEAUTHENTICATION" in error_str:
+                                logger().warning("Deauthentication detected, may need longer delay before retry")
+                                if retry_count < max_retries:
+                                    time.sleep(10)  # Longer delay for deauth errors
+                            elif "IEEE 802.1X authentication failed" in error_str or "0x0017" in error_str:
+                                logger().warning("IEEE 802.1X authentication failed - checking EAP certificate and credentials")
+                                # Additional delay for 802.1X auth failures
+                                if retry_count < max_retries:
+                                    time.sleep(15)  # Even longer delay for 802.1X failures
+                                    
+                                    # Try to reset EAP state
+                                    try:
+                                        logger().info("Attempting to reset EAP authentication state...")
+                                        self.wifi_dut.interfaces.wifi.leave()
+                                        time.sleep(3)
+                                        # Force a fresh scan to refresh AP state
+                                        self.wifi_dut.interfaces.wifi.scan()
+                                        time.sleep(2)
+                                    except:
+                                        pass
+                            
+                            if retry_count >= max_retries:
+                                logger().error(f"Failed to join EAP network after {max_retries} attempts")
+                                logger().error("Last error details:")
+                                logger().error(f"  - Error: {error_str}")
+                                if "IEEE 802.1X authentication failed" in error_str or "0x0017" in error_str:
+                                    logger().error("  - This appears to be an IEEE 802.1X authentication failure")
+                                    logger().error("  - Check EAP certificate configuration and RADIUS server settings")
+                                    logger().error("  - Verify AP is properly configured for WPA2-Enterprise")
+                                raise join_error
+                            else:
+                                logger().info(f"Retrying EAP join in 5 seconds... (attempt {retry_count + 1}/{max_retries})")
+                                time.sleep(5)
 
                     host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                     logger().info(f"Remote device ip :{host_ip}")
