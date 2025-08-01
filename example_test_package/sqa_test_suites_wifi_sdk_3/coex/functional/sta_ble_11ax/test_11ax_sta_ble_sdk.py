@@ -217,7 +217,7 @@ class WifiThreadFunctionality(ThreadBase):
                 logger().info("data transfer is successful")
                 time.sleep(3)
 
-            if self.test_case == 198673 or self.test_case == 198674:
+            if self.test_case == 198673 or self.test_case == 198674 or self.test_case == 198689:
                 self.wifi_dut.interfaces["http"] = self.wifi_dut.interfaces.wifi
                 logger().info("fetching server ip....")
                 host_ip = self.http_server.interfaces.http.hostname_or_ip_address
@@ -568,6 +568,107 @@ class BleThreadFunctionality(ThreadBase):
         self.ble_client.interfaces.bluetooth.close()
         logger().info(" *************DUT Cleanup Success *******************")
 
+# this thread used for sta+ble as a slave
+class BleDualRoleThreadFunctionality(ThreadBase):
+    def __init__(
+        self,
+        wifi_dut=None,
+        ble_clients=None,
+        ble_test_type=None,
+        sl_collections=None,
+        testcase=None,
+        gatt=True,
+        ble_pairing=0,
+        max_conn_interval=160,
+        min_conn_interval=160,
+        bond_info=0
+    ):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ble_clients = ble_clients
+        self.ble_dut_address = None
+        self.ble_test_type = ble_test_type
+        self.sl_collections = sl_collections
+        self.testcase = testcase
+        self.gatt = gatt
+        self.ble_pairing = ble_pairing
+        self.max_conn_interval = max_conn_interval
+        self.min_conn_interval = min_conn_interval
+        self.bond_info = bond_info
+
+        if self.gatt:
+            # Set up DUT for BLE advertising
+            logger().info("start ble GATT service in DUT")
+            self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(
+                set_smp=self.ble_pairing, bond_info=self.bond_info)
+        else:
+            # Set up DUT for BLE advertising
+            logger().info("Initialising BLE")
+            self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start()
+        assert (
+            self.ble_dut_address is not None
+        ), "Unable to fetch bluetooth address from DUT"
+        logger().info(f"bt_dut_address : {self.ble_dut_address}")
+        time.sleep(5)
+        self.ble_clients_address = []
+
+    def dual_role_disconnect(self):
+
+        for i in range(0, len(self.ble_clients)):
+            status = self.ble_clients[i].interfaces.bluetooth.get_connection_status(
+                self.ble_dut_address
+            )
+            logger().info(
+                f"Connection status in remote device '{self.ble_clients[0].name}' is:{status}"
+            )
+            assert (
+                status
+            ), f"Remote device '{self.ble_clients[i].name}' is not connected to DUT"
+            self.wifi_dut.interfaces.wifi.ble_disconnect(
+                ble_remote_dev_address=self.ble_clients_address[i]
+            )
+            self.ble_clients[i].interfaces.bluetooth.close()
+            time.sleep(5)
+
+
+    def run(self):
+        self.ble_clients_address = []
+        if self.ble_test_type == "slave_and_master":
+            self.ble_clients_address.append(
+                self.sl_collections.ble_connection(
+                    wifi_dut=self.wifi_dut,
+                    ble_client=self.ble_clients[0],
+                    ble_dut_address=self.ble_dut_address,
+                    mode="slave",
+                )
+            )
+
+            self.ble_clients_address.append(
+                self.sl_collections.ble_connection(
+                    wifi_dut=self.wifi_dut,
+                    ble_client=self.ble_clients[1],
+                    ble_dut_address=self.ble_dut_address,
+                    mode="master",
+                )
+            )
+
+        if self.ble_test_type == "master_and_slave":
+            self.ble_clients_address.append(
+                self.sl_collections.ble_connection(
+                    wifi_dut=self.wifi_dut,
+                    ble_client=self.ble_clients[0],
+                    ble_dut_address=self.ble_dut_address,
+                    mode="master",
+                )
+            )
+            self.ble_clients_address.append(
+                self.sl_collections.ble_connection(
+                        wifi_dut=self.wifi_dut,
+                        ble_client=self.ble_clients[1],
+                        ble_dut_address=self.ble_dut_address,
+                        mode="slave"
+                )
+            )
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1655,3 +1756,156 @@ def test_wifi_sdk_https_download_with_11ax_ble_connect_slave_c198676(
 
     finally:
         ble_obj.ble_cleanup()
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}, "ble": {"count": 1, "stack_len": 3584}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"5MB.htm"})
+@pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+def test_wifi_sdk_http_download_with_11ax_ble_dual_role_C198689(
+        wifi_sniffer, wifi_access_point, wifi_dut, ble_clients, request, sl_collections, sniffer_filter, wifi_client,
+        ble_dut, http_server, index_path, utf_constants):
+    """ Verify the HTTP download with 11ax AP with BLE connection in Dual Role (Central and Peripheral) """
+    ble_obj = None
+    try:
+        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="master_and_slave",
+            testcase=test_name,
+            ble_pairing = 1,
+        )
+
+        wifi_obj = WifiThreadFunctionality(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                           wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+                                           sniffer_filter=sniffer_filter, wifi_client=wifi_client,
+                                           ping_count=ping_count,
+                                           http_server=http_server, index_path=index_path, test_case=198689)
+
+        ble_obj.start()
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+        wifi_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj.wait_for_exit()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+        time.sleep(30)
+        ble_obj.dual_role_disconnect()
+        wifi_obj.sniffer_validation()
+        wifi_obj.verify_ps_poll_validation()
+
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        if ble_obj:
+            ble_clients[0].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_clients[1].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
+                                       ble_client_address=ble_obj.ble_clients_address[0],
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}, "ble": {"count": 1, "stack_len": 3584}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"5MB.htm"})
+@pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+def test_wifi_sdk_https_download_with_11ax_ble_dual_role_C198677(
+        wifi_sniffer, wifi_access_point, wifi_dut, ble_clients, request, sl_collections, sniffer_filter, wifi_client,
+        ble_dut, http_server, index_path, utf_constants):
+    """ Verify the HTTPS download with 11ax AP with BLE connection in Dual Role (Central and Peripheral) """
+    ble_obj = None
+    try:
+        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+
+        ble_obj = BleDualRoleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_clients=ble_clients,
+            sl_collections=sl_collections,
+            ble_test_type="master_and_slave",
+            testcase=test_name,
+            ble_pairing=1,
+        )
+
+        wifi_obj = WifiThreadFunctionality(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                           wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+                                           sniffer_filter=sniffer_filter, wifi_client=wifi_client,
+                                           ping_count=ping_count, https=1,
+                                           http_server=http_server, index_path=index_path, test_case=198677)
+
+        ble_obj.start()
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+        wifi_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj.wait_for_exit()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+        time.sleep(30)
+        ble_obj.dual_role_disconnect()
+        wifi_obj.sniffer_validation()
+        wifi_obj.verify_ps_poll_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        if ble_obj:
+            ble_clients[0].interfaces.bluetooth.close()
+            ble_clients[1].interfaces.bluetooth.close()
+            ble_clients[0].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_clients[1].interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients[0],
+                                       ble_client_address=ble_obj.ble_clients_address[0],
+                                       ble_dut_address=ble_obj.ble_dut_address)
