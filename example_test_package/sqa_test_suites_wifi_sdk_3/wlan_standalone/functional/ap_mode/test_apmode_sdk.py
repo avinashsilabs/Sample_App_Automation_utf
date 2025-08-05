@@ -19,7 +19,6 @@ from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 
-from utf_wifi.utf_core.src.utf.interfaces.wifi.fixtures import remote_wiseconnect3
 
 """Test Author = Jyothi Nagireddy
         1. Start the sniffer before connection
