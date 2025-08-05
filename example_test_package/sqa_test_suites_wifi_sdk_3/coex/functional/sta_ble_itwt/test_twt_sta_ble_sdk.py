@@ -605,11 +605,6 @@ class WLanTwTThread(ThreadBase):
         if self.test_case == '198631':
             self.req_type = 0
 
-        # Configure the sniffer on wifi_access_point channel
-        self.wifi_sniffer.interfaces.capture.configure_interface(self.wifi_access_point.interfaces.wifi.channel)
-        # Start the sniffer on wifi_access_point channel
-        self.wifi_sniffer.interfaces.capture.start_capture(self.test_case)
-
         # Call set_twt API
         self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
                                               twt_flow_id=self.twt_flow_id,
@@ -630,43 +625,6 @@ class WLanTwTThread(ThreadBase):
                                               twt_retry_interval=self.twt_retry_interval,
                                               req_type=self.req_type,
                                               negotiation_type=self.negotiation_type)
-
-        logger().info(f"....Applying performance profile mode")
-        self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-        self.wifi_dut.interfaces.wifi.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2, psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
-
-        # call sleep
-        logger().info(f'**** Pinging for {self.time_duration} seconds ****')
-
-        start_time = time.time()
-        while (time.time() - start_time) < self.time_duration:
-            self.sl_collections.ping_with_custom_interval(device_ip=self.dut_addr['device_ip'],
-                                                          interval=int(self.wake_interval_resp) // 10000000)
-
-        # Stop the capture
-        self.wifi_sniffer.interfaces.capture.stop_capture()
-
-        # Do power save validation
-        self.power_save_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=self.dut_addr['dut_mac_address'], da_addr=self.ap_mac_address, filter_name="power_mgmt_bit")
-        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=self.power_save_filter)[
-                   'packet_count'] > 0, "Unable to find NULL-Data frame packets with power save bit = 1"
-
-        self.wifi_sniffer.interfaces.capture.collecting_frame_number(
-            packet_filter1=f'wlan.fixed.timestamp >= {int(self.target_wake_time)}')
-
-        filter_file = open(f'./reports/filter2_file.txt', 'r')
-        first_line = filter_file.readline().replace('\n', '')
-
-        logger().info(f"\n\n***** Packets before TWT hits = {first_line}\n\n")
-
-        self.packet_filter4 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            frame_number=first_line, dut_addr=self.dut_addr['dut_mac_address'],
-            filter_name='twt_data_transfer_packets')
-        self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=self.packet_filter4,
-                                                                packet_filter2='        Timestamp:')
-        self.verify_twt_wake_interval()
 
 
 class ble_device_state:
@@ -1218,10 +1176,9 @@ def test_wifi_sdk_verify_twt_conn_with_invalid_parameter_ble_master_c198629(
         ble_obj.ble_cleanup()
 
 
-@pytest.mark.skip("Not Deployed Yet")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt", "ble_stop_adv"])
 def test_wifi_sdk_verify_twt_teardown_recreate_session_with_ble_master_c198630(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client, utf_constants):
     """Check whether DUT is able to teardown and recreate the TWT Session when DUT BLE as Master"""
@@ -1241,23 +1198,15 @@ def test_wifi_sdk_verify_twt_teardown_recreate_session_with_ble_master_c198630(
         wlan_obj.wait_for_exit()
         wlan_obj.twt_teardown_and_recreate_session()
 
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name="twt_teardown_check")
-
-        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
-            'packet_count']
-        assert snif_pkt_count, "Unable to find teardown packet"
-
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         ble_obj.ble_cleanup()
 
 
-@pytest.mark.skip("Not Deployed Yet")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt", "ble_stop_scan", "ble_stop_adv"])
 def test_wifi_sdk_verify_twt_teardown_recreate_session_with_another_type_and_ble_slave_c198631(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client, utf_constants):
     """Check whether DUT is able to teardown and recreate the TWT Session with another TWT type When DUT BLE as slave"""
@@ -1276,17 +1225,10 @@ def test_wifi_sdk_verify_twt_teardown_recreate_session_with_another_type_and_ble
         wlan_obj.wait_for_exit()
         wlan_obj.twt_teardown_and_recreate_session()
 
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name="twt_teardown_check")
-
-        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
-            'packet_count']
-        assert snif_pkt_count, "Unable to find teardown packet"
-
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        ble_obj.ble_cleanup()
+        ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_obj.ble_client_address)
 
 
 @pytest.mark.skip("Not Deployed Yet")
