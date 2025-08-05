@@ -8,6 +8,7 @@ from utf.utils.logger import get_logger
 from utf.utils.stopwatch import Stopwatch
 import string
 import random
+import re
 from utf.utils.thread_base import ThreadBase
 from datetime import datetime
 
@@ -64,7 +65,7 @@ def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None,):
 class WifiJoin(ThreadBase):
     def __init__(self, wifi_dut=None, capture_filename=None, wifi_access_point=None, wifi_sniffer=None, http_server=None
                  , http_client=None, sl_collections=None, sniffer_filter=None, utf_constants=None, index_path=None,
-                 test_case=None):
+                 test_case=None, wifi_client=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.capture_filename = capture_filename
@@ -79,6 +80,7 @@ class WifiJoin(ThreadBase):
         self.test_case = test_case
         self.keep_alive_time = None
         self.dut_addr = None
+        self.wifi_client = wifi_client
 
     def run(self):
         try:
@@ -152,37 +154,38 @@ class WifiJoin(ThreadBase):
 
         if self.test_case == '19235' or self.test_case == '528822' or self.test_case == '564051':
             self.wifi_dut.interfaces.wifi.leave()
+
+    def _curl_request(self, cmd, method, file_time_stamp):
+        logger().info(f"Running: {cmd}")
+        result = self.wifi_client.interfaces.wifi.shell.execute(cmd)
+        returncode = result[0]
+        response = result[1].decode(errors="ignore")
+        if returncode != 0:
+            logger().info(f"\n........Print RESPONSE {response} .......\n")
+            raise RuntimeError(f"curl failed with return code {returncode}")
+        if "Not Found" in response:
+            raise Exception(f"\n Received 404 Not Found during {method} request, skipping further requests.\n")
+        logger().info(f"\n\n ........#length of DUT webpage {len(response)} ....... \n\n")
+        logger().info(f"\n\n ........ contents of webpage {response} ........\n\n")
+        with open(f"./reports/{self.capture_filename}_{method}_webpage{file_time_stamp}.html", "w") as f:
+            f.write(response)
+
     def http_curl_functionality(self):
         current_time = time.time()
         self.wifi_dut.interfaces.wifi.http_server_init()
         self.wifi_dut.interfaces.wifi.http_server_start()
-        status, resp_content = self.http_client.interfaces.http.http_get(self.http_server.interfaces.http,
-                                                                         self.index_path)
-        logger().info(f"........#HTTP_GET# length of DUT webpage {len(resp_content)} .......")
-        logger().info(f"........ contents of webpage {resp_content}\n\n\n ........")
+        dut_ip = self.dut_addr['device_ip']
+        path = self.index_path
         file_time_stamp = str(datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
-        webpage = "./reports/" + self.capture_filename + "webpage" + file_time_stamp + ".html"
-        logger().info(f"........ webpage ID sent by DUT is {webpage} ..........")
-        with open(webpage, "w") as recv:
-            recv.write(resp_content.decode())
-        status, resp_content = self.http_client.interfaces.http.http_put(self.http_server.interfaces.http,
-                                                                         self.index_path)
-        logger().info(f"........#HTTP_PUT# length of DUT webpage {len(resp_content)} .......")
-        logger().info(f"........ contents of webpage {resp_content}\n\n\n ........")
-        file_time_stamp = str(datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
-        webpage = "./reports/" + self.capture_filename + "webpage" + file_time_stamp + ".html"
-        logger().info(f"........ webpage ID sent by DUT is {webpage} ..........")
-        with open(webpage, "w") as recv:
-            recv.write(resp_content.decode())
-        status, resp_content = self.http_client.interfaces.http.http_post(self.http_server.interfaces.http,
-                                                                          self.index_path)
-        logger().info(f"........ #HTTP_POST# length of DUT webpage {len(resp_content)} .......")
-        logger().info(f"........ contents of webpage {resp_content}\n\n\n ........")
-        file_time_stamp = str(datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
-        webpage = "./reports/" + self.capture_filename + "webpage" + file_time_stamp + ".html"
-        logger().info(f"........ webpage ID sent by DUT is {webpage} ..........")
-        with open(webpage, "w") as recv:
-            recv.write(resp_content.decode())
+        # HTTP GET
+        get_cmd = f"curl -v http://{dut_ip}{path}"
+        self._curl_request(get_cmd, "GET", file_time_stamp)
+        # HTTP PUT (file upload)
+        put_cmd = f"curl -v -X PUT --data-binary @{path} http://{dut_ip}{path}"
+        self._curl_request(put_cmd, "PUT", file_time_stamp)
+        # HTTP POST (file upload)
+        post_cmd = f"curl -v -X POST --data-binary @{path} http://{dut_ip}{path}"
+        self._curl_request(post_cmd, "POST", file_time_stamp)
         time.sleep(5)
         self.wifi_dut.interfaces.wifi.http_server_stop()
         self.wifi_dut.interfaces.wifi.http_server_deinit()
@@ -333,16 +336,14 @@ def test_wifi_sdk_query_webpage_http_server_c641388(
         "ble_custom_ext_features": 0,
         "band": 0,
         "boot_option": 49,
-        "ca_cert": ("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
-    }
+        }
 )
-@pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["clear_certs"])
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "password": "12345678"}
 )
-def test_Verify_http_server_with_GET_PUT_POST_using_3rd_party_curl_client_C641377(http_server, wifi_dut,
+def test_Verify_http_server_with_GET_PUT_POST_using_3rd_party_curl_client_C641377(wifi_dut, wifi_client,
                                                                                   wifi_sniffer, wifi_access_point,
                                                                                   request, http_client,
                                                                                   sniffer_filter, utf_constants,
@@ -362,9 +363,9 @@ def test_Verify_http_server_with_GET_PUT_POST_using_3rd_party_curl_client_C64137
                                                             channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}")
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
-                            wifi_sniffer=wifi_sniffer, http_server=http_server, http_client=http_client,
+                            wifi_sniffer=wifi_sniffer, http_client=http_client,
                             sl_collections=sl_collections, sniffer_filter=sniffer_filter, utf_constants=utf_constants,
-                            test_case='641377', index_path=index_path)
+                            test_case='641377', index_path=index_path, wifi_client=wifi_client)
 
         wifi_obj.start()
         wifi_obj.wait_for_exit()
