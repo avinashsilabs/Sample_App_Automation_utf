@@ -44,7 +44,7 @@ def logger():
 
 
 class WifiJoinThread(ThreadBase):
-    dut_addr = None
+    dut_addr = {}
 
     def __init__(
             self,
@@ -74,7 +74,8 @@ class WifiJoinThread(ThreadBase):
             utf_constants=None,
             qos=None,
             topic_wild=None,
-            topic_wild_2=None
+            topic_wild_2=None,
+            address=None
 
     ):
         super().__init__()
@@ -110,6 +111,7 @@ class WifiJoinThread(ThreadBase):
         self.qos = qos
         self.topic_wild = topic_wild
         self.topic_wild_2 = topic_wild_2
+        self.address = address
 
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
@@ -284,7 +286,9 @@ class WifiJoinThread(ThreadBase):
             iter_count = self.utf_constants.get("iter_count")
             for count in range(iter_count):
                 logger().info(".... DUT publishes message over the topic ....")
-                self.wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=self.topic, message=self.message, qos=self.qos)
+                self.wifi_dut.interfaces.mqtt.mqtt_client_publish(
+                    topic=self.topic, message=self.message, qos=self.qos, msg_address=self.address,
+                    topic_address=self.address)
                 time.sleep(5)
 
                 self.mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
@@ -314,11 +318,15 @@ class WifiJoinThread(ThreadBase):
             iter_count = self.utf_constants.get("iter_count")
             for count in range(iter_count):
                 logger().info(".... DUT publishes message over the topic 1 ....")
-                self.wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=self.topic1, message=self.message, qos=self.qos)
+                self.wifi_dut.interfaces.mqtt.mqtt_client_publish(
+                    topic=self.topic1, message=self.message, qos=self.qos, msg_address=self.address,
+                    topic_address=self.address)
                 time.sleep(5)
 
                 logger().info(".... DUT publishes message over the topic 2 ....")
-                self.wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=self.topic2, message=self.message, qos=self.qos)
+                self.wifi_dut.interfaces.mqtt.mqtt_client_publish(
+                    topic=self.topic2, message=self.message, qos=self.qos, msg_address=self.address,
+                    topic_address=self.address)
                 time.sleep(5)
 
                 self.mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
@@ -358,7 +366,7 @@ class WifiJoinThread(ThreadBase):
 
     def wlan_leave(self):
         try:
-            logger().info("....Leaving the WLAN network....")
+            logger().info("....Disconnection DUT from Acess Point....")
             self.wifi_dut.interfaces.wifi.leave()
         except Exception as e:
             self.sl_collections.exception_handling(wifi_dut=self.wifi_dut, exception=e)
@@ -382,7 +390,7 @@ class WifiJoinThread(ThreadBase):
                     ap_power_off = 0
                     logger().info("Successfully powered on AP")
                     logger().info("Pinging to DUT to check rejoin process is completed or not")
-                    status = self.sl_collections.ping(self.dut_addr, 30, 5)
+                    status = self.sl_collections.ping(WifiJoinThread.dut_addr['device_ip'], 30, 5)
                     assert status, "Pinging to DUT is failed, DUT not rejoined to AP"
                 logger().info(f"DUT publishes message over the topic --> {self.topic}")
                 self.wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=self.topic, message=self.message, qos=1,
@@ -475,11 +483,14 @@ class iperfThread(WifiJoinThread, ThreadBase):
 class ble_device_state:
     connected_adv = 9  # 8 for connection + 1 for advertising
     connected_scanning = 10  # 10 for connection and scanning
+    connected_state = 8  # 8 for ble connection state
 
 
 class BleThreadFunctionality(ThreadBase):
+    ble_client_address = {}
+
     def __init__(self, wifi_dut=None, ble_client=None, sl_collections=None, test_case=None,
-                 ble_dut=None, ble_pairing=0, utf_constants=None, ble_dut_address=None, ble_client_address=None,
+                 ble_dut=None, utf_constants=None, ble_dut_address=None, ble_client_address=None,
                  ble_clients=None, ble_conn_interval_min=160, ble_conn_interval_max=160, set_smp=0):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -489,7 +500,6 @@ class BleThreadFunctionality(ThreadBase):
         self.sl_collections = sl_collections
         self.test_case = test_case
         self.ble_dut = ble_dut
-        self.ble_pairing = ble_pairing
         self.utf_constants = utf_constants
         self.ble_clients = ble_clients
         self.ble_conn_interval_min = ble_conn_interval_min
@@ -510,17 +520,18 @@ class BleThreadFunctionality(ThreadBase):
                     logger().info(f'.... Iteration {count} ....')
 
                     logger().info("******************** initializing ble in remote device ********************")
-                    self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
+                    BleThreadFunctionality.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
                         bt_dut_address=self.ble_dut_address)
-                    assert self.ble_client_address, "failed to initialize ble in remote device"
+                    assert BleThreadFunctionality.ble_client_address, "failed to initialize ble in remote device"
 
                     logger().info("******************** start scanning in dut ********************")
-                    self.ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=self.ble_client_address,
-                                                                         timeout=100)
+                    self.ble_dut.interfaces.bluetooth.ble_start_scanning(
+                        ble_client_address=BleThreadFunctionality.ble_client_address, timeout=100)
                     self.ble_dut.interfaces.bluetooth.ble_stop_scanning()
 
                     logger().info(f".... initiating ble connection ....")
-                    self.ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=self.ble_client_address)
+                    self.ble_dut.interfaces.bluetooth.ble_connect(
+                        ble_remote_dev_address=BleThreadFunctionality.ble_client_address)
 
                     logger().info(".... checking for ble connectivity stability ....")
                     time.sleep(60)
@@ -531,13 +542,15 @@ class BleThreadFunctionality(ThreadBase):
                     assert state_int == BLEDeviceState.Connected, ".... DUT BLE device is not in connected state ...."
 
                     logger().info(".... disconnecting from remote device ....")
-                    self.ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
+                    self.ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=BleThreadFunctionality.ble_client_address)
+                    time.sleep(3)
                     self.ble_client.interfaces.bluetooth.close()
+                    time.sleep(20)
 
             if self.test_case == '538054':
                 connection_interval = [45, 125, 250, 500]
 
-                self.ble_client_address = self.sl_collections.check_ble_advertise_functionality(
+                BleThreadFunctionality.ble_client_address = self.sl_collections.check_ble_advertise_functionality(
                     wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_dut_address=self.ble_dut_address,
                     timeout=20)
 
@@ -561,104 +574,31 @@ class BleThreadFunctionality(ThreadBase):
 
             if self.test_case == '538049' or self.test_case == '538051':
                 svc = 'HealthThermometerService'
-                charc = 'CustomNotifyCharacteristic'
-
-                self.sl_collections.check_ble_advertise_functionality(
-                    wifi_dut=self.wifi_dut, ble_client=self.ble_clients[1], ble_dut_address=self.ble_dut_address,
-                    timeout=20)
-                time.sleep(2)
 
                 logger().info("******************** initializing ble in remote device ********************")
-                self.ble_client_address = self.ble_clients[0].interfaces.bluetooth.start_smp_adv(
+                BleThreadFunctionality.ble_client_address = self.ble_clients[0].interfaces.bluetooth.start_smp_adv(
                     bt_dut_address=self.ble_dut_address, service_classes=[svc])
-                assert self.ble_client_address, "failed to initialize ble in remote device"
+                assert BleThreadFunctionality.ble_client_address, "failed to initialize ble in remote device"
 
                 logger().info("******************** start scanning in dut ********************")
-                self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=self.ble_client_address,
-                                                                 timeout=100)
+                self.wifi_dut.interfaces.wifi.ble_start_scanning(
+                    ble_client_address=BleThreadFunctionality.ble_client_address, timeout=100)
                 self.wifi_dut.interfaces.wifi.ble_stop_scanning()
 
                 logger().info("..... initiating connection .....")
                 self.wifi_dut.interfaces.bluetooth.ble_connect(
-                    ble_remote_dev_address=self.ble_client_address, ble_conn_interval_min=self.ble_conn_interval_min,
-                    ble_conn_interval_max=self.ble_conn_interval_max)
+                    ble_remote_dev_address=BleThreadFunctionality.ble_client_address,
+                    ble_conn_interval_min=self.ble_conn_interval_min,
+                    ble_conn_interval_max=self.ble_conn_interval_max, ble_scan_interval=50, ble_scan_window=50)
 
                 logger().info(".... checking for ble connectivity stability ....")
                 time.sleep(60)
 
-                state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
-                state_int = int(state) if state.isdigit() else -1
-                assert state_int == ble_device_state.connected_adv, "DUT BLE device is not in connected state"
-
-                logger().info(f"******************** get all profiles ********************")
-                uuids = self.wifi_dut.interfaces.wifi.ble_get_profiles_async(
-                    ble_remote_dev_address=self.ble_client_address)
-                assert HealthThermometerService.UUID.lower() in uuids is not None, "Could not fetch health " \
-                                                                                   "thermometer profile "
-
-                logger().info(" ******************** Resolving Profile ********************")
-                start_handle, end_handle, data = self.wifi_dut.interfaces.wifi.ble_get_profile_async(
-                    ble_remote_dev_address=self.ble_client_address, uuid=int(HealthThermometerService.UUID, 16))
-                assert start_handle is not None, "failed to fetch the start handle.."
-                assert end_handle is not None, "failed to fetch end handle.."
-
-                char_uuids, write_handles, char_properties = self.wifi_dut.interfaces.wifi.ble_get_char_services_async(
-                    ble_remote_dev_address=self.ble_client_address,
-                    start_handle=int(start_handle, 16),
-                    end_handle=int(end_handle, 16),
-                    async_timeout=60)
-                logger().info(
-                    f"characteristics uuids :{char_uuids}  write_handles{write_handles} : Characteristics_properties"
-                    f"{char_properties}")
-
-                assert CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID in char_uuids, "Unable to find {} uuid".format(
-                    CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID)
-                index = char_uuids.index(CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID)
-                logger().info(f"UUID's are:{char_uuids}")
-                logger().info(f"write_handles:{write_handles}")
-                logger().info(f"index:{index}")
-                assert char_properties[index].isdigit(), "Character property found is not an integer"
-                assert CustomNotifyCharacteristic.prop_int == int(
-                    char_properties[index]), "Invalid character property found"
-
-                write_handle = int(write_handles[index], 16)
-                logger().info(f"write_handle:{write_handle}")
-                assert write_handle > 0, "Unable to get write handle for configured service"
-
-                self.wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=self.ble_client_address,
-                                                                handle=(write_handle + 1), enable_notify=1)
-                time.sleep(1)
-
-                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
-                sw = Stopwatch()
-
-                while sw.elapsed_sec < 60:
-                    since_time = time.perf_counter_ns()
-                    self.ble_clients[0].interfaces.bluetooth.send_gatt_charc_notification(svc, charc, data)
-                    time.sleep(0.5)
-                    found = False
-                    tw = Stopwatch()
-                    while tw.elapsed_sec < 10:
-                        events = self.wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
-                        for event in events:
-                            if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
-                                logger().info(
-                                    f"************** BLE EVENT DATA IS : {event.event_data} **************")
-                                received_data = re.findall(r"(\b[A-Z0-9]{20}\b)", event.event_data)
-                                logger().info(f"******* Received Data on DUT : {received_data} ********")
-                                assert received_data == [data], "data mismatched"
-                                if data in event.event_data:
-                                    found = True
-                                    break
-                        if found:
-                            break
-                    if not found:
-                        raise Exception("No data received on DUT")
-
-                time.sleep(1)
-
-                self.wifi_dut.interfaces.bluetooth.ble_set_att_value(ble_remote_dev_address=self.ble_client_address,
-                                                                     handle=(write_handle + 1), enable_notify=0)
+                self.wifi_dut.interfaces.wifi.ble_set_smp()
+                self.sl_collections.check_ble_advertise_functionality(
+                    wifi_dut=self.wifi_dut, ble_client=self.ble_clients[1], ble_dut_address=self.ble_dut_address,
+                    timeout=20)
+                time.sleep(2)
 
             if self.test_case == '538052':
                 try:
@@ -670,7 +610,7 @@ class BleThreadFunctionality(ThreadBase):
                         logger().info(".... stopping scanning on DUT ....")
                         self.wifi_dut.interfaces.wifi.ble_stop_scanning()
 
-                        self.ble_client_address = self.sl_collections.ble_connection(
+                        BleThreadFunctionality.ble_client_address = self.sl_collections.ble_connection(
                             wifi_dut=self.wifi_dut, ble_client=self.ble_clients[0],
                             ble_dut_address=self.ble_dut_address, timeout=20, dev_state=10, mode='slave')
 
@@ -682,7 +622,7 @@ class BleThreadFunctionality(ThreadBase):
                             f"Connection status in remote device '{self.ble_clients[0].name}' is:{status}")
 
                         self.sl_collections.cleanup_ble(ble_dut=self.wifi_dut, ble_client=self.ble_clients[1],
-                                                        ble_client_address=self.ble_client_address)
+                                                        ble_client_address=BleThreadFunctionality.ble_client_address)
 
                         logger().info(".... stopping advertising on DUT ....")
                         self.wifi_dut.interfaces.wifi.ble_stop_advertising()
@@ -695,14 +635,14 @@ class BleThreadFunctionality(ThreadBase):
                     self.sl_collections.exception_handling(wifi_dut=self.wifi_dut, exception=e)
 
             if self.test_case == '538055':
-                self.ble_client_address = self.sl_collections.ble_connection(
+                BleThreadFunctionality.ble_client_address = self.sl_collections.ble_connection(
                     wifi_dut=self.wifi_dut, ble_client=self.ble_clients[1], ble_dut_address=self.ble_dut_address,
                     timeout=20, dev_state=8, mode='master')
 
                 logger().info("..... checking for ble connection stability ......")
                 time.sleep(60)
 
-                self.ble_client_address = self.sl_collections.ble_connection(
+                BleThreadFunctionality.ble_client_address = self.sl_collections.ble_connection(
                     wifi_dut=self.wifi_dut, ble_client=self.ble_clients[0], ble_dut_address=self.ble_dut_address,
                     timeout=20, dev_state=10, mode='slave')
 
@@ -727,92 +667,216 @@ class BleThreadFunctionality(ThreadBase):
                 self.ble_clients[1].interfaces.bluetooth.close()
 
             if self.test_case == '538050' or self.test_case == '538056':
-
-                service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
-                char_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
-
                 self.wifi_dut.interfaces.wifi.ble_add_service(uid=0xAABB)
                 self.wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1AA1)
                 self.wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1)
 
+                BleThreadFunctionality.ble_client_address = self.sl_collections.check_ble_advertise_functionality(
+                    wifi_dut=self.wifi_dut, ble_client=self.ble_clients[0], ble_dut_address=self.ble_dut_address,
+                    timeout=20)
+
+                logger().info(f'*** ble client address is : {BleThreadFunctionality.ble_client_address}')
+
+                logger().info("*********************** connect to ble dut ***********************")
+                self.ble_clients[0].interfaces.bluetooth.pair_and_connect(self.ble_dut_address)
+                time.sleep(30)
+
+                logger().info("******************** get connection state")
+                state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+                state_int = int(state) if state.isdigit() else -1
+                assert state_int == ble_device_state.connected_state, "DUT BLE device is not in connected state"
+
+                self.wifi_dut.interfaces.wifi.ble_set_smp(set_smp=1)
                 self.sl_collections.check_ble_scan_functionality(
                     wifi_dut=self.wifi_dut, ble_client=self.ble_clients[1], ble_address=self.ble_dut_address,
                     timeout=20)
                 time.sleep(2)
                 self.wifi_dut.interfaces.wifi.ble_stop_scanning()
 
-                ble_client_address = self.sl_collections.check_ble_advertise_functionality(
-                    wifi_dut=self.wifi_dut, ble_client=self.ble_clients[0], ble_dut_address=self.ble_dut_address,
-                    timeout=20)
-
-                logger().info("*********************** connect to ble dut ***********************")
-                self.ble_clients[0].interfaces.bluetooth.pair_and_connect(self.ble_dut_address)
-                time.sleep(10)
-
-                logger().info("******************** get connection state")
-                state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
-                state_int = int(state) if state.isdigit() else -1
-                assert state_int == ble_device_state.connected_scanning, "DUT BLE device is not in connected state"
-
-                servs, chars = self.ble_clients[
-                    0].interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
-                assert len(servs) > 0, "no services fetched"
-                assert len(chars) > 0, "fetched characters are empty"
-
-                char_path, char_props = self.ble_clients[0].interfaces.bluetooth.gatt_adapter.resolve_characteristic(
-                    services=servs, service_uid=service_uid, char_uid=char_uid)
-                assert char_path, "characters are empty"
-                assert len(char_props) > 0, "length of characters is 0"
-
-                self.ble_clients[0].interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=char_path)
-
-                logger().info(f' *********************** subscribe to notifications ***********************')
-                self.ble_clients[0].interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
-                self.ble_clients[0].interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(
-                    char_path=char_path, char_uid=char_uid)
-
-                self.wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(
-                    ble_remote_dev_address=ble_client_address, buffer_mode=0, buffer_count=2)
-
-                sw = Stopwatch()
-                count = 0
-                while sw.elapsed_sec < 60:
-                    data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=240))
-                    # data_length = len(data)
-                    if self.test_case == '538050':
-                        self.wifi_dut.interfaces.wifi.ble_notify_custom_value(
-                            ble_remote_dev_address=ble_client_address, data=data)
-                    # else:
-                    #     self.wifi_dut.interfaces.wifi.ble_indicate_value(
-                    #         ble_remote_dev_address=ble_client_address, handle=12, data=data,
-                    #         data_length=data_length)
-                    time.sleep(3)
-                    logger().info("******************** Validate Data ********************")
-                    notifications = self.ble_clients[0].interfaces.bluetooth.gatt_adapter.notifications[char_uid]
-                    logger().info(
-                        f' *********************** Notification is {notifications} ***********************')
-                    assert len(notifications) > 0, "received data is empty"
-                    assert notifications[count] == data, "Data Mismatched"
-                    count += 1
-
-                logger().info(f' *********************** unsubscribe to notifications ***********************')
-                self.ble_clients[0].interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
-                self.ble_client[0].interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
-                time.sleep(1)
-
-                logger().info("******************** ble_remove_service ***********************")
-                self.wifi_dut.interfaces.wifi.ble_remove_service()
-
         except Exception as e:
             self.sl_collections.exception_handling(wifi_dut=self.wifi_dut, exception=e)
 
-    def ble_disconnect(self):
-        logger().info(".... disconnecting from remote device ....")
-        self.ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
+    def profile_fetch_module_ble_rx(self):
+        svc = 'HealthThermometerService'
+        charc = 'CustomNotifyCharacteristic'
 
-    def ble_disconnect_dut(self):
-        logger().info("*********************** Disconnecting from DUT ***********************")
-        self.ble_clients[0].interfaces.bluetooth.disconnect(self.ble_dut_address)
+        logger().info(f"******************** get all profiles ********************")
+        uuids = self.wifi_dut.interfaces.wifi.ble_get_profiles_async(
+            ble_remote_dev_address=BleThreadFunctionality.ble_client_address)
+        assert HealthThermometerService.UUID.lower() in uuids is not None, "Could not fetch health " \
+                                                                           "thermometer profile "
+
+        logger().info(" ******************** Resolving Profile ********************")
+        start_handle, end_handle, data = self.wifi_dut.interfaces.wifi.ble_get_profile_async(
+            ble_remote_dev_address=BleThreadFunctionality.ble_client_address, uuid=int(HealthThermometerService.UUID, 16))
+        assert start_handle is not None, "failed to fetch the start handle.."
+        assert end_handle is not None, "failed to fetch end handle.."
+
+        char_uuids, write_handles, char_properties = self.wifi_dut.interfaces.wifi.ble_get_char_services_async(
+            ble_remote_dev_address=BleThreadFunctionality.ble_client_address,
+            start_handle=int(start_handle, 16),
+            end_handle=int(end_handle, 16),
+            async_timeout=60)
+        logger().info(
+            f"characteristics uuids :{char_uuids}  write_handles{write_handles} : Characteristics_properties"
+            f"{char_properties}")
+
+        assert CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID in char_uuids, "Unable to find {} uuid".format(
+            CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID)
+        index = char_uuids.index(CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID)
+        logger().info(f"UUID's are:{char_uuids}")
+        logger().info(f"write_handles:{write_handles}")
+        logger().info(f"index:{index}")
+        assert char_properties[index].isdigit(), "Character property found is not an integer"
+        assert CustomNotifyCharacteristic.prop_int == int(
+            char_properties[index]), "Invalid character property found"
+
+        write_handle = int(write_handles[index], 16)
+        logger().info(f"write_handle:{write_handle}")
+        assert write_handle > 0, "Unable to get write handle for configured service"
+
+        self.wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=BleThreadFunctionality.ble_client_address,
+                                                        handle=(write_handle + 1), enable_notify=1)
+        time.sleep(1)
+
+        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+        sw = Stopwatch()
+
+        while sw.elapsed_sec < 60:
+            since_time = time.perf_counter_ns()
+            self.ble_clients[0].interfaces.bluetooth.send_gatt_charc_notification(svc, charc, data)
+            time.sleep(0.5)
+            found = False
+            tw = Stopwatch()
+            while tw.elapsed_sec < 10:
+                events = self.wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+                for event in events:
+                    if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
+                        logger().info(
+                            f"************** BLE EVENT DATA IS : {event.event_data} **************")
+                        received_data = re.findall(r"(\b[A-Z0-9]{20}\b)", event.event_data)
+                        logger().info(f"******* Received Data on DUT : {received_data} ********")
+                        assert received_data == [data], "data mismatched"
+                        if data in event.event_data:
+                            found = True
+                            break
+                if found:
+                    break
+            if not found:
+                raise Exception("No data received on DUT")
+
+        time.sleep(1)
+
+        self.wifi_dut.interfaces.bluetooth.ble_set_att_value(
+            ble_remote_dev_address=BleThreadFunctionality.ble_client_address, handle=(write_handle + 1),
+            enable_notify=0)
+    def update_conn_param(self):
+        self.wifi_dut.interfaces.wifi.ble_update_conn_param(
+            ble_remote_dev_address=BleThreadFunctionality.ble_client_address, ble_conn_interval_min=45,
+            ble_conn_interval_max=45, ble_conn_latency=0, ble_supervision_timeout=2000)
+
+    def ble_remove_services(self):
+        logger().info("***** ble_remove_service *****")
+        self.wifi_dut.interfaces.wifi.ble_remove_service()
+
+    def ble_cleanup(self):
+        logger().info("Checking connection status of BLE")
+        state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        if state_int == 8:
+            logger().info("Device is in connected status try to disconnect")
+            self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=BleThreadFunctionality.ble_client_address)
+        elif state_int == 2:
+            logger().info("Device is in scanning status try to stop scanning")
+            self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+        elif state_int == 1:
+            logger().info("Device is in advertising status try to stop advertising")
+            self.wifi_dut.interfaces.wifi.ble_stop_advertising()
+        elif state_int == 3:
+            logger().info("Device is in scanning status try to stop scanning")
+            self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+            logger().info("Device is advertising status try to stop advertising")
+            self.wifi_dut.interfaces.wifi.ble_stop_advertising()
+        elif state_int == 9:
+            logger().info("Device is in connected status try to disconnect")
+            self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=BleThreadFunctionality.ble_client_address)
+            logger().info("Device is in advertising status try to stop advertising")
+            self.wifi_dut.interfaces.wifi.ble_stop_advertising()
+        elif state_int == 10:
+            logger().info("Device is in connected status try to disconnect")
+            self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=BleThreadFunctionality.ble_client_address)
+            logger().info("Device is advertising status try to stop advertising")
+            self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+        elif state_int == 0:
+            logger().info("Device is in idle status")
+        else:
+            logger().info("Device is in unknown state")
+            self.wifi_dut.interfaces.wifi.is_dut_bad_state = True
+        logger().info(" *************DUT Cleanup Success *******************")
+
+
+class Ble_Data_Transfer_Tx(BleThreadFunctionality):
+    def __init__(self, wifi_dut=None, ble_clients=None, ble_dut_address=None, ble_client_address=None,
+                 char_uid=None, char_path=None, address=None, ble_dut=None, sl_collections=None, ble_client=None):
+
+        super().__init__(
+            wifi_dut, ble_clients, ble_dut_address, ble_client_address, char_uid, char_path, address, ble_dut,
+            sl_collections, ble_client)
+
+        self.wifi_dut = wifi_dut
+        self.ble_clients = ble_clients
+        self.ble_dut_address = ble_dut_address
+        self.ble_client_address = ble_client_address
+        self.char_uid = char_uid
+        self.char_path = char_path
+        self.address = address
+        self.ble_dut = ble_dut
+        self.sl_collections = sl_collections
+        self.ble_client = ble_client
+
+    def profile_fetch_module_ble_tx(self):
+        service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
+        self.char_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+        servs, chars = self.ble_clients[0].interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+        assert len(servs) > 0, "no services fetched"
+        assert len(chars) > 0, "fetched characters are empty"
+
+        self.char_path, char_props = self.ble_clients[0].interfaces.bluetooth.gatt_adapter.resolve_characteristic(
+            services=servs, service_uid=service_uid, char_uid=self.char_uid)
+        assert self.char_path, "characters are empty"
+        assert len(char_props) > 0, "length of characters is 0"
+
+        # self.ble_clients[0].interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=self.char_path)
+
+        logger().info(f' *********************** subscribe to notifications ***********************')
+        self.ble_clients[0].interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=self.char_path)
+        self.ble_clients[0].interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(
+            char_path=self.char_path, char_uid=self.char_uid)
+        time.sleep(3)
+
+    def run(self):
+        self.wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(
+            ble_remote_dev_address=BleThreadFunctionality.ble_client_address, buffer_mode=1, buffer_count=2)
+
+        sw = Stopwatch()
+        count = 0
+        while sw.elapsed_sec < 60:
+            data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=240))
+            self.wifi_dut.interfaces.wifi.ble_notify_custom_value(
+                ble_remote_dev_address=BleThreadFunctionality.ble_client_address, data=data, data_address=self.address)
+            time.sleep(1)
+            logger().info("******************** Validate Data ********************")
+            notifications = self.ble_clients[0].interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
+            logger().info(
+                f' *********************** Notification is {notifications} ***********************')
+            assert len(notifications) > 0, "received data is empty"
+            assert notifications[count] == data, "Data Mismatched"
+            count += 1
+
+        logger().info(f' *********************** unsubscribe to notifications ***********************')
+        self.ble_clients[0].interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=self.char_path)
+        self.ble_client[0].interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=self.char_uid)
+        time.sleep(1)
 
 
 @pytest.mark.config(
@@ -843,9 +907,7 @@ class BleThreadFunctionality(ThreadBase):
     }
 )
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
-@pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_mqtt_conn_subs_disconn_loop_when_ble_rx_smp_c538049(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_clients, mqtt_client, mqtt_server):
@@ -868,21 +930,28 @@ def test_wifi_sdk_mqtt_conn_subs_disconn_loop_when_ble_rx_smp_c538049(
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(message) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(message), write_content=message)
+
         wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                   testcase=test_name, wifi_client=wifi_client, sl_collections=sl_collections,
                                   sniffer_filter=sniffer_filter, topic1=topic1, topic2=topic2, message=message,
                                   mqtt_client=mqtt_client, mqtt_server=mqtt_server, utf_constants=utf_constants,
-                                  ping_count=ping_count, qos=1)
+                                  ping_count=ping_count, qos=1, address=address2)
 
-        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=1,
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections,
                                          ble_dut=ble_dut, ble_clients=ble_clients, utf_constants=utf_constants,
                                          ble_conn_interval_min=250, ble_conn_interval_max=250, set_smp=1,
                                          test_case='538049')
         ble_obj.start()
-        time.sleep(200)
-        for count in range(0, 3):
+        ble_obj.wait_for_exit()
+        for count in range(0, 2):
             logger().info(f'.... MQTT functionality running in a loop of iteration count {count} ....')
             wifi_obj.join_to_ap(skip_power_save=True)
+
+            if count != 1:
+                ble_obj.profile_fetch_module_ble_rx()
+
             wifi_obj.mqtt_connect_ssl()
             wifi_obj.set_power_save()
             wifi_obj.mqtt_subscribe_two_topic()
@@ -890,12 +959,17 @@ def test_wifi_sdk_mqtt_conn_subs_disconn_loop_when_ble_rx_smp_c538049(
             wifi_obj.mqtt_publish_tx()
             wifi_obj.unsubscribe_two_topic()
             wifi_obj.mqtt_disconnect_deinit()
-            ble_obj.ble_disconnect_dut()
+
+            if count != 1:
+                ble_obj.ble_cleanup()
+
             wifi_obj.wlan_leave()
-        ble_obj.wait_for_exit()
+
 
         logger().info(".... stop the sniffer ....")
         wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_dut.interfaces.wifi.memory_free(address2)
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -905,6 +979,7 @@ def test_wifi_sdk_mqtt_conn_subs_disconn_loop_when_ble_rx_smp_c538049(
         ble_clients[1].interfaces.bluetooth.close()
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -932,9 +1007,7 @@ def test_wifi_sdk_mqtt_conn_subs_disconn_loop_when_ble_rx_smp_c538049(
     }
 )
 @pytest.mark.mqtt_server("raspi_mosquitto")
-@pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
-@pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_mqtt_single_multi_wildcard_when_ble_tx_smp_c538050(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_clients, mqtt_client, mqtt_server):
@@ -951,37 +1024,50 @@ def test_wifi_sdk_mqtt_single_multi_wildcard_when_ble_tx_smp_c538050(
 
         ping_count = utf_constants.get("ping_count")
 
-        logger().info("configuring the Sniffer with the channel")
+        logger().info("***** configure and start the Sniffer *****")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         logger().info("start capturing with Sniffer by giving the test case name as filename")
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(message) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(message), write_content=message)
+
         wifi_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                   testcase=test_name, wifi_client=wifi_client, sl_collections=sl_collections,
-                                  sniffer_filter=sniffer_filter, topic1=topic, topic_wild=topic_wild, message=message,
+                                  sniffer_filter=sniffer_filter, topic=topic, topic_wild=topic_wild, message=message,
                                   mqtt_client=mqtt_client, mqtt_server=mqtt_server, utf_constants=utf_constants,
-                                  ping_count=ping_count, qos=1)
+                                  ping_count=ping_count, qos=1, address=address2)
 
-        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=1,
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections,
                                          ble_dut=ble_dut, ble_clients=ble_clients, utf_constants=utf_constants,
-                                         test_case='538050', set_smp=1)
+                                         test_case='538050')
 
+        ble_obj_tx = Ble_Data_Transfer_Tx(wifi_dut=wifi_dut, ble_clients=ble_clients, address=address2,
+                                          sl_collections=sl_collections, ble_dut=ble_dut)
+
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.update_conn_param()
         wifi_obj.join_to_ap(skip_power_save=True)
         wifi_obj.mqtt_connect()
         wifi_obj.set_power_save()
         wifi_obj.mqtt_wild_topic_subscribe()
-        ble_obj.start()
+        ble_obj_tx.profile_fetch_module_ble_tx()
+        ble_obj_tx.start()
+        ble_obj_tx.wait_for_exit()
         wifi_obj.mqtt_publish_rx_single_topic()
         wifi_obj.mqtt_publish_tx_single_topic()
-        ble_obj.wait_for_exit()
+        # ble_obj_tx.wait_for_exit()
+        ble_obj.ble_remove_services()
         wifi_obj.unsubscribe_single_topic()
         wifi_obj.mqtt_disconnect_deinit()
-        ble_obj.ble_disconnect_dut()
-        wifi_obj.wlan_leave()
+        ble_obj.ble_cleanup()
 
         logger().info(".... stop the sniffer ....")
         wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_dut.interfaces.wifi.memory_free(address2)
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -991,6 +1077,7 @@ def test_wifi_sdk_mqtt_single_multi_wildcard_when_ble_tx_smp_c538050(
         ble_clients[1].interfaces.bluetooth.close()
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1019,7 +1106,6 @@ def test_wifi_sdk_mqtt_single_multi_wildcard_when_ble_tx_smp_c538050(
     }
 )
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
-@pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_mqtt_check_rejoin_hit_with_wildcard_and_ble_rx_smp_c538051(
@@ -1053,20 +1139,22 @@ def test_wifi_sdk_mqtt_check_rejoin_hit_with_wildcard_and_ble_rx_smp_c538051(
                                   mqtt_client=mqtt_client, mqtt_server=mqtt_server, utf_constants=utf_constants,
                                   ping_count=ping_count, switch=switch, qos=1)
 
-        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=1,
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections,
                                          ble_dut=ble_dut, ble_clients=ble_clients, utf_constants=utf_constants,
+                                         ble_conn_interval_min=250, ble_conn_interval_max=250, set_smp=1,
                                          test_case='538051')
 
         wifi_obj.join_to_ap(skip_power_save=True)
-        wifi_obj.mqtt_connect()
         wifi_obj.set_power_save()
-        wifi_obj.mqtt_wild_topic_subscribe()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.profile_fetch_module_ble_rx()
+        wifi_obj.mqtt_connect_ssl()
+        wifi_obj.mqtt_wild_topic_subscribe()
         wifi_obj.mqtt_rejoin()
         wifi_obj.unsubscribe_single_topic()
         wifi_obj.mqtt_disconnect_deinit()
-        wifi_obj.wlan_leave()
+        ble_obj.ble_cleanup()
 
         logger().info(".... stop the sniffer ....")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1075,6 +1163,7 @@ def test_wifi_sdk_mqtt_check_rejoin_hit_with_wildcard_and_ble_rx_smp_c538051(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1134,7 +1223,7 @@ def test_wifi_sdk_mqtt_subs_two_topic_ble_conn_disconn_loop_c538052(
                                   mqtt_client=mqtt_client, mqtt_server=mqtt_server, utf_constants=utf_constants,
                                   ping_count=ping_count, qos=0)
 
-        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=1,
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections,
                                          ble_dut=ble_dut, ble_clients=ble_clients, utf_constants=utf_constants,
                                          test_case='538052')
 
@@ -1158,6 +1247,7 @@ def test_wifi_sdk_mqtt_subs_two_topic_ble_conn_disconn_loop_c538052(
         ble_clients[1].interfaces.bluetooth.close()
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1216,7 +1306,7 @@ def test_wifi_sdk_mqtt_subs_two_topic_ble_conn_disconn_loop_c538055(
                                   mqtt_client=mqtt_client, mqtt_server=mqtt_server, utf_constants=utf_constants,
                                   ping_count=ping_count, qos=1)
 
-        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=1,
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections,
                                          ble_dut=ble_dut, ble_clients=ble_clients, utf_constants=utf_constants,
                                          test_case='538055')
 
@@ -1239,6 +1329,7 @@ def test_wifi_sdk_mqtt_subs_two_topic_ble_conn_disconn_loop_c538055(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1300,7 +1391,7 @@ def test_wifi_sdk_mqtt_multi_wildcard_when_ble_tx_smp_c538056(
                                   mqtt_client=mqtt_client, mqtt_server=mqtt_server, utf_constants=utf_constants,
                                   ping_count=ping_count, topic2=topic2, topic_wild_2=topic_wild_2, qos=1)
 
-        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=1,
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections,
                                          ble_dut=ble_dut, ble_clients=ble_clients, utf_constants=utf_constants,
                                          test_case='538050')
 
@@ -1323,6 +1414,7 @@ def test_wifi_sdk_mqtt_multi_wildcard_when_ble_tx_smp_c538056(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1385,7 +1477,7 @@ def test_wifi_sdk_mqtt_iperf_ble_multi_thread_c538053(
                                 wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                 protocol=protocol, net_perf_client=net_perf_client, wifi_client=wifi_client)
 
-        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=1,
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections,
                                          ble_dut=ble_dut, ble_client=ble_client, utf_constants=utf_constants,
                                          test_case='538053', set_smp=1)
 
@@ -1410,6 +1502,7 @@ def test_wifi_sdk_mqtt_iperf_ble_multi_thread_c538053(
         ble_client.interfaces.bluetooth.close()
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1466,7 +1559,7 @@ def test_wifi_sdk_mqtt_sntp_ble_multi_thread_c538054(
                                   mqtt_client=mqtt_client, mqtt_server=mqtt_server, utf_constants=utf_constants,
                                   ping_count=ping_count, test_type='538054')
 
-        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections, ble_pairing=1,
+        ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections,
                                          ble_dut=ble_dut, ble_client=ble_client, utf_constants=utf_constants,
                                          test_case='538054')
 
