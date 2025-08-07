@@ -98,22 +98,15 @@ class SnifferValidationProcess:
             'packet_count'], 'Unable to find ps polls in sniffer capture'
 
     def verify_sniffer_validation_for_transition(self):
-        if self.test_case_no == "680002" or self.test_case_no == "680004":
-            packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                sa_addr=self.ap_mac_address,
-                da_addr=self.dut_mac_address, filter_name='beacon_wpa2_entr_akms_check')
-            logger().info(f"Validating akms type 1 and pmf bit capable in sniffer")
-            packet_filter2 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                sa_addr=self.dut_mac_address,
-                da_addr=self.ap_mac_address, filter_name='assoc_req_resp_eapol_4_wpa3_eap_trans_pmf_cap')
-        else:
-            packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                sa_addr=self.ap_mac_address,
-                da_addr=self.dut_mac_address, filter_name='beacon_wpa2_entr_akms_check_with_pmf_req')
-            logger().info(f"Validating akms type 5 and pmf bit capable in sniffer")
-            packet_filter2 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                sa_addr=self.dut_mac_address,
-                da_addr=self.ap_mac_address, filter_name='assoc_req_resp_eapol_4_wpa3_eap_trans_pmf_req')
+        packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=self.ap_mac_address,
+            da_addr=self.dut_mac_address, filter_name='beacon_wpa2_entr_akms_check')
+
+        logger().info(f"Validating akms type 1 and pmf bit capable in sniffer")
+        packet_filter2 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=self.dut_mac_address,
+            da_addr=self.ap_mac_address, filter_name='assoc_req_resp_eapol_4_wpa3_eap_trans_pmf_cap')
+
         packet_filter3 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=self.dut_mac_address,
             da_addr=self.ap_mac_address, filter_name='power_mgmt_bit')
@@ -1535,7 +1528,7 @@ def test_wifi_sdk_mqtt_wpa3_transition_enterprise_c680004(wifi_dut, wifi_access_
         wifi_dut.interfaces.wifi.set_eap_credentials()
 
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                       passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                       security="wpa3_transition_enterprise", uid="user1", enc="peap")
@@ -1651,7 +1644,7 @@ def test_wifi_sdk_ssl_tx_socket_connection_in_wpa3_transition_enterprise_c680002
         wifi_dut.interfaces.wifi.set_eap_credentials()
 
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                       passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                       security="wpa3_transition_enterprise", uid="user1", enc="tls")
@@ -1741,7 +1734,7 @@ def test_wifi_sdk_ssl_rx_socket_connection_in_wpa3_transition_enterprise_c680003
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-        wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
+        wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
         wifi_access_point.interfaces.wifi.start_ap()
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
@@ -1751,7 +1744,7 @@ def test_wifi_sdk_ssl_rx_socket_connection_in_wpa3_transition_enterprise_c680003
         wifi_dut.interfaces.wifi.set_eap_credentials()
 
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                       passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                       security="wpa3_transition_enterprise", uid="user1", enc="ttls")
@@ -1848,7 +1841,7 @@ def test_wifi_sdk_wpa3_transition_enterprise_eap_tls_multicast_rx_c680001(multic
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-        wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
+        wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
         wifi_access_point.interfaces.wifi.start_ap()
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
@@ -1857,7 +1850,7 @@ def test_wifi_sdk_wpa3_transition_enterprise_eap_tls_multicast_rx_c680001(multic
         wifi_dut.interfaces.wifi.set_eap_credentials()
 
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                       passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                       security="wpa3_transition_enterprise", uid="user1", enc="tls")
@@ -1937,7 +1930,7 @@ def test_wsdk_WPA3_EAP_transition_Conn_TLS_conn_with_sha384_C680013(wifi_dut, wi
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-        wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
+        wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
         wifi_access_point.interfaces.wifi.start_ap()
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
@@ -1946,7 +1939,7 @@ def test_wsdk_WPA3_EAP_transition_Conn_TLS_conn_with_sha384_C680013(wifi_dut, wi
         wifi_dut.interfaces.wifi.set_eap_credentials()
 
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                       passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                       security="wpa3_transition_enterprise", uid="user1", enc="tls")
@@ -2020,7 +2013,7 @@ def test_wsdk_WPA3_EAP_transition_Conn_TLS_conn_with_sha512_C680015(wifi_dut, wi
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-        wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
+        wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
         wifi_access_point.interfaces.wifi.start_ap()
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
@@ -2029,7 +2022,7 @@ def test_wsdk_WPA3_EAP_transition_Conn_TLS_conn_with_sha512_C680015(wifi_dut, wi
         wifi_dut.interfaces.wifi.set_eap_credentials()
 
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
         wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                       passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                       security="wpa3_transition_enterprise", uid="user1", enc="tls")
@@ -2856,7 +2849,7 @@ def test_wifi_sdk_wpa3_transition_enterprise_with_encrypt_cert_c680011(wifi_dut,
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.radius_server("raspi_radius_server_v2")
-def test_wifi_sdk_wpa3_transition_enterprise_eap_fast_multicast_rx_c680000(multicast_client, wifi_dut, wifi_access_point,
+def test_wifi_sdk_wpa3_enterprise_eap_fast_multicast_rx_c680000(multicast_client, wifi_dut, wifi_access_point,
                                                                            wifi_sniffer, sniffer_filter, radius_server,
                                                                            sl_collections, request, net_perf_client, wifi_client, protocol):
     """ Verify whether DUT is able to scan and connect to AP with WPA3 EAP fast tls 1.0 security and run multicast RX traffic """
@@ -2873,7 +2866,7 @@ def test_wifi_sdk_wpa3_transition_enterprise_eap_fast_multicast_rx_c680000(multi
         wifi_dut.interfaces.wifi.set_eap_credentials()
 
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
 
         wifi_thread = WPA3Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, test_name=test_name,
@@ -2891,7 +2884,7 @@ def test_wifi_sdk_wpa3_transition_enterprise_eap_fast_multicast_rx_c680000(multi
                                                         wifi_access_point=wifi_access_point,
                                                         dut_mac_address=wifi_thread.dut_add_dict['dut_mac_address'],
                                                         ap_mac_address=ap_mac_address)
-        sniffer_verification.verify_sniffer_validation_for_transition()
+        sniffer_verification.verify_sniffer_validation()
         packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             da_addr=ap_mac_address,
             sa_addr=wifi_thread.dut_add_dict['dut_mac_address'], filter_name='eap_type_fast_verification')
