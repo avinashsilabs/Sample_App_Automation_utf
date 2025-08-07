@@ -4998,12 +4998,11 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_with_wrong_private_key_C113886(wifi_du
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "band": 0,
-        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs", "reset_wifi_conn_stats"])
-def test_wsdk_WPA2_EAP_Conn_TLS_when_server_inter_root_ca_with_invalid_algorithm_C113900(wifi_dut, wifi_access_point,
+def test_wsdk_WPA2_EAP_Conn_TLS_when_client_inter_root_ca_with_invalid_algorithm_C113900(wifi_dut, wifi_access_point,
                                                                                      wifi_sniffer, sniffer_filter,
                                                                                      radius_server,
                                                                                      sl_collections, request):
@@ -5049,7 +5048,7 @@ def test_wsdk_WPA2_EAP_Conn_TLS_when_server_inter_root_ca_with_invalid_algorithm
         logger().info(f"\n\n Event data is: {output} \n\n")
         result = output.strip().split(':')[1].lstrip()
         logger().info(f"\n\n Reason code:{result} \n\n")
-        assert result == '43', "Unable to get expected reason code hence test is failed"
+        assert result == '4f', "Unable to get expected reason code hence test is failed"
         logger().info(f"Observed Expected Error Code, Hence test cases is passed")
         dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
