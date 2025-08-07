@@ -2885,14 +2885,15 @@ def test_wifi_sdk_beacon_miss_count_stats_90_c641350(wifi_sniffer, wifi_access_p
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 def test_wifi_sdk_wpa3_rejoin_eap_security_with_pmf_c680006(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
-                                                            sl_collections, request, radius_server,
+                                                            sl_collections, request, radius_server, switch, net_perf_client,
                                                             wifi_client):
     """Verify rejoin functionality in EAP-TLS mode"""
     test_name = request.node.name
     wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-        join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+        join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired |
+        Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
     wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
     wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                              beacon_missed_count=40, first_time_retry_enable=0)
