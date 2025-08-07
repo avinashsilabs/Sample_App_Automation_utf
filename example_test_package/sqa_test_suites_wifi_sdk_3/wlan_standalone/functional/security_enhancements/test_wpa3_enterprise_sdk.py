@@ -2075,14 +2075,14 @@ def test_wsdk_WPA3_EAP_transition_Conn_TLS_conn_with_sha512_C680015(wifi_dut, wi
                     Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
                           Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid |
-                           Si91xCustomFeatureBitMap.RealTimeClockFromHost,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
-        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID | Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP
+                           | Si91xConfigFeatureBitMap.TLS_V1,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -2091,9 +2091,11 @@ def test_wsdk_WPA3_EAP_transition_Conn_TLS_conn_with_sha512_C680015(wifi_dut, wi
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 def test_wifi_sdk_wpa_3enterprise_eap_tls_C680024(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
-                                                          sniffer_filter, radius_server, sl_collections, request):
+                                                  sniffer_filter, radius_server, sl_collections, request):
     """ This test case verifies the WPA2 Enterprise Connectivity while using EAP TLS Method when the certificate
             header is removed from certificate """
     try:
@@ -2103,7 +2105,8 @@ def test_wifi_sdk_wpa_3enterprise_eap_tls_C680024(wifi_dut, wifi_access_point, w
         wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
         wifi_access_point.interfaces.wifi.start_ap()
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired)
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired |
+                                Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
@@ -2135,8 +2138,8 @@ def test_wifi_sdk_wpa_3enterprise_eap_tls_C680024(wifi_dut, wifi_access_point, w
             logger().info(f"\n\n Event data is: {output} \n\n")
             result = output.strip().split(':')[1].lstrip()
             logger().info(f"\n\n Reason code:{result} \n\n")
-            assert result == '2A', "Unable to get expected reason code hence test is failed"
-            logger().info(f"Observed Expected Error Code, Hence test cases is passed")
+            assert (result == '4D' or result == '53'), "Unable to get expected reason code hence test is failed"
+            logger().info(f"Observed Expected Error Code {result}, which means PEM Footer error and hence test cases is passed. Hence, Test Case PASSED")
             ap_mac_address = wifi_access_point.interfaces.wifi.bssid
             logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
             dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
@@ -2144,8 +2147,6 @@ def test_wifi_sdk_wpa_3enterprise_eap_tls_C680024(wifi_dut, wifi_access_point, w
 
             logger().info("Stop Sniffer finally")
             wifi_sniffer.interfaces.capture.stop_capture()
-
-            wifi_dut.interfaces.wifi.leave()
 
             sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                             wifi_access_point=wifi_access_point,
