@@ -267,9 +267,9 @@ class WLANAutoJoinThread(ThreadBase):
             logger().info(f"Turn OF AP")
             self.wifi_access_point.interfaces.wifi.stop_ap()
             logger().info("Turn ON AP with Same profile")
+            since_time = time.perf_counter_ns()
             self.wifi_access_point.interfaces.wifi.start_ap()
             logger().info("DUT JOINS TO SAME PROFILE AFTER AP IS UP")
-            since_time = time.perf_counter_ns()
             time.sleep(60)
             logger().info("DUT JOINS TO SAME PROFILE AFTER AP IS UP")
             auto_join_status = False
@@ -565,7 +565,6 @@ def test_wifi_sdk_autojoin_with_one_profile_and_one_credential_C769960(
 ):
 
     try:
-        iter_count = utf_constants.get("iter_count")
         ping_count = utf_constants.get("ping_count")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel

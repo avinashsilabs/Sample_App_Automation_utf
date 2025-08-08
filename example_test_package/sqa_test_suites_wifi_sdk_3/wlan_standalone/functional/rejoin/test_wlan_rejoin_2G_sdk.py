@@ -3,6 +3,8 @@ import time
 from utf.utils.time_measurer import TimeMeasurer
 from random import randint
 import pytest as pytest
+import pyshark
+import uuid
 import re
 from datetime import datetime
 import datetime
@@ -38,6 +40,18 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xPowerSaveProcedureTypes,
     SocketOptions,
     Si91xJoinFeatureBitMap
+)
+from utf.utf_config import UtfConfig
+from utf.interfaces.wifi import (
+    Cipher,
+    SecurityMode,
+    Standard,
+    Bandwidth,
+    Rate,
+    Channel,
+    CountryCode,
+    WirelessBand,
+    WiFiScanResult,
 )
 from utf.utils.stopwatch import Stopwatch
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
@@ -210,6 +224,24 @@ class WLanThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                               beacon_missed_count=40,
                                                                               first_time_retry_enable=0)
+            elif self.test_case_no  == 779704:
+                self.wifi_sniffer.interfaces.capture.configure_interface(
+                    channel=self.wifi_access_point.interfaces.wifi.channel)
+                self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+                logger().info(f"\n Enable Rejoin with First time retry enable = 1 \n")
+                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=5,
+                                                                              scan_interval=2,
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=1)
+                scan_results = self.wifi_dut.interfaces.wifi.scan()
+                assert len(scan_results) > 0, f"\n No scan results found \n"
+                self.wifi_dut.interfaces.wifi.join(ssid=self.wifi_access_point.interfaces.wifi.ssid,
+                                                   passphrase="wrong_password",
+                                                   security='open',
+                                                   channel=self.wifi_access_point.interfaces.wifi.channel,
+                                                   expected_status=SLStatus.SL_STATUS_SI91X_REJOIN_FAILURE)
+                logger().info("\n Validated the REJOIN FAILURE Successfully \n")
+                return
             logger().info('******* Turn on Access point **********')
             self.switch.interfaces.pdu_switch.turn_on(delay=30)
             logger().info("\n *** Start sniffer configuration *** \n")
@@ -2972,3 +3004,207 @@ def test_wifi_sdk_wpa3_rejoin_transition_eap_security_with_pmf_c680007(wifi_dut,
     finally:
         logger().info('******* Turn on Access point Finally **********')
         switch.interfaces.pdu_switch.turn_on(delay=60)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config("wifi_access_point",
+                    wifi={"security": "WPA2", "ssid": "SILABS_STA_MODE",
+                          "passphrase": "Automation@123", "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+def test_wifi_sdk_rejoin_first_time_retry_enable_c779704(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
+                                                         request,
+                                                         sl_collections):
+    time_period = utf_constants.get("time_period")
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                          time_period=time_period, test_name=request.node.name,
+                          test_case_no=779704, sl_collections=sl_collections)
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+        "interface": "wlan0",
+    }
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcp_ip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+def test_wifi_sdk_rejoin_with_rpi4_after_deauth_frame_c782337(wifi_dut, wifi_client, wifi_sniffer,
+                                                              sl_collections, sniffer_filter,
+                                                              request):
+    ssid = "REJOIN_RASPI_4"
+    channel = 11
+    passphrase = "mypassword123"
+    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    try:
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                 beacon_missed_count=40,
+                                                                 first_time_retry_enable=0)
+
+        wifi_client.interfaces.wifi.shell.execute("sudo mkdir -p /var/run/hostapd")
+        wifi_client.interfaces.wifi.shell.execute("sudo chmod 755 /var/run/hostapd")
+
+        # Override the hostapd configuration to include control interface
+        # This mimics the changes made in linux.py but only for this test case
+        original_hostapd_conf = wifi_client.interfaces.wifi.hostapd_conf.copy()
+
+        wifi_client.interfaces.wifi.hostapd_conf["ctrl_interface"] = "/var/run/hostapd"
+
+        wifi_client.interfaces.wifi.start_ap(
+            ssid=ssid,
+            security=SecurityMode.WPA,
+            passphrase=passphrase,
+            channel=channel,
+            standard=Standard.n
+        )
+
+        # Restore original configuration after AP starts
+        wifi_client.interfaces.wifi.hostapd_conf = original_hostapd_conf
+        logger().info(f"\n **** Access Point started with SSID: {ssid}, Channel: {channel} ****\n")
+        ap_mac_address = wifi_client.interfaces.wifi.get_mac_address()
+        logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+        time.sleep(2)  # Wait for hostapd to start
+        rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute("ls -la /var/run/hostapd/")
+        logger().info(f"\n Control interface directory contents: {stdout} \n")
+
+        stdout_str = stdout.decode('utf-8') if isinstance(stdout, bytes) else str(stdout)
+
+        if "hostapd" not in stdout_str:
+            logger().warning("\n Control interface socket not found, hostapd_cli may not work \n")
+
+        wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
+        wifi_dut.interfaces.wifi.join(ssid=ssid,
+                                      channel=channel,
+                                      passphrase=passphrase,
+                                      security="wpa")
+        logger().info(f"\n **** DUT joined the Access Point with SSID: {ssid}, Channel: {channel} ****\n")
+
+        if power_save:
+            wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+            wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                          psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        logger().info("\n Triggering a deauthentication frame from Raspberry Pi client to DUT \n")
+
+        # Try hostapd_cli with control interface path
+        rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute(
+            f"sudo hostapd_cli -p /var/run/hostapd deauthenticate {dut_mac_address}")
+        if rc != 0:
+            stderr_str = stderr.decode('utf-8') if isinstance(stderr, bytes) else str(stderr)
+            logger().warning(f"\n hostapd_cli with control interface failed: {stderr_str} \n")
+            # Fallback: try without control interface path
+            rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute(
+                f"sudo hostapd_cli deauthenticate {dut_mac_address}")
+            if rc != 0:
+                stderr_str = stderr.decode('utf-8') if isinstance(stderr, bytes) else str(stderr)
+                logger().warning(f"\n hostapd_cli fallback also failed: {stderr_str} \n")
+                logger().info("\n Proceeding without deauthentication - this may affect test results \n")
+            else:
+                logger().info(f"\n Deauthentication successful with fallback method \n")
+        else:
+            logger().info(f"\n Deauthentication successful with control interface \n")
+
+        stdout_str = stdout.decode('utf-8') if isinstance(stdout, bytes) else str(stdout)
+        logger().info(f"\n The stdout of the command is: {stdout_str} \n")
+        time.sleep(10)
+
+        packet_filter1 = f'wlan.addr == {ap_mac_address} && wlan.addr == {dut_mac_address} && wlan.fc.type_subtype == 12'
+        logger().info(f"Applying filter: {packet_filter1}")
+        current_time = time.time()
+        updated_capture_file = 'filter_' + request.node.name + '_' + str(datetime.datetime.fromtimestamp(current_time).
+                                                                         strftime('%H_%M_%S'))
+        file_name = f'./reports/{updated_capture_file}.pcap'
+        local_capture_file = file_name
+        wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+        wifi_sniffer.interfaces.capture.shell(
+            f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{packet_filter1}' -T fields -e "
+            f"frame.number -w "
+            f"{wlan_filter_file}")
+        with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+            sftp.get(wlan_filter_file, local_capture_file)
+
+        capture = pyshark.FileCapture(
+            local_capture_file,
+            display_filter=packet_filter1
+        )
+        timestamp_006_deauth = 0
+        reason_data = []
+        for i, packet in enumerate(capture):
+            for layer in packet.layers:
+                if layer.layer_name == 'wlan.mgt':
+                    logger().info(f"\n Printing the Deauth Layers {layer}\n")
+                    string_layer = str(layer)
+                    reason_data = re.findall(r"Reason code:.*?\(0x([0-9a-fA-F]{4})\)", string_layer, re.IGNORECASE)
+                    if not reason_data:
+                        logger().info(f"Packet {i}: No reason code found")
+            if i == 1:
+                logger().info(f"\n Validating the Deauth From RPI4 to STA \n")
+                assert packet.wlan.ta == ap_mac_address and packet.wlan.ra == dut_mac_address and reason_data[
+                    0] == "0002", "\n No Deauth From RPI4 AP to STA During Deauthentication"
+            elif i == 2:
+                logger().info(f"\n Validating the Deauth From STA to RPI4 AP During Reconnection \n")
+                assert packet.wlan.ta == dut_mac_address and packet.wlan.ra == ap_mac_address and reason_data[
+                    0] == "0001", "\n No Deauth From STA to RPI4 AP During REJOINING \n"
+            elif i == 3:
+                timestamp_006_deauth = packet.sniff_timestamp
+                logger().info(f"\n Validating the Deauth From RPI4 AP to STA with code 0006 During Reconnection \n")
+                assert packet.wlan.ta == ap_mac_address and packet.wlan.ra == dut_mac_address and reason_data[
+                    0] == "0006", "\n Expected Deauth From RPI4 AP to STA with code 0006 During Reconnection not found \n"
+        capture.close()
+
+        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=ap_mac_address,
+            da_addr=dut_mac_address,
+            filter_name='association_response')
+        packet_filter2 = packet_filter2 + f" && frame.time_epoch >= {timestamp_006_deauth}"
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count'], \
+            'Unable to find Association Response from AP to DUT after deauthentication for Rejoining'
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)

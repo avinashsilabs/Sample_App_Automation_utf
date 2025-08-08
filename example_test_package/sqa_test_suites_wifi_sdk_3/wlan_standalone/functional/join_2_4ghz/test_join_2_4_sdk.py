@@ -138,6 +138,8 @@ class WLanJoinThread(ThreadBase):
                 device_ip = self.wifi_dut.interfaces.wifi.start_ip()
                 device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(device_ip)
                 logger().info(f"\n **** Device IP Address: {device_ip} ****\n")
+                status = ping(host=device_ip, count=10)
+                assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
                 if self.power_save:
                     self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
                     self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
