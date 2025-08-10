@@ -235,9 +235,14 @@ class ProvisioningFunctionality(ThreadBase):
         time.sleep(5)
 
     def wifi_connect(self):
-        self.wifi_dut.interfaces.wifi.join(
-            ssid=self.credentials[0], passphrase=self.credentials[1], security=self.credentials[2])
-        logger().info("....Successfully connected to the AP....")
+        if self.test_case == 201275:
+            self.wifi_dut.interfaces.wifi.join(
+                ssid=self.credentials[0], passphrase=self.credentials[1], security='wpa', enc='tkip')
+            logger().info("....Successfully connected to the AP....")
+        else:
+            self.wifi_dut.interfaces.wifi.join(
+                ssid=self.credentials[0], passphrase=self.credentials[1], security=self.credentials[2])
+            logger().info("....Successfully connected to the AP....")
 
         ip_status, ip_config = self.sl_collections.configure_ip(wifi_dut=self.wifi_dut)
         assert ip_status, f"....Unable to assign IP ADDRESS through DHCP with reason: {ip_config}...."
@@ -315,7 +320,7 @@ class ProvisioningFunctionality(ThreadBase):
     def ble_disconnect(self):
         logger().info("*********************** Disconnecting from DUT ***********************")
         self.ble_client.interfaces.bluetooth.disconnect(self.bt_dut_address)
-        self.ble_client.interfaces.bluetooth.close()
+        # self.ble_client.interfaces.bluetooth.close()
 
     def ble_cleanup_disconn(self):
         logger().info("Checking connection status of BLE")
@@ -727,7 +732,7 @@ def test_wifi_sdk_ble_conn_500ms_adv_wlan_scan_provisioning_C20159(
         ble_client.interfaces.bluetooth.close()
 
 
-@pytest.mark.skip("Not Deployed Yet")
+@pytest.mark.skip("Not Deployed Yet - BLE Connection is not working when enabling adv int 10.24s ")
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 def test_wifi_sdk_ble_conn_10_24s_adv_wlan_scan_provisioning_C20160(
@@ -836,11 +841,10 @@ def test_wifi_sdk_ble_conn_along_wlan_conn_WPA3_security_C661503(
         ble_client.interfaces.bluetooth.close()
 
 
-@pytest.mark.skip("Not Deployed Yet")
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA', "cipher": "TKIP", "passphrase": 'thisisatestnework',
-                                               "standard": '11bg'})
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPAWPA2MixedMode', "cipher": "TKIP_AES", "passphrase": '123456789'})
 def test_wifi_sdk_ble_conn_along_wlan_conn_WPA_security_C201275(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
     """Verify WLAN connection to the AP with WPA security using STA+BLE provisioning Application"""
