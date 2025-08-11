@@ -273,7 +273,7 @@ class BleThreadFunctionality(ThreadBase):
 
     def run(self):
         try:
-            if self.test_case == '537939':
+            if self.test_case == 537939:
                 CUSTOM_UUID = '0x2a1e'
 
                 self.remote_wiseconnect3.interfaces.wifi.ble_add_service(uid=0x1809)
@@ -370,14 +370,14 @@ class BleThreadFunctionality(ThreadBase):
                 self.remote_wiseconnect3.interfaces.wifi.ble_set_att_value(
                     ble_remote_dev_address=self.ble_dut_address, handle=(self.write_handle + 1), enable_notify=1)
 
-                if self.test_case == '537935' or self.test_case == '537940':
+                if self.test_case == 537935 or self.test_case == 537940:
                     self.wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(
                         ble_remote_dev_address=self.ble_client_address, buffer_mode=0, buffer_count=2)
-                if self.test_case == '537936':
+                if self.test_case == 537936:
                     self.wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(
                         ble_remote_dev_address=self.ble_client_address, buffer_mode=1, buffer_count=2)
 
-            if self.test_case == '537939':
+            if self.test_case == 537939:
                 logger().info(f"******************** get all profiles ********************")
                 uuids = self.wifi_dut.interfaces.wifi.ble_get_profiles_async(
                     ble_remote_dev_address=self.ble_client_address)
@@ -433,7 +433,7 @@ class BleThreadFunctionality(ThreadBase):
                         received_data = re.findall(r"(\b[A-Z0-9]{20}\b)", event.event_data)
                         logger().info(f"******* Received Data on DUT : {received_data} ********")
                         assert received_data == [self.data], "data mismatched"
-                    if self.test_case == '537936':
+                    if self.test_case == 537936:
                         received_data_max = re.findall(r"(\b[A-Z0-9]{237}\b)", event.event_data)
                         logger().info(f"******* Received Data on DUT : {received_data_max} ********")
                         # assert received_data_max == [self.data], "data mismatched"
