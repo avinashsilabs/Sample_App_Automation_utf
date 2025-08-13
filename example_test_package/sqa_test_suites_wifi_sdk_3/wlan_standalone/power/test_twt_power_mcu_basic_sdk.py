@@ -832,12 +832,12 @@ def test_standby_power_announced_twt_enable_without_ip_C129927(firmware_loader, 
      time.sleep(2)
 
      wifi_dut.interfaces.wifi.set_twt(
-                wake_duration=0x60,
-                wake_duration_tol=0x60,
+                wake_duration=0x80,
+                wake_duration_tol=0x80,
                 wake_int_exp=13,
                 wake_int_exp_tol=13,
-                wake_int_mantissa=0x1D4C,
-                wake_int_mantissa_tol=0x1D4C,
+                wake_int_mantissa=0x1B00,
+                wake_int_mantissa_tol=0x1B00,
                 implicit_twt=1,
                 un_announced_twt=0,
                 triggered_twt=0,
@@ -852,7 +852,7 @@ def test_standby_power_announced_twt_enable_without_ip_C129927(firmware_loader, 
                 twt_enable=1,
                 wake_duration_unit=0
      )
- 
+     time.sleep(2)
      logger().info(f"Setting filter broadcast command")
      wifi_dut.interfaces.wifi.set_filter_broadcast()
 
@@ -861,7 +861,7 @@ def test_standby_power_announced_twt_enable_without_ip_C129927(firmware_loader, 
      time.sleep(2)
 
      m4_obj.start()
-     time.sleep(80)
+     time.sleep(50)
      pm_obj.start()
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
@@ -916,12 +916,12 @@ def test_standby_power_announced_twt_enable_with_ip_C129928(firmware_loader, pow
      time.sleep(2)
 
      wifi_dut.interfaces.wifi.set_twt(
-                wake_duration=0x60,
-                wake_duration_tol=0x60,
+                wake_duration=0x80,
+                wake_duration_tol=0x80,
                 wake_int_exp=13,
                 wake_int_exp_tol=13,
-                wake_int_mantissa=0x1D4C,
-                wake_int_mantissa_tol=0x1D4C,
+                wake_int_mantissa=0x1B00,
+                wake_int_mantissa_tol=0x1B00,
                 implicit_twt=1,
                 un_announced_twt=0,
                 triggered_twt=0,
@@ -936,7 +936,7 @@ def test_standby_power_announced_twt_enable_with_ip_C129928(firmware_loader, pow
                 twt_enable=1,
                 wake_duration_unit=0
      )
- 
+     time.sleep(2)
      logger().info(f"Setting filter broadcast command")
      wifi_dut.interfaces.wifi.set_filter_broadcast()
 
@@ -945,7 +945,7 @@ def test_standby_power_announced_twt_enable_with_ip_C129928(firmware_loader, pow
      time.sleep(2)
 
      m4_obj.start()
-     time.sleep(80)
+     time.sleep(50)
      pm_obj.start()
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()

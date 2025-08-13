@@ -375,6 +375,7 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -438,6 +439,7 @@ def test_standby_power_twt_disable_without_ip_C129918(firmware_loader, power_met
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -500,6 +502,7 @@ def test_standby_power_twt_disable_with_ip_C129919(firmware_loader, power_meter,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -545,6 +548,78 @@ def test_standby_power_twt_disable_tcp_ka_C129920(firmware_loader, power_meter, 
      time.sleep(10)
 
 
+# ********************************************************************************************************************
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.Default,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode | Si91xExtCustomFeatureBitMap.DisableDebugPrints,
+        "bt_features" : 0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature,
+        "ble_features" : 0,
+        "ble_custom_ext_features": 0,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
+@pytest.mark.parametrize("keep_alive_time", [60])
+def test_standby_power_twt_disable_mqtt_ka_C129921(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, mqtt_server, keep_alive_time, wifi_sniffer, request):
+     test_name = request.node.name
+     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
+     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+     logger().info(f"M4-TA secure handshake")
+     wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5,xtal_enable=1)
+
+     time.sleep(2)
+
+     wlan_obj = WlanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                         sl_collections=sl_collections)
+     m4_obj = M4_Sleep_Thread(wifi_dut=wifi_dut, m4_sleep_time=220000)
+     pm_obj = Power_Measurement_Thread(power_meter=power_meter)
+ 
+     wlan_obj.start()
+     wlan_obj.wait_for_exit()
+
+     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+     wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client_power",
+                                                                    keep_alive_interval=keep_alive_time)
+     logger().info("DUT connecting to MQTT server")
+     wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+ 
+     time.sleep(5)
+ 
+     logger().info(f"Setting filter broadcast command")
+     wifi_dut.interfaces.wifi.set_filter_broadcast()
+
+     logger().info(f"Enabling TA power save")
+     wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save")
+     time.sleep(2)
+
+     m4_obj.start()
+     time.sleep(80)
+     pm_obj.start()
+     pm_obj.wait_for_exit()
+     m4_obj.wait_for_exit()
+ 
+     time.sleep(10)
+
+
+# ********************************************************************************************************************
+
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -565,6 +640,7 @@ def test_standby_power_twt_disable_tcp_ka_C129920(firmware_loader, power_meter, 
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -733,6 +809,7 @@ def test_standby_power_twt_enable_with_ip_C129923(firmware_loader, power_meter, 
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -844,12 +921,12 @@ def test_standby_power_announced_twt_enable_without_ip_C129927(firmware_loader, 
      time.sleep(2)
 
      wifi_dut.interfaces.wifi.set_twt(
-                wake_duration=0x60,
-                wake_duration_tol=0x60,
+                wake_duration=0x80,
+                wake_duration_tol=0x80,
                 wake_int_exp=13,
                 wake_int_exp_tol=13,
-                wake_int_mantissa=0x1D4C,
-                wake_int_mantissa_tol=0x1D4C,
+                wake_int_mantissa=0x1B00,
+                wake_int_mantissa_tol=0x1B00,
                 implicit_twt=1,
                 un_announced_twt=0,
                 triggered_twt=0,
@@ -864,7 +941,7 @@ def test_standby_power_announced_twt_enable_without_ip_C129927(firmware_loader, 
                 twt_enable=1,
                 wake_duration_unit=0
      )
- 
+     time.sleep(2)
      logger().info(f"Setting filter broadcast command")
      wifi_dut.interfaces.wifi.set_filter_broadcast()
 
@@ -873,7 +950,7 @@ def test_standby_power_announced_twt_enable_without_ip_C129927(firmware_loader, 
      time.sleep(2)
 
      m4_obj.start()
-     time.sleep(80)
+     time.sleep(50)
      pm_obj.start()
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
@@ -919,7 +996,7 @@ def test_standby_power_announced_twt_enable_with_ip_C129928(firmware_loader, pow
 
      wlan_obj = WlanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                          sl_collections=sl_collections)
-     m4_obj = M4_Sleep_Thread(wifi_dut=wifi_dut, m4_sleep_time=220000)
+     m4_obj = M4_Sleep_Thread(wifi_dut=wifi_dut, m4_sleep_time=240000)
      pm_obj = Power_Measurement_Thread(power_meter=power_meter)
  
      wlan_obj.start()
@@ -928,12 +1005,12 @@ def test_standby_power_announced_twt_enable_with_ip_C129928(firmware_loader, pow
      time.sleep(2)
 
      wifi_dut.interfaces.wifi.set_twt(
-                wake_duration=0x60,
-                wake_duration_tol=0x60,
+                wake_duration=0x80,
+                wake_duration_tol=0x80,
                 wake_int_exp=13,
                 wake_int_exp_tol=13,
-                wake_int_mantissa=0x1D4C,
-                wake_int_mantissa_tol=0x1D4C,
+                wake_int_mantissa=0x1B00,
+                wake_int_mantissa_tol=0x1B00,
                 implicit_twt=1,
                 un_announced_twt=0,
                 triggered_twt=0,
@@ -948,7 +1025,7 @@ def test_standby_power_announced_twt_enable_with_ip_C129928(firmware_loader, pow
                 twt_enable=1,
                 wake_duration_unit=0
      )
- 
+     time.sleep(2)
      logger().info(f"Setting filter broadcast command")
      wifi_dut.interfaces.wifi.set_filter_broadcast()
 
@@ -957,7 +1034,7 @@ def test_standby_power_announced_twt_enable_with_ip_C129928(firmware_loader, pow
      time.sleep(2)
 
      m4_obj.start()
-     time.sleep(80)
+     time.sleep(50)
      pm_obj.start()
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
@@ -988,6 +1065,7 @@ def test_standby_power_announced_twt_enable_with_ip_C129928(firmware_loader, pow
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1077,6 +1155,7 @@ def test_standby_power_announced_twt_enable_tcp_ka_C129929(firmware_loader, powe
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1143,6 +1222,7 @@ def test_standby_power_twt_disable_mqtt_ka_C129921(firmware_loader, power_meter,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
     }
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
