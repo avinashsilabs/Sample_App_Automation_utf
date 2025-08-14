@@ -28,7 +28,8 @@ from utf_wiseconnect_3.tests.devices.si91x import (
 lock = threading.Lock()
 from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
-from test_sta_ble_sdk import BleThreadFunctionality, SnifferValidationProcess, ScanTime_JoinTime, WifiJoinThread
+from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble.test_sta_ble_sdk \
+    import BleThreadFunctionality, SnifferValidationProcess, ScanTime_JoinTime, WifiJoinThread
 from utf.utils.stopwatch import Stopwatch
 from utf.interfaces.bluetooth.bluetooth_interface import (
     BluetoothInterface,
@@ -267,7 +268,9 @@ class BleThread(ThreadBase):
             ble_init_required=True,
             ble_dut_address=None,
             svc=None,
-            charc=None
+            charc=None,
+            buffer_mode=1,
+            buffer_count=2
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -305,6 +308,8 @@ class BleThread(ThreadBase):
         self.ble_dut_address = ble_dut_address
         self.svc = svc
         self.charc = charc
+        self.buffer_mode = buffer_mode
+        self.buffer_count = buffer_count
 
         if self.ble_init_required:
 
@@ -486,13 +491,25 @@ class BleThread(ThreadBase):
         self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=self.char_path,
                                                                                      char_uid=self.char_uid)
         self.wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(ble_remote_dev_address=self.ble_client_address,
-                                                                 buffer_mode=1, buffer_count=2)
+                                                                 buffer_mode=self.buffer_mode, buffer_count=self.buffer_count)
         sw = Stopwatch()
         count = 0
         logger().info(f"Send notifications from DUT")
         while sw.elapsed_sec <= self.data_duration:
             self.wifi_dut.interfaces.wifi.ble_notify_custom_value(self.ble_client_address, data=self.data,
                                                                   data_address=self.address)
+            tw = Stopwatch()
+            event_status = False
+            while tw.elapsed_sec < 10:
+                events = self.wifi_dut.interfaces.wifi.get_async_events()
+                for event in events:
+                    if event.event_type == AsyncEventIdentifiers.BLE_REQ_MORE_DATA:
+                        if "RSI_BLE_MORE_DATA_REQ_EVT" in event.event_data:
+                            event_status = True
+                            break
+                if event_status:
+                    logger().info(f"Received RSI_BLE_MORE_DATA_REQ_EVT event : {event.event_data}")
+                    break
             time.sleep(self.periodic_delay)
             count += 1
         time.sleep(10)
@@ -536,10 +553,45 @@ class BleThread(ThreadBase):
 
     def enable_notifications_remote(self):
 
+        self.wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(ble_remote_dev_address=self.ble_client_address,
+                                                                 buffer_mode=1, buffer_count=2)
+
         if self.write_handle:
             logger().info(f"Enabling notification on dut")
             self.wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=self.ble_client_address,
                                                             handle=(self.write_handle + 1), enable_notify=1)
+
+            tw = Stopwatch()
+            Data_received_on_dut = []
+            while tw.elapsed_sec < self.data_duration:
+                if self.svc:
+                    self.ble_client.interfaces.bluetooth.send_gatt_charc_notification(self.svc, self.charc, self.data)
+                logger().info("---------send_gatt_charc_notification-------------")
+                time.sleep(2)
+                lw = Stopwatch()
+                while lw.elapsed_sec < 10:
+                    received_data = None
+                    events = self.wifi_dut.interfaces.wifi.get_async_events()
+                    for event in events:
+                        if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
+                            if "rsi_ble_on_gatt_write_event_gatt" in event.event_data:
+                                received_data = re.findall(r"att_value: (.*)", event.event_data)
+                                break
+                    if received_data:
+                        Data_received_on_dut = received_data + Data_received_on_dut
+                        logger().info(f"received_data:{Data_received_on_dut}")
+                        break
+            assert len(Data_received_on_dut) > 0, "Notifications not received on DUT"
+            self.wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=self.ble_client_address,
+                                                            handle=(self.write_handle + 1), enable_notify=0)
+
+    def enable_indications_remote(self):
+
+        if self.write_handle:
+            logger().info(f"Enabling notification on dut")
+            self.wifi_dut.interfaces.wifi.ble_indicate_value_sync(remote_dev_address=self.ble_client_address,
+                                                                  handle=(self.write_handle + 1), data=self.data,
+                                                                  data_len=self.data_length)
 
             tw = Stopwatch()
             Data_received_on_dut = []
@@ -606,6 +658,9 @@ class BleThread(ThreadBase):
 
         if self.ble_test_type == "indications_tx":
             self.gatt_indication()
+
+        if self.ble_test_type == "indications_rx":
+            self.enable_indications_remote()
 
         if self.ble_test_type == "connect_as_master_notify_rx":
             self.ble_connect(role="master")

@@ -21,10 +21,13 @@ from utf_wiseconnect_3.tests.devices.si91x import (
 from utf.interfaces.bluetooth.bluez.gatt_application.health_thermometer_service import \
     CustomNotifyCharacteristic, HealthThermometerService
 
+from utf.interfaces.bluetooth.bluez.gatt_application.blood_pressure_service import \
+    BloodPressureService, BloodPressureMeasurementCharacteristic
+
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
-from test_sta_ble_sdk import (
+from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble.test_sta_ble_sdk import (
     BleThreadFunctionality,
     SnifferValidationProcess,
     ScanTime_JoinTime,
@@ -38,7 +41,8 @@ import string
 from utf.utils.iperf.iperf_utils import ping
 import re
 
-from test_sta_ble_dle_sdk import (BleThread)
+from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble.test_sta_ble_dle_sdk import BleThread
+
 
 def logger():
     return get_logger(__name__)
@@ -77,9 +81,7 @@ def dual_role_disconnect(wifi_dut, ble_clients, ble_clients_address, ble_dut_add
         assert (
             status
         ), f"Remote device '{ble_clients[i].name}' is not connected to DUT"
-        wifi_dut.interfaces.wifi.ble_disconnect(
-            ble_remote_dev_address=ble_clients_address[i]
-        )
+        ble_clients[i].interfaces.bluetooth.disconnect(ble_dut_address)
         ble_clients[i].interfaces.bluetooth.remove_device(ble_dut_address)
         ble_clients[i].interfaces.bluetooth.close()
         time.sleep(5)
@@ -160,8 +162,8 @@ class SSLdatatransfer(ThreadBase):
 
 def wifi_dut_marker(ext_custom_bit=0, tcp_feat_bit=0,
                     ext_tcp_feat_bit=0,
-                    ca_cert=None, wifi_stack_len=2048,
-                    ble_stack_len=3072, client_cert=None, num_peripheral_connections=1, num_central_connections=1,
+                    ca_cert=None, wifi_stack_len=3584,
+                    ble_stack_len=3584, client_cert=None, num_peripheral_connections=1, num_central_connections=1,
                     wifi_thread_count=1, ble_thread_count=1):
     config = {
 
@@ -1401,7 +1403,6 @@ def test_Coex_sdk_ble_dual_role_wlan_UDP_RX_C133511(
 
 
 
-
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -1691,11 +1692,6 @@ def test_Coex_sdk_2_TCP_RX_ble_dual_role_C622328(
 
 
 
-
-
-
-
-
 @pytest.mark.config(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
@@ -1713,8 +1709,9 @@ def test_Coex_sdk_2_TCP_RX_ble_dual_role_C622328(
         "disassociated",
     ],
 )
-@pytest.mark.skip("3 threads required facing issue with memory allocation in BLE DUT ")
-@wifi_dut_marker(num_central_connections=2, num_peripheral_connections=0)
+# @pytest.mark.skip("3 threads required facing issue with memory allocation in BLE DUT ")
+@wifi_dut_marker(num_central_connections=2, num_peripheral_connections=0, wifi_stack_len=3584,
+                    ble_stack_len=3584, ble_thread_count=2)
 def test_Coex_sdk_ble_multi_central_UDP_RX_C538060(
     wifi_sniffer,
     wifi_access_point,
@@ -1759,9 +1756,12 @@ def test_Coex_sdk_ble_multi_central_UDP_RX_C538060(
 
         data1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
         data2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
-        allocated_mem_addr = wifi_dut.interfaces.wifi.allocate_memory(size=len(data1))
-        logger().info(f"allocated_mem_addr: {allocated_mem_addr}")
-        wifi_dut.interfaces.wifi.load_memory(address=allocated_mem_addr, size=len(data1), write_content=data1)
+        allocated_mem_addr1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data1))
+        logger().info(f"allocated_mem_addr: {allocated_mem_addr1}")
+        wifi_dut.interfaces.wifi.load_memory(address=allocated_mem_addr1, size=len(data1), write_content=data1)
+        allocated_mem_addr2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data2))
+        logger().info(f"allocated_mem_addr: {allocated_mem_addr2}")
+        wifi_dut.interfaces.wifi.load_memory(address=allocated_mem_addr2, size=len(data2), write_content=data2)
         service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
         char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
         svc = 'HealthThermometerService'
@@ -1777,12 +1777,14 @@ def test_Coex_sdk_ble_multi_central_UDP_RX_C538060(
             char_path=None, char_uid=char_uid, data=data1,
             service_uid=service_uid,
             data_length=20, data_duration=120,
-            periodic_delay=1,
+            periodic_delay=0.5,
             ble_pairing=1,
             gatt=True,
-            address=allocated_mem_addr,
+            address=allocated_mem_addr1,
             ble_init_required=False,
             ble_dut_address=ble_dut_address,
+            buffer_mode=1,
+            buffer_count=1
         )
         ble_obj2 = BleThread(
             wifi_dut=wifi_dut,
@@ -1790,15 +1792,17 @@ def test_Coex_sdk_ble_multi_central_UDP_RX_C538060(
             sl_collections=sl_collections,
             ble_test_type="notify_tx",
             dev_state=8,
-            char_path=None, char_uid=char_uid, data=data1,
+            char_path=None, char_uid=char_uid, data=data2,
             service_uid=service_uid,
             data_length=20, data_duration=120,
-            periodic_delay=1,
+            periodic_delay=0.5,
             ble_pairing=1,
             gatt=True,
-            address=allocated_mem_addr,
+            address=allocated_mem_addr2,
             ble_init_required=False,
             ble_dut_address=ble_dut_address,
+            buffer_mode=1,
+            buffer_count=1
         )
 
         # Create Custom services on DUT
@@ -1809,16 +1813,12 @@ def test_Coex_sdk_ble_multi_central_UDP_RX_C538060(
         logger().info("Adding characteristic value attribute to the service")
         wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data="data")
 
-        wifi_dut.interfaces.wifi.ble_set_smp()
+        # wifi_dut.interfaces.wifi.ble_set_smp()
         ble_obj1.ble_connect(role="slave")
         ble_clients_address.append(ble_obj1.ble_client_address)
-        ble_obj1.service_discovery_on_remote()
 
         ble_obj2.ble_connect(role="slave")
         ble_clients_address.append(ble_obj2.ble_client_address)
-        ble_obj2.service_discovery_on_remote()
-        # Configure Buffer Mode
-        # ble_obj2.configure_buffer_mode(mode=0, count=2)
 
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
@@ -1837,12 +1837,17 @@ def test_Coex_sdk_ble_multi_central_UDP_RX_C538060(
         )
         wifi_obj.join_to_ap(skip_power_save=True)
         wifi_obj.set_power_save()
+        ble_obj1.service_discovery_on_remote()
+        ble_obj2.service_discovery_on_remote()
         wifi_obj.start()
         ble_obj1.start()
         ble_obj2.start()
         ble_obj2.wait_for_exit()
         ble_obj1.wait_for_exit()
         wifi_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.memory_free(address=allocated_mem_addr1)
+        wifi_dut.interfaces.wifi.memory_free(address=allocated_mem_addr2)
+        wifi_dut.interfaces.wifi.ble_remove_service()
         dual_role_disconnect(wifi_dut, ble_clients, ble_clients_address, ble_dut_address)
         wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1852,16 +1857,13 @@ def test_Coex_sdk_ble_multi_central_UDP_RX_C538060(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        try:
-            if ble_dut_address is not None:
-                for ble_client in ble_clients:
-                    ble_client.interfaces.bluetooth.remove_device(ble_dut_address)
-                    ble_client.interfaces.bluetooth.close()
-                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients,
-                                           ble_client_address=ble_clients_address,
-                                           ble_dut_address=ble_dut_address)
-        except Exception as e:
-            wifi_dut.interfaces.wifi.is_dut_bad_state = True
+        if ble_dut_address is not None:
+            for ble_client in ble_clients:
+                ble_client.interfaces.bluetooth.remove_device(ble_dut_address)
+                ble_client.interfaces.bluetooth.close()
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients,
+                                       ble_client_address=ble_clients_address,
+                                       ble_dut_address=ble_dut_address)
 
 
 
@@ -1993,17 +1995,18 @@ def test_Coex_sdk_ble_multi_central_ping_C133567(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        # "clear_ble_task"
+        "clear_certs"
     ],
 )
-@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+@wifi_dut_marker(
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
                  tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
                  ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
                  wifi_stack_len=3584,
-                 ble_stack_len=2048,
+                 ble_stack_len=3584,
                  wifi_thread_count=1, ble_thread_count=2
                  )
-@pytest.mark.skip("3 threads required facing issue with memory allocation in BLE DUT ")
+# @pytest.mark.skip("3 threads required facing issue with memory allocation in BLE DUT ")
 def test_Coex_sdk_gatt_rd_wr_dual_role_ssl_tx_C133510(
     wifi_sniffer,
     wifi_access_point,
@@ -2079,7 +2082,7 @@ def test_Coex_sdk_gatt_rd_wr_dual_role_ssl_tx_C133510(
             char_path=None, char_uid=char_uid, data=data1,
             service_uid=service_uid,
             data_length=20, data_duration=120,
-            periodic_delay=1,
+            periodic_delay=0,
             ble_pairing=1,
             gatt=True,
             address=allocated_mem_addr,
@@ -2115,18 +2118,15 @@ def test_Coex_sdk_gatt_rd_wr_dual_role_ssl_tx_C133510(
         wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1, permissions=34)
         logger().info("Adding characteristic value attribute to the service")
         wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data="data")
+
         wifi_obj.join_to_ap(skip_power_save=True)
 
         ble_obj2.ble_connect(role="master")
         ble_clients_address.append(ble_obj2.ble_client_address)
         ble_obj2.service_discovery_on_dut()
-        # # Configure Buffer Mode
-        ble_obj2.configure_buffer_mode(mode=0, count=2)
 
-        wifi_dut.interfaces.wifi.ble_set_smp()
         ble_obj1.ble_connect(role="slave")
         ble_clients_address.append(ble_obj1.ble_client_address)
-
         wifi_obj.set_power_save()
         ssl_obj = SSLdatatransfer(
             wifi_dut=wifi_dut,
@@ -2147,28 +2147,22 @@ def test_Coex_sdk_gatt_rd_wr_dual_role_ssl_tx_C133510(
         ble_obj1.wait_for_exit()
         ssl_obj.wait_for_exit()
         wifi_obj.disconnect()
+        wifi_dut.interfaces.wifi.memory_free(address=allocated_mem_addr)
+        wifi_dut.interfaces.wifi.ble_remove_service()
         dual_role_disconnect(wifi_dut, ble_clients, ble_clients_address, ble_dut_address)
         wifi_sniffer.interfaces.capture.stop_capture()
-        # wifi_obj.sniffer_validation_join()
-        # logger().info("sniffer validation is successful")
+        wifi_obj.sniffer_validation_join()
+        logger().info("sniffer validation is successful")
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        try:
-            wifi_dut.interfaces.bluetooth.ble_remove_service()
             for ble_client in ble_clients:
                 ble_client.interfaces.bluetooth.remove_device(ble_dut_address)
                 ble_client.interfaces.bluetooth.close()
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients,
                                        ble_client_address=ble_clients_address,
                                        ble_dut_address=ble_dut_address)
-            if allocated_mem_addr:
-                wifi_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
-
-        except Exception as e:
-            wifi_dut.interfaces.wifi.is_dut_bad_state = True
-
 
 
 @pytest.mark.config(
@@ -2182,17 +2176,16 @@ def test_Coex_sdk_gatt_rd_wr_dual_role_ssl_tx_C133510(
         "bt_powersave_disable",
         "wifi_powersave_disable",
         "disassociated",
-        # "clear_ble_task"
     ],
 )
 @wifi_dut_marker(wifi_stack_len=3584,
-                 ble_stack_len=2048,
+                 ble_stack_len=3584,
                  wifi_thread_count=1, ble_thread_count=2
                  )
-@pytest.mark.skip("3 threads required facing issue with memory allocation in BLE DUT ")
+# @pytest.mark.skip("3 threads required facing issue with memory allocation in BLE DUT ")
 @pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"1MB.htm"})
-@pytest.mark.skip()
+@pytest.mark.parametrize("index_path", {"5MB.htm"})
+# @pytest.mark.skip()
 def test_Coex_sdk_gatt_rw_wr_dual_role_http_download_C538059(
     wifi_sniffer,
     wifi_access_point,
@@ -2270,7 +2263,7 @@ def test_Coex_sdk_gatt_rw_wr_dual_role_http_download_C538059(
             char_path=None, char_uid=char_uid, data=data1,
             service_uid=service_uid,
             data_length=20, data_duration=120,
-            periodic_delay=1,
+            periodic_delay=0,
             ble_pairing=1,
             gatt=True,
             address=allocated_mem_addr,
@@ -2311,9 +2304,6 @@ def test_Coex_sdk_gatt_rw_wr_dual_role_http_download_C538059(
         ble_obj2.ble_connect(role="master")
         ble_clients_address.append(ble_obj2.ble_client_address)
         ble_obj2.service_discovery_on_dut()
-        # # Configure Buffer Mode
-        ble_obj2.configure_buffer_mode(mode=0, count=2)
-
         wifi_dut.interfaces.wifi.ble_set_smp()
         ble_obj1.ble_connect(role="slave")
         ble_clients_address.append(ble_obj1.ble_client_address)
@@ -2326,6 +2316,9 @@ def test_Coex_sdk_gatt_rw_wr_dual_role_http_download_C538059(
         ble_obj1.wait_for_exit()
         wifi_obj.wait_for_exit()
         wifi_obj.disconnect()
+        wifi_dut.interfaces.wifi.memory_free(address=allocated_mem_addr)
+        wifi_dut.interfaces.wifi.ble_remove_service()
+        dual_role_disconnect(wifi_dut, ble_clients, ble_clients_address, ble_dut_address)
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
@@ -2334,15 +2327,13 @@ def test_Coex_sdk_gatt_rw_wr_dual_role_http_download_C538059(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         try:
-            wifi_dut.interfaces.bluetooth.ble_remove_service()
             for ble_client in ble_clients:
                 ble_client.interfaces.bluetooth.remove_device(ble_dut_address)
                 ble_client.interfaces.bluetooth.close()
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients,
                                        ble_client_address=ble_clients_address,
                                        ble_dut_address=ble_dut_address)
-            if allocated_mem_addr:
-                wifi_dut.interfaces.bluetooth.memory_free(address=allocated_mem_addr)
+
 
         except Exception as e:
             wifi_dut.interfaces.wifi.is_dut_bad_state = True
@@ -2380,14 +2371,14 @@ def test_Coex_sdk_ble_multi_slave_wlan_connected_C133518(
     Test Steps:
         1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
         2. Join the access point and enable the dhcp
-        3. Conenct DUT as BLE master
-        4. Connect DUT as BLE slave
-        5. Query the profiles from DUT
+        3. Connect DUT as BLE master with remote1 as slave
+        4. Connect DUT as BLE master with remote2 as slave
         5. Enable the wlan and bt power save mode in dut after the connection
         6. Initiate ping with size 300
         7. check the stability of WLAN and BLE connection for 60sec
 
     """
+    ble_clients_address = []
     try:
         assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
         test_name = request.node.name
@@ -2403,14 +2394,28 @@ def test_Coex_sdk_ble_multi_slave_wlan_connected_C133518(
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-        ble_obj = BleDualRoleThreadFunctionality(
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(
+            set_smp=1)
+
+        ble_obj1 = BleThread(
             wifi_dut=wifi_dut,
-            ble_clients=ble_clients,
+            ble_client=ble_clients[0],
             sl_collections=sl_collections,
-            ble_test_type="multi_slave",
-            testcase=test_name,
+            ble_test_type="master",
+            dev_state=8,
             ble_pairing=1,
-            set_smp=1
+            ble_init_required=False,
+            ble_dut_address=ble_dut_address,
+        )
+        ble_obj2 = BleThread(
+            wifi_dut=wifi_dut,
+            ble_client=ble_clients[1],
+            sl_collections=sl_collections,
+            ble_test_type="master",
+            dev_state=8,
+            ble_pairing=1,
+            ble_init_required=False,
+            ble_dut_address=ble_dut_address,
         )
 
         wifi_obj = WifiJoinThread(
@@ -2424,15 +2429,20 @@ def test_Coex_sdk_ble_multi_slave_wlan_connected_C133518(
             sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
+        wifi_obj.join_to_ap(skip_power_save=True)
 
-        ble_obj.start()
-        ble_obj.wait_for_exit()
-
-        wifi_obj.join_to_ap()
+        ble_obj1.start()
+        ble_obj1.wait_for_exit()
+        ble_clients_address.append(ble_obj1.ble_client_address)
+        ble_obj2.start()
+        ble_obj2.wait_for_exit()
+        ble_clients_address.append(ble_obj2.ble_client_address)
+        wifi_obj.set_power_save()
         wifi_obj.start()
-        wifi_obj.wait_for_exit()
+        logger().info("Waiting for 60s for BLE connection stability.")
         time.sleep(60)
-        ble_obj.dual_role_disconnect()
+        wifi_obj.wait_for_exit()
+        dual_role_disconnect(wifi_dut, ble_clients, ble_clients_address, ble_dut_address)
         wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.sniffer_validation_join()
@@ -2454,7 +2464,6 @@ def test_Coex_sdk_ble_multi_slave_wlan_connected_C133518(
 
 
 
-
 @pytest.mark.config(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
@@ -2472,7 +2481,7 @@ def test_Coex_sdk_ble_multi_slave_wlan_connected_C133518(
         "disassociated",
     ],
 )
-@wifi_dut_marker(num_central_connections=0, num_peripheral_connections=2)
+@wifi_dut_marker(num_central_connections=0, num_peripheral_connections=2, ble_stack_len=3584, wifi_stack_len=3584)
 @pytest.mark.skip()
 def test_Coex_sdk_ble_multi_peripheral_UDP_TX_C538058(
     wifi_sniffer,
@@ -2494,6 +2503,7 @@ def test_Coex_sdk_ble_multi_peripheral_UDP_TX_C538058(
         3. Conenct DUT as BLE master
         4. Connect DUT as BLE slave
     """
+    ble_clients_address = []
     try:
         assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
         test_name = request.node.name
@@ -2509,55 +2519,94 @@ def test_Coex_sdk_ble_multi_peripheral_UDP_TX_C538058(
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-        ble_obj = BleDualRoleThreadFunctionality(
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(
+            set_smp=1)
+
+        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+        svc = 'BloodPressureService'
+        charc = 'BloodPressureMeasurementCharacteristic'
+        allocated_mem_addr = wifi_dut.interfaces.wifi.allocate_memory(size=len(data))
+        logger().info(f"allocated_mem_addr: {allocated_mem_addr}")
+        wifi_dut.interfaces.wifi.load_memory(address=allocated_mem_addr, size=len(data), write_content=data)
+
+        ble_obj1 = BleThread(
             wifi_dut=wifi_dut,
-            ble_clients=ble_clients,
+            ble_client=ble_clients[0],
             sl_collections=sl_collections,
-            ble_test_type="multi_slave",
-            testcase=test_name,
+            ble_test_type="indications_rx",
+            dev_state=8,
             ble_pairing=1,
-            set_smp=1
+            ble_init_required=False,
+            ble_dut_address=ble_dut_address,
+            service_class=["BloodPressureService"],
+            service_uuid=BloodPressureService.UUID,
+            char_uuid=BloodPressureMeasurementCharacteristic.BP_Measure_UUID.lower(),
+            characteristic=BloodPressureMeasurementCharacteristic,
+            data=data,
+            data_length= 20,
+            svc=svc,
+            charc=charc,
+            address=allocated_mem_addr,
         )
+        # ble_obj2 = BleThread(
+        #     wifi_dut=wifi_dut,
+        #     ble_client=ble_clients[1],
+        #     sl_collections=sl_collections,
+        #     ble_test_type="master",
+        #     dev_state=8,
+        #     ble_pairing=1,
+        #     ble_init_required=False,
+        #     ble_dut_address=ble_dut_address,
+        # )
 
-        wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
-            wifi_dut=wifi_dut,
-            wifi_access_point=wifi_access_point,
-            testcase=test_name,
-            wifi_client=wifi_client,
-            sl_collections=sl_collections,
-            ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
-            test_type=test_type,
-            net_perf_client=net_perf_client,
-            protocol=protocol,
-            traffic_type="TX",
-            timeout=120
-        )
+        # wifi_obj = WifiJoinThread(
+        #     wifi_sniffer=wifi_sniffer,
+        #     wifi_dut=wifi_dut,
+        #     wifi_access_point=wifi_access_point,
+        #     testcase=test_name,
+        #     wifi_client=wifi_client,
+        #     sl_collections=sl_collections,
+        #     ping_count=ping_count,
+        #     sniffer_filter=sniffer_filter,
+        #     test_type=test_type,
+        #     net_perf_client=net_perf_client,
+        #     protocol=protocol,
+        #     traffic_type="TX",
+        #     timeout=120
+        # )
 
+        # ble_obj1.start()
+        # ble_obj1.wait_for_exit()
 
-        ble_obj.start()
-        ble_obj.wait_for_exit()
+        ble_obj1.ble_connect(role="master")
+        ble_clients_address.append(ble_obj1.ble_client_address)
+        ble_obj1.service_discovery_on_dut()
+        # # Configure Buffer Mode
+        # ble_obj1.configure_buffer_mode(mode=0, count=2)
+        ble_obj1.start()
+        ble_obj1.wait_for_exit()
 
-        wifi_obj.join_to_ap()
-        wifi_obj.start()
-        wifi_obj.wait_for_exit()
-        ble_obj.dual_role_disconnect()
-        wifi_obj.disconnect()
+        # ble_clients_address.append(ble_obj2.ble_client_address)
+
+        # wifi_obj.join_to_ap()
+        # wifi_obj.start()
+        # wifi_obj.wait_for_exit()
+        dual_role_disconnect(wifi_dut, ble_clients, ble_clients_address, ble_dut_address)
+        # wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_obj.sniffer_validation_join()
+        # wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-    finally:
-        try:
-            if ble_obj:
-                for ble_client in ble_clients:
-                    ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-                    ble_client.interfaces.bluetooth.close()
-                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients,
-                                           ble_client_address=ble_obj.ble_clients_address,
-                                           ble_dut_address=ble_obj.ble_dut_address)
-        except Exception as e:
-            wifi_dut.interfaces.wifi.is_dut_bad_state = True
+    # finally:
+    #     try:
+    #         if ble_obj:
+    #             for ble_client in ble_clients:
+    #                 ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+    #                 ble_client.interfaces.bluetooth.close()
+    #             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients,
+    #                                        ble_client_address=ble_obj.ble_clients_address,
+    #                                        ble_dut_address=ble_obj.ble_dut_address)
+    #     except Exception as e:
+    #         wifi_dut.interfaces.wifi.is_dut_bad_state = True
