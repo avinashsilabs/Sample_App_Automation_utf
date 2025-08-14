@@ -1052,7 +1052,7 @@ def test_wifi_sdk_verify_twt_with_ble_master_tx_data_transfer_c198625(
         ble_obj.ble_cleanup()
 
 
-@pytest.mark.skip("Not Deployed Yet")
+@pytest.mark.skip("Not Deployed Yet - Asus AP not supporting/sending Trigger Frames")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut",
@@ -1084,7 +1084,7 @@ def test_wifi_sdk_verify_twt_announced_trigger_with_ble_master_tx_data_transfer_
         ble_obj.ble_cleanup()
 
 
-@pytest.mark.skip("Not Deployed Yet")
+@pytest.mark.skip("Not Deployed Yet - Asus AP not supporting/sending Trigger Frames")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut",
@@ -1231,10 +1231,8 @@ def test_wifi_sdk_verify_twt_teardown_recreate_session_with_another_type_and_ble
         ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_obj.ble_client_address)
 
 
-@pytest.mark.skip("Not Deployed Yet")
+@pytest.mark.skip("Not Deployed Yet - Master connection is not working in loop")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
 def test_wifi_sdk_verify_twt_with_ble_master_conn_reconn_c198632(
@@ -1242,7 +1240,6 @@ def test_wifi_sdk_verify_twt_with_ble_master_conn_reconn_c198632(
     """DUT is able to wake up at regular TWT Intervals when The DUT BLE is connecting, Sending the Data and
     disconnecting continuously"""
 
-    ble_obj = None
     try:
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, utf_constants=utf_constants,
@@ -1253,12 +1250,10 @@ def test_wifi_sdk_verify_twt_with_ble_master_conn_reconn_c198632(
                                          test_case='198632')
         wlan_obj.start()
         time.sleep(25)
-        iter_count = utf_constants.get("iter_count")
-        for count in range(iter_count):
+        for count in range(2):
             ble_obj.ble_master_slave_data_transfer()
-            wlan_obj.wait_for_exit()
+            ble_obj.ble_cleanup()
+        wlan_obj.wait_for_exit()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-    finally:
-        ble_obj.ble_cleanup()
