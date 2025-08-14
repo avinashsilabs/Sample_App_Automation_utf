@@ -185,6 +185,7 @@ class WifiSockthread(ThreadBase):
         self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock_id,
                                                        server_ip=server_ip,
                                                        server_port=server_port)
+        time.sleep(5)
         if self.send_ka:
             self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(socket_fd = sock_id,
             option_level = 'SOL_SOCKET',
@@ -198,7 +199,7 @@ class WifiSockthread(ThreadBase):
                 data = self.remote_socket.interfaces.socket.recv_data_tcp(data_size)
                 time.sleep(self.tcp_ka_time)
 
-        time.sleep(2)
+        time.sleep(5)
         if not self.m4_deep_sleep:
             result = self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
             assert b"success" in result, "unable to close opened tcp socket"
@@ -542,8 +543,8 @@ def test_twt_power_2s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(firmware_loader, p
 
      wlan_obj = WlanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                          sl_collections=sl_collections)
-     m4_obj = M4_Sleep_Thread(wifi_dut=wifi_dut, deep_sleep_without_ret=True, m4_sleep_time=380000)
-     pm_obj = Power_Measurement_Thread(power_meter=power_meter, capture_time=300)
+     m4_obj = M4_Sleep_Thread(wifi_dut=wifi_dut, deep_sleep_without_ret=True, m4_sleep_time=480000)
+     pm_obj = Power_Measurement_Thread(power_meter=power_meter, capture_time=240)
 
      wlan_obj.start()
      wlan_obj.wait_for_exit()
@@ -578,7 +579,7 @@ def test_twt_power_2s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(firmware_loader, p
      time.sleep(2)
 
      m4_obj.start()
-     time.sleep(60)
+     time.sleep(50)
      pm_obj.start()
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
@@ -627,8 +628,8 @@ def test_twt_power_30s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(firmware_loader, 
 
      wlan_obj = WlanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                          sl_collections=sl_collections)
-     m4_obj = M4_Sleep_Thread(wifi_dut=wifi_dut, deep_sleep_without_ret=True, m4_sleep_time=380000)
-     pm_obj = Power_Measurement_Thread(power_meter=power_meter, capture_time=300)
+     m4_obj = M4_Sleep_Thread(wifi_dut=wifi_dut, deep_sleep_without_ret=True, m4_sleep_time=480000)
+     pm_obj = Power_Measurement_Thread(power_meter=power_meter, capture_time=240)
  
      wlan_obj.start()
      wlan_obj.wait_for_exit()
@@ -662,7 +663,7 @@ def test_twt_power_30s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(firmware_loader, 
      time.sleep(2)
 
      m4_obj.start()
-     time.sleep(60)
+     time.sleep(50)
      pm_obj.start()
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
@@ -711,7 +712,7 @@ def test_twt_power_60s_twt_int_wlan_ka_60s_tcp_ka_240s_C129923(firmware_loader, 
 
      wlan_obj = WlanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                          sl_collections=sl_collections)
-     m4_obj = M4_Sleep_Thread(wifi_dut=wifi_dut, deep_sleep_without_ret=True, m4_sleep_time=380000)
+     m4_obj = M4_Sleep_Thread(wifi_dut=wifi_dut, deep_sleep_without_ret=True, m4_sleep_time=480000)
      pm_obj = Power_Measurement_Thread(power_meter=power_meter, capture_time=300)
  
      wlan_obj.start()
@@ -746,7 +747,7 @@ def test_twt_power_60s_twt_int_wlan_ka_60s_tcp_ka_240s_C129923(firmware_loader, 
      time.sleep(2)
 
      m4_obj.start()
-     time.sleep(60)
+     time.sleep(50)
      pm_obj.start()
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
