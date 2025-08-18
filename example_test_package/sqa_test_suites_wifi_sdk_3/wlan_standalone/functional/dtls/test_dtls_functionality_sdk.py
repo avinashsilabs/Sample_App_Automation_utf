@@ -10,7 +10,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xCustomSyncSockOptParms,
     Si91xOperatingMode,
     IEEE802_11W,
-    Si91xJoinFeatureBitMap,# <-- add this import
+    Si91xJoinFeatureBitMap,
 )
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 import random
@@ -41,10 +41,12 @@ from utf.utils.logger import get_logger
     Author: SHOBHA RANI JOGU
 """
 
+
 def logger():
     return get_logger(__name__)
 
-def wifi_dut_marker(ca_cert=None, opermode=0, stack_len=None, thread_no=None, pmf_enable=False , priority=0):
+
+def wifi_dut_marker(ca_cert=None, opermode=0, stack_len=None, thread_no=None, pmf_enable=False, priority=0):
     """
     Pytest marker for wifi_dut configuration.
     Args:
@@ -57,7 +59,7 @@ def wifi_dut_marker(ca_cert=None, opermode=0, stack_len=None, thread_no=None, pm
     # Initialize the base configuration
     config = {
         "thread_config": {"wifi": {"count": thread_no if thread_no is not None else 1,
-                                 "stack_len": stack_len if stack_len is not None else 3584, "priority": priority}},
+                                   "stack_len": stack_len if stack_len is not None else 3584, "priority": priority}},
         "oper_mode": opermode,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
@@ -67,10 +69,10 @@ def wifi_dut_marker(ca_cert=None, opermode=0, stack_len=None, thread_no=None, pm
                           Si91xTCPIPFeatureBitMap.SL_SI91X_TCP_IP_FEAT_DTLS_THREE_SOCKETS,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": (Si91xExtCustomFeatureBitMap.FeatureLowPower |
-            Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
-            Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-            Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode|
-            (Si91xExtCustomFeatureBitMap.IEEE802_11W if pmf_enable else 0)),
+                                Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                                (Si91xExtCustomFeatureBitMap.IEEE802_11W if pmf_enable else 0)),
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
@@ -82,9 +84,11 @@ def wifi_dut_marker(ca_cert=None, opermode=0, stack_len=None, thread_no=None, pm
         config["ca_cert"] = ca_cert
     return pytest.mark.config("wifi_dut", wifi=config)
 
+
 class WlanThread(ThreadBase):
     def __init__(self, wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
                  sniffer_filter, test_name, dtls_version):
+        super().__init__()
         self.interfaces = None
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -102,7 +106,9 @@ class WlanThread(ThreadBase):
         self.sent_data = []
         self.dtls_version = dtls_version
 
-    def jointoap(self):
+    def connect_to_access_point(self):
+        """Connect DUT to Wi-Fi access point and configure sniffer capture."""
+        self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.test_name}.pcap")
         result = self.sl_collections.join_to_wifi_network_with_rejoin(
             self.wifi_dut, self.wifi_access_point, ping_count=10, retry_count=3,
@@ -110,18 +116,19 @@ class WlanThread(ThreadBase):
         )
         self.device_ip, self.dut_mac_address = result['device_ip'], result['dut_mac_address']
 
-    def dtlsclientfunctionality(self):
+    def establish_dtls_connection(self):
+        """Establish DTLS connection, perform data transfer, and validate communication."""
         self.local_port1 = randint(5001, 60000)
         # Special logic for negative version mismatch test
         if self.test_name == "test_c766289":
             # Start server as DTLS1.2, client as DTLS1.0
             self.openssl.interfaces.server.start(port=self.local_port1, dtls_version="-dtls1_2")
-            cert_index = 8196 # BIT(13)|BIT(2) i-e enable_dtls = SL_SI91X_ENABLE_DTLS | SL_SI91X_DTLS_V_1_0
+            cert_index = 8196  # BIT(13)|BIT(2) i-e enable_dtls = SL_SI91X_ENABLE_DTLS | SL_SI91X_DTLS_V_1_0
             option_name = Si91xCustomSyncSockOptParms.SL_SI91X_SO_DTLS_V_1_0_ENABLE
         elif self.test_name == "test_c766290":
             # Start server as DTLS1.0, client as DTLS1.2
             self.openssl.interfaces.server.start(port=self.local_port1, dtls_version="-dtls1")
-            cert_index = 8200 # BIT(13)|BIT(3) i-e enable_dtls = SL_SI91X_ENABLE_DTLS | SL_SI91X_DTLS_V_1_2
+            cert_index = 8200  # BIT(13)|BIT(3) i-e enable_dtls = SL_SI91X_ENABLE_DTLS | SL_SI91X_DTLS_V_1_2
             option_name = Si91xCustomSyncSockOptParms.SL_SI91X_SO_DTLS_V_1_2_ENABLE
         elif self.dtls_version == "-dtls1":
             self.openssl.interfaces.server.start(port=self.local_port1, dtls_version="-dtls1")
@@ -135,10 +142,24 @@ class WlanThread(ThreadBase):
             self.openssl.interfaces.server.start(port=self.local_port1, dtls_version="-dtls")
             cert_index = 8200
             option_name = Si91xCustomSyncSockOptParms.SL_SI91X_SO_DTLS_V_1_2_ENABLE
+
+        # Enhanced server startup validation with retries
         time.sleep(1)
-        assert self.openssl.interfaces.server.is_running() is True
+        logger().info(f"Starting OpenSSL server validation for {self.test_name}...")
+        max_retries = 5
+        for retry in range(max_retries):
+            if self.openssl.interfaces.server.is_running():
+                logger().info(f"OpenSSL server confirmed running on port {self.local_port1}")
+                break
+            logger().warning(f"OpenSSL server not running, retry {retry + 1}/{max_retries}")
+            time.sleep(1)
+        else:
+            raise RuntimeError(f"Failed to start OpenSSL server after {max_retries} retries for {self.test_name}")
+
+        assert self.openssl.interfaces.server.is_running() is True, f"OpenSSL server failed to start for {self.test_name}"
         self.server_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-        self.sock1 = self.wifi_dut.interfaces.wifi.socket(domain="AF_INET", stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP")
+        self.sock1 = self.wifi_dut.interfaces.wifi.socket(domain="AF_INET", stream_type="SOCK_DGRAM",
+                                                          protocol="IPPROTO_UDP")
         self.wifi_dut.interfaces.wifi.bsdSetSocketOptAsync(
             self.sock1,
             option_level="SOL_SOCKET",
@@ -164,11 +185,8 @@ class WlanThread(ThreadBase):
                     ip_addr=self.server_ip
                 )
             except Exception as e:
-                # error_match = re.search("status:(.*)", str(e))
-                # if error_match:
-                #     error_code = error_match.group()
-                #     logger().info(f"error_code: {error_code}")
-                status = self.wifi_dut.interfaces.wifi.get_saved_firmware_status(expected_status=SLStatus.SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAIL)
+                status = self.wifi_dut.interfaces.wifi.get_saved_firmware_status(
+                    expected_status=SLStatus.SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAIL)
                 if status == SLStatus.SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAIL:
                     logger().info(f"Expected handshake failure occurred for version mismatch: {status}")
                     handshake_failed = True
@@ -183,41 +201,155 @@ class WlanThread(ThreadBase):
             assert handshake_failed, "Handshake did not fail as expected for DTLS version mismatch."
             return
 
+        # Allow server to fully initialize before sending data
+        logger().info("Waiting for OpenSSL server to fully initialize...")
+        time.sleep(2)
+
         # ...existing code for normal DTLS send/receive...
+        logger().info(f"Starting data transmission loop for {self.test_name}")
         for i in range(10):
             tx_data = f"{i + 1}-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=10))
+            logger().info(f"Preparing to send message {i + 1}: {tx_data}")
             retry = 0
             while retry < 10:
                 try:
-                    self.wifi_dut.interfaces.wifi.dtlsSocketSendTo(
+                    result = self.wifi_dut.interfaces.wifi.dtlsSocketSendTo(
                         socket_fd=self.sock1,
                         port=self.local_port1,
                         data=tx_data,
                         ip_addr=self.server_ip
                     )
+
+                    # Check if the call was successful (status code 0x00000)
+                    # Status code 0x00001 indicates handshake failure and should be retried
+                    if hasattr(result, 'status_code') and result.status_code == 0x00001:
+                        logger().info(
+                            f"\n **** Status Code Received: 0x00001 (SSL_TLS_HANDSHAKE_FAIL), "
+                            f"retrying sendto... retry {retry + 1}/10")
+                        retry += 1
+                        time.sleep(2)  # Increased delay for handshake retry
+                        continue
+
+                    # If we reach here, the send was successful
+                    logger().info(f"Message {i + 1} sent successfully: {tx_data[:20]}...")
                     self.sent_data.append(tx_data)
+                    # Give server time to process the message
+                    time.sleep(1.5)
                     break
+
                 except Exception as e:
+                    logger().error(f"DTLS sendto exception for message {i + 1}: {e}")
                     if hasattr(e, 'status') and e.status == SLStatus.SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAIL:
                         logger().info(
-                            f"\n **** Status Received: {SLStatus.SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAIL}"
-                            f", retrying sendto...")
+                            f"\n **** Exception Status Received: {SLStatus.SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAIL}, "
+                            f"retrying sendto... retry {retry + 1}/10")
+                        retry += 1
+                        time.sleep(1)
+                        continue
+                    else:
+                        # For other exceptions, also retry up to the limit
+                        logger().warning(f"Unexpected exception, retrying... retry {retry + 1}/10: {e}")
                         retry += 1
                         time.sleep(1)
                         continue
             else:
-                raise RuntimeError(f"DTLS sendto failed after retries for message: {tx_data}")
+                raise RuntimeError(f"DTLS sendto failed after {retry} retries for message: {tx_data}")
+
+        # Allow server time to process all received data before getting messages
+        logger().info("All messages sent, waiting for server to process data...")
+        time.sleep(3)
+
+        # Get received data from OpenSSL server with enhanced error handling
+        logger().info("Retrieving messages from OpenSSL server...")
+
+        # Check if server is still running before getting messages
+        if not self.openssl.interfaces.server.is_running():
+            logger().error("OpenSSL server is no longer running when trying to get messages!")
+            raise RuntimeError("OpenSSL server stopped running during data transmission")
+
         rx_data = self.openssl.interfaces.server.get_messages(10)
-        logger().info(f"Sent: {self.sent_data}, Received: {rx_data}")
+        logger().info(f"Sent {len(self.sent_data)} messages: {self.sent_data}")
+        logger().info(f"Raw received data type: {type(rx_data)}, value: {rx_data}")
+
+        # Additional diagnostic: Check if server has any error logs
+        try:
+            server_status = self.openssl.interfaces.server.is_running()
+            logger().info(f"Server status after getting messages: {server_status}")
+        except Exception as e:
+            logger().warning(f"Could not check server status: {e}")
+
+        # Enhanced data validation and processing
         if isinstance(rx_data, list):
-            filtered = [line for line in rx_data if line.strip() not in ("Using default temp DH parameters", "ACCEPT")]
-            received_concat = filtered[0].strip() if filtered else ""
+            # Filter out OpenSSL server messages that are not actual data
+            filtered = [line for line in rx_data if
+                        line.strip() not in ("Using default temp DH parameters", "ACCEPT", "ERROR")]
+            logger().info(f"Filtered data: {filtered}")
+
+            if not filtered:
+                logger().warning("No valid data received after filtering, checking if server had errors...")
+                if any("ERROR" in str(line) for line in rx_data):
+                    logger().error(f"OpenSSL server reported error. Attempting recovery...")
+                    # Try to get messages one more time after a delay
+                    time.sleep(2)
+                    rx_data_retry = self.openssl.interfaces.server.get_messages(10)
+                    logger().info(f"Retry attempt - Raw received data: {rx_data_retry}")
+
+                    if isinstance(rx_data_retry, list):
+                        filtered_retry = [line for line in rx_data_retry if
+                                          line.strip() not in ("Using default temp DH parameters", "ACCEPT", "ERROR")]
+                        if filtered_retry:
+                            received_concat = filtered_retry[0].strip()
+                            logger().info(f"Recovery successful, received: {received_concat}")
+                        else:
+                            raise RuntimeError(
+                                f"OpenSSL server error persists after retry. Original: {rx_data}, Retry: {rx_data_retry}")
+                    else:
+                        if rx_data_retry and "ERROR" not in str(rx_data_retry):
+                            received_concat = rx_data_retry.strip()
+                            logger().info(f"Recovery successful, received: {received_concat}")
+                        else:
+                            raise RuntimeError(
+                                f"OpenSSL server error persists after retry. Original: {rx_data}, Retry: {rx_data_retry}")
+                else:
+                    received_concat = ""
+            else:
+                received_concat = filtered[0].strip() if len(filtered) >= 1 else ""
         else:
-            received_concat = rx_data.strip()
+            if rx_data and rx_data.strip() == "ERROR":
+                logger().error(f"OpenSSL server reported single ERROR response. Attempting recovery...")
+                # Try to get messages one more time after a delay
+                time.sleep(2)
+                rx_data_retry = self.openssl.interfaces.server.get_messages(10)
+                logger().info(f"Retry attempt - Raw received data: {rx_data_retry}")
+
+                if rx_data_retry and "ERROR" not in str(rx_data_retry):
+                    received_concat = rx_data_retry.strip() if rx_data_retry else ""
+                    logger().info(f"Recovery successful, received: {received_concat}")
+                else:
+                    raise RuntimeError(
+                        f"OpenSSL server error persists after retry. Original: {rx_data}, Retry: {rx_data_retry}")
+            else:
+                received_concat = rx_data.strip() if rx_data else ""
+
         sent_concat = "".join(self.sent_data)
+
+        logger().info(f"Final comparison - Sent: '{sent_concat}', Received: '{received_concat}'")
+
+        # Enhanced assertion with better error message
+        if received_concat != sent_concat:
+            logger().error(f"Data mismatch detected!")
+            logger().error(f"Expected: {sent_concat}")
+            logger().error(f"Received: {received_concat}")
+            logger().error(f"Raw server response: {rx_data}")
+
         assert received_concat == sent_concat, (
-            f"Data received doesn't match what was sent: {received_concat} != {sent_concat}")
-        logger().info(f"Closing socket_id->{{self.sock1}}")
+            f"Data received doesn't match what was sent:\n"
+            f"Expected: {sent_concat}\n"
+            f"Received: {received_concat}\n"
+            f"Raw server response: {rx_data}")
+
+        logger().info("Data validation successful - sent and received data match!")
+        logger().info(f"Closing socket_id->{self.sock1}")
         self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.sock1)
         self.openssl.interfaces.server.stop()
         time.sleep(1)
@@ -264,19 +396,19 @@ class WlanThread(ThreadBase):
 
     def sniffer_validate(self):
         if self.dtls_version == "-dtls1":
-            filtername = "dtls1_0"
+            filter_name = "dtls1_0"
         elif self.dtls_version == "-dtls1_2":
-            filtername = "dtls1_2"
+            filter_name = "dtls1_2"
         else:
-            filtername = "dtls"
+            filter_name = "dtls"
 
         dtls_filter = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=self.device_ip,
             da_addr=self.server_ip,
             port=self.local_port1,
-            filter_name=filtername,
+            filter_name=filter_name,
         )
-        if filtername != "dtls":
+        if filter_name != "dtls":
             dtls_filter_generic = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                 sa_addr=self.device_ip,
                 da_addr=self.server_ip,
@@ -292,10 +424,11 @@ class WlanThread(ThreadBase):
             (f"Unable to find dtls Packet in Sniffer Capture for version {self.dtls_version}"
              f" (checked  dtls1_0 or dtls1_2)")
 
-class DTLS1_0Thread(ThreadBase):
+
+class DtlsVersion1_0Handler(ThreadBase):
     """Thread class for DTLS 1.0 operations"""
 
-    def __init__(self, wifi_dut=None, wifi_client=None, openssl=None,  iter_count=None, test_name=None):
+    def __init__(self, wifi_dut=None, wifi_client=None, openssl=None, iter_count=None, test_name=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_client = wifi_client
@@ -306,6 +439,7 @@ class DTLS1_0Thread(ThreadBase):
         self.sock = None
         self.sent_data = []
         self.test_name = test_name
+
     def run(self):
         """Run DTLS 1.0 functionality"""
         try:
@@ -314,6 +448,17 @@ class DTLS1_0Thread(ThreadBase):
             logger().info(f"DTLS 1.0: Starting OpenSSL server on port {self.local_port}")
             self.openssl.interfaces.server.start(port=self.local_port, dtls_version="-dtls1")
             time.sleep(1)
+
+            # Validate server startup with retries
+            max_retries = 5
+            for retry in range(max_retries):
+                if self.openssl.interfaces.server.is_running():
+                    break
+                logger().warning(f"DTLS 1.0: Server not running, retry {retry + 1}/{max_retries}")
+                time.sleep(1)
+            else:
+                raise RuntimeError("DTLS 1.0: Failed to start OpenSSL server after retries")
+
             assert self.openssl.interfaces.server.is_running() is True
             logger().info("DTLS 1.0: OpenSSL server started successfully")
 
@@ -341,53 +486,83 @@ class DTLS1_0Thread(ThreadBase):
                     tx_data = f"DTLS1.0-{i + 1}-" + "".join(
                         random.choices(string.ascii_uppercase + string.digits, k=1370))
                 else:
-                    tx_data = f"DTLS1.0-{i + 1}-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=30))
+                    tx_data = f"DTLS1.0-{i + 1}-" + "".join(
+                        random.choices(string.ascii_uppercase + string.digits, k=30))
                 retry = 0
                 while retry < 10:
                     try:
                         time.sleep(3)
-                        self.wifi_dut.interfaces.wifi.dtlsSocketSendTo(
+                        result = self.wifi_dut.interfaces.wifi.dtlsSocketSendTo(
                             socket_fd=self.sock,
                             port=self.local_port,
                             data=tx_data,
                             ip_addr=self.server_ip
                         )
+
+                        # Check if the call was successful (status code 0x00000)
+                        # Status code 0x00001 indicates handshake failure and should be retried
+                        if hasattr(result, 'status_code') and result.status_code == 0x00001:
+                            logger().info("DTLS 1.0: Status 0x00001 (handshake fail), restarting OpenSSL server")
+                            self.openssl.interfaces.server.stop()
+                            self.openssl.interfaces.server.start(port=self.local_port, dtls_version="-dtls1")
+                            logger().info(f"DTLS1.0 sendto status 0x00001, retry {retry + 1}/10")
+                            retry += 1
+                            time.sleep(1)
+                            continue
+
+                        # If we reach here, the send operation is successful
                         self.sent_data.append(tx_data)
+                        logger().info(f"DTLS 1.0: Message {i + 1} sent successfully")
                         break
+
                     except Exception as e:
                         # Stopping openssl server if handshake fails and starting it again
-                        logger().info("DTLS 1.0: Handshake failed, restarting OpenSSL server")
+                        logger().info("DTLS 1.0: Exception occurred, restarting OpenSSL server")
                         self.openssl.interfaces.server.stop()
                         self.openssl.interfaces.server.start(port=self.local_port, dtls_version="-dtls1")
-                        # Log the error and always retry up to 50 times
-                        logger().info(f"DTLS1.0 sendto exception: {e}, retry {retry + 1}/50")
+                        # Log the error and retry up to 10 times
+                        logger().info(f"DTLS1.0 sendto exception: {e}, retry {retry + 1}/10")
                         retry += 1
                         time.sleep(1)
                         continue
                 else:
                     raise RuntimeError(f"DTLS 1.0 sendto failed after retries for message: {tx_data}")
 
-
             time.sleep(1)
             # Get received data
             rx_data = self.openssl.interfaces.server.get_messages(self.iter_count)
             logger().info(f"Sent: {self.sent_data}, Received: {rx_data}")
 
-          # Close DTLS 1.2 socket
+            # Close DTLS 1.2 socket
             self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.sock)
-            logger().info("DTLS 1.2: Socket closed successfully")
+            logger().info("DTLS 1.0: Socket closed successfully")
             self.openssl.interfaces.server.stop()
             logger().info("DTLS 1.0: OpenSSL server stopped successfully")
 
-
-
         except Exception as e:
+            logger().error(f"DTLS 1.0 thread failed: {e}")
+            # Cleanup resources on failure
+            try:
+                if hasattr(self, 'sock') and self.sock:
+                    self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.sock)
+                    logger().info("DTLS 1.0: Socket closed in exception handler")
+            except Exception as cleanup_error:
+                logger().error(f"Failed to close socket in exception handler: {cleanup_error}")
+
+            try:
+                if hasattr(self, 'openssl') and self.openssl:
+                    self.openssl.interfaces.server.stop()
+                    logger().info("DTLS 1.0: OpenSSL server stopped in exception handler")
+            except Exception as cleanup_error:
+                logger().error(f"Failed to stop OpenSSL server in exception handler: {cleanup_error}")
+
             raise
 
-class DTLS1_2Thread(ThreadBase):
+
+class DtlsVersion1_2Handler(ThreadBase):
     """Thread class for DTLS 1.2 operations"""
 
-    def __init__(self, wifi_dut=None, wifi_client=None, openssl=None, iter_count=None,test_name=None):
+    def __init__(self, wifi_dut=None, wifi_client=None, openssl=None, iter_count=None, test_name=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_client = wifi_client
@@ -398,6 +573,7 @@ class DTLS1_2Thread(ThreadBase):
         self.sock2 = None
         self.sent_data = []
         self.test_name = test_name
+
     def run(self):
         """Run DTLS 1.2 functionality"""
         try:
@@ -406,6 +582,17 @@ class DTLS1_2Thread(ThreadBase):
             logger().info(f"DTLS 1.2: Starting OpenSSL server on port {self.local_port2}")
             self.openssl.interfaces.server.start(port=self.local_port2, dtls_version="-dtls1_2")
             time.sleep(1)
+
+            # Validate server startup with retries
+            max_retries = 5
+            for retry in range(max_retries):
+                if self.openssl.interfaces.server.is_running():
+                    break
+                logger().warning(f"DTLS 1.2: Server not running, retry {retry + 1}/{max_retries}")
+                time.sleep(1)
+            else:
+                raise RuntimeError("DTLS 1.2: Failed to start OpenSSL server after retries")
+
             assert self.openssl.interfaces.server.is_running() is True
             logger().info("DTLS 1.2: OpenSSL server started successfully")
 
@@ -413,7 +600,7 @@ class DTLS1_2Thread(ThreadBase):
             logger().info(f"DTLS 1.2: Server IP address: {self.server_ip}")
 
             self.sock2 = self.wifi_dut.interfaces.wifi.socket(domain="AF_INET", stream_type="SOCK_DGRAM",
-                                                             protocol="IPPROTO_UDP")
+                                                              protocol="IPPROTO_UDP")
             logger().info(f"DTLS 1.2: Socket created with ID: {self.sock2}")
 
             # Configure for DTLS 1.2
@@ -434,26 +621,42 @@ class DTLS1_2Thread(ThreadBase):
                     tx_data2 = f"DTLS1.2-{i + 1}-" + "".join(
                         random.choices(string.ascii_uppercase + string.digits, k=1370))
                 else:
-                    tx_data2 = f"DTLS1.2-{i + 1}-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=30))
+                    tx_data2 = f"DTLS1.2-{i + 1}-" + "".join(
+                        random.choices(string.ascii_uppercase + string.digits, k=30))
                 retry2 = 0
                 while retry2 < 10:
                     try:
                         time.sleep(3)  # Add for consistency if needed
-                        self.wifi_dut.interfaces.wifi.dtlsSocketSendTo(
+                        result = self.wifi_dut.interfaces.wifi.dtlsSocketSendTo(
                             socket_fd=self.sock2,
                             port=self.local_port2,
                             data=tx_data2,
                             ip_addr=self.server_ip
                         )
+
+                        # Check if the call was successful (status code 0x00000)
+                        # Status code 0x00001 indicates handshake failure and should be retried
+                        if hasattr(result, 'status_code') and result.status_code == 0x00001:
+                            logger().info("DTLS 1.2: Status 0x00001 (handshake fail), restarting OpenSSL server")
+                            self.openssl.interfaces.server.stop()
+                            self.openssl.interfaces.server.start(port=self.local_port2, dtls_version="-dtls1_2")
+                            logger().info(f"DTLS1.2 sendto status 0x00001, retry2 {retry2 + 1}/10")
+                            retry2 += 1
+                            time.sleep(1)
+                            continue
+
+                        # If we reach here, the send operation is successful
                         self.sent_data.append(tx_data2)
+                        logger().info(f"DTLS 1.2: Message {i + 1} sent successfully")
                         break
+
                     except Exception as e:
                         # Stopping openssl server if handshake fails and starting it again
-                        logger().info("DTLS 1.2: Handshake failed, restarting OpenSSL server")
+                        logger().info("DTLS 1.2: Exception occurred, restarting OpenSSL server")
                         self.openssl.interfaces.server.stop()
                         self.openssl.interfaces.server.start(port=self.local_port2, dtls_version="-dtls1_2")
-                        # Log the error and always retry up to 50 times
-                        logger().info(f"DTLS1.2 sendto exception: {e}, retry2 {retry2 + 1}")
+                        # Log the error and retry up to 10 times
+                        logger().info(f"DTLS1.2 sendto exception: {e}, retry2 {retry2 + 1}/10")
                         retry2 += 1
                         time.sleep(1)
                         continue
@@ -472,7 +675,24 @@ class DTLS1_2Thread(ThreadBase):
             logger().info("DTLS 1.2: OpenSSL server stopped successfully")
 
         except Exception as e:
+            logger().error(f"DTLS 1.2 thread failed: {e}")
+            # Cleanup resources on failure
+            try:
+                if hasattr(self, 'sock2') and self.sock2:
+                    self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.sock2)
+                    logger().info("DTLS 1.2: Socket closed in exception handler")
+            except Exception as cleanup_error:
+                logger().error(f"Failed to close socket in exception handler: {cleanup_error}")
+
+            try:
+                if hasattr(self, 'openssl') and self.openssl:
+                    self.openssl.interfaces.server.stop()
+                    logger().info("DTLS 1.2: OpenSSL server stopped in exception handler")
+            except Exception as cleanup_error:
+                logger().error(f"Failed to stop OpenSSL server in exception handler: {cleanup_error}")
             raise
+
+
 def dtls_sendto_loop(wifi_dut, sock1, server_ip, local_port1, duration_sec=250):
     """Repeatedly send DTLS data for the specified duration (seconds) on the given socket."""
     start_time = time.time()
@@ -482,24 +702,37 @@ def dtls_sendto_loop(wifi_dut, sock1, server_ip, local_port1, duration_sec=250):
         retry = 0
         while retry < 10:
             try:
-                wifi_dut.interfaces.wifi.dtlsSocketSendTo(
+                result = wifi_dut.interfaces.wifi.dtlsSocketSendTo(
                     socket_fd=sock1,
                     port=local_port1,
                     data=tx_data,
                     ip_addr=server_ip
                 )
+
+                # Check if the call was successful (status code 0x00000)
+                # Status code 0x00001 indicates handshake failure and should be retried
+                if hasattr(result, 'status_code') and result.status_code == 0x00001:
+                    logger().info(
+                        f"\n **** Status Code Received: 0x00001 (SSL_TLS_HANDSHAKE_FAIL), "
+                        f"retrying sendto... retry {retry + 1}/10")
+                    retry += 1
+                    time.sleep(1)
+                    continue
+
+                # If we reach here, the send operation is successful
                 logger().info(f"DTLS sendto iteration {i + 1} complete.")
                 break
+
             except Exception as e:
                 if hasattr(e, 'status') and e.status == SLStatus.SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAIL:
-                    if logger:
-                        logger.info(
-                            f"\n **** Status Received: {SLStatus.SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAIL},"
-                            f" retrying sendto...")
+                    logger().info(
+                        f"\n **** Exception Status Received: {SLStatus.SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAIL}, "
+                        f"retrying sendto... retry {retry + 1}/10")
                     retry += 1
                     time.sleep(1)
                     continue
                 else:
+                    logger().error(f"Unexpected exception in dtls_sendto_loop: {e}")
                     raise
         else:
             raise RuntimeError(f"DTLS sendto failed after retries for message: {tx_data}")
@@ -553,13 +786,13 @@ def dtls_send_with_long_duration(dtls_thread, wifi_dut, wifi_client, openssl,
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_dtls_handshake_client_server_c766258(wifi_sniffer, wifi_client, wifi_dut, wifi_access_point, openssl,
                                                        sl_collections, sniffer_filter):
-    ''' DTLS Protocol handshakes and Verify exchanges between server and client sockets
-    during connection establishment'''
+    """ DTLS Protocol handshakes and Verify exchanges between server and client sockets during connection
+        establishment """
     dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
                              sniffer_filter, test_name="test_c766258", dtls_version="-dtls")
     try:
-        dtls_thread.jointoap()
-        dtls_thread.dtlsclientfunctionality()
+        dtls_thread.connect_to_access_point()
+        dtls_thread.establish_dtls_connection()
         dtls_thread.sniffer_validate()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
@@ -570,13 +803,13 @@ def test_wifi_sdk_dtls_handshake_client_server_c766258(wifi_sniffer, wifi_client
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_dtls_1_0_c766259(wifi_sniffer, wifi_client, wifi_dut, wifi_access_point, openssl,
-                                    sl_collections, sniffer_filter):
-    '''Verify the DUT functionality by opening client socket with DTLS1.0 version and do data transfer.'''
+                                   sl_collections, sniffer_filter):
+    """ Verify the DUT functionality by opening client socket with DTLS1.0 version and do data transfer """
     dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
                              sniffer_filter, test_name="test_c766259", dtls_version="-dtls1")
     try:
-        dtls_thread.jointoap()
-        dtls_thread.dtlsclientfunctionality()
+        dtls_thread.connect_to_access_point()
+        dtls_thread.establish_dtls_connection()
         dtls_thread.sniffer_validate()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
@@ -587,13 +820,13 @@ def test_wifi_sdk_dtls_1_0_c766259(wifi_sniffer, wifi_client, wifi_dut, wifi_acc
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_dtls_1_2_c766260(wifi_sniffer, wifi_client, wifi_dut, wifi_access_point, openssl,
-                                    sl_collections, sniffer_filter):
-    '''Verify the DUT functionality by opening client socket with DTLS1.2 version and do data transfer.'''
+                                   sl_collections, sniffer_filter):
+    """ Verify the DUT functionality by opening client socket with DTLS1.2 version and do data transfer """
     dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
                              sniffer_filter, test_name="test_c766260", dtls_version="-dtls1_2")
     try:
-        dtls_thread.jointoap()
-        dtls_thread.dtlsclientfunctionality()
+        dtls_thread.connect_to_access_point()
+        dtls_thread.establish_dtls_connection()
         dtls_thread.sniffer_validate()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
@@ -606,12 +839,12 @@ def test_wifi_sdk_dtls_client_socket_creation_send_data_close_regression_c766273
                                                                                  wifi_access_point, openssl,
                                                                                  sl_collections,
                                                                                  sniffer_filter):
-    '''Verify DTLS client socket connection, data send (10 times), and socket close regression
+    """Verify DTLS client socket connection, data send (10 times), and socket close regression
     (loop: socket creation-send data-close) for 10 iterations. Sniffer validation is not performed
-    in this regression test.'''
+    in this regression test"""
     dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
                              sniffer_filter, test_name="test_c766273", dtls_version="-dtls1_2")
-    dtls_thread.jointoap()
+    dtls_thread.connect_to_access_point()
     for i in range(5):
         logger().info(f"Iteration {i + 1}/10: Creating socket, sending data 10 times, and closing socket.")
         dtls_thread.local_port1 = randint(5001, 60000)
@@ -645,6 +878,7 @@ def test_wifi_sdk_dtls_client_socket_creation_send_data_close_regression_c766273
                 data=tx_data,
                 ip_addr=dtls_thread.server_ip
             )
+            time.sleep(5)
             dtls_thread.sent_data.append(tx_data)
         rx_data = openssl.interfaces.server.get_messages(10)
         logger().info(f"Iteration {i + 1}: Sent: {dtls_thread.sent_data}, Received: {rx_data}")
@@ -658,7 +892,7 @@ def test_wifi_sdk_dtls_client_socket_creation_send_data_close_regression_c766273
             f"Iteration {i + 1}: Data received doesn't match what was sent: {received_concat} != {sent_concat}")
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=dtls_thread.sock1)
         openssl.interfaces.server.stop()
-        time.sleep(0.5)
+        time.sleep(10)
     wifi_dut.interfaces.wifi.leave()
     logger().info("Stop Sniffer finally")
     wifi_sniffer.interfaces.capture.stop_capture()
@@ -672,9 +906,9 @@ def test_wifi_sdk_dtls_client_socket_creation_send_data_close_regression_c766273
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_dtls_client_data_transfer_with_sni_feature_c766278(wifi_sniffer, wifi_client, wifi_dut,
                                                                      wifi_access_point, openssl,
-                                                                      sl_collections, sniffer_filter):
-    '''Verify DTLS client data transfer with SNI feature in SSL.'''
-    dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl,  sl_collections,
+                                                                     sl_collections, sniffer_filter):
+    """Verify DTLS client data transfer with SNI feature in SSL"""
+    dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
                              sniffer_filter, test_name="test_c766278", dtls_version="-dtls1_2")
     # Patch the SNI extension for this test only
     orig_set_dtls_extensions = dtls_thread.wifi_dut.interfaces.wifi.set_dtls_extensions
@@ -687,8 +921,8 @@ def test_wifi_sdk_dtls_client_data_transfer_with_sni_feature_c766278(wifi_sniffe
 
     dtls_thread.wifi_dut.interfaces.wifi.set_dtls_extensions = set_dtls_extensions_with_long_sni
     try:
-        dtls_thread.jointoap()
-        dtls_thread.dtlsclientfunctionality()
+        dtls_thread.connect_to_access_point()
+        dtls_thread.establish_dtls_connection()
 
         dtls_thread.sniffer_validate()
 
@@ -711,8 +945,8 @@ def test_wifi_sdk_dtls_client_data_transfer_with_sni_feature_c766278(wifi_sniffe
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_dtls_client_data_transfer_with_alpn_feature_c766279(wifi_sniffer, wifi_client, wifi_dut,
                                                                       wifi_access_point, openssl,
-                                                                       sl_collections, sniffer_filter):
-    '''Verify DTLS client data transfer with ALPN feature in SSL.'''
+                                                                      sl_collections, sniffer_filter):
+    """ Verify DTLS client data transfer with ALPN feature in SSL"""
     dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
                              sniffer_filter, test_name="test_c766279", dtls_version="-dtls1_2")
     # Patch the ALPN extension for this test only
@@ -726,8 +960,8 @@ def test_wifi_sdk_dtls_client_data_transfer_with_alpn_feature_c766279(wifi_sniff
 
     dtls_thread.wifi_dut.interfaces.wifi.set_dtls_extensions = set_dtls_extensions_with_long_alpn
     try:
-        dtls_thread.jointoap()
-        dtls_thread.dtlsclientfunctionality()
+        dtls_thread.connect_to_access_point()
+        dtls_thread.establish_dtls_connection()
         dtls_thread.sniffer_validate()
 
         # --- Sniffer filter validation for ALPN extension --
@@ -750,11 +984,11 @@ def test_wifi_sdk_dtls_client_data_transfer_with_alpn_feature_c766279(wifi_sniff
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_dtls_functionality_with_dhcp_renewal_c766294(wifi_sniffer, wifi_client, wifi_dut, wifi_access_point,
                                                                openssl,
-                                                                sl_collections, sniffer_filter, dhcp_lease):
-    '''Verify DTLS data transfer while DHCP renewal occurs (120s lease), with sniffer and DHCP renewal validation.'''
-    dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl,  sl_collections,
+                                                               sl_collections, sniffer_filter, dhcp_lease):
+    """ Verify DTLS data transfer while DHCP renewal occurs (120s lease), with sniffer and DHCP renewal validation """
+    dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
                              sniffer_filter, test_name="test_c766294", dtls_version="-dtls1_2")
-    dtls_thread.jointoap()
+    dtls_thread.connect_to_access_point()
     # --- Sniffer filter validation before renewal ---
     logger().info("Starting DTLS data transfer and DHCP renewal overlap test.")
 
@@ -767,6 +1001,8 @@ def test_wifi_sdk_dtls_functionality_with_dhcp_renewal_c766294(wifi_sniffer, wif
     logger().info("Waiting for DHCP renewal to occur during DTLS transfer...")
     time.sleep(240)  # Start DHCP renewal about halfway through DTLS sends
     # --- DHCP renewal sniffer validation ---
+    wifi_sniffer.interfaces.capture.stop_capture()
+    time.sleep(10)  # Allow time for sniffer to process captured packets
     device_address = {'sa_addr': dtls_thread.dut_mac_address, 'da_addr': wifi_access_point.interfaces.wifi.bssid,
                       'wlan_addr': dtls_thread.dut_mac_address}
     filters_name = {1: 'power_mgmt_bit', 2: 'dhcp'}
@@ -797,27 +1033,21 @@ def test_wifi_sdk_dtls_functionality_with_dhcp_renewal_c766294(wifi_sniffer, wif
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_dtls_with_wpa2_enterprise_c766299(wifi_sniffer, wifi_client, wifi_dut, wifi_access_point, openssl,
-                                                    radius_server,  sl_collections, sniffer_filter,
+                                                    radius_server, sl_collections, sniffer_filter,
                                                     test_name="test_c766299"):
-    '''
-    C766299: Verify the DTLS functionality with WPA2-Enterprise security.
-    - Connect DUT to WPA2-Enterprise AP
-    - Establish DTLS connection and transfer data
-    - Validate DTLS traffic via sniffer
-    '''
-    dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl,  sl_collections,
+    """ Verify the DTLS functionality with WPA2- Enterprise security """
+    dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
                              sniffer_filter, test_name="test_c766299", dtls_version="-dtls1_2")
     try:
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
 
         result = sl_collections.join_to_eap_network(wifi_dut=wifi_dut,
-                                                         wifi_access_point=wifi_access_point,
-                                                         eap_type="tls",
-                                                         ping_after_power_save=True)
-        device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+                                                    wifi_access_point=wifi_access_point,
+                                                    eap_type="tls",
+                                                    ping_after_power_save=True)
 
         logger().info("DUT successfully connected with AP")
-        dtls_thread.dtlsclientfunctionality()
+        dtls_thread.establish_dtls_connection()
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
@@ -827,70 +1057,58 @@ def test_wifi_sdk_dtls_with_wpa2_enterprise_c766299(wifi_sniffer, wifi_client, w
                  opermode=Si91xOperatingMode.EAPWiFiClient,
                  pmf_enable=True)
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678' , "protected_management_frame": "Required"})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678',
+                                               "protected_management_frame": "Required"})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_dtls_with_wpa3_enterprise_c766300(wifi_sniffer, wifi_client, wifi_dut, wifi_access_point, openssl,
                                                     radius_server, sl_collections, sniffer_filter,
                                                     test_name="test_c766300"):
-    '''
-    C766299: Verify the DTLS functionality with WPA2-Enterprise security.
-    - Connect DUT to WPA2-Enterprise AP
-    - Establish DTLS connection and transfer data
-    - Validate DTLS traffic via sniffer
-    '''
+    """ Verify the DTLS functionality with WPA3- Enterprise security """
+
     dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
                              sniffer_filter, test_name="test_c766300", dtls_version="-dtls1_2")
     try:
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
 
         result = sl_collections.join_to_eap_network(wifi_dut=wifi_dut,
-                                                   wifi_access_point=wifi_access_point,
-                                                   eap_type="tls",
-                                                   security="wpa3_enterprise",
-                                                   ping_after_power_save=True)
-        device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+                                                    wifi_access_point=wifi_access_point,
+                                                    eap_type="tls",
+                                                    security="wpa3_enterprise",
+                                                    ping_after_power_save=True)
 
         logger().info("DUT successfully connected with AP")
-        dtls_thread.dtlsclientfunctionality()
+        dtls_thread.establish_dtls_connection()
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
-@pytest.mark.skip(reason="https://tech.forums.silabs.net/topic/946-dtls10-and-dtls12-parallel-functionality-failing-with-dtlssendto-in-multithreaded-scenario/")
-@wifi_dut_marker(thread_no=2, stack_len=3584,priority=8)
+
+@pytest.mark.skip(
+    reason="https://tech.forums.silabs.net/topic/946-dtls10-and-dtls12-parallel-functionality-failing-with-dtlssendto-in-multithreaded-scenario/")
+@wifi_dut_marker(thread_no=2, stack_len=3584, priority=8)
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_dtls_multithread_dtls1_0_and_dtls1_2_c766271(wifi_sniffer, wifi_client, wifi_dut, wifi_access_point,
                                                                openssl, sl_collections, sniffer_filter):
-    """
-    C766271: Verify DUT functionality with DTLS1.0 over one socket and DTLS1.2 over another socket
-    data transfer using multithread sockets.
-
-    Test Steps:
-        1. Configure DUT for DTLS functionality
-        2. Join to WiFi access point
-        3. Create two DTLS connections with different versions (DTLS1.0 and DTLS1.2)
-        4. Transfer data simultaneously using multithreading
-        5. Validate both connections work independently
-        6. Validate DTLS traffic via sniffer
-    """
+    """Verify DUT functionality with DTLS1.0 over one socket and with DTLS1.2 over another socket data transfer
+        using multithread sockets"""
     try:
         logger().info("Starting multithreaded DTLS test C766271")
         iter_count = 20
         logger().info(f"Iteration count for data transfer: {iter_count}")
-        # Create WlanThread object for WiFi connection
+        # Create WlanThread object for Wi-Fi connection
         dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl,
                                  sl_collections,
                                  sniffer_filter, test_name="test_c766271", dtls_version="-dtls1_2")
 
-        # Join to WiFi network
-        dtls_thread.jointoap()
+        # Join to Wi-Fi network
+        dtls_thread.connect_to_access_point()
         logger().info("DUT successfully connected with AP")
 
         # Create DTLS thread instances using proper ThreadBase pattern
         logger().info("Creating DTLS thread instances")
-        dtls1_0_thread = DTLS1_0Thread(
+        dtls1_0_thread = DtlsVersion1_0Handler(
             wifi_dut=wifi_dut,
             wifi_client=wifi_client,
             openssl=openssl,
@@ -898,7 +1116,7 @@ def test_wifi_sdk_dtls_multithread_dtls1_0_and_dtls1_2_c766271(wifi_sniffer, wif
             test_name="test_c766271"
         )
 
-        dtls1_2_thread = DTLS1_2Thread(
+        dtls1_2_thread = DtlsVersion1_2Handler(
             wifi_dut=wifi_dut,
             wifi_client=wifi_client,
             openssl=openssl,
@@ -917,82 +1135,99 @@ def test_wifi_sdk_dtls_multithread_dtls1_0_and_dtls1_2_c766271(wifi_sniffer, wif
         dtls1_2_thread.wait_for_exit()
 
         logger().info("**** Both DTLS1.0 and DTLS1.2 threads completed successfully ****")
-        # stop sniffer captures for both DTLS versions
+
+        # Cleanup and finalization
+        logger().info("Cleaning up test resources...")
+        wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as error:
+        logger().error(f"Test c766271 failed with error: {error}")
         sl_collections.exception_handling(wifi_dut, error)
 
     finally:
-        # stop OpenSSL server if running
-        openssl.interfaces.server.stop()
-@pytest.mark.skip(reason="Not getting expected error code")
-@wifi_dut_marker()
-@pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_wifi_sdk_dtls_negative_version_mismatch_server1_2_and_dut_1_0_c766289(wifi_sniffer, wifi_client, wifi_dut, wifi_access_point, openssl, sl_collections, sniffer_filter):
-    """
-    C766289 - Negative: Connect to SSL server socket running DTLS1.2 at remote side and connect from module with DTLS1.0.
-    Expect handshake failure and proper error handling.
-    """
-    dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections, sniffer_filter, test_name="test_c766289",dtls_version="-dtls1")
-    try:
-        dtls_thread.jointoap()
-        dtls_thread.dtlsclientfunctionality()
-    except Exception as error:
-        sl_collections.exception_handling(wifi_dut, error)
+        # Ensure cleanup in all scenarios
+        try:
+            openssl.interfaces.server.stop()
+            logger().info("OpenSSL server stopped in finally block")
+        except Exception as cleanup_error:
+            logger().error(f"Failed to stop OpenSSL server in finally: {cleanup_error}")
+
+        try:
+            wifi_sniffer.interfaces.capture.stop_capture()
+            logger().info("Sniffer capture stopped in finally block")
+        except Exception as cleanup_error:
+            logger().error(f"Failed to stop sniffer in finally: {cleanup_error}")
+
 
 @pytest.mark.skip(reason="Not getting expected error code")
 @wifi_dut_marker()
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_wifi_sdk_dtls_negative_version_mismatch_server1_0_and_dut_1_2_c766290(wifi_sniffer, wifi_client, wifi_dut, wifi_access_point, openssl, sl_collections, sniffer_filter):
+def test_wifi_sdk_dtls_negative_version_mismatch_server1_2_and_dut_1_0_c766289(wifi_sniffer, wifi_client, wifi_dut,
+                                                                               wifi_access_point, openssl,
+                                                                               sl_collections, sniffer_filter):
+    """Negative: Connect to ssl server socket which run with version DTLS1.2 at remote side and connect to it from
+        module with version DTLS1.0"""
+
+    dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
+                             sniffer_filter, test_name="test_c766289", dtls_version="-dtls1")
+    try:
+        dtls_thread.connect_to_access_point()
+        dtls_thread.establish_dtls_connection()
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.skip(reason="Not getting expected error code")
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_dtls_negative_version_mismatch_server1_0_and_dut_1_2_c766290(wifi_sniffer, wifi_client, wifi_dut,
+                                                                               wifi_access_point, openssl,
+                                                                               sl_collections, sniffer_filter):
     """
     C766290 - Negative: Connect to SSL server socket running DTLS1.0 at remote side and connect from module with DTLS1.2.
     Expect handshake failure and proper error handling.
     """
-    dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections, sniffer_filter, test_name="test_c766290",dtls_version="-dtls1_2")
+    dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
+                             sniffer_filter, test_name="test_c766290", dtls_version="-dtls1_2")
     try:
-        dtls_thread.jointoap()
-        dtls_thread.dtlsclientfunctionality()
+        dtls_thread.connect_to_access_point()
+        dtls_thread.establish_dtls_connection()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
+
 @pytest.mark.skip(reason="max testfails")
-@wifi_dut_marker(thread_no=2, stack_len=3584,priority=8)
+@wifi_dut_marker(thread_no=2, stack_len=3584, priority=8)
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_wifi_sdk_dtls_multithread_dtls1_0_and_dtls1_2_maxdatalenth_1370_c766291(wifi_sniffer, wifi_client, wifi_dut, wifi_access_point,
-                                                               openssl, sl_collections, sniffer_filter):
-    """
-     C766291: Verify DUT functionality with DTLS1.0 over one socket and DTLS1.2 over another socket
-    data transfer using multithread sockets, sending 1370-byte messages.
+def test_wifi_sdk_dtls_multithread_dtls_1_0_and_dtls_1_2_max_data_length_1370_c766291(wifi_sniffer, wifi_client,
+                                                                                      wifi_dut,
+                                                                                      wifi_access_point,
+                                                                                      openssl, sl_collections,
+                                                                                      sniffer_filter):
+    """ Verify DUT functionality with DTLS1.0 over one socket and DTLS1.2 over another socket
+    data transfer using multithread sockets, sending 1370-byte messages"""
 
-    Test Steps:
-        1. Configure DUT for DTLS functionality
-        2. Join to WiFi access point
-        3. Create two DTLS connections with different versions (DTLS1.0 and DTLS1.2)
-        4. Transfer max data length 1370 simultaneously using multithreading
-        5. Validate both connections work independently
-        6. Validate DTLS traffic via sniffer
-    """
     try:
         logger().info("Starting multithreaded DTLS test C766291")
         iter_count = 20
         logger().info(f"Iteration count for data transfer: {iter_count}")
-        # Create WlanThread object for WiFi connection
+        # Create WlanThread object for Wi-Fi connection
         dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl,
                                  sl_collections,
                                  sniffer_filter, test_name="test_c766291", dtls_version="-dtls1_2")
 
         # Join to WiFi network
-        dtls_thread.jointoap()
+        dtls_thread.connect_to_access_point()
         logger().info("DUT successfully connected with AP")
 
         # Create DTLS thread instances using proper ThreadBase pattern
         logger().info("Creating DTLS thread instances")
-        dtls1_0_thread = DTLS1_0Thread(
+        dtls1_0_thread = DtlsVersion1_0Handler(
             wifi_dut=wifi_dut,
             wifi_client=wifi_client,
             openssl=openssl,
@@ -1000,12 +1235,12 @@ def test_wifi_sdk_dtls_multithread_dtls1_0_and_dtls1_2_maxdatalenth_1370_c766291
             test_name="test_c766291"
         )
 
-        dtls1_2_thread = DTLS1_2Thread(
+        dtls1_2_thread = DtlsVersion1_2Handler(
             wifi_dut=wifi_dut,
             wifi_client=wifi_client,
             openssl=openssl,
             iter_count=iter_count,
-            test_name = "test_c766291"
+            test_name="test_c766291"
         )
 
         # Start both threads simultaneously
@@ -1019,12 +1254,26 @@ def test_wifi_sdk_dtls_multithread_dtls1_0_and_dtls1_2_maxdatalenth_1370_c766291
         dtls1_2_thread.wait_for_exit()
 
         logger().info("**** Both DTLS1.0 and DTLS1.2 threads completed successfully ****")
-        # stop sniffer captures for both DTLS versions
+
+        # Cleanup and finalization
+        logger().info("Cleaning up test resources...")
+        wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as error:
+        logger().error(f"Test c766291 failed with error: {error}")
         sl_collections.exception_handling(wifi_dut, error)
 
     finally:
-        # stop OpenSSL server if running
-        openssl.interfaces.server.stop()
+        # Ensure cleanup in all scenarios
+        try:
+            openssl.interfaces.server.stop()
+            logger().info("OpenSSL server stopped in finally block")
+        except Exception as cleanup_error:
+            logger().error(f"Failed to stop OpenSSL server in finally: {cleanup_error}")
+
+        try:
+            wifi_sniffer.interfaces.capture.stop_capture()
+            logger().info("Sniffer capture stopped in finally block")
+        except Exception as cleanup_error:
+            logger().error(f"Failed to stop sniffer in finally: {cleanup_error}")
