@@ -25,7 +25,6 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xCustomFeatureBitMap,
     Si91xExtCustomFeatureBitMap,
     Si91xExtTCPIPFeatureBitMap,
-    Si91xFeatureFrameRequest,
     Si91xModuleType,
 )
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
