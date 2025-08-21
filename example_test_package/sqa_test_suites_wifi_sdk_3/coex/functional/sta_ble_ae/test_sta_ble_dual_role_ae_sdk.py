@@ -95,7 +95,7 @@ class BleAEThread(ThreadBase):
             central=None, print_all_adv_devices=1, data_len=0, data_len_s2=None,
             pri_adv_phy=1, sec_adv_phy=1, adv_data="", adv_handle=0, duration=0, max_ae_events=0,
             min_interval=48, max_interval=48, min_interval_s2=64, max_interval_s2=64, sec_adv_max_skip=1,
-            adv_async_required=0, own_address_type=0, peer_addr_type=0, random_address=None,
+            adv_async_required=0, own_address_type=0, peer_addr_type=0, random_address=None, test_case=None,
             random_address_s2=None, ConnIntervalMax=160, ConnIntervalMin=160, set_smp=None, set_smp_remote1=None,
             scan_req_notify_enable=1, scan_resp_len=0, whitelist=None, scanning_whitelist=None,
             adv_filter_policy=0, scanning_filter_policy=0, powersave_p=None, powersave_c=None, ble_client_address_2=None,
@@ -182,6 +182,7 @@ class BleAEThread(ThreadBase):
         self.write_handle = write_handle
         self.ble_client_address_2 = ble_client_address_2
         self.result = None
+        self.test_case = test_case
 
     def configure_ble_device(self):
         BleAEThread.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=self.set_smp)
@@ -555,48 +556,18 @@ class BleAEThread(ThreadBase):
         logger().info(f"\nDevice state: {state_int}")
         assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
 
-        """**** starting adv again from remote device 1 and main dut will scan and connect **** """
-
-        logger().info("\n\n ***** Configuring AE advertising parameters ***** \n\n")
-        self.ble_dut.interfaces.wifi.ble_get_max_no_of_supp_adv_sets(no_adv_sets=no_adv_sets)
-        adv_type = 1
-        logger().info("SET PARAMS FROM REMOTE WISECONNECT3 TO BLE DUT")
-        self.sl_collections.ble_ae_set_params_from_remote(
-            pheripheral_dev=self.remote_wiseconnect3, adv_event_prop=adv_type, own_address_type=0, peer_addr_type=0,
-            peer_address=BleAEThread.ble_dut_address, adv_handle=0, pri_adv_phy=1, sec_adv_phy=1,
-            scan_req_notify_enable=1,
-            adv_filter_policy=0, sec_adv_max_skip=1, adv_min_interval=48, adv_max_interval=48)
-        logger().info("\n ***** Successfully Configured AE advertising parameters ***** \n\n")
-
-        adv_data = "".join(random.choices(string.ascii_uppercase + string.digits, k=20))
-        logger().info(f"adv_data: {adv_data}")
-
-        self.sl_collections.ble_set_ae_data_from_remote(
-            ble_dut=self.remote_wiseconnect3, dut_address=BleAEThread.ble_client_address, adv_data_type=1,
-            data_len=len(adv_data), adv_data=adv_data, adv_handle=0)
-
-        logger().info(
-            f"\n\n ***** AE advertising Data configured successfully on {BleAEThread.ble_client_address} with data type: BLE_AE_ADV_DATA_TYPE***** \n\n")
-        self.sl_collections.ble_set_ae_data_from_remote(
-            ble_dut=self.remote_wiseconnect3, dut_address=BleAEThread.ble_client_address, adv_data_type=3,
-            data_len=len(adv_data), adv_data=adv_data, adv_handle=0, scan_resp_len=0)
-
-        self.sl_collections.ble_ae_start_advertising_from_remote(
-            ble_dut=self.remote_wiseconnect3, dut_address=BleAEThread.ble_client_address, duration=0, max_ae_events=0,
-            adv_handle=0, adv_async_required=0)
-
-        self.ble_dut.interfaces.bluetooth.ble_ae_set_scan_params(
+        self.remote_wiseconnect3.interfaces.wifi.ble_ae_set_scan_params(
             ble_addr_type=0, scanning_phys=1, scanning_filter_policy=0, scan_type=1, scan_type_sec=1, ScanInterval=48,
             ScanWindow=48, remote_addr_type=0, scan_interval_sec=48, scan_window_sec=30)
 
-        self.ble_dut.interfaces.bluetooth.ble_ae_set_scan_enable(
-            enable=1, filter_duplicates=0, duration=0, period=0, remote_address=BleAEThread.ble_client_address)
+        self.remote_wiseconnect3.interfaces.wifi.ble_ae_set_scan_enable(
+            enable=1, filter_duplicates=0, duration=0, period=0, remote_address=self.ble_client_address_2)
 
-        self.ble_dut.interfaces.wifi.ble_ae_set_scan_enable(
-            enable=0, filter_duplicates=0, duration=0, period=0, remote_address=BleAEThread.ble_client_address)
+        self.remote_wiseconnect3.interfaces.wifi.ble_ae_set_scan_enable(
+            enable=0, filter_duplicates=0, duration=0, period=0, remote_address=self.ble_client_address_2)
 
-        self.ble_dut.interfaces.bluetooth.ble_extended_connect_with_params(
-            remote_dev_addr=BleAEThread.ble_client_address, remote_addr_type=0, initiator_filter_policy=0, init_phys=7,
+        self.remote_wiseconnect3.interfaces.wifi.ble_extended_connect_with_params(
+            remote_dev_addr=self.ble_client_address_2, remote_addr_type=0, initiator_filter_policy=0, init_phys=7,
             ConnIntervalMin=160, ConnIntervalMax=160)
         time.sleep(60)
         logger().info("\nChecking connection status of BLE")
@@ -605,13 +576,14 @@ class BleAEThread(ThreadBase):
         logger().info(f"\nDevice state: {state_int}")
 
     def ble_cleanup_disconn(self):
-        self.sl_collections.ble_ae_start_advertising(
-            ble_dut=self.ble_dut, dut_address=BleAEThread.ble_dut_address, adv_enable=0, no_of_sets=1, adv_handle=0,
-                                 duration=0, max_ae_events=0)
-
-        # self.sl_collections.ble_ae_start_advertising(
-        #     ble_dut=self.remote_wiseconnect3s[0], dut_address=BleAEThread.ble_dut_address, adv_enable=0, no_of_sets=1,
-        #     adv_handle=0, duration=0, max_ae_events=0)
+        if self.test_case in [768295]:
+            self.remote_wiseconnect3.interfaces.wifi.ble_start_ae_advertising(
+                enable=0, no_of_sets=1, adv_handle=0, duration=0, max_ae_events=0)
+            time.sleep(2)
+        else:
+            self.sl_collections.ble_ae_start_advertising(
+                ble_dut=self.ble_dut, dut_address=BleAEThread.ble_dut_address, adv_enable=0, no_of_sets=1, adv_handle=0,
+                                     duration=0, max_ae_events=0)
 
         logger().info("Checking connection status of BLE")
         state = self.ble_dut.interfaces.bluetooth.ble_get_device_state()
@@ -733,23 +705,17 @@ class BleIndicationFunctionality(BleAEThread, ThreadBase):
         self.data_length = data_length
 
     def run(self):
-        logger().info(f"****** Indication Start *******")
-        sw = Stopwatch()
-        while sw.elapsed_sec < 30:
-            self.ble_dut.interfaces.bluetooth.ble_indicate_value(
-                ble_remote_dev_address=BleAEThread.ble_client_address, handle=12, data=self.data,
-                data_length=self.data_length, data_address=self.address)
-            time.sleep(5)
-
-            events = self.remote_wiseconnect3.interfaces.wifi.get_async_events()
-            for event in events:
-                if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
-                    logger().info(f"******* BLE EVENT DATA RECEIVED ON REMOTE DUT : {event.event_data} ******")
-                    received_data = re.findall(r"(\b[A-Z0-9]{20}\b)", event.event_data)
-                    logger().info(f"******* Received indication Data on Remote DUT : {received_data} ********")
-                    assert received_data == [self.data], "data mismatched"
-
-        time.sleep(5)
+        self.ble_dut.interfaces.bluetooth.ble_indicate_value(
+            ble_remote_dev_address=BleAEThread.ble_client_address, handle=3, data=self.data,
+            data_length=self.data_length, data_address=self.address)
+        time.sleep(2)
+        events = self.remote_wiseconnect3.interfaces.wifi.get_async_events()
+        for event in events:
+            if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
+                logger().info(f"******* BLE EVENT DATA RECEIVED ON REMOTE DUT : {event.event_data} ******")
+                received_data = re.findall(r"(\b[A-Z0-9]{20}\b)", event.event_data)
+                logger().info(f"******* Received indication Data on Remote DUT : {received_data} ********")
+                assert received_data == [self.data], "data mismatched"
 
 
 class WifiRejoinThread(WifiJoinThread, ThreadBase):
@@ -1027,7 +993,6 @@ def test_wifi_sdk_dual_role_and_ping_traffic_c708887(
         ble_obj.ble_cleanup_disconn()
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1534,10 +1499,9 @@ def test_wifi_sdk_dual_role_and_http_download_c768306(
         ble_obj.att_value_enable_remote()
 
         http_obj.start()
-        time.sleep(20)
+        http_obj.wait_for_exit()
         tx_obj.start()
         tx_obj.wait_for_exit()
-        http_obj.wait_for_exit()
 
         ble_obj.att_value_disable_remote()
         ble_obj.att_value_disable_dut()
@@ -1880,7 +1844,182 @@ def test_wifi_sdk_two_central_and_tcp_tx_traffic_c768303(
         ble_obj.ble_cleanup_disconn()
 
 
-@pytest.mark.skip("Invalid handle Range - Need to Debug")
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
+                        Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+            "custom_features": Si91xCustomFeatureBitMap.Default,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default |
+                                   Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                                   Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_GATT_INIT |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
+                             Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+            },
+        },
+    )
+@pytest.mark.config(
+        "remote_wiseconnect3",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
+                        Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+            "custom_features": Si91xCustomFeatureBitMap.Default,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default |
+                                   Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                                   Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
+                             Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+            },
+        },
+)
+@pytest.mark.config(
+        "remote_wiseconnect3s",
+        wifi={
+            0: {
+                "oper_mode": 0,
+                "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
+                            Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+                "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+                "custom_features": Si91xCustomFeatureBitMap.Default,
+                "ext_custom_features": Si91xExtCustomFeatureBitMap.Default |
+                                       Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                                       Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+                "bt_features": Si91xBTFeatureBitMap.Default,
+                "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE |
+                                           Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                           Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN |
+                                           Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS |
+                                           Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+                "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
+                             Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+                "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                "thread_config": {
+                    "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                    "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+                },
+            },
+        },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_dual_role_and_indication_and_tcp_tx_traffic_c768311(
+        ble_dut, remote_wiseconnect3s, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
+        wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):
+    """ Verify AE ADV (2 ADV sets) + AE scan + (Dual role) connections with indications during WLAN TCP Tx data transfer
+    """
+    ble_obj = None
+    try:
+        capture_filename = request.node.name
+        logger().info("TESTCASE EXECUTION STARTED")
+
+        wifi_obj = WifiJoinThread(
+            wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+            wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, sniffer_filter=sniffer_filter)
+
+        ble_obj = BleAEThread(wifi_dut=wifi_dut, sl_collections=sl_collections, set_smp=1, set_smp_remote1=0,
+                              set_smp_remote2=1, ble_dut=ble_dut, remote_wiseconnect3s=remote_wiseconnect3s,
+                              remote_wiseconnect3=remote_wiseconnect3)
+
+        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+        data_length = len(data)
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
+
+        indication_obj = BleIndicationFunctionality(
+            wifi_dut=wifi_dut, data=data, ble_dut=ble_dut, remote_wiseconnect3=remote_wiseconnect3, address=address2,
+            data_length=data_length)
+
+        tcp_tx_obj = Iperf(
+            wifi_dut=wifi_dut, net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
+            traffic='0x00', wifi_access_point=wifi_access_point, qos=0,
+            wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, sniffer_filter=sniffer_filter)
+
+        wifi_obj.configure_sniffer()
+
+        ble_obj.configure_ble_device()
+        ble_obj.configure_ble_remote_device_1()
+        ble_obj.configure_ble_remote_device_2()
+        ble_obj.ble_add_service_dut()
+        ble_obj.ble_add_services_remote_1()
+
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+        ble_obj.ae_ble_master(no_adv_sets=2)
+        wifi_dut.interfaces.wifi.ble_set_smp()
+        ble_obj.ae_ble_slave(no_adv_sets_slave=2)
+
+        ble_obj.ble_resolve_services_dut()
+        ble_obj.att_value_enable_dut()
+        ble_obj.ble_resolve_services_remote()
+        ble_obj.att_value_enable_remote()
+
+        tcp_tx_obj.start()
+        tcp_tx_obj.wait_for_exit()
+
+        indication_obj.start()
+        indication_obj.wait_for_exit()
+
+        ble_obj.att_value_disable_remote()
+        ble_obj.att_value_disable_dut()
+
+        ble_obj.ble_remove_services_dut()
+        ble_obj.ble_remove_services_remote()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        ble_obj.ble_cleanup_disconn()
+
+
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1983,11 +2122,10 @@ def test_wifi_sdk_two_central_and_tcp_tx_traffic_c768303(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_wifi_sdk_dual_role_and_indication_and_tcp_tx_traffic_c768311(
+def test_wifi_sdk_dual_role_and_tcp_tx_traffic_c768325(
         ble_dut, remote_wiseconnect3s, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):
-    """ Verify AE ADV (2 ADV sets) + AE scan + (Dual role) connections with indications during WLAN TCP Tx data transfer
-    """
+    """ Verify BLE Dual role connection & disconnection functionality in AE during WiFi TCP Tx """
     ble_obj = None
     try:
         capture_filename = request.node.name
@@ -2002,13 +2140,307 @@ def test_wifi_sdk_dual_role_and_indication_and_tcp_tx_traffic_c768311(
                               remote_wiseconnect3=remote_wiseconnect3)
 
         data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
-        data_length = len(data)
         address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
         wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
 
-        indication_obj = BleIndicationFunctionality(
-            wifi_dut=wifi_dut, data=data, ble_dut=ble_dut, remote_wiseconnect3=remote_wiseconnect3, address=address2,
-            data_length=data_length)
+        tcp_tx_obj = Iperf(
+            wifi_dut=wifi_dut, net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
+            traffic='0x00', wifi_access_point=wifi_access_point, qos=0,
+            wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, sniffer_filter=sniffer_filter)
+
+        wifi_obj.configure_sniffer()
+
+        ble_obj.configure_ble_device()
+        ble_obj.configure_ble_remote_device_1()
+        ble_obj.configure_ble_remote_device_2()
+
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+        tcp_tx_obj.start()
+        tcp_tx_obj.wait_for_exit()
+        ble_obj.ae_ble_master(no_adv_sets=1)
+        wifi_dut.interfaces.wifi.ble_set_smp()
+        ble_obj.ae_ble_slave(no_adv_sets_slave=1)
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        ble_obj.ble_cleanup_disconn()
+
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
+                        Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+            "custom_features": Si91xCustomFeatureBitMap.Default,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default |
+                                   Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                                   Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_GATT_INIT,
+            "ble_features" : Si91xBLEFeatureBitMap.set_num_peripherals(num_peripherals=0) |
+                             Si91xBLEFeatureBitMap.set_num_centrals(num_centrals=2) |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
+                             Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+            },
+        },
+    )
+@pytest.mark.config(
+        "remote_wiseconnect3",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
+                        Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+            "custom_features": Si91xCustomFeatureBitMap.Default,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default |
+                                   Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                                   Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
+                             Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+            },
+        },
+)
+@pytest.mark.config(
+        "remote_wiseconnect3s",
+        wifi={
+            0: {
+                "oper_mode": 0,
+                "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
+                            Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+                "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+                "custom_features": Si91xCustomFeatureBitMap.Default,
+                "ext_custom_features": Si91xExtCustomFeatureBitMap.Default |
+                                       Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                                       Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+                "bt_features": Si91xBTFeatureBitMap.Default,
+                "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE |
+                                           Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                           Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN |
+                                           Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+                "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
+                             Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+                "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                "thread_config": {
+                    "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                    "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+                },
+            },
+        },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_two_central_and_tcp_tx_traffic_c768295(
+        ble_dut, remote_wiseconnect3s, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
+        wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):
+    """ Verify AE ADV (2 ADV sets) + AE scan with BLE central connection(2) during WLAN TCP Tx data transfer
+    """
+    ble_obj = None
+    try:
+        capture_filename = request.node.name
+        logger().info("TESTCASE EXECUTION STARTED")
+
+        wifi_obj = WifiJoinThread(
+            wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+            wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, sniffer_filter=sniffer_filter)
+
+        ble_obj = BleAEThread(wifi_dut=wifi_dut, sl_collections=sl_collections, set_smp=1, set_smp_remote1=0,
+                              set_smp_remote2=0, ble_dut=ble_dut, remote_wiseconnect3s=remote_wiseconnect3s,
+                              remote_wiseconnect3=remote_wiseconnect3, test_case=768295)
+
+        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
+
+        tcp_tx_obj = Iperf(
+            wifi_dut=wifi_dut, net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
+            traffic='0x00', wifi_access_point=wifi_access_point, qos=0,
+            wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, sniffer_filter=sniffer_filter)
+
+        wifi_obj.configure_sniffer()
+
+        ble_obj.configure_ble_device()
+        ble_obj.configure_ble_remote_device_1()
+        ble_obj.configure_ble_remote_device_2()
+        ble_obj.ble_add_services_remote_1()
+
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+        tcp_tx_obj.start()
+        tcp_tx_obj.wait_for_exit()
+        ble_obj.ae_two_ble_master(no_adv_sets=2)
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        ble_obj.ble_cleanup_disconn()
+
+
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
+                        Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+            "custom_features": Si91xCustomFeatureBitMap.Default,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default |
+                                   Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                                   Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_GATT_INIT,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
+                             Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+            },
+        },
+    )
+@pytest.mark.config(
+        "remote_wiseconnect3",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
+                        Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+            "custom_features": Si91xCustomFeatureBitMap.Default,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default |
+                                   Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                                   Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
+                             Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "thread_config": {
+                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+            },
+        },
+)
+@pytest.mark.config(
+        "remote_wiseconnect3s",
+        wifi={
+            0: {
+                "oper_mode": 0,
+                "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake |
+                            Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+                "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+                "custom_features": Si91xCustomFeatureBitMap.Default,
+                "ext_custom_features": Si91xExtCustomFeatureBitMap.Default |
+                                       Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                                       Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+                "bt_features": Si91xBTFeatureBitMap.Default,
+                "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE |
+                                           Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                           Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN |
+                                           Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+                "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV |
+                             Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX |
+                             Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS |
+                             Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+                "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                "thread_config": {
+                    "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                    "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+                },
+            },
+        },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_two_peripheral_and_tcp_tx_traffic_c768296(
+        ble_dut, remote_wiseconnect3s, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
+        wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):
+    """ Verify AE ADV (2 ADV sets) + AE scan with BLE peripheral connection(2) during WLAN TCP Tx data transfer
+    """
+    ble_obj = None
+    try:
+        capture_filename = request.node.name
+        logger().info("TESTCASE EXECUTION STARTED")
+
+        wifi_obj = WifiJoinThread(
+            wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+            wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, sniffer_filter=sniffer_filter)
+
+        ble_obj = BleAEThread(wifi_dut=wifi_dut, sl_collections=sl_collections, set_smp=0, set_smp_remote1=1,
+                              set_smp_remote2=1, ble_dut=ble_dut, remote_wiseconnect3s=remote_wiseconnect3s,
+                              remote_wiseconnect3=remote_wiseconnect3)
+
+        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data), write_content=data)
 
         tcp_tx_obj = Iperf(
             wifi_dut=wifi_dut, net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
@@ -2021,31 +2453,13 @@ def test_wifi_sdk_dual_role_and_indication_and_tcp_tx_traffic_c768311(
         ble_obj.configure_ble_remote_device_1()
         ble_obj.configure_ble_remote_device_2()
         ble_obj.ble_add_service_dut()
-        ble_obj.ble_add_services_remote_1()
 
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
-        ble_obj.ae_ble_master(no_adv_sets=2)
-        wifi_dut.interfaces.wifi.ble_set_smp()
-        ble_obj.ae_ble_slave(no_adv_sets_slave=2)
-
-        ble_obj.ble_resolve_services_dut()
-        ble_obj.att_value_enable_dut()
-        ble_obj.ble_resolve_services_remote()
-        ble_obj.att_value_enable_remote()
-
         tcp_tx_obj.start()
         tcp_tx_obj.wait_for_exit()
-
-        indication_obj.start()
-        indication_obj.wait_for_exit()
-
-        ble_obj.att_value_disable_remote()
-        ble_obj.att_value_disable_dut()
-
-        ble_obj.ble_remove_services_dut()
-        ble_obj.ble_remove_services_remote()
+        ble_obj.ae_two_ble_slave()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
