@@ -995,7 +995,7 @@ def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_scan_ps_C76834
         # Use the standardized BLE cleanup function
         cleanup_ble_and_client(ble_client, ble_obj, wifi_dut, sl_collections)
 
-@pytest.mark.skip()
+
 # Test configuration: Disable IPv6, use Open security for simplified testing
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",                                      # Disable IPv6 support (IPv4 only)
@@ -1237,7 +1237,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateless_disconn_loop_
         # Use the standardized BLE cleanup function
         cleanup_ble_and_client(ble_client, ble_obj, wifi_dut, sl_collections)
 
-@pytest.mark.skip()
+
 # Test configuration: Disable IPv6, use WPA2 security for enhanced security testing
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",                                      # Disable IPv6 support (IPv4 only)
