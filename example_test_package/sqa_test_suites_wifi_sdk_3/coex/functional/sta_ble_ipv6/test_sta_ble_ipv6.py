@@ -295,16 +295,29 @@ class BleThread(ThreadBase):
         self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=self.char_path,
                                                                                      char_uid=self.char_uid)
         self.wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(ble_remote_dev_address=self.ble_client_address,
-                                                            buffer_mode=1, buffer_count=2)
+                                                                 buffer_mode=1, buffer_count=2)
+
         sw = Stopwatch()
         count = 0
         logger().info(f"Send notifications from DUT")
         while sw.elapsed_sec <= self.data_duration:
             self.wifi_dut.interfaces.wifi.ble_notify_custom_value(self.ble_client_address, data=self.data,
                                                                   data_address=self.address)
+            tw = Stopwatch()
+            event_status = False
+            while tw.elapsed_sec < 10:
+                events = self.wifi_dut.interfaces.wifi.get_async_events()
+                for event in events:
+                    if event.event_type == AsyncEventIdentifiers.BLE_REQ_MORE_DATA:
+                        if "RSI_BLE_MORE_DATA_REQ_EVT" in event.event_data:
+                            event_status = True
+                            break
+                if event_status:
+                    logger().info(f"Received RSI_BLE_MORE_DATA_REQ_EVT event : {event.event_data}")
+                    break
             time.sleep(self.periodic_delay)
             count += 1
-        time.sleep(10)
+        time.sleep(10)  # wait for notifications to be received
         notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
         assert len(notifications) > 0, "received data is empty"
         logger().info(f"notifications received on remote :{notifications}")
@@ -516,22 +529,19 @@ class WLanThread(ThreadBase):
     def run(self):
 
         if self.test_type == '538033' or self.test_type == '538026' or self.test_type == '538032':
-            #
-            # if self.addr_type == "link":
-            #     interface = self.wifi_client.interfaces.wifi.config["interface"]
-            #     device_ip = f"{self.dut_add_dict['device_ip']}%{interface}"
 
-            local_port = 5001
+            server_port = self.ssl_server.interfaces.ssl.config['device_port1']
 
             self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address(version=6,
                                                                            addr_type=self.addr_type)
-            # if self.addr_type == "link":
-            #     interface = self.wifi_client.interfaces.wifi.config["interface"]
-                # self.host_ip = f"{self.host_ip}%{interface}"
-            logger().info(f".... Remote device ip :{self.host_ip} ....")
 
-            """ ***** Open ssl server socket in remote device(Raspberry pi or static device) ***** """
-            self.ssl_server.interfaces.ssl.start_server(port=local_port, ip_version=6, server_ip=self.host_ip)
+            self.remote_ip = self.host_ip
+            if self.addr_type == "link":
+                interface = self.wifi_client.interfaces.wifi.config["interface"]
+                self.remote_ip = f"{self.remote_ip}%{interface}"
+
+            # """ ***** Open ssl server socket in remote device(Raspberry pi or static device) ***** """
+            self.ssl_server.interfaces.ssl.start_server(port=server_port, ip_version=6, server_ip="::")
 
             sock = self.wifi_dut.interfaces.wifi.socket(domain="AF_INET6")
             logger().info(f" ******************* Sock ID {sock} ******************** ")
@@ -541,7 +551,7 @@ class WLanThread(ThreadBase):
                 socket_fd=sock, option_level="SOL_TCP", option_name="TCP_ULP", option_val="tls_1_2")
 
             self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.dut_add_dict['device_ip'],
-                                               server_port=local_port, timeout=15,
+                                               server_port=server_port, timeout=15,
                                                ip_len=6, ip_version=6)
 
             logger().info(" ***** DUT is connecting to server socket ***** ")
@@ -549,7 +559,7 @@ class WLanThread(ThreadBase):
             for count in range(3):
                 try:
                     self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=self.host_ip,
-                                                                   server_port=local_port, timeout=30, ip_len=6)
+                                                                   server_port=server_port, timeout=30, ip_len=6)
                     connect_status = True
                     break
                 except:
@@ -3457,7 +3467,7 @@ def test_Coex_WLAN_ipv6_ssl_tx_GUA_ble_rx_C538032(
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
-def test_Coex_WLAN_ipv6_ssl_rx_LL_ble_tx_C538033(
+def test_Coex_WLAN_ipv6_ssl_rx_LL_ble_rx_C538033(
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
@@ -3498,19 +3508,13 @@ def test_Coex_WLAN_ipv6_ssl_rx_LL_ble_tx_C538033(
             remote_adv_int_min="0xA0 0x00",
             remote_adv_int_max="0xA0 0x00"
         )
-
-        ble_obj.check_scan_functionality()
         wifi_obj.join_to_ap()
-
-        ble_obj.connect_from_dut()
+        ble_obj.ble_connect(role="master")
         ble_obj.fetch_profiles()
         ble_obj.start()
-
         wifi_obj.start()
         wifi_obj.wait_for_exit()
-
         ble_obj.wait_for_exit()
-
         ble_obj.ble_disconnect(disconnect_from="dut")
         wifi_dut.interfaces.wifi.leave()
         logger().info("..... stop capturing with Sniffer ......")
@@ -3519,7 +3523,6 @@ def test_Coex_WLAN_ipv6_ssl_rx_LL_ble_tx_C538033(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             ble_client.interfaces.bluetooth.close()
