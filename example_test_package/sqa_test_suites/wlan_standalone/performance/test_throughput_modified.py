@@ -88,7 +88,7 @@ class spp_loopback(ThreadBase):
 
     def run(self):
         # Sending BT data for 80 seconds
-        recv_text = text_generator(size=30)
+        recv_text = text_generator(size=100)
         time.sleep(5)
         sw = Stopwatch()
         logger().info(f"BT DATA transfer for 80 seconds")
@@ -100,7 +100,7 @@ class spp_loopback(ThreadBase):
             )  # Dut is programmed to send back data
 
             assert sent
-            data = self.bt_server_socket.recv(timeout=10)
+            data = self.bt_server_socket.recv(timeout=30)
             assert data is not None
             assert data.decode() == recv_text
 
