@@ -304,8 +304,12 @@ def test_twt_power_2s_twt_int_wlan_ka_30s_C129923(firmware_loader, power_meter, 
      test_name = request.node.name
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
-     logger().info(f"M4-TA secure handshake")
-     wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
+     dut = UtfConfig.instance().defaults.get("dut", {})
+     logger().info(f"dut: {dut}")
+
+     if dut != "si917_ncp_sl_wifi":
+         logger().info(f"M4-TA secure handshake")
+         wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
 
      time.sleep(2)
 
@@ -381,8 +385,12 @@ def test_twt_power_30s_twt_int_wlan_ka_30s_C129923(firmware_loader, power_meter,
      test_name = request.node.name
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
-     logger().info(f"M4-TA secure handshake")
-     wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
+     dut = UtfConfig.instance().defaults.get("dut", {})
+     logger().info(f"dut: {dut}")
+
+     if dut != "si917_ncp_sl_wifi":
+         logger().info(f"M4-TA secure handshake")
+         wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
 
      time.sleep(2)
 
@@ -460,8 +468,12 @@ def test_twt_power_60s_twt_int_wlan_ka_60s_C129923(firmware_loader, power_meter,
      test_name = request.node.name
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
-     logger().info(f"M4-TA secure handshake")
-     wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
+     dut = UtfConfig.instance().defaults.get("dut", {})
+     logger().info(f"dut: {dut}")
+
+     if dut != "si917_ncp_sl_wifi":
+         logger().info(f"M4-TA secure handshake")
+         wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
 
      time.sleep(2)
 
@@ -536,8 +548,12 @@ def test_twt_power_2s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(firmware_loader, p
      test_name = request.node.name
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
-     logger().info(f"M4-TA secure handshake")
-     wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
+     dut = UtfConfig.instance().defaults.get("dut", {})
+     logger().info(f"dut: {dut}")
+
+     if dut != "si917_ncp_sl_wifi":
+         logger().info(f"M4-TA secure handshake")
+         wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
 
      time.sleep(2)
 
@@ -621,8 +637,12 @@ def test_twt_power_30s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(firmware_loader, 
      test_name = request.node.name
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
-     logger().info(f"M4-TA secure handshake")
-     wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
+     dut = UtfConfig.instance().defaults.get("dut", {})
+     logger().info(f"dut: {dut}")
+
+     if dut != "si917_ncp_sl_wifi":
+         logger().info(f"M4-TA secure handshake")
+         wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
 
      time.sleep(2)
 
@@ -705,8 +725,12 @@ def test_twt_power_60s_twt_int_wlan_ka_60s_tcp_ka_240s_C129923(firmware_loader, 
      test_name = request.node.name
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
-     logger().info(f"M4-TA secure handshake")
-     wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
+     dut = UtfConfig.instance().defaults.get("dut", {})
+     logger().info(f"dut: {dut}")
+
+     if dut != "si917_ncp_sl_wifi":
+         logger().info(f"M4-TA secure handshake")
+         wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
 
      time.sleep(2)
 
