@@ -353,6 +353,15 @@ devices:
                 standard: 'n'
                 ip_address: '192.168.0.1'
                 region: 'Japan'
+            wiseconnect_ui:
+                type: web.wiseconnect_web_login
+                src_dir: 'utf_wiseconnect'
+                mode: 'Client'
+                band: '2.4'
+                is_security_enable: True
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
 
     raspi_wifi_ssh:
         interfaces:
@@ -371,6 +380,15 @@ devices:
                 interface: 'wlan0'
                 standard: 'n'
                 ip_address: '192.168.0.152'
+            wiseconnect_ui:
+                type: web.wiseconnect_web_login
+                src_dir: 'utf_wiseconnect'
+                mode: 'Client'
+                band: '2.4'
+                is_security_enable: True
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
 
     raspi_wifi_ssh_1:
         interfaces:
@@ -389,6 +407,15 @@ devices:
                 interface: 'wlan0'
                 standard: 'n'
                 ip_address: '192.168.0.152'
+            wiseconnect_ui:
+                type: web.wiseconnect_web_login
+                src_dir: 'utf_wiseconnect'
+                mode: 'Client'
+                band: '2.4'
+                is_security_enable: True
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
 
     raspi_wifi_ssh_2:
         interfaces:
@@ -407,6 +434,15 @@ devices:
                 interface: 'wlan0'
                 standard: 'n'
                 ip_address: '192.168.0.152'
+            wiseconnect_ui:
+                type: web.wiseconnect_web_login
+                src_dir: 'utf_wiseconnect'
+                mode: 'Client'
+                band: '2.4'
+                is_security_enable: True
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
 
     raspi_ble_client:
         interfaces:
@@ -415,7 +451,6 @@ devices:
             bluetooth:
                 type: 'bluetooth.bluez'
                 shell: 'linux_shell'
-
 
     raspi_multicast:
         interfaces:
@@ -736,7 +771,8 @@ devices:
             mqtt:
                 type: 'mqtt.server.mosquitto_linux'
                 shell: 'linux_shell'
-                server_listen_address: '0.0.0.0'
+#                server_listen_address: '0.0.0.0'
+                server_listen_address: "::"
                 # port must be set to 8883 for TLS to be enabled
                 port: 8883
                 interface: 'eth1'
@@ -750,7 +786,6 @@ devices:
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
                 ip_version: 6
-
 
     raspi_mosquitto_tls_ecdsa:
         interfaces:
@@ -1220,6 +1255,27 @@ devices:
                 password: '12345678'
                 tls_min_version: '1.0'
                 tls_max_version: '1.2'
+    raspi_dtls_server:
+        interfaces:
+            dtls_server:
+                type: 'dtls.dtls_server'
+                dtls_psk_identity: 'psk_identity'
+                dtls_psk_key: 'psk_key'
+                validate_certificates: True
+                dtls_server_ip: "0.0.0.0"
+                dtls_server_port: 5001
+
+    raspi_dtls_client:
+        interfaces:
+            dtls_client:
+                type: 'dtls.dtls_client'
+                dtls_psk_identity: 'psk_identity'
+                dtls_psk_key: 'psk_key'
+                validate_certificates: True
+                dtls_server_port: 5001
+                dtls_client_ip: "127.0.0.1"
+
+
 
     openssl_socket:
         interfaces:
@@ -1373,10 +1429,11 @@ defaults:
         - 'raspi_wifi_ssh_1'
         - 'raspi_wifi_ssh_2'
 
-
     wifi_sniffer: 'airpcap'
 
     sniffer_filter: 'sniffer_filter'
+    dtls_server: 'raspi_dtls_server'
+    dtls_client: 'raspi_dtls_client'
 
     openssl: 'openssl_socket'
 
@@ -1554,7 +1611,7 @@ defaults:
         stop_capture_on: ["crash", "error", "exception", "oops", "Target is not responding"]
         bt_exploit_type: "au_rand_flooding"
         script: ""
-    
+
     plotter: 'power_meter_plotter'
 
     net_perf:
@@ -1585,11 +1642,11 @@ defaults:
                 # bytes, number of bytes we want device to send to server (host) in each iteration
                 data_len: 1472
         tos_value: '0xC8'
-    
+
     power_meter_keysight_benchvue:
         data_log_file_name: 'UTF_DataLog_'
         data_log_file_name_is_append_date:  true
-        data_log_file_name_is_append_time: true 
+        data_log_file_name_is_append_time: true
         data_log_folder_location: 'C:\\UTF\\data_log'
         data_log_start: 'DatalogRunButton'
         data_log_stop: 'AfterElapsedTime'
@@ -1600,7 +1657,7 @@ defaults:
         data_log_enable_min_max_logging: false
         data_log_is_avg_enabled: true
         data_log_is_min_enabled: true
-        data_log_is_max_enabled: true 
+        data_log_is_max_enabled: true
         data_log_is_peak_to_peak_enabled: true
         data_log_is_charge_c_enabled: true
         data_log_is_charge_ah_enabled: true
@@ -1678,6 +1735,6 @@ constants:
         value: 'combined_ta_m4.rps'
     rejoin_time:
         value: 160
-
+    websocket_long_run_test_time_duration:
+        value: 10 # Please add time as per your test case requirement
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
-

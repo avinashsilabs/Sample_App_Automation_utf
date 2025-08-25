@@ -193,7 +193,7 @@ devices:
                 ssh_port: 22
                 ssid: "Azeez123"
                 passphrase: '12345678'
-                channel: 1
+                channel: 11
                 web_ui_port: 8443
                 standard: 'bgnax'
                 protected_management_frame: 'Disable'
@@ -250,7 +250,7 @@ devices:
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
-                outlet: 7
+                outlet: 3
                 # use_persistent_state: true will set a persistent state, that the outlet will revert
                 # to after reboot or power cycle
                 # use_persistent_state: false will set a transient state only, and the outlet will revert
@@ -273,7 +273,7 @@ devices:
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
-                outlet: 7
+                outlet: 3
                 # use_persistent_state: true will set a persistent state, that the outlet will revert
                 # to after reboot or power cycle
                 # use_persistent_state: false will set a transient state only, and the outlet will revert
@@ -296,7 +296,7 @@ devices:
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
-                outlet: 7
+                outlet: 3
                 # use_persistent_state: true will set a persistent state, that the outlet will revert
                 # to after reboot or power cycle
                 # use_persistent_state: false will set a transient state only, and the outlet will revert
@@ -328,6 +328,15 @@ devices:
                 standard: 'n'
                 ip_address: '192.168.0.1'
                 region: 'Japan'
+            wiseconnect_ui:
+                type: web.wiseconnect_web_login
+                src_dir: 'utf_wiseconnect'
+                mode: 'Client'
+                band: '2.4'
+                is_security_enable: True
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
 
     raspi_wifi_ssh:
         interfaces:
@@ -346,6 +355,15 @@ devices:
                 interface: 'wlan0'
                 standard: 'n'
                 ip_address: '192.168.0.152'
+            wiseconnect_ui:
+                type: web.wiseconnect_web_login
+                src_dir: 'utf_wiseconnect'
+                mode: 'Client'
+                band: '2.4'
+                is_security_enable: True
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
 
     raspi_wifi_ssh_1:
         interfaces:
@@ -364,6 +382,15 @@ devices:
                 interface: 'wlan0'
                 standard: 'n'
                 ip_address: '192.168.0.152'
+            wiseconnect_ui:
+                type: web.wiseconnect_web_login
+                src_dir: 'utf_wiseconnect'
+                mode: 'Client'
+                band: '2.4'
+                is_security_enable: True
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
 
     raspi_wifi_ssh_2:
         interfaces:
@@ -382,6 +409,15 @@ devices:
                 interface: 'wlan0'
                 standard: 'n'
                 ip_address: '192.168.0.152'
+            wiseconnect_ui:
+                type: web.wiseconnect_web_login
+                src_dir: 'utf_wiseconnect'
+                mode: 'Client'
+                band: '2.4'
+                is_security_enable: True
+                ssid: 'TESTTESTTEST'
+                passphrase: 'thisisatestnetwork'
+                firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
 
     raspi_ble_client:
         interfaces:
@@ -390,7 +426,6 @@ devices:
             bluetooth:
                 type: 'bluetooth.bluez'
                 shell: 'linux_shell'
-
 
     raspi_multicast:
         interfaces:
@@ -479,6 +514,7 @@ devices:
                 image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
                 username: pi
                 password: 'raspberry'
+                skip_rabbitmq_check: True
 
             # these are the RPC-enabled interfaces that will forward all method and property access
             # calls over to the respective instance on the server
@@ -710,7 +746,8 @@ devices:
             mqtt:
                 type: 'mqtt.server.mosquitto_linux'
                 shell: 'linux_shell'
-                server_listen_address: '0.0.0.0'
+#                server_listen_address: '0.0.0.0'
+                server_listen_address: "::"
                 # port must be set to 8883 for TLS to be enabled
                 port: 8883
                 interface: 'eth1'
@@ -724,7 +761,6 @@ devices:
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
                 tls_ca_chain: 'ca-chain.cert.pem'
                 ip_version: 6
-
 
     raspi_mosquitto_tls_ecdsa:
         interfaces:
@@ -832,7 +868,7 @@ devices:
             server:
                 type: "wifi.sdk_server.sdk_server_linux"
                 server_name: "TCP"
-                firmware_file_name: "encrypted_1_SiWG917-B.2.14.5.0.0.2.rps"
+                firmware_file_name: "SiWG917-B.2.15.5.0.0.1.rps"
                 server_binary_file_name: "tcp_server.bin"
 
     airpcap:
@@ -843,19 +879,19 @@ devices:
                 username: svc_sqa_automation       # sniffer NUC username
                 password: Silicon@20242025    # sniffer NUC password
                 use_paramiko_expect: false
-                timeout: 30
+                timeout: 1800
             capture:
                 default:
                 type: 'wifi.sniffer.tshark'
                 shell: 'local_shell'
-                interface: 'wlp0s20f3'
-#                interface: 'wlx00c0cab57c2a'
+#                interface: 'wlp0s20f3'
+                interface: 'wlx00c0cab84fb6'
             live_capture:
                 host_address: 10.208.70.38
                 type: 'wifi.sniffer.pyshark_live_sniffer'
                 shell: 'local_shell'
-                interface: 'wlp0s20f3'
-#                interface: 'wlx00c0cab57c2a'
+#                interface: 'wlp0s20f3'
+                interface: 'wlx00c0cab84fb6'
 
     saleae_logic_analyzer:
         interfaces:
@@ -1157,6 +1193,7 @@ devices:
                 private_key_file: 'wifi-user.pem'
                 certificate_file: 'wifi-user.pem'
                 ca_file: 'wifi-user.pem'
+                private_key_password: 12345678
 
     raspi_radius_server_v2:
         interfaces:
@@ -1174,7 +1211,7 @@ devices:
                 private_key_file: 'wifi-user.pem'
                 certificate_file: 'wifi-user.pem'
                 ca_file: 'wifi-user.pem'
-                #private_key_password: 12345678
+                private_key_password: 12345678
 
     static_radius_server:
         interfaces:
@@ -1193,6 +1230,27 @@ devices:
                 password: '12345678'
                 tls_min_version: '1.0'
                 tls_max_version: '1.2'
+    raspi_dtls_server:
+        interfaces:
+            dtls_server:
+                type: 'dtls.dtls_server'
+                dtls_psk_identity: 'psk_identity'
+                dtls_psk_key: 'psk_key'
+                validate_certificates: True
+                dtls_server_ip: "0.0.0.0"
+                dtls_server_port: 5001
+
+    raspi_dtls_client:
+        interfaces:
+            dtls_client:
+                type: 'dtls.dtls_client'
+                dtls_psk_identity: 'psk_identity'
+                dtls_psk_key: 'psk_key'
+                validate_certificates: True
+                dtls_server_port: 5001
+                dtls_client_ip: "127.0.0.1"
+
+
 
     openssl_socket:
         interfaces:
@@ -1347,6 +1405,8 @@ defaults:
     wifi_sniffer: 'airpcap'
 
     sniffer_filter: 'sniffer_filter'
+    dtls_server: 'raspi_dtls_server'
+    dtls_client: 'raspi_dtls_client'
 
     openssl: 'openssl_socket'
 
@@ -1419,7 +1479,7 @@ defaults:
         disable_sniffer_validation: false
 
         # firmware path for http/https otaf
-        http_url: '/SiWG917-B.2.13.4.1.0.2.rps'
+        http_url: '/SiWG917-B.2.15.5.0.0.1.rps'
 
         pll_mode: 0
         rf_type: 1
@@ -1603,7 +1663,7 @@ start_state:
     wifi_access_point:
         wifi: 'ap_enabled'
     wifi_dut:
-        device: 'reset'
+#        device: 'reset'
         wifi: 'init'
 
 #end_state:
@@ -1614,7 +1674,7 @@ constants:
     time_duration:
         value: 5
     long_duration:
-        value: 30
+        value: 360
     ping_count:
         value: 10
     iter_count:
@@ -1636,15 +1696,15 @@ constants:
     wreck_password:
         value: 'test123'
     rps_filename:
-        value:  'RS9117_WC_SI_7kppm.rps'
+        value:  'SiWG917-B.2.15.5.0.0.1.rps'
     m4_rps_filename:
-        value:  'secured_wifi_station_ping_soc.rps'
+        value:  'test_agent_soc_3.5.0-hotfix_TWT_15thJUNE_25.rps'
     m4_rps_plain:
-        value: 'wifi_station_ping_soc.rps'
+        value: 'test_agent_soc_3.5.0-hotfix_TWT_15thJUNE_25.rps'
     combine_rps_filename:
         value: 'combined_ta_m4.rps'
     rejoin_time:
         value: 160
-
+    websocket_long_run_test_time_duration:
+        value: 10 # Please add time as per your test case requirement
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
-
