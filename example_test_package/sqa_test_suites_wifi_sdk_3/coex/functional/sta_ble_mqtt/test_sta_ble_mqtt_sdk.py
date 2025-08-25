@@ -572,6 +572,11 @@ class BleThreadFunctionality(ThreadBase):
     def test_case_538049_538051(self):
         svc = 'HealthThermometerService'
 
+        self.sl_collections.check_ble_advertise_functionality(
+            wifi_dut=self.wifi_dut, ble_client=self.ble_clients[1], ble_dut_address=self.ble_dut_address,
+            timeout=20)
+        time.sleep(2)
+
         logger().info("******************** initializing ble in remote device ********************")
         BleThreadFunctionality.ble_client_address = self.ble_clients[0].interfaces.bluetooth.start_smp_adv(
             bt_dut_address=self.ble_dut_address, service_classes=[svc])
@@ -594,13 +599,7 @@ class BleThreadFunctionality(ThreadBase):
         logger().info("Checking connection status of BLE")
         state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
-        assert state_int == BLEDeviceState.Connected, "device is in disconnection state"
-
-        self.wifi_dut.interfaces.wifi.ble_set_smp()
-        self.sl_collections.check_ble_advertise_functionality(
-            wifi_dut=self.wifi_dut, ble_client=self.ble_clients[1], ble_dut_address=self.ble_dut_address,
-            timeout=20)
-        time.sleep(2)
+        assert state_int == 9, "device is in disconnection state"
 
     def test_case_538050_538056(self):
         self.wifi_dut.interfaces.wifi.ble_add_service(uid=0xAABB)
@@ -970,9 +969,9 @@ def test_wifi_sdk_mqtt_conn_subs_disconn_loop_when_ble_rx_smp_c538049(
                 ble_obj.start()
                 time.sleep(35)
             wifi_obj.mqtt_publish_rx()
-            ble_obj.wait_for_exit()
             wifi_obj.unsubscribe_two_topic()
             wifi_obj.mqtt_disconnect_deinit()
+            ble_obj.wait_for_exit()
             wifi_obj.wlan_leave()
 
         logger().info(".... stop the sniffer ....")
