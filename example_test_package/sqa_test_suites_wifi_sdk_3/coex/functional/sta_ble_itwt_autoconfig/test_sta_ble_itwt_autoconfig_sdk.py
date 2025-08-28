@@ -254,17 +254,26 @@ class TWT_AUTOCONFIG(ThreadBase):
         )
 
     def disable_twt(self):
-        self.wifi_dut.interfaces.wifi.disable_twt()
+        self.wifi_dut.interfaces.wifi.twt_auto_config(twt_enable=0)
 
     def twt_enable_disable_data_transfer(self, power_save=False):
-        #iteration_count = 0
-        for iteration_count in range(0,3):  #while iteration_count < 3:
+        iteration_count = 0
+        while iteration_count < 3:
+            if iteration_count != 0:
+                logger().info(
+                    f"\n....Enable the target wake time for : {iteration_count + 1} time....\n"
+                )
+                self.enable_twt()
             if power_save:
-                logger().info(f"\n\nEnable Power save mode\n\n")
-                self.set_power_save()
-            logger().info(f"\n\nSend data over socket\n\n")
+                self.wifi_dut.interfaces.wifi.set_performance_profile(
+                    mode="power_save_low_latency"
+                )
+                self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                              psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
             self.socket_data_transfer_obj.send_data_over_socket(
-                wifi_dut=self.wifi_dut, duration=60, sleep_time=0
+                wifi_dut=self.wifi_dut,
+                duration=self.socket_data_transfer_obj.data_transfer_duration,
+                sleep_time=0,
             )
             logger().info(f"\n\nDisable the target wake time\n\n")
             self.disable_twt()
@@ -273,11 +282,14 @@ class TWT_AUTOCONFIG(ThreadBase):
                 self.wifi_dut.interfaces.wifi.set_performance_profile(
                     mode="high_performance"
                 )
-            logger().info(f"\n\nSend data over socket\n\n")
+                self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveDisabled,
+                                                                   psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
             self.socket_data_transfer_obj.send_data_over_socket(
-                wifi_dut=self.wifi_dut, duration=60, sleep_time=0
+                wifi_dut=self.wifi_dut,
+                duration=self.socket_data_transfer_obj.data_transfer_duration,
+                sleep_time=0,
             )
-            #iteration_count += 1
+            iteration_count += 1
 
     def join_to_ap(self):
         self.wifi_sniffer.interfaces.capture.start_capture(self.sniffer_capture)
@@ -766,6 +778,8 @@ pytestmark = [
             "ble_features": Si91xBLEFeatureBitMap.Default,
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default,
             "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "enable_timeout_config": True,
+            "keep_alive_timeout_value": 10,
             "thread_config": {
             "wifi": {"count": 1, "stack_len": 4096, "priority": 8},
             "ble": {"count": 1, "stack_len": 4096, "priority": 8},
@@ -779,7 +793,6 @@ pytestmark = [
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_dut",wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv",
                              "disable_twt"])
 def test_wifi_sdk_wifi_rx_latency_60s_ble_tx_C539203(
@@ -878,7 +891,6 @@ def test_wifi_sdk_wifi_rx_latency_60s_ble_tx_C539203(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_dut",wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv",
                              "disable_twt"])
 def test_wifi_sdk_wifi_rx_latency_0_ble_tx_C539204(
@@ -978,7 +990,6 @@ def test_wifi_sdk_wifi_rx_latency_0_ble_tx_C539204(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_dut",wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv",
                              "disable_twt"])
 def test_wifi_sdk_wifi_tx_latency_50s_ble_rx_C539205(
@@ -1057,16 +1068,16 @@ def test_wifi_sdk_wifi_tx_latency_50s_ble_rx_C539205(
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
-@pytest.mark.skip("Test case development is in progress")
+
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890","dtim": 1, "standard": "gnbax"}
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890","dtim": 1, "standard": "gnbax", "twt": 1}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_dut",wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv",
                              "disable_twt"])
-def test_wifi_sdk_ble_scan_adv_behaviour_twt_enable_traffic_enable_ps_enable_twt_disable_traffic_disable_ps_disable_c539206(
+def test_wifi_sdk_ble_scan_adv_twt_ps_enable_traffic_twt_ps_disable_traffic_c539206(
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
@@ -1125,8 +1136,6 @@ def test_wifi_sdk_ble_scan_adv_behaviour_twt_enable_traffic_enable_ps_enable_twt
         # Stop wireshark sniffer capture
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        # Close the BLE of Raspberry Pi
-        ble_client.interfaces.bluetooth.close()
         if ble_obj:
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
@@ -1137,7 +1146,6 @@ def test_wifi_sdk_ble_scan_adv_behaviour_twt_enable_traffic_enable_ps_enable_twt
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_dut",wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv",
                              "disable_twt"])
 def test_wifi_sdk_wifi_rx_latency_60s_ble_slave_conn_discon_C540498(
@@ -1189,7 +1197,7 @@ def test_wifi_sdk_wifi_rx_latency_60s_ble_slave_conn_discon_C540498(
         for i in range(0,3):
             ble_obj.advertise_dut()
             ble_obj.scan_and_connect_from_remote()
-            time.sleep(60)
+            time.sleep(30)
             ble_obj.ble_disconnect(disconnect_from="dut")
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             ble_client.interfaces.bluetooth.close()
@@ -1219,7 +1227,6 @@ def test_wifi_sdk_wifi_rx_latency_60s_ble_slave_conn_discon_C540498(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_dut",wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv",
                              "disable_twt"])
 def test_wifi_sdk_wifi_tx_latency_50s_ble_slave_conn_discon_C540499(
@@ -1271,7 +1278,7 @@ def test_wifi_sdk_wifi_tx_latency_50s_ble_slave_conn_discon_C540499(
         for i in range(0, 3):
             ble_obj.advertise_dut()
             ble_obj.scan_and_connect_from_remote()
-            time.sleep(60)
+            time.sleep(30)
             ble_obj.ble_disconnect(disconnect_from="dut")
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
             ble_client.interfaces.bluetooth.close()
