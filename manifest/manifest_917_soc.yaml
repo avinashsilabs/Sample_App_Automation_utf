@@ -78,6 +78,11 @@ firmware_applications:
         device_subtype: 'efr32'
         filename: 'test_agent_soc_rcf2_daf57c7579_twt.rps'
 
+    test_nvm3:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/nvm_test_agent_soc.rps'
+
     test_ipv6:
       - device_type: 'efx32'
         device_subtype: 'efr32'
