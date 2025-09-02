@@ -50,10 +50,13 @@ class WifiJoinThread(ThreadBase):
             traffic_type=None,
             iteration_count=None,
             protocol=None,
-
-            host_ip=None):
+            timeout=None,
+            async_socket=0,
+            host_ip=None,
+            test_type=None):
         super().__init__()
         #here defined_DM
+        self.timeout = timeout
         # Define all the parameters
 
         self.wifi_dut = wifi_dut
@@ -74,34 +77,29 @@ class WifiJoinThread(ThreadBase):
         self.traffic_type = traffic_type
         self.iteration_count = iteration_count
         self.protocol = protocol
+        self.test_type = test_type
 
 
     def run(self):
         self.dut_addr = self.sl_collections.join_to_wifi_network(
-            self.wifi_dut, self.wifi_access_point, associated=self.wifi_dut.interfaces.wifi.associated, ping_count=300)
+            self.wifi_dut, self.wifi_access_point, associated=self.wifi_dut.interfaces.wifi.associated, ping_count=self.ping_count, ping_after_power_save=True)
 
-    def iperf(self):
+        if self.test_type == "iperf":
+            logger().info("Running data transfer")
+            self.run_traffic()
+
+    def run_traffic(self):
         host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-        self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=self.dut_addr['device_ip'],
-                                                             protocol='0x00')
-
-        self.net_perf_client.interfaces.net_perf.start()
-
-        logger().info("sending data from DUT")
-
-        timeout = 40
-
-        self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=1, protocol=6,
-                                       local_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                       local_ip=self.dut_addr['device_ip'], remote_ip=host_ip,
-                                       remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                       size=1460, ttl=30, throughput_type=1, qos=0)
-
-        logger().info(f"***** get and print throughput ******")
-        tp = self.net_perf_client.interfaces.net_perf.process_output()
-        assert tp, "failed to get throughput..."
-        self.__print_throughput(tp)
-        logger().info("data transfer is successful")
+        logger().info(f"Remote device ip :{host_ip}")
+        self.sl_collections.run_traffic(
+            wifi_dut=self.wifi_dut,
+            net_perf_client=self.net_perf_client,
+            protocol=self.protocol,
+            device_ip=self.device_ip,
+            host_ip=host_ip,
+            timeout=100,
+            traffic_type="TX",
+        )
 
 
 class BleThreadFunctionality(ThreadBase):
@@ -134,7 +132,7 @@ class BleThreadFunctionality(ThreadBase):
         time.sleep(5)
 
     def run(self):
-        if self.test_case in [769615, 769616, 769617]:
+        if self.test_case in [769615, 769616, 769617, 769618]:
             svc = 'HealthThermometerService'
             logger().info("******************** initializing ble in remote device ********************")
             self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
@@ -286,12 +284,11 @@ def test_Coex_sdk_ble_adv_scan_then_wlan_ping_C769617(wifi_dut, utf_constants, s
         logger().error(f"Error in BLE thread functionality: {error}")
         raise error
 
-@pytest.mark.skip()
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 def test_Coex_sdk_ble_adv_scan_check_during_TCP_Tx_C769618(
-        wifi_dut, utf_constants, sl_collections, ble_clients, ble_dut, wifi_access_point, wifi_client, wifi_sniffer,
-        testcase, sniffer_filter, net_perf_client, protocol,ping_count, iter_count ):
+        wifi_dut, utf_constants, sl_collections, ble_client, ble_dut, wifi_access_point, wifi_client, wifi_sniffer,
+        net_perf_client, protocol):
     """
         Test Steps:
             1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
@@ -303,27 +300,30 @@ def test_Coex_sdk_ble_adv_scan_check_during_TCP_Tx_C769618(
             8.Stop TCP data transfer.
 
         """
-    try:
-        wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                  testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
-                                  protocol=protocol, sl_collections=sl_collections,
-                                  ping_count=ping_count, data_transfer=True, traffic_type="TX",
-                                  iteration_count=iter_count
-                                  )
 
+    try:
+        ping_count = utf_constants.get("ping_count")
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, sl_collections=sl_collections,
-                                         ble_dut=ble_dut, ble_clients=ble_clients, utf_constants=utf_constants,
-                                         ble_scan_interval=384, ble_scan_window=128, set_smp=1, ble_conn_interval_min=48, ble_conn_interval_max=48,
-                                         test_case=769618)
+                                    ble_dut=ble_dut, ble_client=ble_client, utf_constants=utf_constants,
+                                    ble_scan_interval=384, ble_scan_window=128, set_smp=1, ble_conn_interval_min=48, ble_conn_interval_max=48,
+                                    test_case=769618)
+        wlan_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            wifi_client=wifi_client,
+            net_perf_client=net_perf_client,
+            protocol=protocol,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            test_type="iperf"
+        )
+
         wlan_obj.start()
-        wlan_obj.wait_for_exit()
-        time.sleep(20)
-        wlan_obj.iperf()
         ble_obj.start()
+        wlan_obj.wait_for_exit()
         ble_obj.wait_for_exit()
         logger().info("Test completed successfully.")
 
-    except Exception as error:
-        logger().error(f"Error in BLE thread functionality: {error}")
-        raise error
-
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
