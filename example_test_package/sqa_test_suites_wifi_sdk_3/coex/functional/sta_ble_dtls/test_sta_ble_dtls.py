@@ -59,6 +59,11 @@ import sys
 
 from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble.test_sta_ble_dle_sdk import BleThread
 
+
+from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble_provisioning.test_sta_ble_provisioning_sdk import ProvisioningFunctionality
+
+
+
 def logger():
     return get_logger(__name__)
 
@@ -1356,6 +1361,42 @@ class BleThread(ThreadBase):
             
         logger().info("All connection intervals updated successfully")
 
+    def wifi_scan(self):
+        scan_result_ssid_security = []
+        result = self.wifi_dut.interfaces.wifi.scan()
+        assert result, ".... scan results are empty ...."
+
+        for scan in result:
+            ssid = re.findall(r"((?<=ssid:\s)[\w\W]+?(?=\sbssid))", str(scan))
+            security = re.findall(r"((?<=security_mode:\s)\d+)", str(scan))
+            scan_result_ssid_security.append((ssid[0], security[0]))
+
+        logger().info(f".... scan result for ssid and security is : {scan_result_ssid_security} ....")
+
+        logger().info(f' *********************** subscribe to notifications ***********************')
+        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=self.char_path)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(
+            char_path=self.char_path, char_uid=self.char_uid)
+
+        self.wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(
+            ble_remote_dev_address=self.ble_client_address, buffer_mode=1, buffer_count=2)
+
+        for ssid in scan_result_ssid_security:
+            self.wifi_dut.interfaces.wifi.ble_notify_custom_value(
+                ble_remote_dev_address=self.ble_client_address, data=str(ssid))
+            time.sleep(3)
+            logger().info("******************** Validate Data ********************")
+            notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
+            time.sleep(30)
+            logger().info(f' ******* received ssid and security on remote device is : {notifications} *******')
+
+            assert notifications, ".... received data is empty ...."
+            # assert notifications == [str(ssid)], ".... SSID or Security Mismatch or Acknowledgement not received ....."
+        self.ble_client.interfaces.bluetooth.gatt_adapter.clear_notifications()
+        logger().info(f' *********************** unsubscribe to notifications ***********************')
+        self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=self.char_path)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=self.char_uid)
+
 
         
     def ble_provisioning_commission(self):
@@ -2104,6 +2145,7 @@ def test_sta_ble_dtls_ble_rx_c767037(
             data=data,
             svc=svc,
             charc=charc,
+            set_smp=1
         )
         
         # Create threads for parallel execution
@@ -2675,15 +2717,14 @@ def test_sta_ble_dtls_multiple_centrals_c767047(
         )
         logger().info("start capturing with Sniffer by giving the test case name as filename")
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        ble_thread1.connect_ble_client()  # DUT as peripheral (slave)
+        ble_thread2.connect_ble_client()  # DUT as peripheral (slave)
         wifi_thread.scan_networks()
         wifi_thread.join_access_point()
         wifi_thread.get_network_performance_client_ip()
         wifi_thread.test_network_connectivity()
 
-        ble_thread1.connect_ble_client()  # DUT as peripheral (slave)
         ble_thread1.service_discovery_on_remote()
-
-        ble_thread2.connect_ble_client()  # DUT as peripheral (slave)
         ble_thread2.service_discovery_on_remote()
 
         wifi_thread.start()
@@ -3883,7 +3924,7 @@ def test_sta_ble_dtls_grp_key_renw_ble_rx_c767053(
 ])
 def test_sta_ble_dtls_ble_provisioning_c767054(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl, 
-    wifi_sniffer, sl_collections, sniffer_filter
+    wifi_sniffer, sl_collections, sniffer_filter, ble_dut, utf_constants
 ):
     """
     C767054: Verify DTLS client functionality with DTLS 1.2 using BLE provisioning
@@ -3900,38 +3941,14 @@ def test_sta_ble_dtls_ble_provisioning_c767054(
     """
     logger().info("Starting optimized DTLS with BLE provisioning test")
 
-    data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
-    allocated_mem_addr = wifi_dut.interfaces.wifi.allocate_memory(size=len(data))
-    logger().info(f"allocated_mem_addr: {allocated_mem_addr}")
-    wifi_dut.interfaces.wifi.load_memory(address=allocated_mem_addr, size=len(data), write_content=data)
-    service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
-    char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
-    svc = 'HealthThermometerService'
-    charc = 'CustomNotifyCharacteristic'
+    ble_obj = ProvisioningFunctionality(
+        wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, ble_pairing=0,
+        utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+        test_case=20147)
 
-    ble_thread = BleThread(
-        wifi_dut=wifi_dut,
-        ble_client=ble_client,
-        sl_collections=sl_collections,
-        ble_test_type="provisioning",  # DUT as central (master) for Rx notifications
-        data_length=20,  # 20 bytes as per test case
-        data_duration=120,
-        periodic_delay=1,
-        set_smp=1,  # Enable SMP pairing
-        service_class=["HealthThermometerService"],
-        service_uuid=HealthThermometerService.UUID,
-        char_uuid=CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID,
-        characteristic=CustomNotifyCharacteristic,
-        data=data,
-        svc=svc,
-        charc=charc,
-        wifi_access_point=wifi_access_point
-    )
-
-    ble_thread.connect_ble_master()  # DUT as central (master)
-    ble_thread.service_discovery_on_dut()
-    ble_thread.start()
-    ble_thread.wait_for_exit()
+    ble_obj.start()
+    ble_obj.wait_for_exit()
+    ble_obj.wifi_scan()
 
     # Create threads for parallel execution
     wifi_thread = WifiThread(
@@ -3944,17 +3961,19 @@ def test_sta_ble_dtls_ble_provisioning_c767054(
         sniffer_filter=sniffer_filter,
         test_name="C767054_provisioning",  # Indicates provisioning test
         dtls_version="1.2",  # DTLS 1.2 as per test case,
-        received_credentials=ble_thread.credentials
+        received_credentials=ble_obj.credentials
     )
-    
+
+
+
     # Start both threads simultaneously
     wifi_thread.start()
     
     # Wait for completion
     wifi_thread.wait_for_exit()
-    
-    # # Validate coexistence
-    # assert validate_parallel_coexistence(wifi_dut, expected_wifi_state=True, expected_ble_state=0x08)
+
+    ble_obj.ble_remove_servie()
+    ble_obj.ble_disconnect()
     
     logger().info("Optimized C767054: DTLS with BLE provisioning test completed successfully")
 
