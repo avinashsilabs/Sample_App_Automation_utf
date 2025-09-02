@@ -135,6 +135,35 @@ class RescheduleTwTThread(ThreadBase):
                 logger().info('***** Getting error code 0x10076, which is expected *****')
                 return
 
+            if self.test_case == '540482':
+                self.wifi_dut.interfaces.wifi.twt_reschedule(flow_id=0, suspend_duration=0,
+                                                             twt_reschedule_action=Si91xTWTRescheduleParams.SL_WIFI_SUSPEND_INDEFINITELY,
+                                                             expected_status=SLStatus.SL_STATUS_SI91X_RESCHEDULE_TWT_ERR_NOACTIVE_SESS)
+                logger().info('***** Getting error code 0x10076, which is expected *****')
+                return
+            if self.test_case == '544490':
+                self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
+                                                      twt_flow_id=self.twt_flow_id,
+                                                      wake_duration=self.wake_duration,
+                                                      wake_duration_unit=self.wake_duration_unit,
+                                                      wake_duration_tol=self.wake_duration_tol,
+                                                      wake_int_exp=self.wake_int_exp,
+                                                      wake_int_exp_tol=self.wake_int_exp_tol,
+                                                      wake_int_mantissa=self.wake_int_mantissa,
+                                                      wake_int_mantissa_tol=self.wake_int_mantissa_tol,
+                                                      implicit_twt=self.implicit_twt,
+                                                      un_announced_twt=self.un_announced_twt,
+                                                      triggered_twt=self.triggered_twt,
+                                                      twt_channel=self.twt_channel,
+                                                      twt_protection=self.twt_protection,
+                                                      restrict_tx_outside_tsp=self.restrict_tx_outside_tsp,
+                                                      twt_retry_limit=self.twt_retry_limit,
+                                                      twt_retry_interval=self.twt_retry_interval,
+                                                      req_type=self.req_type,
+                                                      negotiation_type=self.negotiation_type,
+                                                      expected_status=SLStatus.SL_STATUS_TWT_SUPPORT_NOT_ENABLED_ERR)
+                logger().info('***** Getting error code 0x10070, which is expected *****')
+                return
             self.wifi_dut.interfaces.wifi.set_twt(twt_enable=self.twt_enable,
                                                   twt_flow_id=self.twt_flow_id,
                                                   wake_duration=self.wake_duration,
@@ -450,7 +479,25 @@ def test_wifi_sdk_twt_resume_back_immediately_suspend_for_duration_c540481(wifi_
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated", 'disable_twt'])
+def test_wifi_sdk_reschedule_TwT_With_No_TwT_c540482(wifi_dut, wifi_access_point, sl_collections,
+                                                                           wifi_sniffer, sniffer_filter, utf_constants):
+    try:
+        wlan_obj = RescheduleTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                       sl_collections=sl_collections, wifi_sniffer=wifi_sniffer,
+                                       sniffer_filter=sniffer_filter, power_save=True, test_case='540482',
+                                       utf_constants=utf_constants)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "twt": 1})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+
 def test_wifi_sdk_reschedule_twt_connecting_to_non_twt_ap_c540483(wifi_dut, wifi_access_point, sl_collections,
                                                                   wifi_sniffer, sniffer_filter, utf_constants):
     try:
@@ -508,6 +555,23 @@ def test_wifi_sdk_twt_autoconfig_fails_or_not_c540490(wifi_dut, wifi_access_poin
         wlan_obj = RescheduleTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                        sl_collections=sl_collections, wifi_sniffer=wifi_sniffer,
                                        sniffer_filter=sniffer_filter, power_save=True, test_case='540490',
+                                       utf_constants=utf_constants)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+@pytest.mark.firmware_app("test_wlan_aws_enable")
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "twt": 1})
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_TwT_With_No_Params_Enabled_c544490(firmware_loader,wifi_dut, wifi_access_point, sl_collections,
+                                                                           wifi_sniffer, sniffer_filter, utf_constants):
+    try:
+        wlan_obj = RescheduleTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                       sl_collections=sl_collections, wifi_sniffer=wifi_sniffer,
+                                       sniffer_filter=sniffer_filter, power_save=True, test_case='544490',
                                        utf_constants=utf_constants)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
