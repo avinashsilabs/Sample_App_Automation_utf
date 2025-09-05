@@ -6,6 +6,7 @@ import re
 from threading import Thread
 from utf.utf_config import UtfConfig
 from utf.utils.stopwatch import Stopwatch
+from utf.utils import get_tls_certificate_dir
 from utf.utils.iperf.iperf_utils import ping
 from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.devices.si91x import (
@@ -19,6 +20,9 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xPowerSaveProcedureTypes,
     Si91xJoinFeatureBitMap,
     Si91xMqttQos,
+    Si91xOperatingMode,
+    Si91xCertificateType,
+    Si91xCertIdentifier,
 )
 from utf.interfaces.wifi import (
     SecurityMode,
@@ -27,6 +31,9 @@ from utf.interfaces.wifi import (
 )
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.security_enhancements.test_wlan_sta_enterprise_sdk import (
+    SnifferValidationProcess,
+)
 
 
 def logger():
@@ -46,6 +53,8 @@ Test Cases Overview:
 - C769961: RAM auto-join with WPA2/WPA two profiles
 - C769962: RAM auto-join with WPA2/OPEN two profiles
 - C769963: RAM auto-join after sl_net_deinit with WPA3
+- C769994: RAM auto-join with WPA3 enterprise TLS PEAP security
+- C769995: RAM auto-join with WPA2 enterprise TLS TTLS security
 - C769974: RAM auto-join while doing SNTP data transfer
 - C769975: RAM auto-join while doing MQTT over SSL data transfer
 - C769980: RAM auto-join with incorrect PSK first try
@@ -62,6 +71,8 @@ Test Cases Overview:
 - C770009: NVM auto-join with two profiles MBSSID
 - C770011: NVM auto-join error with invalid credential
 - C770012: NVM auto-join error with three profiles and credentials
+- C769994: NVM auto-join with WPA3 enterprise TLS PEAP security
+- C769995: NVM auto-join with WPA2 enterprise TLS TTLS security
 
 Key Features Tested:
 - Profile and credential storage in RAM vs NVM
@@ -598,6 +609,57 @@ class WLANAutoJoinThread(ThreadBase):
         )["packet_count"]
         assert snif_pkt_count, "Unable to find association & ea pols packets."
 
+    def verify_wpa3_enterprise_sniffer_validation(self):
+        packet_filter1 = (
+            self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=self.ap_mac_address,
+                da_addr=self.dut_mac_address,
+                filter_name="beacon_wpa2_entr_akms_check_with_pmf_req",
+            )
+        )
+        logger().info(
+            f"Validating akms type 5 and pmf bit capable & required in sniffer"
+        )
+        packet_filter2 = (
+            self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=self.dut_mac_address,
+                da_addr=self.ap_mac_address,
+                filter_name="assoc_req_resp_eapol_4_way_handshake_wpa3_eap",
+            )
+        )
+        packet_filter3 = (
+            self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=self.dut_mac_address,
+                da_addr=self.ap_mac_address,
+                filter_name="power_mgmt_bit",
+            )
+        )
+
+        packet_filter4 = (
+            self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=self.dut_mac_address,
+                ta_addr=self.dut_mac_address,
+                filter_name="null_data_powersave",
+            )
+        )
+
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter1
+        )["packet_count"], "Unable to find akms value in beacon packet"
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter2
+        )[
+            "packet_count"
+        ], "Unable to find assoc_req_resp_eapol_4_way_handshake packet in sniffer"
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter3
+        )[
+            "packet_count"
+        ], "Unable to find power management bit in QOS null frames in sniffer capture"
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter4
+        )["packet_count"], "Unable to find ps polls in sniffer capture"
+
     def ping(self):
         logger().info("Initiating ping from Raspi to DUT to check stability")
         status = ping(self.device_ip, 30, size=300)
@@ -721,12 +783,12 @@ Map_security = {
     "WPA": 1,
     "WPA2": 2,
     "WEP": 3,
-    "WPA_ENTERPRISE": 4,
-    "WPA2_ENTERPRISE": 5,
+    "WPAEnterprise": 4,
+    "WPA2Enterprise": 5,
     "WPA_WPA2_MIXED": 6,
     "WPA3": 7,
     "WPA3_TRANSITION": 8,
-    "WPA3_ENTERPRISE": 9,
+    "WPA3Enterprise": 9,
     "WPA3_TRANSITION_ENTERPRISE": 10,
 }
 
@@ -1122,6 +1184,356 @@ def test_RAM_autojoin_auto_join_with_wpa2_open_two_profiles_c769962(
             f"\n <---------------- Verify Auto Join Functionality with Profile: {profiles[1]} ---------------->\n"
         )
         wifi_obj.verify_auto_join_functionality(profile=profiles[1])
+        wifi_obj.ping()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@wifi_dut_marker(
+    wifi_stack_len=3584,
+    oper_mode=Si91xOperatingMode.EAPWiFiClient,
+    ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W,
+)
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=["wifi_powersave_disable", "bt_powersave_disable", "net_down", "clear_certs"],
+)
+@pytest.mark.parametrize(
+    "profiles",
+    [
+        (
+            {
+                "ssid": "ssid_profile1",
+                "channel": 1,
+                "security": "WPA3Enterprise",
+                "passphrase": "12345678",
+                "encryption_type": "SL_WIFI_EAP_TLS_ENCRYPTION",
+            },
+            {
+                "ssid": "ssid_profile2",
+                "channel": 6,
+                "security": "WPA3Enterprise",
+                "passphrase": "12345678",
+                "encryption_type": "SL_WIFI_PEAP_MSCHAPV2_ENCRYPTION",
+            },
+        ),
+    ],
+)
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "ssid": "ssid_profile1",
+        "security": "WPA2Enterprise",
+        "passphrase": "12345678",
+        "channel": 1,
+    },
+)
+def test_RAM_autojoin_with_wpa3_enterprise_tls_peap_security_c769967(
+    wifi_dut,
+    radius_server,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    sniffer_filter,
+    utf_constants,
+    request,
+    wifi_client,
+    profiles,
+):
+
+    try:
+        wifi_access_point.interfaces.wifi.config["protected_management_frame"] = (
+            "Required"
+        )
+        wifi_access_point.interfaces.wifi.start_ap()
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_obj = WLANAutoJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            profiles=profiles,
+            request=request,
+        )
+        wifi_dut.interfaces.wifi.sl_net_set_profile(
+            ssid=profiles[0]["ssid"],
+            security=Map_security[profiles[0]["security"]],
+            credential_id=5,
+            priority=1,
+            profile_id=0,
+            channel=profiles[0]["channel"],
+            encryption=5,
+            expected_status="SL_STATUS_OK",
+        )
+        wifi_dut.interfaces.wifi.sl_net_set_profile(
+            ssid=profiles[1]["ssid"],
+            security=Map_security[profiles[1]["security"]],
+            credential_id=5,
+            priority=2,
+            profile_id=1,
+            channel=profiles[1]["channel"],
+            encryption=8,
+            expected_status="SL_STATUS_OK",
+        )
+        wifi_dut.interfaces.wifi.sl_net_set_eap_credential(
+            username="user1",
+            password="12345678",
+            certificate_id=1,
+            eap_flags=0,
+            credential_id=5,
+        )
+        profile_id_0 = wifi_dut.interfaces.wifi.sl_net_get_profile(profile_id=0)
+        profile_id_1 = wifi_dut.interfaces.wifi.sl_net_get_profile(profile_id=1)
+        logger().info(
+            f"\n The Profile ID 0: {profile_id_0} and Profile ID 1: {profile_id_1}"
+        )
+
+        wifi_dut.interfaces.wifi.set_ssl_certificate(
+            str(get_tls_certificate_dir().joinpath("wifi-user.pem")),
+            Si91xCertificateType.SL_NET_CERTIFICATE,
+            Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID,
+            cert_index=0,
+        )
+        wifi_obj.set_rejoin_params()
+        wifi_obj.join_to_ap()
+        wifi_obj.set_power_save()
+        wifi_obj.verify_wpa3_enterprise_sniffer_validation()
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=wifi_obj.ap_mac_address,
+            sa_addr=wifi_obj.dut_mac_address,
+            filter_name="eap_type_tls_verification",
+        )
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter
+        )["packet_count"], "\n Unable to find EAP frames sent from AP in sniffer \n"
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info(
+            f"\n <---------------- Verify Auto Join Functionality with Profile: {profiles[1]} ---------------->\n"
+        )
+        wifi_access_point.interfaces.wifi.disconnect_devices(
+            mac_address=wifi_obj.dut_mac_address
+        )
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=profiles[1]["channel"]
+        )
+        wifi_sniffer.interfaces.capture.start_capture(
+            capture_file=request.node.name + f"channel_{profiles[1]['channel']}"
+        )
+        logger().info(f"SSID : {profiles[1]['ssid']}")
+        logger().info(f"Security : {profiles[1]['security']}")
+        logger().info(f"Passphrase : {profiles[1]['passphrase']}")
+        wifi_access_point.interfaces.wifi.config["protected_management_frame"] = (
+            "Required"
+        )
+        wifi_access_point.interfaces.wifi.start_ap(
+            ssid=profiles[1]["ssid"],
+            security="WPA2Enterprise",
+            passphrase=profiles[1]["passphrase"],
+            channel=profiles[1]["channel"],
+        )
+        since_time = time.perf_counter_ns()
+        auto_join_status = False
+        in_progress_status = False
+        sw = Stopwatch()
+        while sw.elapsed_sec < 60 and not auto_join_status:
+            events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+            for event in events:
+                event_data = event.event_data
+                if "IN PROGRESS" in event_data and not in_progress_status:
+                    logger().info(
+                        f"AUTO JOIN PROCESS STARTED WITH EVENT: {event_data} FOR PROFILE {profiles[1]}"
+                    )
+                    in_progress_status = True
+                if "CONNECTED TO AP" in event_data:
+                    logger().info(f"DUT CONNECTED TO PROFILE {profiles[1]}")
+                    auto_join_status = True
+                    break
+        wifi_dut.interfaces.wifi.associated = auto_join_status
+        assert (
+            auto_join_status
+        ), f"DUT FAILED TO AUTO-JOIN WITH PROFILE {profiles[1]}...."
+        wifi_obj.set_power_save()
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=wifi_obj.ap_mac_address,
+            sa_addr=wifi_obj.dut_mac_address,
+            filter_name="eap_type_peap_verification",
+        )
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter
+        )["packet_count"], "Unable to find EAP frames sent from AP in sniffer"
+
+        logger().info(f"\n Validating for Power Management Bit \n")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=wifi_obj.ap_mac_address,
+            sa_addr=wifi_obj.dut_mac_address,
+            filter_name="power_mgmt_bit",
+        )
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter1
+        )[
+            "packet_count"
+        ], "Unable to find power management bit in QOS null frames in sniffer capture"
+        wifi_dut.interfaces.wifi.sl_wifi_get_wireless_info()
+        wifi_obj.ping()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@wifi_dut_marker(
+    wifi_stack_len=3584,
+    oper_mode=Si91xOperatingMode.EAPWiFiClient,
+    config_feature=Si91xConfigFeatureBitMap.TLS_V2,
+)
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=["wifi_powersave_disable", "bt_powersave_disable", "net_down", "clear_certs"],
+)
+@pytest.mark.parametrize(
+    "profiles",
+    [
+        (
+            {
+                "ssid": "ssid_profile1",
+                "channel": 1,
+                "security": "WPA2Enterprise",
+                "passphrase": "12345678",
+                "encryption_type": "SL_WIFI_EAP_TLS_ENCRYPTION",
+            },
+            {
+                "ssid": "ssid_profile2",
+                "channel": 6,
+                "security": "WPA2Enterprise",
+                "passphrase": "12345678",
+                "encryption_type": "SL_WIFI_EAP_TLS_ENCRYPTION",
+            },
+        ),
+    ],
+)
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "ssid": "ssid_profile1",
+        "security": "WPA2Enterprise",
+        "passphrase": "12345678",
+        "channel": 1,
+    },
+)
+def test_RAM_autojoin_with_wpa2_enterprise_tls_ttls_security_c769968(
+    wifi_dut,
+    radius_server,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    sniffer_filter,
+    utf_constants,
+    request,
+    wifi_client,
+    profiles,
+):
+
+    try:
+
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_obj = WLANAutoJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            profiles=profiles,
+            request=request,
+        )
+        wifi_dut.interfaces.wifi.sl_net_set_profile(
+            ssid=profiles[0]["ssid"],
+            security=Map_security[profiles[0]["security"]],
+            credential_id=5,
+            priority=1,
+            profile_id=0,
+            channel=profiles[0]["channel"],
+            encryption=5,
+            expected_status="SL_STATUS_OK",
+        )
+        wifi_dut.interfaces.wifi.sl_net_set_profile(
+            ssid=profiles[1]["ssid"],
+            security=Map_security[profiles[1]["security"]],
+            credential_id=5,
+            priority=2,
+            profile_id=1,
+            channel=profiles[1]["channel"],
+            encryption=6,
+            expected_status="SL_STATUS_OK",
+        )
+        wifi_dut.interfaces.wifi.sl_net_set_eap_credential(
+            username="user1",
+            password="12345678",
+            certificate_id=1,
+            eap_flags=0,
+            credential_id=5,
+        )
+        profile_id_0 = wifi_dut.interfaces.wifi.sl_net_get_profile(profile_id=0)
+        profile_id_1 = wifi_dut.interfaces.wifi.sl_net_get_profile(profile_id=1)
+        logger().info(
+            f"\n The Profile ID 0: {profile_id_0} and Profile ID 1: {profile_id_1}"
+        )
+
+        wifi_dut.interfaces.wifi.set_ssl_certificate(
+            str(get_tls_certificate_dir().joinpath("wifi-user.pem")),
+            Si91xCertificateType.SL_NET_CERTIFICATE,
+            Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID,
+            cert_index=0,
+        )
+        wifi_obj.set_rejoin_params()
+        wifi_obj.join_to_ap()
+        wifi_obj.set_power_save()
+        sniffer_verification = SnifferValidationProcess(
+            wifi_sniffer=wifi_sniffer,
+            sniffer_filter=sniffer_filter,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=wifi_obj.dut_mac_address,
+            ap_mac_address=wifi_obj.ap_mac_address,
+        )
+        sniffer_verification.verify_sniffer_validation()
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=wifi_obj.ap_mac_address,
+            sa_addr=wifi_obj.dut_mac_address,
+            filter_name="eap_type_tls_verification",
+        )
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter
+        )["packet_count"], "\n Unable to find EAP frames sent from AP in sniffer \n"
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info(
+            f"\n <---------------- Verify Auto Join Functionality with Profile: {profiles[1]} ---------------->\n"
+        )
+        wifi_obj.verify_auto_join_functionality(profile=profiles[1])
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=wifi_obj.ap_mac_address,
+            sa_addr=wifi_obj.dut_mac_address,
+            filter_name="eap_type_ttls_verification",
+        )
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter
+        )["packet_count"], "\n Unable to find EAP frames sent from AP in sniffer \n"
+        wifi_dut.interfaces.wifi.sl_wifi_get_wireless_info()
         wifi_obj.ping()
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -2273,6 +2685,7 @@ def test_NVM_autojoin_auto_join_with_wpa2_open_two_profiles_c769989(
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+
 @pytest.mark.firmware_app("test_nvm3")
 @wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -2384,6 +2797,360 @@ def test_NVM_autojoin_after_sl_net_deinit_with_wpa3_C769990(
         wifi_obj.set_power_save()
         wifi_obj.ping()
         wifi_obj.wpa3_sniffer_validation(profile=profiles[0])
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.firmware_app("test_nvm3")
+@wifi_dut_marker(
+    wifi_stack_len=3584,
+    oper_mode=Si91xOperatingMode.EAPWiFiClient,
+    ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W,
+)
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=["wifi_powersave_disable", "bt_powersave_disable", "net_down", "clear_certs"],
+)
+@pytest.mark.parametrize(
+    "profiles",
+    [
+        (
+            {
+                "ssid": "ssid_profile1",
+                "channel": 1,
+                "security": "WPA3Enterprise",
+                "passphrase": "12345678",
+                "encryption_type": "SL_WIFI_EAP_TLS_ENCRYPTION",
+            },
+            {
+                "ssid": "ssid_profile2",
+                "channel": 6,
+                "security": "WPA3Enterprise",
+                "passphrase": "12345678",
+                "encryption_type": "SL_WIFI_PEAP_MSCHAPV2_ENCRYPTION",
+            },
+        ),
+    ],
+)
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "ssid": "ssid_profile1",
+        "security": "WPA2Enterprise",
+        "passphrase": "12345678",
+        "channel": 1,
+    },
+)
+def test_NVM_autojoin_with_wpa3_enterprise_tls_peap_security_c769994(
+    firmware_loader,
+    wifi_dut,
+    radius_server,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    sniffer_filter,
+    utf_constants,
+    request,
+    wifi_client,
+    profiles,
+):
+
+    try:
+        wifi_access_point.interfaces.wifi.config["protected_management_frame"] = (
+            "Required"
+        )
+        wifi_access_point.interfaces.wifi.start_ap()
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_obj = WLANAutoJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            profiles=profiles,
+            request=request,
+        )
+        wifi_dut.interfaces.wifi.sl_net_set_profile(
+            ssid=profiles[0]["ssid"],
+            security=Map_security[profiles[0]["security"]],
+            credential_id=5,
+            priority=1,
+            profile_id=0,
+            channel=profiles[0]["channel"],
+            encryption=5,
+            expected_status="SL_STATUS_OK",
+        )
+        wifi_dut.interfaces.wifi.sl_net_set_profile(
+            ssid=profiles[1]["ssid"],
+            security=Map_security[profiles[1]["security"]],
+            credential_id=5,
+            priority=2,
+            profile_id=1,
+            channel=profiles[1]["channel"],
+            encryption=8,
+            expected_status="SL_STATUS_OK",
+        )
+        wifi_dut.interfaces.wifi.sl_net_set_eap_credential(
+            username="user1",
+            password="12345678",
+            certificate_id=1,
+            eap_flags=0,
+            credential_id=5,
+        )
+        profile_id_0 = wifi_dut.interfaces.wifi.sl_net_get_profile(profile_id=0)
+        profile_id_1 = wifi_dut.interfaces.wifi.sl_net_get_profile(profile_id=1)
+        logger().info(
+            f"\n The Profile ID 0: {profile_id_0} and Profile ID 1: {profile_id_1}"
+        )
+
+        wifi_dut.interfaces.wifi.set_ssl_certificate(
+            str(get_tls_certificate_dir().joinpath("wifi-user.pem")),
+            Si91xCertificateType.SL_NET_CERTIFICATE,
+            Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID,
+            cert_index=0,
+        )
+        wifi_obj.set_rejoin_params()
+        wifi_obj.join_to_ap()
+        wifi_obj.set_power_save()
+        wifi_obj.verify_wpa3_enterprise_sniffer_validation()
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=wifi_obj.ap_mac_address,
+            sa_addr=wifi_obj.dut_mac_address,
+            filter_name="eap_type_tls_verification",
+        )
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter
+        )["packet_count"], "\n Unable to find EAP frames sent from AP in sniffer \n"
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info(
+            f"\n <---------------- Verify Auto Join Functionality with Profile: {profiles[1]} ---------------->\n"
+        )
+        wifi_access_point.interfaces.wifi.disconnect_devices(
+            mac_address=wifi_obj.dut_mac_address
+        )
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=profiles[1]["channel"]
+        )
+        wifi_sniffer.interfaces.capture.start_capture(
+            capture_file=request.node.name + f"channel_{profiles[1]['channel']}"
+        )
+        logger().info(f"SSID : {profiles[1]['ssid']}")
+        logger().info(f"Security : {profiles[1]['security']}")
+        logger().info(f"Passphrase : {profiles[1]['passphrase']}")
+        wifi_access_point.interfaces.wifi.config["protected_management_frame"] = (
+            "Required"
+        )
+        wifi_access_point.interfaces.wifi.start_ap(
+            ssid=profiles[1]["ssid"],
+            security="WPA2Enterprise",
+            passphrase=profiles[1]["passphrase"],
+            channel=profiles[1]["channel"],
+        )
+        since_time = time.perf_counter_ns()
+        auto_join_status = False
+        in_progress_status = False
+        sw = Stopwatch()
+        while sw.elapsed_sec < 60 and not auto_join_status:
+            events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+            for event in events:
+                event_data = event.event_data
+                if "IN PROGRESS" in event_data and not in_progress_status:
+                    logger().info(
+                        f"AUTO JOIN PROCESS STARTED WITH EVENT: {event_data} FOR PROFILE {profiles[1]}"
+                    )
+                    in_progress_status = True
+                if "CONNECTED TO AP" in event_data:
+                    logger().info(f"DUT CONNECTED TO PROFILE {profiles[1]}")
+                    auto_join_status = True
+                    break
+        wifi_dut.interfaces.wifi.associated = auto_join_status
+        assert (
+            auto_join_status
+        ), f"DUT FAILED TO AUTO-JOIN WITH PROFILE {profiles[1]}...."
+        wifi_obj.set_power_save()
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=wifi_obj.ap_mac_address,
+            sa_addr=wifi_obj.dut_mac_address,
+            filter_name="eap_type_peap_verification",
+        )
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter
+        )["packet_count"], "Unable to find EAP frames sent from AP in sniffer"
+
+        logger().info(f"\n Validating for Power Management Bit \n")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=wifi_obj.ap_mac_address,
+            sa_addr=wifi_obj.dut_mac_address,
+            filter_name="power_mgmt_bit",
+        )
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter1
+        )[
+            "packet_count"
+        ], "Unable to find power management bit in QOS null frames in sniffer capture"
+        wifi_dut.interfaces.wifi.sl_wifi_get_wireless_info()
+        wifi_obj.ping()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.firmware_app("test_nvm3")
+@wifi_dut_marker(
+    wifi_stack_len=3584,
+    oper_mode=Si91xOperatingMode.EAPWiFiClient,
+    config_feature=Si91xConfigFeatureBitMap.TLS_V2,
+)
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=["wifi_powersave_disable", "bt_powersave_disable", "net_down", "clear_certs"],
+)
+@pytest.mark.parametrize(
+    "profiles",
+    [
+        (
+            {
+                "ssid": "ssid_profile1",
+                "channel": 1,
+                "security": "WPA2Enterprise",
+                "passphrase": "12345678",
+                "encryption_type": "SL_WIFI_EAP_TLS_ENCRYPTION",
+            },
+            {
+                "ssid": "ssid_profile2",
+                "channel": 6,
+                "security": "WPA2Enterprise",
+                "passphrase": "12345678",
+                "encryption_type": "SL_WIFI_EAP_TLS_ENCRYPTION",
+            },
+        ),
+    ],
+)
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "ssid": "ssid_profile1",
+        "security": "WPA2Enterprise",
+        "passphrase": "12345678",
+        "channel": 1,
+    },
+)
+def test_NVM_autojoin_with_wpa2_enterprise_tls_ttls_security_c769995(
+    firmware_loader,
+    wifi_dut,
+    radius_server,
+    wifi_access_point,
+    wifi_sniffer,
+    sl_collections,
+    sniffer_filter,
+    utf_constants,
+    request,
+    wifi_client,
+    profiles,
+):
+
+    try:
+
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_obj = WLANAutoJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            profiles=profiles,
+            request=request,
+        )
+        wifi_dut.interfaces.wifi.sl_net_set_profile(
+            ssid=profiles[0]["ssid"],
+            security=Map_security[profiles[0]["security"]],
+            credential_id=5,
+            priority=1,
+            profile_id=0,
+            channel=profiles[0]["channel"],
+            encryption=5,
+            expected_status="SL_STATUS_OK",
+        )
+        wifi_dut.interfaces.wifi.sl_net_set_profile(
+            ssid=profiles[1]["ssid"],
+            security=Map_security[profiles[1]["security"]],
+            credential_id=5,
+            priority=2,
+            profile_id=1,
+            channel=profiles[1]["channel"],
+            encryption=6,
+            expected_status="SL_STATUS_OK",
+        )
+        wifi_dut.interfaces.wifi.sl_net_set_eap_credential(
+            username="user1",
+            password="12345678",
+            certificate_id=1,
+            eap_flags=0,
+            credential_id=5,
+        )
+        profile_id_0 = wifi_dut.interfaces.wifi.sl_net_get_profile(profile_id=0)
+        profile_id_1 = wifi_dut.interfaces.wifi.sl_net_get_profile(profile_id=1)
+        logger().info(
+            f"\n The Profile ID 0: {profile_id_0} and Profile ID 1: {profile_id_1}"
+        )
+
+        wifi_dut.interfaces.wifi.set_ssl_certificate(
+            str(get_tls_certificate_dir().joinpath("wifi-user.pem")),
+            Si91xCertificateType.SL_NET_CERTIFICATE,
+            Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID,
+            cert_index=0,
+        )
+        wifi_obj.set_rejoin_params()
+        wifi_obj.join_to_ap()
+        wifi_obj.set_power_save()
+        sniffer_verification = SnifferValidationProcess(
+            wifi_sniffer=wifi_sniffer,
+            sniffer_filter=sniffer_filter,
+            wifi_access_point=wifi_access_point,
+            dut_mac_address=wifi_obj.dut_mac_address,
+            ap_mac_address=wifi_obj.ap_mac_address,
+        )
+        sniffer_verification.verify_sniffer_validation()
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=wifi_obj.ap_mac_address,
+            sa_addr=wifi_obj.dut_mac_address,
+            filter_name="eap_type_tls_verification",
+        )
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter
+        )["packet_count"], "\n Unable to find EAP frames sent from AP in sniffer \n"
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info(
+            f"\n <---------------- Verify Auto Join Functionality with Profile: {profiles[1]} ---------------->\n"
+        )
+        wifi_obj.verify_auto_join_functionality(profile=profiles[1])
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=wifi_obj.ap_mac_address,
+            sa_addr=wifi_obj.dut_mac_address,
+            filter_name="eap_type_ttls_verification",
+        )
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter
+        )["packet_count"], "\n Unable to find EAP frames sent from AP in sniffer \n"
+        wifi_dut.interfaces.wifi.sl_wifi_get_wireless_info()
+        wifi_obj.ping()
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
