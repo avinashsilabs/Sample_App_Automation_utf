@@ -187,12 +187,10 @@ def test_Coex_sdk_WLAN_TCP_socket_select_without_bit_BLE_scan_C133576(
         buffer_length = len(tx_buffer)
         remote_socket.interfaces.socket.send_data_tcp(tx_buffer, use_server_socket=True)
 
-        try:
-            wifi_dut.interfaces.wifi.bsdSocketSelect(numberOfFds=1,
-                                                 time=30, timeout=30)
-        except:
-            wifi_dut.interfaces.wifi.get_saved_firmware_status(expected_status=
-                                                               SLStatus.SL_STATUS_SI91X_MEMORY_FAILED_FROM_MODULE)
+
+        wifi_dut.interfaces.wifi.bsdSocketSelect(numberOfFds=1,
+                                                 time=30, timeout=30, expected_status=SLStatus.SL_STATUS_FAIL)
+
         wifi_dut.interfaces.wifi.ble_stop_scanning()
         wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()

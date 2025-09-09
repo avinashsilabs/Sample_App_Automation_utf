@@ -203,10 +203,9 @@ def test_Coex_sdk_WLAN_bgscan_BLE_slave_C133585(
         )
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-        wifi_dut.interfaces.wifi.set_advanced_scan_configuration(adv_active_channel_time=50,
-                                                                 adv_passive_channel_time=50,
-                                                                 adv_trigger_level=63,
-                                                                 adv_trigger_level_change=4)
+        wifi_dut.interfaces.wifi.set_advanced_scan_configuration(adv_active_channel_time=15,
+                                                                 adv_passive_channel_time=20,
+                                                                 adv_trigger_level=-5)
 
         ble_obj = BleThreadFunctionality(
             wifi_dut=wifi_dut,
