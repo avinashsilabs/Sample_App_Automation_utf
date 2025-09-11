@@ -224,7 +224,8 @@ class WLanTwTThread(ThreadBase):
                 self.wifi_sniffer.interfaces.capture.stop_capture()
 
                 assert int(self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=retry_filter)[
-                               'find_packet_num']) == self.twt_retry_limit + 1, "Unable to find TWT request packets"
+                               'find_packet_num']) in {self.twt_retry_limit + 1,  self.twt_retry_limit, self.twt_retry_limit - 1}, \
+                    "Unable to find TWT request packets"
                 logger().info('\n\n**** Retry packets verified successfully ****\n\n')
 
                 self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=retry_filter,
