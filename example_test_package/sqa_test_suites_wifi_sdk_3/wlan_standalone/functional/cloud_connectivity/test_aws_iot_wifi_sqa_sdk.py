@@ -1280,8 +1280,7 @@ def test_wifi_sdk_aws_connection_when_client_id_is_null_c19558(wifi_sniffer, wif
 @pytest.mark.config('wifi_access_point', wifi={"channel": 10})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
-                             "disassociated"])
+                       wifi=["wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_aws_tcp_shutdown_c19546(wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client,
                                           logger, sl_collections, sniffer_filter, utf_constants):
     """
