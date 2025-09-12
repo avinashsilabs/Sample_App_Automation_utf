@@ -22,6 +22,9 @@ from threading import Thread
 from utf.utils.thread_base import ThreadBase
 import re
 from utf.utils.logger import get_logger
+from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
+from utf.utils.time_measurer import TimeMeasurer
+from utf.utils.stopwatch import Stopwatch
 
 """This Test plan is validating DTLS functionality in SDK 3.0
 
@@ -87,7 +90,7 @@ def wifi_dut_marker(ca_cert=None, opermode=0, stack_len=None, thread_no=None, pm
 
 class WlanThread(ThreadBase):
     def __init__(self, wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
-                 sniffer_filter, test_name, dtls_version):
+                 sniffer_filter, test_name, dtls_version,rejoin_params= None):
         super().__init__()
         self.interfaces = None
         self.wifi_dut = wifi_dut
@@ -105,14 +108,24 @@ class WlanThread(ThreadBase):
         self.sock1 = None
         self.sent_data = []
         self.dtls_version = dtls_version
+        self.rejoin_params = rejoin_params
 
     def connect_to_access_point(self):
         """Connect DUT to Wi-Fi access point and configure sniffer capture."""
         self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.test_name}.pcap")
+
+        # Set rejoin parameters based on test case
+        if self.test_name == "test_c766276":
+            rejoin_params = [5, 4, 40, 0]
+        elif self.rejoin_params is not None:
+            rejoin_params = self.rejoin_params
+        else:
+            rejoin_params = [0, 4, 40, 0]
+
         result = self.sl_collections.join_to_wifi_network_with_rejoin(
             self.wifi_dut, self.wifi_access_point, ping_count=10, retry_count=3,
-            rejoin_params=[0, 4, 40, 0], associated=False, power_save=True, ping_after_ps=True
+            rejoin_params=rejoin_params, associated=False, power_save=True, ping_after_ps=True
         )
         self.device_ip, self.dut_mac_address = result['device_ip'], result['dut_mac_address']
 
@@ -239,7 +252,8 @@ class WlanThread(ThreadBase):
 
                 except Exception as e:
                     logger().error(f"DTLS sendto exception for message {i + 1}: {e}")
-                    if hasattr(e, 'status') and e.status == SLStatus.SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAIL:
+                    status = getattr(e, 'status', None)
+                    if status and str(status) == "SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAIL":
                         logger().info(
                             f"\n **** Exception Status Received: {SLStatus.SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAIL}, "
                             f"retrying sendto... retry {retry + 1}/10")
@@ -424,8 +438,27 @@ class WlanThread(ThreadBase):
             (f"Unable to find dtls Packet in Sniffer Capture for version {self.dtls_version}"
              f" (checked  dtls1_0 or dtls1_2)")
 
+    def rejoin_async_event(self):
+        logger().info("Checking for rejoin fail event from dut")
+        with TimeMeasurer() as t:
+            sw = Stopwatch()
+            while sw.elapsed_sec < 180:
+                events = self.wifi_dut.interfaces.wifi.get_async_events()
+                rejoin_error_events = [
+                    event
+                    for event in events
+                    if event.event_type == AsyncEventIdentifiers.REJOIN_EVENT
+                ]
+                if len(rejoin_error_events):
+                    break
+                time.sleep(0.1)
+            else:
+                return False
 
-class DtlsVersion1_0Handler(ThreadBase):
+        logger().info(f"Received rejoin error event after {t.duration:.2f}s")
+        return True
+
+class DtlsVersion10Handler(ThreadBase):
     """Thread class for DTLS 1.0 operations"""
 
     def __init__(self, wifi_dut=None, wifi_client=None, openssl=None, iter_count=None, test_name=None):
@@ -558,8 +591,7 @@ class DtlsVersion1_0Handler(ThreadBase):
 
             raise
 
-
-class DtlsVersion1_2Handler(ThreadBase):
+class DtlsVersion12Handler(ThreadBase):
     """Thread class for DTLS 1.2 operations"""
 
     def __init__(self, wifi_dut=None, wifi_client=None, openssl=None, iter_count=None, test_name=None):
@@ -693,7 +725,69 @@ class DtlsVersion1_2Handler(ThreadBase):
             raise
 
 
-def dtls_sendto_loop(wifi_dut, sock1, server_ip, local_port1, duration_sec=250):
+class dtls_send_with_long_duration(ThreadBase):
+    """Thread class for long duration DTLS operations during rejoin tests"""
+
+    def __init__(self, dtls_thread, wifi_dut, wifi_client, openssl, wifi_access_point, wifi_sniffer, sl_collections, duration_sec=None):
+        super().__init__()
+        self.dtls_thread = dtls_thread
+        self.wifi_dut = wifi_dut
+        self.wifi_client = wifi_client
+        self.openssl = openssl
+        self.wifi_access_point = wifi_access_point
+        self.wifi_sniffer = wifi_sniffer
+        self.sl_collections = sl_collections
+        self.duration_sec = duration_sec
+
+    def run(self):
+        """Setup OpenSSL server, create socket, set socket options, and repeatedly send DTLS data for specified duration"""
+        try:
+            logger().info("dtls_send_with_long_duration: Starting long duration DTLS operations...")
+            self.dtls_thread.local_port1 = randint(5001, 60000)
+
+            # Start OpenSSL server for DTLS
+            self.openssl.interfaces.server.start(port=self.dtls_thread.local_port1, dtls_version="-dtls1_2")
+            time.sleep(1)  # Give server time to start
+            assert self.openssl.interfaces.server.is_running() is True
+
+            # Get server IP
+            self.dtls_thread.server_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+            self.dtls_thread.sock1 = self.wifi_dut.interfaces.wifi.socket(domain="AF_INET", stream_type="SOCK_DGRAM",
+                                                                        protocol="IPPROTO_UDP")
+            self.wifi_dut.interfaces.wifi.bsdSetSocketOptAsync(
+                self.dtls_thread.sock1,
+                option_level="SOL_SOCKET",
+                option_name=Si91xCustomSyncSockOptParms.SL_SI91X_SO_DTLS_V_1_2_ENABLE,
+                cert_index=8200
+            )
+            self.wifi_dut.interfaces.wifi.set_dtls_extensions(
+                self.dtls_thread.sock1,
+                tls_extension_sni_type=1,
+                tls_extension_alpn_type=2,
+                tls_sni_extension="example.com",
+                tls_alpn_extension="http/1.1"
+            )
+
+            logger().info(f"dtls_send_with_long_duration: Starting DTLS sendto loop for {self.duration_sec} seconds...")
+            dtls_sendto_loop(
+                wifi_dut=self.wifi_dut,
+                sock1=self.dtls_thread.sock1,
+                server_ip=self.dtls_thread.server_ip,
+                local_port1=self.dtls_thread.local_port1,
+                duration_sec=self.duration_sec,
+            )
+
+            # Close socket and stop server after sending
+            self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.dtls_thread.sock1)
+            self.openssl.interfaces.server.stop()
+            logger().info("dtls_send_with_long_duration: DTLS sendto loop and server stop complete.")
+
+        except Exception as e:
+            logger().error(f"dtls_send_with_long_duration: Error during DTLS operations: {e}")
+            raise
+
+
+def dtls_sendto_loop(wifi_dut, sock1, server_ip, local_port1, duration_sec=30):
     """Repeatedly send DTLS data for the specified duration (seconds) on the given socket."""
     start_time = time.time()
     i = 0
@@ -724,7 +818,8 @@ def dtls_sendto_loop(wifi_dut, sock1, server_ip, local_port1, duration_sec=250):
                 break
 
             except Exception as e:
-                if hasattr(e, 'status') and e.status == SLStatus.SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAIL:
+                status = getattr(e, 'status', None)
+                if status and str(status) == "SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAIL":
                     logger().info(
                         f"\n **** Exception Status Received: {SLStatus.SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAIL}, "
                         f"retrying sendto... retry {retry + 1}/10")
@@ -738,46 +833,6 @@ def dtls_sendto_loop(wifi_dut, sock1, server_ip, local_port1, duration_sec=250):
             raise RuntimeError(f"DTLS sendto failed after retries for message: {tx_data}")
         i += 1
         time.sleep(2)  # Spread out sends to overlap with renewal
-
-
-def dtls_send_with_long_duration(dtls_thread, wifi_dut, wifi_client, openssl,
-                                 wifi_access_point, wifi_sniffer, sl_collections):
-    """Setup OpenSSL server, create socket, set socket options, and repeatedly send DTLS data for 250s, then decrypt."""
-    dtls_thread.local_port1 = randint(5001, 60000)
-
-    # Start OpenSSL server for DTLS
-    openssl.interfaces.server.start(port=dtls_thread.local_port1, dtls_version="-dtls1_2")
-    time.sleep(1)  # Give server time to start
-    assert openssl.interfaces.server.is_running() is True
-    # Get server IP (optionally specify interface)
-    dtls_thread.server_ip = wifi_client.interfaces.wifi.get_ip_address()
-    dtls_thread.sock1 = wifi_dut.interfaces.wifi.socket(domain="AF_INET", stream_type="SOCK_DGRAM",
-                                                        protocol="IPPROTO_UDP")
-    wifi_dut.interfaces.wifi.bsdSetSocketOptAsync(
-        dtls_thread.sock1,
-        option_level="SOL_SOCKET",
-        option_name=Si91xCustomSyncSockOptParms.SL_SI91X_SO_DTLS_V_1_2_ENABLE,
-        cert_index=8200
-    )
-    wifi_dut.interfaces.wifi.set_dtls_extensions(
-        dtls_thread.sock1,
-        tls_extension_sni_type=1,
-        tls_extension_alpn_type=2,
-        tls_sni_extension="example.com",
-        tls_alpn_extension="http/1.1"
-    )
-    logger().info("Starting DTLS sendto loop for DHCP renewal overlap test.")
-    dtls_sendto_loop(
-        wifi_dut=wifi_dut,
-        sock1=dtls_thread.sock1,
-        server_ip=dtls_thread.server_ip,
-        local_port1=dtls_thread.local_port1,
-        duration_sec=250,
-    )
-    # Close socket and stop server after sending
-    wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=dtls_thread.sock1)
-    openssl.interfaces.server.stop()
-    logger().info("DTLS sendto loop and server stop complete.")
 
 
 @wifi_dut_marker()
@@ -994,8 +1049,7 @@ def test_wifi_sdk_dtls_functionality_with_dhcp_renewal_c766294(wifi_sniffer, wif
 
     # Start DTLS send in a thread
 
-    dtls_send_thread = threading.Thread(target=dtls_send_with_long_duration, args=(
-        dtls_thread, wifi_dut, wifi_client, openssl, wifi_access_point, wifi_sniffer, sl_collections))
+    dtls_send_thread = dtls_send_with_long_duration(dtls_thread, wifi_dut, wifi_client, openssl, wifi_access_point, wifi_sniffer, sl_collections, duration_sec=300)  # 5 minutes for DHCP renewal
     dtls_send_thread.start()
     # Wait to overlap DHCP renewal (simulate 120s lease, renewal at ~120s)
     logger().info("Waiting for DHCP renewal to occur during DTLS transfer...")
@@ -1084,7 +1138,8 @@ def test_wifi_sdk_dtls_with_wpa3_enterprise_c766300(wifi_sniffer, wifi_client, w
 
 
 @pytest.mark.skip(
-    reason="https://tech.forums.silabs.net/topic/946-dtls10-and-dtls12-parallel-functionality-failing-with-dtlssendto-in-multithreaded-scenario/")
+    reason="https://tech.forums.silabs.net/topic/946-dtls10-and-dtls12-parallel-functionality-failing-with-dtlssendto"
+           "-in-multithreaded-scenario/")
 @wifi_dut_marker(thread_no=2, stack_len=3584, priority=8)
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
@@ -1108,7 +1163,7 @@ def test_wifi_sdk_dtls_multithread_dtls1_0_and_dtls1_2_c766271(wifi_sniffer, wif
 
         # Create DTLS thread instances using proper ThreadBase pattern
         logger().info("Creating DTLS thread instances")
-        dtls1_0_thread = DtlsVersion1_0Handler(
+        dtls1_0_thread = DtlsVersion10Handler(
             wifi_dut=wifi_dut,
             wifi_client=wifi_client,
             openssl=openssl,
@@ -1116,7 +1171,7 @@ def test_wifi_sdk_dtls_multithread_dtls1_0_and_dtls1_2_c766271(wifi_sniffer, wif
             test_name="test_c766271"
         )
 
-        dtls1_2_thread = DtlsVersion1_2Handler(
+        dtls1_2_thread = DtlsVersion12Handler(
             wifi_dut=wifi_dut,
             wifi_client=wifi_client,
             openssl=openssl,
@@ -1227,7 +1282,7 @@ def test_wifi_sdk_dtls_multithread_dtls_1_0_and_dtls_1_2_max_data_length_1370_c7
 
         # Create DTLS thread instances using proper ThreadBase pattern
         logger().info("Creating DTLS thread instances")
-        dtls1_0_thread = DtlsVersion1_0Handler(
+        dtls1_0_thread = DtlsVersion10Handler(
             wifi_dut=wifi_dut,
             wifi_client=wifi_client,
             openssl=openssl,
@@ -1235,7 +1290,7 @@ def test_wifi_sdk_dtls_multithread_dtls_1_0_and_dtls_1_2_max_data_length_1370_c7
             test_name="test_c766291"
         )
 
-        dtls1_2_thread = DtlsVersion1_2Handler(
+        dtls1_2_thread = DtlsVersion12Handler(
             wifi_dut=wifi_dut,
             wifi_client=wifi_client,
             openssl=openssl,
@@ -1277,3 +1332,114 @@ def test_wifi_sdk_dtls_multithread_dtls_1_0_and_dtls_1_2_max_data_length_1370_c7
             logger().info("Sniffer capture stopped in finally block")
         except Exception as cleanup_error:
             logger().error(f"Failed to stop sniffer in finally: {cleanup_error}")
+
+
+@wifi_dut_marker(thread_no=2, stack_len=3584, priority=8)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_dtls_client_data_transfer_after_rejoin_process_c766275(wifi_sniffer, wifi_client, wifi_dut,
+                                                                         wifi_access_point, openssl, switch,
+                                                                         sl_collections, sniffer_filter):
+    '''Verify DTLS client data transfer after rejoin process (rejoin param- max retry=0) using 2 threads:
+    Thread 1: DTLS data transfer
+    Thread 2: AP power control to trigger rejoin'''
+
+    logger().info("Starting DTLS client data transfer after rejoin test with max retry=0 using 2 threads")
+
+    # Configure DUT for rejoin with max retry=0
+
+    dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
+                             sniffer_filter, test_name="test_c766275", dtls_version="-dtls1_2")
+
+    try:
+        # Join to AP first
+        dtls_thread.connect_to_access_point()
+        logger().info("DUT joined AP successfully")
+
+        # Start DTLS functionality (this will handle rejoin automatically due to rejoin params)
+        logger().info("Starting DTLS data transfer thread...")
+
+        # Create DTLS send thread using the thread class
+        dtls_send_thread = dtls_send_with_long_duration(dtls_thread, wifi_dut, wifi_client, openssl, wifi_access_point,
+                                                  wifi_sniffer, sl_collections, duration_sec=120)  # 1 minute for rejoin test
+        dtls_send_thread.start()
+        # started dtls messages before and after turning off AP
+
+        logger().info("Turning off the AP")
+        switch.interfaces.pdu_switch.turn_off(delay=5)
+        logger().info("Successfully powered off AP")
+        logger().info("Again turning on the AP")
+        switch.interfaces.pdu_switch.turn_on(delay=10)
+        ap_power_off = 0
+        logger().info("Successfully powered on AP")
+        logger().info("Pinging to DUT to check rejoin process is completed or not")
+        dut_ip = dtls_send_thread.dut_addr['device_ip']
+        status = sl_collections.ping(dut_ip, 30, 5)
+        assert status, "Pinging to DUT is failed, DUT not rejoined to AP"
+
+        time.sleep(10)
+        logger().info("delay to do dtls functionality...")
+
+        # Wait for DTLS data transfer thread to complete
+        dtls_send_thread.wait_for_exit()
+        logger().info("DTLS data transfer thread completed")
+
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=30)
+
+@wifi_dut_marker(thread_no=2, stack_len=3584, priority=8)
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+def test_wifi_sdk_dtls_client_data_transfer_after_rejoin_failure_c766276(wifi_sniffer, wifi_client, wifi_dut,
+                                                                            wifi_access_point, openssl, switch,
+                                                                            sl_collections, sniffer_filter):
+    '''Verify DTLS client data transfer after rejoin process (rejoin param- max retry=1) using 2 threads:
+    Thread 1: DTLS data transfer
+    Thread 2: AP power control to trigger rejoin'''
+
+    logger().info("Starting DTLS client data transfer after rejoin test with max retry=5 using 2 threads")
+
+    dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
+                             sniffer_filter, test_name="test_c766276", dtls_version="-dtls1_2")
+
+    try:
+        # Join to AP first
+        dtls_thread.connect_to_access_point()
+        logger().info("DUT joined AP successfully")
+
+        # Start DTLS functionality (this will handle rejoin automatically due to rejoin params)
+        logger().info("Starting DTLS data transfer thread...")
+        dtls_send_thread = dtls_send_with_long_duration(dtls_thread, wifi_dut, wifi_client, openssl, wifi_access_point, wifi_sniffer, sl_collections,duration_sec=60)
+        dtls_send_thread.start()
+        time.sleep(5)
+
+        logger().info("Turning off the AP")
+        switch.interfaces.pdu_switch.turn_off(delay=20)
+
+        logger().info("Successfully powered off AP")
+        time.sleep(5)
+        dtls_send_thread.rejoin_async_event()
+        logger().info("Again turning on the AP")
+        switch.interfaces.pdu_switch.turn_on(delay=100)
+
+        dtls_send_thread.wait_for_exit()
+        #Need to repeat from Join to AP after rejoin failure
+        dtls_thread.connect_to_access_point()
+        logger().info("DUT joined AP successfully after rejoin failure")
+
+        dtls_send_thread.start()
+        dtls_send_thread.wait_for_exit()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=30)

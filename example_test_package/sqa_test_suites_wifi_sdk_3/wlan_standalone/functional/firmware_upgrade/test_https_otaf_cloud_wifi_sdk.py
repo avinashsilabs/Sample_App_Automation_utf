@@ -8,6 +8,8 @@ from utf.utils.thread_base import ThreadBase
 from utf.utils.iperf.iperf_utils import get_host_ip, ping
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utils import get_tls_certificate_dir
+from datetime import datetime, timedelta
+import time
 
 
 """This Test plan is validating Firmware version upgrade through AWS/Azure HTTP OTAF
@@ -243,6 +245,12 @@ class WifiJoin(ThreadBase):
                                                      power_save=False,
                                                      retry_count=3,
                                                      associated=self.wifi_dut.interfaces.wifi.associated)
+            if self.test_case == '876840':
+                delay_sec = 30 * 60  # 1800 seconds
+                end_time = datetime.now() + timedelta(seconds=delay_sec)
+                logger.info(f"**** Waiting for 30 minutes (until {end_time:%Y-%m-%d %H:%M:%S}) ****")
+                time.sleep(delay_sec)
+                logger.info("**** Delay ended ****")
             if self.test_case == '652416' or self.test_case == '498663':
                 result = self.wifi_dut.interfaces.wifi.dns_get(domain_name=self.azure_host_name, query_timeout=20000,
                                                                timeout=100)
@@ -714,15 +722,25 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_intermediate_root_ca_c687579
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@wifi_dut_marker()
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_wifi_sdk_https_fw_upgrade_using_aws_server_30min_delay_after_connect_to_ap_c876840(aws_s3,
+                                                                                            wifi_sniffer,
+                                                                                            wifi_access_point,
+                                                                                            wifi_dut,
+                                                                                            sl_collections,
+                                                                                            utf_constants):
+    """Verify HTTPS client-based firmware upgrade works seamlessly with an AWS server after a 30-minute delay o"""
+    rps_path = utf_constants.get("rps_filename")
+    try:
+        test_case = '876840'
 
+        wlan_obj = WifiJoin(aws_s3=aws_s3, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
+                            rps_path=rps_path)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
 
-
-
-
-
-
-
-
-
-
-
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
