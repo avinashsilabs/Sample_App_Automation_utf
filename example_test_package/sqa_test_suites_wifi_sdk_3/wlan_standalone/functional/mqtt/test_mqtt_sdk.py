@@ -1,6 +1,7 @@
 import time
 import pytest
 from utf_wiseconnect_3.tests.devices.si91x import (
+    Si91xOperatingMode,
     Si91xCoexMode,
     Si91xTCPIPFeatureBitMap,
     Si91xExtTCPIPFeatureBitMap,
@@ -13,7 +14,8 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xExtCustomFeatureBitMap,
     Si91xJoinFeatureBitMap,
     Si91xAesType, Si91xAesOperation, Si91xAesKeySize,
-    Si91xKeyType, Si91xWrapIVMode
+    Si91xKeyType, Si91xWrapIVMode,
+    Si91xPowerSaveModes, Si91xPowerSaveProcedureTypes
 )
 from utf.interfaces.shell.ssh_shell import SSHShell
 from utf.utils.logger import get_logger
@@ -53,6 +55,31 @@ setup requirement:
 Author : Saurabh Sharma
 
 """
+webpage = '''<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" 
+content="width=device-width, initial-scale=1.0"><title>Login Page</title><style>body {font-family: Arial, 
+sans-serif;margin: 0;padding: 0;display: flex;justify-content: center;align-items: center;height: 
+100vh;background-color: #f0f0f0;}#connect-form {text-align: center;padding: 20px;border: 1px solid 
+#ccc;border-radius: 8px;background-color: #fff;}input[type="text"],input[type="password"] {width: 100%;padding: 
+10px;margin: 10px 0;border-radius: 5px;border: 1px solid #ccc;box-sizing: border-box;}input[type="submit"] {width: 
+100%;padding: 10px;margin: 10px 0;border: none;border-radius: 5px;background-color: #007bff;color: #fff;cursor: 
+pointer;}input[type="submit"]:hover {background-color: #0056b3;}#heading {margin-bottom: 20px;width: 100%;}select[
+name="security-type"] {width: 100%;padding: 10px;margin: 10px 0;border-radius: 5px;border: 1px solid #ccc;box-sizing: 
+border-box;}.form-row {display: flex;justify-content: space-between;align-items: center;margin: 10px 0;}.form-row 
+label {width: 100px;text-align: right;margin-right: 10px;white-space: nowrap;}.form-row input,.form-row select {flex: 
+2;}</style></head><body><div id="connect-form"><h3 id="heading">Silicon Labs</h3><form id="connect-form" 
+action="/connect" method="post"><div class="form-row"><label for="ssid">SSID:</label><input type="text" id="ssid" 
+name="ssid" placeholder="SSID" required></div><div class="form-row"><label for="password">Password:</label><input 
+type="text" id="password" name="password" placeholder="Password" required></div><div class="form-row"><label 
+for="security-type">Security Type:</label><select id="security-type" name="security-type"><option 
+value="WPA">WPA</option><option value="WPA2">WPA2</option><option value="WPA3">WPA3</option><option value="Mixed 
+Mode">Mixed Mode</option></select></div><input type="submit" 
+value="Connect"></form></div><script>document.getElementById('connect-form').addEventListener('submit', 
+function (event) {event.preventDefault();var xhr = new XMLHttpRequest();xhr.open('POST', '/connect', 
+true);xhr.setRequestHeader('Content-Type', 'application/json');var id = document.getElementsByName('ssid')[
+0].value;var password = document.getElementsByName('password')[0].value;var securityType = document.getElementById(
+'security-type').value;console.log('SSID: ' + id);console.log('Password: ' + password);console.log('Security Type: ' 
++ securityType);var data = {id: id,password: password,securityType: securityType};xhr.send(JSON.stringify(
+data));});</script></body></html>'''
 
 
 def logger():
@@ -1002,6 +1029,98 @@ class http_put(ThreadBase):
             self.wifi_dut.interfaces.wifi.http_client_deinit()
             time.sleep(3)
 
+class http_server_provisioning(ThreadBase):
+    def __init__(self, wifi_dut=None, wifi_client=None, wiseconnect_web=None, ap_channel=None,wifi_access_point=None,sl_collections=None, power_save=True, ping_after_power_save=True):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_client = wifi_client
+        self.sl_collections = sl_collections
+        self.wiseconnect_web = wiseconnect_web
+        self.ap_channel = ap_channel
+        self.wifi_access_point = wifi_access_point
+        self.credentials = None
+        self.ssid = "SILABS_AP_MODE"
+        self.security = "WPA2"
+        self.psk = "Automation@123"
+        self.power_save = power_save
+        self.ping_after_power_save = ping_after_power_save
+        self.dut_sta_ip = None
+
+    def join_to_ap(self, ssid, passphrase, security, ping_count=10, mode='power_save_low_latency', dtim_aligned_type=0,
+                   num_of_dtim_skip=0, listen_interval=0, monitor_interval=0,):
+        join_status = False
+        for count in range(3):
+            try:
+                logger().info(f"DUT Joining to 3rd party AP using credentials --> {ssid}:{passphrase}:{security}")
+                self.wifi_dut.interfaces.wifi.join(ssid=ssid, passphrase=passphrase, security=security,
+                                              timeout=60)
+                join_status = True
+                break
+            except Exception as error:
+                logger().info(f"Joining to AP failed:{error}, retry_count...{count}")
+                time.sleep(10)
+        assert join_status, "Failed to join to 3rd party AP"
+        ip_config = self.sl_collections.configure_ip(self.wifi_dut, retry_count=3, timeout=120)[-1]
+        dut_sta_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info("Pinging to DUT")
+        status = self.sl_collections.ping(device_ip=dut_sta_ip, ping_count=ping_count, retry_count=3)
+        assert status, "Failed to ping to DUT"
+
+        if self.power_save:
+            logger().info(f"....Applying performance profile mode : {mode}")
+            self.wifi_dut.interfaces.wifi.set_performance_profile(mode, dtim_aligned_type, num_of_dtim_skip,
+                                                             listen_interval, monitor_interval)
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                          psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+            if self.ping_after_power_save:
+                logger().info("....Pinging DUT after power-save....")
+                status = self.sl_collections.ping(device_ip=dut_sta_ip, ping_count=ping_count)
+                assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+        return dut_sta_ip
+
+    def run(self):
+        logger().info(" ******************** Starting http server provisioning ******************** ")
+        self.sl_collections.configure_dut_in_static_ip(self.wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
+                                                  static_gateway="192.168.100.76")
+        logger().info(" ********** Starting DUT as an AP ********* ")
+        self.wifi_dut.interfaces.wifi.start_ap(ssid=self.ssid, security=self.security, psk=self.psk,
+                                          channel=self.ap_channel,
+                                          dtim_beacon_count="1", beacon_interval="100")
+        time.sleep(30)
+        self.wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        self.wifi_dut.interfaces.wifi.http_server_start()
+
+        # Connect the client to DUT-AP
+        logger().info(f" ********** RASPI-STA:'{self.wifi_client.name}' is joining to DUT-AP ********** ")
+        self.wifi_client.interfaces.wifi.join()
+        dut_as_ap_ip = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
+        logger().info(f"RASPI-STA:'{self.wifi_client.name}' is successfully connected to DUT-AP")
+        logger().info(f"Initiating wlan ping from client '{self.wifi_client.name}' to DUT")
+        client_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Client_ip: {client_ip}")
+        rc, stdout, stderr = self.wifi_client.interfaces.wifi.shell.execute(
+            f"sudo ping -c 5 {dut_as_ap_ip}")
+        assert rc == 0, f"RASPI-STA failed to ping DUT"
+        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+
+        self.wiseconnect_web.interfaces.wiseconnect_ui.connect(ip_address=dut_as_ap_ip, web_ui_port=80,
+                                                          ssid=self.wifi_access_point.interfaces.wifi.ssid,
+                                                          security=self.wifi_access_point.interfaces.wifi.security,
+                                                          passphrase=self.wifi_access_point.interfaces.wifi.passphrase)
+        data = self.wifi_dut.interfaces.wifi.http_server_get_credentials_from_webpage(timeout=30)
+
+        logger().info(f"credenatils from webpage: {data}")
+        self.credentials = re.search(r'ssid:(\w+),password:(\w+),security:(\w+)', data.decode())
+        logger().info(f"credenatils: {self.credentials}")
+        assert self.credentials, "Unable to fetch 3rd party AP details from DUT"
+        self.wifi_dut.interfaces.wifi.http_server_deinit()
+        self.wifi_dut.interfaces.wifi.http_server_stop()
+        self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="ap")
+
+        self.wifi_dut.interfaces.wifi.sl_net_init(mode="client", timeout=20, stats_arg=1)
+        self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=1)
+
+        self.dut_sta_ip = self.join_to_ap(self.credentials[1], self.credentials[2], self.credentials[3].lower())
 
 @pytest.mark.config(
     "wifi_dut",
@@ -7929,3 +8048,156 @@ def test_wifi_sdk_verify_mqtt_conn_when_AP_OFF_initially_C662093(
     except Exception as Ex:
         switch.interfaces.pdu_switch.turn_on(delay=60)
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.mqtt_server("raspi_mosquitto")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_mqtt_will_topic_length_62_to_202_bytes_C708546(
+        wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, mqtt_client):
+    """Verify Embedded MQTT connection when will topic length between 62 to 202 bytes"""
+
+    try:
+        topic = ''.join(random.choices(string.ascii_uppercase + string.digits, k=60))
+        will_topic = ''.join(random.choices(string.ascii_uppercase + string.digits, k=201))
+        capture_filename = request.node.name
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", will_topic=will_topic)
+
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
+        logger().info("MQTTconnection should be success when user tries to connect LAST_WILL_TOPIC in b/w 62 to 202 bytes")
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+        "security": "WPA2",
+        "ssid": "SILABS_AP_MODE",
+        "passphrase": "Automation@123",
+        "channel": 1,
+        "interface": "wlan0",
+    }
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.SL_SI91X_FEAT_DISABLE_11AX_SUPPORT,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL |0,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | 0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | 0 | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 1
+    }
+)
+@pytest.mark.parametrize("channel", [1])
+@pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2', "channel": 1, "ssid": 'ThirdPartyAP', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+def test_wifi_sdk_MQTT_publish_STA_using_provisioning_c778871(wifi_dut, wifi_client, channel, wifi_access_point, mqtt_server, mqtt_client,
+                                                                 wiseconnect_web, request, wifi_sniffer, sl_collections, sniffer_filter):
+    """
+    Verify MQTT publish if AP mode is started before STA using provision application.
+    """
+    try:
+        topic = "mytesttopic_C127757"
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
+        capture_filename = request.node.name
+
+        provision_obj = http_server_provisioning(wifi_dut=wifi_dut, sl_collections=sl_collections, wifi_client=wifi_client,
+                                    wiseconnect_web=wiseconnect_web, wifi_access_point=wifi_access_point, ap_channel=channel)
+
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+        wifi_dut.interfaces.wifi.init(mode="ap")
+
+        provision_obj.start()
+        provision_obj.wait_for_exit()
+
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=1)
+        logger().info(".....DUT connects to MQTT server.....")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        logger().info(".....MQTT Client connects to MQTT server.....")
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        wifi_obj.subscribe_and_publish(qos=Si91xMqttQos.QOS1)
+
+        msgs = []
+        sw = Stopwatch()
+        while sw.elapsed_sec < 10:
+            time.sleep(0.1)
+            msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+            if len(msgs) == 1:
+                break
+        assert len(msgs) == 1, "No message is received by mqtt-client"
+        assert msgs[0].topic == topic, "No message received by mqtt-client on subscribed topic"
+        assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
+        assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
+                                                    "message received is wrong"
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        time.sleep(1)
+
+        logger().info(f"Checking for the PS-Poll packets in the sniffer.")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wifi_dut.interfaces.wifi.get_mac_address(), filter_name='ps_poll')
+
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "PS-POLL packets are not captured in the sniffer"
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
+        wifi_dut.interfaces.wifi.stop_ap()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
