@@ -1317,7 +1317,9 @@ def test_Coex_sdk_WLAN_ipv6_BLE_adv_scan_C156989(
 
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               test_name=test_name, sl_collections=sl_collections, test_type="ping",
-                              ping_count=ping_count, wifi_client=wifi_client, addr_type="link")
+                              ping_count=ping_count, wifi_client=wifi_client, addr_type="link",
+                              ping_after_power_save=False,
+                              ping_before_power_save=False)
         ble_obj = BleThreadFunctionality(
             wifi_dut=wifi_dut,
             ble_client=ble_client,

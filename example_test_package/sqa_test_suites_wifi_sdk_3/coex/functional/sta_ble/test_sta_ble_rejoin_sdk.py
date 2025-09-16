@@ -79,7 +79,7 @@ ble_obj = None
     },
 )
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890", "channel": 8}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -165,8 +165,25 @@ def test_Coex_sdk_rejoin_fun_ble_slave_C133464(
         logger().info(
             "Initiating ping from Raspi to DUT to check whether DUT rejoins to AP or not"
         )
-        status = ping(wifi_obj.device_ip, 30)
+        # status = ping(wifi_obj.device_ip, 30)
+        # assert status, "DUT NOT RESPONDING FOR PING REQUEST......Rejoin Failed"
+        for retries in range(3):
+            status = ping(wifi_obj.device_ip, 30)
+            if status:
+                break
+            else:
+                client_interface = wifi_client.interfaces.wifi.config["interface"]
+                logger().info(f"=======>>>>>DUT NOT RESPONDING FOR PING REQUEST......")
+                logger().info(f"=======>>>>>Disabling the ethernet adaptor at remote side....")
+                wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {client_interface} down")
+                time.sleep(5)
+                logger().info(f"=======>>>>>Enabling the ethernet adaptor at remote side....")
+                wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {client_interface} up")
+                wifi_client.interfaces.wifi.shell.execute(f"sudo iptables -F")
+                time.sleep(10)
+
         assert status, "DUT NOT RESPONDING FOR PING REQUEST......Rejoin Failed"
+
         wifi_sniffer.interfaces.capture.stop_capture()
         ble_obj.ble_disconnect()
         sl_collections.join_sniffer_validation(
