@@ -32,7 +32,11 @@ COPY utf_wiseconnect_3/ ./utf_wiseconnect_3/
 # Set UTF_EXTENSIONS_PATH to include all extensions.
 # Separate extension paths with ":"
 # e.g.  UTF_EXTENSIONS_PATH=$APP_DIR/utf_extensions/utf_wiseconnect
-ENV UTF_EXTENSIONS_PATH=$APP_DIR/utf_wiseconnect
+# Add new extension: utf_wifi_zephyr
+COPY utf_wifi_zephyr/ ./utf_wifi_zephyr/
+# If you have a target-install.sh for this extension, uncomment the next line
+# RUN ./utf_wifi_zephyr/target-install.sh
+ENV UTF_EXTENSIONS_PATH=$APP_DIR/utf_wiseconnect:$APP_DIR/utf_wifi_zephyr
 
 # Set PYTHONPATH to include UTF core + all extensions
 ENV PYTHONPATH=$UTF_CORE_PATH:$UTF_EXTENSIONS_PATH
