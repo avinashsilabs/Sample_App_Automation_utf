@@ -60,4 +60,10 @@ COPY config/ ./config/
 COPY manifest/ ./manifest/
 ENV MANIFEST_FILE=/app/manifest/manifest.yaml
 
+USER root
+# Configure nsswitch.conf to enable hostname resolution via mDNS (multicast DNS)
+# This allows ping and other network tools to resolve .local hostnames like "wiseconnect.local"
+RUN sed -i 's/^hosts:.*mdns4_minimal.*\[NOTFOUND=return\] dns$/hosts:          files mdns4_minimal mdns6_minimal [NOTFOUND=return] dns/' /etc/nsswitch.conf
+USER dockerUser
+
 CMD ["./docker_startup.sh"]
