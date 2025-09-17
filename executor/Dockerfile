@@ -32,7 +32,11 @@ COPY utf_wiseconnect_3/ ./utf_wiseconnect_3/
 # Set UTF_EXTENSIONS_PATH to include all extensions.
 # Separate extension paths with ":"
 # e.g.  UTF_EXTENSIONS_PATH=$APP_DIR/utf_extensions/utf_wiseconnect
-ENV UTF_EXTENSIONS_PATH=$APP_DIR/utf_wiseconnect
+# Add new extension: utf_wifi_zephyr
+COPY utf_wifi_zephyr/ ./utf_wifi_zephyr/
+# If you have a target-install.sh for this extension, uncomment the next line
+# RUN ./utf_wifi_zephyr/target-install.sh
+ENV UTF_EXTENSIONS_PATH=$APP_DIR/utf_wiseconnect:$APP_DIR/utf_wifi_zephyr
 
 # Set PYTHONPATH to include UTF core + all extensions
 ENV PYTHONPATH=$UTF_CORE_PATH:$UTF_EXTENSIONS_PATH
@@ -55,5 +59,11 @@ COPY $TESTS_DIR/ ./$TESTS_DIR/
 COPY config/ ./config/
 COPY manifest/ ./manifest/
 ENV MANIFEST_FILE=/app/manifest/manifest.yaml
+
+USER root
+# Configure nsswitch.conf to enable hostname resolution via mDNS (multicast DNS)
+# This allows ping and other network tools to resolve .local hostnames like "wiseconnect.local"
+RUN sed -i 's/^hosts:.*mdns4_minimal.*\[NOTFOUND=return\] dns$/hosts:          files mdns4_minimal mdns6_minimal [NOTFOUND=return] dns/' /etc/nsswitch.conf
+USER dockerUser
 
 CMD ["./docker_startup.sh"]

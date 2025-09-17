@@ -15,6 +15,8 @@ def test_dtls_client_server(dtls_server, dtls_client, logger):
     except Exception as e:
         logger.error(f"Error in client: {e}")
     finally:
+        throughput = server.measure_rx_throughput()
+        logger.info(f"DTLS client throughput: {throughput} Mbps")
         server.stop()
         if not server.is_running():
             logger.info("Server has stopped successfully.")
