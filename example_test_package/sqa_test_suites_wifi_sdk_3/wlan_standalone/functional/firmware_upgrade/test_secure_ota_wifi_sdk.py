@@ -294,7 +294,7 @@ class WifiJoin(ThreadBase):
 
             if self.test_case == '510698' or self.test_case == '510702':
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
-                    flags=1,
+                    flags=2049,
                     ip_address=self.host_ip,
                     port=443,
                     host_name=self.aws_host_name,
@@ -306,7 +306,7 @@ class WifiJoin(ThreadBase):
 
             if self.test_case == '510699':
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
-                    flags=1,
+                    flags=2049,
                     ip_address=self.host_ip,
                     port=443,
                     host_name=self.azure_host_name,

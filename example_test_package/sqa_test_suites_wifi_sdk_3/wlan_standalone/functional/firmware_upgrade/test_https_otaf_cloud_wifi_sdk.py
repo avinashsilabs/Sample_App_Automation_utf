@@ -270,7 +270,7 @@ class WifiJoin(ThreadBase):
 
             if self.test_case == '19769' or self.test_case == '498662' or self.test_case == '687579' or self.test_case == '687580':
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
-                    flags=1,
+                    flags=2049,
                     ip_address=self.host_ip,
                     port=443,
                     host_name=self.aws_host_name,
