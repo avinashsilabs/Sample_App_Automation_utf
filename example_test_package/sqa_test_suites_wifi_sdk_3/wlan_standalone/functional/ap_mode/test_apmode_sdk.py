@@ -2767,6 +2767,7 @@ def test_wifi_sdk_APUT_disabling_short_GI_C793715(wifi_dut, wifi_access_point, w
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
+@pytest.mark.start_state("wifi_dut", wifi=["reset"])
 def test_wifi_sdk_dutap_singapore_unsupported_region_c793717(wifi_dut, wifi_sniffer, sl_collections):
     """Try to configure unsupported region Country singapore in AP with  and check the DUT behavior"""
     try:

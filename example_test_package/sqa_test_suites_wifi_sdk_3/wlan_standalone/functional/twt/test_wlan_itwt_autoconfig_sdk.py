@@ -715,12 +715,14 @@ def wifi_dut_marker(
     return pytest.mark.config("wifi_dut", wifi=config)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_twt_enable_traffic_enable_ps_enable_twt_disable_traffic_disable_ps_disable_c538046(
+    firmware_loader,
     wifi_dut,
     wifi_access_point,
     wifi_sniffer,
@@ -745,12 +747,14 @@ def test_wifi_sdk_verify_dut_behaviour_twt_enable_traffic_enable_ps_enable_twt_d
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_twt_enable_traffic_enable_twt_disable_traffic_disable_c538047(
+    firmware_loader,
     wifi_dut,
     wifi_access_point,
     wifi_sniffer,
@@ -775,12 +779,14 @@ def test_wifi_sdk_verify_dut_behaviour_twt_enable_traffic_enable_twt_disable_tra
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_no_twt_tx_latency_0_c510684(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -813,12 +819,14 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_no_twt_tx_latency_0_c510684
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_rx_latency_25_no_twt_tx_latency_0_c510685(
+    firmware_loader,
     wifi_dut,
     wifi_sniffer,
     wifi_access_point,
@@ -852,12 +860,14 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_25_no_twt_tx_latency_0_c510685
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_rx_latency_5_no_twt_tx_latency_0_c510686(
+    firmware_loader,
     wifi_dut,
     wifi_sniffer,
     wifi_access_point,
@@ -891,12 +901,14 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_5_no_twt_tx_latency_0_c510686(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_500ms_no_twt_tx_latency_0_c510687(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -931,12 +943,14 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_500ms_no_tw
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_800ms_no_twt_tx_latency_0_c510688(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -971,12 +985,14 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_800ms_no_tw
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_rx_latency_5_secs_listen_interval_700ms_no_twt_tx_latency_0_c510689(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -1033,12 +1049,14 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_5_secs_listen_interval_700ms_n
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_1000ms_twt_interval_1024_c510690(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -1084,12 +1102,14 @@ def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_1000ms_twt_interval_5024_ms_c510691(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -1135,12 +1155,14 @@ def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_500ms_twt_interval_1024_ms_c510692(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -1186,12 +1208,14 @@ def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_check_dut_able_to_send_twt_req_when_average_tx_throughput_greater_than_device_average_throughput_c538035(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -1233,12 +1257,14 @@ def test_wifi_sdk_check_dut_able_to_send_twt_req_when_average_tx_throughput_grea
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_check_dut_able_to_send_twt_req_when_average_tx_throughput_less_than_device_average_throughput_c538036(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -1280,12 +1306,14 @@ def test_wifi_sdk_check_dut_able_to_send_twt_req_when_average_tx_throughput_less
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_weather_dut_is_able_to_wakeup_for_rx_latency_60_secs_c538037(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -1327,12 +1355,14 @@ def test_wifi_sdk_verify_weather_dut_is_able_to_wakeup_for_rx_latency_60_secs_c5
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_weather_dut_is_able_to_wakeup_for_rx_latency_0_secs_and_check_data_transfer_c538038(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -1374,12 +1404,14 @@ def test_wifi_sdk_verify_weather_dut_is_able_to_wakeup_for_rx_latency_0_secs_and
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_weather_dut_is_able_to_configure_tx_latency_50sec_c538039(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -1421,12 +1453,14 @@ def test_wifi_sdk_verify_weather_dut_is_able_to_configure_tx_latency_50sec_c5380
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_verify_weather_dut_is_throwing_error_rx_latency_more_than_2160_secs_c538040(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -1469,12 +1503,14 @@ def test_wifi_sdk_verify_weather_dut_is_throwing_error_rx_latency_more_than_2160
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax", "twt": 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_verify_weather_dut_is_throwing_error_tx_latency_more_than_2160_secs_c538041(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -1516,6 +1552,7 @@ def test_wifi_sdk_verify_weather_dut_is_throwing_error_tx_latency_more_than_2160
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker(
     ca_cert=[
         "start_field.pem",
@@ -1542,6 +1579,7 @@ def test_wifi_sdk_verify_weather_dut_is_throwing_error_tx_latency_more_than_2160
     wifi=["unassociated", "disable_auto_twt"],
 )
 def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_55_secs_recieve_data_from_aws_cloud_tx_latency_0_c538042(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -1601,6 +1639,7 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_55_secs_recieve_data_from
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker(
     ca_cert=[
         "start_field.pem",
@@ -1627,6 +1666,7 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_55_secs_recieve_data_from
     wifi=["unassociated", "disable_auto_twt"],
 )
 def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_25_secs_recieve_data_from_aws_cloud_tx_latency_0_c538043(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -1686,6 +1726,7 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_25_secs_recieve_data_from
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker(
     ca_cert=[
         "start_field.pem",
@@ -1712,6 +1753,7 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_25_secs_recieve_data_from
     wifi=["unassociated", "disable_auto_twt"],
 )
 def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_2_secs_recieve_data_from_aws_cloud_tx_latency_0_c538044(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,
@@ -1771,6 +1813,7 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_2_secs_recieve_data_from_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.firmware_app("test_twt_sta")
 @wifi_dut_marker(
     ca_cert=[
         "start_field.pem",
@@ -1794,6 +1837,7 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_2_secs_recieve_data_from_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_auto_twt"])
 def test_wifi_sdk_verify_dut_behaviour_with_twt_enabled_while_running_udp_tx_and_aws_traffic_c538045(
+    firmware_loader,
     wifi_dut,
     remote_socket,
     wifi_access_point,

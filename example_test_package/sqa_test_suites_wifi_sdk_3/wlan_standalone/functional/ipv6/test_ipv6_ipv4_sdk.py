@@ -571,6 +571,7 @@ def wifi_dut_marker(ext_custom_bit=0, thread_count=1, tcp_ip_bit=0, ext_tcp_ip_b
     return pytest.mark.config("wifi_dut", wifi=config)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460", "ipv6_state": "0",
@@ -582,7 +583,8 @@ def wifi_dut_marker(ext_custom_bit=0, thread_count=1, tcp_ip_bit=0, ext_tcp_ip_b
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.test_src_map_id('C156954')
-def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156954(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
+def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156954(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer,
+                                                          sl_collections,
                                                           request,
                                                           sniffer_filter, utf_constants,
                                                           wifi_client):
@@ -620,6 +622,7 @@ def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156954(wifi_dut, wifi_access_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA3", "passphrase": "231469460",
@@ -632,7 +635,7 @@ def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156954(wifi_dut, wifi_access_
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.test_src_map_id('C156955')
-def test_wifi_sdk_ipv4_ipv6_stateful_dhcpv6_WPA3_C156955(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
+def test_wifi_sdk_ipv4_ipv6_stateful_dhcpv6_WPA3_C156955(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
                                                          request,
                                                          sniffer_filter,
                                                          utf_constants, wifi_client):
@@ -665,6 +668,7 @@ def test_wifi_sdk_ipv4_ipv6_stateful_dhcpv6_WPA3_C156955(wifi_dut, wifi_access_p
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
@@ -674,7 +678,8 @@ def test_wifi_sdk_ipv4_ipv6_stateful_dhcpv6_WPA3_C156955(wifi_dut, wifi_access_p
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.test_src_map_id('C156957')
-def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156957(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
+def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156957(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer,
+                                                          sl_collections,
                                                           request,
                                                           sniffer_filter, utf_constants,
                                                           wifi_client):
@@ -715,6 +720,7 @@ def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156957(wifi_dut, wifi_access_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA3", "passphrase": "231469460",
@@ -725,7 +731,7 @@ def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156957(wifi_dut, wifi_access_
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.test_src_map_id('C156958')
-def test_wifi_sdk_ipv4_ipv6_stateful_dhcpv6_WPA3_C156958(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
+def test_wifi_sdk_ipv4_ipv6_stateful_dhcpv6_WPA3_C156958(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
                                                          request,
                                                          sniffer_filter, utf_constants, wifi_client):
     """
@@ -757,6 +763,7 @@ def test_wifi_sdk_ipv4_ipv6_stateful_dhcpv6_WPA3_C156958(wifi_dut, wifi_access_p
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA3", "passphrase": "231469460",
@@ -767,7 +774,8 @@ def test_wifi_sdk_ipv4_ipv6_stateful_dhcpv6_WPA3_C156958(wifi_dut, wifi_access_p
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.test_src_map_id('C156959')
-def test_wifi_sdk_ipv4_ipv6_stateful_dhcpv6_WPA3_C156959(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
+def test_wifi_sdk_ipv4_ipv6_stateful_dhcpv6_WPA3_C156959(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer,
+                                                         sl_collections,
                                                          request,
                                                          sniffer_filter, utf_constants,
                                                          wifi_client):
@@ -791,6 +799,7 @@ def test_wifi_sdk_ipv4_ipv6_stateful_dhcpv6_WPA3_C156959(wifi_dut, wifi_access_p
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
@@ -801,7 +810,8 @@ def test_wifi_sdk_ipv4_ipv6_stateful_dhcpv6_WPA3_C156959(wifi_dut, wifi_access_p
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.test_src_map_id('C156960')
-def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156960(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
+def test_wifi_sdk_ipv4_ipv6_stateless_dhcpv6_WPA2_C156960(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer,
+                                                          sl_collections,
                                                           request,
                                                           sniffer_filter, utf_constants,
                                                           wifi_client):
@@ -869,6 +879,7 @@ def test_wifi_sdk_sim_ping_ipv4_ipv6_stateless_dhcpv6_WPA3_C156961(firmware_load
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
@@ -879,7 +890,7 @@ def test_wifi_sdk_sim_ping_ipv4_ipv6_stateless_dhcpv6_WPA3_C156961(firmware_load
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.test_src_map_id('C156962')
-def test_wifi_sdk_sim_ping_ipv4_ipv6_stateless_dhcpv6_WPA2_C156962(wifi_dut, wifi_access_point, wifi_sniffer,
+def test_wifi_sdk_sim_ping_ipv4_ipv6_stateless_dhcpv6_WPA2_C156962(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer,
                                                                    sl_collections,
                                                                    request, sniffer_filter, utf_constants,
                                                                    wifi_client):
@@ -912,6 +923,7 @@ def test_wifi_sdk_sim_ping_ipv4_ipv6_stateless_dhcpv6_WPA2_C156962(wifi_dut, wif
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
@@ -922,7 +934,7 @@ def test_wifi_sdk_sim_ping_ipv4_ipv6_stateless_dhcpv6_WPA2_C156962(wifi_dut, wif
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.test_src_map_id('C156975')
-def test_wifi_sdk_ipv6_assign_dut_while_conn_disc_C156975(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
+def test_wifi_sdk_ipv6_assign_dut_while_conn_disc_C156975(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
                                                           request,
                                                           sniffer_filter, utf_constants,
                                                           wifi_client):
@@ -967,6 +979,7 @@ def test_wifi_sdk_ipv6_assign_dut_while_conn_disc_C156975(wifi_dut, wifi_access_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
@@ -977,7 +990,7 @@ def test_wifi_sdk_ipv6_assign_dut_while_conn_disc_C156975(wifi_dut, wifi_access_
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.test_src_map_id('C156971')
-def test_wifi_sdk_static_ip_DUT_stateful_dhcpv6_WPA2_C156971(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
+def test_wifi_sdk_static_ip_DUT_stateful_dhcpv6_WPA2_C156971(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
                                                              request,
                                                              sniffer_filter, utf_constants,
                                                              wifi_client):
@@ -1020,6 +1033,7 @@ def test_wifi_sdk_static_ip_DUT_stateful_dhcpv6_WPA2_C156971(wifi_dut, wifi_acce
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
@@ -1031,7 +1045,7 @@ def test_wifi_sdk_static_ip_DUT_stateful_dhcpv6_WPA2_C156971(wifi_dut, wifi_acce
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.test_src_map_id('C206918')
-def test_wifi_sdk_config_static_IPV6_DUT_C206918(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
+def test_wifi_sdk_config_static_IPV6_DUT_C206918(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
                                                  request,
                                                  sniffer_filter, utf_constants,
                                                  wifi_client):
@@ -1059,6 +1073,7 @@ def test_wifi_sdk_config_static_IPV6_DUT_C206918(wifi_dut, wifi_access_point, wi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "Open",
@@ -1069,7 +1084,8 @@ def test_wifi_sdk_config_static_IPV6_DUT_C206918(wifi_dut, wifi_access_point, wi
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.test_src_map_id('C156974')
-def test_wifi_sdk_assign_existing_static_ip_DUT_stateful_dhcpv6_WPA2_C156974(wifi_dut, wifi_access_point, wifi_sniffer,
+def test_wifi_sdk_assign_existing_static_ip_DUT_stateful_dhcpv6_WPA2_C156974(firmware_loader, wifi_dut,
+                                                                             wifi_access_point, wifi_sniffer,
                                                                              sl_collections,
                                                                              request,
                                                                              sniffer_filter, utf_constants,
@@ -1135,6 +1151,7 @@ def test_wifi_sdk_assign_existing_static_ip_DUT_stateful_dhcpv6_WPA2_C156974(wif
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA3", "passphrase": "231469460",
@@ -1147,7 +1164,8 @@ def test_wifi_sdk_assign_existing_static_ip_DUT_stateful_dhcpv6_WPA2_C156974(wif
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.test_src_map_id('C156970')
-def test_wifi_sdk_IPV6_assign_after_rejoin_DUT_stateful_dhcpv6_WPA3_C156970(wifi_dut, wifi_access_point, wifi_sniffer,
+def test_wifi_sdk_IPV6_assign_after_rejoin_DUT_stateful_dhcpv6_WPA3_C156970(firmware_loader, wifi_dut,
+                                                                            wifi_access_point, wifi_sniffer,
                                                                             sl_collections,
                                                                             request,
                                                                             sniffer_filter, utf_constants,
@@ -1186,6 +1204,7 @@ def test_wifi_sdk_IPV6_assign_after_rejoin_DUT_stateful_dhcpv6_WPA3_C156970(wifi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
@@ -1196,7 +1215,7 @@ def test_wifi_sdk_IPV6_assign_after_rejoin_DUT_stateful_dhcpv6_WPA3_C156970(wifi
 @pytest.mark.start_state("wifi_dut", wifi=["reset"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.test_src_map_id('C156972')
-def test_wifi_sdk_ipv4_change_notify_IPV6_C156972(wifi_dut, wifi_access_point,
+def test_wifi_sdk_ipv4_change_notify_IPV6_C156972(firmware_loader, wifi_dut, wifi_access_point,
                                                   wifi_sniffer,
                                                   sl_collections,
                                                   request,
@@ -1262,6 +1281,7 @@ def test_wifi_sdk_ipv4_change_notify_IPV6_C156972(wifi_dut, wifi_access_point,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W,
                  thread_count=2, stack_len=4096)
 @pytest.mark.config(
@@ -1273,7 +1293,7 @@ def test_wifi_sdk_ipv4_change_notify_IPV6_C156972(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-def test_wifi_sdk_sim_tcp_tx_rx_ipv4_ipv6_stateful_dhcpv6_WPA3_C156963(wifi_dut, wifi_access_point,
+def test_wifi_sdk_sim_tcp_tx_rx_ipv4_ipv6_stateful_dhcpv6_WPA3_C156963(firmware_loader, wifi_dut, wifi_access_point,
                                                                        wifi_sniffer, sniffer_filter,
                                                                        sl_collections, request,
                                                                        utf_constants, wifi_client,
@@ -1331,6 +1351,7 @@ def test_wifi_sdk_sim_tcp_tx_rx_ipv4_ipv6_stateful_dhcpv6_WPA3_C156963(wifi_dut,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(thread_count=2, stack_len=4096)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
@@ -1342,7 +1363,7 @@ def test_wifi_sdk_sim_tcp_tx_rx_ipv4_ipv6_stateful_dhcpv6_WPA3_C156963(wifi_dut,
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-def test_wifi_sdk_sim_udp_tx_rx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156964(wifi_dut, wifi_access_point,
+def test_wifi_sdk_sim_udp_tx_rx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156964(firmware_loader, wifi_dut, wifi_access_point,
                                                                        wifi_sniffer,
                                                                        sl_collections, request,
                                                                        sniffer_filter,
@@ -1405,6 +1426,7 @@ def test_wifi_sdk_sim_udp_tx_rx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156964(wifi_dut,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(thread_count=2, stack_len=4096)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
@@ -1415,7 +1437,7 @@ def test_wifi_sdk_sim_udp_tx_rx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156964(wifi_dut,
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-def test_wifi_sdk_sim_tcp_rx_udp_tx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156965(wifi_dut, wifi_access_point,
+def test_wifi_sdk_sim_tcp_rx_udp_tx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156965(firmware_loader, wifi_dut, wifi_access_point,
                                                                            wifi_sniffer,
                                                                            sl_collections,
                                                                            request,
@@ -1478,6 +1500,7 @@ def test_wifi_sdk_sim_tcp_rx_udp_tx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156965(wifi_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(thread_count=2, stack_len=4096)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "231469460",
@@ -1488,7 +1511,7 @@ def test_wifi_sdk_sim_tcp_rx_udp_tx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156965(wifi_
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-def test_wifi_sdk_sim_tcp_rx_udp_tx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156965(wifi_dut, wifi_access_point,
+def test_wifi_sdk_sim_tcp_rx_udp_tx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156965(firmware_loader, wifi_dut, wifi_access_point,
                                                                            wifi_sniffer,
                                                                            sl_collections,
                                                                            request,
@@ -1551,6 +1574,7 @@ def test_wifi_sdk_sim_tcp_rx_udp_tx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156965(wifi_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(thread_count=1)
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1", "security": "WPA2", "passphrase": "12345678",
@@ -1561,7 +1585,7 @@ def test_wifi_sdk_sim_tcp_rx_udp_tx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156965(wifi_
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_ipv6_http_file_download_stateful_C119367(wifi_dut,
+def test_wifi_sdk_ipv6_http_file_download_stateful_C119367(firmware_loader, wifi_dut,
                                                            wifi_access_point, wifi_sniffer,
                                                            sl_collections,
                                                            utf_constants,
@@ -1606,6 +1630,7 @@ def test_wifi_sdk_ipv6_http_file_download_stateful_C119367(wifi_dut,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(thread_count=1,
                  tcp_ip_bit=Si91xTCPIPFeatureBitMap.SSL,
                  ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
@@ -1620,7 +1645,7 @@ def test_wifi_sdk_ipv6_http_file_download_stateful_C119367(wifi_dut,
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_ipv6_https_file_download_C119370(wifi_dut,
+def test_wifi_sdk_ipv6_https_file_download_C119370(firmware_loader, wifi_dut,
                                                    wifi_access_point, wifi_sniffer,
                                                    sl_collections,
                                                    utf_constants,
@@ -1664,6 +1689,7 @@ def test_wifi_sdk_ipv6_https_file_download_C119370(wifi_dut,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(thread_count=1)
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0", "security": "WPA2", "passphrase": "12345678",
@@ -1674,7 +1700,7 @@ def test_wifi_sdk_ipv6_https_file_download_C119370(wifi_dut,
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-def test_wifi_sdk_ipv6_http_file_download_stateless_C119404(wifi_dut, wifi_access_point, wifi_sniffer,
+def test_wifi_sdk_ipv6_http_file_download_stateless_C119404(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer,
                                                             sl_collections,
                                                             utf_constants,
                                                             request, sniffer_filter, wifi_client,
@@ -1714,6 +1740,7 @@ def test_wifi_sdk_ipv6_http_file_download_stateless_C119404(wifi_dut, wifi_acces
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(thread_count=1,
                  tcp_ip_bit=Si91xTCPIPFeatureBitMap.SSL,
                  ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
@@ -1728,7 +1755,7 @@ def test_wifi_sdk_ipv6_http_file_download_stateless_C119404(wifi_dut, wifi_acces
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_ipv6_https_file_download_C119405(wifi_dut,
+def test_wifi_sdk_ipv6_https_file_download_C119405(firmware_loader, wifi_dut,
                                                    wifi_access_point, wifi_sniffer,
                                                    sl_collections,
                                                    utf_constants,
@@ -1772,6 +1799,7 @@ def test_wifi_sdk_ipv6_https_file_download_C119405(wifi_dut,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(thread_count=2,
                  ext_tcp_ip_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
                                 | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
@@ -1786,7 +1814,7 @@ def test_wifi_sdk_ipv6_https_file_download_C119405(wifi_dut,
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_ipv6_http_dwnld_ipv4_fw_mqtt_stateless_C156968(wifi_dut,
+def test_wifi_sdk_ipv6_http_dwnld_ipv4_fw_mqtt_stateless_C156968(firmware_loader, wifi_dut,
                                                                  wifi_access_point, wifi_sniffer,
                                                                  sl_collections,
                                                                  utf_constants,
@@ -1849,6 +1877,7 @@ def test_wifi_sdk_ipv6_http_dwnld_ipv4_fw_mqtt_stateless_C156968(wifi_dut,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(thread_count=2,
                  stack_len=4096,
                  tcp_ip_bit=Si91xTCPIPFeatureBitMap.SSL,
@@ -1868,7 +1897,7 @@ def test_wifi_sdk_ipv6_http_dwnld_ipv4_fw_mqtt_stateless_C156968(wifi_dut,
 @pytest.mark.mqtt_server("raspi_mosquitto_ipv6")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_ipv4_https_dwnld_ipv6_fw_mqtt_stateless_C156967(wifi_dut,
+def test_wifi_sdk_ipv4_https_dwnld_ipv6_fw_mqtt_stateless_C156967(firmware_loader, wifi_dut,
                                                                   wifi_access_point, wifi_sniffer,
                                                                   sl_collections,
                                                                   utf_constants,
@@ -1931,6 +1960,7 @@ def test_wifi_sdk_ipv4_https_dwnld_ipv6_fw_mqtt_stateless_C156967(wifi_dut,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(thread_count=2, tcp_ip_bit=Si91xTCPIPFeatureBitMap.SSL,
                  ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
                  ext_tcp_ip_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
@@ -1946,7 +1976,7 @@ def test_wifi_sdk_ipv4_https_dwnld_ipv6_fw_mqtt_stateless_C156967(wifi_dut,
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_ipv6_https_dwnld_ipv4_fw_mqtt_stateless_C156969(wifi_dut,
+def test_wifi_sdk_ipv6_https_dwnld_ipv4_fw_mqtt_stateless_C156969(firmware_loader, wifi_dut,
                                                                   wifi_access_point, wifi_sniffer,
                                                                   sl_collections,
                                                                   utf_constants,
@@ -2009,6 +2039,7 @@ def test_wifi_sdk_ipv6_https_dwnld_ipv4_fw_mqtt_stateless_C156969(wifi_dut,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(thread_count=1,
                  ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
                  ext_tcp_ip_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
@@ -2022,7 +2053,7 @@ def test_wifi_sdk_ipv6_https_dwnld_ipv4_fw_mqtt_stateless_C156969(wifi_dut,
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.mqtt_server("raspi_mosquitto_ipv6")
-def test_wifi_sdk_mqtt_on_ipv6_stateful_dhcp_QOS0_C119385(wifi_dut,
+def test_wifi_sdk_mqtt_on_ipv6_stateful_dhcp_QOS0_C119385(firmware_loader, wifi_dut,
                                                                    wifi_access_point, wifi_sniffer,
                                                                    sl_collections,
                                                                    utf_constants,
@@ -2080,6 +2111,7 @@ def test_wifi_sdk_mqtt_on_ipv6_stateful_dhcp_QOS0_C119385(wifi_dut,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(thread_count=1,
                  ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
                  ext_tcp_ip_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
@@ -2093,7 +2125,7 @@ def test_wifi_sdk_mqtt_on_ipv6_stateful_dhcp_QOS0_C119385(wifi_dut,
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.mqtt_server("raspi_mosquitto_ipv6")
-def test_wifi_sdk_mqtt_on_ipv6_stateful_dhcp_QOS1_TC119387(wifi_dut,
+def test_wifi_sdk_mqtt_on_ipv6_stateful_dhcp_QOS1_TC119387(firmware_loader, wifi_dut,
                                                            wifi_access_point, wifi_sniffer,
                                                            sl_collections,
                                                            utf_constants,
@@ -2152,9 +2184,7 @@ def test_wifi_sdk_mqtt_on_ipv6_stateful_dhcp_QOS1_TC119387(wifi_dut,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-
-
-# @pytest.mark.skip()
+@pytest.mark.firmware_app("test_ipv6")
 @wifi_dut_marker(thread_count=1,
                  ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
                  ext_tcp_ip_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
@@ -2176,7 +2206,7 @@ def test_wifi_sdk_mqtt_on_ipv6_stateful_dhcp_QOS1_TC119387(wifi_dut,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls_ipv6")
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_mqtt_functionality_on_ipv6_stateful_dhcp_with_QOS1_TC119391(
+def test_wifi_sdk_mqtt_functionality_on_ipv6_stateful_dhcp_with_QOS1_TC119391(firmware_loader,
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, utf_constants,
         sniffer_filter, wifi_client):
     """QOS1: Subscribe to MQTT server with TCP connection and publish data oversubscribed topic"""
@@ -2221,7 +2251,7 @@ def test_wifi_sdk_mqtt_functionality_on_ipv6_stateful_dhcp_with_QOS1_TC119391(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-
+@pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.skip(reason="WIFI_BT_UTFHELP-5460")
 @wifi_dut_marker(thread_count=2, stack_len=4096)
 @pytest.mark.config(
@@ -2233,7 +2263,7 @@ def test_wifi_sdk_mqtt_functionality_on_ipv6_stateful_dhcp_with_QOS1_TC119391(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-def test_wifi_sdk_udp_socket_async_port_ipv6_622353(wifi_dut, wifi_access_point,
+def test_wifi_sdk_udp_socket_async_port_ipv6_622353(firmware_loader, wifi_dut, wifi_access_point,
                                                     wifi_sniffer,
                                                     sl_collections,
                                                     request,
@@ -2282,7 +2312,7 @@ def test_wifi_sdk_udp_socket_async_port_ipv6_622353(wifi_dut, wifi_access_point,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-
+@pytest.mark.firmware_app("test_ipv6")
 @pytest.mark.skip(reason="WIFI_BT_UTFHELP-5460")
 @wifi_dut_marker(thread_count=2, stack_len=3584)
 @pytest.mark.config(
@@ -2293,7 +2323,7 @@ def test_wifi_sdk_udp_socket_async_port_ipv6_622353(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-def test_wifi_sdk_udp_socket_async_port_ipv4_622354(wifi_dut, wifi_access_point,
+def test_wifi_sdk_udp_socket_async_port_ipv4_622354(firmware_loader, wifi_dut, wifi_access_point,
                                                     wifi_sniffer,
                                                     sl_collections,
                                                     request,
