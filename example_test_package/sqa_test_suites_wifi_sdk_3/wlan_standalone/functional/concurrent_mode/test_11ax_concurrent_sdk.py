@@ -168,6 +168,7 @@ def wifi_dut_marker(ext_custom_bit=0):
 )
 @pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.legacy_deployed
 def test_conn_ping_on_different_security_modes_C148302(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client,
                                                        sniffer_filter, sl_collections):
     try:
@@ -226,6 +227,7 @@ def test_conn_ping_on_different_security_modes_C148302(wifi_dut, wifi_access_poi
 )
 @pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.legacy_deployed
 def test_terminate_ap_while_running_sta_C148303(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client,
                                                 sniffer_filter, sl_collections):
     try:
@@ -294,6 +296,7 @@ def test_terminate_ap_while_running_sta_C148303(wifi_dut, wifi_access_point, wif
 )
 @pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.legacy_deployed
 def test_terminate_sta_while_running_ap_C148304(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client,
                                                 sniffer_filter, sl_collections):
     try:
@@ -377,6 +380,7 @@ def test_terminate_sta_while_running_ap_C148304(wifi_dut, wifi_access_point, wif
                     wifi={'security': 'WPA2', 'standard': 'gnbax', 'channel': 13, 'region': 'europe'})
 @pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.legacy_deployed
 def test_conn_ping_on_EU_region_C148306(
         wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, sl_collections, sniffer_filter):
     try:
@@ -497,6 +501,7 @@ def test_conn_ping_on_STA_in_JP_and_AP_in_US_region_C148307(wifi_dut, wifi_acces
 )
 @pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.legacy_deployed
 def test_conn_ping_on_sta_in_open_and_ap_in_wpa2_security_modes_C148308(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                         wifi_client, sniffer_filter, sl_collections):
     try:
@@ -575,6 +580,7 @@ def test_conn_ping_on_sta_in_open_and_ap_in_wpa2_security_modes_C148308(wifi_dut
                     wifi={'security': 'WPA3', 'standard': 'gnbax', "passphrase": 'thisisatestnetwork',
                           "ssid": 'sharma1234', 'channel': 11, 'region': 'Europe'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.legacy_deployed
 def test_conn_ping_on_wpa3_security_mode_C148309(
         wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, sl_collections, remote_wiseconnect3):
     try:
@@ -637,6 +643,7 @@ def test_conn_ping_on_wpa3_security_mode_C148309(
 )
 @pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.legacy_deployed
 def test_conn_ping_on_multi_client_C148310(wifi_dut, wifi_access_point, wifi_sniffer, wifi_clients,
                                            sniffer_filter, sl_collections):
     try:

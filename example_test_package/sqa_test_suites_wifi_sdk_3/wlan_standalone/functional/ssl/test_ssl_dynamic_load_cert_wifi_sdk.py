@@ -285,6 +285,7 @@ class data_tx_rx_thread(ThreadBase):
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dynamic_load_cert_no_index_TC19638(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, sl_collections
 ):
@@ -371,6 +372,7 @@ def test_wifi_sdk_dynamic_load_cert_no_index_TC19638(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dynamic_load_cert_socket_connected_state_TC19639(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, sl_collections
 ):
@@ -458,6 +460,7 @@ def test_wifi_sdk_dynamic_load_cert_socket_connected_state_TC19639(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dynamic_load_new_cert_TC19640(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, sl_collections
 ):
@@ -549,6 +552,7 @@ def test_wifi_sdk_dynamic_load_new_cert_TC19640(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dynamic_load_powersave_not_enabled_TC19646(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, sl_collections):
     """
@@ -652,6 +656,7 @@ def test_wifi_sdk_dynamic_load_powersave_not_enabled_TC19646(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_connection_and_transfer_of_index0_index1_when_trying_loadcert_index2_TC19642(wifi_access_point,
                                                                                                wifi_dut, ssl_server,
                                                                                                logger, cert1, cert2,
@@ -729,6 +734,7 @@ def test_wifi_sdk_connection_and_transfer_of_index0_index1_when_trying_loadcert_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_connection_and_transfer_of_index0_index2_when_trying_loadcert_index1_TC19648(wifi_access_point, cert1,
                                                                                                wifi_dut, ssl_server,
                                                                                                logger, cert2, cert3,
@@ -809,6 +815,7 @@ def test_wifi_sdk_connection_and_transfer_of_index0_index2_when_trying_loadcert_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_socket", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_socket_connection_dataTX_enable_deep_sleep_base_powersave_C19650(wifi_dut, ssl_server, logger,
                                                                                        wifi_access_point, cert1, cert2,
                                                                                        cert3, sl_collections):
@@ -899,6 +906,7 @@ def test_wifi_sdk_ssl_socket_connection_dataTX_enable_deep_sleep_base_powersave_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dynamic_load_three_ssl_sockets_TC19641(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, sl_collections):
     """
@@ -1006,6 +1014,7 @@ def test_wifi_sdk_dynamic_load_three_ssl_sockets_TC19641(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, sl_collections
 ):
@@ -1151,6 +1160,7 @@ def test_wifi_sdk_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_load_certs_without_erasing_multiple_times_TC19644(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, sl_collections):
     """
@@ -1292,6 +1302,7 @@ def test_wifi_sdk_load_certs_without_erasing_multiple_times_TC19644(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_thread_wifi_sdk_connection_and_transfer_of_index1_index2_when_trying_loadcert_index0_TC19649(wifi_access_point,
                                                                                                       wifi_dut, logger,
                                                                                                       ssl_server, cert1,
@@ -1376,6 +1387,7 @@ def test_thread_wifi_sdk_connection_and_transfer_of_index1_index2_when_trying_lo
 )
 @pytest.mark.parametrize("cert1", [("ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
                                     "mosquitto-utf.silabs.com.key.pem")])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_dynamic_load_cert_in_concurrent_mode_c19647(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                   wifi_client, ssl_server, logger, sl_collections,
                                                                   request, cert1, sniffer_filter):

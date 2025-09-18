@@ -1404,6 +1404,7 @@ class FilterPacket:
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config("wifi_access_point", wifi={"beacon_interval": 100, "dtim": 3})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_max_psp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections):
     """
     Verify whether RSI_STA is wake up and receive data based on configured listen interval when enable power save
@@ -1507,6 +1508,7 @@ def test_wifi_sdk_max_psp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config("wifi_access_point", wifi={"beacon_interval": 100, "dtim": 3})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_max_psp_dtim_3_c40155(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections):
     """
     Verify whether RSI_STA is wake up and receive data at DTIM beacon when enable power save2 & MAX PSP mode
@@ -1600,6 +1602,7 @@ def test_wifi_sdk_max_psp_dtim_3_c40155(wifi_sniffer, wifi_access_point, wifi_du
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config("wifi_access_point", wifi={"beacon_interval": 100, "dtim": 3})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections):
     """
     Configure the AP DTIM count=2 and DUT DTIM no. of skip = 3 validate when DTIM count reach 0 DUT
@@ -1699,6 +1702,7 @@ def test_wifi_sdk_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_du
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config("wifi_access_point", wifi={"dtim": 2})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                 utf_constants):
     """
@@ -1786,6 +1790,7 @@ def test_wifi_sdk_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point,
                                "beacon_interval": 100,
                                "dtim": 3})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_max_psp_enable_ps2_ulp_ipv6_c535826(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut,
                                                       sl_collections, sniffer_filter):
     """
@@ -1908,6 +1913,7 @@ def test_wifi_sdk_max_psp_enable_ps2_ulp_ipv6_c535826(firmware_loader, wifi_snif
                                "beacon_interval": 100,
                                "dtim": 3})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_max_psp_dtim_enable_ps2_ulp_ipv6_c535827(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut,
                                                            sl_collections, sniffer_filter):
     """Verify whether RSI_STA is wake up and receive data based on DTIM beacon when enable power save2 with ULP and

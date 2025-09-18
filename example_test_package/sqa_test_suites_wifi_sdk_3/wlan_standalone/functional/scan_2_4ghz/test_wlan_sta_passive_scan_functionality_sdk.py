@@ -149,6 +149,7 @@ class PassiveScanFunctionality:
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wsdk_passive_scan_with_dwell_time_400ms_c551130(wifi_access_point, wifi_sniffer, wifi_dut, request,
                                                          sniffer_filter, sl_collections):
     """
@@ -183,6 +184,7 @@ def test_wsdk_passive_scan_with_dwell_time_400ms_c551130(wifi_access_point, wifi
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wsdk_passive_scan_with_dwell_time_110ms_c551131(wifi_access_point, wifi_sniffer, wifi_dut, request,
                                                          sniffer_filter, sl_collections):
     """
@@ -216,6 +218,7 @@ def test_wsdk_passive_scan_with_dwell_time_110ms_c551131(wifi_access_point, wifi
 @pytest.mark.start_state("wifi_dut", wifi=['deinit'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("dwell_time", [200, 400, 600, 800])
+@pytest.mark.legacy_deployed
 def test_wsdk_passive_scan_for_diff_dwell_time_lp_chain_enabled_c551133(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                         request, sniffer_filter, sl_collections,
                                                                         dwell_time):
@@ -257,6 +260,7 @@ def test_wsdk_passive_scan_for_diff_dwell_time_lp_chain_enabled_c551133(wifi_acc
 @pytest.mark.start_state("wifi_dut", wifi=['deinit'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("dwell_time", [300, 500, 700])
+@pytest.mark.legacy_deployed
 def test_wsdk_passive_scan_for_diff_dwell_time_lp_chain_disabled_c551134(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                          request, sniffer_filter, sl_collections,
                                                                          dwell_time):
@@ -300,6 +304,7 @@ def test_wsdk_passive_scan_for_diff_dwell_time_lp_chain_disabled_c551134(wifi_ac
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wsdk_passive_scan_and_active_scan_c551137(wifi_access_point, wifi_sniffer, wifi_dut, request, sniffer_filter,
                                                    sl_collections):
     """
@@ -338,6 +343,7 @@ def test_wsdk_passive_scan_and_active_scan_c551137(wifi_access_point, wifi_sniff
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wsdk_passive_scan_max_dwell_time_1000ms_c551132(wifi_access_point, wifi_sniffer, wifi_dut, request,
                                                          sniffer_filter, sl_collections):
     """
@@ -372,6 +378,7 @@ def test_wsdk_passive_scan_max_dwell_time_1000ms_c551132(wifi_access_point, wifi
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wsdk_passive_scan_func_probe_response_check_c551135(wifi_access_point, wifi_sniffer, wifi_dut, request,
                                                              sniffer_filter, sl_collections):
     """
@@ -410,6 +417,7 @@ def test_wsdk_passive_scan_func_probe_response_check_c551135(wifi_access_point, 
 )
 @pytest.mark.start_state("wifi_dut", wifi=['deinit'])
 @pytest.mark.end_state("wifi_dut", wifi=["reset"])
+@pytest.mark.legacy_deployed
 def test_wsdk_passive_scan_with_dwell_time_1001ms_c551136(wifi_dut, sl_collections):
     """
     Negative Case : Verify Passive scan functionality by enabling Dwell time to 1001msec.
@@ -446,6 +454,7 @@ def test_wsdk_passive_scan_with_dwell_time_1001ms_c551136(wifi_dut, sl_collectio
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wsdk_passive_scan_with_dwell_time_110ms_lp_chain_enabled_c551138(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                           request, sniffer_filter, sl_collections):
     """
@@ -481,6 +490,7 @@ def test_wsdk_passive_scan_with_dwell_time_110ms_lp_chain_enabled_c551138(wifi_a
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wsdk_passive_scan_with_dwell_time_1000ms_lp_chain_disabled_c551139(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                             request, sniffer_filter, sl_collections):
     """
@@ -520,6 +530,7 @@ def test_wsdk_passive_scan_with_dwell_time_1000ms_lp_chain_disabled_c551139(wifi
 @pytest.mark.config('wifi_access_point', wifi={'interface': 'wlan0', 'region': 'Japan', 'channel': 13})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wsdk_passive_scan_in_japan_region_lp_chain_enabled_c551142(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                     request, sniffer_filter, sl_collections):
     """
@@ -568,6 +579,7 @@ def test_wsdk_passive_scan_in_japan_region_lp_chain_enabled_c551142(wifi_access_
 @pytest.mark.config('wifi_access_point', wifi={'region': 'Europe', 'channel': 12})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wsdk_passive_scan_in_europe_region_lp_chain_enabled_c551143(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                      request, sniffer_filter, sl_collections):
     """
@@ -616,6 +628,7 @@ def test_wsdk_passive_scan_in_europe_region_lp_chain_enabled_c551143(wifi_access
 @pytest.mark.config('wifi_access_point', wifi={'region': 'US'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wsdk_passive_scan_in_us_region_lp_chain_enabled_c551144(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                  request, sniffer_filter, sl_collections):
     """
@@ -664,6 +677,7 @@ def test_wsdk_passive_scan_in_us_region_lp_chain_enabled_c551144(wifi_access_poi
 @pytest.mark.config('wifi_access_point', wifi={'interface': 'wlan0', 'region': 'Korea', 'channel': 13})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wsdk_passive_scan_in_korea_region_lp_chain_enabled_c551145(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                     request, sniffer_filter, sl_collections):
     """
@@ -711,6 +725,7 @@ def test_wsdk_passive_scan_in_korea_region_lp_chain_enabled_c551145(wifi_access_
 @pytest.mark.config('wifi_access_point', wifi={'region': 'Asia'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wsdk_passive_scan_in_world_wide_domain_lp_chain_enabled_c551146(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                          request, sniffer_filter, sl_collections):
     """

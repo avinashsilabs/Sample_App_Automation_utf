@@ -208,6 +208,7 @@ pytestmark = [
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
+@pytest.mark.legacy_deployed
 def test_advertise_all_ciphers_ssl_tx_regression_c19618(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                         cipher_list, request, utf_constants, sniffer_filter,
                                                         sl_collections):
@@ -232,6 +233,7 @@ def test_advertise_all_ciphers_ssl_tx_regression_c19618(wifi_sniffer, wifi_acces
                                           'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256',
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
+@pytest.mark.legacy_deployed
 def test_advertise_specific_ciphers_ssl_tx_regression_c19620(wifi_sniffer, wifi_access_point, wifi_dut,
                                                              ssl_server, cipher_list, request, utf_constants,
                                                              sniffer_filter, sl_collections):
@@ -250,6 +252,7 @@ def test_advertise_specific_ciphers_ssl_tx_regression_c19620(wifi_sniffer, wifi_
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
+@pytest.mark.legacy_deployed
 def test_advertise_all_ciphers_wlan_ssl_rx_regression_c19619(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                              cipher_list, request, utf_constants, sl_collections,
                                                              sniffer_filter):
@@ -275,6 +278,7 @@ def test_advertise_all_ciphers_wlan_ssl_rx_regression_c19619(wifi_sniffer, wifi_
                                           'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256',
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
+@pytest.mark.legacy_deployed
 def test_advertise_specific_ciphers_wlan_ssl_rx_regression_c19621(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                                   cipher_list, request, utf_constants, sl_collections,
                                                                   sniffer_filter):

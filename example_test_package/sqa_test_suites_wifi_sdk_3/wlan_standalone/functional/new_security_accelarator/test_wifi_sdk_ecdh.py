@@ -308,6 +308,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_add_operation_ecdh_256_mode_c217761(wifi_dut, sl_collections):
     """ verify addition operation with ecdh 256 mode"""
     try:
@@ -318,6 +319,7 @@ def test_wifi_sdk_add_operation_ecdh_256_mode_c217761(wifi_dut, sl_collections):
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_sub_operation_ecdh_256_mode_c217762(wifi_dut, sl_collections):
     """ verify subtraction operation with ecdh 256 mode"""
     try:
@@ -328,6 +330,7 @@ def test_wifi_sdk_sub_operation_ecdh_256_mode_c217762(wifi_dut, sl_collections):
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_multi_operation_ecdh_256_mode_c217763(wifi_dut, sl_collections):
     """ verify multiplication operation with ecdh 256 mode"""
     try:
@@ -338,6 +341,7 @@ def test_wifi_sdk_multi_operation_ecdh_256_mode_c217763(wifi_dut, sl_collections
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_double_operation_ecdh_256_mode_c217764(wifi_dut, sl_collections):
     """ verify double operation with ecdh 256 mode"""
     try:
@@ -348,6 +352,7 @@ def test_wifi_sdk_double_operation_ecdh_256_mode_c217764(wifi_dut, sl_collection
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_affinity_operation_ecdh_192_mode_c217765(wifi_dut, sl_collections):
     """ verify affinity operation with ecdh 192mode"""
     try:
@@ -358,6 +363,7 @@ def test_wifi_sdk_affinity_operation_ecdh_192_mode_c217765(wifi_dut, sl_collecti
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_add_operation_ecdh_224_mode_c217766(wifi_dut, sl_collections):
     """ verify addition operation with ecdh 224 mode"""
     try:
@@ -368,6 +374,7 @@ def test_wifi_sdk_add_operation_ecdh_224_mode_c217766(wifi_dut, sl_collections):
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_add_operation_ecdh_192_mode_c217767(wifi_dut, sl_collections):
     """ verify addition operation with ecdh 192 mode"""
     try:

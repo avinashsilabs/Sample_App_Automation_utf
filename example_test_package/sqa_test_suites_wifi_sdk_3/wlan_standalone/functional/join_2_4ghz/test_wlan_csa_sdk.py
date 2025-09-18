@@ -691,6 +691,7 @@ def wifi_dut_fixture(
 @pytest.mark.config("wifi_access_point", wifi={"channel": 6, "security": "WPA2"})
 @pytest.mark.parametrize("channel", [8])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_csa_with_rx_data_transfer_c776228(
     wifi_dut,
     wifi_access_point,
@@ -769,6 +770,7 @@ def test_wifi_sdk_csa_with_tx_data_transfer_c776229(
 @pytest.mark.parametrize("channel", [1])
 @pytest.mark.parametrize("beacon_count", [1])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_csa_with_min_switch_count_c776230(
     wifi_dut,
     wifi_access_point,
@@ -853,6 +855,7 @@ def test_wifi_sdk_csa_with_max_switch_count_c776231(
 @pytest.mark.parametrize("channel", [13])
 @pytest.mark.parametrize("beacon_count", [4])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_csa_when_ap_switched_to_unsupported_region_c776232(
     wifi_dut,
     wifi_access_point,
@@ -1050,6 +1053,7 @@ def test_wifi_sdk_csa_with_aws_shadow_updates_C776234(
 @pytest.mark.config("wifi_access_point", wifi={"channel": 6, "security": "WPA3"})
 @pytest.mark.parametrize("channel", [5])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_csa_with_wpa3_personal_security_c776235(
     wifi_dut,
     wifi_access_point,
@@ -1487,6 +1491,7 @@ def test_wifi_sdk_csa_with_mbssid_enabled_ap_c776239(
 @pytest.mark.config("wifi_access_point", wifi={"channel": 6, "security": "WPA2"})
 @pytest.mark.parametrize("channel", [5])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_csa_with_switch_mode_c776240(
     wifi_dut,
     wifi_access_point,
@@ -1532,6 +1537,7 @@ def test_wifi_sdk_csa_with_switch_mode_c776240(
 @pytest.mark.config("wifi_access_point", wifi={"channel": 6, "security": "OPEN"})
 @pytest.mark.parametrize("channel", [4])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_csa_with_quiet_mode_c776241(
     wifi_dut,
     wifi_access_point,

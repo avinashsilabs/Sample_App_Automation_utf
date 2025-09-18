@@ -1547,6 +1547,7 @@ def test_wifi_sdk_max_psp_dtim_3_c19680(wifi_sniffer, wifi_access_point, wifi_du
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_max_psp_enable_disable_c19682(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
                                                 sl_collections,
                                                 request, utf_constants):
@@ -2209,6 +2210,7 @@ def test_wifi_sdk_enhanced_max_psp_c19697(wifi_sniffer, wifi_access_point, wifi_
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_max_psp_enable_disable_c19698(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
                                                 sl_collections, request, utf_constants, wifi_client, net_perf_client):
     test_name = request.node.name

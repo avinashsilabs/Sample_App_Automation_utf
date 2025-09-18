@@ -203,6 +203,7 @@ class WLanThread(ThreadBase):
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mgmt_data_rates_c19622(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                          sniffer_filter, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -256,6 +257,7 @@ def test_wifi_sdk_mgmt_data_rates_c19622(wifi_sniffer, wifi_access_point, wifi_d
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mgmt_data_rates_rts_cts_c19623(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                  sniffer_filter, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -324,6 +326,7 @@ def test_wifi_sdk_mgmt_data_rates_rts_cts_c19623(wifi_sniffer, wifi_access_point
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_data_rates_for_data_packet_c19624(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                     sniffer_filter, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -372,6 +375,7 @@ def test_wifi_sdk_data_rates_for_data_packet_c19624(wifi_sniffer, wifi_access_po
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_data_rates_for_b_mode_c19625(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                sniffer_filter, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -436,6 +440,7 @@ def test_wifi_sdk_data_rates_for_b_mode_c19625(wifi_sniffer, wifi_access_point, 
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_data_rates_for_g_mode_c19626(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                sniffer_filter, sl_collections, data_rates, filter_name):
     ping_count = utf_constants.get("ping_count")
@@ -498,6 +503,7 @@ def test_wifi_sdk_data_rates_for_g_mode_c19626(wifi_sniffer, wifi_access_point, 
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_data_rates_for_n_mode_c19627(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                sniffer_filter, sl_collections, data_rates, filter_name):
     ping_count = utf_constants.get("ping_count")
@@ -552,6 +558,7 @@ def test_wifi_sdk_data_rates_for_n_mode_c19627(wifi_sniffer, wifi_access_point, 
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_data_rates_for_data_packets_12mbps_c19628(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                             request, sniffer_filter, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -600,6 +607,7 @@ def test_wifi_sdk_data_rates_for_data_packets_12mbps_c19628(wifi_sniffer, wifi_a
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_data_rates_for_rts_cts_12mbps_c19629(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sniffer_filter, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -651,6 +659,7 @@ def test_wifi_sdk_data_rates_for_rts_cts_12mbps_c19629(wifi_sniffer, wifi_access
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_data_rates_eapol_c19631(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                           sniffer_filter, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -697,6 +706,7 @@ def test_wifi_sdk_data_rates_eapol_c19631(wifi_sniffer, wifi_access_point, wifi_
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_basic_data_rates_c19634(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                           sniffer_filter, sl_collections):
     ping_count = utf_constants.get("ping_count")

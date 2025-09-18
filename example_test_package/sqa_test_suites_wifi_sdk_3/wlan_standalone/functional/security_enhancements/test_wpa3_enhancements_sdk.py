@@ -215,6 +215,7 @@ class Wlan_Conn_Thread(ThreadBase):
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_conn_STA_AP_in_H2E_mode_C113907(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                   sniffer_filter, sl_collections):
     try:
@@ -264,6 +265,7 @@ def test_wifi_sdk_conn_STA_AP_in_H2E_mode_C113907(wifi_sniffer, wifi_access_poin
 
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_conn_STA_AP_in_Transition_mode_C113912(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                          request, sniffer_filter, sl_collections):
     try:
@@ -303,6 +305,7 @@ def test_wifi_sdk_conn_STA_AP_in_Transition_mode_C113912(wifi_sniffer, wifi_acce
 
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_DUT_behaviour_rejoin_H2E_C113909(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                    sniffer_filter, switch, sl_collections):
     try:
@@ -421,6 +424,7 @@ def test_wifi_sdk_DUT_behaviour_rejoin_H2E_C113909(wifi_sniffer, wifi_access_poi
 
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_thpt_STA_AP_in_H2E_mode_C113911(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                   net_perf_client, protocol, request, sniffer_filter, wifi_client,
                                                   sl_collections):
@@ -472,6 +476,7 @@ def test_wifi_sdk_thpt_STA_AP_in_H2E_mode_C113911(wifi_sniffer, wifi_access_poin
 
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_data_transfer_STA_in_Transition_mode_C113913(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                                wifi_client, net_perf_client, protocol, request,
                                                                sniffer_filter, sl_collections):
@@ -513,6 +518,7 @@ def test_wifi_sdk_data_transfer_STA_in_Transition_mode_C113913(wifi_sniffer, wif
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_conn_with_ax_enabled_C537920(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                   sniffer_filter, sl_collections):
     ''' Verify WPA3 with 11 AX enabled parameter in the AP'''
@@ -578,6 +584,7 @@ def test_wifi_sdk_conn_with_ax_enabled_C537920(wifi_sniffer, wifi_access_point, 
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_conn_when_ap_in_wpa3_mixed_mode_C537921(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                           request, sniffer_filter, sl_collections):
     ''' Verify WPA3 functionality when third party AP is configured in WPA3 mixed mode and
@@ -624,6 +631,7 @@ def test_wifi_sdk_conn_when_ap_in_wpa3_mixed_mode_C537921(wifi_sniffer, wifi_acc
         "ext_custom_features":  Si91xExtCustomFeatureBitMap.IEEE802_11W | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_conn_with_conc_mode_with_bec_C463705(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                   sniffer_filter, sl_collections, wifi_client):
     ''' Verify WLAN Connectivity to STAUT with WPA3 Security in Concurrent Mode when APUT is Beaconing'''
@@ -698,6 +706,7 @@ def test_wifi_sdk_conn_with_conc_mode_with_bec_C463705(wifi_sniffer, wifi_access
         "ext_custom_features":  Si91xExtCustomFeatureBitMap.IEEE802_11W | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_conn_with_conc_mode_with_open_mode_C463712(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                   sniffer_filter, sl_collections, wifi_client):
     ''' Verify connectivity of STAUT with WPA3 security to 3rd party AP and 3rd party STA connectivity
@@ -783,6 +792,7 @@ def test_wifi_sdk_conn_with_conc_mode_with_open_mode_C463712(wifi_sniffer, wifi_
         "ext_custom_features":  Si91xExtCustomFeatureBitMap.IEEE802_11W | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_conn_with_conc_mode_with_wpa2_mode_C463709(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                   sniffer_filter, sl_collections, wifi_client):
     ''' Verify connectivity of STAUT with WPA3 security to 3rd party AP and 3rd party STA connectivity

@@ -1007,6 +1007,7 @@ class WifiJoinThread(ThreadBase):
         "close_sockets",
     ],
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_one_tcp_tx_and_udp_tx_multi_thread_socket_functionality_c689554(
     wifi_dut,
     wifi_sniffer,
@@ -1085,6 +1086,7 @@ def test_wifi_sdk_verify_one_tcp_tx_and_udp_tx_multi_thread_socket_functionality
         "close_sockets",
     ],
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_one_tcp_tx_and_udp_rx_multi_thread_socket_functionality_c689555(
     wifi_dut,
     wifi_sniffer,
@@ -1163,6 +1165,7 @@ def test_wifi_sdk_verify_one_tcp_tx_and_udp_rx_multi_thread_socket_functionality
         "close_sockets",
     ],
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_one_tcp_tx_and_tcp_rx_multi_thread_socket_functionality_c689556(
     wifi_dut,
     wifi_sniffer,
@@ -1241,6 +1244,7 @@ def test_wifi_sdk_verify_one_tcp_tx_and_tcp_rx_multi_thread_socket_functionality
         "close_sockets",
     ],
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_one_tcp_rx_and_udp_tx_multi_thread_socket_functionality_c689557(
     wifi_dut,
     wifi_sniffer,
@@ -1319,6 +1323,7 @@ def test_wifi_sdk_verify_one_tcp_rx_and_udp_tx_multi_thread_socket_functionality
         "close_sockets",
     ],
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_one_tcp_rx_and_udp_rx_multi_thread_socket_functionality_c689558(
     wifi_dut,
     wifi_sniffer,
@@ -1397,6 +1402,7 @@ def test_wifi_sdk_verify_one_tcp_rx_and_udp_rx_multi_thread_socket_functionality
         "close_sockets",
     ],
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_one_udp_rx_and_udp_tx_multi_thread_socket_functionality_c689559(
     wifi_dut,
     wifi_sniffer,
@@ -1475,6 +1481,7 @@ def test_wifi_sdk_verify_one_udp_rx_and_udp_tx_multi_thread_socket_functionality
         "close_sockets",
     ],
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_one_udp_rx_and_tcp_rx_multi_thread_socket_functionality_c689560(
     wifi_dut,
     wifi_sniffer,
@@ -1554,6 +1561,7 @@ def test_wifi_sdk_verify_one_udp_rx_and_tcp_rx_multi_thread_socket_functionality
         "close_sockets",
     ],
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_one_udp_tx_and_udp_rx_multi_thread_socket_functionality_c689561(
     wifi_dut,
     wifi_sniffer,
@@ -1633,6 +1641,7 @@ def test_wifi_sdk_verify_one_udp_tx_and_udp_rx_multi_thread_socket_functionality
         "close_sockets",
     ],
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_two_tcp_tx_and_tcp_rx_multi_thread_socket_functionality_c689562(
     wifi_dut,
     wifi_sniffer,
@@ -1712,6 +1721,7 @@ def test_wifi_sdk_verify_two_tcp_tx_and_tcp_rx_multi_thread_socket_functionality
         "close_sockets",
     ],
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_two_udp_tx_and_udp_rx_multi_thread_socket_functionality_c689563(
     wifi_dut,
     wifi_sniffer,
@@ -1798,6 +1808,7 @@ def test_wifi_sdk_verify_two_udp_tx_and_udp_rx_multi_thread_socket_functionality
         "close_sockets",
     ],
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_one_tls_tx_and_tls_rx_multi_thread_socket_functionality_c689564(
     wifi_dut,
     wifi_sniffer,

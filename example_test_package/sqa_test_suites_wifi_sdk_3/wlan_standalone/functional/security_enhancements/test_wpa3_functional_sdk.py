@@ -243,6 +243,7 @@ class WifiConnectionThread(ThreadBase):
 
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_scan_wpa3_c34503_04_05_07(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                             sniffer_filter, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -283,6 +284,7 @@ def test_wifi_sdk_scan_wpa3_c34503_04_05_07(wifi_sniffer, wifi_access_point, wif
 
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                  sniffer_filter, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -325,6 +327,7 @@ def test_wifi_sdk_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, wifi_access_point
 
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_bg_scan_specific_ch_wpa3_c34511(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                   sniffer_filter, sl_collections, wifi_client):
     test_name = request.node.name
@@ -417,6 +420,7 @@ def test_wifi_sdk_bg_scan_specific_ch_wpa3_c34511(wifi_sniffer, wifi_access_poin
 
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_bg_scan_in_all_ch_wpa3_c34510(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                   sniffer_filter, sl_collections):
     test_name = request.node.name
@@ -510,6 +514,7 @@ def test_wifi_sdk_bg_scan_in_all_ch_wpa3_c34510(wifi_sniffer, wifi_access_point,
 
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                    sniffer_filter, switch, sl_collections):
     try:

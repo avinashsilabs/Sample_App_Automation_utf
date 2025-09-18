@@ -595,6 +595,7 @@ class WifiJoinThread(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_tcp_open_send_close_socket_c19347(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client):
@@ -666,6 +667,7 @@ def test_wifi_sdk_tcp_open_send_close_socket_c19347(
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_udp_open_send_data_close_socket_c19348(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client):
@@ -782,6 +784,7 @@ def test_wifi_sdk_tcp_socket_dut_client_c19349(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_udp_socket_dut_client_c19350(
         wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, request, sniffer_filter,
         remote_socket_factory, wifi_client):
@@ -915,6 +918,7 @@ def test_wifi_sdk_5tcp_5udp_socket_c19352(
                     net_perf={"host_role": IperfConstants.SERVER_MODE, "tcp_window_size": '1k'})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_socket_tcp_Data_Transfer_mss_c19356(wifi_access_point, wifi_dut, sl_collections, wifi_sniffer,
                                                       sniffer_filter, protocol, net_perf_client,
                                                       wifi_client):
@@ -1109,6 +1113,7 @@ def test_wifi_sdk_tcp_TX_with_message_size_greater_size_than_tcp_window_size_c19
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "close_sockets"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_tcp_data_receive_check_c19360(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections,
                                                 sniffer_filter, remote_socket_factory, wifi_client):
     """Validation of data and length by giving length in read command over TCP server socket"""
@@ -1204,6 +1209,7 @@ def test_wifi_sdk_tcp_data_receive_check_c19360(wifi_sniffer, wifi_dut, wifi_acc
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "close_sockets"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_udp_receive_c19361(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections,
                                      sniffer_filter, remote_socket, wifi_client):
     """Validation of data and length by giving length in read command over udp"""
@@ -1286,6 +1292,7 @@ def test_wifi_sdk_udp_receive_c19361(wifi_sniffer, wifi_dut, wifi_access_point, 
                                                "standard": '11bg'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "close_sockets"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_tcp_udp_data_receive_WPA_TKIP_c71653(
         wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket_factory,
         remote_socket, wifi_client):
@@ -1411,6 +1418,7 @@ def test_wifi_sdk_tcp_udp_data_receive_WPA_TKIP_c71653(
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA', "cipher": "TKIP", "passphrase": '123456789',
                                                "standard": '11bg'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_tcp_udp_data_tx_WPA_TKIP_c19365(
         wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket_factory,
         wifi_client):
@@ -1720,6 +1728,7 @@ def test_wifi_sdk_5tcp_5udp_dut_server_socket_c19353(
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_tcp_remote_terminate_c19362(
         wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket,
         wifi_client):
@@ -1962,6 +1971,7 @@ def test_tcp_tx_rx_high_performance_socket_C19366(wifi_sniffer, wifi_dut, wifi_a
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": 12345678})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "close_sockets"])
+@pytest.mark.legacy_deployed
 def test_open_tcp_server_udp_client_C148603(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections,
                                             sniffer_filter, remote_socket_factory, wifi_client):
     """ Verify 10 sockets functionality open 5TCP server +5UDP client sockets."""
@@ -2086,6 +2096,7 @@ def test_open_tcp_server_udp_client_C148603(wifi_sniffer, wifi_dut, wifi_access_
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_tcp_socket_window_size_C19367(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections,
                                        sniffer_filter, remote_socket_factory, wifi_client):
     """ Open TCP socket with window size 7 in socket create command."""
@@ -2169,6 +2180,7 @@ def test_tcp_socket_window_size_C19367(wifi_sniffer, wifi_dut, wifi_access_point
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": 12345678})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_udp_async_server_open_receive_close_C584247(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections,
                                                      sniffer_filter, remote_socket, wifi_client):
     """ Verify UDP async  server  socket is open, receive data, and close socket."""
@@ -2239,6 +2251,7 @@ def test_udp_async_server_open_receive_close_C584247(wifi_sniffer, wifi_dut, wif
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": 12345678})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_tcp_server_open_more_than_max_limit_C19364(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections,
                                                     sniffer_filter, remote_socket_factory, wifi_client):
     """ Open TCP severs socket more than maximum  and connect TCP clients."""
@@ -2347,6 +2360,7 @@ def test_tcp_server_open_more_than_max_limit_C19364(wifi_sniffer, wifi_dut, wifi
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": 12345678})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_socket_limit_C19359(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket,
         wifi_client):
     """ Open more than one socket when only one socket is selected in opermode command."""

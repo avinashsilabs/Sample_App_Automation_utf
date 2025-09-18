@@ -141,6 +141,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_hmac_sha_mode_1_digest_length_20_c217757(wifi_dut, sl_collections):
     """Verify hmac sha output with sha mode 1 digest length 20"""
     try:
@@ -151,6 +152,7 @@ def test_wifi_sdk_hmac_sha_mode_1_digest_length_20_c217757(wifi_dut, sl_collecti
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_hmac_sha_mode_256_digest_length_32_c217758(wifi_dut, sl_collections):
     """Verify hmac sha output with sha mode 256 digest length 32"""
     try:
@@ -161,6 +163,7 @@ def test_wifi_sdk_hmac_sha_mode_256_digest_length_32_c217758(wifi_dut, sl_collec
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_hmac_sha_mode_384_digest_length_48_c217759(wifi_dut, sl_collections):
     """Verify hmac sha output with sha mode 384 digest length 48"""
     try:
@@ -171,6 +174,7 @@ def test_wifi_sdk_hmac_sha_mode_384_digest_length_48_c217759(wifi_dut, sl_collec
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_hmac_sha_mode_512_digest_length_32_c217760(wifi_dut, sl_collections):
     """Verify hmac sha output with sha mode 512 digest length 32"""
     try:

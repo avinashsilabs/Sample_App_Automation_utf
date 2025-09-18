@@ -193,6 +193,7 @@ class Iperf(ThreadBase):
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_sta_mqtt_tx_and_ap_tcp_tx_in_conc_mode_c122789(wifi_sniffer, mqtt_server, mqtt_client, wifi_clients,
                                                                  wifi_access_point, sl_collections, sniffer_filter,
                                                                  wifi_dut, remote_socket):
@@ -345,6 +346,7 @@ def test_wifi_sdk_sta_mqtt_tx_and_ap_tcp_tx_in_conc_mode_c122789(wifi_sniffer, m
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_sta_mqtt_tx_with_rejoin_and_ap_tcp_tx_in_conc_mode_c122801(wifi_access_point, wifi_dut, remote_socket,
                                                                              wifi_clients, sl_collections, mqtt_client,
                                                                              mqtt_server, wifi_sniffer, sniffer_filter,
@@ -494,6 +496,7 @@ def test_wifi_sdk_sta_mqtt_tx_with_rejoin_and_ap_tcp_tx_in_conc_mode_c122801(wif
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_socket_func_when_network_is_not_stable_c37577(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                     logger, sl_collections, sniffer_filter):
     """
@@ -591,6 +594,7 @@ def test_wifi_sdk_ssl_socket_func_when_network_is_not_stable_c37577(wifi_sniffer
 @pytest.mark.config('wifi_access_point',
                     wifi={'security': 'WPA2', 'channel': 11, 'ssid': 'sharma1234', 'passphrase': 'thisistestnet'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_connect_correct_psk_C694555(
         wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, sl_collections):
     """Verify DUT connectivity with correct PSK after sl_net_up(connect API) with wrong PSK"""
@@ -666,6 +670,7 @@ def test_wifi_sdk_connect_correct_psk_C694555(
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_tcp_tx_both_sta_and_ap_in_conc_mode_c766509(
         wifi_clients, wifi_access_point, sl_collections, wifi_dut, net_perf_client, protocol, wifi_client, wifi_sniffer,
         sniffer_filter):

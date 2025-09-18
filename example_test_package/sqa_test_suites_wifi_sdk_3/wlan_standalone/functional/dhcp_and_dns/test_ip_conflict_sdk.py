@@ -230,6 +230,7 @@ class Ip_Conflict(ThreadBase):
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_static_ip_assignment_to_DUT_c101963(wifi_dut, wifi_access_point, wifi_client, request,
                                                       sl_collections, utf_constants, wifi_sniffer):
     """Verify Static assignment to the DUT"""
@@ -297,6 +298,7 @@ def test_wifi_sdk_static_ip_assignment_to_DUT_c101963(wifi_dut, wifi_access_poin
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dynamic_ip_assignment_to_DUT_C101964(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, request,
                                                        sl_collections):
     """Verify dynamic ip assignment to the dut"""
@@ -359,6 +361,7 @@ def test_wifi_sdk_dynamic_ip_assignment_to_DUT_C101964(wifi_sniffer, wifi_dut, w
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_static_ip_assignment_when_dut_in_concurrent_mode_c101967(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                            wifi_client, request, sl_collections,
                                                                            utf_constants):
@@ -431,6 +434,7 @@ def test_wifi_sdk_static_ip_assignment_when_dut_in_concurrent_mode_c101967(wifi_
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dynamic_IP_Assignment_when_dut_in_concurrent_Mode_C101973(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                             wifi_client, request, sl_collections,
                                                                             utf_constants):
@@ -496,6 +500,7 @@ def test_wifi_sdk_dynamic_IP_Assignment_when_dut_in_concurrent_Mode_C101973(wifi
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_static_ip_assignment_with_existing_ip_c101962(wifi_dut, wifi_sniffer, wifi_access_point, request,
                                                                 wifi_client, sl_collections):
     """verifies the Static IP assignment to the device which is already existing in the Network"""
@@ -556,6 +561,7 @@ def test_wifi_sdk_static_ip_assignment_with_existing_ip_c101962(wifi_dut, wifi_s
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_static_ip_assignment_with_and_Without_ip_Conflict_c101965(wifi_dut, wifi_sniffer, wifi_access_point,
                                                                             request, wifi_client, sl_collections):
     """Verifies Static ip assignment to the device when the existing ip is assigned to the DUT and then assign the
@@ -620,6 +626,7 @@ def test_wifi_sdk_static_ip_assignment_with_and_Without_ip_Conflict_c101965(wifi
     wifi={"security": "WPA2", "ssid": "IPConflict_Sil_917", "passphrase": "test1234", "channel": 8,
           "interface": "wlan0"}
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_tcp_tx_once_ip_conflict_resolved_static_mode_c101974(wifi_dut, wifi_sniffer, wifi_access_point,
                                                                        request, wifi_client, sl_collections,
                                                                        net_perf_client,
@@ -698,6 +705,7 @@ def test_wifi_sdk_tcp_tx_once_ip_conflict_resolved_static_mode_c101974(wifi_dut,
     wifi={"security": "WPA2", "ssid": "IPConflict_Sil_917", "passphrase": "test1234", "channel": 8,
           "interface": "wlan0"}
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_tcp_rx_once_ip_conflict_resolved_static_mode_c101975(wifi_dut, wifi_sniffer, wifi_access_point,
                                                                        request, wifi_client, sl_collections,
                                                                        net_perf_client,
@@ -776,6 +784,7 @@ def test_wifi_sdk_tcp_rx_once_ip_conflict_resolved_static_mode_c101975(wifi_dut,
     wifi={"security": "WPA2", "ssid": "IPConflict_Sil_917", "passphrase": "test1234", "channel": 8,
           "interface": "wlan0"}
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_udp_tx_once_ip_conflict_resolved_static_mode_c101976(wifi_dut, wifi_sniffer, wifi_access_point,
                                                                        request, wifi_client, sl_collections,
                                                                        net_perf_client, protocol, utf_constants):
@@ -852,6 +861,7 @@ def test_wifi_sdk_udp_tx_once_ip_conflict_resolved_static_mode_c101976(wifi_dut,
     wifi={"security": "WPA2", "ssid": "IPConflict_Sil_917", "passphrase": "test1234", "channel": 8,
           "interface": "wlan0"}
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_udp_rx_once_ip_conflict_resolved_static_mode_c101977(wifi_dut, wifi_sniffer, wifi_access_point,
                                                                        request, wifi_client, sl_collections,
                                                                        net_perf_client,
@@ -927,6 +937,7 @@ def test_wifi_sdk_udp_rx_once_ip_conflict_resolved_static_mode_c101977(wifi_dut,
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_static_ip_conflict_multiple_iterations_c101980(wifi_dut, wifi_sniffer, wifi_access_point, request,
                                                                  wifi_client, sl_collections):
     """verifies the Static ip conflict for multiple iterations"""
@@ -991,6 +1002,7 @@ def test_wifi_sdk_static_ip_conflict_multiple_iterations_c101980(wifi_dut, wifi_
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_tx_once_ip_conflict_resolved_in_static_ip_c101978(wifi_dut, wifi_sniffer, wifi_access_point,
                                                                         request, ssl_server, utf_constants,
                                                                         wifi_client, sl_collections):
@@ -1093,6 +1105,7 @@ def test_wifi_sdk_ssl_tx_once_ip_conflict_resolved_in_static_ip_c101978(wifi_dut
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_rx_once_ip_conflict_resolved_in_static_ip_c101979(wifi_dut, wifi_sniffer, wifi_access_point,
                                                                         request, ssl_server, utf_constants,
                                                                         wifi_client, sl_collections):
@@ -1189,6 +1202,7 @@ def test_wifi_sdk_ssl_rx_once_ip_conflict_resolved_in_static_ip_c101979(wifi_dut
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_static_ip_with_ip_conflict_in_concurrent_mode_c101968(wifi_dut, wifi_sniffer, wifi_access_point,
                                                                         request, wifi_client, sl_collections):
     """verifies the dut in concurrent mode when the dut is assigned with existing ip address"""
@@ -1253,6 +1267,7 @@ def test_wifi_sdk_static_ip_with_ip_conflict_in_concurrent_mode_c101968(wifi_dut
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_static_ip_with_and_without_ipconflict_when_dut_in_concurrent_mode_c101970(wifi_dut, wifi_sniffer,
                                                                                             wifi_access_point, request,
                                                                                             wifi_client, sl_collections):

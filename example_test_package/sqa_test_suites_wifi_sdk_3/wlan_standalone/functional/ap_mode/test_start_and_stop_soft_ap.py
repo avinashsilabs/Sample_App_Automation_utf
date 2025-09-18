@@ -364,6 +364,7 @@ class ConcurrentFun(ThreadBase):
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dut_soft_stop_ap_functionality_after_enabling_start_ap_C191344(wifi_sniffer, wifi_dut, wifi_clients,
                                                                                  utf_constants, sl_collections,
                                                                                  sniffer_filter, channel):
@@ -434,6 +435,7 @@ def test_wifi_sdk_dut_soft_stop_ap_functionality_after_enabling_start_ap_C191344
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dut_able_restart_to_with_different_beacon_intervals_C191345(wifi_sniffer, wifi_dut, wifi_clients,
                                                                               utf_constants, sl_collections,
                                                                               sniffer_filter, channel):
@@ -519,6 +521,7 @@ def test_wifi_sdk_dut_able_restart_to_with_different_beacon_intervals_C191345(wi
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_dut_able_restart_with_invalid_beacon_interval_C191347(wifi_sniffer, wifi_dut, wifi_clients,
                                                                utf_constants, sl_collections, sniffer_filter, channel):
     """Verify whether DUT is able to restart with invalid beacon interval"""
@@ -594,6 +597,7 @@ def test_dut_able_restart_with_invalid_beacon_interval_C191347(wifi_sniffer, wif
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dut_able_to_restart_with_different_dtim_intervals_C191349(wifi_sniffer, wifi_dut, wifi_clients,
                                                                             utf_constants, sl_collections,
                                                                             sniffer_filter, channel):
@@ -678,6 +682,7 @@ def test_wifi_sdk_dut_able_to_restart_with_different_dtim_intervals_C191349(wifi
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dut_soft_start_and_stop_ap_in_multiple_iterations_C191351(wifi_sniffer, wifi_dut, wifi_clients,
                                                                             channel, sl_collections):
     """Verify the DUT behavior while doing start and stop AP in multiple iterations"""
@@ -735,6 +740,7 @@ def test_wifi_sdk_dut_soft_start_and_stop_ap_in_multiple_iterations_C191351(wifi
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_giving_soft_stop_ap_for_second_time_C191355(wifi_sniffer, wifi_dut,
                                                               sl_collections, channel):
     """Check DUT is throwing error or not while giving stop AP API for the second time without giving START AP"""
@@ -802,6 +808,7 @@ def test_wifi_sdk_giving_soft_stop_ap_for_second_time_C191355(wifi_sniffer, wifi
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_different_dtim_intervals_concurrent_C191362(wifi_sniffer, wifi_dut,
                                                                                              wifi_clients,
                                                                                              utf_constants,
@@ -909,6 +916,7 @@ def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_different_dtim_intervals_concur
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_different_beacon_intervals_concurrent_C191359(wifi_sniffer, wifi_dut,
                                                                                                wifi_clients,
                                                                                                utf_constants,
@@ -1140,6 +1148,7 @@ def test_wifi_sdk_dut_soft_start_and_stop_ap_in_multiple_iterations_C191363(wifi
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_invalid_beacon_interval_concurrent_C191360(wifi_sniffer, wifi_dut,
                                                                                             wifi_clients,
                                                                                             utf_constants,
@@ -1219,6 +1228,7 @@ def test_wifi_sdk_dut_soft_start_ap_stop_ap_with_invalid_beacon_interval_concurr
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dut_restart_start_ap_beacon_params_C191346(wifi_sniffer, wifi_dut, wifi_clients,
                                                              utf_constants, sl_collections, sniffer_filter, channel):
     """Verify the Required parameters of APUT Beacons in sniffer for every start and stop"""
@@ -1361,6 +1371,7 @@ def test_wifi_sdk_dut_restart_start_ap_beacon_params_C191346(wifi_sniffer, wifi_
 @pytest.mark.parametrize("channel", [8])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["reset"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_giving_soft_stop_ap_without_start_ap_C191354(wifi_sniffer, wifi_dut,
                                                                sl_collections, channel):
     """Check DUT is throwing error or not while giving stop AP API without giving START AP"""
@@ -1420,6 +1431,7 @@ def test_wifi_sdk_giving_soft_stop_ap_without_start_ap_C191354(wifi_sniffer, wif
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dut_able_to_restart_with_different_securities_C191348(wifi_sniffer, wifi_dut, wifi_clients,
                                                                         utf_constants, sl_collections, sniffer_filter,
                                                                         channel, wifi_client):
@@ -1551,6 +1563,7 @@ def test_wifi_sdk_dut_able_to_restart_with_different_securities_C191348(wifi_sni
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C191356(wifi_sniffer, wifi_dut, wifi_clients,
                                                                          utf_constants, sl_collections, sniffer_filter,
                                                                          channel, wifi_access_point):
@@ -1647,6 +1660,7 @@ def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C191356(wifi_sn
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_powersave_after_start_ap_concurrent_C191372(wifi_sniffer, wifi_dut, wifi_clients,
                                                               utf_constants, sl_collections, sniffer_filter, channel,
                                                               wifi_access_point):
@@ -1720,6 +1734,7 @@ def test_wifi_sdk_powersave_after_start_ap_concurrent_C191372(wifi_sniffer, wifi
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dut_soft_start_and_stop_ap_STAs_connected_in_multiple_iterations_C191352(wifi_sniffer, wifi_dut,
                                                                                            wifi_clients,
                                                                                            utf_constants,
@@ -1813,6 +1828,7 @@ def test_wifi_sdk_dut_soft_start_and_stop_ap_STAs_connected_in_multiple_iteratio
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_giving_soft_stop_ap_for_second_time_concurrent_C191365(wifi_sniffer, wifi_dut, wifi_clients,
                                                                          utf_constants, sl_collections, sniffer_filter,
                                                                          channel, wifi_access_point):
@@ -1890,6 +1906,7 @@ def test_wifi_sdk_giving_soft_stop_ap_for_second_time_concurrent_C191365(wifi_sn
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_restart_with_different_securities_concurrent_C191361(wifi_sniffer, wifi_dut, wifi_clients,
                                                                        utf_constants, sl_collections, sniffer_filter,
                                                                        channel, wifi_access_point, wifi_client):
@@ -2026,6 +2043,7 @@ def test_wifi_sdk_restart_with_different_securities_concurrent_C191361(wifi_snif
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_start_ap_after_enabling_power_save_concurrent_C191373(wifi_sniffer, wifi_dut, wifi_clients,
                                                                         utf_constants, sl_collections,
                                                                         channel, wifi_access_point):
@@ -2098,6 +2116,7 @@ def test_wifi_sdk_start_ap_after_enabling_power_save_concurrent_C191373(wifi_sni
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_restart_beacon_params_concurrent_C191358(wifi_sniffer, wifi_dut, wifi_clients,
                                                            utf_constants, sl_collections, sniffer_filter, channel,
                                                            wifi_access_point):
@@ -2269,6 +2288,7 @@ def test_wifi_sdk_restart_beacon_params_concurrent_C191358(wifi_sniffer, wifi_du
     }
 )
 @pytest.mark.parametrize("channel", [8])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_enh_max_psp_after_stop_C191370(wifi_sniffer, wifi_dut, wifi_clients,
                                                  utf_constants, sl_collections, channel,
                                                  wifi_access_point, sniffer_filter):
@@ -2387,6 +2407,7 @@ def test_wifi_sdk_enh_max_psp_after_stop_C191370(wifi_sniffer, wifi_dut, wifi_cl
 )
 @pytest.mark.parametrize("channel", [8])
 @pytest.mark.config("wifi_access_point", wifi={"beacon_interval": 100, "dtim": 3})
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_enh_max_psp_after_stop_ap_dtim_based_concurrent_concurrent_C191371(wifi_sniffer, wifi_dut,
                                                                                      wifi_clients,
                                                                                      utf_constants, sl_collections,
@@ -2460,6 +2481,7 @@ def test_wifi_sdk_enh_max_psp_after_stop_ap_dtim_based_concurrent_concurrent_C19
         'channel': 1,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_sta_ap_conn_disconn_concurrent_mode_C191357(wifi_sniffer, wifi_dut, wifi_clients,
                                                               utf_constants, sl_collections, sniffer_filter, channel,
                                                               wifi_access_point):
@@ -2541,6 +2563,7 @@ def test_wifi_sdk_sta_ap_conn_disconn_concurrent_mode_C191357(wifi_sniffer, wifi
         'channel': 11,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C641351(
         wifi_sniffer, wifi_dut, wifi_clients, utf_constants, sl_collections, wifi_client, wifi_access_point):
     """Do start AP --> Stop AP -->Start STA --> Start AP -->Stop AP --> Stop STA in concurrent mode"""
@@ -2590,6 +2613,7 @@ def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C641351(
         'channel': 11,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C641352(
         wifi_sniffer, wifi_dut, wifi_clients, utf_constants, sl_collections, wifi_client, wifi_access_point):
     """Do start STA --> Stop STA -->Start AP -->Stop AP in concurrent mode"""
@@ -2651,6 +2675,7 @@ def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C641352(
         'channel': 11,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_stop_ap_functionality_after_stop_ap_concurrent_C585985(
         wifi_sniffer, wifi_dut, wifi_clients, utf_constants, sl_collections, wifi_client, wifi_access_point):
     """Verify whether DUT(APUT) is able to restart with different data rates in concurrent mode"""

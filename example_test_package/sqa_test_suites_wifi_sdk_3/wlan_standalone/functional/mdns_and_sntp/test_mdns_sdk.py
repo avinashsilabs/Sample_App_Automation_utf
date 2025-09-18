@@ -82,6 +82,7 @@ class WifiThreadFunctionality(ThreadBase):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mdns_neg_without_sel_feature_C19006(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                       request):
     """Check whether DUT is giving error or not when issue MDNS init command without selecting the feature in
@@ -124,6 +125,7 @@ def test_wifi_sdk_mdns_neg_without_sel_feature_C19006(wifi_sniffer, wifi_access_
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mdns_neg_port_already_in_use_C19007(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                       request):
     """Check whether DUT is giving an error or not when issue MDNS init command when udp socket is opened at 5353."""
@@ -179,6 +181,7 @@ def test_wifi_sdk_mdns_neg_port_already_in_use_C19007(wifi_sniffer, wifi_access_
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mdns_neg_multicast_socket_in_open_state_C19008(
         wifi_sniffer, wifi_access_point, wifi_dut, sl_collections, request, multicast_client):
     """Check whether DUT is giving error or not when issue MDNS init command after any multicast group is added."""
@@ -227,6 +230,7 @@ def test_wifi_sdk_mdns_neg_multicast_socket_in_open_state_C19008(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mdns_cmd_type_resp_C37585(
         wifi_sniffer, wifi_access_point, wifi_dut, sl_collections, request, utf_constants):
     """Command Type Response for MDNS Functionality"""
@@ -278,6 +282,7 @@ def test_wifi_sdk_mdns_cmd_type_resp_C37585(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mdns_init_deinit_loop_C551869(
         wifi_sniffer, wifi_access_point, wifi_dut, sl_collections, request, utf_constants):
     """Verify MDNS Init Register services and de-init in a loop"""
@@ -328,6 +333,7 @@ def test_wifi_sdk_mdns_init_deinit_loop_C551869(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_mdns_functionality_restart_avahi_C551870(wifi_sniffer, wifi_access_point, wifi_dut, service_discovery,
                                                                   sl_collections, request, utf_constants):
     """Verify MDNS functionality by kill and restart avahi-daemon browser

@@ -94,6 +94,7 @@ class WifiJoin(ThreadBase):
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.legacy_deployed
 def test_tcp_data_tx_with_BE_BK_VI_VO_c19752(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                              protocol, request, sl_collections, sniffer_filter, traffic, qos,
                                              filter_name):
@@ -163,6 +164,7 @@ def test_tcp_data_tx_with_BE_BK_VI_VO_c19752(wifi_sniffer, net_perf_client, wifi
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.legacy_deployed
 def test_udp_data_tx_with_BE_BK_VI_VO_c19753(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                              protocol, request, sl_collections, sniffer_filter, traffic, qos,
                                              filter_name):
@@ -226,6 +228,7 @@ def test_udp_data_tx_with_BE_BK_VI_VO_c19753(wifi_sniffer, net_perf_client, wifi
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.legacy_deployed
 def test_ping_from_ap_to_module_ip_with_four_traffics_c19754(wifi_sniffer, wifi_access_point, wifi_dut, request,
                                                              wifi_client, sl_collections, sniffer_filter):
 
@@ -292,6 +295,7 @@ def test_ping_from_ap_to_module_ip_with_four_traffics_c19754(wifi_sniffer, wifi_
 
     },
 )
+@pytest.mark.legacy_deployed
 def test_udp_data_rx_with_BE_BK_VI_VO_c22116(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                              protocol, request, sl_collections, sniffer_filter, traffic, qos,
                                              filter_name):
@@ -358,6 +362,7 @@ def test_udp_data_rx_with_BE_BK_VI_VO_c22116(wifi_sniffer, net_perf_client, wifi
 
     },
 )
+@pytest.mark.legacy_deployed
 def test_tcp_data_rx_with_BE_BK_VI_VO_c22115(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                              protocol, request, sl_collections, sniffer_filter, traffic, qos,
                                              filter_name):
@@ -430,6 +435,7 @@ def test_tcp_data_rx_with_BE_BK_VI_VO_c22115(wifi_sniffer, net_perf_client, wifi
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=["net_init_client"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_tcp_tx_in_tcp_ip_bypass_mode_c539021(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                        wifi_client, protocol, sniffer_filter, sl_collections):
     """Verify TCP Tx data transfer ( TCP socket create->connect->close) in loop with TCP/IP bypass mode"""

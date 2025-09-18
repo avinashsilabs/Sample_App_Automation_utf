@@ -136,6 +136,7 @@ class ApModeClientConnections(ThreadBase):
 @pytest.mark.config("wifi_client", wifi={"country": "Default", "channel": "11", "interface": "wlan0"})
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'bgnax', "security": 'WPA2', "channel": 11, "Region": 'Asia'})
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ap_mode_scan_in_region_default_specific_ssid_c654498(wifi_dut, wifi_access_point, wifi_client,
                                                                        wifi_sniffer, sl_collections, sniffer_filter):
     """ Scan for available APs in the vicinity after Soft AP Started with default(us) region code
@@ -188,6 +189,7 @@ def test_wifi_sdk_ap_mode_scan_in_region_default_specific_ssid_c654498(wifi_dut,
 @pytest.mark.config("wifi_client", wifi={"country": "Default", "channel": "11", "interface": "wlan0"})
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'bgnax', "security": 'WPA2', "channel": 11, "Region": 'Asia'})
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ap_mode_scan_in_region_default_c654499(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer,
                                                          sl_collections, sniffer_filter):
     """ Scan for available APs in the vicinity after Soft AP Started with default(us) region code
@@ -239,6 +241,7 @@ def test_wifi_sdk_ap_mode_scan_in_region_default_c654499(wifi_dut, wifi_access_p
 )
 @pytest.mark.config("wifi_client", wifi={"country": "US", "channel": "11", "interface": "wlan0"})
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'bgnax', "security": 'WPA2', "channel": 11})
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ap_mode_scan_in_region_us_c654500(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer,
                                                     sl_collections, sniffer_filter):
     """ Scan for available APs in the vicinity after Soft AP Started with US region code
@@ -291,6 +294,7 @@ def test_wifi_sdk_ap_mode_scan_in_region_us_c654500(wifi_dut, wifi_access_point,
 @pytest.mark.config("wifi_client", wifi={"country": "GE", "channel": "13", "interface": "wlan0"})
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'bgnax', "security": 'WPA2', "channel": 13, "region": 'Europe'})
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ap_mode_scan_in_region_eu_c654501(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer,
                                                     sl_collections, sniffer_filter):
     """ Scan for available APs in the vicinity after Soft AP Started with EU region code
@@ -343,6 +347,7 @@ def test_wifi_sdk_ap_mode_scan_in_region_eu_c654501(wifi_dut, wifi_access_point,
 @pytest.mark.config("wifi_client", wifi={"country": "KR", "channel": "13", "interface": "wlan0"})
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'bgnax', "security": 'WPA2', "channel": 13, "region": 'Korea'})
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ap_mode_scan_in_region_korea_c654503(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer,
                                                        sl_collections, sniffer_filter):
     """ Scan for available APs in the vicinity after Soft AP Started with KR region code
@@ -395,6 +400,7 @@ def test_wifi_sdk_ap_mode_scan_in_region_korea_c654503(wifi_dut, wifi_access_poi
 @pytest.mark.config("wifi_client", wifi={"country": "GE", "channel": "13", "interface": "wlan0"})
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'bgnax', "security": 'WPA2', "channel": 13, "region": 'Europe'})
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ap_mode_scan_for_5mins_c535824(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer,
                                                  sl_collections, sniffer_filter):
     """ Scan for available APs in the vicinity after Soft AP Started for 5 minutes in loop """
@@ -553,6 +559,7 @@ def test_wifi_sdk_ap_mode_scan_with_PASSIVE_SCAN_TYPE_C688244(wifi_dut, wifi_acc
     ],
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 11, "region": 'US'})
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ap_mode_verify_DUT_able_to_send_stats_responce_or_not_C689175(wifi_dut, wifi_access_point,
                                                                                 wifi_client, wifi_sniffer, sniffer_filter,
                                                                                 sl_collections):

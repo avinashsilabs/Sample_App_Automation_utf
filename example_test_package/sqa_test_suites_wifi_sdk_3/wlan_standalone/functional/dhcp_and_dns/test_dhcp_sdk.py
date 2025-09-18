@@ -249,6 +249,7 @@ class WifiJoinThread(ThreadBase):
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_static_ip_allocation_to_dut_c19292(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                             request, sl_collections, sniffer_filter):
     try:
@@ -322,6 +323,7 @@ def test_wifi_sdk_verify_static_ip_allocation_to_dut_c19292(wifi_sniffer, wifi_a
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                                  utf_constants, request, sl_collections, dhcp_lease, sniffer_filter):
     time_delta = 60
@@ -397,6 +399,7 @@ def test_wifi_sdk_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer, w
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_tcp_tx_functionality_while_dhcp_renewal_c19295(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                                  net_perf_client, protocol, utf_constants, request, sl_collections, dhcp_lease, sniffer_filter):
     time_delta = 60
@@ -474,6 +477,7 @@ def test_wifi_sdk_tcp_tx_functionality_while_dhcp_renewal_c19295(wifi_sniffer, w
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_tcp_rx_functionality_while_dhcp_renewal_c19296(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                                  net_perf_client,
                                                                  protocol, utf_constants, request, sl_collections, dhcp_lease,
@@ -552,6 +556,7 @@ def test_wifi_sdk_tcp_rx_functionality_while_dhcp_renewal_c19296(wifi_sniffer, w
 @pytest.mark.config('wifi_access_point', wifi={"dhcp_lease": "100", "security": 'OPEN', "standard": 'gnbax'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "close_sockets", "disassociated",])
 @pytest.mark.parametrize("dhcp_lease", [100])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_tx_functionality_while_dhcp_renewal_c551871(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                   utf_constants, request, sl_collections, dhcp_lease, ssl_server, sniffer_filter):
     time_delta = 60
@@ -627,6 +632,7 @@ def test_wifi_sdk_ssl_tx_functionality_while_dhcp_renewal_c551871(wifi_access_po
 @pytest.mark.config('wifi_access_point', wifi={"dhcp_lease": "100", "security": 'OPEN', "standard": 'gnbax'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "close_sockets", "disassociated",])
 @pytest.mark.parametrize("dhcp_lease", [100])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_rx_functionality_while_dhcp_renewal_c551872(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                   utf_constants, request, sl_collections, dhcp_lease, ssl_server, sniffer_filter):
     time_delta = 60
@@ -698,6 +704,7 @@ def test_wifi_sdk_ssl_rx_functionality_while_dhcp_renewal_c551872(wifi_access_po
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_legacy_dhcp_discover_failure_c683173(wifi_sniffer, wifi_access_point, wifi_dut,
                                                        request, sl_collections, dhcp_lease, sniffer_filter):
     capture_filename = request.node.name
@@ -763,6 +770,7 @@ def test_wifi_sdk_legacy_dhcp_discover_failure_c683173(wifi_sniffer, wifi_access
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_legacy_dhcp_request_failure_c683174(wifi_sniffer, wifi_access_point, wifi_dut,
                                                       request, sl_collections, dhcp_lease, sniffer_filter):
     capture_filename = request.node.name
@@ -1326,6 +1334,7 @@ def test_wifi_sdk_verify_config_ip_and_get_ip_address_api_c693569(wifi_access_po
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_verify_ip_change_notification_c19294(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
                                                        request, utf_constants):
     capture_filename = request.node.name

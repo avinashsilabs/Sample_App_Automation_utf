@@ -229,6 +229,7 @@ class WLanThread(ThreadBase):
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_bgscan_c19035(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request, sniffer_filter,
                                 sl_collections):
     test_name = request.node.name
@@ -279,6 +280,7 @@ def test_wifi_sdk_bgscan_c19035(wifi_sniffer, wifi_access_point, wifi_dut, utf_c
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_instant_bgscan_c19037(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                         sl_collections, sniffer_filter):
     test_name = request.node.name
@@ -337,6 +339,7 @@ def test_wifi_sdk_instant_bgscan_c19037(wifi_sniffer, wifi_access_point, wifi_du
         "interface": "eth1"
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_bgscan_rejoin_infinite_retry_c19038(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                       sl_collections, sniffer_filter, switch, net_perf_client, protocol, wifi_client):
     test_name = request.node.name
@@ -398,6 +401,7 @@ def test_wifi_sdk_bgscan_rejoin_infinite_retry_c19038(wifi_sniffer, wifi_access_
           "ble_custom_ext_features": 0,
           },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_bgscan_primary_channel_2g_c19039(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                    sl_collections, sniffer_filter, request):
     test_name = request.node.name

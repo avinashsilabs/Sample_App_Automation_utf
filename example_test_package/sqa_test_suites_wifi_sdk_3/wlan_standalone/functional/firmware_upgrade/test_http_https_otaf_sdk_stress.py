@@ -216,6 +216,7 @@ class WifiJoin(ThreadBase):
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @wifi_dut_marker()
 @pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.legacy_deployed
 def test_http_fw_upgrade_downgrade_overnight_c19793(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                     request, wifi_client, sl_collections, utf_constants):
     try:
@@ -240,6 +241,7 @@ def test_http_fw_upgrade_downgrade_overnight_c19793(http_server, wifi_sniffer, w
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @wifi_dut_marker()
 @pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.legacy_deployed
 def test_http_fw_upgrade_overnight_corrupted_file_c19794(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                          request, wifi_client, sl_collections, utf_constants):
     try:
@@ -263,6 +265,7 @@ def test_http_fw_upgrade_overnight_corrupted_file_c19794(http_server, wifi_sniff
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @wifi_dut_marker()
 @pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.legacy_deployed
 def test_http_fw_upgrade_overnight_corrupted_file_c19795(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                          request, wifi_client, sl_collections, utf_constants):
     try:
@@ -286,6 +289,7 @@ def test_http_fw_upgrade_overnight_corrupted_file_c19795(http_server, wifi_sniff
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker(ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.legacy_deployed
 def test_https_fw_upgrade_downgrade_overnight_file_c19771(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                           request, wifi_client, sl_collections, utf_constants):
     try:
@@ -310,6 +314,7 @@ def test_https_fw_upgrade_downgrade_overnight_file_c19771(http_server, wifi_snif
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker(ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.legacy_deployed
 def test_https_fw_upgrade_overnight_corrupted_rps_file_c19772(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                               request, wifi_client, sl_collections, utf_constants):
     try:
@@ -334,6 +339,7 @@ def test_https_fw_upgrade_overnight_corrupted_rps_file_c19772(http_server, wifi_
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker(ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.legacy_deployed
 def test_https_fw_upgrade_overnight_corrupted_text_file_c19773(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                                request, wifi_client, sl_collections, utf_constants):
     try:

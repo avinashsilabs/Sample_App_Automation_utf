@@ -231,6 +231,7 @@ class WifiPingThread(ThreadBase):
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_conn_wpa3_in_aput_func_deauth_C537919(wifi_sniffer, wifi_dut, utf_constants, request,
                                                         remote_wiseconnect3, sniffer_filter, sl_collections):
     """Verify WPA3 functionality with Deauth based"""
@@ -302,6 +303,7 @@ def test_wifi_sdk_conn_wpa3_in_aput_func_deauth_C537919(wifi_sniffer, wifi_dut, 
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_conn_wpa3_in_aput_func_Keep_alive_C537918(wifi_sniffer, wifi_dut, utf_constants, request,
                                                         remote_wiseconnect3, sniffer_filter, sl_collections):
     """ Verify WPA3 functionality with Keep alive based"""
@@ -373,6 +375,7 @@ def test_wifi_sdk_conn_wpa3_in_aput_func_Keep_alive_C537918(wifi_sniffer, wifi_d
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_aput_wpa3_with_wpa2_sta_C468602(wifi_sniffer, wifi_dut, utf_constants, request,
                                                         remote_wiseconnect3, sniffer_filter, sl_collections):
     """Verify WPA3 Transition functionality in APUT mode by connecting WPA2 STA do ping or any data transfer"""
@@ -444,6 +447,7 @@ def test_wifi_sdk_aput_wpa3_with_wpa2_sta_C468602(wifi_sniffer, wifi_dut, utf_co
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_aput_wpa3_with_wpa3_sta_func_C463726(wifi_sniffer, wifi_dut, utf_constants, request,
                                                         remote_wiseconnect3, sniffer_filter, sl_collections):
     """Verify Connect and ping 3rd party STA and Verify the APUT in functionality in WPA3 H2E mode."""
@@ -515,6 +519,7 @@ def test_wifi_sdk_aput_wpa3_with_wpa3_sta_func_C463726(wifi_sniffer, wifi_dut, u
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_aput_wpa3_with_full_sae_C468608(wifi_sniffer, wifi_dut, utf_constants, request,
                                                         remote_wiseconnect3, sniffer_filter, sl_collections):
     """Verify PMKSA func in APUT mode with WPA3 sec when STA is con-ting for the first time full SAE should happen"""
@@ -586,6 +591,7 @@ def test_wifi_sdk_aput_wpa3_with_full_sae_C468608(wifi_sniffer, wifi_dut, utf_co
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_aput_wpa3_with_pmf_h2e_C463725(wifi_sniffer, wifi_dut, utf_constants, request,
                                                         remote_wiseconnect3, sniffer_filter, sl_collections):
     """Verify APUT beacon(Check PMF(Required, capable),RSNX IE along with H2E only membership) in WPA3 H2E mode"""
@@ -666,6 +672,7 @@ def test_wifi_sdk_aput_wpa3_with_pmf_h2e_C463725(wifi_sniffer, wifi_dut, utf_con
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_aput_wpa3_with_full_transition_C468614(wifi_sniffer, wifi_dut, utf_constants, request,
                                                         remote_wiseconnect3, sniffer_filter, sl_collections):
     """Verify PMKSA func in APUT mode with WPA3 transition sec when STA is con-ting for the first time
@@ -738,6 +745,7 @@ def test_wifi_sdk_aput_wpa3_with_full_transition_C468614(wifi_sniffer, wifi_dut,
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_aput_wpa3_with_trasition_C468599(wifi_sniffer, wifi_dut, utf_constants, request,
                                                         remote_wiseconnect3, sniffer_filter, sl_collections):
     """Verify WPA3 Transition func in APUT mode by enabling MFP capable only and check in
@@ -819,6 +827,7 @@ def test_wifi_sdk_aput_wpa3_with_trasition_C468599(wifi_sniffer, wifi_dut, utf_c
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wpa3_in_enable_tdi_C468523(wifi_sniffer, wifi_dut, utf_constants, request, remote_wiseconnect3,
                                              sniffer_filter, sl_collections):
     """Verify WPA3 Transition functionality in APUT mode by enabling TDI and connect to
@@ -895,6 +904,7 @@ def test_wifi_sdk_wpa3_in_enable_tdi_C468523(wifi_sniffer, wifi_dut, utf_constan
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wpa3_enable_tdi_aput_3rd_party_ap_C468525(wifi_access_point, wifi_sniffer, wifi_dut, utf_constants, request,
                                                         remote_wiseconnect3, sniffer_filter, sl_collections):
     """Enable TDI functionality in APUT mode with WPA3 transition mode , configure third party AP with same SSID as
@@ -989,6 +999,7 @@ def test_wifi_sdk_wpa3_enable_tdi_aput_3rd_party_ap_C468525(wifi_access_point, w
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wpa3_disable_tdi_aput_3rd_party_ap_C468526(wifi_access_point, wifi_sniffer, wifi_dut, utf_constants, request,
                                                         remote_wiseconnect3, sniffer_filter, sl_collections):
     """Disable TDI functionality in APUT mode with WPA3 transition mode , configure third party AP with same SSID as
@@ -1079,6 +1090,7 @@ def test_wifi_sdk_wpa3_disable_tdi_aput_3rd_party_ap_C468526(wifi_access_point, 
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_aput_wpa3_with_start_stop_C468604(wifi_sniffer, wifi_dut, utf_constants, request,
                                                         remote_wiseconnect3, sniffer_filter, sl_collections):
     """Verify WPA3 Transition functionality in APUT mode by connecting WPA3 transition enabled STA do start and stop AP
@@ -1173,6 +1185,7 @@ for every 1 minute ping or any data transfe"""
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_null_based_keep_alive_c463728(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                                 sl_collections):
     """Verify APUT Keep alive functionality(Sending NULL packet to STA on timer expire) in WPA3 H2E mode"""
@@ -1279,6 +1292,7 @@ def test_wifi_sdk_null_based_keep_alive_c463728(wifi_sniffer, wifi_dut, remote_w
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_deauth_based_keep_alive_c463729(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                                   sl_collections):
     """Verify APUT Keep alive functionality(Triggering deauth directly on timer expire) in WPA3 H2E mode"""
@@ -1372,6 +1386,7 @@ def test_wifi_sdk_deauth_based_keep_alive_c463729(wifi_sniffer, wifi_dut, remote
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_keep_alive_disable_c463730(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                              sl_collections):
     """Verify APUT functionality when keep alive is disable so when STA is IDLE AP should not discard STA"""
@@ -1462,6 +1477,7 @@ def test_wifi_sdk_keep_alive_disable_c463730(wifi_sniffer, wifi_dut, remote_wise
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_calculate_assoc_time_c463731(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                                sl_collections):
     """Verify 3rd party association time with APUT in WPA3 H2E mode(150 to 180 ms)"""
@@ -1558,6 +1574,7 @@ def test_wifi_sdk_calculate_assoc_time_c463731(wifi_sniffer, wifi_dut, remote_wi
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_min_and_max_keepalive_c537917(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                                 sl_collections):
     """Verify WPA3 functionality with minimum and maximum keep alive values """

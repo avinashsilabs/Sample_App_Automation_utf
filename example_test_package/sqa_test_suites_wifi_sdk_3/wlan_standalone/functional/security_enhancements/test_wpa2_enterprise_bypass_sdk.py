@@ -206,6 +206,7 @@ class WPA2Enterprise(ThreadBase):
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
+@pytest.mark.legacy_deployed
 def test_sdk_WPA2_EAP_tls_tcp_bypass_V1_C113807(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                             radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap tls method with version 1.o in tcp ip bypass mode"""
@@ -271,6 +272,7 @@ def test_sdk_WPA2_EAP_tls_tcp_bypass_V1_C113807(wifi_sniffer, wifi_access_point,
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
+@pytest.mark.legacy_deployed
 def test_sdk_WPA2_EAP_ttls_tcp_bypass_V1_C113808(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                             radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap ttls method with version 1.o in tcp ip bypass mode"""
@@ -335,6 +337,7 @@ def test_sdk_WPA2_EAP_ttls_tcp_bypass_V1_C113808(wifi_sniffer, wifi_access_point
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
+@pytest.mark.legacy_deployed
 def test_sdk_WPA2_EAP_peap_tcp_bypass_V1_C113809(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                             radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap peap method with version 1.o in tcp ip bypass mode"""
@@ -399,6 +402,7 @@ def test_sdk_WPA2_EAP_peap_tcp_bypass_V1_C113809(wifi_sniffer, wifi_access_point
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
+@pytest.mark.legacy_deployed
 def test_sdk_WPA2_EAP_tls_tcp_bypass_V12_C113811(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                             radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap tls method with version 1.2 in tcp ip bypass mode"""
@@ -463,6 +467,7 @@ def test_sdk_WPA2_EAP_tls_tcp_bypass_V12_C113811(wifi_sniffer, wifi_access_point
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
+@pytest.mark.legacy_deployed
 def test_sdk_WPA2_EAP_ttls_tcp_bypass_V12_C113812(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                             radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap ttls method with version 1.2 in tcp ip bypass mode"""
@@ -524,6 +529,7 @@ def test_sdk_WPA2_EAP_ttls_tcp_bypass_V12_C113812(wifi_sniffer, wifi_access_poin
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
+@pytest.mark.legacy_deployed
 def test_sdk_WPA2_EAP_peap_tcp_bypass_V12_C113813(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                             radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap peap method with version 1.2 in tcp ip bypass mode"""
@@ -589,6 +595,7 @@ def test_sdk_WPA2_EAP_peap_tcp_bypass_V12_C113813(wifi_sniffer, wifi_access_poin
                           'protected_management_frame': 'Capable'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
+@pytest.mark.legacy_deployed
 def test_sdk_WPA2_EAP_tls_tcp_bypass_pmf_C113816(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                             radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap tls method with pmf in tcp ip bypass mode"""

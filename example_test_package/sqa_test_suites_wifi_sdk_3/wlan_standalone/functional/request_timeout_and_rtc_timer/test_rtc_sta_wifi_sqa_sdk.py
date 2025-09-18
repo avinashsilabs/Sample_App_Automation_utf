@@ -158,6 +158,7 @@ class WLanRTCSTAThread(ThreadBase):
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_set_rtc_c19046(wifi_dut, wifi_access_point, sl_collections, wifi_sniffer):
     """
     Test Steps:
@@ -193,6 +194,7 @@ def test_wifi_sdk_verify_set_rtc_c19046(wifi_dut, wifi_access_point, sl_collecti
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_set_rtc_without_enabling_feature_c19047(wifi_dut, wifi_access_point, sl_collections, wifi_sniffer):
     """
     Test Steps:
@@ -230,6 +232,7 @@ def test_wifi_sdk_set_rtc_without_enabling_feature_c19047(wifi_dut, wifi_access_
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_check_set_rtc_functionality_twice_c19049(wifi_dut, wifi_access_point, sl_collections, wifi_sniffer):
     """
      Test Steps:
@@ -275,6 +278,7 @@ def test_wifi_sdk_check_set_rtc_functionality_twice_c19049(wifi_dut, wifi_access
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_check_get_rtc_functionality_c19052(wifi_dut, wifi_access_point, sl_collections, wifi_sniffer):
     """
      Test Steps:
@@ -317,6 +321,7 @@ def test_wifi_sdk_check_get_rtc_functionality_c19052(wifi_dut, wifi_access_point
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_get_rtc_multiple_times_c19053(wifi_dut, wifi_access_point, sl_collections, wifi_sniffer):
     """
     Test Steps:
@@ -408,6 +413,7 @@ def test_wifi_sdk_get_rtc_multiple_times_c19053(wifi_dut, wifi_access_point, sl_
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_get_rtc_without_enabling_feature_c19054(wifi_dut, wifi_access_point, sl_collections, wifi_sniffer):
     """
     Test Steps:
@@ -455,6 +461,7 @@ def test_wifi_sdk_get_rtc_without_enabling_feature_c19054(wifi_dut, wifi_access_
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_get_rtc_after_rejoin_c19055(switch, wifi_dut, wifi_access_point, sl_collections, wifi_sniffer):
     """
     Test Steps:
@@ -533,6 +540,7 @@ def test_wifi_sdk_get_rtc_after_rejoin_c19055(switch, wifi_dut, wifi_access_poin
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi="reset")
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_set_rtc_in_incorrect_state_c19048(wifi_dut, wifi_sniffer, sl_collections):
     """ Check whether the device is able to set the RTC Timer in Incorrect state."""
     try:
@@ -562,6 +570,7 @@ def test_wifi_sdk_set_rtc_in_incorrect_state_c19048(wifi_dut, wifi_sniffer, sl_c
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_set_rtc_timer_in_deep_sleep_mode_C40858(wifi_dut, wifi_access_point, sl_collections, wifi_sniffer):
     """ Check whether the device is able to set the RTC timer when device is in deep sleep mode."""
     tolerance_threshold = [-1, 2]

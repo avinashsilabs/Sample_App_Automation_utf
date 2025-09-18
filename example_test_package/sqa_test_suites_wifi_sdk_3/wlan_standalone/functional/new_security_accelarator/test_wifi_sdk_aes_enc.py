@@ -236,6 +236,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_aes_encryption_with_key_size_192_c537626(wifi_dut, sl_collections):
     """ Verify AES Encryption with wrapped key enable,AES_KEY_SIZE_192."""
     try:
@@ -246,6 +247,7 @@ def test_wifi_sdk_aes_encryption_with_key_size_192_c537626(wifi_dut, sl_collecti
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_aes_encryption_with_key_size_128_c537627(wifi_dut, sl_collections):
     """ Verify AES Encryption with wrapped key enable,AES_KEY_SIZE_128."""
     try:

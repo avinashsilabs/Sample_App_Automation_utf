@@ -152,6 +152,7 @@ class WLanThread(ThreadBase):
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_pmf_cap_c19658(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections, request,
                                  sniffer_filter):
     test_name = request.node.name
@@ -200,6 +201,7 @@ def test_wifi_sdk_pmf_cap_c19658(wifi_sniffer, wifi_access_point, wifi_dut, sl_c
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_pmf_req_c19659(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections, request,
                                  sniffer_filter):
     test_name = request.node.name
@@ -250,6 +252,7 @@ def test_wifi_sdk_pmf_req_c19659(wifi_sniffer, wifi_access_point, wifi_dut, sl_c
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_pmf_req_ap_pmf_cap_dut_c19661(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                 request, sniffer_filter):
     test_name = request.node.name
@@ -299,6 +302,7 @@ def test_wifi_sdk_pmf_req_ap_pmf_cap_dut_c19661(wifi_sniffer, wifi_access_point,
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_pmf_req_ap_pmf_req_and_cap_dut_c19670(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                         request, sniffer_filter):
     test_name = request.node.name
@@ -349,6 +353,7 @@ def test_wifi_sdk_pmf_req_ap_pmf_req_and_cap_dut_c19670(wifi_sniffer, wifi_acces
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_pmf_cap_ap_pmf_req_and_cap_dut_c19663(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                         request, sniffer_filter):
     test_name = request.node.name
@@ -399,6 +404,7 @@ def test_wifi_sdk_pmf_cap_ap_pmf_req_and_cap_dut_c19663(wifi_sniffer, wifi_acces
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_unicast_frame_protection_bit_c19665(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                       request, sniffer_filter):
     test_name = request.node.name
@@ -463,6 +469,7 @@ def test_wifi_sdk_unicast_frame_protection_bit_c19665(wifi_sniffer, wifi_access_
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_action_frame_with_protection_bit_encrypted_c19667(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                     sl_collections, request, sniffer_filter):
     test_name = request.node.name
@@ -527,6 +534,7 @@ def test_wifi_sdk_action_frame_with_protection_bit_encrypted_c19667(wifi_sniffer
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_disconnection_with_pmf_c19672(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                 request, sniffer_filter):
     test_name = request.node.name
@@ -592,6 +600,7 @@ def test_wifi_sdk_disconnection_with_pmf_c19672(wifi_sniffer, wifi_access_point,
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mgmt_pmf_enable_receive_data_c19671(wifi_dut, wifi_access_point, wifi_sniffer,
                                                       sl_collections, request, sniffer_filter, remote_socket):
     # Check whether the data transfer(receiver) is happening with PMF enable mode
@@ -665,6 +674,7 @@ def test_wifi_sdk_mgmt_pmf_enable_receive_data_c19671(wifi_dut, wifi_access_poin
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mgmt_pmf_req_connection_fail_c19664(wifi_access_point, wifi_dut):
     """ Verify the Connection between AP(PMF required) and DUT(PMF disable)"""
     '''	Check whether the device is not connecting to PMF Required AP when the device is not configured with PMF'''

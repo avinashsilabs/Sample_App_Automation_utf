@@ -83,6 +83,7 @@ class WlanThread(ThreadBase):
         "ble_custom_ext_features": 0
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dns_server_obtaining_ip_through_dhcp_handshake_c19297(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                         request, sniffer_filter,
                                                                         sl_collections):
@@ -160,6 +161,7 @@ def test_wifi_sdk_dns_server_obtaining_ip_through_dhcp_handshake_c19297(wifi_sni
         "ble_custom_ext_features": 0
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dns_server_dns_feature_disable_c19299(wifi_sniffer, wifi_access_point, wifi_dut, request,
                                                         sl_collections):
     """

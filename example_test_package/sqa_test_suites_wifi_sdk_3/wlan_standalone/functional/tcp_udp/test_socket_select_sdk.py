@@ -204,6 +204,7 @@ class SocketDataTransfer:
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [10])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_socket_select_tcp_TC19325(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger,
                                             repeat_count, sl_collections):
     """
@@ -266,6 +267,7 @@ def test_wifi_sdk_socket_select_tcp_TC19325(wifi_sniffer, wifi_dut, wifi_access_
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_socket_select_udp_c19328(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger,
                                            sl_collections, sniffer_filter):
     """
@@ -335,6 +337,7 @@ def test_wifi_sdk_socket_select_udp_c19328(wifi_sniffer, wifi_dut, wifi_access_p
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [10])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_socket_select_dut_tcp_server_TC19326(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count, sl_collections
 ):
@@ -409,6 +412,7 @@ def test_wifi_sdk_socket_select_dut_tcp_server_TC19326(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_socket_select_tcp_server_multiple_sockets_c19327(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                    remote_socket_factory, logger, sl_collections,
                                                                    sniffer_filter):
@@ -496,6 +500,7 @@ def test_wifi_sdk_socket_select_tcp_server_multiple_sockets_c19327(wifi_sniffer,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_socket_select_tcp_c19331(switch, wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger,
                                            sl_collections, sniffer_filter):
     """
@@ -588,6 +593,7 @@ def test_wifi_sdk_socket_select_tcp_c19331(switch, wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_socket_select_after_remote_socket_close_c19333(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                  sniffer_filter, remote_socket_factory, logger,
                                                                  sl_collections):
@@ -672,6 +678,7 @@ def test_wifi_sdk_socket_select_after_remote_socket_close_c19333(wifi_sniffer, w
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_socket_select_tcp_close_stress_c19334(wifi_sniffer, wifi_dut, wifi_access_point, sl_collections,
                                                         remote_socket_factory, logger, sniffer_filter,
                                                         utf_constants):
@@ -781,6 +788,7 @@ def test_wifi_sdk_socket_select_tcp_close_stress_c19334(wifi_sniffer, wifi_dut, 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_socket_select_multiple_sockets_tcp_udp_c19329(wifi_sniffer, wifi_dut, wifi_access_point, logger,
                                                                 remote_socket_factory, sl_collections, sniffer_filter):
     """
@@ -903,6 +911,7 @@ def test_wifi_sdk_socket_select_multiple_sockets_tcp_udp_c19329(wifi_sniffer, wi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_data_rx_func_of_multiple_tcp_socks_after_rejoin_c19330(switch, wifi_sniffer, wifi_dut, logger,
                                                                                 sl_collections, remote_socket_factory,
                                                                                 wifi_access_point, sniffer_filter):
@@ -1007,6 +1016,7 @@ def test_wifi_sdk_verify_data_rx_func_of_multiple_tcp_socks_after_rejoin_c19330(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_socket_select_udp_bidirectional_c19338(wifi_sniffer, wifi_dut, wifi_access_point, sniffer_filter,
                                                          remote_socket_factory, logger, sl_collections):
     """
@@ -1107,6 +1117,7 @@ def test_wifi_sdk_socket_select_udp_bidirectional_c19338(wifi_sniffer, wifi_dut,
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_sync_socket_select_with_timeout_null_c19335(wifi_sniffer, wifi_access_point, wifi_dut, remote_socket,
                                                               logger, sl_collections, sniffer_filter):
     """
@@ -1192,6 +1203,7 @@ def test_wifi_sdk_sync_socket_select_with_timeout_null_c19335(wifi_sniffer, wifi
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_sync_socket_select_with_time_interval_1_30_60_sec_c19336_case1(wifi_sniffer, remote_socket_factory,
                                                                                  wifi_dut, logger, sl_collections,
                                                                                  wifi_access_point, sniffer_filter):
@@ -1282,6 +1294,7 @@ def test_wifi_sdk_sync_socket_select_with_time_interval_1_30_60_sec_c19336_case1
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_sync_socket_select_with_time_interval_300_sec_c19336_case2(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                              remote_socket_factory, logger,
                                                                              sl_collections,
@@ -1371,6 +1384,7 @@ def test_wifi_sdk_sync_socket_select_with_time_interval_300_sec_c19336_case2(wif
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_sync_socket_select_with_time_interval_900_sec_c19336_case3(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                              remote_socket_factory, logger,
                                                                              sl_collections,
@@ -1461,6 +1475,7 @@ def test_wifi_sdk_sync_socket_select_with_time_interval_900_sec_c19336_case3(wif
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_socket_select_tcp_bidirectional_c19337(wifi_sniffer, wifi_dut, wifi_access_point, sniffer_filter,
                                                          remote_socket_factory, logger, sl_collections):
     """
@@ -1561,6 +1576,7 @@ def test_wifi_sdk_socket_select_tcp_bidirectional_c19337(wifi_sniffer, wifi_dut,
 @pytest.mark.parametrize("test_run_time", [900])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_tcp_rx_without_socket_select_for_first_time_c19339(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                      remote_socket_factory, sniffer_filter,
                                                                      logger, test_run_time, sl_collections):
@@ -1675,6 +1691,7 @@ def test_wifi_sdk_tcp_rx_without_socket_select_for_first_time_c19339(wifi_sniffe
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable"])
+@pytest.mark.legacy_deployed
 def test_socket_select_neg_TCC19332(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, sl_collections):
     """
     Execute select() api when no socket is opened in the DUT
@@ -1724,6 +1741,7 @@ def test_socket_select_neg_TCC19332(wifi_sniffer, wifi_dut, wifi_access_point, r
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [1])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_socket_select_dut_tcp_server_timeout0_TC538014(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count, sl_collections
 ):
@@ -1800,6 +1818,7 @@ def test_wifi_sdk_socket_select_dut_tcp_server_timeout0_TC538014(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [1])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_4tcp_client_socket_select_TC538008(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger,
                                             repeat_count, sl_collections, sniffer_filter):
     """
@@ -1883,6 +1902,7 @@ def test_wifi_sdk_4tcp_client_socket_select_TC538008(wifi_sniffer, wifi_dut, wif
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['reset','init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_socket_select_tcp_10server_sockets_c538019(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                    remote_socket_factory, logger, sl_collections,
                                                                    sniffer_filter):

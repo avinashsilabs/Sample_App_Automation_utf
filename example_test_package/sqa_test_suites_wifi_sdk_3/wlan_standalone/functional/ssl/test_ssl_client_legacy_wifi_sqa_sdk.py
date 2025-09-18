@@ -141,6 +141,7 @@ pytestmark = [
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_client_connect_close_sequence_testcase_c19130(wifi_access_point, sniffer_filter, sl_collections,
                                                                     wifi_dut, ssl_server, logger, utf_constants,
                                                                     wifi_sniffer):
@@ -230,6 +231,7 @@ def test_wifi_sdk_ssl_client_connect_close_sequence_testcase_c19130(wifi_access_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_socket_limit_testcase_c19121(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger,
                                                    sl_collections, sniffer_filter):
     """
@@ -309,6 +311,7 @@ def test_wifi_sdk_ssl_socket_limit_testcase_c19121(wifi_sniffer, wifi_access_poi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_client_1_2_version_server_1_0_testcase_c19120(wifi_sniffer, wifi_dut, wifi_access_point, openssl,
                                                                     wifi_client, logger, sl_collections,
                                                                     sniffer_filter):
@@ -371,6 +374,7 @@ def test_wifi_sdk_ssl_client_1_2_version_server_1_0_testcase_c19120(wifi_sniffer
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_client_testcase_c19109(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger,
                                              sl_collections, sniffer_filter, utf_constants):
     """
@@ -451,6 +455,7 @@ def test_wifi_sdk_ssl_client_testcase_c19109(wifi_sniffer, wifi_access_point, wi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_max_sockets_testcase_c19128(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1,
                                                   cert2, sl_collections, sniffer_filter, utf_constants):
     """
@@ -567,6 +572,7 @@ def test_wifi_sdk_ssl_max_sockets_testcase_c19128(wifi_sniffer, wifi_dut, wifi_a
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_client_tx_while_rejoining_c19134(wifi_dut, wifi_access_point, wifi_sniffer, ssl_server,
                                                        cert1, logger, sl_collections, sniffer_filter, switch):
     """
@@ -619,6 +625,7 @@ def test_wifi_sdk_ssl_client_tx_while_rejoining_c19134(wifi_dut, wifi_access_poi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_client_tx_rx_bidirectional_c19129(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                         logger, sl_collections, sniffer_filter):
     """
@@ -694,6 +701,7 @@ def test_wifi_sdk_ssl_client_tx_rx_bidirectional_c19129(wifi_sniffer, wifi_acces
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "wifi_powersave_disable", "close_sockets"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_client_rx_while_rejoining_c19135(switch, wifi_dut, wifi_access_point, wifi_sniffer, ssl_server,
                                                        cert1, logger, sl_collections, sniffer_filter):
     """
@@ -751,6 +759,7 @@ def test_wifi_sdk_ssl_client_rx_while_rejoining_c19135(switch, wifi_dut, wifi_ac
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated",
                              "clear_certs"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_server_v1_0_and_client_v1_0_c19117(sl_collections, openssl, logger, wifi_access_point,
                                                          wifi_client, wifi_sniffer, wifi_dut, sniffer_filter):
     """
@@ -815,6 +824,7 @@ def test_wifi_sdk_ssl_server_v1_0_and_client_v1_0_c19117(sl_collections, openssl
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_server_v1_2_and_client_v1_0_c19119(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger,
                                                          sl_collections):
     """
@@ -861,6 +871,7 @@ def test_wifi_sdk_ssl_server_v1_2_and_client_v1_0_c19119(wifi_sniffer, wifi_acce
 @pytest.mark.parametrize("cipher_list", [["TLS_RSA_WITH_AES_256_CBC_SHA256", "TLS_RSA_WITH_AES_128_CBC_SHA256",
                                           "TLS_RSA_WITH_AES_256_CBC_SHA", "TLS_RSA_WITH_AES_128_CBC_SHA",
                                           ["TLS_RSA_WITH_AES_256_CBC_SHA256", "TLS_RSA_WITH_AES_128_CBC_SHA256"]]])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_client_cipher_list_c19132(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger,
                                                 cipher_list, sl_collections, sniffer_filter):
     """
@@ -953,6 +964,7 @@ def test_wifi_sdk_ssl_client_cipher_list_c19132(wifi_sniffer, wifi_access_point,
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ssl_client_cipher_suite_mismatch_c19133(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
                                                           ssl_server, logger, sl_collections):
     """

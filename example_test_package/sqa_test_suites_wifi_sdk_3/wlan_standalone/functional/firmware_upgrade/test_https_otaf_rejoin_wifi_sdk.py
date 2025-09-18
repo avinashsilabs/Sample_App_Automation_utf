@@ -220,6 +220,7 @@ class ThreadHttpOtaf(ThreadBase):
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["clear_certs"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_https_fw_upgrade_after_rejoin_failure_and_measure_time_c19766(http_server, wifi_client, wifi_sniffer,
                                                                                 wifi_access_point, wifi_dut, switch,
                                                                                 sl_collections):
@@ -275,6 +276,7 @@ def test_wifi_sdk_https_fw_upgrade_after_rejoin_failure_and_measure_time_c19766(
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_http_fw_upgrade_after_rejoin_failure_and_measure_time_c19788(http_server, wifi_client, wifi_sniffer,
                                                                                wifi_access_point, wifi_dut, switch,
                                                                                sl_collections):
@@ -330,6 +332,7 @@ def test_wifi_sdk_http_fw_upgrade_after_rejoin_failure_and_measure_time_c19788(h
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_https_otaf_after_rejoin_failure_and_measure_time_c584245(http_server, wifi_client, wifi_sniffer,
                                                                            wifi_access_point, wifi_dut, switch,
                                                                            sl_collections):
@@ -385,6 +388,7 @@ def test_wifi_sdk_https_otaf_after_rejoin_failure_and_measure_time_c584245(http_
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_https_otaf_after_rejoin_failure_and_measure_time_c584246(http_server, wifi_client, wifi_sniffer,
                                                                            wifi_access_point, wifi_dut, switch,
                                                                            sl_collections):

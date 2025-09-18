@@ -1601,6 +1601,7 @@ class WLanThread(ThreadBase):
     },
 )
 @pytest.mark.test_src_map_id('C219284')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_c219284(
     wifi_sniffer,
     wifi_access_point,
@@ -1701,6 +1702,7 @@ def test_wifi_sdk_mbssid_c219284(
     },
 )
 @pytest.mark.test_src_map_id('C219285')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_scan_all_vap_c219285(
     wifi_sniffer,
     wifi_access_point,
@@ -1797,6 +1799,7 @@ def test_wifi_sdk_mbssid_scan_all_vap_c219285(
     },
 )
 @pytest.mark.test_src_map_id('C219286')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_open_sec_c219286(
     wifi_sniffer,
     wifi_access_point,
@@ -1894,6 +1897,7 @@ def test_wifi_sdk_mbssid_T_open_sec_c219286(
     },
 )
 @pytest.mark.test_src_map_id('C219287')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_wpa2_psk_c219287(
     wifi_sniffer,
     wifi_access_point,
@@ -1991,6 +1995,7 @@ def test_wifi_sdk_mbssid_T_wpa2_psk_c219287(
     },
 )
 @pytest.mark.test_src_map_id('C219288')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_NT_wpa2_psk_c219288(
     wifi_sniffer,
     wifi_access_point,
@@ -2099,6 +2104,7 @@ def test_wifi_sdk_mbssid_NT_wpa2_psk_c219288(
     },
 )
 @pytest.mark.test_src_map_id('C219289')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_wpa3_c219289(
     wifi_sniffer,
     wifi_access_point,
@@ -2205,6 +2211,7 @@ def test_wifi_sdk_mbssid_T_wpa3_c219289(
     },
 )
 @pytest.mark.test_src_map_id('C219290')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_NT_wpa3_c219290(
     wifi_sniffer,
     wifi_access_point,
@@ -2324,6 +2331,7 @@ def test_wifi_sdk_mbssid_NT_wpa3_c219290(
     ],
 )
 @pytest.mark.test_src_map_id('C219291')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_wpa2_enterprise_c219291(
     wifi_dut,
     wifi_access_point,
@@ -2432,6 +2440,7 @@ def test_wifi_sdk_mbssid_T_wpa2_enterprise_c219291(
 )
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.test_src_map_id('C219292')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_NT_wpa2_enterprise_c219292(
     wifi_sniffer,
     wifi_access_point,
@@ -2532,6 +2541,7 @@ def test_wifi_sdk_mbssid_NT_wpa2_enterprise_c219292(
     },
 )
 @pytest.mark.test_src_map_id('C219293')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_rejoin_T_open_sec_c219293(
     wifi_sniffer,
     wifi_access_point,
@@ -2644,6 +2654,7 @@ def test_wifi_sdk_mbssid_rejoin_T_open_sec_c219293(
     },
 )
 @pytest.mark.test_src_map_id('C219294')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_rejoin_T_wpa2_c219294(
     wifi_sniffer,
     wifi_access_point,
@@ -2757,6 +2768,7 @@ def test_wifi_sdk_mbssid_rejoin_T_wpa2_c219294(
     },
 )
 @pytest.mark.test_src_map_id('C219295')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_rejoin_NT_wpa2_c219295(
     wifi_sniffer,
     wifi_access_point,
@@ -2876,6 +2888,7 @@ def test_wifi_sdk_mbssid_rejoin_NT_wpa2_c219295(
     },
 )
 @pytest.mark.test_src_map_id('C219296')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_rejoin_T_wpa3_c219296(
     wifi_sniffer,
     wifi_access_point,
@@ -2994,6 +3007,7 @@ def test_wifi_sdk_mbssid_rejoin_T_wpa3_c219296(
     },
 )
 @pytest.mark.test_src_map_id('C219297')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_rejoin_NT_wpa3_c219297(
     wifi_sniffer,
     wifi_access_point,
@@ -3101,6 +3115,7 @@ def test_wifi_sdk_mbssid_rejoin_NT_wpa3_c219297(
     },
 )
 @pytest.mark.test_src_map_id('C219298')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_c219298(
     wifi_sniffer,
     wifi_access_point,
@@ -3195,6 +3210,7 @@ def test_wifi_sdk_mbssid_c219298(
     },
 )
 @pytest.mark.test_src_map_id('C219299')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_negative_c219299(
     wifi_sniffer,
     wifi_access_point,
@@ -3288,6 +3304,7 @@ def test_wifi_sdk_mbssid_negative_c219299(
     },
 )
 @pytest.mark.test_src_map_id('C219300')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_connection_failure_c219300(
     wifi_sniffer, wifi_access_point, wifi_dut, request, sniffer_filter, sl_collections
 ):
@@ -3370,6 +3387,7 @@ def test_wifi_sdk_mbssid_connection_failure_c219300(
     },
 )
 @pytest.mark.test_src_map_id('C219301')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_c219301(
     wifi_sniffer,
     wifi_access_point,
@@ -3461,6 +3479,7 @@ def test_wifi_sdk_mbssid_c219301(
     },
 )
 @pytest.mark.test_src_map_id('C219302')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_c219302(
     wifi_sniffer,
     wifi_access_point,
@@ -3557,6 +3576,7 @@ def test_wifi_sdk_mbssid_c219302(
     },
 )
 @pytest.mark.test_src_map_id('C219319')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_c219319(
     wifi_sniffer,
     wifi_access_point,
@@ -3654,6 +3674,7 @@ def test_wifi_sdk_mbssid_c219319(
     },
 )
 @pytest.mark.test_src_map_id('C219320')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_c219320(
     wifi_sniffer,
     wifi_access_point,
@@ -3741,6 +3762,7 @@ def test_wifi_sdk_mbssid_c219320(
     },
 )
 @pytest.mark.test_src_map_id('C219321')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_c219321(
     wifi_sniffer,
     wifi_access_point,
@@ -3834,6 +3856,7 @@ def test_wifi_sdk_mbssid_c219321(
     },
 )
 @pytest.mark.test_src_map_id('C219307')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_profile_based_ap_open_sec_c219307(
     wifi_sniffer,
     wifi_access_point,
@@ -3933,6 +3956,7 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_open_sec_c219307(
     },
 )
 @pytest.mark.test_src_map_id('C219308')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_NT_profile_based_ap_open_sec_c219308(
     wifi_sniffer,
     wifi_access_point,
@@ -4041,6 +4065,7 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_open_sec_c219308(
     },
 )
 @pytest.mark.test_src_map_id('C219309')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_profile_based_ap_wpa2_sec_c219309(
     wifi_sniffer,
     wifi_access_point,
@@ -4148,6 +4173,7 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_wpa2_sec_c219309(
     },
 )
 @pytest.mark.test_src_map_id('C219310')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa2_sec_c219310(
     wifi_sniffer,
     wifi_access_point,
@@ -4260,6 +4286,7 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa2_sec_c219310(
     },
 )
 @pytest.mark.test_src_map_id('C219311')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_profile_based_ap_wpa3_sec_c219311(
     wifi_sniffer,
     wifi_access_point,
@@ -4372,6 +4399,7 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_wpa3_sec_c219311(
     },
 )
 @pytest.mark.test_src_map_id('C219312')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa3_sec_c219312(
     wifi_sniffer,
     wifi_access_point,
@@ -4473,6 +4501,7 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa3_sec_c219312(
     },
 )
 @pytest.mark.test_src_map_id('C219315')
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_NT_connect_disconnect_c219315(
     wifi_sniffer,
     wifi_access_point,
@@ -4701,6 +4730,7 @@ def test_wifi_sdk_mbssid_T_NT_connect_disconnect_c535828(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_wpa2_psk_hidden_ssid_c535830(
         wifi_sniffer,
         wifi_access_point,
@@ -4797,6 +4827,7 @@ Check the connection with hidden MBSSID AP with WPA2 security enabled in AP"""
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_NT_connect_disconnect_hidden_mode_c535831(
         wifi_sniffer,
         wifi_access_point,

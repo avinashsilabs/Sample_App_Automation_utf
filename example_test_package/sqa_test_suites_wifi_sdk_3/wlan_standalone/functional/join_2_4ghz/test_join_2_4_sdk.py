@@ -248,6 +248,7 @@ class WLanJoinThread(ThreadBase):
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_connectivity_with_11n_mode_c19707(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                                     sl_collections, sniffer_filter, request):
     """
@@ -297,6 +298,7 @@ def test_wifi_sdk_connectivity_with_11n_mode_c19707(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_connectivity_with_hidden_mode_ap_c19708(wifi_dut, wifi_access_point, wifi_sniffer,
                                                           utf_constants, sl_collections, sniffer_filter, request):
     """
@@ -351,6 +353,7 @@ def test_wifi_sdk_connectivity_with_hidden_mode_ap_c19708(wifi_dut, wifi_access_
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_join_time_providing_psk_c19712(wifi_dut, wifi_access_point, wifi_sniffer, request,
                                                  sl_collections, sniffer_filter, utf_constants):
     """
@@ -415,6 +418,7 @@ def test_wifi_sdk_join_time_providing_psk_c19712(wifi_dut, wifi_access_point, wi
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_Joining_by_rsi_psk_command_c19714(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, utf_constants,
                                                     request, sl_collections, sniffer_filter):
     """
@@ -465,6 +469,7 @@ def test_wifi_sdk_Joining_by_rsi_psk_command_c19714(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_psk_with_64_different_characters_c19719(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper,
                                                           utf_constants, request, sl_collections, sniffer_filter):
     """
@@ -512,6 +517,7 @@ def test_wifi_sdk_psk_with_64_different_characters_c19719(wifi_dut, wifi_access_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper,
                                                          utf_constants, request, sl_collections, sniffer_filter):
     """
@@ -564,6 +570,7 @@ def test_wifi_sdk_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_p
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sniffer,
                                             utf_constants, request, sl_collections, sniffer_filter):
     """
@@ -611,6 +618,7 @@ def test_wifi_sdk_Join_providing_PMK_C19715(wifi_dut, wifi_access_point, wifi_sn
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_Joining_to_PMK_in_module_by_wrong_PSK_C19716(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                utf_constants, request, sl_collections, sniffer_filter):
     """
@@ -660,6 +668,7 @@ def test_wifi_sdk_Joining_to_PMK_in_module_by_wrong_PSK_C19716(wifi_dut, wifi_ac
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_join_PMK_with_64_characters_psk_32_characters_ssid_C19720(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                             utf_constants, request, sl_collections,
                                                                             sniffer_filter):
@@ -711,6 +720,7 @@ def test_wifi_sdk_join_PMK_with_64_characters_psk_32_characters_ssid_C19720(wifi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_wifi_join_PMK_with_space_before_redpine_ssid_C19718(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                       utf_constants, request, sl_collections,
                                                                       sniffer_filter):
@@ -758,6 +768,7 @@ def test_wifi_sdk_wifi_join_PMK_with_space_before_redpine_ssid_C19718(wifi_dut, 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_Joining_time_PMK_C19711(wifi_dut, wifi_access_point, wifi_sniffer, request,
                                           sl_collections, sniffer_filter, utf_constants):
     """
@@ -821,6 +832,7 @@ def test_wifi_sdk_Joining_time_PMK_C19711(wifi_dut, wifi_access_point, wifi_snif
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wifi_join_PMK_without_SSID_C19717(wifi_dut, wifi_access_point, sl_collections, request):
     """
     Test Steps:
@@ -866,6 +878,7 @@ def test_wifi_sdk_wifi_join_PMK_without_SSID_C19717(wifi_dut, wifi_access_point,
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'TESTTEST-ASUS-ANSHUL', "security": 'WPA2', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wlan_get_stats_sta_C19175(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections, request,
                                             utf_constants):
     """ Test case verifies the device is able to get the wireless statistics in station mode"""
@@ -913,6 +926,7 @@ def test_wifi_sdk_wlan_get_stats_sta_C19175(wifi_dut, wifi_access_point, wifi_sn
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wlan_get_stats_ap_c19176(wifi_dut, wifi_sniffer, sl_collections):
     """Verify whether the device is able to get the Wireless Statistics in AP Mode"""
     channel = 11
@@ -960,6 +974,7 @@ def test_wifi_sdk_wlan_get_stats_ap_c19176(wifi_dut, wifi_sniffer, sl_collection
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'sta_mode_ssid', "passphrase": '12345678', "security": 'WPA2', })
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_device_wpa2_sec_to_sta_mode_c564145(wifi_dut, request, utf_constants, wifi_sniffer,
                                                              sniffer_filter, wifi_access_point, sl_collections):
     """Verify whether the device is able to get the
@@ -1026,6 +1041,7 @@ def test_wifi_sdk_verify_device_wpa2_sec_to_sta_mode_c564145(wifi_dut, request, 
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_device_wpa2_sec_to_ap_mode_c564146(wifi_dut, wifi_client, request, utf_constants, wifi_sniffer,
                                                             sniffer_filter, sl_collections):
     """Verify whether the device is able to get
@@ -1105,6 +1121,7 @@ def test_wifi_sdk_verify_device_wpa2_sec_to_ap_mode_c564146(wifi_dut, wifi_clien
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'sta_mode_ssid', "passphrase": '12345678', "security": 'WPA3',
                                                "protected_management_frame": "Capable", })
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_device_wpa3_sec_to_sta_mode_c564147(wifi_dut, request, utf_constants, wifi_sniffer,
                                                              sniffer_filter, wifi_access_point, sl_collections):
     """Verify whether the device is able to get the
@@ -1191,6 +1208,7 @@ def test_wifi_sdk_verify_device_wpa3_sec_to_sta_mode_c564147(wifi_dut, request, 
         "security": "WPA3", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_device_wpa3_sec_to_ap_mode_c564148(wifi_dut, wifi_client, request, utf_constants,
                                                             remote_wiseconnect3,
                                                             wifi_sniffer, sniffer_filter, sl_collections):
@@ -1280,6 +1298,7 @@ def test_wifi_sdk_verify_device_wpa3_sec_to_ap_mode_c564148(wifi_dut, wifi_clien
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_device_wpa2_enterprise_to_sta_mode_c564149(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                     sniffer_filter,
                                                                     radius_server, sl_collections, request,
@@ -1357,6 +1376,7 @@ def test_wifi_sdk_verify_device_wpa2_enterprise_to_sta_mode_c564149(wifi_dut, wi
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'sta_mode_ssid', "passphrase": '12345678', "security": 'WPA2',
                                                "protected_management_frame": "Capable"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_traffic_with_load_default_nwp_fw_active_low_c38192(wifi_dut, request, utf_constants, wifi_sniffer,
                                                                      wifi_client, net_perf_client,
                                                                      sniffer_filter, wifi_access_point, protocol,
@@ -1450,6 +1470,7 @@ def test_wifi_sdk_traffic_with_load_default_nwp_fw_active_low_c38192(wifi_dut, r
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'sta_mode_ssid', "passphrase": '12345678', "security": 'WPA2',
                                                "protected_management_frame": "Capable"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wifi_init_with_load_default_nwp_fw_active_low_c38056(wifi_dut, wifi_sniffer, wifi_access_point,
                                                                        request, sniffer_filter, utf_constants,
                                                                        sl_collections):
@@ -1511,6 +1532,7 @@ def test_wifi_sdk_wifi_init_with_load_default_nwp_fw_active_low_c38056(wifi_dut,
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'join:BSSID:00:11:22:33:44:55', "passphrase": '12345678', "security": 'WPA2',
                           "protected_management_frame": "Capable"})
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_join_bssid_with_spaces_and_colons_c37566(wifi_dut, wifi_sniffer, wifi_access_point,
                                                            sniffer_filter, utf_constants, sl_collections):
     """Verify whether Device is throwing error for join BSSID command along with spaces /colons."""
@@ -1555,6 +1577,7 @@ def test_wifi_sdk_join_bssid_with_spaces_and_colons_c37566(wifi_dut, wifi_sniffe
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'sta_mode_ssid', "passphrase": '12345678', "security": 'WPA2',
                                                "protected_management_frame": "Capable"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_dut_conn_with_third_party_ap_using_sl_wifi_api_c686553(wifi_access_point, wifi_dut, wifi_sniffer,
                                                                          request, sniffer_filter, utf_constants,
                                                                          sl_collections):
@@ -1605,6 +1628,7 @@ def test_wifi_sdk_dut_conn_with_third_party_ap_using_sl_wifi_api_c686553(wifi_ac
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sta_mode_ssid', "passphrase": 'test12345678', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_verify_connectivity_with_correct_psk_after_wrong_psk_c694554(wifi_dut, wifi_access_point,
                                                                                wifi_sniffer,
                                                                                utf_constants, request, sl_collections,
@@ -1674,6 +1698,7 @@ def test_wifi_sdk_verify_connectivity_with_correct_psk_after_wrong_psk_c694554(w
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 12})
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_connection_in_eu_region_C782626(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                   sl_collections, sniffer_filter):
     """
@@ -1725,6 +1750,7 @@ def test_wifi_sdk_connection_in_eu_region_C782626(wifi_sniffer, wifi_access_poin
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 13})
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_connection_in_JP_region_C782627(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                   sl_collections, sniffer_filter):
     """
@@ -1776,6 +1802,7 @@ def test_wifi_sdk_connection_in_JP_region_C782627(wifi_sniffer, wifi_access_poin
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 11})
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_connection_in_world_region_C782628(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                      sl_collections, sniffer_filter):
     """
@@ -1822,6 +1849,7 @@ def test_wifi_sdk_connection_in_world_region_C782628(wifi_sniffer, wifi_access_p
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_connectivity_with_wpa2_security_hidden_psk_c770028(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                      utf_constants, sl_collections, sniffer_filter,
                                                                      request):
@@ -1869,6 +1897,7 @@ def test_wifi_sdk_connectivity_with_wpa2_security_hidden_psk_c770028(wifi_dut, w
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_connectivity_with_wpa_wpa2_mixed_hidden_psk_c770031(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                       utf_constants, sl_collections, sniffer_filter,
                                                                       request):
@@ -1917,6 +1946,7 @@ def test_wifi_sdk_connectivity_with_wpa_wpa2_mixed_hidden_psk_c770031(wifi_dut, 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'sta_mode_ssid', "passphrase": '12345678', "security": 'open'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_long_icmp_packet_functionality_ipv4_c770033(wifi_dut, wifi_access_point, wifi_sniffer,
                                                               sl_collections, sniffer_filter, request, wifi_client):
     """
@@ -2037,6 +2067,7 @@ def test_wifi_sdk_long_icmp_packet_functionality_ipv4_c770033(wifi_dut, wifi_acc
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'sta_mode_ssid', "passphrase": '12345678', "security": 'open'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_long_icmp_packet_functionality_ipv6_c770035(firmware_loader, wifi_dut, wifi_access_point,
                                                               wifi_sniffer,
                                                               sl_collections, sniffer_filter, request, wifi_client):
@@ -2156,6 +2187,7 @@ def test_wifi_sdk_long_icmp_packet_functionality_ipv6_c770035(firmware_loader, w
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_disabling_short_GI_C770043(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                              sl_collections, sniffer_filter, request, wifi_client):
     """
@@ -2220,6 +2252,7 @@ def test_wifi_sdk_disabling_short_GI_C770043(wifi_dut, wifi_access_point, wifi_s
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_connectivity_with_wpa3_security_hidden_psk_c770029(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                      utf_constants, sl_collections, sniffer_filter,
                                                                      request):
@@ -2273,6 +2306,7 @@ def test_wifi_sdk_connectivity_with_wpa3_security_hidden_psk_c770029(wifi_dut, w
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_connectivity_with_EAP_TLS_mixed_hidden_psk_c770030(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                      radius_server,
                                                                      utf_constants, sl_collections, sniffer_filter,
@@ -2318,6 +2352,7 @@ def test_wifi_sdk_connectivity_with_EAP_TLS_mixed_hidden_psk_c770030(wifi_dut, w
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'sta_mode_ssid', "passphrase": '12345678', "security": 'open'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_long_icmp_packet_more_than_1472_bytes_c770039(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                 utf_constants,
                                                                 sl_collections, sniffer_filter, request, wifi_client):
@@ -2404,6 +2439,7 @@ def test_wifi_sdk_long_icmp_packet_more_than_1472_bytes_c770039(wifi_dut, wifi_a
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'sta_mode_ssid', "passphrase": '12345678', "security": 'open'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_long_icmp_packet_more_than_1452_bytes_ipv6_c770040(firmware_loader, wifi_dut, wifi_access_point,
                                                                      wifi_sniffer, utf_constants,
                                                                      sl_collections, sniffer_filter, request,

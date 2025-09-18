@@ -156,6 +156,7 @@ class IperfClientThread(ThreadBase):
         "region_code": "japan",
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_sta_japan_region_aput_c551266( wifi_dut,
                                              sl_collections, remote_wiseconnect3):
     """Verify APUT beacon with region JP, WPA2 security, Channel 14, DTIM 3 , Beacon interval 500ms configurations"""
@@ -247,6 +248,7 @@ def test_wifi_sdk_sta_japan_region_aput_c551266( wifi_dut,
     },
 )
 @pytest.mark.parametrize("listen_interval", [500, 700, 1000])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_sta_with_listen_intervals_c19445(wifi_sniffer, wifi_dut,
                                                    sl_collections, remote_wiseconnect3, listen_interval):
     """APUT functionality ,when a STA connected with various listen intervals."""
@@ -327,6 +329,7 @@ def test_wifi_sdk_sta_with_listen_intervals_c19445(wifi_sniffer, wifi_dut,
         "region_code": "japan",
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ap_mode_scan_in_region_japan_c654502(wifi_dut, sl_collections, remote_wiseconnect3):
     """Verify APUT beacon with region JP, WPA2 security, Channel 14, DTIM 3 , Beacon interval 500ms configurations"""
     try:
@@ -421,6 +424,7 @@ def test_wifi_sdk_ap_mode_scan_in_region_japan_c654502(wifi_dut, sl_collections,
         "channel": 13,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_sta_korea_region_ap_c477831(wifi_sniffer, wifi_dut,
                                               sl_collections, remote_wiseconnect3, utf_constants, sniffer_filter):
     """verify connection between 2 DUTs, one setup as STA and other setup as AP  channel 13 and region set to Korea"""

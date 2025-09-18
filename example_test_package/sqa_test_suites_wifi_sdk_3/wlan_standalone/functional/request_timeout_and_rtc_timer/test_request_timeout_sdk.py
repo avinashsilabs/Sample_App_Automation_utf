@@ -191,6 +191,7 @@ class WifiConnectionThread(ThreadBase):
 )
 @pytest.mark.parametrize("channel", [4])
 @pytest.mark.config("wifi_access_point", wifi={"channel": 4, "security": 'OPEN'})
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_request_timeout_keep_alive_30s_c19750(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, channel):
     """ Verify the keep alive functionality with configured value 30s """
@@ -258,6 +259,7 @@ def test_wifi_sdk_request_timeout_keep_alive_30s_c19750(
 )
 @pytest.mark.parametrize("channel", [4])
 @pytest.mark.config("wifi_access_point", wifi={"channel": 4, "security": 'OPEN'})
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_request_timeout_keep_alive_10s_c19746(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, channel):
     """Verify the STA keep alive functionality with 10s keep alive time"""
@@ -322,6 +324,7 @@ def test_wifi_sdk_request_timeout_keep_alive_10s_c19746(
         "active_chan_scan_timeout_value": 100
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_request_timeout_scan_100ms_c19748(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
     """ Verify the functionality by enabling each channel active scan time with default value(100ms) """
@@ -355,6 +358,7 @@ def test_wifi_sdk_request_timeout_scan_100ms_c19748(
         "active_chan_scan_timeout_value": 500
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_request_timeout_scan_500ms_C19751(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
     """ Verify time for each channel active scan in request timeout command with configured value 500ms """
@@ -392,6 +396,7 @@ def test_wifi_sdk_request_timeout_scan_500ms_C19751(
 )
 @pytest.mark.parametrize("channel", [4])
 @pytest.mark.config("wifi_access_point", wifi={"channel": 4, "security": 'OPEN'})
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_sta_keep_alive_10s_with_bg_scan_C19637(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, channel):
     """ STA keep alive functionality with BG scan """
@@ -470,6 +475,7 @@ def test_wifi_sdk_sta_keep_alive_10s_with_bg_scan_C19637(
         "auth_assoc_timeout_value": 100
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_auth_timeout_with_100ms_c19749(wifi_sniffer, wifi_dut, wifi_access_point, request,
                                                  sniffer_filter):
     """Verify negative functionality by setting request timeout for association and authentication request for 100ms"""
@@ -521,6 +527,7 @@ def test_wifi_sdk_auth_timeout_with_100ms_c19749(wifi_sniffer, wifi_dut, wifi_ac
         "auth_assoc_timeout_value": 300
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_auth_timeout_with_300ms_c19747(wifi_sniffer, wifi_dut, wifi_access_point, request,
                                                  sniffer_filter):
     """Verify negative functionality by setting request timeout for association and authentication request for 300ms"""

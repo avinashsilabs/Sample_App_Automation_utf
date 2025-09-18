@@ -63,6 +63,7 @@ setup requirement:
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_2aps_same_security_c19065(wifi_dut, wifi_access_points, sl_collections):
     try:
 
@@ -131,6 +132,7 @@ def test_wifi_sdk_2aps_same_security_c19065(wifi_dut, wifi_access_points, sl_col
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_2aps_diff_security_c19066(wifi_dut, wifi_access_points, sl_collections):
     try:
         logger().info("Setting DUT in wlan power save...")
@@ -192,6 +194,7 @@ def test_wifi_sdk_2aps_diff_security_c19066(wifi_dut, wifi_access_points, sl_col
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_regional_scan_in_EU_region_c19069(wifi_sniffer, wifi_dut, wifi_access_point, sniffer_filter, request, sl_collections):
 
     try:
@@ -275,6 +278,7 @@ def test_wifi_sdk_regional_scan_in_EU_region_c19069(wifi_sniffer, wifi_dut, wifi
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_scan_and_connect_in_world_domain_c19075(wifi_dut, utf_constants, wifi_access_points, wifi_sniffer, request, sniffer_filter, sl_collections):
     try:
         test_name = request.node.name
@@ -357,6 +361,7 @@ def test_wifi_sdk_scan_and_connect_in_world_domain_c19075(wifi_dut, utf_constant
 )
 @pytest.mark.config('wifi_access_point', wifi={"channel": 6, "standard": '11n', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_scan_and_connect_in_world_domain_c19078(wifi_dut, utf_constants, wifi_access_point, request, wifi_sniffer, sniffer_filter, sl_collections):
     try:
         test_name = request.node.name
@@ -483,6 +488,7 @@ def test_wifi_sdk_scan_and_connect_in_world_domain_c19078(wifi_dut, utf_constant
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_scan_and_connect_in_world_domain_c19076(wifi_access_points, wifi_dut, utf_constants, remote_wiseconnect3, wifi_sniffer, request, sniffer_filter, sl_collections):
     """ Set STAUT to World Mode Domain in 2.4 Ghz__(TC_3)Case3:
         1. Place US regeion AP in channel 1 and place JP regeion AP in channel 6 and place EU regeion AP in channel 13 3.
@@ -606,6 +612,7 @@ def test_wifi_sdk_scan_and_connect_in_world_domain_c19076(wifi_access_points, wi
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_quick_scan_c113700(wifi_dut, wifi_access_points,request,wifi_sniffer, sl_collections):
 
     try:

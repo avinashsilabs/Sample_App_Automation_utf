@@ -173,6 +173,7 @@ pytestmark = [
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_receive_data_over_udp_socket_using_multicast_address_TC19369(
     wifi_sniffer,
     wifi_access_point,
@@ -305,6 +306,7 @@ def test_wifi_sdk_receive_data_over_udp_socket_using_multicast_address_TC19369(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_receive_data_over_multicast_address_which_is_removed_from_multicast_group_TC19370(
     wifi_sniffer,
     wifi_access_point,
@@ -446,6 +448,7 @@ def test_wifi_sdk_receive_data_over_multicast_address_which_is_removed_from_mult
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_SET_ALL_BIT_TC19372(
     wifi_sniffer,
     wifi_access_point,
@@ -591,6 +594,7 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_SET_ALL_BIT_
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_CLEAR_ALL_BIT_TC19373(
     wifi_sniffer,
     wifi_access_point,
@@ -736,6 +740,7 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_CLEAR_ALL_BI
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_CLEAR_BIT_TC19374(
     wifi_sniffer,
     wifi_access_point,
@@ -883,6 +888,7 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_CLEAR_BIT_TC
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19375(
     wifi_sniffer,
     wifi_access_point,

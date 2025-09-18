@@ -50,6 +50,7 @@ def logger():
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_ver_aput_channel_13_c661455(wifi_dut, sl_collections):
     """Verify APUT when channel 13 is configured"""
     try:
@@ -97,6 +98,7 @@ def test_wifi_sdk_ver_aput_channel_13_c661455(wifi_dut, sl_collections):
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_ver_aput_channel_11_c661456(wifi_dut, wifi_client, sl_collections):
     """Verify APUT behavior when channel 11 is configured"""
     try:

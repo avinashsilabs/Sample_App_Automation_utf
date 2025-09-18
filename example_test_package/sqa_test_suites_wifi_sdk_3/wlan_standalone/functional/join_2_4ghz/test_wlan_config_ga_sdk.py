@@ -113,6 +113,7 @@ def rts_cts_data_sequence_check(wifi_sniffer, dut_mac, ap_bssid, rts_threshold, 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "set_default_rts_threshold"])
+@pytest.mark.legacy_deployed
 def test_wsdk_verify_rts_threshold_256_c19511(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections):
     """
     Verify whether DUT is not sending any RTS packet for every data packet if we configure RTS Threshold as '256'
@@ -173,6 +174,7 @@ def test_wsdk_verify_rts_threshold_256_c19511(wifi_dut, wifi_access_point, wifi_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "set_default_rts_threshold"])
+@pytest.mark.legacy_deployed
 def test_wsdk_verify_rts_threshold_0_c19512(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections):
     """
     Verify whether DUT is sending RTS packets for every data packet if we configure RTS Threshold as '0'
@@ -233,6 +235,7 @@ def test_wsdk_verify_rts_threshold_0_c19512(wifi_dut, wifi_access_point, wifi_sn
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "set_default_rts_threshold"])
+@pytest.mark.legacy_deployed
 def test_wsdk_verify_rts_threshold_2347_c19513(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections):
     """
     Verify whether DUT is not sending any RTS packet for every data packet if we configure RTS Threshold as '2347'
@@ -290,6 +293,7 @@ def test_wsdk_verify_rts_threshold_2347_c19513(wifi_dut, wifi_access_point, wifi
 @pytest.mark.start_state("wifi_dut", wifi=['deinit'])
 @pytest.mark.end_state("wifi_dut", wifi=["reset"])
 @pytest.mark.parametrize("rts_threshold", [-5, 2500])
+@pytest.mark.legacy_deployed
 def test_wsdk_invalid_rts_c537946(wifi_dut, sl_collections, rts_threshold):
     """
     Verify DUT is throwing error or not by setting Invalid RTS threshold.
@@ -327,6 +331,7 @@ def test_wsdk_invalid_rts_c537946(wifi_dut, sl_collections, rts_threshold):
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "set_default_rts_threshold"])
+@pytest.mark.legacy_deployed
 def test_wsdk_verify_rts_in_high_congestion_ping_trf_c535103(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections):
     """
     Verify whether DUT is sending CTS packets for every RTS initiated by AP in High congestion environment with ping
@@ -402,6 +407,7 @@ def test_wsdk_verify_rts_in_high_congestion_ping_trf_c535103(wifi_dut, wifi_acce
                                          "set_default_rts_threshold"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.legacy_deployed
 def test_wsdk_verify_rts_in_high_congestion_tcp_rx_c537948(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
                                                            net_perf_client, protocol, wifi_client):
     """

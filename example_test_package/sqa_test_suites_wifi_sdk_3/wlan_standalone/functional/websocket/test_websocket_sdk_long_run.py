@@ -187,6 +187,7 @@ class WLanJoinThread(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_websocket_connection_close_in_loop_c687539(wifi_dut, wifi_access_point, wifi_sniffer, http_server,
                                                              utf_constants,
                                                              request, sl_collections, sniffer_filter):

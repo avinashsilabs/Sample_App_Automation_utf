@@ -496,6 +496,7 @@ class Start_stop(ThreadBase):
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463706(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter):
     '''Verify WLAN Connectivity to STAUT with Configured 3rd Party AP and 3rd party STA's connectivity
@@ -578,6 +579,7 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463706(wifi_sniffer, wifi_access
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463710(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter):
     '''Check wlan connectivity of STAUT with WPA2 Security to 3rd party AP and 3rd party STA
@@ -644,6 +646,7 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463710(wifi_sniffer, wifi_access
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463711(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter):
     '''Check wlan connectivity of STAUT with OPEN securty to 3rd party AP and 3rd party STA
@@ -790,6 +793,7 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463723(wifi_sniffer, wifi_access
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wpa3_when_sta_doing_udp_tx_C463707(wifi_sniffer, wifi_access_point, wifi_dut, protocol, wifi_client,
                                         net_perf_client, request, sl_collections, remote_wiseconnect3, sniffer_filter):
     '''Check 3rd party STA connectivity to APUT when STAUT is doing UDP Tx to AP Backend Machine'''
@@ -900,6 +904,7 @@ def test_wifi_sdk_wpa3_when_sta_doing_udp_tx_C463707(wifi_sniffer, wifi_access_p
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wpa3_in_conc_mode_with_tdi_enable_C468528(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter):
     """Enable TDI functionality in concurrent mode with WPA3 transition mode,configure third party AP with same SSID as
@@ -1017,6 +1022,7 @@ APUT but security in WPA2 after STA gets connected with APUT stop AP and check w
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wpa3_in_conc_mode_with_tdi_disable_C468529(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter):
     """Disable TDI functionality in concurrent mode with WPA3 transition mode , configure third party AP with same SSID
@@ -1134,6 +1140,7 @@ def test_wifi_sdk_wpa3_in_conc_mode_with_tdi_disable_C468529(wifi_sniffer, wifi_
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C468633(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client):
@@ -1217,6 +1224,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C468633(wifi_sniffer, wifi_
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C468634(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client):
@@ -1300,6 +1308,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C468634(wifi_sniffer, wifi_
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C463720(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client):
@@ -1383,6 +1392,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C463720(wifi_sniffer, wifi_
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C463721(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client):
@@ -1466,6 +1476,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C463721(wifi_sniffer, wifi_
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C463722(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client):
@@ -1553,6 +1564,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C463722(wifi_sniffer, wifi_
         "security": "WPA3", "ssid": "Concurrent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wpa3_conc_listen_based_ps_enabled_C463714(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client, protocol, net_perf_client):
@@ -1676,6 +1688,7 @@ def test_wifi_sdk_wpa3_conc_listen_based_ps_enabled_C463714(wifi_sniffer, wifi_a
         "security": "WPA3", "ssid": "Concurrent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wpa3_conc_dtim_based_ps_enabled_C463715(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client, protocol, net_perf_client):
@@ -1796,6 +1809,7 @@ def test_wifi_sdk_wpa3_conc_dtim_based_ps_enabled_C463715(wifi_sniffer, wifi_acc
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@Silabs", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_restart_C463719(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client):
@@ -1897,6 +1911,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_restart_C463719(wifi_sniffer, wifi
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_wpa3_conc_mode_12_hour_ping_C468633(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                       sl_collections, remote_wiseconnect3, sniffer_filter, wifi_client):
     """Longrun : Verify WLAN Connectivity to STAUT with Configured 3rd Party AP and 3rd party STA's connectivity to APUT

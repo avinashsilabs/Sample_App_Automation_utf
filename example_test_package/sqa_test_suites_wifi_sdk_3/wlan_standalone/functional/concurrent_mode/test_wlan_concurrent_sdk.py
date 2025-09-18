@@ -461,6 +461,7 @@ class ConcurrentThread(ThreadBase):
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_concurrent_mode_sta_ap_c19312(wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, sniffer_filter, utf_constants, sl_collections, protocol, net_perf_client):
     """ To Verify Dut Behaviour in  STA and AP connection by enabling concurrent mode"""
     try:
@@ -514,6 +515,7 @@ def test_wifi_sdk_concurrent_mode_sta_ap_c19312(wifi_access_point, wifi_dut, wif
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_concurrent_mode_sta_ap_c19321(wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, sniffer_filter, multicast_client, utf_constants, sl_collections, protocol, net_perf_client):
     """ To Verify Dut Behaviour  multicast in  STA and AP connection by enabling concurrent mode"""
     try:
@@ -611,6 +613,7 @@ def test_wifi_sdk_concurrent_mode_sta_ap_c19321(wifi_access_point, wifi_dut, wif
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_device_as_ap_and_sta_c19313(sl_collections, wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
                                       protocol, net_perf_client, utf_constants, sniffer_filter):
     """ To Verify Dut Behaviour in AP and STA connection by enabling concurrent mode"""
@@ -665,6 +668,7 @@ def test_wifi_sdk_device_as_ap_and_sta_c19313(sl_collections, wifi_access_point,
                }
          }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_device_as_ap_and_sta_c19323(sl_collections, wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
                                       utf_constants, sniffer_filter, remote_socket):
     """ To Verify Dut Behaviour with the 3rd AP connection by enabling concurrent mode"""
@@ -753,6 +757,7 @@ def test_wifi_sdk_device_as_ap_and_sta_c19323(sl_collections, wifi_access_point,
                }
          }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_device_as_ap_and_sta_c19314(sl_collections, wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
                                       utf_constants, sniffer_filter):
     """ To Verify Dut Behaviour  disconnecting the 3rd AP connection by enabling concurrent mode
@@ -813,6 +818,7 @@ def test_wifi_sdk_device_as_ap_and_sta_c19314(sl_collections, wifi_access_point,
                }
          }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_device_as_ap_and_sta_c19315(sl_collections, wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
                                    utf_constants, sniffer_filter):
     """ To Verify Dut Behaviour by disconnecting the connected STA  by enabling concurrent mode
@@ -879,6 +885,7 @@ def test_wifi_sdk_device_as_ap_and_sta_c19315(sl_collections, wifi_access_point,
          }
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "cipher": 'AES', "channel": 11})
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_device_as_ap_and_sta_c19319(sl_collections, wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
                                       utf_constants, sniffer_filter):
     """ To Verify Dut Behaviour when we use the WPA2-AES security in STA and AP connection by enabling concurrent mode"""
@@ -997,6 +1004,7 @@ def test_wifi_sdk_device_as_ap_and_sta_c19320(sl_collections, wifi_access_point,
                }
          }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_device_as_ap_and_sta_c19324(sl_collections, wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
                                      utf_constants, sniffer_filter):
     """ To Verify Dut Behaviour in Ap and STA connection by enabling concurrent mode"""
@@ -1064,6 +1072,7 @@ def test_wifi_sdk_device_as_ap_and_sta_c19324(sl_collections, wifi_access_point,
                }
          }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_device_as_ap_and_sta_c19317(sl_collections, wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
                                      utf_constants, sniffer_filter, switch):
     """ To Verify Dut rejoin Behaviour in  Ap and STA connection by enabling concurrent mode"""
@@ -1140,6 +1149,7 @@ def test_wifi_sdk_device_as_ap_and_sta_c19317(sl_collections, wifi_access_point,
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_device_as_ap_and_sta_c19318(sl_collections, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client, utf_constants, sniffer_filter):
     """ To Verify Dut Behaviour in  STA and AP connection by enabling concurrent mode in different security modes"""
@@ -1224,6 +1234,7 @@ def test_wifi_sdk_device_as_ap_and_sta_c19318(sl_collections, wifi_access_point,
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "thisistestnetwork", "ssid": "sharma1234", "channel": 11})
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_AP_STA_UDP_RX_C148577(
         wifi_sniffer, wifi_access_point, wifi_dut, sl_collections, utf_constants, wifi_client,
         wifi_clients, request, protocol, net_perf_client):
@@ -1304,6 +1315,7 @@ def test_wifi_sdk_AP_STA_UDP_RX_C148577(
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_HTTPS_download_incorrect_PSK_C148584(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, utf_constants, wifi_client,
         wifi_clients, index_path, http_server ):
@@ -1380,6 +1392,7 @@ def test_wifi_sdk_HTTPS_download_incorrect_PSK_C148584(
 )
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "thisistestnetwork", "ssid": "sharma1234", "channel": 11})
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_ping_from_APBE_disable_APUT_C148586(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, utf_constants, wifi_client,
         wifi_clients):
@@ -1461,6 +1474,7 @@ def test_wifi_sdk_ping_from_APBE_disable_APUT_C148586(
         'channel': 11,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_concurrent_mode_sta_ap_c535823(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer, sniffer_filter, utf_constants, sl_collections):
     try:
         packet_filter2 = "    Type/Subtype: Beacon (0x0008)"
@@ -1558,6 +1572,7 @@ def test_wifi_sdk_concurrent_mode_sta_ap_c535823(wifi_access_point, wifi_dut, wi
         'channel': 11,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_concurrent_mode_sta_ap_c535104(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer, sniffer_filter, utf_constants, sl_collections):
     try:
         logger().info("********** configuring the sniffer with access point channel **********")
@@ -1662,6 +1677,7 @@ def test_wifi_sdk_concurrent_mode_sta_ap_c535104(wifi_access_point, wifi_dut, wi
         'channel': 11,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_concurrent_mode_read_mac_c537336(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer, sniffer_filter, utf_constants, sl_collections):
     try:
         logger().info("********** configuring the sniffer with access point channel **********")
@@ -1730,6 +1746,7 @@ def test_wifi_sdk_concurrent_mode_read_mac_c537336(wifi_access_point, wifi_dut, 
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_device_as_ap_and_sta_c477524(sl_collections, wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
                                       utf_constants, sniffer_filter, net_perf_client, protocol):
     """Enable the module to act as 802.11n supported AP, the default HT Capabilities should show the support only for
@@ -1783,6 +1800,7 @@ def test_wifi_sdk_device_as_ap_and_sta_c477524(sl_collections, wifi_access_point
         'channel': 11,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_concurrent_mode_sta_ap_c586187(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,sl_collections):
     """Check the 3rd party STA Association to APUT(OPEN security) with Hidden SSID Mode in Concurrent Mode"""
     try:
@@ -1882,6 +1900,7 @@ def test_wifi_sdk_concurrent_mode_sta_ap_c586187(wifi_access_point, wifi_dut, wi
         'channel': 11,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_concurrent_mode_sta_ap_scan_c563958(wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
                                                       sniffer_filter,sl_collections, utf_constants):
     """Verification of bgscan/advanced scan functionality STA Interface after AP Start in Concurrent Mode """
@@ -1955,6 +1974,7 @@ def test_wifi_sdk_concurrent_mode_sta_ap_scan_c563958(wifi_access_point, wifi_du
         'channel': 11,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_concurrent_mode_sta_ap_scan_c563959(wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
                                                       sniffer_filter, utf_constants, sl_collections):
     """ Verify the bgscan/advanced scan functionality of STA interface after AP interface down """
@@ -2029,6 +2049,7 @@ def test_wifi_sdk_concurrent_mode_sta_ap_scan_c563959(wifi_access_point, wifi_du
         'channel': 11,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_concurrent_mode_ap_sta_scan_c654504(wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
                                                       sniffer_filter, sl_collections, utf_constants):
     """ Verify scan functionality after configuring our device as first AP and next STA with Specific SSID in
@@ -2094,6 +2115,7 @@ def test_wifi_sdk_concurrent_mode_ap_sta_scan_c654504(wifi_access_point, wifi_du
         'channel': 11,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_concurrent_mode__ap_sta_scan_c654505(wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
                                                        sniffer_filter, sl_collections,utf_constants):
     """ Verify scan functionality after configuring our device as first AP and next STA with NULL SSID in
@@ -2160,6 +2182,7 @@ def test_wifi_sdk_concurrent_mode__ap_sta_scan_c654505(wifi_access_point, wifi_d
         'channel': 11,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_concurrent_mode_sta_ap_scan_c654506(wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer,
                                                       sniffer_filter, sl_collections, utf_constants):
     """ Negative:Verify scan functionality after configuring our device as first STA and next AP with SSID as NULL in
@@ -2225,6 +2248,7 @@ def test_wifi_sdk_concurrent_mode_sta_ap_scan_c654506(wifi_access_point, wifi_du
     }
 )
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_concurrent_mode_sta_ap_emb_mqtt_c537975(
         wifi_access_point, wifi_dut, wifi_clients, sl_collections, utf_constants, request, wifi_sniffer, sniffer_filter,
         mqtt_server, mqtt_client):
@@ -2469,6 +2493,7 @@ def test_wifi_sdk_concurrent_mode_sta_ap_aws_mqtt_c537976(
         'channel': 11,
     }
 )
+@pytest.mark.legacy_deployed
 def test_wifi_sdk_concurrent_mode_sta_ap_stability_check_c148587(
         wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, sniffer_filter, sl_collections, utf_constants,
         request):
@@ -2617,6 +2642,7 @@ def test_wifi_sdk_concurrent_mode_sta_ap_http_put_c148565(
         'channel': 11,
     }
 )
+@pytest.mark.deployed_25q2
 def test_wifi_sdk_concurrent_mode_large_ping_ipv4_c770037(wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, sniffer_filter, utf_constants, sl_collections, request):
     ssid = "SILABS_AP_MODE"
     security = "OPEN"
