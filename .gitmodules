@@ -9,7 +9,7 @@
 	url = ../../utf/utf_wiseconnect
 [submodule "utf_wiseconnect_3"]
 	path = utf_wiseconnect_3
-	url = ../../redpine/sl_net.git
+	url = git@github.com:SiliconLabsInternal/wiseconnect.git
 [submodule "utf_wifi_zephyr"]
 	path = utf_wifi_zephyr
 	url = ../../utf/utf_wifi_zephyr
