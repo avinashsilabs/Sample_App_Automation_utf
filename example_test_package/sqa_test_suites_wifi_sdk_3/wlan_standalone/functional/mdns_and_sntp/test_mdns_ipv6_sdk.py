@@ -1,4 +1,6 @@
+import collections
 import pytest
+import logging
 import time
 import ipaddress
 from utf.utils.logger import get_logger
@@ -97,6 +99,16 @@ def assert_dut_ipv6_in_ap_network(dut_ip_str, ap_network):
         dut_ip = ipaddress.IPv6Address(dut_ip_str)
         assert dut_ip in ap_network, f"{dut_ip_str} not in AP LAN IPv6 network {ap_network}"
 
+class InMemoryLogHandler(logging.Handler):
+    def __init__(self, level=logging.DEBUG):
+        super().__init__(level)
+        self.logs = []  # list of (logger_name, message)
+
+    def emit(self, record):
+        try:
+            self.logs.append((record.name, record.getMessage()))
+        except Exception:
+            pass
 
 class WLanThread(ThreadBase):
     """Configure sniffer, start capture, and join Wi-Fi with IPv6."""
@@ -401,3 +413,128 @@ def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ipv6_c767022(wifi_acce
         log.error(f"Exception occurred: {e}")
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
         raise
+
+
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "enable_ipv6": True,
+        "connection_type": "STATIC_IPV6",
+        "wan_ipv6_address": "2404:1343:1234:7785:1134:331:243:2221",
+        "wan_ipv6_gateway": "2404:1343:1234:7785::1",
+        "wan_prefix_length": "64",
+        "ipv6_state": "1",
+        "lan_ipv6_address": "2401:2334:1234:1356:7785:1234:1134:3321",
+        "lan_prefix_length": "64",
+        "lan_ipv6_prefix": "2401:2334:1234:1356::",
+        "lan_ip_pool_start": "2401:2334:1234:1356::1000",
+        "lan_ip_pool_end":   "2401:2334:1234:1356::2000",
+    },
+)
+@pytest.mark.config("wifi_dut", wifi=WIFI_DUT_CFG)
+@pytest.mark.firmware_app("test_ipv6")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_mdns_avahi_discover_1hr_loop_c767026(wifi_access_point, wifi_dut, wifi_sniffer, sl_collections,
+                                                       request, wifi_client, utf_constants, service_discovery):
+    """
+    Verify mDNS IPv6 functionality when multiple mDNS queries are sent to the DUT.
+
+    Pass criteria:
+      - Count how many Avahi discovery command iterations actually ran.
+      - Count how many of those iterations reported at least one
+        "hostname = [wiseconnect.local]" line from the Avahi daemon.
+
+    High-level steps:
+      1) Connect DUT to the IPv6-enabled AP.
+      2) Enable Wi-Fi power save (if supported).
+      3) Initialize the mDNS service (IPv6).
+      4) Add the network interface to the mDNS instance.
+      5) Register an mDNS service on the DUT.
+      6) For the configured duration (e.g., ~1 hour via utf_constants["long_duration"]):
+         - Stop/start the service discovery helper.
+         - Start/stop active discovery and capture logs for each iteration.
+      7) Deinitialize the mDNS service.
+      8) Disconnect and restore DUT power-save state.
+
+    """
+    sd_iface = service_discovery.interfaces.sd
+    test_name = request.node.name
+    ap_net = get_ap_ipv6_network(wifi_access_point, default_prefixlen=64)
+    wlan_obj = None
+
+    # Capture all logs as (logger_name, message) tuples; independent of global formatters.
+    log_handler = InMemoryLogHandler()
+    root_logger = logging.getLogger()
+    root_logger.addHandler(log_handler)
+
+    AVAHI_LOGGER = "AvahiDaemonLinux"
+    CMD_MARKER = "Executing command: '['avahi-browse', '-a', '-r']'"
+    HOSTNAME_LINE = "hostname = [wiseconnect.local]"
+
+    try:
+        # Bring up Wi-Fi and obtain a global IPv6; verifying it sits within the AP's IPv6 network.
+        wlan_obj = WLanThread(wifi_dut, wifi_sniffer, wifi_access_point, sl_collections, test_name, wifi_client, ipv6_type="global")
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        ip6 = wlan_obj.dut_info.get("ip_address")
+        assert_dut_ipv6_in_ap_network(ip6, ap_net)
+
+        # enabling power save.
+        if hasattr(wifi_dut.interfaces.wifi, "wifi_powersave_enable"):
+            wifi_dut.interfaces.wifi.wifi_powersave_enable()
+
+        # Initialize and advertise mDNS (IPv6).
+        wifi_dut.interfaces.wifi.mdns_init(ip_version=Si91xMdnsParams.IPV6)
+        wifi_dut.interfaces.wifi.mdns_add_interface()
+        wifi_dut.interfaces.wifi.mdns_register_service()
+
+        # Main discovery loop: run for the configured duration and score each iteration.
+        duration_seconds = utf_constants.get("long_duration")
+        start_time = time.time()
+        total_cmd_executed = 0           # iterations where the Avahi command line was seen
+        total_success_iters = 0          # iterations with >=1 "wiseconnect.local" hostname
+
+        while (time.time() - start_time) < duration_seconds:
+            # Work on a clean slate each iteration.
+            log_handler.logs.clear()
+
+            # Bounce the helper and perform a short active discovery round.
+            sd_iface.stop()
+            time.sleep(2)
+            sd_iface.start()
+            time.sleep(2)
+            sd_iface.start_discovering_services()
+            time.sleep(10)
+            sd_iface.stop_discovering_services()
+
+            # Classifying the iteration based on captured logs.
+            seen_cmd = any(CMD_MARKER in msg for (_name, msg) in log_handler.logs)
+            seen_wise = any(
+                (name == AVAHI_LOGGER) and (HOSTNAME_LINE in msg)
+                for (name, msg) in log_handler.logs
+            )
+
+            if seen_cmd:
+                total_cmd_executed += 1
+                if seen_wise:
+                    # Count per iteration.
+                    total_success_iters += 1
+
+        # Final metrics.
+        log.info(f"Total Avahi commands executed: {total_cmd_executed}")
+        log.info(f"Total mdns response: {total_success_iters}")
+
+        wifi_dut.interfaces.wifi.mdns_deinit()
+        wifi_dut.interfaces.wifi.leave()
+        if hasattr(wifi_dut.interfaces.wifi, "wifi_powersave_disable"):
+            wifi_dut.interfaces.wifi.wifi_powersave_disable()
+
+    finally:
+        if wlan_obj:
+            try:
+                wlan_obj.sniffer_capture(mode="stop")
+            except Exception:
+                pass
+        root_logger.removeHandler(log_handler)
