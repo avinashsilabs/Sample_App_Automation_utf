@@ -398,6 +398,21 @@ class WLanThread(ThreadBase):
                                                                          ping_after_power_save=False,
                                                                          channel=4)
                 logger().info("DUT successfully connected with AP")
+            elif self.test_case_no == 877263:
+                """ Enabling Rejoin for max retry count = 1 """
+                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=1,
+                                                                              scan_interval=4,
+                                                                              beacon_missed_count=40,
+                                                                              first_time_retry_enable=0)
+                self.rejoin_event = True
+                self.logger.info(f"********** rejoin_plan channel_bitmap_2_4:{self.channel_bitmap_2_4}****************")
+                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                         channel_bitmap_2_4=self.channel_bitmap_2_4,
+                                                                         ping_after_power_save=False,
+                                                                         channel=4)
+                logger().info("DUT successfully connected with AP")
             else:
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
@@ -3233,3 +3248,70 @@ def test_wifi_sdk_rejoin_with_rpi4_after_deauth_frame_c782337(wifi_dut, wifi_cli
 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+
+def test_wifi_sdk_join_failure_with_max_retry_1_rejoin_disable_c877263(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
+                                                  request,
+                                                  sl_collections, sniffer_filter):
+    """Do scan, Join after rejoin failure and validate Rejoin max retry attempts is set to 1 """
+    test_name = request.node.name
+    max_retry_attempts = 1
+    time_period = utf_constants.get("time_period")
+    wifi_access_point.interfaces.wifi.start_ap(channel=4)
+
+    wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                          time_period=time_period, test_name=test_name,
+                          test_case_no=877263, sl_collections=sl_collections, switch=switch)
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        logger().info("Stop sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_addr['dut_mac_address'],
+            filter_name="probe_request")
+        time.sleep(5)
+
+        # Validating Probe req broadcast packet
+        packet_count = int(
+            wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1).get('find_packet_num', 0)
+        )
+        message = f"Broadcast probe request packet count '{packet_count}' is not equal to one less rejoin value {max_retry_attempts}"
+        assert packet_count == (max_retry_attempts - 1), message
+        logger().info(
+            f"Successfully matched Broadcast probe request packet count:'{packet_count}' to one less than rejoin_max_value:'{max_retry_attempts}'")
+        logger().info(
+            f"Broadcast probe request packet count:'{packet_count}' with max_retry_attempts:'{max_retry_attempts}'. No probe requests should be found in capture when max_retry_attempts is 1.")
+        logger().info("****** Access point is going to turn on  ******")
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+
+        sl_collections.join_to_wifi_network(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, associated=False,
+                                            ping_after_power_save=False)
+
+        wlan_obj.socket_obj.socket_data_transfer()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
