@@ -1841,13 +1841,12 @@ def test_wifi_sdk_mqtt_keep_alive_120_with_qos1_TC127784(wifi_sniffer, mqtt_serv
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
-@pytest.mark.legacy_deployed
-def test_wifi_sdk_mqtt_check_error_0x21_C127802(
+def test_wifi_sdk_mqtt_will_topic_more_than_202_btyes_C127802(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, mqtt_client):
-    """If topic is given more than 201 bytes 0x21 error code should be seen"""
+    """If user tries to connect LAST_WILL_TOPIC more than 202 bytes, 0x0021 error should be seen in MQTT Connection"""
 
     try:
-        topic = ''.join(random.choices(string.ascii_uppercase + string.digits, k=205))
+        will_topic = ''.join(random.choices(string.ascii_uppercase + string.digits, k=205))
         capture_filename = request.node.name
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
                             wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
@@ -1855,12 +1854,11 @@ def test_wifi_sdk_mqtt_check_error_0x21_C127802(
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
-        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client")
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client",
+                                                                        will_topic=will_topic)
 
-        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt, expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
         time.sleep(25)
-        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1,
-                                                       expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
         logger().info("DUT sent 0x21 when the topic is more than 201 bytes")
 
         logger().info("Stop the sniffer")
@@ -8109,7 +8107,7 @@ def test_wifi_sdk_verify_mqtt_conn_when_AP_OFF_initially_C662093(
         switch.interfaces.pdu_switch.turn_on(delay=60)
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-@pytest.mark.skip()
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -8147,8 +8145,15 @@ def test_wifi_sdk_mqtt_will_topic_length_62_to_202_bytes_C708546(
 
         wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
         time.sleep(25)
-        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=1)
         logger().info("MQTTconnection should be success when user tries to connect LAST_WILL_TOPIC in b/w 62 to 202 bytes")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("....Disconnecting from MQTT Server....")
+        wifi_dut.interfaces.wifi.mqtt_client_disconnect()
+        time.sleep(3)
 
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()

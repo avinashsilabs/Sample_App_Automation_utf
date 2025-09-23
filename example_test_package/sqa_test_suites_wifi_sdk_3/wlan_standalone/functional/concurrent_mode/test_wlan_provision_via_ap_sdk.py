@@ -318,6 +318,51 @@ def test_wifi_provisioning_via_ap_WPA2_c694946(wifi_dut, wifi_client, channel, w
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+        "security": "WPA2",
+        "ssid": "SILABS_AP_MODE",
+        "passphrase": "Automation@123",
+        "channel": 1,
+        "interface": "wlan0",
+    }
+)
+@pytest.mark.parametrize("channel", [1])
+@pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2', "channel": 1, "ssid": 'ThirdPartyAP', 'passphrase': 'test1234'})
+def test_wifi_provisioning_via_ap_loop_c667577(wifi_dut, wifi_client, channel, wifi_access_point,
+                                                                 wiseconnect_web, request, wifi_sniffer, sl_collections):
+    """
+    Verify wi-fi provisioning via Access Point in WPA2 security and APUT in WPA2 mode in LOOP
+    """
+    try:
+        capture_filename = request.node.name
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+
+        provision_obj = http_server_provisioning(wifi_dut=wifi_dut, sl_collections=sl_collections, wifi_client=wifi_client,
+                                                wiseconnect_web=wiseconnect_web, wifi_access_point=wifi_access_point, ap_channel=channel, webpage=webpage1, testcase="667577")
+
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+        wifi_dut.interfaces.wifi.set_wifi_config()
+        for i in range(5):
+            logger().info(f" \n ****************************************  Iteration {i+1} **************************************** \n")
+            provision_obj.start()
+            provision_obj.wait_for_exit()
+            wifi_dut.interfaces.wifi.leave()
+            wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
+        wifi_dut.interfaces.wifi.stop_ap()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
 
 @pytest.mark.config(
     "wifi_client",

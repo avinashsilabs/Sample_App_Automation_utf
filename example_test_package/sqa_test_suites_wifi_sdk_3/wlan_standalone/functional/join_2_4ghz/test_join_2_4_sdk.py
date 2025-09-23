@@ -2526,6 +2526,7 @@ def test_wifi_sdk_long_icmp_packet_more_than_1452_bytes_ipv6_c770040(firmware_lo
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
     }
 )
+@pytest.mark.config("wifi_client", wifi={"interface": "wlan0"})
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_connectivity_with_wpa_security_hidden_psk_c770027(wifi_dut, wifi_client, wifi_sniffer,
