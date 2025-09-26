@@ -44,6 +44,8 @@ from utf.interfaces.bluetooth.bluez.gatt_application.heart_rate_service import (
                                                                                 HeartRateMeasurementCharacterstic)
 from utf.interfaces.bluetooth.bluez.gatt_application.immediate_alert_service import ImmediateAlertService
 from utf.interfaces.bluetooth.bluez.gatt_application.immediate_alert_service import ImmediateAlertLevelCharacteristic
+from utf.interfaces.bluetooth.bluez.gatt_application.health_thermometer_service import \
+    CustomNotifyCharacteristic, HealthThermometerService
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
 import threading
 from utf.interfaces.iperf.iperf_constants import IperfConstants
@@ -348,7 +350,8 @@ class BleThread(ThreadBase):
                                         max_conn_interval=self.conn_interval,
                                         min_conn_interval=self.conn_interval,
                                         ble_dut_address=self.ble_dut_address,
-                                        timeout=30)
+                                        timeout=30,
+                                        ble_scan_interval=256, ble_scan_window=80)
 
     def ble_disconnect(self, disconnect_from="remote"):
 
@@ -452,6 +455,8 @@ class BleThread(ThreadBase):
             services=self.service_class,
             ble_scan_interval=int(self.ble_scan_interval / 0.625),
             ble_scan_window=int(self.ble_scan_window / 0.625),
+            remote_adv_int_max="0xF4 0x01",
+            remote_adv_int_min="0xF4 0x01",
         )
 
     def check_adv_functionality_dut(self):
@@ -566,7 +571,7 @@ class BleThread(ThreadBase):
             while tw.elapsed_sec < self.data_duration:
                 if self.svc:
                     self.ble_client.interfaces.bluetooth.send_gatt_charc_notification(self.svc, self.charc, self.data)
-                logger().info("---------send_gatt_charc_notification-------------")
+                    logger().info("---------send_gatt_charc_notification-------------")
                 time.sleep(2)
                 lw = Stopwatch()
                 while lw.elapsed_sec < 10:
@@ -581,6 +586,7 @@ class BleThread(ThreadBase):
                         Data_received_on_dut = received_data + Data_received_on_dut
                         logger().info(f"received_data:{Data_received_on_dut}")
                         break
+                time.sleep(2)
             assert len(Data_received_on_dut) > 0, "Notifications not received on DUT"
             self.wifi_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=self.ble_client_address,
                                                             handle=(self.write_handle + 1), enable_notify=0)
@@ -671,6 +677,8 @@ class BleThread(ThreadBase):
         #     self.gatt_write_without_resp(write_handle=self.write_handle, data_length=self.data_length, data=self.data)
 
 
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -693,8 +701,8 @@ class BleThread(ThreadBase):
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                          "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
+                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}}
 
     }
 )
@@ -710,9 +718,12 @@ class BleThread(ThreadBase):
         "disassociated",
     ],
 )
-def test_sta_ble_sdk_ble_conn_wlan_conn_dhcp_C540347(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
-                                                     request, utf_constants, sl_collections, wifi_client,
-                                                     sniffer_filter):
+def test_sta_ble_sdk_ble_conn_wlan_conn_dhcp_C540347(
+        wifi_sniffer,
+        wifi_access_point, wifi_dut, ble_client,
+        request, utf_constants, sl_collections, wifi_client,
+        sniffer_filter
+):
     """
     This test case verifies the coexistence of Wi-Fi and BLE functionalities by performing a BLE connection and WLAN connection with DHCP.
 
@@ -759,7 +770,9 @@ def test_sta_ble_sdk_ble_conn_wlan_conn_dhcp_C540347(wifi_sniffer, wifi_access_p
             sl_collections=sl_collections,
             ble_test_type="connect_from_remote",
             dev_state=8,
-            ble_pairing=1
+            ble_pairing=1,
+            set_smp=0,
+            gatt=False
 
         )
         ble_obj.advertise_dut()
@@ -786,131 +799,8 @@ def test_sta_ble_sdk_ble_conn_wlan_conn_dhcp_C540347(wifi_sniffer, wifi_access_p
                                        ble_dut_address=ble_obj.ble_dut_address)
 
 
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default
-                    | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz
-                           | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE
-                              | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY
-                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-        "ble_features": Si91xBLEFeatureBitMap.Default
-                        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
-                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
-                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                          "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
 
-    }
-)
-@pytest.mark.config('wifi_access_point',
-                    wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state(
-    "wifi_dut",
-    wifi=[
-        "bt_powersave_disable",
-        "wifi_powersave_disable",
-        "disassociated",
-    ],
-)
-@pytest.mark.config(
-    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
-)
-@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-def test_sta_ble_sdk_ble_whitelist_UDP_TX_C535084(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
-                                                  request, utf_constants, sl_collections, wifi_client,
-                                                  sniffer_filter, net_perf_client, protocol):
-    """
-    This test case verifies the coexistence of Wi-Fi and BLE functionalities by performing a UDP transmission while utilizing BLE whitelist functionality.
 
-    Test Steps:
-    1. Configure the Wi-Fi DUT in coexistence mode (Wi-Fi + BLE).
-    2. Set up the Wi-Fi DUT to join the access point and enable UDP transmission.
-    3. Start the UDP transmission from the Wi-Fi DUT to the remote server.
-    4. Perform BLE whitelist addition and establish a BLE connection as central.
-    5. Validate the UDP transmission and BLE connection.
-    6. Disconnect BLE and Wi-Fi connections
-    7. Repeat the process for multiple iterations.
-    """
-    ble_dut_addr = ""
-    ble_obj = None
-    try:
-        test_name = request.node.name
-        ping_count = utf_constants.get("ping_count")
-        iter_count = utf_constants.get("iter_count")
-        test_type = "iperf"
-
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-
-        wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
-            wifi_dut=wifi_dut,
-            wifi_access_point=wifi_access_point,
-            testcase=test_name,
-            wifi_client=wifi_client,
-            sl_collections=sl_collections,
-            ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
-            test_type=test_type,
-            net_perf_client=net_perf_client,
-            protocol=protocol,
-            timeout=60,
-            traffic_type="TX"
-        )
-        ble_obj = BleThread(
-            wifi_dut=wifi_dut,
-            ble_client=ble_client,
-            sl_collections=sl_collections,
-            ble_test_type="master",
-            dev_state=8,
-            ble_pairing=0,
-            ble_scan_filter_type=1,
-            bond_info=1,
-            set_smp=1
-
-        )
-        for count in range(0, iter_count):
-            wifi_obj.join_to_ap()
-            ble_obj.add_whitelist()
-            wifi_obj.start()
-            ble_obj.start()
-            wifi_obj.wait_for_exit()
-            ble_obj.wait_for_exit()
-            wifi_obj.disconnect()
-            ble_obj.ble_disconnect()
-            ble_client.interfaces.bluetooth.close()
-        wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_obj.sniffer_validation_join()
-        logger().info("sniffer validation is successful")
-
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-    finally:
-        if ble_obj is not None:
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.close()
-            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                       ble_client_address=ble_obj.ble_client_address,
-                                       ble_dut_address=ble_obj.ble_dut_address)
 
 
 @pytest.mark.config(
@@ -1005,9 +895,10 @@ def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(
             data_length=20, data_duration=120,
             periodic_delay=0.5,
             ble_pairing=1,
-            gatt=True,
+            gatt=False,
             address=address2,
-            conn_interval=45
+            conn_interval=45,
+            set_smp=0
         )
 
         # Create Custom services on DUT
@@ -1054,6 +945,12 @@ def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(
                                        ble_dut_address=ble_obj.ble_dut_address)
 
 
+
+
+
+
+
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1064,7 +961,10 @@ def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(
         "custom_features": Si91xCustomFeatureBitMap.NWP120MHz
                            | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_BI_DIR_ACK_UPDATE
+                              | Si91xExtTCPIPFeatureBitMap.EXT_DYNAMIC_COEX_MEMORY
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "ble_features": Si91xBLEFeatureBitMap.Default
@@ -1085,31 +985,46 @@ def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
         "disassociated",
     ],
 )
-def test_sta_ble_sdk_wlan_scan_ble_master_rx_C538010(
-        wifi_sniffer,
-        wifi_access_point, wifi_dut, ble_client,
-        request, utf_constants, sl_collections, wifi_client,
-        sniffer_filter
-):
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+def test_sta_ble_sdk_ble_whitelist_UDP_TX_C535084(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
+                                                  request, utf_constants, sl_collections, wifi_client,
+                                                  sniffer_filter, net_perf_client, protocol):
     """
-    This test case verifies the coexistence of Wi-Fi and BLE functionalities by performing a WLAN scan while simultaneously receiving BLE notifications as a master.
+    This test case verifies the coexistence of Wi-Fi and BLE functionalities by performing a UDP transmission while utilizing BLE whitelist functionality.
 
     Test Steps:
     1. Configure the Wi-Fi DUT in coexistence mode (Wi-Fi + BLE).
-    2. Set up the Wi-Fi DUT to perform a WLAN scan.
-    3. Configure the BLE DUT to connect as a master and receive notifications from a remote BLE client.
-    4. Perform service discovery on the BLE DUT and enable notifications.
-    5. Validate the WLAN scan results and BLE notifications.
-    6. Disconnect BLE and Wi-Fi connections and clean up resources.
+    2. Set up the Wi-Fi DUT to join the access point and enable UDP transmission.
+    3. Start the UDP transmission from the Wi-Fi DUT to the remote server.
+    4. Perform BLE whitelist addition and establish a BLE connection as central.
+    5. Validate the UDP transmission and BLE connection.
+    6. Disconnect BLE and Wi-Fi connections
+    7. Repeat the process for multiple iterations.
     """
+    ble_dut_addr = ""
     ble_obj = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
-        test_type = "scan"
+        iter_count = utf_constants.get("iter_count")
+        test_type = "iperf"
+
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
@@ -1121,40 +1036,36 @@ def test_sta_ble_sdk_wlan_scan_ble_master_rx_C538010(
             ping_count=ping_count,
             sniffer_filter=sniffer_filter,
             test_type=test_type,
-            scan_count=100
+            net_perf_client=net_perf_client,
+            protocol=protocol,
+            timeout=60,
+            traffic_type="TX"
         )
         ble_obj = BleThread(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
             sl_collections=sl_collections,
-            ble_test_type="connect_as_master_notify_rx",
+            ble_test_type="master",
             dev_state=8,
-            data_duration=120,
-            service_class=["HeartRateService"],
-            gatt=True,
-            ble_pairing=1,
-            service_uuid=HeartRateService.UUID,
-            char_uuid=HeartRateMeasurementCharacterstic.HR_Measure_UUID,
-            characteristic=HeartRateMeasurementCharacterstic,
+            ble_pairing=0,
+            ble_scan_filter_type=1,
+            bond_info=1,
             set_smp=1
+
         )
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        wifi_obj.start()
-        ble_obj.start()
-        ble_obj.wait_for_exit()
-        wifi_obj.wait_for_exit()
-        time.sleep(2)
-        wifi_obj.disconnect()
+        for count in range(0, iter_count):
+            wifi_obj.join_to_ap()
+            ble_obj.add_whitelist()
+            wifi_obj.start()
+            ble_obj.start()
+            wifi_obj.wait_for_exit()
+            ble_obj.wait_for_exit()
+            wifi_obj.disconnect()
+            ble_obj.ble_disconnect()
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
         wifi_sniffer.interfaces.capture.stop_capture()
-        ble_obj.ble_disconnect(disconnect_from="dut")
-        wifi_obj.sniffer_validation_scan()
+        wifi_obj.sniffer_validation_join()
         logger().info("sniffer validation is successful")
 
     except Exception as Ex:
@@ -1166,6 +1077,7 @@ def test_sta_ble_sdk_wlan_scan_ble_master_rx_C538010(
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
+
 
 
 @pytest.mark.config(
@@ -1192,7 +1104,7 @@ def test_sta_ble_sdk_wlan_scan_ble_master_rx_C538010(
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
-                          "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
+                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}}
 
     }
 )
@@ -1266,7 +1178,8 @@ def test_sta_ble_sdk_tcp_tx_ble_slave_C133549(wifi_sniffer, wifi_access_point, w
             periodic_delay=1,
             ble_pairing=1,
             gatt=True,
-            bond_info=1
+            bond_info=1,
+            set_smp=0
         )
         # Create Custom services on DUT
         # Create Custom services, attributes, values
@@ -1342,8 +1255,8 @@ def test_sta_ble_sdk_tcp_tx_ble_slave_C133549(wifi_sniffer, wifi_access_point, w
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                          "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
+                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}}
 
     }
 )
@@ -1423,7 +1336,8 @@ def test_sta_ble_sdk_set_att_value_diff_length_tcp_tx_ble_slave_C133437(wifi_sni
             gatt=True,
             service_uuid=ImmediateAlertService.UUID,
             char_uuid=ImmediateAlertLevelCharacteristic.LLA_UUID,
-            characteristic=ImmediateAlertLevelCharacteristic
+            characteristic=ImmediateAlertLevelCharacteristic,
+            set_smp=0
         )
 
         logger().info("configuring the Sniffer with the channel")
@@ -1493,8 +1407,8 @@ def test_sta_ble_sdk_set_att_value_diff_length_tcp_tx_ble_slave_C133437(wifi_sni
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 4095, "priority": 8},
-                          "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
+                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}}
 
     }
 )
@@ -1567,7 +1481,8 @@ def test_sta_ble_sdk_http_dle_ble_periodic_tx_C537979(wifi_sniffer, wifi_access_
             periodic_delay=10,
             address=address1,
             ble_pairing=1,
-            gatt=True
+            gatt=True,
+            set_smp=0
         )
 
         # Create Custom services on DUT
@@ -1642,8 +1557,8 @@ def test_sta_ble_sdk_http_dle_ble_periodic_tx_C537979(wifi_sniffer, wifi_access_
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 4095, "priority": 8},
-                          "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
+                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}}
 
     }
 )
@@ -1716,7 +1631,8 @@ def test_sta_ble_sdk_http_dl_ble_periodic_tx_dle_C537980(wifi_sniffer, wifi_acce
             periodic_delay=30,
             address=address1,
             ble_pairing=1,
-            gatt=True
+            gatt=True,
+            set_smp=0
         )
 
         # Create Custom services on DUT
@@ -1787,14 +1703,13 @@ def test_sta_ble_sdk_http_dl_ble_periodic_tx_dle_C537980(wifi_sniffer, wifi_acce
                                | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
                               | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz
-                           | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ble_features": Si91xBLEFeatureBitMap.Default
                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 4096, "priority": 8},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
                           "ble": {"count": 1, "stack_len": 2048, "priority": 8}},
         # "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
@@ -1880,7 +1795,9 @@ def test_coex_sdk_httpget_url_2048_ble_smp_tx_C476959(http_server, wifi_dut, htt
             data_length=20, data_duration=300,
             conn_interval=45,
             periodic_delay=0.5,
-            address=address2
+            address=address2,
+            set_smp=0,
+            gatt=True
         )
 
         # Create Custom services on DUT
@@ -1998,6 +1915,10 @@ def test_coex_sdk_https_get_url_2048_ble_RX_C476960(http_server, wifi_dut, http_
         test_type = "http_get"
         address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(index_path) + 1)
         wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(index_path), write_content=index_path)
+        svc = 'HealthThermometerService'
+        charc = 'CustomNotifyCharacteristic'
+        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
@@ -2029,15 +1950,17 @@ def test_coex_sdk_https_get_url_2048_ble_RX_C476960(http_server, wifi_dut, http_
             sl_collections=sl_collections,
             ble_test_type="notify_rx",
             dev_state=8,
-            data_duration=30,
-            service_class=["HeartRateService"],
+            data_duration=120,
+            service_class=["HealthThermometerService"],
             gatt=True,
             ble_pairing=1,
-            bond_info=1,
-            service_uuid=HeartRateService.UUID,
-            char_uuid=HeartRateMeasurementCharacterstic.HR_Measure_UUID,
-            characteristic=HeartRateMeasurementCharacterstic,
-            set_smp=1
+            service_uuid=HealthThermometerService.UUID,
+            char_uuid=CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID,
+            characteristic=CustomNotifyCharacteristic,
+            set_smp=1,
+            svc=svc,
+            charc=charc,
+            data=data
         )
         logger().info(f"iter count is configured as {iter_count}")
 
@@ -2180,6 +2103,7 @@ def test_coex_sdk_httpsget_url_1536_ble_smp_C476963(http_server, wifi_dut, http_
             dev_state=8,
             ble_pairing=1,
             conn_interval=45,
+            set_smp=0
         )
         logger().info(f"iter count is configured as {iter_count}")
         ble_obj.advertise_dut()
@@ -2237,7 +2161,7 @@ def test_coex_sdk_httpsget_url_1536_ble_smp_C476963(http_server, wifi_dut, http_
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
-                          "ble": {"count": 1, "stack_len": 4096, "priority": 8}},
+                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}},
     }
 )
 @pytest.mark.http_server("raspi_lighttpd")
@@ -2321,7 +2245,8 @@ def test_coex_sdk_httpget_url_1536_ble_smp_tx_C476964(http_server, wifi_dut, htt
             data_length=240, data_duration=120,
             periodic_delay=0.5,
             address=address2,
-            conn_interval=45
+            conn_interval=45,
+            set_smp=0
         )
 
         logger().info("Creating new custom gatt service in DUT")
@@ -2366,3 +2291,134 @@ def test_coex_sdk_httpget_url_1536_ble_smp_tx_C476964(http_server, wifi_dut, htt
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
+
+
+
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default
+                    | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz
+                           | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ble_features": Si91xBLEFeatureBitMap.Default
+                        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default
+                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}}
+    }
+)
+@pytest.mark.config('wifi_access_point',
+                    wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "disassociated",
+    ],
+)
+def test_sta_ble_sdk_wlan_scan_ble_master_rx_C538010(
+        wifi_sniffer,
+        wifi_access_point, wifi_dut, ble_client,
+        request, utf_constants, sl_collections, wifi_client,
+        sniffer_filter
+):
+    """
+    This test case verifies the coexistence of Wi-Fi and BLE functionalities by performing a WLAN scan while simultaneously receiving BLE notifications as a master.
+
+    Test Steps:
+    1. Configure the Wi-Fi DUT in coexistence mode (Wi-Fi + BLE).
+    2. Set up the Wi-Fi DUT to perform a WLAN scan.
+    3. Configure the BLE DUT to connect as a master and receive notifications from a remote BLE client.
+    4. Perform service discovery on the BLE DUT and enable notifications.
+    5. Validate the WLAN scan results and BLE notifications.
+    6. Disconnect BLE and Wi-Fi connections and clean up resources.
+    """
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "scan"
+        svc = 'HealthThermometerService'
+        charc = 'CustomNotifyCharacteristic'
+        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+
+
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type=test_type,
+            scan_count=100
+        )
+        ble_obj = BleThread(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="connect_as_master_notify_rx",
+            dev_state=8,
+            data_duration=120,
+            service_class=["HealthThermometerService"],
+            gatt=True,
+            ble_pairing=1,
+            service_uuid=HealthThermometerService.UUID,
+            char_uuid=CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID,
+            characteristic=CustomNotifyCharacteristic,
+            set_smp=1,
+            svc=svc,
+            charc=charc,
+            data=data,
+
+        )
+        logger().info("configuring the Sniffer with the channel")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        logger().info(
+            "start capturing with Sniffer by giving the test case name as filename"
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_obj.start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj.wait_for_exit()
+        time.sleep(2)
+        wifi_obj.disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        ble_obj.ble_disconnect(disconnect_from="dut")
+        wifi_obj.sniffer_validation_scan()
+        logger().info("sniffer validation is successful")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
+
+
+
+
+
