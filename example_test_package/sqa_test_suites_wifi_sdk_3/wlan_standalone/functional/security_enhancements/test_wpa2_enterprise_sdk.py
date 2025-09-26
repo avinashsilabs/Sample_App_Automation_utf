@@ -28,7 +28,9 @@ from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficTyp
 from utf.utils.iperf.iperf_utils import get_host_ip, ping
 from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.security_enhancements.\
     test_wlan_sta_enterprise_sdk import SnifferValidationProcess
-
+from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.websocket.\
+    test_websocket_sdk import WebsocketEventHandler
+from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
 
 def logger():
     return get_logger(__name__)
@@ -54,7 +56,8 @@ def logger():
     Author: M.Harshitha 
 
 """
-
+def text_generator(size=1000):
+    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
 
 class SnifferValidationProcess_pmf_validate:
 
@@ -3897,3 +3900,182 @@ def test_wifi_sdk_wpa2_enterprise_eap_fast_1_0_udp_tx_11w_c679990(wifi_dut, wifi
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.HTTPClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+def test_wifi_sdk_wpa2_enterprise_with_websocket_ssl_c113802(wifi_dut, wifi_access_point, wifi_sniffer, http_server,
+                                                             utf_constants, radius_server,
+                                                             request, sl_collections, sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+        5. Verify websocket connection over ssl and data transfer functionality
+    """
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     eap_type="tls", sl_collections=sl_collections, test_name=test_name)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        wifi_dut.interfaces["http"] = wifi_dut.interfaces.wifi
+        ws_handler = WebsocketEventHandler()
+        http_server.interfaces.http.set_fn_on_websocket_client_connected(
+            ws_handler.on_ws_client_connected
+        )
+        http_server.interfaces.http.set_fn_on_websocket_client_disconnected(
+            ws_handler.on_ws_client_disconnected
+        )
+        http_server.interfaces.http.set_fn_on_websocket_message_received(
+            ws_handler.on_ws_message_received
+        )
+        wifi_dut.interfaces.wifi.websocket_init(http_server.interfaces.http, "example.com",
+                                                     "/websocket",
+                                                     443, 5001, enable_tls=1)
+        wifi_dut.interfaces.wifi.websocket_connect()
+        time.sleep(0.1)
+        assert ws_handler.client_connected
+        iter_count = 10
+        for i in range(iter_count):
+            data = text_generator(size=1362)
+            address = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+            wifi_dut.interfaces.wifi.load_memory(address=address, size=len(data), write_content=data)
+            wifi_dut.interfaces.wifi.websocket_send(
+                opcode=Si91xWebSocketParms.SL_WEBSOCKET_OPCODE_TEXT | Si91xWebSocketParms.SL_WEBSOCKET_FIN_BIT,
+                higher_data_len=1, address=address)
+            wifi_dut.interfaces.wifi.memory_free(address)
+            time.sleep(2)
+            logger().info(f"data received on websocket server ->{ws_handler.message_received}")
+        wifi_dut.interfaces.wifi.websocket_close()
+        wifi_dut.interfaces.wifi.websocket_deinit()
+        wifi_dut.interfaces.wifi.leave()
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                        wifi_access_point=wifi_access_point,
+                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification.verify_sniffer_validation()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+def test_wifi_sdk_wpa2_enterprise_pmk_caching_c113790(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                         utf_constants, radius_server,
+                                                         request, sl_collections, sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+        5. Turn OFF and Turn ON the AP.
+        6. Check whether the DUT is using the PMKID for reassociation.
+    """
+    try:
+        validation = True
+        ping_count=30
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     eap_type="tls", sl_collections=sl_collections, test_name=test_name)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+
+        wifi_access_point.interfaces.wifi.enable_disable_radio(enable=False)
+        time.sleep(5)
+        wifi_access_point.interfaces.wifi.enable_disable_radio(enable=True)
+        time.sleep(5)
+        status = ping(wifi_thread.dut_addr['device_ip'], ping_count)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+        logger().info("PING TO DUT IS SUCCESSFULLY DONE....")
+        wifi_dut.interfaces.wifi.leave()
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                        wifi_access_point=wifi_access_point,
+                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification.verify_sniffer_validation()
+
+        packet_filter10 = f'(wlan.fc.type_subtype==0 || eapol) && (wlan.pmkid.akms)'
+        logger().info(f"Validating association, eapol from DUT for PMKID")
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter10)['packet_count'], \
+            'Unable to find EAP failure frames sent from AP in sniffer '
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
