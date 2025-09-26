@@ -301,7 +301,7 @@ class WifiJoin(ThreadBase):
                     async_timeout=500)
             if self.test_case == '652581':
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
-                    flags=1,
+                    flags=2049,
                     ip_address=self.host_ip,
                     port=443,
                     host_name=self.aws_host_name,
@@ -316,7 +316,7 @@ class WifiJoin(ThreadBase):
                 self.new_url = self.url.replace("https://httpotaf.s3.us-east-2.amazonaws.com/", "")
                 logger().info(f"Final url to upload {self.new_url}")
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
-                    flags=1,
+                    flags=2049,
                     ip_address=self.host_ip,
                     port=443,
                     host_name=self.aws_host_name,
@@ -331,7 +331,7 @@ class WifiJoin(ThreadBase):
                 logger().info(f"Final url to upload {self.new_url}")
                 logger().info(f"**** length of url is {len(self.new_url)}")
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
-                    flags=1,
+                    flags=2049,
                     ip_address=self.host_ip,
                     port=443,
                     host_name=self.aws_host_name,
@@ -362,7 +362,7 @@ class WifiJoin(ThreadBase):
                 logger().info(f"Final url to upload {self.new_url}")
                 logger().info(f"**** length of url is {len(self.new_url)}")
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
-                    flags=1,
+                    flags=2049,
                     ip_address=self.host_ip,
                     port=443,
                     host_name=self.aws_host_name,

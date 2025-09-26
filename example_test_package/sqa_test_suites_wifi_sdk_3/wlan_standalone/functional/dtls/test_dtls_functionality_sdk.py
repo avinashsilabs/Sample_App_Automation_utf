@@ -836,6 +836,56 @@ def dtls_sendto_loop(wifi_dut, sock1, server_ip, local_port1, duration_sec=30):
 
 
 @wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.parametrize("dhcp_lease", [120])
+@pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "120", "security": "Open", })
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.deployed_25q2
+def test_wifi_sdk_dtls_functionality_with_dhcp_renewal_c766294(wifi_sniffer, wifi_client, wifi_dut, wifi_access_point,
+                                                               openssl,
+                                                               sl_collections, sniffer_filter, dhcp_lease):
+    """ Verify DTLS data transfer while DHCP renewal occurs (120s lease), with sniffer and DHCP renewal validation """
+    dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
+                             sniffer_filter, test_name="test_c766294", dtls_version="-dtls1_2")
+    dtls_thread.connect_to_access_point()
+    # --- Sniffer filter validation before renewal ---
+    logger().info("Starting DTLS data transfer and DHCP renewal overlap test.")
+
+    # Start DTLS send in a thread
+
+    dtls_send_thread = dtls_send_with_long_duration(dtls_thread, wifi_dut, wifi_client, openssl, wifi_access_point, wifi_sniffer, sl_collections, duration_sec=300)  # 5 minutes for DHCP renewal
+    dtls_send_thread.start()
+    # Wait to overlap DHCP renewal (simulate 120s lease, renewal at ~120s)
+    logger().info("Waiting for DHCP renewal to occur during DTLS transfer...")
+    time.sleep(240)  # Start DHCP renewal about halfway through DTLS sends
+    # --- DHCP renewal sniffer validation ---
+    wifi_sniffer.interfaces.capture.stop_capture()
+    time.sleep(10)  # Allow time for sniffer to process captured packets
+    device_address = {'sa_addr': dtls_thread.dut_mac_address, 'da_addr': wifi_access_point.interfaces.wifi.bssid,
+                      'wlan_addr': dtls_thread.dut_mac_address}
+    filters_name = {1: 'power_mgmt_bit', 2: 'dhcp'}
+    output_1 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
+                                                                    device_address, filters_name=filters_name)
+    logger().info(f'OUTPUT 1 = {output_1}')
+    assert all(output_1.values()), 'Unable to find expected filter (power_mgmt_bit, dhcp)'
+    filters_name_1 = {1: 'dhcp_renewal'}
+    packet_filter2 = '        DHCP: Request (3)'
+    output_2 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
+                                                                    device_address, filters_name=filters_name_1,
+                                                                    packet_filter2=packet_filter2)
+    logger().info(f'OUTPUT 2 = {output_2}')
+    assert all(output_2.values()), 'Unable to find expected filter (dhcp_renewal)'
+    # Wait for DTLS sends to finish
+    dtls_send_thread.join()
+    openssl.interfaces.server.stop()
+    wifi_dut.interfaces.wifi.leave()
+    logger().info("Stop Sniffer finally")
+    wifi_sniffer.interfaces.capture.stop_capture()
+
+    dtls_thread.sniffer_validate()
+
+
+@wifi_dut_marker()
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
@@ -1036,56 +1086,6 @@ def test_wifi_sdk_dtls_client_data_transfer_with_alpn_feature_c766279(wifi_sniff
             f"Unable to find dtls_alpn Packet in Sniffer Capture for ALPN test"
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
-
-
-@wifi_dut_marker()
-@pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.parametrize("dhcp_lease", [120])
-@pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "120", "security": "Open", })
-@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-@pytest.mark.deployed_25q2
-def test_wifi_sdk_dtls_functionality_with_dhcp_renewal_c766294(wifi_sniffer, wifi_client, wifi_dut, wifi_access_point,
-                                                               openssl,
-                                                               sl_collections, sniffer_filter, dhcp_lease):
-    """ Verify DTLS data transfer while DHCP renewal occurs (120s lease), with sniffer and DHCP renewal validation """
-    dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
-                             sniffer_filter, test_name="test_c766294", dtls_version="-dtls1_2")
-    dtls_thread.connect_to_access_point()
-    # --- Sniffer filter validation before renewal ---
-    logger().info("Starting DTLS data transfer and DHCP renewal overlap test.")
-
-    # Start DTLS send in a thread
-
-    dtls_send_thread = dtls_send_with_long_duration(dtls_thread, wifi_dut, wifi_client, openssl, wifi_access_point, wifi_sniffer, sl_collections, duration_sec=300)  # 5 minutes for DHCP renewal
-    dtls_send_thread.start()
-    # Wait to overlap DHCP renewal (simulate 120s lease, renewal at ~120s)
-    logger().info("Waiting for DHCP renewal to occur during DTLS transfer...")
-    time.sleep(240)  # Start DHCP renewal about halfway through DTLS sends
-    # --- DHCP renewal sniffer validation ---
-    wifi_sniffer.interfaces.capture.stop_capture()
-    time.sleep(10)  # Allow time for sniffer to process captured packets
-    device_address = {'sa_addr': dtls_thread.dut_mac_address, 'da_addr': wifi_access_point.interfaces.wifi.bssid,
-                      'wlan_addr': dtls_thread.dut_mac_address}
-    filters_name = {1: 'power_mgmt_bit', 2: 'dhcp'}
-    output_1 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
-                                                                    device_address, filters_name=filters_name)
-    logger().info(f'OUTPUT 1 = {output_1}')
-    assert all(output_1.values()), 'Unable to find expected filter (power_mgmt_bit, dhcp)'
-    filters_name_1 = {1: 'dhcp_renewal'}
-    packet_filter2 = '        DHCP: Request (3)'
-    output_2 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
-                                                                    device_address, filters_name=filters_name_1,
-                                                                    packet_filter2=packet_filter2)
-    logger().info(f'OUTPUT 2 = {output_2}')
-    assert all(output_2.values()), 'Unable to find expected filter (dhcp_renewal)'
-    # Wait for DTLS sends to finish
-    dtls_send_thread.join()
-    openssl.interfaces.server.stop()
-    wifi_dut.interfaces.wifi.leave()
-    logger().info("Stop Sniffer finally")
-    wifi_sniffer.interfaces.capture.stop_capture()
-
-    dtls_thread.sniffer_validate()
 
 
 @wifi_dut_marker(ca_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
