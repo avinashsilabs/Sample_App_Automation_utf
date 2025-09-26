@@ -38,6 +38,7 @@ import uuid
 
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 
+
 def logger():
     return get_logger(__name__)
 
@@ -74,6 +75,7 @@ class ssl_connection:
             self.rejoin_params = [20, 6, 40, 0]
         result = self.sl_collections.join_to_wifi_network_with_rejoin(self.wifi_dut, self.wifi_access_point,
                                                                       self.rejoin_params, power_save=power_save,
+                                                                      retry_count=3,
                                                                       listen_interval=self.listen_interval)
         dut_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
         return dut_ip, dut_mac_address
@@ -163,7 +165,7 @@ class FilterPacket:
     {
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -186,6 +188,7 @@ def test_wifi_sdk_ssl_three_sockets_receive_data_testcase_C19153(wifi_sniffer, w
     """
     try:
         capture_filename = "test_wifi_sdk_ssl_ssl_three_sockets_receive_data_testcase_C19153"
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(
             capture_file=f"{capture_filename}.pcap"
         )
@@ -195,7 +198,9 @@ def test_wifi_sdk_ssl_three_sockets_receive_data_testcase_C19153(wifi_sniffer, w
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
 
         logger.info(f"Applying performance profile mode")
-        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         port2 = ssl_server.interfaces.ssl.config['device_port2']
@@ -264,7 +269,7 @@ def test_wifi_sdk_ssl_three_sockets_receive_data_testcase_C19153(wifi_sniffer, w
     {
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -287,7 +292,7 @@ def test_wifi_sdk_ssl_three_openssl_sockets_set_16k_record_C19164(wifi_sniffer, 
     """
     try:
         capture_filename = "test_wifi_sdk_ssl_three_openssl_sockets_set_16k_record_C19164"
-
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(
             capture_file=f"{capture_filename}.pcap"
         )
@@ -297,7 +302,9 @@ def test_wifi_sdk_ssl_three_openssl_sockets_set_16k_record_C19164(wifi_sniffer, 
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
 
         logger.info(f"Applying performance profile mode")
-        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         port2 = ssl_server.interfaces.ssl.config['device_port2']
@@ -345,7 +352,8 @@ def test_wifi_sdk_ssl_three_openssl_sockets_set_16k_record_C19164(wifi_sniffer, 
 
                     ssl_server.interfaces.ssl.send_data(socket, pkt_count, buffer_length, message=tx_buffer)
                     sock = (socket - 1)
-                    buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock, timeout=120, async_timeout=120)
+                    buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock, timeout=120,
+                                                                              async_timeout=120)
 
                     assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
 
@@ -366,7 +374,7 @@ def test_wifi_sdk_ssl_three_openssl_sockets_set_16k_record_C19164(wifi_sniffer, 
     {
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -389,6 +397,7 @@ def test_wifi_sdk_ssl_three_sockets_tx_rx_data_testcase_C19201(wifi_sniffer, wif
     """
     try:
         capture_filename = "test_wifi_sdk_ssl_three_sockets_tx_rx_data_testcase_C19201"
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(
             capture_file=f"{capture_filename}.pcap"
         )
@@ -398,7 +407,9 @@ def test_wifi_sdk_ssl_three_sockets_tx_rx_data_testcase_C19201(wifi_sniffer, wif
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
 
         logger.info(f"Applying performance profile mode")
-        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         port2 = ssl_server.interfaces.ssl.config['device_port2']
@@ -476,7 +487,7 @@ def test_wifi_sdk_ssl_three_sockets_tx_rx_data_testcase_C19201(wifi_sniffer, wif
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -514,9 +525,12 @@ def test_wifi_sdk_ssl_three_sockets_shut_down_testcase_c19157(wifi_sniffer, wifi
     """
     try:
         capture_filename = "test_wifi_sdk_ssl_three_sockets_shut_down_testcase_C19157"
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -583,7 +597,7 @@ def test_wifi_sdk_ssl_three_sockets_shut_down_testcase_c19157(wifi_sniffer, wifi
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -625,6 +639,8 @@ def test_wifi_sdk_ssl_three_sockets_close_reopen_socket2_c19159(wifi_sniffer, wi
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -717,7 +733,7 @@ def test_wifi_sdk_ssl_three_sockets_close_reopen_socket2_c19159(wifi_sniffer, wi
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -759,6 +775,8 @@ def test_wifi_sdk_ssl_three_sockets_close_socket2_on_remote_c19160(wifi_sniffer,
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -851,7 +869,7 @@ def test_wifi_sdk_ssl_three_sockets_close_socket2_on_remote_c19160(wifi_sniffer,
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "custom_features": Si91xCustomFeatureBitMap.RealTimeClockFromHost | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -897,7 +915,7 @@ def test_wifi_sdk_rtc_get_multiple_times_c19178(wifi_sniffer, wifi_access_point,
         wifi_dut.interfaces.wifi.set_rtc(seconds=set_seconds, minutes=set_minutes, hours=set_hour,
                                          day=set_month_day, month=set_month, year=set_year, weekday=set_week_day)
         with TimeMeasurer() as t:
-            wifi_dut.interfaces.wifi.scan(ssid=None)
+            wifi_dut.interfaces.wifi.scan(ssid=None, retries=3)
             mac_address = wifi_dut.interfaces.wifi.get_mac_address()
             logger.info(f"DUT MAC_Address: {mac_address}")
         scan_time = t.duration
@@ -933,7 +951,7 @@ def test_wifi_sdk_rtc_get_multiple_times_c19178(wifi_sniffer, wifi_access_point,
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "custom_features": Si91xCustomFeatureBitMap.RealTimeClockFromHost | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -976,7 +994,7 @@ def test_wifi_sdk_rtc_get_multiple_times_c19179(wifi_sniffer, wifi_access_point,
                                          day=set_month_day, month=set_month, year=set_year, weekday=set_week_day)
 
         with TimeMeasurer() as t:
-            wifi_dut.interfaces.wifi.scan(ssid=None)
+            wifi_dut.interfaces.wifi.scan(ssid=None, retries=3)
         scan_time = t.duration
         dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
         logger.info(f"DUT MAC_Address: {dut_mac_address}")
@@ -1051,6 +1069,8 @@ def test_wifi_sdk_rtc_get_multiple_times_c19179(wifi_sniffer, wifi_access_point,
             device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
             wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency',
                                                              listen_interval=listen_interval)
+            wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                          psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
             ping(device_ip, ping_count)
         power_save_time = t.duration
         with TimeMeasurer() as t:
@@ -1090,7 +1110,7 @@ def test_wifi_sdk_rtc_get_multiple_times_c19179(wifi_sniffer, wifi_access_point,
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient
                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
@@ -1138,6 +1158,8 @@ def test_wifi_sdk_ssl_three_sockets_connectivity_check_loading_wrong_certs_c1916
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
         ssl_server.interfaces.ssl.start_server(port=port1, server_cert=cert1[1], server_key=cert1[2])
@@ -1185,7 +1207,7 @@ def test_wifi_sdk_ssl_three_sockets_connectivity_check_loading_wrong_certs_c1916
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient
                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
@@ -1232,6 +1254,8 @@ def test_wifi_sdk_ssl_connection_when_the_date_rtc_timer_expired_c19199(wifi_sni
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -1281,7 +1305,7 @@ def test_wifi_sdk_ssl_connection_when_the_date_rtc_timer_expired_c19199(wifi_sni
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -1304,6 +1328,7 @@ def test_wifi_sdk_2SSL_1TCP_TX_testcase_C19185(wifi_sniffer, wifi_dut, wifi_acce
     """
     try:
         capture_filename = "test_wifi_sdk_2SSL_1TCP_TX_testcase_C19185"
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(
             capture_file=f"{capture_filename}.pcap"
         )
@@ -1317,6 +1342,8 @@ def test_wifi_sdk_2SSL_1TCP_TX_testcase_C19185(wifi_sniffer, wifi_dut, wifi_acce
                                                      associated=False)
 
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
         # Open ssl server socket in remote device-Port1
         ssl_server.interfaces.ssl.start_server(port=port1)
@@ -1430,6 +1457,7 @@ def test_wifi_sdk_2SSL_1TCP_RX_testcase_C19187(wifi_sniffer, wifi_dut, wifi_acce
     """
     try:
         capture_filename = "test_wifi_sdk_2SSL_1TCP_RX_testcase_C19187"
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(
             capture_file=f"{capture_filename}.pcap"
         )
@@ -1529,7 +1557,7 @@ def test_wifi_sdk_2SSL_1TCP_RX_testcase_C19187(wifi_sniffer, wifi_dut, wifi_acce
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -1564,6 +1592,8 @@ def test_wifi_sdk_1ssl_2tcp_sockets_send_data_testcase_C19188(wifi_sniffer, wifi
                                                      associated=False)
 
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
         # Open ssl server socket in remote device-Port1
@@ -1654,7 +1684,7 @@ def test_wifi_sdk_1ssl_2tcp_sockets_send_data_testcase_C19188(wifi_sniffer, wifi
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -1689,6 +1719,8 @@ def test_wifi_sdk_tcp_three_sockets_send_data_testcase_C19189(wifi_sniffer, wifi
                                                      associated=False)
 
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
 
@@ -1740,7 +1772,7 @@ def test_wifi_sdk_tcp_three_sockets_send_data_testcase_C19189(wifi_sniffer, wifi
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -1779,6 +1811,8 @@ def test_wifi_sdk_2SSL_tcp_ack_feature_testcase_c19136(wifi_sniffer, wifi_dut, w
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -1839,7 +1873,7 @@ def test_wifi_sdk_2SSL_tcp_ack_feature_testcase_c19136(wifi_sniffer, wifi_dut, w
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -1888,6 +1922,8 @@ def test_wifi_sdk_ssl_three_sockets_data_tx_while_rejoin_testcase_c19155(wifi_sn
                                  rejoin_params=[40, 6, 40, 0])
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -1952,7 +1988,7 @@ def test_wifi_sdk_ssl_three_sockets_data_tx_while_rejoin_testcase_c19155(wifi_sn
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -2002,6 +2038,8 @@ def test_wifi_sdk_ssl_aws_testcase_c19202(wifi_sniffer, wifi_dut, wifi_access_po
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
         ssl_server.interfaces.ssl.start_server(port=port1, server_cert=cert1[1], server_key=cert1[2])
@@ -2081,7 +2119,7 @@ def test_wifi_sdk_ssl_aws_testcase_c19202(wifi_sniffer, wifi_dut, wifi_access_po
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -2128,6 +2166,8 @@ def test_wifi_sdk_ssl_three_sockets_data_tx_after_rejoin_testcase_c19156(wifi_sn
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -2199,6 +2239,8 @@ def test_wifi_sdk_ssl_three_sockets_data_tx_after_rejoin_testcase_c19156(wifi_sn
             device_ip = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False,
                                                             associated=False)['device_ip']
             wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+            wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                          psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         for sock_id in range(3):
             wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
             logger.info(f"Successfully closed socket_id '{sock_id}' in the DUT")
@@ -2216,7 +2258,7 @@ def test_wifi_sdk_ssl_three_sockets_data_tx_after_rejoin_testcase_c19156(wifi_sn
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.Ping,
@@ -2264,6 +2306,8 @@ def test_wifi_sdk_2_ssl_tx_1_tcp_rx_c19161(wifi_sniffer, wifi_dut, wifi_access_p
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -2334,7 +2378,7 @@ def test_wifi_sdk_2_ssl_tx_1_tcp_rx_c19161(wifi_sniffer, wifi_dut, wifi_access_p
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
@@ -2389,6 +2433,8 @@ def test_wifi_sdk_2ssl_1aws_testcase_c19150(wifi_sniffer, wifi_dut, wifi_access_
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -2469,7 +2515,7 @@ def test_wifi_sdk_2ssl_1aws_testcase_c19150(wifi_sniffer, wifi_dut, wifi_access_
     {
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
@@ -2489,6 +2535,7 @@ def test_wifi_sdk_2ssl_1aws_testcase_c19150(wifi_sniffer, wifi_dut, wifi_access_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated", "disable_store_config", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.skip()
 def test_wifi_sdk_dns_get_func_with_multiple_APs_c19183(wifi_sniffer, wifi_access_points, wifi_dut, domain_name,
                                                         logger, sl_collections, sniffer_filter):
     """
@@ -2500,6 +2547,8 @@ def test_wifi_sdk_dns_get_func_with_multiple_APs_c19183(wifi_sniffer, wifi_acces
             ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_points[i], capture_filename, sl_collections)
             device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
             wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+            wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                          psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
             ap_bssid = wifi_access_points[1].interfaces.wifi.bssid
             if not i:
                 ap_bssid = wifi_access_points[i].interfaces.wifi.get_mac_address()
@@ -2525,7 +2574,7 @@ def test_wifi_sdk_dns_get_func_with_multiple_APs_c19183(wifi_sniffer, wifi_acces
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
@@ -2564,6 +2613,8 @@ def test_wifi_sdk_aws_cloud_with_different_certificate_c19186(wifi_sniffer, wifi
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -2603,7 +2654,7 @@ def test_wifi_sdk_aws_cloud_with_different_certificate_c19186(wifi_sniffer, wifi
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
@@ -2615,7 +2666,7 @@ def test_wifi_sdk_aws_cloud_with_different_certificate_c19186(wifi_sniffer, wifi
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
-        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "thread_config": {"wifi": {"count": 2, "stack_len": 4096}},
         "ca_cert": [("start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
                     ("aws_root_cert.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
                     ("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START")],
@@ -2649,6 +2700,8 @@ def test_wifi_sdk_three_socket_connection_with_1ssl_2aws_c19151(wifi_sniffer, wi
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -2697,7 +2750,7 @@ def test_wifi_sdk_three_socket_connection_with_1ssl_2aws_c19151(wifi_sniffer, wi
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.Ping,
@@ -2740,6 +2793,8 @@ def test_wifi_sdk_ssl_three_sockets_socket_select_receive_data_c19162(wifi_sniff
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -2809,7 +2864,7 @@ def test_wifi_sdk_ssl_three_sockets_socket_select_receive_data_c19162(wifi_sniff
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.Ping,
@@ -2852,6 +2907,8 @@ def test_wifi_sdk_ssl_three_sockets_socket_select_tx_rx_data_c19166(wifi_sniffer
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -2930,7 +2987,7 @@ def test_wifi_sdk_ssl_three_sockets_socket_select_tx_rx_data_c19166(wifi_sniffer
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.Ping,
@@ -2963,6 +3020,8 @@ def test_wifi_sdk_socket_select_ssl_asynchronous_c19192(wifi_sniffer, wifi_dut, 
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -3008,7 +3067,7 @@ def test_wifi_sdk_socket_select_ssl_asynchronous_c19192(wifi_sniffer, wifi_dut, 
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.Ping | Si91xTCPIPFeatureBitMap.DNSClient,
@@ -3039,6 +3098,8 @@ def test_wifi_sdk_ssl_synchronous_socket_send_data_c19137(wifi_sniffer, wifi_dut
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -3095,7 +3156,7 @@ def test_wifi_sdk_ssl_synchronous_socket_send_data_c19137(wifi_sniffer, wifi_dut
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.Ping | Si91xTCPIPFeatureBitMap.DNSClient,
@@ -3125,6 +3186,8 @@ def test_wifi_sdk_ssl_synchronous_select_timeout_c19198(wifi_sniffer, wifi_acces
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -3163,7 +3226,7 @@ def test_wifi_sdk_ssl_synchronous_select_timeout_c19198(wifi_sniffer, wifi_acces
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.Ping | Si91xTCPIPFeatureBitMap.DNSClient,
@@ -3193,6 +3256,8 @@ def test_wifi_sdk_ssl_synchronous_select_timeout_c19200(wifi_sniffer, wifi_acces
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -3238,7 +3303,7 @@ def test_wifi_sdk_ssl_synchronous_select_timeout_c19200(wifi_sniffer, wifi_acces
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.Ping,
@@ -3298,7 +3363,7 @@ def test_wifi_sdk_ssl_ps_func_when_ps_li_greater_than_join_li_c19168(wifi_sniffe
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.Ping,
@@ -3311,7 +3376,7 @@ def test_wifi_sdk_ssl_ps_func_when_ps_li_greater_than_join_li_c19168(wifi_sniffe
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -3340,6 +3405,8 @@ def test_wifi_sdk_ssl_three_sockets_load_remove_certs_connection_c19163(wifi_sni
                 error_code = 0
                 device_ip, dut_mac_address = ssl_obj.join_get_ip(sniff_capture=sniff, power_save=False)
                 wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+                wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                              psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
                 for sock_count in range(3):
                     socket_port = port1 + sock_count
                     ssl_server.interfaces.ssl.start_server(port=socket_port)
@@ -3397,7 +3464,7 @@ def test_wifi_sdk_ssl_three_sockets_load_remove_certs_connection_c19163(wifi_sni
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPSServer
                           | Si91xTCPIPFeatureBitMap.SingleSSLSocket,
@@ -3431,6 +3498,8 @@ def test_wifi_sdk_ssl_client_when_https_server_is_enabled_c19124(wifi_sniffer, w
         socket_port = 443
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ssl_server.interfaces.ssl.start_server(port=socket_port)
         server_ip = ssl_server.interfaces.ssl.server_ip
         sock = wifi_dut.interfaces.wifi.socket()
@@ -3462,7 +3531,7 @@ def test_wifi_sdk_ssl_client_when_https_server_is_enabled_c19124(wifi_sniffer, w
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
@@ -3494,6 +3563,8 @@ def test_wifi_sdk_ssl_tx_with_1aws_2tcp_sockets_c19193(wifi_sniffer, wifi_dut, w
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -3554,9 +3625,9 @@ def test_wifi_sdk_ssl_tx_with_1aws_2tcp_sockets_c19193(wifi_sniffer, wifi_dut, w
                                | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 |
-        Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -3613,11 +3684,11 @@ def test_wifi_sdk_sntp_functionality_c19191(wifi_sniffer, wifi_dut, wifi_access_
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
@@ -3680,11 +3751,11 @@ def test_wifi_sdk_verify_ssl_functionality_with_expired_cert_c537929(wifi_sniffe
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
@@ -3742,6 +3813,7 @@ def test_wifi_sdk_ssl_rx_while_rejoining_c537931(switch, wifi_dut, wifi_access_p
                                                sniffer_filter)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -3872,7 +3944,7 @@ def test_wifi_sdk_ssl_verify_sni_feature_c537607(
             packet_filter2=second_level_filter
         )['packet_count'], "Unable to find SNI frame in TLS Hello Packet"
 
-        #Sniffer Validation for TLS SNI Extension
+        # Sniffer Validation for TLS SNI Extension
         with open("./reports/filter2_file.txt", "r") as file:
             contents = file.read()
             pattern = r"Server Name:\s*(\S+)"
@@ -3966,7 +4038,7 @@ def test_wifi_sdk_ssl_verify_alpn_functionality_when_header_exceeds_256_bytes_c6
         wifi_dut.interfaces.wifi.bsdSetSocketOpt(
             socket_id, option_name="TCP_ULP", option_val="tls_1_0"
         )
-        #Generate ALPN Extension more than 256 bytes
+        # Generate ALPN Extension more than 256 bytes
         alpn_extension_header = "http/1.1" * 33
         logger.info(f"The ALPN Extension header length is {len(alpn_extension_header)}")
         wifi_dut.interfaces.wifi.bsdSetSocketOpt(
@@ -3977,6 +4049,7 @@ def test_wifi_sdk_ssl_verify_alpn_functionality_when_header_exceeds_256_bytes_c6
         wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -4054,7 +4127,8 @@ def test_wifi_sdk_ssl_verify_alpn_with_sni_using_two_sockets_c661870(
         device_ip, dut_mac_address = result["device_ip"], result["dut_mac_address"]
         for sock_count in range(0, 5):
             for iteration in range(2):
-                port = ssl_server.interfaces.ssl.config["device_port1"] if iteration == 0 else ssl_server.interfaces.ssl.config["device_port2"]
+                port = ssl_server.interfaces.ssl.config["device_port1"] if iteration == 0 else \
+                ssl_server.interfaces.ssl.config["device_port2"]
                 ssl_server.interfaces.ssl.start_server(port=port)
                 server_ip = ssl_server.interfaces.ssl.server_ip
                 socket_id = wifi_dut.interfaces.wifi.socket()
@@ -4103,7 +4177,7 @@ def test_wifi_sdk_ssl_verify_alpn_with_sni_using_two_sockets_c661870(
                 packet_filter2=second_level_filter
             )['find_packet_num']) == 2 * (sock_count + 1), "Unable to find SNI frame in TLS Hello Packet"
 
-            #Sniffer Validation for TLS SNI and ALPN Extension
+            # Sniffer Validation for TLS SNI and ALPN Extension
             with open("./reports/filter2_file.txt", "r") as file:
                 contents = file.read()
                 extensions = []
@@ -4124,6 +4198,7 @@ def test_wifi_sdk_ssl_verify_alpn_with_sni_using_two_sockets_c661870(
         wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -4271,13 +4346,14 @@ def test_wifi_sdk_ssl_verify_alpn_with_sni_using_single_socket_and_tls_1_3_c6618
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
     {
         "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -4339,7 +4415,6 @@ Raises:
 
         device_ip, dut_mac_address = dut_addr['device_ip'], dut_addr['dut_mac_address']
 
-
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f'AP BSSID = {ap_bssid}')
 
@@ -4400,7 +4475,7 @@ Raises:
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
@@ -4489,6 +4564,8 @@ Expected Outcome:
             ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
             device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False, sniff_capture=False)
             wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+            wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                          psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
             ap_bssid = wifi_access_point.interfaces.wifi.bssid
             logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -4553,13 +4630,14 @@ Expected Outcome:
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
     {
         "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -4669,12 +4747,13 @@ def test_wifi_sdk_ssl_rx_with_remote_terminate_c537930(wifi_dut, wifi_access_poi
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
     {
         "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
@@ -4725,6 +4804,8 @@ def test_wifi_sdk_ssl_with_different_tls_versions_C780930(wifi_sniffer, wifi_dut
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
 
@@ -4778,6 +4859,8 @@ def test_wifi_sdk_ssl_with_different_tls_versions_C780930(wifi_sniffer, wifi_dut
                                                sniffer_filter, power_save=False)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
 """Below testcases are not supported in Si917_Beta_Soc_WIFISDK"""
 # @pytest.mark.config(
 #     "wifi_dut",
@@ -4849,7 +4932,7 @@ def test_wifi_sdk_ssl_with_different_tls_versions_C780930(wifi_sniffer, wifi_dut
 #     wifi=
 #     {
 #         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLANOnly,
+#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
 #         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.ULPGPIOHandshake,
 #         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
 #         "custom_features": Si91xCustomFeatureBitMap.Default,
@@ -5062,7 +5145,7 @@ def test_wifi_sdk_ssl_with_different_tls_versions_C780930(wifi_sniffer, wifi_dut
 #     wifi=
 #     {
 #         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLANOnly,
+#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
 #         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.ULPGPIOHandshake,
 #         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
 #         "custom_features": Si91xCustomFeatureBitMap.Default,
@@ -5245,7 +5328,7 @@ def test_wifi_sdk_ssl_with_different_tls_versions_C780930(wifi_sniffer, wifi_dut
 #     wifi=
 #     {
 #         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLANOnly,
+#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
 #         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.ULPGPIOHandshake,
 #         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
 #         "custom_features": Si91xCustomFeatureBitMap.Default,
@@ -5332,7 +5415,7 @@ def test_wifi_sdk_ssl_with_different_tls_versions_C780930(wifi_sniffer, wifi_dut
 #     wifi=
 #     {
 #         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLANOnly,
+#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
 #         "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.ULPGPIOHandshake,
 #         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL,
 #         "custom_features": Si91xCustomFeatureBitMap.Default,
@@ -5439,7 +5522,7 @@ def test_wifi_sdk_ssl_with_different_tls_versions_C780930(wifi_sniffer, wifi_dut
 #     wifi=
 #     {
 #         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLANOnly,
+#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
 #         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.Aggregation,
 #         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
 #         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -5555,7 +5638,7 @@ def test_wifi_sdk_ssl_with_different_tls_versions_C780930(wifi_sniffer, wifi_dut
 #     wifi=
 #     {
 #         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLANOnly,
+#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
 #         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
 #         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
 #         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -5675,7 +5758,7 @@ def test_wifi_sdk_ssl_with_different_tls_versions_C780930(wifi_sniffer, wifi_dut
 #     wifi=
 #     {
 #         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLANOnly,
+#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
 #         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
 #         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
 #         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -5844,7 +5927,7 @@ def test_wifi_sdk_ssl_with_different_tls_versions_C780930(wifi_sniffer, wifi_dut
 #     wifi=
 #     {
 #         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLANOnly,
+#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
 #         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
 #         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
 #         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -6022,7 +6105,7 @@ def test_wifi_sdk_ssl_with_different_tls_versions_C780930(wifi_sniffer, wifi_dut
 #     wifi=
 #     {
 #         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLANOnly,
+#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
 #         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.Aggregation,
 #         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
 #         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -6145,7 +6228,7 @@ def test_wifi_sdk_ssl_with_different_tls_versions_C780930(wifi_sniffer, wifi_dut
 #     wifi=
 #     {
 #         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLANOnly,
+#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
 #         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
 #         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
 #         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -6275,7 +6358,7 @@ def test_wifi_sdk_ssl_with_different_tls_versions_C780930(wifi_sniffer, wifi_dut
 #     wifi=
 #     {
 #         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLANOnly,
+#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
 #         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
 #         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
 #         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -6465,7 +6548,7 @@ def test_wifi_sdk_ssl_with_different_tls_versions_C780930(wifi_sniffer, wifi_dut
 #     wifi=
 #     {
 #         "oper_mode": 0,
-#         "coex_mode": Si91xCoexMode.WLANOnly,
+#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
 #         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation,
 #         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
 #         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
