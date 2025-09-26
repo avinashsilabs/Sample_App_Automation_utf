@@ -54,6 +54,7 @@ from utf.interfaces.power_meter.nrf_ppk2.nrf_power_profiler_mp import NRFPowerPr
     Author: Benazeer@Silabs 
 """
 
+
 def logger():
     return get_logger(__name__)
 
@@ -239,7 +240,7 @@ class WifiSockthread(ThreadBase):
 class WlanThread(ThreadBase):
 
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, sl_collections=None,
-                 dtim=10, listen_interval=0):
+                 dtim=10, listen_interval=0, dtim_based=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -249,21 +250,34 @@ class WlanThread(ThreadBase):
         self.dtim = dtim
         self.listen_interval = listen_interval
         self.device_ip = None
+        self.dtim_based = dtim_based
 
     def run(self):
-        logger().info(f"Configuring Access Point with dtim : {self.dtim}")
-        self.wifi_access_point.interfaces.wifi.start_ap(dtim=self.dtim)
-        time.sleep(5)
-        logger().info(f"######=========>>>>>>DUT is going Connecting to N Profile")
-        dictionary = self.sl_collections.join_to_wifi_network(
-            wifi_dut=self.wifi_dut,
-            wifi_access_point=self.wifi_access_point,
-            associated=self.wifi_dut.interfaces.wifi.associated,
-            listen_interval=self.listen_interval,
-            power_save=False,
-            retry_count=3
-        )
-        self.device_ip = dictionary['device_ip']
+        if self.dtim_based:
+            logger().info(f"Configuring Access Point with dtim : {self.dtim}")
+            self.wifi_access_point.interfaces.wifi.start_ap(dtim=self.dtim)
+            time.sleep(5)
+            logger().info(f"######=========>>>>>>DUT is going Connecting to N Profile")
+            dictionary = self.sl_collections.join_to_wifi_network(
+                wifi_dut=self.wifi_dut,
+                wifi_access_point=self.wifi_access_point,
+                associated=self.wifi_dut.interfaces.wifi.associated,
+                listen_interval=self.listen_interval,
+                power_save=False,
+                retry_count=3
+            )
+            self.device_ip = dictionary['device_ip']
+        else:
+            logger().info(f"######=========>>>>>>DUT is going Connecting to N Profile")
+            dictionary = self.sl_collections.join_to_wifi_network(
+                wifi_dut=self.wifi_dut,
+                wifi_access_point=self.wifi_access_point,
+                associated=self.wifi_dut.interfaces.wifi.associated,
+                listen_interval=1100,
+                power_save=False,
+                retry_count=3
+            )
+            self.device_ip = dictionary['device_ip']
 
     def getter(self):
         return self.device_ip
@@ -307,7 +321,8 @@ class StandBy_Associated(ThreadBase):
     def __init__(self, dtim=None, wifi_dut=None, wifi_access_point=None, sl_collections=None, power_meter=None,
                  deep_sleep=False, dtim_aligned_type=1, test_case_id=None, wifi_sniffer=None, test_name=None,
                  remote_socket=None, send_data=False, capture_time=60, m4_sleep_time=120000, bcast_filter=True,
-                 tcp_ka_time=240, send_ka=False, listen_case=False, sniffer_filter=None):
+                 tcp_ka_time=240, send_ka=False, listen_case=False, sniffer_filter=None, listen_based=None,
+                 dtim_based=None):
         self.dtim = dtim
         self.wifi_dut = wifi_dut
         self.sl_collections = sl_collections
@@ -328,6 +343,8 @@ class StandBy_Associated(ThreadBase):
         self.test_case_id = test_case_id
         self.sniffer_filter = sniffer_filter
         self.wifi_sniffer = wifi_sniffer
+        self.listen_based = listen_based
+        self.dtim_based = dtim_based
         self.security_dict = {
             "OPEN": 0,
             "WPA2": 2,
@@ -606,11 +623,12 @@ class StandBy_Associated(ThreadBase):
         self.wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
 
         time.sleep(2)
-
-        self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            interface='client',
-            join_feature_bitmap=Si91xJoinFeatureBitMap.Default
-        )
+        if self.dtim_based:
+            logger().info(f"#######===========>>>>>>>Configuring the DTIM Interval")
+            self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+                interface='client',
+                join_feature_bitmap=Si91xJoinFeatureBitMap.Default
+            )
         wlan_obj = WlanThread(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point, dtim=self.dtim,
                               sl_collections=self.sl_collections)
         if dut != "si917_ncp_sl_wifi":
@@ -620,25 +638,45 @@ class StandBy_Associated(ThreadBase):
             else:
                 m4_obj = M4_Sleep_Thread(wifi_dut=self.wifi_dut, m4_sleep_time=self.m4_sleep_time)
             pm_obj = Power_Measurement_Thread(power_meter=self.power_meter, capture_time=self.capture_time)
+        if self.listen_based:
+            logger().info(f"#########=========>>>>>>>>Configuring the Listen Interval")
+            self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
+                                                             Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+            self.wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=1100)
+
         if self.test_case_id == 219305:
             wlan_obj.start()
             wlan_obj.wait_for_exit()
         else:
-            logger().info(f"#############===========>>>>>>> Connecting to NT Profile")
-            logger().info(f"Configuring Access Point with dtim : {self.dtim}")
-            self.wifi_access_point.interfaces.wifi.start_ap(dtim=self.dtim)
-            time.sleep(10)
-            self.wifi_dut.interfaces.wifi.join(ssid=vap_list[0],
-                                               passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0][
-                                                   "passphrase"],
-                                               security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
-                                                   "security"].name.lower(), )
+            if self.dtim_based:
+                logger().info(f"Configuring Access Point with dtim : {self.dtim}")
+                self.wifi_access_point.interfaces.wifi.start_ap(dtim=self.dtim)
+                time.sleep(10)
+                logger().info(f"#############===========>>>>>>> Connecting to NT Profile")
+                self.wifi_dut.interfaces.wifi.join(ssid=vap_list[0],
+                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       "passphrase"],
+                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       "security"].name.lower(), )
 
-            self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
-                                                                     wifi_access_point=self.wifi_access_point,
-                                                                     associated=False, power_save=False,
-                                                                     ping_after_power_save=False, skip_scan=True,
-                                                                     skip_connect=True, retry_count=3, )
+                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         associated=False, power_save=False,
+                                                                         ping_after_power_save=False, skip_scan=True,
+                                                                         skip_connect=True, retry_count=3, )
+            else:
+                logger().info(f"#############===========>>>>>>> Connecting to NT Profile")
+                self.wifi_dut.interfaces.wifi.join(ssid=vap_list[0],
+                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       "passphrase"],
+                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       "security"].name.lower(), )
+
+                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         associated=False, power_save=False,
+                                                                         ping_after_power_save=False, skip_scan=True,
+                                                                         skip_connect=True, retry_count=3, )
 
         if self.send_data or self.send_ka:
             device2_ip = wlan_obj.getter()
@@ -655,10 +693,14 @@ class StandBy_Associated(ThreadBase):
             self.wifi_dut.interfaces.wifi.set_filter_broadcast()
 
         time.sleep(2)
-
-        logger().info(f"Enabling TA power save")
-        self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save",
-                                                              dtim_aligned_type=self.dtim_aligned_type)
+        if self.dtim_based:
+            logger().info(f"Enabling TA power save")
+            self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save",
+                                                                  dtim_aligned_type=self.dtim_aligned_type)
+        else:
+            logger().info(f"Enabling TA power save")
+            self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save", listen_interval=1100,
+                                                                  dtim_aligned_type=self.dtim_aligned_type)
         time.sleep(2)
 
         if dut != "si917_ncp_sl_wifi":
@@ -680,48 +722,6 @@ class StandBy_Associated(ThreadBase):
             wifisock_obj.wait_for_exit()
 
         time.sleep(10)
-
-
-class Active_TX(ThreadBase):
-    def __init__(self, power=None, wifi_dut=None, power_meter=None, rate=None, enable_11ax=0):
-        self.power = power
-        self.wifi_dut = wifi_dut
-        self.power_meter = power_meter
-        self.rate = rate
-        self.enable_11ax = enable_11ax
-
-    def run(self):
-        length = 1000
-        mode = 1
-        channel = 1
-        aggr_enable = 0
-
-        pm_obj = Power_Measurement_Thread(power_meter=self.power_meter)
-
-        self.wifi_dut.interfaces.wifi.set_antenna(interface="client", antenna=4)
-        logger().info(f"setting the wireless antenna ")
-
-        logger().info(f"configuring dut with diff power:{self.power}")
-
-        self.wifi_dut.interfaces.wifi.sl_si91x_transmit_test_start(
-            enable=1,
-            power=self.power,
-            rate=self.rate,
-            length=length,
-            mode=mode,
-            channel=channel,
-            aggr_enable=aggr_enable,
-            enable_11ax=self.enable_11ax,
-        )
-        logger().info(f"Transmit Test started.")
-        time.sleep(5)
-
-        pm_obj.start()
-        pm_obj.wait_for_exit()
-
-        self.wifi_dut.interfaces.wifi.sl_si91x_transmit_test_stop()
-
-        time.sleep(15)
 
 
 @pytest.mark.parametrize("dtim", [10])
@@ -782,7 +782,8 @@ class Active_TX(ThreadBase):
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_conn_DTIM_based_with_T_profile_C219305(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                               sl_collections, dtim, wifi_sniffer, sniffer_filter, request):
+                                                             sl_collections, dtim, wifi_sniffer, sniffer_filter,
+                                                             request):
     '''
     Measure the WLAN stand by power when DUT connects to T profile BSSID(DTIM based)
     '''
@@ -790,7 +791,7 @@ def test_wlan_standby_conn_DTIM_based_with_T_profile_C219305(firmware_loader, po
     standby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
-                                     wifi_sniffer=wifi_sniffer, test_case_id=219305)
+                                     wifi_sniffer=wifi_sniffer, test_case_id=219305, dtim_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
 
@@ -853,7 +854,8 @@ def test_wlan_standby_conn_DTIM_based_with_T_profile_C219305(firmware_loader, po
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219306(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                               sl_collections, dtim, wifi_sniffer, sniffer_filter, request):
+                                                              sl_collections, dtim, wifi_sniffer, sniffer_filter,
+                                                              request):
     '''
     Measure the WLAN stand by power when DUT connects to NT profile BSSID(DTIM based)
     '''
@@ -861,7 +863,7 @@ def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219306(firmware_loader, p
     standby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
-                                     wifi_sniffer=wifi_sniffer)
+                                     wifi_sniffer=wifi_sniffer, dtim_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
 
@@ -924,7 +926,8 @@ def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219306(firmware_loader, p
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_conn_DTIM_based_with_T_profile_C219307(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                               sl_collections, dtim, wifi_sniffer, sniffer_filter, request):
+                                                             sl_collections, dtim, wifi_sniffer, sniffer_filter,
+                                                             request):
     '''
     Measure the WLAN stand by power when DUT connects to T profile BSSID(DTIM based)
     '''
@@ -932,7 +935,7 @@ def test_wlan_standby_conn_DTIM_based_with_T_profile_C219307(firmware_loader, po
     standby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
-                                     wifi_sniffer=wifi_sniffer, test_case_id=219305)
+                                     wifi_sniffer=wifi_sniffer, test_case_id=219305, dtim_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
 
@@ -995,7 +998,8 @@ def test_wlan_standby_conn_DTIM_based_with_T_profile_C219307(firmware_loader, po
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219308(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                               sl_collections, dtim, wifi_sniffer, sniffer_filter, request):
+                                                              sl_collections, dtim, wifi_sniffer, sniffer_filter,
+                                                              request):
     '''
     Measure the WLAN stand by power when DUT connects to NT profile BSSID(DTIM based)
     '''
@@ -1003,7 +1007,7 @@ def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219308(firmware_loader, p
     standby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
-                                     wifi_sniffer=wifi_sniffer)
+                                     wifi_sniffer=wifi_sniffer, dtim_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
 
@@ -1066,7 +1070,8 @@ def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219308(firmware_loader, p
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_conn_DTIM_based_with_T_profile_C219309(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                               sl_collections, dtim, wifi_sniffer, sniffer_filter, request):
+                                                             sl_collections, dtim, wifi_sniffer, sniffer_filter,
+                                                             request):
     '''
     Measure the WLAN stand by power when DUT connects to T profile BSSID(DTIM based)
     '''
@@ -1074,7 +1079,7 @@ def test_wlan_standby_conn_DTIM_based_with_T_profile_C219309(firmware_loader, po
     standby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
-                                     wifi_sniffer=wifi_sniffer, test_case_id=219305)
+                                     wifi_sniffer=wifi_sniffer, test_case_id=219305, dtim_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
 
@@ -1137,7 +1142,8 @@ def test_wlan_standby_conn_DTIM_based_with_T_profile_C219309(firmware_loader, po
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219310(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                               sl_collections, dtim, wifi_sniffer, sniffer_filter, request):
+                                                              sl_collections, dtim, wifi_sniffer, sniffer_filter,
+                                                              request):
     '''
     Measure the WLAN stand by power when DUT connects to NT profile BSSID(DTIM based)
     '''
@@ -1145,11 +1151,428 @@ def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219310(firmware_loader, p
     standby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
-                                     wifi_sniffer=wifi_sniffer)
+                                     wifi_sniffer=wifi_sniffer, dtim_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
 
 
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.Default,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+    }
+)
+@pytest.mark.firmware_app("test_480K_M4SS_192K")
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_wlan_standby_con_Listen_based_with_T_profile_C219303(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+                                                             sl_collections, wifi_sniffer, sniffer_filter, request):
+    '''
+    Measure the WLAN stand by power when DUT connects to T profile BSSID(DTIM based)
+    '''
+    test_name = request.node.name
+    standby_obj = StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     sl_collections=sl_collections, power_meter=power_meter,
+                                     sniffer_filter=sniffer_filter, test_name=test_name,
+                                     wifi_sniffer=wifi_sniffer, test_case_id=219305, listen_based=True)
+    standby_obj.start()
+    standby_obj.wait_for_exit()
+
+
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.Default,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+    }
+)
+@pytest.mark.firmware_app("test_480K_M4SS_192K")
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_wlan_standby_con_Listen_based_with_NT_profile_C219304(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+                                                              sl_collections, wifi_sniffer, sniffer_filter, request):
+    '''
+    Measure the WLAN stand by power when DUT connects to NT profile BSSID(DTIM based)
+    '''
+    test_name = request.node.name
+    standby_obj = StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     sl_collections=sl_collections, power_meter=power_meter,
+                                     sniffer_filter=sniffer_filter, test_name=test_name,
+                                     wifi_sniffer=wifi_sniffer, listen_based=True)
+    standby_obj.start()
+    standby_obj.wait_for_exit()
+
+
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.Default,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints |
+                               Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "bt_features": 0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+    }
+)
+@pytest.mark.firmware_app("test_416K_M4SS_256K")
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_wlan_standby_con_Listen_based_with_T_profile_C219311(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+                                                             sl_collections, wifi_sniffer, sniffer_filter, request):
+    '''
+    Measure the WLAN stand by power when DUT connects to T profile BSSID(DTIM based)
+    '''
+    test_name = request.node.name
+    standby_obj = StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     sl_collections=sl_collections, power_meter=power_meter,
+                                     sniffer_filter=sniffer_filter, test_name=test_name,
+                                     wifi_sniffer=wifi_sniffer, test_case_id=219305, listen_based=True)
+    standby_obj.start()
+    standby_obj.wait_for_exit()
+
+
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.Default,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints |
+                               Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "bt_features": 0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+    }
+)
+@pytest.mark.firmware_app("test_416K_M4SS_256K")
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_wlan_standby_con_Listen_based_with_NT_profile_C219312(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+                                                              sl_collections, wifi_sniffer, sniffer_filter, request):
+    '''
+    Measure the WLAN stand by power when DUT connects to NT profile BSSID(DTIM based)
+    '''
+    test_name = request.node.name
+    standby_obj = StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     sl_collections=sl_collections, power_meter=power_meter,
+                                     sniffer_filter=sniffer_filter, test_name=test_name,
+                                     wifi_sniffer=wifi_sniffer, listen_based=True)
+    standby_obj.start()
+    standby_obj.wait_for_exit()
+
+
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.Default,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints |
+                               Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+        "bt_features": 0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+    }
+)
+@pytest.mark.firmware_app("test_352K_M4SS_320K")
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_wlan_standby_con_Listen_based_with_T_profile_C219313(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+                                                             sl_collections, wifi_sniffer, sniffer_filter, request):
+    '''
+    Measure the WLAN stand by power when DUT connects to T profile BSSID(DTIM based)
+    '''
+    test_name = request.node.name
+    standby_obj = StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     sl_collections=sl_collections, power_meter=power_meter,
+                                     sniffer_filter=sniffer_filter, test_name=test_name,
+                                     wifi_sniffer=wifi_sniffer, test_case_id=219305, listen_based=True)
+    standby_obj.start()
+    standby_obj.wait_for_exit()
+
+
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    }
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.Default,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints |
+                               Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+        "bt_features": 0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+    }
+)
+@pytest.mark.firmware_app("test_352K_M4SS_320K")
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_wlan_standby_con_Listen_based_with_NT_profile_C219314(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+                                                              sl_collections, wifi_sniffer, sniffer_filter, request):
+    '''
+    Measure the WLAN stand by power when DUT connects to NT profile BSSID(DTIM based)
+    '''
+    test_name = request.node.name
+    standby_obj = StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     sl_collections=sl_collections, power_meter=power_meter,
+                                     sniffer_filter=sniffer_filter, test_name=test_name,
+                                     wifi_sniffer=wifi_sniffer, listen_based=True)
+    standby_obj.start()
+    standby_obj.wait_for_exit()
+
 # ********************************************************************************************************************
-
-
