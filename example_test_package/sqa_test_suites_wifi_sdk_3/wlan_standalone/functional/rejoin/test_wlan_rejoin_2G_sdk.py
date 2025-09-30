@@ -1326,6 +1326,7 @@ def test_wifi_sdk_rejoin_psk_change_c19734(switch, wifi_sniffer, wifi_access_poi
                                            sl_collections, sniffer_filter):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
+    wifi_access_point.interfaces.wifi.start_ap(channel=4)
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name,
