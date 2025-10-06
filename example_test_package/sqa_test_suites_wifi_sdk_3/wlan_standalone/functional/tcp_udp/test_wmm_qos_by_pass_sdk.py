@@ -310,3 +310,58 @@ def test_wifi_sdk_udp_different_traffic_types_rx_bypass_mode_c19756(wifi_sniffer
         except Exception: pass
         try: wifi_sniffer.interfaces.capture.stop_capture()
         except Exception: pass
+
+
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disable_external_stack"])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "ssid": 'WSDK-AUTOMATION', "passphrase": '12345678', "security": 'open'})
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config("wifi_dut", wifi=COMMON_DUT_WIFI_CFG)
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="net_init_client")
+def test_wifi_sdk_tcp_rx_in_tcp_ip_bypass_mode_loop_c539022(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, sl_collections):
+    """Receive TCP data with different traffic types in TCP/IP bypass mode (create->bind->listen->accept->recv->close)"""
+    transfer_type   = 1   # TCP
+    throughput_type = 3   # TCP RX
+    pkt_size        = 1460
+    duration        = 30
+    timeout         = duration + 5
+    capture_filename = "c539022_tcp_rx_loop"
+    executed = []
+
+    try:
+        host_ip, dut_ip = _wifi_setup(wifi_dut, wifi_sniffer, wifi_access_point, wifi_client, capture_filename)
+
+        for tos_val, qos_val, tag in TRAFFIC_PROFILES:
+            logger().info(f"[TCP RX][{tag}] init host TCP client (TOS={tos_val}, QoS={qos_val})")
+            net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=dut_ip, protocol=protocol, tos_value=tos_val)
+            port = net_perf_client.interfaces.net_perf.client_port
+
+            def _start_client():
+                time.sleep(1)
+                logger().info(f"[TCP RX][{tag}] start host traffic -> DUT:{port}")
+                net_perf_client.interfaces.net_perf.start()
+
+            th = Thread(target=_start_client, daemon=True)
+            th.start()
+
+            logger().info(f"[TCP RX][{tag}] DUT iperf server (blocking): listen/accept on {dut_ip}:{port}")
+            wifi_dut.interfaces.wwifi = getattr(wifi_dut.interfaces, "wifi")
+            wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=6, local_port=port, local_ip=dut_ip,
+                                           remote_ip="0.0.0.0", remote_port=0, size=pkt_size, ttl=duration, throughput_type=throughput_type,
+                                           timeout=timeout, qos=qos_val, host_tcp_ip_stack_enable=1, async_socket=0)
+            th.join()
+            executed.append(tag)
+            logger().info(f"[TCP RX][{tag}] completed")
+            time.sleep(2)
+
+        assert len(executed) == len(TRAFFIC_PROFILES), f"Not all TCP RX profiles executed: {executed}"
+        logger().info(f"[TCP RX] Completed profiles: {executed}")
+
+    except Exception as ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=ex)
+        raise
+    finally:
+        try: wifi_dut.interfaces.wifi.leave()
+        except Exception: pass
+        try: wifi_sniffer.interfaces.capture.stop_capture()
+        except Exception: pass
