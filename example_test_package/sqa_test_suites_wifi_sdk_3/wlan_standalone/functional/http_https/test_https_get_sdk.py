@@ -1607,3 +1607,46 @@ def test_wifi_sdk_https_get_no_file_on_remote_c510834(http_server, wifi_dut, wif
     finally:
         if http_client_initialized:
             wifi_dut.interfaces.wifi.http_client_deinit()
+
+
+@pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.HTTPLongerURL,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.legacy_deployed
+def test_wifi_sdk_http_get_with_weak_signal_70dbm_longer_url_bit_greater_than_2048_c476955(http_server, wifi_dut, http_client,
+                                                                      wifi_access_point, wifi_sniffer,
+                                                                      sl_collections, sniffer_filter,rf_attenuator):
+    """
+
+    Verify HTTPS GET with HTTP longer URL support BIT enable in opermode at Low RSSI (weak signal ~70dBm)
+
+    """
+    try:
+        set_db_value = 50
+
+        wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel, set_db_value)
+        time.sleep(10)
+        test_name = '476955'
+        index_path = "url_greater_than_2048_bytes/" * 75 + "LONG_PATH.htm"
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              http_client=http_client, test_name=test_name, sl_collections=sl_collections,
+                              http_server=http_server, index_path=index_path, sniffer_filter=sniffer_filter)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
