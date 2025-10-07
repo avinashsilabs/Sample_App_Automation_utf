@@ -12,8 +12,8 @@ from utf.utils.test_management.test_definition_utils import (
     generate_base_test_definitions_yaml,
 )
 from utf_wiseconnect.interfaces.web.fixtures import *  # NOSONAR
-from utf_wiseconnect.interfaces.sniffer_filter.fixtures import * # NOSONAR
-from utf_wiseconnect.interfaces.power_analyzer.fixtures import * # NOSONAR
+from utf_wiseconnect.interfaces.sniffer_filter.fixtures import *  # NOSONAR
+from utf_wiseconnect.interfaces.power_analyzer.fixtures import *  # NOSONAR
 
 import pytest
 import os
@@ -27,6 +27,7 @@ from utf.utils.fixtures import harness
 from utf.harness.harness import Harness
 from utf_wiseconnect.utils.rs_helper_commands import RSHelperCommands
 from utf_wiseconnect_3.tests.interfaces.sl_collections import SLCollections
+from utf_wifi_zephyr.tests.interfaces.zephyr_wifi_collections import ZephyrWifiCollections
 from utf_wiseconnect.utils.rs_helper_commands_ble import RSHelperCommandsBle
 import utf.utils.commander as commander
 from utf_wiseconnect.devices.rs911x import RS911X
@@ -72,7 +73,7 @@ def reset_wiseconnect_duts(request, harness):
 
 @pytest.fixture()
 def wiseconnect_duts(
-    request: pytest.FixtureRequest, harness
+        request: pytest.FixtureRequest, harness
 ) -> Generator[List[Device], None, None]:
     """
     This fixture creates devices from configuration specified under defaults and under wiseconnect_duts section
@@ -111,12 +112,13 @@ def firmware_loader(request, wiseconnect_duts):
             last_loaded_custom_app_name = app_name
         yield fw_mgr
 
+
 @pytest.fixture(autouse=True, scope="function")
 def roll_back_to_default_firmware(request, wiseconnect_duts):
     global last_loaded_custom_app_name
     if (
-        "firmware_loader" not in request.fixturenames
-        and last_loaded_custom_app_name is not None
+            "firmware_loader" not in request.fixturenames
+            and last_loaded_custom_app_name is not None
     ):
         fw_mgr = FirmwareManager.get_instance()
         fw_mgr.roll_back_to_default_firmware(
@@ -170,6 +172,11 @@ def rs_helper(request):
 @pytest.fixture()
 def sl_collections(request):
     yield SLCollections.create_instance()
+
+
+@pytest.fixture()
+def zephyr_wifi_collections(request):
+    yield ZephyrWifiCollections.create_instance()
 
 
 @pytest.fixture()

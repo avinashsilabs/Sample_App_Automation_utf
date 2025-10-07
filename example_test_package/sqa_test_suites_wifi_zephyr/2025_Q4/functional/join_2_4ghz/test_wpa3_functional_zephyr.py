@@ -1,0 +1,609 @@
+import time
+import pytest
+from utf.interfaces.iperf.iperf_constants import IperfConstants
+from threading import Thread
+from utf.utils.thread_base import ThreadBase
+from utf.utils.iperf.iperf_utils import ping
+from utf.utils.logger import get_logger
+from utf_wifi_zephyr.tests.devices.si91x import (
+    ZephyrWifiMfpOptions
+)
+
+
+def logger():
+    return get_logger(__name__)
+
+
+"""This function runs below test steps for DUT-RS9117
+        1. Configuration of DUT in 2G : B/G/N/AX
+        2. Start the sniffer before connection
+        3. Association of Third party AP's
+        4. Get the valid IP address
+        5. Enable the power save mode in DUT & BLE
+        6. Stop the sniffer  
+        7. Analyizing all sniffer capture packets for wpa3 functionality
+    setup requirement:
+        1. DUT(RS9117)
+        2. WSDK 3.0 Board
+        3. Raspberry PI4
+        4. Access Point(Third Party AP's)
+
+    Author: Vinod G
+"""
+
+
+class WifiConnectionThread(ThreadBase):
+    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, time_period=None, sniffer_filter=None,
+                 data=None, ping_count=None, data_transfer=True, test_name=None, zephyr_wifi_collections=None,
+                 wifi_client=None,
+                 traffic_type=None, dut_leave=True, protocol=None, net_perf_client=None, test_case_no=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.wifi_client = wifi_client
+        self.net_perf_client = net_perf_client
+        self.time_period = time_period
+        self.data = data
+        self.ping_count = ping_count
+        self.protocol = protocol
+        self.device_ip = None
+        self.test_case_no = test_case_no
+        self.data_transfer = data_transfer
+        self.traffic_type = traffic_type
+        self.wifi_sniffer = wifi_sniffer
+        self.sniffer_filter = sniffer_filter
+        self.test_case_no = test_case_no
+        self.data_transfer = data_transfer
+        self.zephyr_wifi_collections = zephyr_wifi_collections
+        self.dut_leave = dut_leave
+        self.test_name = test_name
+
+    def run(self):
+        try:
+            self.wifi_sniffer.interfaces.capture.configure_interface(
+                channel=self.wifi_access_point.interfaces.wifi.channel)
+            self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
+
+            if self.test_case_no == 34503:
+                logger().info(f"\n\nscanning for wpa3 Access Point with different combinations of scan\n\n\n")
+                scan_dict = [{"ssid": None, "channel": 0},
+                             {"ssid": None, "channel": self.wifi_access_point.interfaces.wifi.channel},
+                             {"ssid": self.wifi_access_point.interfaces.wifi.ssid,
+                              "channel": self.wifi_access_point.interfaces.wifi.channel}]
+
+                for i in range(len(scan_dict)):
+                    assert self.wifi_dut.interfaces.wifi.scan(ssid=scan_dict[i]['ssid'],
+                                                              channel=scan_dict[i]['channel'])
+                    time.sleep(3)
+
+            self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                              wifi_access_point=self.wifi_access_point,
+                                                                              associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                              power_save=False,
+                                                                              ping_after_power_save=False,
+                                                                              mfp=ZephyrWifiMfpOptions.WIFI_MFP_REQUIRED)
+            logger().info("DUT successfully connected with AP")
+
+            if self.test_case_no == 113911 or self.test_case_no == 113913:
+                host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+                device_ip = self.dut_addr['device_ip']
+                logger().info(f"Remote device ip :{host_ip}")
+                protocols = ["TCP", "UDP"]
+                traffic_types = ["TX", "RX"]
+                for protocol in protocols:
+                    for traffic_type in traffic_types:
+                        self.zephyr_wifi_collections.run_traffic(
+                            wifi_dut=self.wifi_dut,
+                            net_perf_client=self.net_perf_client,
+                            protocol=protocol,
+                            device_ip=device_ip,
+                            host_ip=host_ip,
+                            timeout=35,
+                            traffic_type=traffic_type,
+                        )
+
+            time.sleep(2)
+            if self.test_case_no == 34509:
+                logger().info("This is rejoin")
+            else:
+                self.wifi_dut.interfaces.wifi.leave()
+                time.sleep(2)
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                logger().info("Stop Sniffer finally")
+
+                if self.test_case_no != 113912 or self.test_case_no != 113911 or self.test_case_no != 113913 or self.test_case_no != 537920 or self.test_case_no != 537921:
+                    time.sleep(2)
+                    packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                        wlan_addr=self.dut_addr['dut_mac_address'],
+                        filter_name="wpa3_confirm_commit_message")
+                    logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
+
+                    packet_filter3 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                        wlan_addr=self.dut_addr['dut_mac_address'],
+                        filter_name="wpa3_4_way_handshake_message")
+                    logger().info(f"\n\n\n Sniffer Filter = {packet_filter3}\n\n")
+
+                    snif_pkt_count = \
+                        self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+                            'packet_count']
+                    assert snif_pkt_count, "Unable to find the commit & confirm packets."
+
+                    snif_pkt_count = \
+                        self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)[
+                            'packet_count']
+                    assert snif_pkt_count, "Unable to find association & ea pols packets."
+
+        except Exception as e:
+            logger().info(f"\n\n **** Got exception in test case {self.test_case_no} thread: {str(e)} ****\n\n")
+            raise e
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_scan_wpa3_c34503_04_05_07(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                            sniffer_filter, zephyr_wifi_collections):
+    ping_count = utf_constants.get("ping_count")
+    test_name = request.node.name
+    '''Verifying scan for wpa3 configured access point'''
+    logger().info(f"This test case will cover four test cases c34503, c34504, c34505, c34507")
+    wlan_obj = WifiConnectionThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                    ping_count=ping_count, test_name=test_name,
+                                    zephyr_wifi_collections=zephyr_wifi_collections,
+                                    sniffer_filter=sniffer_filter, test_case_no=34503, data_transfer=False)
+
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as e:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                                 sniffer_filter, zephyr_wifi_collections):
+    ping_count = utf_constants.get("ping_count")
+    iter_count = utf_constants.get("iter_count")
+    test_name = request.node.name
+    '''Verifying connection, disconnection and reconnection with WPA3 configured Access Point'''
+
+    wlan_obj = WifiConnectionThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                    ping_count=ping_count, test_name=test_name, sniffer_filter=sniffer_filter,
+                                    zephyr_wifi_collections=zephyr_wifi_collections, data_transfer=False)
+    try:
+        for i in range(0, iter_count):
+            wlan_obj.start()
+            wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                                   sniffer_filter, switch, zephyr_wifi_collections):
+    try:
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        ''' Verify Rejoin Functionality in WPA3 Security'''
+        state = switch.interfaces.pdu_switch.get_state()
+        logger().info("pdu switch state : " + str(state))
+        if state == 'true':
+            logger().info('PDU is ready for use')
+        else:
+            logger().info(f'\n\n Please check the AP & PDU current state')
+            assert False
+        '''Verifying the scan results with-in the configure time interval of 500 Milli-Seconds '''
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                        wifi_sniffer=wifi_sniffer,
+                                        ping_count=ping_count, test_name=test_name,
+                                        zephyr_wifi_collections=zephyr_wifi_collections,
+                                        data_transfer=False, test_case_no=34509)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(3)
+        if state == 'true':
+            logger().info('#### Turn off the Access Point')
+            switch.interfaces.pdu_switch.turn_off()
+        time.sleep(30)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        logger().info('##### Turn on Access point #####')
+        state = switch.interfaces.pdu_switch.get_state()
+        logger().info(f"checking status: {state}")
+        if state == 'false':
+            switch.interfaces.pdu_switch.turn_on()
+            logger().info(
+                f"PDU was off, trying to turn on using PDU, Please wait for 60 seconds "
+                f"to check DUT is rejoined to that AP or not ........")
+            time.sleep(60)
+        if wifi_dut.interfaces.wifi.associated is True:
+            logger().info(f"Initiating ping to DUT ip {wlan_obj.dut_addr['device_ip']} after successful rejoin")
+        ping_count = 10
+        device_ip = wlan_obj.dut_addr['device_ip']
+        status = ping(device_ip, ping_count)
+        assert status, "DUT not responding for ping request......"
+        if status == 1:
+            logger().info('#### Ping successful ####')
+        else:
+            logger().info('#### Ping unsuccessful ####')
+        logger().info("ping to DUT is successful....")
+        logger().info(f"DUT is going to leave the Thirdy Party")
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_addr['dut_mac_address'],
+            filter_name="probe_request")
+        logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find Probe Request packets'
+    except Exception as e:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exeception=e)
+        logger().info(f"\n\n **** Details of the Exception are:{str(e)} *****\n\n")
+        assert False, "Failed"
+    finally:
+        if state == 'false':
+            switch.interfaces.pdu_switch.turn_on()
+            logger().info(
+                f"Checking PDU status in finally state, trying to turn on using PDU, Please wait for 60 seconds ......")
+            time.sleep(60)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3', "protected_management_frame": "Capable"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_conn_STA_AP_in_H2E_mode_C113907(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                                  sniffer_filter, zephyr_wifi_collections):
+    try:
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"DUT MAC is : {dut_mac_addr}")
+        time.sleep(1)
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                        wifi_sniffer=wifi_sniffer,
+                                        ping_count=ping_count, test_name=test_name,
+                                        zephyr_wifi_collections=zephyr_wifi_collections,
+                                        data_transfer=False)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(3)
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_addr,
+            filter_name="wpa3_h2e_mode")
+        logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find Assoc req with H2E."
+    except Exception as e:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3', "protected_management_frame": "Capable"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_DUT_behaviour_rejoin_H2E_C113909(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                                   sniffer_filter, switch, zephyr_wifi_collections):
+    try:
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"DUT MAC is : {dut_mac_addr}")
+        ''' Verify Rejoin Functionality in WPA3 Security'''
+        state = switch.interfaces.pdu_switch.get_state()
+        logger().info("pdu switch state : " + str(state))
+        if state == 'true':
+            logger().info('PDU is ready for use')
+        else:
+            logger().info(f'\n\n Please check the AP & PDU current state')
+            assert False
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
+        wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
+                                      security=wifi_access_point.interfaces.wifi.security.name.lower(),
+                                      passphrase=wifi_access_point.interfaces.wifi.passphrase,
+                                      channel=wifi_access_point.interfaces.wifi.channel, timeout=60,
+                                      mfp=ZephyrWifiMfpOptions.WIFI_MFP_REQUIRED)
+        time.sleep(5)
+        ip_config = wifi_dut.interfaces.wifi.start_ip(timeout=30)
+        time.sleep(2)
+        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"DUT ip: {device_ip}")
+        time.sleep(2)
+        dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"DUT MAC is : {dut_mac_addr}")
+
+        time.sleep(2)
+        status = ping(device_ip, ping_count)
+        assert status is True, "DUT is not responding to ping request from third party device"
+        time.sleep(2)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_addr,
+            filter_name="wpa3_h2e_mode")
+        logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find Assoc req with H2E."
+        if state == 'true':
+            logger().info('#### Turn off the Access Point')
+            switch.interfaces.pdu_switch.turn_off()
+        time.sleep(30)
+        logger().info('##### Turn on Access point #####')
+        state = switch.interfaces.pdu_switch.get_state()
+        logger().info(f"checking status: {state}")
+        if state == 'false':
+            switch.interfaces.pdu_switch.turn_on()
+            logger().info(
+                f"PDU was off, trying to turn on using PDU, Please wait for 60 seconds to check DUT is rejoined to that AP or not ........")
+            time.sleep(60)
+        if wifi_dut.interfaces.wifi.associated is True:
+            logger().info(f"Initiating ping to DUT ip {device_ip} after successful rejoin")
+        status = ping(device_ip, ping_count)
+        assert status, "DUT not responding for ping request......"
+        if status == 1:
+            logger().info('#### Ping successful ####')
+        else:
+            logger().info('#### Ping unsuccessful ####')
+        time.sleep(2)
+        logger().info(f"DUT is leaving the Third party AP")
+        wifi_dut.interfaces.wifi.leave()
+    except Exception as e:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+        logger().info(f"\n\n **** Details of the Exception are:{str(e)} *****\n\n")
+        assert False, "Failed"
+    finally:
+        if state == 'false':
+            switch.interfaces.pdu_switch.turn_on()
+            logger().info(
+                f"Checking PDU status in finally state, trying to turn on using PDU, Please wait for 60 seconds......")
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3', "protected_management_frame": "Capable"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_thpt_STA_AP_in_H2E_mode_C113911(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
+                                                  net_perf_client, protocol, request, sniffer_filter, wifi_client,
+                                                  zephyr_wifi_collections):
+    try:
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"DUT MAC is : {dut_mac_addr}")
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                        wifi_sniffer=wifi_sniffer, wifi_client=wifi_client,
+                                        net_perf_client=net_perf_client,
+                                        ping_count=ping_count, test_name=test_name,
+                                        zephyr_wifi_collections=zephyr_wifi_collections,
+                                        protocol=protocol,
+                                        data_transfer=True, traffic_type="TX", test_case_no=113911)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(3)
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_addr,
+            filter_name="wpa3_h2e_mode")
+        logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find Assoc req with H2E."
+    except Exception as e:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "protected_management_frame": "Capable"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_conn_STA_AP_in_Transition_mode_C113912(wifi_sniffer, wifi_access_point, wifi_dut,
+                                                         utf_constants,
+                                                         request, sniffer_filter, zephyr_wifi_collections):
+    try:
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                        wifi_sniffer=wifi_sniffer,
+                                        ping_count=ping_count, test_name=test_name,
+                                        zephyr_wifi_collections=zephyr_wifi_collections,
+                                        data_transfer=False, test_case_no=113912)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(3)
+    except Exception as e:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "protected_management_frame": "Capable"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wifi_sdk_data_transfer_STA_in_Transition_mode_C113913(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
+                                                               wifi_client, net_perf_client, protocol, request,
+                                                               sniffer_filter, zephyr_wifi_collections):
+    try:
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                        wifi_sniffer=wifi_sniffer, wifi_client=wifi_client,
+                                        net_perf_client=net_perf_client,
+                                        ping_count=ping_count, test_name=test_name,
+                                        zephyr_wifi_collections=zephyr_wifi_collections,
+                                        protocol=protocol,
+                                        data_transfer=True, traffic_type="RX", test_case_no=113913)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(3)
+
+    except Exception as e:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point',
+                    wifi={"standard": 'gnbax', "security": 'WPA3', "protected_management_frame": "Capable"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_conn_with_ax_enabled_C537920(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                               sniffer_filter, zephyr_wifi_collections):
+    ''' Verify WPA3 with 11 AX enabled parameter in the AP'''
+    try:
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"DUT MAC is : {dut_mac_addr}")
+        time.sleep(1)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"MAC of AP2 is: {ap_bssid}")
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                        wifi_sniffer=wifi_sniffer,
+                                        ping_count=ping_count, test_name=test_name,
+                                        zephyr_wifi_collections=zephyr_wifi_collections,
+                                        data_transfer=False, test_case_no=537920)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(1)
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=ap_bssid,
+            filter_name="third_party_ap_ax")
+        logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find H2E Packets."
+        packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_addr,
+            filter_name="adv_he_info")
+        logger().info(f"\n\n\n Sniffer Filter = {packet_filter3}\n\n")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find advertising H2E Packets."
+        packet_filter4 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_addr,
+            filter_name="adv_he_in_data_pkt")
+        logger().info(f"\n\n\n Sniffer Filter = {packet_filter4}\n\n")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter4)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find advertising H2E Packets."
+    except Exception as e:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config('wifi_access_point',
+                    wifi={"security": 'WPA2WPA3MixedMode', "protected_management_frame": "Capable"})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_conn_when_ap_in_wpa3_mixed_mode_C537921(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
+                                                          request, sniffer_filter, zephyr_wifi_collections):
+    ''' Verify WPA3 functionality when third party AP is configured in WPA3 mixed mode and
+        11W as capable only see the behavior '''
+    try:
+        ping_count = utf_constants.get("ping_count")
+        test_name = request.node.name
+        dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"DUT MAC is : {dut_mac_addr}")
+        time.sleep(1)
+        wlan_obj = WifiConnectionThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                        wifi_sniffer=wifi_sniffer,
+                                        ping_count=ping_count, test_name=test_name,
+                                        zephyr_wifi_collections=zephyr_wifi_collections,
+                                        data_transfer=False, test_case_no=537921)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(1)
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_addr,
+            filter_name="pmf_bit_enable")
+        logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
+        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'packet_count']
+        assert snif_pkt_count, "Unable to find PMF bit enabled packets."
+    except Exception as e:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
