@@ -14,6 +14,7 @@ from utf.utils.test_management.test_definition_utils import (
 from utf_wiseconnect.interfaces.web.fixtures import *  # NOSONAR
 from utf_wiseconnect.interfaces.sniffer_filter.fixtures import * # NOSONAR
 from utf_wiseconnect.interfaces.power_analyzer.fixtures import * # NOSONAR
+from utf_wiseconnect.interfaces.performance_data.fixtures import * # NOSONAR
 
 import pytest
 import os
@@ -30,6 +31,13 @@ from utf_wiseconnect_3.tests.interfaces.sl_collections import SLCollections
 from utf_wiseconnect.utils.rs_helper_commands_ble import RSHelperCommandsBle
 import utf.utils.commander as commander
 from utf_wiseconnect.devices.rs911x import RS911X
+
+from utf.utils.vault import VaultClient
+from utf.utf_config import  get_or_create_reports_session_dir
+from utf.utf_session import get_active_session
+from utf.utf_queue_session import UtfQueueSession
+from data_transform.generate_perf_data import generate_perf_data_files
+from data_transform.send_perf_data_to_datalake import send_perf_data
 
 last_loaded_custom_app_name = None
 last_test_mode = None
@@ -230,3 +238,65 @@ def pytest_runtest_protocol(item, nextitem):
             (TestUserPropertiesSource.TEST_CUSTOM_INFO, custom_values)
         )
     yield
+
+@pytest.fixture
+def custom_performance_fixture(request, performance_fixture):
+    performance_file_root_dir, performance_file_name = performance_fixture
+    request.node.performance_file = os.path.join(
+        performance_file_root_dir, f"{request.node.name}.csv"
+    )
+    performance_file_name = request.node.performance_file
+    yield performance_file_root_dir, performance_file_name
+
+def pytest_addoption(parser):
+    parser.addoption("--generate_datalake_file", action="store",
+    default="false", help="to generate datalake files")
+    parser.addoption("--send_perf_data_to_datalake", action="store",
+    default="false", help="to send performance data to datalake")
+ 
+@pytest.hookimpl(tryfirst=True)
+def pytest_sessionfinish(session, exitstatus) -> None:
+    generate_datalake_file = session.config.getoption("--generate_datalake_file")
+    if str(generate_datalake_file).upper() == "TRUE":
+        try:
+            reports_dir = get_or_create_reports_session_dir(session.config)
+            utf_session = get_active_session()
+            publish_test_results = isinstance(utf_session, UtfQueueSession)
+            source_path, session_args_file, metadata_file_pattern = generate_perf_data_files(reports_dir, utf_session, publish_test_results)
+            logger().info(f"Generated datalake files Successfully")
+            logger().info(f"#" * 50)
+            logger().info(f"--source_path - {source_path}")
+            logger().info(f"--session_args_file - {session_args_file}")
+            logger().info(f"--metadata_file_pattern - {metadata_file_pattern}")
+            logger().info(f"#" * 50)
+        except Exception as e:
+            logger().error(f"Failed to Generate Perf Data Files - {e}")
+            return
+    send_perf_data_to_datalake  = session.config.getoption("--send_perf_data_to_datalake")
+    if str(send_perf_data_to_datalake).upper() == "TRUE":
+        try:
+            env_settings = EnvironSettings()
+            vault_addr = env_settings.VAULT_ADDR
+            vault_token  = env_settings.VAULT_TOKEN
+            os.environ["VAULT_ADDR"] = vault_addr
+            os.environ["VAULT_TOKEN"] = vault_token
+            tenant_key = VaultClient().get_secret_value(
+                "teams/iot-sqa/app/datalake-tenants" , "key"
+            )
+        except Exception as e:
+                logger().error(f"Unable to fetch tenant key from Vault {e}")
+                return
+        try:
+            result = send_perf_data(source_path=source_path, 
+                session_args_file=session_args_file, 
+                metadata_file_pattern=metadata_file_pattern,
+                datalake_env="dev",
+                delete_data_files=False,
+                tenant_key=tenant_key
+                )
+            if result:
+                logger().info(f"Sent Performace files to datalake files Successfully")
+        except Exception as e:
+            logger().error(f"Failed to Send Perf Data to Datalake - {e}")
+
+ 

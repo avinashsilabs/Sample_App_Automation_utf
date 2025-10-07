@@ -10,7 +10,7 @@ WORKDIR $APP_DIR
 # no changes should be required in this section
 #################################################
 ENV UTF_CORE_PATH /app/utf_core/src
-
+ENV UTF_CORE_TOOLS_PATH /app/utf_core/tools
 
 #################################################
 # UTF extension components
@@ -39,7 +39,7 @@ COPY utf_wifi_zephyr/ ./utf_wifi_zephyr/
 ENV UTF_EXTENSIONS_PATH=$APP_DIR/utf_wiseconnect:$APP_DIR/utf_wifi_zephyr
 
 # Set PYTHONPATH to include UTF core + all extensions
-ENV PYTHONPATH=$UTF_CORE_PATH:$UTF_EXTENSIONS_PATH
+ENV PYTHONPATH=$UTF_CORE_PATH:$UTF_EXTENSIONS_PATH:$UTF_CORE_TOOLS_PATH
 #################################################
 # Top-level application files
 #################################################
