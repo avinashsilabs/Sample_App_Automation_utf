@@ -104,6 +104,26 @@ class WLanJoinThread(ThreadBase):
                 logger().info("disconnecting to ap.....")
                 self.wifi_dut.interfaces.wifi.leave()
 
+            elif '777569' in self.test_case:
+
+                self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+
+                self.wifi_dut.interfaces.wifi.join(passphrase="12345",
+                                                   ssid=self.wifi_access_point.interfaces.wifi.ssid,
+                                                   security="wpa2",
+                                                   expected_status=SLStatus.SL_STATUS_SI91X_INVALID_PSK_LENGTH)
+                logger().info(
+                    f"Dut Tried to connect to ap with PSK length less than 8 , observed error code 0x10028 which is expected")
+
+                self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+
+                self.wifi_dut.interfaces.wifi.join(passphrase="1234567890123456789012345678901234567890123456789012345678901231111",
+                                                   ssid=self.wifi_access_point.interfaces.wifi.ssid,
+                                                   security="wpa2",
+                                                   expected_status=SLStatus.SL_STATUS_SI91X_INVALID_PSK_LENGTH)
+                logger().info(
+                    f"Dut Tried to connect to ap with PSK length greater than 63, observed error code 0x10028 which is expected")
+
             elif '19717' in self.test_case:
                 self.wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
 
@@ -2637,3 +2657,37 @@ def test_wifi_sdk_connectivity_with_wpa2_security_hidden_psk_conc_mode_c770032(w
 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": "pmkwithwrongpsk", "passphrase": 'thisisatestnetwork', "security": 'WPA2'})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_wifi_sdk_psk_length_is_more_than_63_or_less_than_8_bytes_c777569(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                               utf_constants, request, sl_collections, sniffer_filter):
+    """
+Test Steps:
+    1. Configure the DUT in WiFi Client mode for 2.4GHz
+    2. Try to join the access point with PSK length less than 8 characters
+    3. Verify error SL_STATUS_SI91X_INVALID_PSK_LENGTH (0x10028)
+    4. Try to join the access point with PSK length more than 63 characters
+    5. Verify error SL_STATUS_SI91X_INVALID_PSK_LENGTH (0x10028)
+    """
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+    try:
+        test_case = request.node.name
+        ping_count = utf_constants.get("ping_count")
+
+        wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                  sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case=test_case,
+                                  ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
