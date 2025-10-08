@@ -431,3 +431,277 @@ def test_wifi_sdk_wireless_get_info_in_wpa3_enterprise_11ax_c777567(wifi_dut, wi
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+
+    }
+)
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config(
+    "wifi_client", wifi={"interface": "wlan0", "ip_address": "192.168.0.1"}
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wifi_sdk_wireless_get_info_in_open_11b_c777566(wifi_dut,wifi_client,request, sl_collections,utf_constants):
+    """Verify whether the device is able to get the
+       wireless information in open security-station and 802.11b mode"""
+
+    ssid = "OPEN_11b"
+    channel = 8
+    power_save = True
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+    try:
+        wifi_client.interfaces.wifi.start_ap(
+            ssid=ssid,
+            security=SecurityMode.Open,
+            channel=channel,
+            standard=Standard.b,
+            region='US'
+        )
+        logger().info(f"\n **** Access Point started with SSID: {ssid}, Channel: {channel} ****\n")
+        ap_mac_address = wifi_client.interfaces.wifi.get_mac_address()
+        logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+        wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
+        dut_addr=wifi_dut.interfaces.wifi.join(ssid=ssid,
+                                      channel=channel,
+                                      security="open")
+
+        logger().info(f"\n **** DUT joined the Access Point with SSID: {ssid}, Channel: {channel} ****\n")
+        ip_obj = wifi_dut.interfaces.wifi.start_ip()
+        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_obj)
+        logger().info(f"\n **** Device IP Address: {device_ip} ****\n")
+
+        if power_save:
+            wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+            wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                          psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        logger().info(f"\n **** Device IP Address: {device_ip} ****\n")
+        status = ping(host=device_ip, count=10)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {dut_mac_address}")
+
+        data = wifi_dut.interfaces.wifi.sl_wifi_get_wireless_info(timeout=100)
+        logger().info(f"\n Wireless DUT Stats: {data} \n")
+        stats = {}
+        # Number of stations connected
+        stats['Number_of_stations_connected'] = re.findall(r"(?<=Number of stations connected\s:)\d+", str(data))[0]
+        # Channel number
+        stats['Channel number'] = re.findall(r"(?<=Channel number\s:)\d+", str(data))[0]
+        # SSID
+        stats['ssid'] = re.findall(r"(?<=ssid\s:)[^\n]+", str(data))[0]
+        # MAC address
+        stats['MAC_address'] = re.findall(r"(?<=MAC address\s:)[0-9a-fA-F:]+", str(data))[0]
+        # Security type
+        stats['Security_type'] = re.findall(r"(?<=Security type\s:)\d+", str(data))[0]
+        # PMF
+        stats['pmk'] = re.findall(r"(?<=\n)\w+(?=ipv4_address)", str(data))[0]
+        # IPv4 address
+        # stats['ipv4_address'] = re.findall(r"(?<=ipv4_address:)[0-9\.]+", str(data))[0]
+        stats['ipv4_address'] = re.findall(r"(?<=ipv4_address:)[0-9\:]+", str(data))[0]
+        stats['ipv4_address'] = stats['ipv4_address'].replace(":", ".")
+        logger().info(
+            f"Validation of wireless_info API")
+
+        if int(stats['Channel number']) == int(channel):
+            logger().info(
+                f"Channel number validation passed: {stats['Channel number']} == {channel}")
+        else:
+            logger().error(
+                f"Channel number validation failed: {stats['Channel number']} != {channel}")
+            assert False, f"Channel number mismatch: {stats['Channel number']} != {channel}"
+
+        if stats['ssid'] == ssid:
+            logger().info(f"SSID validation passed: {stats['ssid']} == { ssid}")
+        else:
+            logger().error(f"SSID validation failed: {stats['ssid']} != { ssid}")
+            assert False, f"SSID mismatch: {stats['ssid']} != { ssid}"
+
+        # Compare MAC addresses and log the result
+        if stats['MAC_address'].lower() == dut_mac_address.lower():
+            logger().info(f"MAC address validation passed: {stats['MAC_address']} == {dut_mac_address}")
+        else:
+            logger().error(f"MAC address validation failed: {stats['MAC_address']} != {dut_mac_address}")
+            assert False, f"MAC address mismatch: {stats['MAC_address']} != {dut_mac_address}"
+
+        dut_security_type = int(wifi_dut.interfaces.wifi.convert_security_mode('open'))
+        stats_security_type = int(stats['Security_type'])
+
+        if stats_security_type == dut_security_type:
+            logger().info(f"Security type validation passed: {stats_security_type} == {dut_security_type}")
+        else:
+            logger().error(f"Security type validation failed: {stats_security_type} != {dut_security_type}")
+            assert False, f"Security type mismatch: {stats_security_type} != {dut_security_type}"
+
+        logger().info(f"PMK value from get wireless info API : {stats['pmk']}")
+
+        ip_address = str(wifi_dut.interfaces.wifi.get_ip_address())
+        if ip_address == str(stats['ipv4_address']):
+            logger().info(f"IP address validation passed: {ip_address} == {stats['ipv4_address']}")
+        else:
+            logger().error(f"IP address validation failed: {ip_address} != {stats['ipv4_address']}")
+            assert False, f"IP address mismatch: {ip_address} != {stats['ipv4_address']}"
+
+        ap_standard = wifi_client.interfaces.wifi.standard
+        logger().info(f"802.11 wireless Standard info: {ap_standard}")
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+
+    }
+)
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config(
+    "wifi_client", wifi={"interface": "wlan0", "ip_address": "192.168.0.1"}
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "bt_powersave_disable"])
+def test_wifi_sdk_wireless_get_info_in_wpa2_11g_c777568(wifi_dut,wifi_client,request, sl_collections,utf_constants):
+    """Verify whether the device is able to get the
+       wireless information in WAP2 security-station and 802.11g mode)"""
+
+    ssid = "WPA2_11g"
+    channel = 8
+    passphrase = "mypassword123"
+    power_save = True
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+    try:
+        wifi_client.interfaces.wifi.start_ap(
+            ssid=ssid,
+            security=SecurityMode.WPA2,
+            passphrase=passphrase,
+            channel=channel,
+            standard=Standard.g,
+            region='US'
+        )
+        logger().info(f"\n **** Access Point started with SSID: {ssid}, Channel: {channel} ****\n")
+        ap_mac_address = wifi_client.interfaces.wifi.get_mac_address()
+        logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+        wifi_dut.interfaces.wifi.scan(ssid=None, channel=channel)
+
+        dut_addr = wifi_dut.interfaces.wifi.join(ssid=ssid,
+                                                 channel=channel,
+                                                 passphrase=passphrase,
+                                                 security="wpa2")
+        logger().info(f"\n **** DUT joined the Access Point with SSID: {ssid}, Channel: {channel} ****\n")
+        ip_obj = wifi_dut.interfaces.wifi.start_ip()
+        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_obj)
+        logger().info(f"\n **** Device IP Address: {device_ip} ****\n")
+
+        if power_save:
+            wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+            wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                          psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        logger().info(f"\n **** Device IP Address: {device_ip} ****\n")
+        status = ping(host=device_ip, count=10)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {dut_mac_address}")
+
+        data = wifi_dut.interfaces.wifi.sl_wifi_get_wireless_info(timeout=100)
+        logger().info(f"\n Wireless DUT Stats: {data} \n")
+        stats = {}
+        # Number of stations connected
+        stats['Number_of_stations_connected'] = re.findall(r"(?<=Number of stations connected\s:)\d+", str(data))[0]
+        # Channel number
+        stats['Channel number'] = re.findall(r"(?<=Channel number\s:)\d+", str(data))[0]
+        # SSID
+        stats['ssid'] = re.findall(r"(?<=ssid\s:)[^\n]+", str(data))[0]
+        # MAC address
+        stats['MAC_address'] = re.findall(r"(?<=MAC address\s:)[0-9a-fA-F:]+", str(data))[0]
+        # Security type
+        stats['Security_type'] = re.findall(r"(?<=Security type\s:)\d+", str(data))[0]
+        # PMF
+        stats['pmk'] = re.findall(r"(?<=\n)\w+(?=ipv4_address)", str(data))[0]
+        # IPv4 address
+        # stats['ipv4_address'] = re.findall(r"(?<=ipv4_address:)[0-9\.]+", str(data))[0]
+        stats['ipv4_address'] = re.findall(r"(?<=ipv4_address:)[0-9\:]+", str(data))[0]
+        stats['ipv4_address'] = stats['ipv4_address'].replace(":", ".")
+
+
+        logger().info(
+            f"Validation of wireless_info API")
+
+        if int(stats['Channel number']) == int(channel):
+            logger().info(
+                f"Channel number validation passed: {stats['Channel number']} == {channel}")
+        else:
+            logger().error(
+                f"Channel number validation failed: {stats['Channel number']} != {channel}")
+            assert False, f"Channel number mismatch: {stats['Channel number']} != {channel}"
+
+        if stats['ssid'] == ssid:
+            logger().info(f"SSID validation passed: {stats['ssid']} == { ssid}")
+        else:
+            logger().error(f"SSID validation failed: {stats['ssid']} != { ssid}")
+            assert False, f"SSID mismatch: {stats['ssid']} != { ssid}"
+
+        # Compare MAC addresses and log the result
+        if stats['MAC_address'].lower() == dut_mac_address.lower():
+            logger().info(f"MAC address validation passed: {stats['MAC_address']} == {dut_mac_address}")
+        else:
+            logger().error(f"MAC address validation failed: {stats['MAC_address']} != {dut_mac_address}")
+            assert False, f"MAC address mismatch: {stats['MAC_address']} != {dut_mac_address}"
+
+        dut_security_type = int(wifi_dut.interfaces.wifi.convert_security_mode('wpa2'))
+        stats_security_type = int(stats['Security_type'])
+
+        if stats_security_type == dut_security_type:
+            logger().info(f"Security type validation passed: {stats_security_type} == {dut_security_type}")
+        else:
+            logger().error(f"Security type validation failed: {stats_security_type} != {dut_security_type}")
+            assert False, f"Security type mismatch: {stats_security_type} != {dut_security_type}"
+
+        logger().info(f"PMK value from get wireless info API : {stats['pmk']}")
+
+        ip_address = str(wifi_dut.interfaces.wifi.get_ip_address())
+        if ip_address == str(stats['ipv4_address']):
+            logger().info(f"IP address validation passed: {ip_address} == {stats['ipv4_address']}")
+        else:
+            logger().error(f"IP address validation failed: {ip_address} != {stats['ipv4_address']}")
+            assert False, f"IP address mismatch: {ip_address} != {stats['ipv4_address']}"
+
+        ap_standard = wifi_client.interfaces.wifi.standard
+
+        logger().info(f"802.11 wireless Standard info: {ap_standard}")
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
