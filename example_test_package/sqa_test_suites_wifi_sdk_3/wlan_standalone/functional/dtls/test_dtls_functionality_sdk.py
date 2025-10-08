@@ -90,7 +90,7 @@ def wifi_dut_marker(ca_cert=None, opermode=0, stack_len=None, thread_no=None, pm
 
 class WlanThread(ThreadBase):
     def __init__(self, wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
-                 sniffer_filter, test_name, dtls_version,rejoin_params= None):
+                 sniffer_filter, test_name, dtls_version, rejoin_params=None):
         super().__init__()
         self.interfaces = None
         self.wifi_dut = wifi_dut
@@ -458,6 +458,7 @@ class WlanThread(ThreadBase):
         logger().info(f"Received rejoin error event after {t.duration:.2f}s")
         return True
 
+
 class DtlsVersion10Handler(ThreadBase):
     """Thread class for DTLS 1.0 operations"""
 
@@ -590,6 +591,7 @@ class DtlsVersion10Handler(ThreadBase):
                 logger().error(f"Failed to stop OpenSSL server in exception handler: {cleanup_error}")
 
             raise
+
 
 class DtlsVersion12Handler(ThreadBase):
     """Thread class for DTLS 1.2 operations"""
@@ -728,7 +730,8 @@ class DtlsVersion12Handler(ThreadBase):
 class dtls_send_with_long_duration(ThreadBase):
     """Thread class for long duration DTLS operations during rejoin tests"""
 
-    def __init__(self, dtls_thread, wifi_dut, wifi_client, openssl, wifi_access_point, wifi_sniffer, sl_collections, duration_sec=None):
+    def __init__(self, dtls_thread, wifi_dut, wifi_client, openssl, wifi_access_point, wifi_sniffer, sl_collections,
+                 duration_sec=None):
         super().__init__()
         self.dtls_thread = dtls_thread
         self.wifi_dut = wifi_dut
@@ -753,7 +756,7 @@ class dtls_send_with_long_duration(ThreadBase):
             # Get server IP
             self.dtls_thread.server_ip = self.wifi_client.interfaces.wifi.get_ip_address()
             self.dtls_thread.sock1 = self.wifi_dut.interfaces.wifi.socket(domain="AF_INET", stream_type="SOCK_DGRAM",
-                                                                        protocol="IPPROTO_UDP")
+                                                                          protocol="IPPROTO_UDP")
             self.wifi_dut.interfaces.wifi.bsdSetSocketOptAsync(
                 self.dtls_thread.sock1,
                 option_level="SOL_SOCKET",
@@ -853,7 +856,9 @@ def test_wifi_sdk_dtls_functionality_with_dhcp_renewal_c766294(wifi_sniffer, wif
 
     # Start DTLS send in a thread
 
-    dtls_send_thread = dtls_send_with_long_duration(dtls_thread, wifi_dut, wifi_client, openssl, wifi_access_point, wifi_sniffer, sl_collections, duration_sec=300)  # 5 minutes for DHCP renewal
+    dtls_send_thread = dtls_send_with_long_duration(dtls_thread, wifi_dut, wifi_client, openssl, wifi_access_point,
+                                                    wifi_sniffer, sl_collections,
+                                                    duration_sec=300)  # 5 minutes for DHCP renewal
     dtls_send_thread.start()
     # Wait to overlap DHCP renewal (simulate 120s lease, renewal at ~120s)
     logger().info("Waiting for DHCP renewal to occur during DTLS transfer...")
@@ -1371,7 +1376,8 @@ def test_wifi_sdk_dtls_client_data_transfer_after_rejoin_process_c766275(wifi_sn
 
         # Create DTLS send thread using the thread class
         dtls_send_thread = dtls_send_with_long_duration(dtls_thread, wifi_dut, wifi_client, openssl, wifi_access_point,
-                                                  wifi_sniffer, sl_collections, duration_sec=120)  # 1 minute for rejoin test
+                                                        wifi_sniffer, sl_collections,
+                                                        duration_sec=120)  # 1 minute for rejoin test
         dtls_send_thread.start()
         # started dtls messages before and after turning off AP
 
@@ -1402,13 +1408,14 @@ def test_wifi_sdk_dtls_client_data_transfer_after_rejoin_process_c766275(wifi_sn
         logger().info('******* Turn on Access point Finally **********')
         switch.interfaces.pdu_switch.turn_on(delay=30)
 
+
 @wifi_dut_marker(thread_no=2, stack_len=3584, priority=8)
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 def test_wifi_sdk_dtls_client_data_transfer_after_rejoin_failure_c766276(wifi_sniffer, wifi_client, wifi_dut,
-                                                                            wifi_access_point, openssl, switch,
-                                                                            sl_collections, sniffer_filter):
+                                                                         wifi_access_point, openssl, switch,
+                                                                         sl_collections, sniffer_filter):
     '''Verify DTLS client data transfer after rejoin process (rejoin param- max retry=1) using 2 threads:
     Thread 1: DTLS data transfer
     Thread 2: AP power control to trigger rejoin'''
@@ -1425,7 +1432,8 @@ def test_wifi_sdk_dtls_client_data_transfer_after_rejoin_failure_c766276(wifi_sn
 
         # Start DTLS functionality (this will handle rejoin automatically due to rejoin params)
         logger().info("Starting DTLS data transfer thread...")
-        dtls_send_thread = dtls_send_with_long_duration(dtls_thread, wifi_dut, wifi_client, openssl, wifi_access_point, wifi_sniffer, sl_collections,duration_sec=60)
+        dtls_send_thread = dtls_send_with_long_duration(dtls_thread, wifi_dut, wifi_client, openssl, wifi_access_point,
+                                                        wifi_sniffer, sl_collections, duration_sec=60)
         dtls_send_thread.start()
         time.sleep(5)
 
@@ -1439,7 +1447,7 @@ def test_wifi_sdk_dtls_client_data_transfer_after_rejoin_failure_c766276(wifi_sn
         switch.interfaces.pdu_switch.turn_on(delay=100)
 
         dtls_send_thread.wait_for_exit()
-        #Need to repeat from Join to AP after rejoin failure
+        # Need to repeat from Join to AP after rejoin failure
         dtls_thread.connect_to_access_point()
         logger().info("DUT joined AP successfully after rejoin failure")
 
@@ -1452,3 +1460,27 @@ def test_wifi_sdk_dtls_client_data_transfer_after_rejoin_failure_c766276(wifi_sn
     finally:
         logger().info('******* Turn on Access point Finally **********')
         switch.interfaces.pdu_switch.turn_on(delay=30)
+
+
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.parametrize("dhcp_lease", [120])
+@pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "120", "security": "Open", })
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.deployed_25q2
+def test_wifi_sdk_DTLS_functionality_weak_RSSI_60dBm_c766301(wifi_sniffer, wifi_client, wifi_dut, wifi_access_point,
+                                                             openssl, sl_collections, sniffer_filter, dhcp_lease,
+                                                             rf_attenuator):
+    try:
+        set_db_value = 50
+
+        wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel=1, db_value=set_db_value)
+
+        """ Verify test_wifi_sdk_DTLS_functionality_weak_RSSI_60dBm """
+        dtls_thread = WlanThread(wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, openssl, sl_collections,
+                                 sniffer_filter, test_name="test_c766301", dtls_version="-dtls1_2")
+        dtls_thread.connect_to_access_point()
+
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
