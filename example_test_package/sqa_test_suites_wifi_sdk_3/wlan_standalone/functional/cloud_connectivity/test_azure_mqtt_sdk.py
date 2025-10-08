@@ -147,10 +147,26 @@ class Azure_iot_Thread():
         )
         self.dut_addr['ap_mac_address'] = self.wifi_access_point.interfaces.wifi.bssid
 
-        result = self.wifi_dut.interfaces.wifi.dns_get(domain_name=self.host_name,
-                                                       query_timeout=20000,
-                                                       timeout=100)
-        self.host_ip = (result.decode()).strip()
+        # Perform DNS lookup with a small retry loop to tolerate transient timeouts
+        dns_attempts = 3
+        dns_delay = 5
+        last_exc = None
+        for attempt in range(dns_attempts):
+            try:
+                result = self.wifi_dut.interfaces.wifi.dns_get(domain_name=self.host_name,
+                                                               query_timeout=20000,
+                                                               timeout=100)
+                # dns_get returns bytes; decode and strip to get the IP string
+                self.host_ip = (result.decode()).strip() if isinstance(result, (bytes, bytearray)) else str(result).strip()
+                break
+            except Exception as e:
+                last_exc = e
+                logger().warning(f"DNS lookup attempt {attempt + 1} failed for '{self.host_name}': {e}")
+                if attempt < dns_attempts - 1:
+                    time.sleep(dns_delay)
+                else:
+                    # re-raise the last exception so upper code can handle it
+                    raise
 
     @retry(Exception, delay=5, tries=2)
     def publish_from_dut(self, count=1, message="hello", timeout=120):
@@ -267,6 +283,7 @@ class Azure_Thread():
             self.azure_iot_client.interfaces.hub.send_message_to_device(
                 self.device_id, message  # "{message} {count}"
             )
+            time.sleep(10)
             recv_msg = self.receive_messages_from_dut()
             assert message == recv_msg, "Failed to receive published message in DUT"
             time.sleep(2)
@@ -350,10 +367,24 @@ class Azure_Thread():
         )
         self.dut_addr['ap_mac_address'] = self.wifi_access_point.interfaces.wifi.bssid
 
-        result = self.wifi_dut.interfaces.wifi.dns_get(domain_name=self.host_name,
-                                                       query_timeout=20000,
-                                                       timeout=100)
-        self.host_ip = (result.decode()).strip()
+        # Perform DNS lookup with a small retry loop to tolerate transient timeouts
+        dns_attempts = 3
+        dns_delay = 5
+        last_exc = None
+        for attempt in range(dns_attempts):
+            try:
+                result = self.wifi_dut.interfaces.wifi.dns_get(domain_name=self.host_name,
+                                                               query_timeout=20000,
+                                                               timeout=100)
+                self.host_ip = (result.decode()).strip() if isinstance(result, (bytes, bytearray)) else str(result).strip()
+                break
+            except Exception as e:
+                last_exc = e
+                logger().warning(f"DNS lookup attempt {attempt + 1} failed for '{self.host_name}': {e}")
+                if attempt < dns_attempts - 1:
+                    time.sleep(dns_delay)
+                else:
+                    raise
 
     def azure_iot_test(self, socket=True, init=True, subscribe=True, publish=True, receive=True, disconnect=True):
 
