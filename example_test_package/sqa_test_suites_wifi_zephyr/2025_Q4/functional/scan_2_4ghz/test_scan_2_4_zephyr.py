@@ -2,7 +2,7 @@ import time
 import re
 import pytest
 from utf.utils.logger import get_logger
-from utf_wifi_zephyr.tests.sl_status import SLStatus
+from utf_wifi_zephyr.utils.sl_status import SLStatus
 from utf.utils.time_measurer import TimeMeasurer
 
 

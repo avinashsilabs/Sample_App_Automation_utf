@@ -6,7 +6,7 @@ from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
 
 from utf.utils.stopwatch import Stopwatch
-from utf_wifi_zephyr.tests.interfaces.zephyr_wifi_test_agent_cli import SLWifiCLI
+from utf_wifi_zephyr.interfaces.zephyr_wifi_test_agent_cli import SLWifiCLI
 
 
 

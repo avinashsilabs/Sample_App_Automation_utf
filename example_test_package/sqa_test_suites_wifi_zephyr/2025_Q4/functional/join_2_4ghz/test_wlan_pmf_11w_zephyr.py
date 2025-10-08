@@ -2,11 +2,11 @@ import time
 import pytest as pytest
 from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
-from utf_wifi_zephyr.tests.devices.si91x import (
+from utf_wifi_zephyr.devices.si91x import (
     ZephyrWifiMfpOptions
 )
 from utf_wiseconnect_3.tests.sl_status import SLStatus
-from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
+from utf.interfaces.iperf.iperf_constants import IperfConstants
 
 
 def logger():

@@ -1,5 +1,3 @@
-import time
-
 from utf import TestResultsModelAttrs, TestUserPropertiesSource
 from utf.apis.test_rail import extract_test_case_id
 
@@ -11,12 +9,6 @@ from utf.utils import (
 from utf.utils.test_management.test_definition_utils import (
     generate_base_test_definitions_yaml,
 )
-from utf_wiseconnect.interfaces.web.fixtures import *  # NOSONAR
-from utf_wiseconnect.interfaces.sniffer_filter.fixtures import * # NOSONAR
-from utf_wiseconnect.interfaces.power_analyzer.fixtures import * # NOSONAR
-from utf_wiseconnect.interfaces.performance_data.fixtures import * # NOSONAR
-from utf_wiseconnect.interfaces.sniffer_filter.fixtures import *  # NOSONAR
-from utf_wiseconnect.interfaces.power_analyzer.fixtures import *  # NOSONAR
 
 import pytest
 import os
@@ -30,9 +22,8 @@ from utf.utils.fixtures import harness
 from utf.harness.harness import Harness
 from utf_wiseconnect.utils.rs_helper_commands import RSHelperCommands
 from utf_wiseconnect_3.tests.interfaces.sl_collections import SLCollections
-from utf_wifi_zephyr.tests.interfaces.zephyr_wifi_collections import ZephyrWifiCollections
+from utf_wifi_zephyr.interfaces.zephyr_wifi_collections import ZephyrWifiCollections
 from utf_wiseconnect.utils.rs_helper_commands_ble import RSHelperCommandsBle
-import utf.utils.commander as commander
 from utf_wiseconnect.devices.rs911x import RS911X
 
 from utf.utils.vault import VaultClient

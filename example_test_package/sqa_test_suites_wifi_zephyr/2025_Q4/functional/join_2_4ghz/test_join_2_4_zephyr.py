@@ -6,7 +6,7 @@ from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utf_config import UtfConfig
-from utf_wifi_zephyr.tests.sl_status import SLStatus
+from utf_wifi_zephyr.utils.sl_status import SLStatus
 
 
 def logger():

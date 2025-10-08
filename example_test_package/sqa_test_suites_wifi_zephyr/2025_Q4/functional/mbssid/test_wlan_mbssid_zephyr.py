@@ -1,16 +1,15 @@
 import re
 import time
 import pytest as pytest
-from utf.interfaces.wifi import SecurityMode
 from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
 
 # from example_test_package.sqa_test_suites_wifi_zephyr.functional.data_rates.test_wlan_data_rates_sdk \
 #     import SocketDataTransfer
-from utf_wifi_zephyr.tests.sl_status import SLStatus
+from utf_wifi_zephyr.utils.sl_status import SLStatus
 from collections import Counter
 from utf.interfaces.iperf.iperf_constants import IperfConstants
-from utf_wifi_zephyr.tests.devices.si91x import (
+from utf_wifi_zephyr.devices.si91x import (
     ZephyrWifiMfpOptions
 )
 from threading import Thread

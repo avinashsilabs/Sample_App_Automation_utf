@@ -20,7 +20,7 @@ import time
 import pytest
 from utf.utils.logger import get_logger
 from utf.utils.stopwatch import Stopwatch
-from utf_wifi_zephyr.tests.sl_status import SLStatus
+from utf_wifi_zephyr.utils.sl_status import SLStatus
 
 
 def logger():

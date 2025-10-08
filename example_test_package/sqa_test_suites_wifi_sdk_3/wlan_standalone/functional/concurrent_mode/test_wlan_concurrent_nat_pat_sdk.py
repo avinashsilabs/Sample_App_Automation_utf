@@ -1,33 +1,16 @@
-import re
-import uuid
-from datetime import datetime
 import time
-from typing import Dict
-from random import randint
-from threading import Thread
 from utf.interfaces.socket.fixtures import remote_socket_factory
-from utf.utils.time_measurer import TimeMeasurer
-from utf.utf_config import UtfConfig
 from utf.interfaces.wifi import SecurityMode
-from utf.utils.stopwatch import Stopwatch
 from utf.utils.thread_base import ThreadBase
 import pytest as pytest
 from utf.interfaces.iperf.iperf_constants import IperfConstants
-from utf import UtfDatabaseProperties
-from utf_wifi_zephyr.tests.sl_status import SLStatus
-from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
-from utf.interfaces.wifi import WlanError
+from utf_wifi_zephyr.utils.sl_status import SLStatus
 from utf.utils.logger import get_logger
-from utf.utils.iperf.iperf_utils import ping
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xOperatingMode, Si91xFeatureBitMap, Si91xTCPIPFeatureBitMap, \
     Si91xCustomFeatureBitMap, \
-    Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, Si91xBLEFeatureBitMap, Si91xConfigFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xAwsQos
-from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
+    Si91xExtTCPIPFeatureBitMap, Si91xExtCustomFeatureBitMap
 import string
 import random
-from AWSIoTPythonSDK.core.protocol.internal.clients import ClientStatus
-from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.cloud_connectivity.test_aws_iot_wifi_sqa_sdk import AwsConnection
-
 
 """
     setup requirement:

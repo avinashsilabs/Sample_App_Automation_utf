@@ -1,11 +1,10 @@
 import time
 import pytest
 from utf.interfaces.iperf.iperf_constants import IperfConstants
-from threading import Thread
 from utf.utils.thread_base import ThreadBase
 from utf.utils.iperf.iperf_utils import ping
 from utf.utils.logger import get_logger
-from utf_wifi_zephyr.tests.devices.si91x import (
+from utf_wifi_zephyr.devices.si91x import (
     ZephyrWifiMfpOptions
 )
 
