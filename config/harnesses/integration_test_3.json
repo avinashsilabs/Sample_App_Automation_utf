@@ -84,7 +84,7 @@
                   "admin_password": "bhuvgycft",
                   "ssid": "TESTZESTDLIN3",
                   "passphrase": "thisisatestnetwork",
-                  "channel": 6,
+                  "channel": 8,
                   "cipher": "AES"
                }
             }
@@ -96,7 +96,7 @@
                   "security": "WPA2",
                   "ssid": "TESTZESTDLIN3",
                   "passphrase": "thisisatestnetwork",
-                  "channel": 6,
+                  "channel": 8,
                   "cipher": "AES"
                }
             }
@@ -491,7 +491,7 @@
          "wifi": {
             "ssid": "TESTZESTDLIN3",
             "security": "WPA2",
-            "channel": 6,
+            "channel": 8,
             "passphrase": "thisisatestnetwork",
             "server_ip": "192.168.0.1",
             "num_ping_attempts": 10,
