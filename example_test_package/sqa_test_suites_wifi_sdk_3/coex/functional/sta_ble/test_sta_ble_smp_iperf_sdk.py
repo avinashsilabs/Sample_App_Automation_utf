@@ -145,6 +145,8 @@ class get_throughput(ThreadBase):
                                                    timeout=self.timeout + 20, ip_version=self.ip_version,
                                                    async_socket=self.async_socket)
 
+                client_thread1.join()
+
                 self.throughput_remote = self.net_perf_client.interfaces.net_perf.process_output(is_client=True)
                 assert self.throughput_remote is not None, "Throughput not found"
                 logger().info("data transfer is successful")
@@ -1612,8 +1614,8 @@ def test_Coex_sdk_ADV_BLE_WLAN_TCP_RX_packet_loss_C133469(
         throughput = throughput_obj.throughput
 
         packets, data_mb = calculate_packets_and_data(throughput, 60, 1460)
-        logger().info(f"Number of packets sent: {packets}")
-        logger().info(f"Total data transmitted in MBYTES: {data_mb} MB")
+        logger().info(f"Number of packets received: {packets}")
+        logger().info(f"Total data received in MBYTES: {data_mb} MB")
         rx_data = data_mb
 
         logger().info(f"tx_data: {tx_data}MBytes")
