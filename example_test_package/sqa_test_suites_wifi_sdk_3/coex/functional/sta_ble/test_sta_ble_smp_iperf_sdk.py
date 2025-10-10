@@ -29,7 +29,7 @@ from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.utils.logger import get_logger
 from test_sta_ble_sdk import BleThreadFunctionality, WifiJoinThread
 from utf.utils.thread_base import ThreadBase
-
+from threading import Thread
 ble_obj = None
 
 def logger():
@@ -57,6 +57,109 @@ def num_sort(input_string: str):
 
 """
 ble_obj = None
+
+
+
+class get_throughput(ThreadBase):
+
+    def __init__(self, wifi_dut=None, net_perf_client=None, protocol=None, device_ip=None, host_ip=None,
+                 timeout=60, traffic_type="TX", buffer_size_tcp=1460, buffer_size_udp=1470,
+                 ip_version=4, async_socket=0, bandwidth="60M",
+                 protocol_family=2):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.net_perf_client = net_perf_client
+        self.protocol = protocol
+        self.device_ip = device_ip
+        self.host_ip = host_ip
+        self.traffic_type = traffic_type
+        self.buffer_size_tcp = buffer_size_tcp
+        self.buffer_size_udp = buffer_size_udp
+        self.ip_version = ip_version
+        self.async_socket = async_socket
+        self.bandwidth = bandwidth
+        self.protocol_family = protocol_family
+        self.timeout = timeout
+        self.throughput = None
+        self.throughput_remote = None
+
+
+    def run(self):
+
+        if self.traffic_type == "TX":
+            logger().info("starting the server from Remote device")
+            # starting iperf
+            self.net_perf_client.interfaces.net_perf.init_server(host_ip=self.host_ip, device_ip=self.device_ip,
+                                                                 protocol=self.protocol, time_out=self.timeout,
+                                                                 version=self.ip_version)
+            self.net_perf_client.interfaces.net_perf.start()
+
+            if self.protocol == "TCP":
+                logger().info("sending data from DUT")
+                status, data = self.wifi_dut.interfaces.wifi.iperf(family=self.protocol_family, transfer_type=1, protocol=6,
+                                                              local_port=self.net_perf_client.interfaces.net_perf.server_port,
+                                                               local_ip=self.device_ip, remote_ip=self.host_ip,
+                                                               remote_port=self.net_perf_client.interfaces.net_perf.server_port,
+                                                               size=self.buffer_size_tcp,
+                                                               ttl=self.timeout,
+                                                               throughput_type=1, qos=0,
+                                                               timeout=self.timeout + 20, ip_version=self.ip_version,
+                                                               async_socket=self.async_socket)
+
+
+            # # get and print throughput
+            self.throughput_remote = self.net_perf_client.interfaces.net_perf.process_output()
+            assert self.throughput_remote is not None, "Throughput not found"
+            logger().info("data transfer is successful")
+            self.net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+
+            # return data
+            pattern = r"Throughput achieved @ (\d+\.?\d*) Mbps"
+            match = re.search(pattern, data)
+            if match:
+                self.throughput = float(match.group(1))
+                logger().info(f"self.throughput :{self.throughput}")
+
+        if self.traffic_type == "RX":
+
+            self.net_perf_client.interfaces.net_perf.init_client(host_ip=self.host_ip, device_ip=self.device_ip,
+                                                            protocol=self.protocol, time_out=self.timeout,
+                                                            version=self.ip_version,
+                                                            bandwidth=self.bandwidth)
+            logger().info(f"Host IP: {self.host_ip}, Dut IP: {self.device_ip}, Protocol: {self.protocol}")
+            logger().info(f"***** starting iperf ******")
+
+            def start_client():
+                time.sleep(3)
+                logger().info(f"***** start listening  ******")
+                self.net_perf_client.interfaces.net_perf.start()
+
+            if self.protocol == "TCP":
+                client_thread1 = Thread(target=start_client, args=(),)
+                client_thread1.start()
+                status, data = self.wifi_dut.interfaces.wifi.iperf(family=self.protocol_family, transfer_type=1, protocol=6,
+                                                   local_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                   local_ip=self.device_ip, remote_ip=self.host_ip,
+                                                   remote_port=self.net_perf_client.interfaces.net_perf.client_port,
+                                                   size=self.buffer_size_tcp, ttl=self.timeout, throughput_type=3, qos=0,
+                                                   timeout=self.timeout + 20, ip_version=self.ip_version,
+                                                   async_socket=self.async_socket)
+
+                self.throughput_remote = self.net_perf_client.interfaces.net_perf.process_output(is_client=True)
+                assert self.throughput_remote is not None, "Throughput not found"
+                logger().info("data transfer is successful")
+
+                # return data
+                pattern = r"Throughput achieved @ (\d+\.?\d*) Mbps"
+                match = re.search(pattern, data)
+                if match:
+                    self.throughput = float(match.group(1))
+                    logger().info(f"self.throughput :{self.throughput}")
+
+            self.net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+            time.sleep(5)
+
+
 
 pytestmark = [
     pytest.mark.config(
@@ -1267,6 +1370,30 @@ def test_Coex_sdk_2_TCP_RX_ble_slave_C622327(
 
 
 
+
+
+def calculate_packets_and_data(throughput_mbps, time_seconds, packet_size_bytes):
+    # Convert throughput to bits per second
+    throughput_bps = throughput_mbps * 1_000_000
+
+    # Total bits transmitted
+    total_bits = throughput_bps * time_seconds
+
+    # Convert packet size to bits
+    packet_size_bits = packet_size_bytes * 8
+
+    # Calculate number of packets
+    num_packets = total_bits / packet_size_bits
+
+    # Calculate total bytes transmitted
+    total_bytes = num_packets * packet_size_bytes
+
+    # Convert bytes to megabytes (1 MB = 1024 * 1024 bytes)
+    total_megabytes = total_bytes / (1024 * 1024)
+
+    return int(num_packets), round(total_megabytes, 2)
+
+
 @pytest.mark.config(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
@@ -1340,31 +1467,40 @@ def test_Coex_sdk_ADV_BLE_WLAN_TCP_TX_packet_loss_C133468(
             test_type="iperf",
             traffic_type="TX",
         )
-        wifi_obj.join_to_ap()
-        wifi_obj.start()
+        wifi_obj.join_to_ap(skip_power_save=True)
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Remote device ip :{host_ip}")
+
+        throughput_obj = get_throughput(wifi_dut=wifi_dut, net_perf_client=net_perf_client, protocol=protocol,
+                                        device_ip=wifi_obj.device_ip, host_ip=host_ip,
+                                        timeout=60, traffic_type="TX", buffer_size_tcp=1460, buffer_size_udp=1470,
+                                        ip_version=4, async_socket=0, bandwidth="60M",
+                                        protocol_family=2)
+        throughput_obj.start()
+
         ble_obj.start()
         ble_obj.wait_for_exit()
-        wifi_obj.wait_for_exit()
+        throughput_obj.wait_for_exit()
         ble_client.interfaces.bluetooth.close()
-        rx_data = wifi_obj.throughput_remote['transfer'] / 1024
+        rx_data = throughput_obj.throughput_remote['transfer'] / 1024
         rx_data = round(rx_data, 2)
-        logger().info(f"Mbytes received on remote device {rx_data}")
-        tx_data = re.findall(r"Total packets sent :(.*?), ", wifi_obj.throughput_dut)
-        logger().info(f"tx_data: {tx_data}")
-        if tx_data:
-            tx_data = tx_data[0].strip()
-            logger().info(f"Total packets sent : {tx_data}")
-            tx_data = (int(tx_data) * 1460) / (1024 * 1024)
-            tx_data = round(tx_data, 2)
-            logger().info(f"Mbytes sent fro dut {tx_data}")
-            packet_loss = tx_data - rx_data
-            packet_loss = round(packet_loss, 2)
-            logger().info(f"Packet Loss : {packet_loss}")
-            assert packet_loss <= 0.1, f"Packet Loss found {packet_loss}"
+
+        throughput = throughput_obj.throughput
+
+        packets, data_mb = calculate_packets_and_data(throughput, 60, 1460)
+        logger().info(f"Number of packets sent: {packets}")
+        logger().info(f"Total data transmitted in MBYTES: {data_mb} MB")
+        tx_data = data_mb
+
+        logger().info(f"tx_data: {tx_data}MBytes")
+        logger().info(f"rx_data: {rx_data}MBytes")
+
+        packet_loss = tx_data - rx_data
+        packet_loss = round(packet_loss, 2)
+        logger().info(f"Packet Loss : {packet_loss}")
+        assert packet_loss <= 0.1, f"Packet Loss found {packet_loss}"
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_obj.sniffer_validation_join()
-        logger().info("sniffer validation is successful")
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
@@ -1378,7 +1514,7 @@ def test_Coex_sdk_ADV_BLE_WLAN_TCP_TX_packet_loss_C133468(
 
 
 
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4472")
+
 @pytest.mark.config(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
@@ -1391,7 +1527,7 @@ def test_Coex_sdk_ADV_BLE_WLAN_TCP_TX_packet_loss_C133468(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
-def test_Coex_sdk_ADV_BLE_WLAN_TCP_RX_packet_loss_C133468(
+def test_Coex_sdk_ADV_BLE_WLAN_TCP_RX_packet_loss_C133469(
     wifi_sniffer,
     wifi_access_point,
     wifi_dut,
@@ -1426,19 +1562,19 @@ def test_Coex_sdk_ADV_BLE_WLAN_TCP_RX_packet_loss_C133468(
         )
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        # ble_obj = BleThreadFunctionality(
-        #     wifi_dut=wifi_dut,
-        #     ble_client=ble_client,
-        #     sl_collections=sl_collections,
-        #     ble_test_type="scan_from_remote_device",
-        # )
-        #
-        # ble_obj.advertise_dut()
-        # ble_obj.start()
-        # ble_obj.wait_for_exit()
-        # logger().info("Initiating stop scan from Remote device")
-        # ble_client.interfaces.bluetooth.stop_scanning()
-        # ble_client.interfaces.bluetooth.close()
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="scan_from_remote_device",
+        )
+
+        ble_obj.advertise_dut()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        logger().info("Initiating stop scan from Remote device")
+        ble_client.interfaces.bluetooth.stop_scanning()
+        ble_client.interfaces.bluetooth.close()
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1456,22 +1592,49 @@ def test_Coex_sdk_ADV_BLE_WLAN_TCP_RX_packet_loss_C133468(
 
         )
         wifi_obj.join_to_ap(skip_power_save=True)
-        wifi_obj.start()
-        # ble_obj.start()
-        # ble_obj.wait_for_exit()
-        wifi_obj.wait_for_exit()
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Remote device ip :{host_ip}")
+
+        throughput_obj = get_throughput(wifi_dut=wifi_dut, net_perf_client=net_perf_client, protocol=protocol,
+                                        device_ip=wifi_obj.device_ip, host_ip=host_ip,
+                                        timeout=60, traffic_type="RX", buffer_size_tcp=1460, buffer_size_udp=1470,
+                                        ip_version=4, async_socket=1, bandwidth="60M",
+                                        protocol_family=2)
+        throughput_obj.start()
+
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        throughput_obj.wait_for_exit()
+        ble_client.interfaces.bluetooth.close()
+        tx_data = throughput_obj.throughput_remote['transfer'] / 1024
+        tx_data = round(tx_data, 2)
+
+        throughput = throughput_obj.throughput
+
+        packets, data_mb = calculate_packets_and_data(throughput, 60, 1460)
+        logger().info(f"Number of packets sent: {packets}")
+        logger().info(f"Total data transmitted in MBYTES: {data_mb} MB")
+        rx_data = data_mb
+
+        logger().info(f"tx_data: {tx_data}MBytes")
+        logger().info(f"rx_data: {rx_data}MBytes")
+
+        packet_loss = tx_data - rx_data
+        packet_loss = round(packet_loss, 2)
+        logger().info(f"Packet Loss : {packet_loss}")
+        assert packet_loss <= 0.1, f"Packet Loss found {packet_loss}"
+
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_obj.sniffer_validation_join()
-        logger().info("sniffer validation is successful")
+
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-    # finally:
-    #     if ble_obj:
-    #         sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-    #                                    ble_client_address=ble_obj.ble_client_address,
-    #                                    ble_dut_address=ble_obj.ble_dut_address)
-    #         ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+    finally:
+        if ble_obj:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
 
 
 
