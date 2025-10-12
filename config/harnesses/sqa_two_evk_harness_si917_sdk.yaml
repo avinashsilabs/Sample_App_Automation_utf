@@ -179,6 +179,31 @@ devices:
                 src_dir: 'utf_wiseconnect_3.tests'
                 commander_options: '--serialno 000440296594 --device Si917' #configure secondary EVK serial number
 
+    remote_wiseconnect3_3:
+        type: 'efx32'
+        subtype: 'efr32'
+        commander_options: '--serialno 000440315699 --device Si917' #configure secondary EVK serial number
+        defaults:
+            cli_transport: 'serial'
+        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
+        interfaces:
+            serial:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440315699' # configure secondary evk serial number
+            wifi:
+                type: 'sl_wifi_test_agent_cli'
+                src_dir: 'utf_wiseconnect_3.tests'
+                commander_options: '--serialno 000440315699 --device Si917' #configure secondary EVK serial number
+
     remote_wiseconnect3:
         type: 'efx32'
         subtype: 'efr32'
@@ -733,6 +758,39 @@ devices:
                 client_cert: 'client-certificate.crt'
                 root_ca: 'start_field.pem'
 
+    python_aws_iot_thing_2:
+        interfaces:
+            aws_iot:
+                type: 'aws_iot.python_thing'
+                client_id: 'test_thing_1_Raspi'
+                port: 8883
+                hostname: 'a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com'
+                private_key: 'private-key.key'
+                client_cert: 'client-certificate.crt'
+                root_ca: 'start_field.pem'
+
+    python_aws_iot_thing_3:
+        interfaces:
+            aws_iot:
+                type: 'aws_iot.python_thing'
+                client_id: 'test_thing_3_Raspi'
+                port: 8883
+                hostname: 'a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com'
+                private_key: 'private-key.key'
+                client_cert: 'client-certificate.crt'
+                root_ca: 'start_field.pem'
+
+    python_aws_iot_thing_4:
+        interfaces:
+            aws_iot:
+                type: 'aws_iot.python_thing'
+                client_id: 'test_thing_4_Raspi'
+                port: 8883
+                hostname: 'a2m21kovu9tcsh-ats.iot.ap-southeast-1.amazonaws.com'
+                private_key: 'private-key.key'
+                client_cert: 'client-certificate.crt'
+                root_ca: 'start_field.pem'
+
 
 
     aws_s3_boto3:
@@ -1021,6 +1079,7 @@ defaults:
     remote_wiseconnect3s:
         - 'remote_wiseconnect3_1'
         - 'remote_wiseconnect3_2'
+        - 'remote_wiseconnect3_3'
 
 #    # List of devices on test bed, used for loading/upgrading firmware at test case level
     wiseconnect_duts:
@@ -1044,6 +1103,12 @@ defaults:
     aws_s3: 'aws_s3_boto3'
 
     aws_iot_client: 'python_aws_iot_thing'
+
+    aws_iot_clients:
+        - 'python_aws_iot_thing'
+        - 'python_aws_iot_thing_2'
+        - 'python_aws_iot_thing_3'
+        - 'python_aws_iot_thing_4'
 
     wifi_clients:
         - 'raspi_wifi'
