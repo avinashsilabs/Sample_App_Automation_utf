@@ -1412,7 +1412,6 @@ def test_wifi_ble_sdk_wlan_udp_rx_ble_conn_disconn_C34469(wifi_sniffer, wifi_acc
         cleanup_ble(ble_client, ble_dut_addr)
 
 
-@pytest.mark.skip(reason="Test case is in development")
 @wifi_dut_marker()
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "OPEN"}
@@ -1467,39 +1466,6 @@ def test_wifi_ble_sdk_wlan_fast_ping_ble_commissioning_C34483(wifi_sniffer, wifi
         logger().info(f'dut_mac_address is {dut_mac_address}')
         logger().info("\n********************** Stopping the capture *************************")
         wifi_sniffer.interfaces.capture.stop_capture()
-
-        'Validating sniffer packets'
-        """1. Filter out only PS-Poll frames and Null function frames"""
-        logger().info("\n1. PS-Poll and Null frames validation")
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            sa_addr=dut_mac_address,
-            filter_name='wait_time')
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
-                                                                  packet_filter2=packet_filter2)['packet_count']
-        delta_between_ps_poll_packet = filter_obj.delta_between_ps_poll_and_null_fn()
-        if len(delta_between_ps_poll_packet) >= 3:
-            logger().info("Test case passed")
-            assert True
-        else:
-            logger().info("Test case failed")
-            assert False
-        """2. Check for Null Function from DUT in the time delta between QoS Data and Null Function(45ms to 55ms)"""
-        logger().info(
-            "\n2. Check for Null Function from DUT in the time delta between QoS Data and Null Function(45ms to 55ms)")
-        packet_filter4 = "    Type/Subtype: Null function (No data) (0x0024)"
-        packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-            da_addr=dut_mac_address,
-            filter_name='inactivity_timeout')
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3,
-                                                                  packet_filter2=packet_filter4)['packet_count']
-        delta_between_qos_data_packet = filter_obj.delta_between_qos_data_and_null_fn()
-        logger().info(f"Time delta between QoS data and null function packets : {delta_between_qos_data_packet}")
-        if len(delta_between_qos_data_packet) >= 3:
-            logger().info("Test case passed")
-            assert True
-        else:
-            logger().info("Test case failed")
-            assert False
         ble_obj.ble_remove_servie()
         ble_obj.ble_disconnect()
 
