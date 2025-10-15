@@ -1,13 +1,10 @@
 import re
 import uuid
-from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.ap_mode.test_apmode_sdk import FilterPacket
 from datetime import datetime
 import time
 from typing import Dict
 from random import randint
-from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.ap_mode import test_apmode_sdk as ap
 from threading import Thread
-
 from utf.interfaces.iperf.fixtures import net_perf_clients
 from utf.interfaces.socket.fixtures import remote_socket
 from utf.utils.time_measurer import TimeMeasurer
@@ -161,7 +158,7 @@ class http_server_provisioning(ThreadBase):
 
     def run(self):
         if self.testcase == "667577":
-            self.wifi_dut.interfaces.wifi.sl_net_init(mode="ap")
+            self.wifi_dut.interfaces.wifi.init(mode="ap")
         else:
             self.wifi_dut.interfaces.wifi.init(mode="ap")
         logger().info(" ******************** Starting http server provisioning ******************** ")
@@ -206,6 +203,7 @@ class http_server_provisioning(ThreadBase):
         self.wifi_dut.interfaces.wifi.http_server_deinit()
         self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="ap")
 
+        self.wifi_dut.interfaces.wifi.set_wifi_config(oper_mode=Si91xOperatingMode.WiFiClient)
         self.wifi_dut.interfaces.wifi.sl_net_init(mode="client", timeout=20)
         self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=1)
 
@@ -216,7 +214,7 @@ pytestmark = [
         wifi=
         {
             "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
-            "oper_mode": Si91xOperatingMode.ConcurrentMode,
+            "oper_mode": Si91xOperatingMode.AccessPoint,
             "coex_mode": Si91xCoexMode.WLANOnly,
             "features": Si91xFeatureBitMap.Default,
             "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
@@ -347,13 +345,14 @@ def test_wifi_provisioning_via_ap_loop_c667577(wifi_dut, wifi_client, channel, w
                                                 wiseconnect_web=wiseconnect_web, wifi_access_point=wifi_access_point, ap_channel=channel, webpage=webpage1, testcase="667577")
 
         wifi_dut.interfaces.wifi.is_sl_net_enabled = True
-        wifi_dut.interfaces.wifi.set_wifi_config()
-        for i in range(5):
+        # wifi_dut.interfaces.wifi.set_wifi_config()
+        for i in range(2):
             logger().info(f" \n ****************************************  Iteration {i+1} **************************************** \n")
             provision_obj.start()
             provision_obj.wait_for_exit()
             wifi_dut.interfaces.wifi.leave()
             wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+            time.sleep(10)
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
