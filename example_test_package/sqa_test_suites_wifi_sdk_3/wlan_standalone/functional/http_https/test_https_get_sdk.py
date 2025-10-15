@@ -1355,7 +1355,6 @@ def test_wifi_sdk_https_get_functionality_with_url_len_with_longer_url_bit_disab
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.skip()
 @pytest.mark.config("wifi_access_point", wifi={"security": 'WPA2'})
 @pytest.mark.config(
     "wifi_dut",

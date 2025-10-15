@@ -721,7 +721,6 @@ def test_wifi_sdk_join_PMK_with_64_characters_psk_32_characters_ssid_C19720(wifi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
