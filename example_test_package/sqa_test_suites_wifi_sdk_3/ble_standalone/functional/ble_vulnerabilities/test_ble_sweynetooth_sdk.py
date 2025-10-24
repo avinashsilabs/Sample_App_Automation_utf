@@ -199,36 +199,36 @@ def test_verify_dut_with_llid_dealock_script_C20003(ble_dut, ble_client, ble_vul
     reset_USB_Device()
 
 
-# @pytest.mark.config(
-#         "wifi_dut",
-#         wifi={
-#             "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
-#             "oper_mode": 0,
-#             "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-#             "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
-#             "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-#             "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-#             "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-#             "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
-#                                    Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-#             "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-#             "bt_features": Si91xBTFeatureBitMap.Default,
-#             "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-#             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
-#                                        | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-#         },
-#     )
-# @pytest.mark.config(
-#     "ble_vulnerability_sniffer",
-#     ble_vul_sniffer={
-#         "script": "DA14580_exploit_att_crash.py"
-#     },
-# )
-# def test_verify_dut_with_DA14580_exploit_att_crash_script_C20004(ble_dut, ble_client, ble_vulnerability_sniffer, utf_constants):
-#     #Test case to verify DUT behaviour after executing DA14580_exploit_att_crash.py script
-#     test_duration = utf_constants.get("time_duration")
-#     ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration, script_name="llid_dealock")
-#     ble_client.interfaces.bluetooth.close()
+@pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                                   Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                       | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        },
+    )
+@pytest.mark.config(
+    "ble_vulnerability_sniffer",
+    ble_vul_sniffer={
+        "script": "DA14580_exploit_att_crash.py"
+    },
+)
+def test_verify_dut_with_DA14580_exploit_att_crash_script_C20004(ble_dut, ble_client, ble_vulnerability_sniffer, utf_constants):
+    #Test case to verify DUT behaviour after executing DA14580_exploit_att_crash.py script
+    test_duration = utf_constants.get("time_duration")
+    ble_vulnerability(ble_dut=ble_dut,ble_vulnerability_sniffer=ble_vulnerability_sniffer, test_duration=test_duration, script_name="llid_dealock")
+    ble_client.interfaces.bluetooth.close()
 
 @pytest.mark.config(
         "wifi_dut",
