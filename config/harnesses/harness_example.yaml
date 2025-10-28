@@ -1330,12 +1330,20 @@ devices:
                 type: "service_discovery.avahi_daemon_linux"
                 shell: 'linux_shell'
 
-    # This represents the sniffer filter configuration
+    # This represents the power_analyzer configuration
     power_analyzer_wlan:
         interfaces:
             power_analyzer:
                 type: 'power_analyzer.wlan_power_analyzer'
                 src_dir: 'utf_wiseconnect'
+    
+    # This represents the wolfssl configuration
+    wolfssl_socket:
+        interfaces:
+            server:
+                type: 'wolfssl.server'
+            client:
+                type: 'wolfssl.client'
  
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -1544,6 +1552,8 @@ defaults:
     service_discovery: 'avahi_daemon_linux'
 
     power_analyzer: 'power_analyzer_wlan'
+
+    wolfssl: 'wolfssl_socket'
 
     net_perf:
         server_options:
