@@ -206,7 +206,7 @@ class WLanThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
                                                                       Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
                 self.wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
-                time.sleep(2)
+                time.sleep(3)
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated,
@@ -216,7 +216,8 @@ class WLanThread(ThreadBase):
             if self.test_case_no == 19694 or self.test_case_no == 19706:
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
-                self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=Si91xJoinFeatureBitMap.Default)
+                self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+                    join_feature_bitmap=Si91xJoinFeatureBitMap.Default)
                 time.sleep(2)
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
@@ -264,7 +265,7 @@ class WLanThread(ThreadBase):
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated,
                                                                          power_save=False)
-                time.sleep(2)
+                time.sleep(3)
 
             if self.test_case_no == 19698:
                 self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
@@ -444,20 +445,6 @@ class WLanThread(ThreadBase):
                 status = ping(self.dut_addr['device_ip'], 60, size="300")
                 assert status == 1, "Ping failed"
 
-            if self.test_case_no == 19173:
-                listen_interval = 1000
-                host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-                logger().info(f"Remote device ip :{host_ip}")
-                self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
-                                                                      Si91xJoinFeatureBitMap.ListenIntervalFromPowerSave)
-                self.wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
-                time.sleep(2)
-                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
-                                                                         wifi_access_point=self.wifi_access_point,
-                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                         power_save=False)
-                time.sleep(2)
-
             if self.test_case_no == 19174:
                 listen_interval = 2000
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -541,32 +528,33 @@ class WLanThread(ThreadBase):
 class FilterPacket:
     """
     WiFi Power Save Frame Analysis and Validation Class
-    
+
     This class provides comprehensive analysis of WiFi power save behavior by processing
-    captured wireless frames from a network sniffer. It validates Enhanced Max PSP 
+    captured wireless frames from a network sniffer. It validates Enhanced Max PSP
     (Power Save Poll) functionality and various power save timing requirements.
-    
+
     Key Responsibilities:
     ==================
     1. Parse and analyze captured wireless frames (beacons, PS-polls, data frames)
-    2. Validate DTIM-based power save behavior  
+    2. Validate DTIM-based power save behavior
     3. Validate Listen Interval-based power save timing
     4. Monitor Enhanced Max PSP entry/exit timing
     5. Track power save protocol violations and timing failures
-    
+
     Core Validation Functions:
     =========================
     - validation_of_enh_max_psp(): Validates 20ms exit and monitor interval enable timing
-    - validate_pspoll_data_packet_with_more_bit_enable(): Analyzes PS-poll/data sequences  
+    - validate_pspoll_data_packet_with_more_bit_enable(): Analyzes PS-poll/data sequences
     - dtim_based_validation(): Ensures proper DTIM beacon PS-poll behavior
     - listen_interval_based_validation(): Validates listen interval timing accuracy
-    
+
     Frame Processing Flow:
     =====================
     [Capture File] → [Parse Frames] → [Find Start Point] → [Analyze Sequences] → [Validate Timing] → [Report Results]
-    
+
     Author: Vivek
     """
+
     def get_association_id(self):
         # This function will parse the pacap file and find & return the association id
         packet_filter = "= Association ID:"
@@ -1142,7 +1130,7 @@ class FilterPacket:
     def validation_of_enh_max_psp(self, ps_exit_interval_list, ps_enable_interval_list, monitor_interval):
         """
         Enhanced Max PSP Validation Function
-        
+
         Flowchart Description:
         ┌─────────────────────────────────────────────────────────┐
         │ A[Start Enhanced Max PSP Validation]                   │
@@ -1174,16 +1162,16 @@ class FilterPacket:
         │ M[Return: ps_exit_interval_fail,                       │
         │   ps_enable_interval_fail]                             │
         └─────────────────────────────────────────────────────────┘
-        
+
         Purpose:
          - Validates DUT exits from powersave when no response for ps-poll in ~20ms
          - Validates DUT enables powersave if no data received from AP for monitor_interval
-         
+
         Args:
             ps_exit_interval_list: List of intervals when DUT exits powersave
-            ps_enable_interval_list: List of intervals when DUT enables powersave  
+            ps_enable_interval_list: List of intervals when DUT enables powersave
             monitor_interval: Expected monitor interval for powersave enable
-            
+
         Returns:
             tuple: (ps_exit_interval_fail_count, ps_enable_interval_fail_count)
         """
@@ -1200,18 +1188,18 @@ class FilterPacket:
                 logger().info(f'is_between = {is_between}')
                 if is_between is True:
                     logger().info(
-                    f'DUT is exit from the powersave after {time_diff}ms as there is no response for ps-poll')
+                        f'DUT is exit from the powersave after {time_diff}ms as there is no response for ps-poll')
                 else:
                     # Count failed scenarios where exit timing is outside expected range
                     logger().info(
-                    f'DUT is exit from the powersave after {time_diff}ms as there is no response for ps-poll')
+                        f'DUT is exit from the powersave after {time_diff}ms as there is no response for ps-poll')
                     ps_exit_interval_fail = ps_exit_interval_fail + 1
 
         # Step 3: Validate PS-Enable intervals (should match monitor_interval when no data from AP)
         for time_diff in ps_enable_interval_list:
             if time_diff != 0:
-                # Check if enable timing is within monitor interval ± tolerance  
-                is_between = monitor_interval-1 <= time_diff <= monitor_interval+2
+                # Check if enable timing is within monitor interval ± tolerance
+                is_between = monitor_interval - 1 <= time_diff <= monitor_interval + 2
                 logger().info(f'is_between = {is_between}')
                 if is_between is True:
                     logger().info(
@@ -1221,7 +1209,7 @@ class FilterPacket:
                     logger().info(
                         f'DUT back to power save and there is no RX data from the AP for {time_diff}ms interval')
                     ps_enable_interval_fail = ps_enable_interval_fail + 1
-                    
+
         # Step 4: Return failure counts for both exit and enable scenarios
         return ps_exit_interval_fail, ps_enable_interval_fail
 
@@ -1229,7 +1217,7 @@ class FilterPacket:
                                                          current_beacon_time, beacon_count=None, listen_interval=None):
         """
         PS-Poll Data Packet Validation with More Bit Enable Function
-        
+
         Flowchart Description:
         ┌─────────────────────────────────────────────────────────┐
         │ A[Start PS-Poll Validation]                            │
@@ -1268,12 +1256,12 @@ class FilterPacket:
         │ L[Return: frame_number, case2, first_beacon_time,      │
         │   ps_exit_interval, ps_enable_interval, beacon_count]  │
         └─────────────────────────────────────────────────────────┘
-        
+
         Purpose:
          - Validates DUT can receive data after sending ps-poll
          - Tracks failed scenarios when DUT doesn't send ps-poll with more_data bit set
          - Monitors enhanced max PSP timing behavior
-         
+
         Args:
             frame_list: List of captured frames from sniffer
             frame_number: Current frame index to start processing
@@ -1281,33 +1269,33 @@ class FilterPacket:
             current_beacon_time: Timestamp of current beacon
             beacon_count: Count of beacons processed
             listen_interval: Listen interval value
-            
+
         Returns:
-            tuple: (frame_number, failed_case_count, beacon_time, 
+            tuple: (frame_number, failed_case_count, beacon_time,
                    ps_exit_interval, ps_enable_interval, beacon_count)
         """
         # Step 1: Initialize frame processing variables and frame type constants
         first_beacon_time = current_beacon_time
-        beacon = int('0x0008', 16)          # Beacon frame type
-        ps_poll = int('0x001a', 16)         # PS-Poll frame type  
-        qos_data = int('0x0028', 16)        # QoS Data frame type
-        qos_null = int('0x002c', 16)        # QoS Null frame type
-        action_frame = int('0x000d', 16)    # Action frame type
-        block_req = int('0x0018', 16)       # Block ACK request frame type
-        null_function = int('0x0024', 16)   # Null function frame type
-        
+        beacon = int('0x0008', 16)  # Beacon frame type
+        ps_poll = int('0x001a', 16)  # PS-Poll frame type
+        qos_data = int('0x0028', 16)  # QoS Data frame type
+        qos_null = int('0x002c', 16)  # QoS Null frame type
+        action_frame = int('0x000d', 16)  # Action frame type
+        block_req = int('0x0018', 16)  # Block ACK request frame type
+        null_function = int('0x0024', 16)  # Null function frame type
+
         # Step 2: Initialize tracking variables for Enhanced Max PSP analysis
         no_of_filtered_packets = len(frame_list)
-        ps_exit_interval = 0                # Time to exit power save mode
-        ps_enable_interval = 0              # Time to re-enable power save mode  
-        ps_exit_interval_ignore = 0         # Ignored exit intervals
-        ps_enable_interval_ignore = 0       # Ignored enable intervals
-        beacon_count = 0                    # Count of beacons processed
-        max_beacon = int(listen_interval_time/100)  # Max beacons in listen interval
+        ps_exit_interval = 0  # Time to exit power save mode
+        ps_enable_interval = 0  # Time to re-enable power save mode
+        ps_exit_interval_ignore = 0  # Ignored exit intervals
+        ps_enable_interval_ignore = 0  # Ignored enable intervals
+        beacon_count = 0  # Count of beacons processed
+        max_beacon = int(listen_interval_time / 100)  # Max beacons in listen interval
         bmiss_listen_interval = listen_interval_time  # Handle beacon miss scenarios
-        tim_diff_bw_beacon = 0              # Time difference between beacons
-        case2 = 0                           # Count of more_data bit related failures
-        
+        tim_diff_bw_beacon = 0  # Time difference between beacons
+        case2 = 0  # Count of more_data bit related failures
+
         # Step 3: Main frame processing loop - analyze each captured frame
         while 1:
             if frame_number < no_of_filtered_packets - 2:  # removing last 2 frames from the capture
@@ -1317,16 +1305,18 @@ class FilterPacket:
             moredata_pspoll_failed = 0
 
             if frame_list[frame_number][2] == str(null_function) and frame_list[frame_number][4] == '0':
-                logger().info("found Null frame with PM '0' and DUT is entering into active state during ENH MAX PSP mode")
+                logger().info(
+                    "found Null frame with PM '0' and DUT is entering into active state during ENH MAX PSP mode")
                 logger().info(frame_list[frame_number])
                 nullframe_time = frame_list[frame_number][1]
                 if frame_list[frame_number - 1][2] == str(ps_poll):
-                    logger().info(frame_list[frame_number-1])
+                    logger().info(frame_list[frame_number - 1])
                     current_pspoll_time = frame_list[frame_number - 1][1]
                     ps_exit_interval = (float(nullframe_time) - float(current_pspoll_time)) * 1000
                     logger().info(f'time_diff_bw_pspoll_nullframe={ps_exit_interval}')
                 else:
-                    if frame_list[frame_number - 1][2] == str(beacon) or (frame_list[frame_number - 1][2] == str(qos_data)):
+                    if frame_list[frame_number - 1][2] == str(beacon) or (
+                            frame_list[frame_number - 1][2] == str(qos_data)):
                         logger().info(frame_list[frame_number - 1])
                         current_pspoll_time = frame_list[frame_number - 1][1]
                         ps_exit_interval_ignore = (float(nullframe_time) - float(current_pspoll_time)) * 1000
@@ -1344,19 +1334,21 @@ class FilterPacket:
                         if frame_list[frame_number][2] == str(null_function) and frame_list[frame_number][4] == '1':
                             logger().info(frame_list[frame_number])
                             nullframe_time = frame_list[frame_number][1]
-                            if frame_list[frame_number - 1][2] == str(qos_data) or frame_list[frame_number - 1][2] == str(beacon) or \
+                            if frame_list[frame_number - 1][2] == str(qos_data) or frame_list[frame_number - 1][
+                                2] == str(beacon) or \
                                     frame_list[frame_number - 1][2] == str(null_function):
                                 if frame_list[frame_number - 1][2] == str(beacon):
                                     logger().info(frame_list[frame_number - 2])
                                     qos_time = frame_list[frame_number - 2][1]
                                     ps_enable_interval_ignore = (float(nullframe_time) - float(
                                         qos_time)) * 1000
-                                    logger().info(f'time_diff_bw_last_qos_nullframe(ignore)={ps_enable_interval_ignore}')
-                                else :
+                                    logger().info(
+                                        f'time_diff_bw_last_qos_nullframe(ignore)={ps_enable_interval_ignore}')
+                                else:
                                     logger().info(frame_list[frame_number - 1])
                                     qos_time = frame_list[frame_number - 1][1]
                                     ps_enable_interval = (float(nullframe_time) - float(
-                                    qos_time)) * 1000
+                                        qos_time)) * 1000
                                     logger().info(f'time_diff_bw_last_qos_nullframe={ps_enable_interval}')
                                 first_beacon_time = float(frame_list[frame_number][1])
                                 return frame_number, case2, first_beacon_time, ps_exit_interval, ps_enable_interval, beacon_count
@@ -1374,7 +1366,7 @@ class FilterPacket:
                         else:
                             break
                         if frame_list[frame_number][2] == str(beacon):
-                            beacon_count = beacon_count+1
+                            beacon_count = beacon_count + 1
                             current_beacon_time = float(frame_list[frame_number][1])
                             tim_diff_bw_beacon = int((current_beacon_time - first_beacon_time) * 1000)
                             logger().info(frame_list[frame_number])
@@ -1386,7 +1378,8 @@ class FilterPacket:
                                     t0 = float(frame_list[frame_number - 1][2])
                                     time_diff = int(round((t1 - t0) * 1000))
                                     if time_diff > 100:
-                                        logger().info("DUT is sending PS-POLL at next DTIM/DTIMSKIP beacon only even though moredata bit set")
+                                        logger().info(
+                                            "DUT is sending PS-POLL at next DTIM/DTIMSKIP beacon only even though moredata bit set")
                                         case2 = case2 + 1
                                     break
                             else:
@@ -1395,7 +1388,8 @@ class FilterPacket:
                                     logger().info(f'tim_diff_bw_beacon={tim_diff_bw_beacon}')
                                     logger().info(f'beacon_count={beacon_count}')
                                     first_beacon_time = current_beacon_time
-                                    logger().info(f'listen_interval_time={listen_interval_time}, max_beacon = {max_beacon}')
+                                    logger().info(
+                                        f'listen_interval_time={listen_interval_time}, max_beacon = {max_beacon}')
                                     if (beacon_count > max_beacon):
                                         listen_interval_time = bmiss_listen_interval - (beacon_count - max_beacon) * 100
                                         logger().info(f'listen_interval_time_lastbmiss={listen_interval_time}')
@@ -1403,7 +1397,8 @@ class FilterPacket:
                                     else:
                                         listen_interval_time = bmiss_listen_interval
                                         logger().info(f'listen_interval_time={listen_interval_time}')
-                                if tim_diff_bw_beacon >= (listen_interval_time - 30) and frame_list[frame_number + 1][2] == str(
+                                if tim_diff_bw_beacon >= (listen_interval_time - 30) and frame_list[frame_number + 1][
+                                    2] == str(
                                         ps_poll):
                                     t1 = float(frame_list[frame_number][2])
                                     t0 = float(frame_list[frame_number - 1][2])
@@ -1426,7 +1421,7 @@ class FilterPacket:
                 else:
                     logger().info(frame_list[frame_number])
                     if tim_diff_bw_beacon != 0:
-                        if tim_diff_bw_beacon > listen_interval_time :
+                        if tim_diff_bw_beacon > listen_interval_time:
                             beacon_count = int(tim_diff_bw_beacon / 100) - max_beacon
                         else:
                             beacon_count = int(tim_diff_bw_beacon / 100)
@@ -1441,9 +1436,9 @@ class FilterPacket:
                     continue
                 elif frame_list[frame_number][2] == str(beacon):
                     logger().info(frame_list[frame_number])
-                    beacon_count = beacon_count+1
+                    beacon_count = beacon_count + 1
                     if frame_number < no_of_filtered_packets:
-                        if(listen_interval_time!=0):
+                        if (listen_interval_time != 0):
                             current_beacon_time = float(frame_list[frame_number][1])
                             tim_diff_bw_beacon = int((current_beacon_time - first_beacon_time) * 1000)
                             if tim_diff_bw_beacon > listen_interval_time or beacon_count == max_beacon:
@@ -1473,12 +1468,12 @@ class FilterPacket:
                             4] == '1'):
                             logger().info("On-air data is missing")
                         break
-        return frame_number, case2, first_beacon_time, ps_exit_interval, ps_enable_interval,beacon_count
+        return frame_number, case2, first_beacon_time, ps_exit_interval, ps_enable_interval, beacon_count
 
     def dtim_based_validation(self, assoc_id):
         """
         DTIM-Based Power Save Validation Function
-        
+
         Flowchart Description:
         ┌─────────────────────────────────────────────────────────┐
         │ A[Start DTIM Validation]                               │
@@ -1527,57 +1522,57 @@ class FilterPacket:
         │ U[Return: case1, case2, case3, case4,                 │
         │   ps_exit_interval_list, ps_enable_interval_list]     │
         └─────────────────────────────────────────────────────────┘
-        
+
         Purpose:
          - Validates DTIM-based power save functionality
          - Ensures DUT sends PS-Poll only at DTIM beacons when TIM bit is set
          - Tracks various failure scenarios in DTIM power save behavior
-         
+
         Validation Cases:
          - case1: DUT should NOT send PS-Poll when TIM is not set
-         - case2: DUT should NOT wait for next DTIM when more_data bit is set  
+         - case2: DUT should NOT wait for next DTIM when more_data bit is set
          - case3: DUT should NOT skip sending PS-Poll at DTIM beacon when TIM is set
          - case4: DUT should NOT send PS-Poll at non-DTIM beacons
-         
+
         Args:
             assoc_id: Association ID of the DUT in hex format
-            
+
         Returns:
             tuple: (case1_count, case2_count, case3_count, case4_count,
                    ps_exit_interval_list, ps_enable_interval_list)
         """
         # Step 1: Initialize tracking variables and data structures
         beacon_count = 0
-        frame_list = []                     # Will store parsed capture frames
-        ps_exit_interval_list = []          # Track power save exit timings  
-        ps_enable_interval_list = []        # Track power save enable timings
-        count = 0                          # Frame counter for initial scan
-        assoc_id = int(assoc_id, 16)       # Convert association ID to integer
-        tim_aid = 0                        # TIM association ID from beacon
-        
+        frame_list = []  # Will store parsed capture frames
+        ps_exit_interval_list = []  # Track power save exit timings
+        ps_enable_interval_list = []  # Track power save enable timings
+        count = 0  # Frame counter for initial scan
+        assoc_id = int(assoc_id, 16)  # Convert association ID to integer
+        tim_aid = 0  # TIM association ID from beacon
+
         # Step 2: Define frame type constants for pattern matching
-        beacon = int('0x0008', 16)         # Beacon frame type
-        null_frame = int('0x0024', 16)     # Null frame type  
-        ps_poll = int('0x001a', 16)        # PS-Poll frame type
-        
+        beacon = int('0x0008', 16)  # Beacon frame type
+        null_frame = int('0x0024', 16)  # Null frame type
+        ps_poll = int('0x001a', 16)  # PS-Poll frame type
+
         # Step 3: Initialize validation case counters for different failure scenarios
         case1 = 0  # VIOLATION: DUT sends PS-POLL when TIM is NOT set
         case2 = 0  # VIOLATION: DUT waits for next DTIM beacon despite more_data bit set
-        case3 = 0  # VIOLATION: DUT skips PS-POLL at DTIM beacon when TIM IS set  
+        case3 = 0  # VIOLATION: DUT skips PS-POLL at DTIM beacon when TIM IS set
         case4 = 0  # VIOLATION: DUT sends PS-POLL at non-DTIM beacons
-        
+
         # Step 4: Read and parse the captured frame data from sniffer
         filter_file = open(f'./reports/Powersave_capture.txt', 'r')
         lines = filter_file.readlines()
         for line in lines:
             frame_list.append(line.strip().split('\t'))  # Parse tab-separated frame data
         filter_file.close()
-        
+
         # Step 5: Prepare frame list for processing (remove last 10 frames for stability)
         no_of_filtered_packets = len(frame_list)
         if no_of_filtered_packets > 10:
             no_of_filtered_packets = no_of_filtered_packets - 10
-            
+
         # Step 6: Find the starting point - first NULL frame with PM='1' (power save enabled)
         if no_of_filtered_packets > 1:
             for frame_number in range(no_of_filtered_packets):
@@ -1649,7 +1644,7 @@ class FilterPacket:
                     '''-ve scenario: Validation of ps_poll at non dtim beacons with TIM set condition'''
                     logger().info(f'{frame_list[frame_number]}: Negative scenario')
                     current_beacon_time = float(frame_list[frame_number][1])
-                    before_beacon_time = float(frame_list[frame_number-1][1])
+                    before_beacon_time = float(frame_list[frame_number - 1][1])
                     time_diff = int((current_beacon_time - before_beacon_time) * 1000)
                     if tim_aid == assoc_id:
                         if frame_number < no_of_filtered_packets:
@@ -1729,7 +1724,7 @@ class FilterPacket:
     def listen_interval_based_validation(self, listen_interval_period, assoc_id):
         """
         Listen Interval Based Power Save Validation Function
-        
+
         Flowchart Description:
         ┌─────────────────────────────────────────────────────────┐
         │ A[Start Listen Interval Validation]                    │
@@ -1792,22 +1787,22 @@ class FilterPacket:
         │ Z[Return: dut_wake_interval_list, case1, case2,       │
         │   ps_exit_interval_list, ps_enable_interval_list]     │
         └─────────────────────────────────────────────────────────┘
-        
+
         Purpose:
          - Validates listen interval based power-save functionality
          - Ensures DUT wakes up at correct listen interval timing
          - Tracks timing accuracy and protocol violations
-         
+
         Key Validations:
          - DUT should wake at listen_interval ± tolerance
          - DUT should only send PS-Poll when TIM is set
          - Timing accuracy within expected beacon intervals
          - Proper handling of beacon miss scenarios
-         
+
         Args:
             listen_interval_period: Expected listen interval in milliseconds
             assoc_id: Association ID of the DUT in hex format
-            
+
         Returns:
             tuple: (wake_interval_list, case1_violations, case2_violations,
                    ps_exit_interval_list, ps_enable_interval_list)
@@ -1816,36 +1811,36 @@ class FilterPacket:
         beacon_count = 0
         bmiss_listen_interval = listen_interval_period  # Handle beacon miss scenarios
         max_beacon = int(listen_interval_period) / 100  # Max beacons in one listen interval
-        
+
         # Step 2: Initialize data structures for frame processing and result tracking
-        frame_list = []                     # Will store parsed capture frames
-        dut_wake_interval = []              # Track actual DUT wake intervals
-        ps_exit_interval_list = []          # Track power save exit timings
-        ps_enable_interval_list = []        # Track power save enable timings  
-        count = 0                          # Frame counter for initial positioning
-        
+        frame_list = []  # Will store parsed capture frames
+        dut_wake_interval = []  # Track actual DUT wake intervals
+        ps_exit_interval_list = []  # Track power save exit timings
+        ps_enable_interval_list = []  # Track power save enable timings
+        count = 0  # Frame counter for initial positioning
+
         # Step 3: Setup association and frame type identifiers
-        assoc_id = int(assoc_id, 16)       # Convert association ID to integer
-        tim_aid = 0                        # TIM association ID extracted from beacons
-        beacon = int('0x0008', 16)         # Beacon frame type constant
-        null_frame = int('0x0024', 16)     # Null frame type constant
-        ps_poll = int('0x001a', 16)        # PS-Poll frame type constant
-        
-        # Step 4: Initialize validation case counters for different violation scenarios  
+        assoc_id = int(assoc_id, 16)  # Convert association ID to integer
+        tim_aid = 0  # TIM association ID extracted from beacons
+        beacon = int('0x0008', 16)  # Beacon frame type constant
+        null_frame = int('0x0024', 16)  # Null frame type constant
+        ps_poll = int('0x001a', 16)  # PS-Poll frame type constant
+
+        # Step 4: Initialize validation case counters for different violation scenarios
         case1 = 0  # VIOLATION: DUT sends PS-POLL when TIM is NOT set for its AID
         case2 = 0  # VIOLATION: DUT waits for next LI beacon despite more_data bit set
-        
+
         # Step 5: Read and parse the captured wireless frames from sniffer
         filter_file = open(f'./reports/Powersave_capture.txt', 'r')
         lines = filter_file.readlines()
         for line in lines:
             frame_list.append(line.strip().split('\t'))  # Parse tab-separated frame data
         filter_file.close()
-        
+
         # Step 6: Prepare frame processing window (remove last 10 frames for stability)
         no_of_filtered_packets = len(frame_list)
         no_of_filtered_packets = no_of_filtered_packets - 10
-        
+
         # Step 7: Find starting point - locate first NULL frame with PM='1' (power save mode enabled)
         for frame_number in range(no_of_filtered_packets):
             if (frame_list[frame_number][2] == str(null_frame)) and (frame_list[frame_number][4] == '1'):
@@ -1894,7 +1889,7 @@ class FilterPacket:
                                 tim_diff_bw_beacon = int((current_beacon_time - first_beacon_time) * 1000)
                                 dut_wake_interval.append(tim_diff_bw_beacon)
                                 logger().info(f'tim_diff_bw_beacon={tim_diff_bw_beacon}')
-                                packet_number, failed_case, beacon_time, ps_exit_interval, ps_enable_interval,beacon_count = self.validate_pspoll_data_packet_with_more_bit_enable(
+                                packet_number, failed_case, beacon_time, ps_exit_interval, ps_enable_interval, beacon_count = self.validate_pspoll_data_packet_with_more_bit_enable(
                                     frame_list, frame_number,
                                     listen_interval_period,
                                     current_beacon_time)
@@ -1927,7 +1922,7 @@ class FilterPacket:
                                     logger().info(f'tim_diff_bw_beacon={tim_diff_bw_beacon}')
                                     logger().info(
                                         "On-air ps-poll miss at LI beacon-time difference")
-                                    packet_number, failed_case, beacon_time, ps_exit_interval, ps_enable_interval,beacon_count = self.validate_pspoll_data_packet_with_more_bit_enable(
+                                    packet_number, failed_case, beacon_time, ps_exit_interval, ps_enable_interval, beacon_count = self.validate_pspoll_data_packet_with_more_bit_enable(
                                         frame_list, frame_number,
                                         listen_interval_period,
                                         current_beacon_time)
@@ -1957,7 +1952,7 @@ class FilterPacket:
                                 dut_wake_interval.append(tim_diff_bw_beacon)
                                 logger().info(f'tim_diff_bw_beacon={tim_diff_bw_beacon}')
                                 # logger().info("DUT is sending PS-POLL at before/after LI beacon-time-difference")
-                                packet_number, failed_case, beacon_time, ps_exit_interval, ps_enable_interval,beacon_count = self.validate_pspoll_data_packet_with_more_bit_enable(
+                                packet_number, failed_case, beacon_time, ps_exit_interval, ps_enable_interval, beacon_count = self.validate_pspoll_data_packet_with_more_bit_enable(
                                     frame_list, frame_number,
                                     listen_interval_period,
                                     current_beacon_time)
@@ -1981,7 +1976,7 @@ class FilterPacket:
                                     logger().info(f'tim_diff_bw_beacon={tim_diff_bw_beacon}')
                                     logger().info(
                                         "DUT is waking at before LI beacon-time-difference & on-air ps-poll miss ")
-                                    packet_number, failed_case, beacon_time, ps_exit_interval, ps_enable_interval,beacon_count = self.validate_pspoll_data_packet_with_more_bit_enable(
+                                    packet_number, failed_case, beacon_time, ps_exit_interval, ps_enable_interval, beacon_count = self.validate_pspoll_data_packet_with_more_bit_enable(
                                         frame_list, frame_number,
                                         listen_interval_period,
                                         current_beacon_time)
@@ -2013,7 +2008,7 @@ class FilterPacket:
                         logger().info(f'tim_diff_bw_beacon={tim_diff_bw_beacon}')
                         logger().info("DUT is sending PS-POLL even though tim is not set")
                         case1 = case1 + 1
-                        packet_number, failed_case, beacon_time, ps_exit_interval, ps_enable_interval,beacon_count = self.validate_pspoll_data_packet_with_more_bit_enable(
+                        packet_number, failed_case, beacon_time, ps_exit_interval, ps_enable_interval, beacon_count = self.validate_pspoll_data_packet_with_more_bit_enable(
                             frame_list, frame_number,
                             listen_interval_period,
                             current_beacon_time)
@@ -2025,7 +2020,8 @@ class FilterPacket:
                         else:
                             first_beacon_time = beacon_time
                             listen_interval_time = bmiss_listen_interval - beacon_count * 100
-                            logger().info(f'listen_interval_time_validate_pspoll_data_packet_with_more_bit_enable={listen_interval_time}')
+                            logger().info(
+                                f'listen_interval_time_validate_pspoll_data_packet_with_more_bit_enable={listen_interval_time}')
                             tim_diff_bw_beacon = 0
                         frame_number = packet_number
                     else:
@@ -2462,7 +2458,7 @@ def test_wifi_sdk_max_psp_enable_disable_c19682(wifi_sniffer, wifi_access_point,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.
-            Feature32KHzBypassClockOnUULP_GPIO_3
+        Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
 def test_wifi_sdk_enhanced_max_psp_ulp_c19693(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
@@ -2495,10 +2491,10 @@ def test_wifi_sdk_enhanced_max_psp_ulp_c19693(wifi_sniffer, wifi_access_point, w
         wlan_obj.wait_for_exit()
         logger().info(f"***** Enabling Max PSP in DUT ******")
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency',
-                                                              dtim_aligned_type=0,
-                                                              num_of_dtim_skip=0,
-                                                              listen_interval=listen_interval,
-                                                              monitor_interval=monitor_interval)
+                                                         dtim_aligned_type=0,
+                                                         num_of_dtim_skip=0,
+                                                         listen_interval=listen_interval,
+                                                         monitor_interval=monitor_interval)
         time.sleep(2)
         logger().info("Pinging to DUT to with byte size 300")
         status = sl_collections.ping_with_custom_size(wlan_obj.dut_addr["device_ip"], ping_counts=60, byte_size=300)
@@ -2539,7 +2535,8 @@ def test_wifi_sdk_enhanced_max_psp_ulp_c19693(wifi_sniffer, wifi_access_point, w
             listen_interval,
             association_id)
         case3 = ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, listen_interval)
-        case4, case5 = ps_poll_time_delta_obj.validation_of_enh_max_psp(ps_exit_interval, ps_enable_interval, monitor_interval)
+        case4, case5 = ps_poll_time_delta_obj.validation_of_enh_max_psp(ps_exit_interval, ps_enable_interval,
+                                                                        monitor_interval)
         if case1 != 0:
             logger().info(
                 f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
@@ -2576,11 +2573,11 @@ def test_wifi_sdk_enhanced_max_psp_ulp_c19693(wifi_sniffer, wifi_access_point, w
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.
-            Feature32KHzBypassClockOnUULP_GPIO_3
+        Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
 def test_wifi_sdk_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
-                                              sl_collections, request, utf_constants, wifi_client, net_perf_client):
+                                          sl_collections, request, utf_constants, wifi_client, net_perf_client):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
     test_case_no = 19694
@@ -2609,10 +2606,10 @@ def test_wifi_sdk_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_
         wlan_obj.wait_for_exit()
         logger().info(f"***** Enabling Max PSP in DUT ******")
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency',
-                                                              dtim_aligned_type=0,
-                                                              num_of_dtim_skip=0,
-                                                              listen_interval=0,
-                                                              monitor_interval=50)
+                                                         dtim_aligned_type=0,
+                                                         num_of_dtim_skip=0,
+                                                         listen_interval=0,
+                                                         monitor_interval=50)
 
         time.sleep(2)
         logger().info("Pinging to DUT to with byte size 300")
@@ -2651,8 +2648,10 @@ def test_wifi_sdk_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_
             wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, None, powersave_validation)[
                 'packet_count']
 
-        case1, case2, case3, case4,ps_exit_interval, ps_enable_interval = ps_poll_time_delta_obj.dtim_based_validation(association_id)
-        case5, case6 = ps_poll_time_delta_obj.validation_of_enh_max_psp(ps_exit_interval, ps_enable_interval, monitor_interval)
+        case1, case2, case3, case4, ps_exit_interval, ps_enable_interval = ps_poll_time_delta_obj.dtim_based_validation(
+            association_id)
+        case5, case6 = ps_poll_time_delta_obj.validation_of_enh_max_psp(ps_exit_interval, ps_enable_interval,
+                                                                        monitor_interval)
         if case1: logger().info(
             f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
         if case2: logger().info(
@@ -2688,7 +2687,7 @@ def test_wifi_sdk_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.
-            Feature32KHzBypassClockOnUULP_GPIO_3
+        Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
 def test_wifi_sdk_enhanced_max_psp_ulp_c19695(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
@@ -2722,10 +2721,10 @@ def test_wifi_sdk_enhanced_max_psp_ulp_c19695(wifi_sniffer, wifi_access_point, w
         wlan_obj.wait_for_exit()
         logger().info(f"***** Enabling Max PSP in DUT ******")
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency',
-                                                              dtim_aligned_type=0,
-                                                              num_of_dtim_skip=0,
-                                                              listen_interval=listen_interval,
-                                                              monitor_interval=monitor_interval)
+                                                         dtim_aligned_type=0,
+                                                         num_of_dtim_skip=0,
+                                                         listen_interval=listen_interval,
+                                                         monitor_interval=monitor_interval)
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
         time.sleep(5)
@@ -2775,7 +2774,8 @@ def test_wifi_sdk_enhanced_max_psp_ulp_c19695(wifi_sniffer, wifi_access_point, w
             listen_interval,
             association_id)
         case3 = ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, listen_interval)
-        case4, case5 = ps_poll_time_delta_obj.validation_of_enh_max_psp(ps_exit_interval, ps_enable_interval, monitor_interval)
+        case4, case5 = ps_poll_time_delta_obj.validation_of_enh_max_psp(ps_exit_interval, ps_enable_interval,
+                                                                        monitor_interval)
         if case1 != 0:
             logger().info(
                 f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
@@ -2812,7 +2812,7 @@ def test_wifi_sdk_enhanced_max_psp_ulp_c19695(wifi_sniffer, wifi_access_point, w
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.
-            Feature32KHzBypassClockOnUULP_GPIO_3
+        Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
 def test_wifi_sdk_enhanced_max_psp_ulp_c19696(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
@@ -2846,10 +2846,10 @@ def test_wifi_sdk_enhanced_max_psp_ulp_c19696(wifi_sniffer, wifi_access_point, w
         wlan_obj.wait_for_exit()
         logger().info(f"***** Enabling Max PSP in DUT ******")
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency',
-                                                              dtim_aligned_type=0,
-                                                              num_of_dtim_skip=0,
-                                                              listen_interval=listen_interval,
-                                                              monitor_interval=monitor_interval)
+                                                         dtim_aligned_type=0,
+                                                         num_of_dtim_skip=0,
+                                                         listen_interval=listen_interval,
+                                                         monitor_interval=monitor_interval)
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
         time.sleep(5)
@@ -2899,7 +2899,8 @@ def test_wifi_sdk_enhanced_max_psp_ulp_c19696(wifi_sniffer, wifi_access_point, w
             listen_interval,
             association_id)
         case3 = ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, listen_interval)
-        case4, case5 = ps_poll_time_delta_obj.validation_of_enh_max_psp(ps_exit_interval, ps_enable_interval, monitor_interval)
+        case4, case5 = ps_poll_time_delta_obj.validation_of_enh_max_psp(ps_exit_interval, ps_enable_interval,
+                                                                        monitor_interval)
         if case1 != 0:
             logger().info(
                 f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
@@ -2936,7 +2937,7 @@ def test_wifi_sdk_enhanced_max_psp_ulp_c19696(wifi_sniffer, wifi_access_point, w
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.
-            Feature32KHzBypassClockOnUULP_GPIO_3
+        Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
 def test_wifi_sdk_enhanced_max_psp_ulp_c19697(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
@@ -3141,7 +3142,7 @@ def test_wifi_sdk_max_psp_enable_disable_c19698(wifi_sniffer, wifi_access_point,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.
-            Feature32KHzBypassClockOnUULP_GPIO_3
+        Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
 def test_wifi_sdk_enhanced_max_psp_ulp_c19699(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
@@ -3598,11 +3599,12 @@ def test_wifi_sdk_enhanced_max_psp_with_ulp_mode_dtim_c19704(wifi_sniffer, wifi_
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.
-            Feature32KHzBypassClockOnUULP_GPIO_3
+        Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
 def test_wifi_sdk_enhanced_max_psp_listen_interval_c19705(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
-                                              sl_collections, request, utf_constants, wifi_client, net_perf_client):
+                                                          sl_collections, request, utf_constants, wifi_client,
+                                                          net_perf_client):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
     test_case_no = 19705
@@ -3643,10 +3645,10 @@ def test_wifi_sdk_enhanced_max_psp_listen_interval_c19705(wifi_sniffer, wifi_acc
         logger().info(f"Remote device ip :{host_ip}")
         time.sleep(5)
         for i in range(0, 4):
-            if i%2 != 0:
-                time_out=300
-            else :
-                time_out=60
+            if i % 2 != 0:
+                time_out = 300
+            else:
+                time_out = 60
             sl_collections.run_traffic(
                 wifi_dut=wifi_dut,
                 net_perf_client=net_perf_client,
@@ -3705,11 +3707,11 @@ def test_wifi_sdk_enhanced_max_psp_listen_interval_c19705(wifi_sniffer, wifi_acc
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.
-            Feature32KHzBypassClockOnUULP_GPIO_3
+        Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
 def test_wifi_sdk_enhanced_max_psp_dtim_c19706(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
-                                              sl_collections, request, utf_constants, wifi_client, net_perf_client):
+                                               sl_collections, request, utf_constants, wifi_client, net_perf_client):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
     test_case_no = 19706
@@ -3748,10 +3750,10 @@ def test_wifi_sdk_enhanced_max_psp_dtim_c19706(wifi_sniffer, wifi_access_point, 
         logger().info(f"Remote device ip :{host_ip}")
         time.sleep(5)
         for i in range(0, 4):
-            if i%2 != 0:
-                time_out=300
-            else :
-                time_out=60
+            if i % 2 != 0:
+                time_out = 300
+            else:
+                time_out = 60
             sl_collections.run_traffic(
                 wifi_dut=wifi_dut,
                 net_perf_client=net_perf_client,
@@ -3795,6 +3797,7 @@ def test_wifi_sdk_enhanced_max_psp_dtim_c19706(wifi_sniffer, wifi_access_point, 
                 'packet_count']
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -3846,7 +3849,7 @@ def test_wifi_sdk_maxpsp_listen_interval_11ms_c19167(wifi_sniffer, wifi_access_p
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-@pytest.mark.skip("Test case marked as manual")
+
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config(
@@ -3864,11 +3867,11 @@ def test_wifi_sdk_maxpsp_listen_interval_11ms_c19167(wifi_sniffer, wifi_access_p
     },
 )
 def test_wifi_sdk_enhanced_max_psp_after_rejoin_c19171(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
-                                              sl_collections, request, utf_constants, wifi_client, net_perf_client):
+                                                       sl_collections, request, utf_constants, wifi_client,
+                                                       net_perf_client, switch):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
     test_case_no = 19171
-    mode = 'power_save'
     listen_interval = 1000
     monitor_interval = 50
     ps_poll_time_delta_obj = FilterPacket()
@@ -3879,7 +3882,7 @@ def test_wifi_sdk_enhanced_max_psp_after_rejoin_c19171(wifi_sniffer, wifi_access
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'
     wifi_access_point.interfaces.wifi.config['dtim'] = '3'
 
-    '''Verify the DUT functionality when ULP POWER SAVE MODE 2,Enhanced MAX PSP and LISTEN INTERVAL based power
+    '''Verify the DUT functionality after rejoined to the AP when ULP POWER SAVE MODE 2,Enhanced MAX PSP and LISTEN INTERVAL based power
     save feature enabled.'''
     wifi_access_point.interfaces.wifi.start_ap()
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
@@ -3894,66 +3897,86 @@ def test_wifi_sdk_enhanced_max_psp_after_rejoin_c19171(wifi_sniffer, wifi_access
         wlan_obj.wait_for_exit()
         logger().info(f"***** Enabling Max PSP in DUT ******")
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency',
-                                                              dtim_aligned_type=0,
-                                                              num_of_dtim_skip=0,
-                                                              listen_interval=listen_interval,
-                                                              monitor_interval=monitor_interval)
+                                                         dtim_aligned_type=0,
+                                                         num_of_dtim_skip=0,
+                                                         listen_interval=listen_interval,
+                                                         monitor_interval=monitor_interval)
         wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                       psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
 
         time.sleep(2)
+
         logger().info("Pinging to DUT to with byte size 300")
-        status = sl_collections.ping_with_custom_size(wlan_obj.dut_addr["device_ip"], ping_counts=60, byte_size=300)
+        status = sl_collections.ping_with_custom_size(wlan_obj.dut_addr["device_ip"], ping_counts=20, byte_size=300)
+        time.sleep(2)
         wifi_sniffer.interfaces.capture.stop_capture()
-        time.sleep(5)
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         dut_mac_address = wlan_obj.dut_addr['dut_mac_address']
-        # Assoc resp frame in sniffer to get the DUT assoc id
-        packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
+        time.sleep(2)
+        for i in range(0, 2):
+            if i ==1:
+                wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+                wifi_sniffer.interfaces.capture.start_capture(capture_file=f'outofpower_savemode_afterrejoin')
+                time.sleep(20)
+                logger().info("***** Turn off Access Point *****")
+                switch.interfaces.pdu_switch.turn_off(delay=10)
+                logger().info("***** Turn on Access Point *****")
+                switch.interfaces.pdu_switch.turn_on(delay=60)
+                logger().info('******* Trying to reconnect DUT and resume data transfer **********')
+                # Initiate ping from third party wifi-client to DUT
+                logger().info(f"\n\n *** Initiating ping from third party wifi-client to DUT after turn "
+                              f"on the AP *** \n\n")
+                logger().info(f"DUT IP address: {wlan_obj.dut_addr['device_ip']}")
+                logger().info("Pinging to DUT to with byte size 300")
+                status = sl_collections.ping_with_custom_size(wlan_obj.dut_addr["device_ip"], ping_counts=60, byte_size=300)
+                time.sleep(2)
+                wifi_sniffer.interfaces.capture.stop_capture()
+                # Assoc resp frame in sniffer to get the DUT assoc id
+            packet_filter1 = f'((wlan.fc.type_subtype == 0x0001) && (wlan.sa == {ap_bssid} && (wlan.da == {dut_mac_address})))'
 
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
-            'packet_count'], 'No packet found for Assoc resp frame'
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter1, packet_filter10)[
+                'packet_count'], 'No packet found for Assoc resp frame'
 
-        time.sleep(1)
-        association_id = assoc_obj.get_association_id()
-        if association_id is None:
-            logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
-            assert False
-        else:
-            logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
+            time.sleep(1)
+            association_id = assoc_obj.get_association_id()
+            if association_id is None:
+                logger().info(f'Unable to find ASSOCIATION-ID={association_id}')
+                assert False
+            else:
+                logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
 
-        packet_filter2 = f' (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address}) &&' \
-                         f' (wlan.da == {ap_bssid}))'
+            packet_filter2 = f' (wlan.fc.pwrmgt == 1) && ((wlan.fc.type_subtype == 0x0024) && (wlan.sa == {dut_mac_address}) &&' \
+                             f' (wlan.da == {ap_bssid}))'
 
-        packet_filter3 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} && ' \
-                         f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.sa == {ap_bssid} && ' \
-                         f'wlan.fc.type_subtype==8) || ((wlan.sa == {ap_bssid} && wlan.da == {dut_mac_address}) &&' \
-                         f'(wlan.fc.type_subtype == 0x002c || wlan.fc.type_subtype == 0x000d || wlan.fc.type_subtype == 0x0018))'
+            packet_filter3 = f'(wlan.da == {dut_mac_address} && wlan.fc.type_subtype == 0x28) || (wlan.ta == {dut_mac_address} && ' \
+                             f'(wlan.fc.type_subtype == 0x24 || wlan.fc.type_subtype ==0x1a)) || (wlan.sa == {ap_bssid} && ' \
+                             f'wlan.fc.type_subtype==8) || ((wlan.sa == {ap_bssid} && wlan.da == {dut_mac_address}) &&' \
+                             f'(wlan.fc.type_subtype == 0x002c || wlan.fc.type_subtype == 0x000d || wlan.fc.type_subtype == 0x0018))'
 
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
-        assert \
-            wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, None, powersave_validation)[
-                'packet_count']
-        ps_poll_packets_time_delta_list, case1, case2, ps_exit_interval, ps_enable_interval = ps_poll_time_delta_obj.listen_interval_based_validation(
-            listen_interval,
-            association_id)
-        case3 = ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, listen_interval)
-        case4, case5 = ps_poll_time_delta_obj.validation_of_enh_max_psp(ps_exit_interval, ps_enable_interval, monitor_interval)
-        if case1 != 0:
-            logger().info(
-                f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
-        if case2 != 0:
-            logger().info(
-                f'Observed {case2} times DUT is sending the PS-POLL to retrieve the data after post listen interval beacon only even though more data bit is set')
-        if case3 != 0:
-            logger().info(
-                f'Observed {case3} times DUT is unable to send PS-POLL at listen interval')
-        if case4 != 0:
-            logger().info(
-                f'Observed {case4} times DUT is unable to exit from powersave at 20ms')
-        if case5 != 0:
-            logger().info(
-                f'Observed {case5} times DUT is unable to enable from powersave afer there is no data from {monitor_interval}ms')
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
+            assert \
+                wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, None, powersave_validation)[
+                    'packet_count']
+            ps_poll_packets_time_delta_list, case1, case2, ps_exit_interval, ps_enable_interval = ps_poll_time_delta_obj.listen_interval_based_validation(
+                listen_interval,
+                association_id)
+            case3 = ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, listen_interval)
+            case4, case5 = ps_poll_time_delta_obj.validation_of_enh_max_psp(ps_exit_interval, ps_enable_interval,
+                                                                            monitor_interval)
+            if case1 != 0:
+                logger().info(
+                    f'Observed {case1} times DUT is sending PS-POLL to retrieve the data even though TIM is not set')
+            if case2 != 0:
+                logger().info(
+                    f'Observed {case2} times DUT is sending the PS-POLL to retrieve the data after post listen interval beacon only even though more data bit is set')
+            if case3 != 0:
+                logger().info(
+                    f'Observed {case3} times DUT is unable to send PS-POLL at listen interval')
+            if case4 != 0:
+                logger().info(
+                    f'Observed {case4} times DUT is unable to exit from powersave at 20ms')
+            if case5 != 0:
+                logger().info(
+                    f'Observed {case5} times DUT is unable to enable from powersave afer there is no data from {monitor_interval}ms')
         if case1 or case3 > 3 or case2 != 0:
             assert False
         else:
@@ -3983,7 +4006,6 @@ def test_wifi_sdk_cmdbased_maxpsp_listen_interval_c19173(wifi_sniffer, wifi_acce
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
     test_case_no = 19173
-    mode = 'power_save'
     listen_interval = 500
     monitor_interval = 50
     ps_poll_time_delta_obj = FilterPacket()
@@ -4027,7 +4049,7 @@ def test_wifi_sdk_cmdbased_maxpsp_listen_interval_c19173(wifi_sniffer, wifi_acce
                 protocol='TCP',
                 device_ip=wlan_obj.dut_addr["device_ip"],
                 host_ip=host_ip,
-                timeout=60,
+                timeout=70,
                 traffic_type="RX",
             )
             time.sleep(2)
@@ -4096,11 +4118,12 @@ def test_wifi_sdk_cmdbased_maxpsp_listen_interval_c19173(wifi_sniffer, wifi_acce
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.
-            Feature32KHzBypassClockOnUULP_GPIO_3
+        Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
 def test_wifi_sdk_maxpsp_multiple_listen_interval_c19174(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
-                                                  sl_collections, request, utf_constants, wifi_client, net_perf_client):
+                                                         sl_collections, request, utf_constants, wifi_client,
+                                                         net_perf_client):
     test_name = request.node.name
     time_period = utf_constants.get("time_period")
     test_case_no = 19174
@@ -4119,9 +4142,9 @@ def test_wifi_sdk_maxpsp_multiple_listen_interval_c19174(wifi_sniffer, wifi_acce
     wifi_access_point.interfaces.wifi.start_ap()
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_bssid}')
-    time_delta_bw_pspol_count=0
-    ps_exit_interval_count=0
-    ps_enabe_interval_count=0
+    time_delta_bw_pspol_count = 0
+    ps_exit_interval_count = 0
+    ps_enabe_interval_count = 0
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, test_name=test_name, sl_collections=sl_collections,
                           test_case_no=test_case_no, wifi_client=wifi_client, net_perf_client=net_perf_client)
@@ -4147,9 +4170,9 @@ def test_wifi_sdk_maxpsp_multiple_listen_interval_c19174(wifi_sniffer, wifi_acce
             logger().info(f'\n\n *** ASSOCIATION-ID={association_id} *** \n')
 
         for i in range(0, 3):
-            if i==1:
+            if i == 1:
                 listen_interval = 1000
-            if i==2:
+            if i == 2:
                 listen_interval = 2000
             wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
             wifi_sniffer.interfaces.capture.start_capture(capture_file=f'outofpower_savemode_{listen_interval}')
@@ -4177,16 +4200,18 @@ def test_wifi_sdk_maxpsp_multiple_listen_interval_c19174(wifi_sniffer, wifi_acce
 
             assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter2)['packet_count']
             assert \
-                wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, None, powersave_validation)[
+                wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter3, None,
+                                                                   powersave_validation)[
                     'packet_count']
             ps_poll_packets_time_delta_list, case1, case2, ps_exit_interval, ps_enable_interval = ps_poll_time_delta_obj.listen_interval_based_validation(
                 listen_interval,
                 association_id)
             case3 = ps_poll_time_delta_obj.validate_time_delta(ps_poll_packets_time_delta_list, listen_interval)
-            case4, case5 = ps_poll_time_delta_obj.validation_of_enh_max_psp(ps_exit_interval, ps_enable_interval,monitor_interval)
-            time_delta_bw_pspol_count = time_delta_bw_pspol_count+case3
-            ps_exit_interval_count = ps_exit_interval_count+case4
-            ps_enabe_interval_count= ps_enabe_interval_count+case5
+            case4, case5 = ps_poll_time_delta_obj.validation_of_enh_max_psp(ps_exit_interval, ps_enable_interval,
+                                                                            monitor_interval)
+            time_delta_bw_pspol_count = time_delta_bw_pspol_count + case3
+            ps_exit_interval_count = ps_exit_interval_count + case4
+            ps_enabe_interval_count = ps_enabe_interval_count + case5
             if case3 != 0:
                 logger().info(
                     f'Observed {case3} times DUT is unable to send PS-POLL at listen interval')
