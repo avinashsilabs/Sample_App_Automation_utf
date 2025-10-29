@@ -1322,12 +1322,12 @@ devices:
                 server_binary_file_name: "tcp_server.bin"
  
     # This represents the service_discovery configuration
-    avahi_daemon_linux:
+    avahi_service_discovery:
         interfaces:
             linux_shell:
                 type: 'shell.shell'
             sd:
-                type: "service_discovery.avahi_daemon_linux"
+                type: "mdns.avahi.avahi_discovery"
                 shell: 'linux_shell'
 
     # This represents the power_analyzer configuration
@@ -1549,7 +1549,7 @@ defaults:
 
     sdk_server: 'tcp_server'
     
-    service_discovery: 'avahi_daemon_linux'
+    service_discovery: 'avahi_service_discovery'
 
     power_analyzer: 'power_analyzer_wlan'
 

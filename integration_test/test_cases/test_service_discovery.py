@@ -5,7 +5,7 @@ def logger():
     return get_logger(__name__)
 
 
-def test_service_discovery_using_avahi_daemon(service_discovery):
+def test_service_discovery(service_discovery):
     status = service_discovery.interfaces.sd.get_status()
     logger().info(f"Status {status}")
     time.sleep(5)
