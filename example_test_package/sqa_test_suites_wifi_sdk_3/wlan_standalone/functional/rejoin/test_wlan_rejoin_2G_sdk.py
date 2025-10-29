@@ -92,7 +92,7 @@ def logger():
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None,
                  ping_count=None, data_transfer=True, test_name=None, sl_collections=None, switch=None,
-                 wifi_client=None, net_perf_client=None, protocol=None, sniffer_filter=None, rejoin_time=None,):
+                 wifi_client=None, net_perf_client=None, protocol=None, sniffer_filter=None, rejoin_time=None, ):
 
         super().__init__()
         self.socket_obj = None
@@ -224,7 +224,7 @@ class WLanThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
                                                                               beacon_missed_count=40,
                                                                               first_time_retry_enable=0)
-            elif self.test_case_no  == 779704:
+            elif self.test_case_no == 779704:
                 self.wifi_sniffer.interfaces.capture.configure_interface(
                     channel=self.wifi_access_point.interfaces.wifi.channel)
                 self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
@@ -793,8 +793,8 @@ class WLanThread(ThreadBase):
                             time.sleep(20)
                             self.wifi_sniffer.interfaces.capture.stop_capture()
                             assert \
-                            self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
-                                'packet_count'], \
+                                self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+                                    'packet_count'], \
                                 'Unable to find Broadcast Probe request packet'
 
                             # start sniffer before turn on acess point
@@ -2957,7 +2957,8 @@ def test_wifi_sdk_beacon_miss_count_stats_90_c641350(wifi_sniffer, wifi_access_p
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 def test_wifi_sdk_wpa3_rejoin_eap_security_with_pmf_c680006(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
-                                                            sl_collections, request, radius_server, switch, net_perf_client,
+                                                            sl_collections, request, radius_server, switch,
+                                                            net_perf_client,
                                                             wifi_client):
     """Verify rejoin functionality in EAP-TLS mode"""
     test_name = request.node.name
@@ -2965,7 +2966,7 @@ def test_wifi_sdk_wpa3_rejoin_eap_security_with_pmf_c680006(wifi_dut, wifi_acces
     wifi_access_point.interfaces.wifi.start_ap()
     wifi_dut.interfaces.wifi.set_join_feature_bitmap(
         join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired |
-        Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+                            Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
     wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
     wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                              beacon_missed_count=40, first_time_retry_enable=0)
@@ -3269,10 +3270,10 @@ def test_wifi_sdk_rejoin_with_rpi4_after_deauth_frame_c782337(wifi_dut, wifi_cli
         "ble_custom_ext_features": 0,
     }
 )
-
-def test_wifi_sdk_join_failure_with_max_retry_1_rejoin_disable_c877263(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
-                                                  request,
-                                                  sl_collections, sniffer_filter):
+def test_wifi_sdk_join_failure_with_max_retry_1_rejoin_disable_c877263(switch, wifi_sniffer, wifi_access_point,
+                                                                       wifi_dut, utf_constants,
+                                                                       request,
+                                                                       sl_collections, sniffer_filter):
     """Do scan, Join after rejoin failure and validate Rejoin max retry attempts is set to 1 """
     test_name = request.node.name
     max_retry_attempts = 1
@@ -3310,6 +3311,94 @@ def test_wifi_sdk_join_failure_with_max_retry_1_rejoin_disable_c877263(switch, w
                                             ping_after_power_save=False)
 
         wlan_obj.socket_obj.socket_data_transfer()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost | Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.legacy_deployed
+def test_wifi_sdk_Rejoin_functionality_RSSI_value_80dbm_c19727(switch, wifi_sniffer, wifi_access_point, wifi_dut,
+                                                               utf_constants, request,
+                                                               sl_collections, rf_attenuator):
+    """test_wifi_sdk_Rejoin_functionality_RSSI_value_80dbm"""
+    test_name = request.node.name
+    ping_count = utf_constants.get("ping_count")
+
+    try:
+        logger().info("\n *** Start sniffer configuration *** \n")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("Start sniffer capture")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        time.sleep(2)
+
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                 beacon_missed_count=40,
+                                                                 first_time_retry_enable=0)
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=4)
+        time.sleep(20)
+        logger().info(scan_results)
+        scan_count = len(scan_results)
+        assert scan_count > 0, "Scan results not found"
+        time.sleep(2)
+        set_db_value = 60
+        wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel=1, db_value=set_db_value)
+        time.sleep(2)
+
+        target_ssid = wifi_access_point.interfaces.wifi.ssid
+        logger().info(f"Target SSID for RSSI extraction: {target_ssid}")
+
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=wifi_access_point.interfaces.wifi.ssid)
+        logger().info(f'\n\n{scan_results[0]}\n')
+        my_str = str(scan_results[0])
+        current_rssi = abs(int(my_str.strip('()').split(' ')[5]))
+        logger().info(f'Current RSSI = {current_rssi}')
+
+        if current_rssi is not None:
+            logger().info(f"\n\n *********RSSI for SSID '{target_ssid}' is {current_rssi} dBm **********\n\n")
+
+            # Validation: RSSI must be between -75 and -90 (inclusive)
+            if 75 <= current_rssi <= 95:
+                logger().info("✅ RSSI validation passed.")
+            else:
+                assert False, f"❌ RSSI {current_rssi} dBm out of acceptable range (-90 to -75)."
+        else:
+            assert False, f"❌ SSID '{target_ssid}' not found in scan results."
+
+        sl_collections.join_to_wifi_network(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                            associated=wifi_dut.interfaces.wifi.associated,
+                                            retry_count=3, ping_after_power_save=True,
+                                            ping_count=ping_count, power_save=True, skip_scan=False)
+
+        time.sleep(2)
+        logger().info("***** Turn off Access Point *****")
+        switch.interfaces.pdu_switch.turn_off(delay=10)
+        time.sleep(120)
+
+        switch.interfaces.pdu_switch.turn_on(delay=10)
+        wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
