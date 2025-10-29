@@ -1157,12 +1157,12 @@ devices:
                 pid: 0xC00A
 
     # This represents the service_discovery configuration
-    avahi_daemon_linux:
+    avahi_service_discovery:
         interfaces:
             linux_shell:
                 type: 'shell.shell'
             sd:
-                type: "service_discovery.avahi_daemon_linux"
+                type: "mdns.avahi.avahi_discovery"
                 shell: 'linux_shell'
 
     power_performance_data:
@@ -1305,7 +1305,7 @@ defaults:
 
     wiseconnect_web: 'wiseconnect_web'
 
-    service_discovery: 'avahi_daemon_linux'
+    service_discovery: 'avahi_service_discovery'
 
     net_perf_server: 'secondary_raspi_iperf'
 
