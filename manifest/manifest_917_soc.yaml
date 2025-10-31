@@ -113,6 +113,16 @@ firmware_applications:
         device_subtype: 'efr32'
         filename: 'test_agent_soc_cf_352K.rps'
 
+    test_RSSI_11G:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_si91x_1011_352.rps'
+
+    test_RSSI_11B:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_si91x_1011_352.rps'
+
     load_ta_and_m4:
       - device_type: 'efx32'
         device_subtype: 'efr32'
