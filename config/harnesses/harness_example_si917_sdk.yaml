@@ -1588,6 +1588,8 @@ constants:
         value: 'combined_ta_m4.rps'
     rejoin_time:
         value: 160
+    set_att_count:
+        value: 20
     websocket_long_run_test_time_duration:
         value: 10 # Please add time as per your test case requirement
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']
