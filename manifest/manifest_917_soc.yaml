@@ -115,21 +115,30 @@ firmware_applications:
 
     test_RSSI_11G:
       - device_type: 'efx32'
-          device_subtype: 'efr32'
-          filename:
-            load_binary:
-              file_name: 'SiWG917-B.2.13.5.2.2.4.rps'
-            write_firmware:
-              file_name: 'test_agent_soc_ifc2_c7d161bbc7_generic192k.rps'
+        device_subtype: 'efr32'
+        filename:
+          load_binary:
+            file_name: 'dut_ap_6mbps_11g.rps'
+          write_firmware:
+            file_name: 'test_agent.rps'
+
+    test_RSSI_11N:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename:
+          load_binary:
+            file_name: 'bcn_6_5_final1.rps'
+          write_firmware:
+            file_name: 'test_agent.rps'
 
     test_RSSI_11B:
       - device_type: 'efx32'
-          device_subtype: 'efr32'
-          filename:
-            load_binary:
-              file_name: 'SiWG917-B.2.13.5.2.2.4.rps'
-            write_firmware:
-              file_name: 'test_agent_soc_ifc2_c7d161bbc7_generic192k.rps'
+        device_subtype: 'efr32'
+        filename:
+          load_binary:
+            file_name: 'b_6_5_final1.rps'
+          write_firmware:
+            file_name: 'test_agent.rps'
 
     load_ta_and_m4:
       - device_type: 'efx32'
