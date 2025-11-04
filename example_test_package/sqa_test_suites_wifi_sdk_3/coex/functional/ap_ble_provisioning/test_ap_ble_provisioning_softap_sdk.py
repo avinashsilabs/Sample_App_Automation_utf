@@ -161,6 +161,13 @@ class ProvisioningFunctionality(ThreadBase):
             expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
         logger().info("....De-Authentication received when trying to connect with AP using wrong PSK....")
 
+    def wifi_connect_mixed_security(self):
+        self.wifi_dut.interfaces.wifi.join(
+            ssid=self.result[1], passphrase=self.result[2], security='wpa2')
+
+    def ble_start_advertising(self):
+        self.wifi_dut.interfaces.wifi.ble_start_advertising()
+
     def ble_stop_advertising(self):
         logger().info("Device is in advertising status try to stop advertising")
         self.ble_dut.interfaces.bluetooth.ble_stop_advertising()
@@ -188,18 +195,28 @@ class ProvisioningFunctionality(ThreadBase):
 
         logger().info(f".... scan result for ssid and security is : {scan_result_ssid_security} ....")
 
-    def connect_clients_to_dut_as_ap(self, scan_ssid=0):
+    def connect_clients_to_dut_as_ap(self):
         ping_count = self.utf_constants.get("ping_count")
         self.wifi_dut.interfaces.wifi.get_channel_info(interface='ap')
         for i in range(0, self.no_of_clients):
             connected = False
             self.wifi_clients[i].interfaces.wifi.config['interface'] = "wlan0"
             logger().info(f"RASPI-STA{i + 1}:'{self.wifi_clients[i].name}' is joining to DUT-AP")
-            if self.test_case == 3:
+
+            if self.test_case == 887643:
                 logger().info("******* joining client to DUT-AP in OPEN security ********")
-                self.wifi_clients[i].interfaces.wifi.join(security=SecurityMode.Open, scan_ssid=scan_ssid)
+                self.wifi_clients[i].interfaces.wifi.join(security=SecurityMode.Open, scan_ssid=0)
+
+            elif self.test_case == 887650:
+                logger().info("******* joining client to DUT-AP in Mixed Mode security ********")
+                self.wifi_clients[i].interfaces.wifi.join(security=SecurityMode.WPA2, scan_ssid=0)
+
+            elif self.test_case == 887659:
+                self.wifi_clients[i].interfaces.wifi.join(scan_ssid=1)
+
             else:
-                self.wifi_clients[i].interfaces.wifi.join(scan_ssid=scan_ssid)
+                self.wifi_clients[i].interfaces.wifi.join(scan_ssid=0)
+
             time.sleep(5)
             ProvisioningFunctionality.ip_dict['dut_ip'] = self.wifi_dut.interfaces.wifi.ip.ip.decode('utf-8')
             logger().info(f"********* Dut IP **********: {ProvisioningFunctionality.ip_dict['dut_ip']}")
@@ -221,14 +238,24 @@ class ProvisioningFunctionality(ThreadBase):
                     logger().info(f"RASPI-STA{i + 1} failed to ping DUT...retry count -> {count + 1}")
                     time.sleep(10)
             assert connected, f"RASPI-STA{i + 1} is disconnected from DUT-AP"
-        return ProvisioningFunctionality.ip_dict
+        # return ProvisioningFunctionality.ip_dict
 
     def http_server_provisioning(self):
         self.wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
         self.wifi_dut.interfaces.wifi.http_server_start()
         time.sleep(30)
-        ProvisioningFunctionality.ip_dict['dut_ip'] = self.connect_clients_to_dut_as_ap()
+        # ProvisioningFunctionality.ip_dict['dut_ip'] = self.connect_clients_to_dut_as_ap()
+        self.connect_clients_to_dut_as_ap()
         self.ble_stop_advertising()
+
+        if self.test_case == 887658:
+            self.wifi_clients[0].interfaces.wifi.leave()
+            self.wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+            self.ap_mode_start()
+            self.ble_start_advertising()
+            self.connect_clients_to_dut_as_ap()
+            self.ble_stop_advertising()
+
         self.scan_on_ap_interface()
         self.wiseconnect_web.interfaces.wiseconnect_ui.connect(
             ip_address="192.168.100.76", web_ui_port=80,
@@ -236,8 +263,10 @@ class ProvisioningFunctionality(ThreadBase):
             security=self.wifi_access_point.interfaces.wifi.security,
             passphrase=self.wifi_access_point.interfaces.wifi.passphrase)
 
+        # time.sleep(300)
+
         data = self.wifi_dut.interfaces.wifi.http_server_get_credentials_from_webpage(timeout=30)
-        if self.test_case == 19:
+        if self.test_case == 887649:
             self.result = re.search(r'ssid:([\w@!]+),password:([\w@#!]+),security:(\w+)', data.decode())
         else:
             self.result = re.search(r'ssid:(\w+),password:(\w+),security:(\w+)', data.decode())
@@ -280,7 +309,7 @@ class ProvisioningFunctionality(ThreadBase):
         time.sleep(3)
 
 
-def wifi_dut_marker(IEEE802_11W=0, memory_config=0, OpenMode=0):
+def wifi_dut_marker(IEEE802_11W=0, memory_config=0, OpenMode=0, HiddenSSID=0):
     """
         Common method to generate wifi_dut marker for pytest.mark.config decorator..
     """
@@ -291,7 +320,7 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0, OpenMode=0):
         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.SL_SI91X_FEAT_DISABLE_11AX_SUPPORT | OpenMode,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv4Server |
                           Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.HTTPClient,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | HiddenSSID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | IEEE802_11W | memory_config
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
@@ -306,7 +335,6 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0, OpenMode=0):
     }
     return pytest.mark.config("wifi_dut", wifi=config)
 
-
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -320,11 +348,16 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0, OpenMode=0):
 )
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.parametrize("ap_channel", [11])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_case_1(
-        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
-        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+def test_wifi_sdk_ap_provisioning_wpa2_security_c887642(
+        sl_collections, wifi_dut, wifi_client, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter, ap_channel):
+
+    """Verify Soft AP provisioning in WPA2 security and also check WLAN connection to the third party home AP with the
+    received credentials on APUT."""
+
     try:
         test_name = request.node.name
         wifi_client = [wifi_client]
@@ -344,7 +377,6 @@ def test_case_1(
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
         ble_obj.check_beacon()
-        # ble_obj.scan_on_ap_interface()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
 
@@ -379,9 +411,13 @@ def test_case_1(
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'sharma_test', "security": 'OPEN', "passphrase": '123456789',
                                                "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_case_3(
+def test_wifi_sdk_ap_provisioning_open_security_c887643(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify Soft AP provisioning in OPEN security and also check WLAN connection to the third party home AP with the
+    received credentials on APUT."""
+
     try:
         test_name = request.node.name
         wifi_client = [wifi_client]
@@ -395,7 +431,7 @@ def test_case_3(
             utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
             ssid='sharma_test', security='open', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
             wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter,
-            test_case=3)
+            test_case=887643)
 
         ble_obj.ap_mode_start()
         time.sleep(10)
@@ -403,7 +439,6 @@ def test_case_3(
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
         ble_obj.check_beacon()
-        # ble_obj.scan_on_ap_interface()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
 
@@ -438,9 +473,13 @@ def test_case_3(
 @pytest.mark.parametrize("ap_channel", [11])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_case_4(
+def test_wifi_sdk_ap_provisioning_wpa3_security_c887644(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify Soft AP provisioning in WPA3 security and also check WLAN connection to the third party home AP with the
+    received credentials on APUT."""
+
     try:
         test_name = request.node.name
         wifi_client = [wifi_client]
@@ -460,121 +499,6 @@ def test_case_4(
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
         ble_obj.check_beacon()
-        # ble_obj.scan_on_ap_interface()
-        ble_obj.http_server_provisioning()
-        ble_obj.sl_net_deinit()
-
-        wifi_dut.interfaces.wifi.set_wifi_config(
-            oper_mode=Si91xOperatingMode.WiFiClient,
-            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
-            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
-        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
-        wifi_dut.interfaces.wifi.scan()
-        ble_obj.wifi_connect()
-
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info("Stop the Sniffer")
-
-    except Exception as error:
-        sl_collections.exception_handling(wifi_dut, error)
-
-
-@pytest.mark.config(
-    "wifi_clients",
-    wifi={
-        0: {
-            "security": "WPA2",
-            "ssid": "sharma_test",
-            "passphrase": "thisistestnetworkthisistestnetworkthisistestnetworkthisistestne",
-            "channel": "11",
-        },
-    }
-)
-@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
-@pytest.mark.parametrize("ap_channel", [11])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_case_5(
-        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
-        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
-    try:
-        test_name = request.node.name
-        wifi_client = [wifi_client]
-
-        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
-
-        ble_obj = ProvisioningFunctionality(
-            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
-            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-            ssid='sharma_test', security='wpa2', psk='thisistestnetworkthisistestnetworkthisistestnetworkthisistestne',
-            ap_channel=ap_channel, wifi_client=wifi_client, wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web,
-            sniffer_filter=sniffer_filter)
-
-        ble_obj.ap_mode_start()
-        ble_obj.start()
-        ble_obj.wait_for_exit()
-        ble_obj.firmware_version()
-        ble_obj.check_beacon()
-        # ble_obj.scan_on_ap_interface()
-        ble_obj.http_server_provisioning()
-        ble_obj.sl_net_deinit()
-
-        wifi_dut.interfaces.wifi.set_wifi_config(
-            oper_mode=Si91xOperatingMode.WiFiClient,
-            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
-            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
-        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
-        wifi_dut.interfaces.wifi.scan()
-        ble_obj.wifi_connect()
-
-        wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info("Stop the Sniffer")
-
-    except Exception as error:
-        sl_collections.exception_handling(wifi_dut, error)
-
-
-@pytest.mark.config(
-    "wifi_clients",
-    wifi={
-        0: {
-            "security": "WPA2",
-            "ssid": "sharma_testsharma_testsharma_tes",
-            "passphrase": "123456789",
-            "channel": "11",
-        },
-    }
-)
-@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
-@pytest.mark.parametrize("ap_channel", [11])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_case_6(
-        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
-        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
-    try:
-        test_name = request.node.name
-        wifi_client = [wifi_client]
-
-        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
-
-        ble_obj = ProvisioningFunctionality(
-            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
-            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-            ssid='sharma_testsharma_testsharma_tes', security='wpa2', psk='123456789',
-            ap_channel=ap_channel, wifi_client=wifi_client, wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web,
-            sniffer_filter=sniffer_filter)
-
-        ble_obj.ap_mode_start()
-        ble_obj.start()
-        ble_obj.wait_for_exit()
-        ble_obj.firmware_version()
-        ble_obj.check_beacon()
-        # ble_obj.scan_on_ap_interface()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
 
@@ -606,11 +530,142 @@ def test_case_6(
 )
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.parametrize("ap_channel", [11])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2',
+                          "passphrase": 'thisistestnetworkthisistestnetworkthisistestnetworkthisistestne',
+                          "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_case_16(
+def test_wifi_sdk_ap_provisioning_wpa2_security_with_psk_63bytes_c887645(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify Soft AP provisioning in WPA2 security with PSK length 63bytes and also check WLAN connection to the
+    third party home AP with the received credentials on APUT"""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789',
+            ap_channel=ap_channel, wifi_client=wifi_client, wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web,
+            sniffer_filter=sniffer_filter)
+
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        ble_obj.check_beacon()
+        ble_obj.http_server_provisioning()
+        ble_obj.sl_net_deinit()
+
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.scan()
+        ble_obj.wifi_connect()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma_testsharma_testsharma_tes', "security": 'WPA2',
+                          "passphrase": '123456789',
+                          "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_wpa2_security_with_ssid_32bytes_c887646(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify Soft AP provisioning in WPA2 security with SSID length 32bytes and also check WLAN connection to the
+    third party home AP with the received credentials on APUT."""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789',
+            ap_channel=ap_channel, wifi_client=wifi_client, wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web,
+            sniffer_filter=sniffer_filter)
+
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        ble_obj.check_beacon()
+        ble_obj.http_server_provisioning()
+        ble_obj.sl_net_deinit()
+
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.scan()
+        ble_obj.wifi_connect()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_wpa2_security_with_wrong_psk_c887647(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify Soft AP provisioning when configuring wrong PSK and also check WLAN connection to the third party home AP
+    with the received credentials on APUT."""
+
     try:
         test_name = request.node.name
         wifi_client = [wifi_client]
@@ -630,7 +685,6 @@ def test_case_16(
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
         ble_obj.check_beacon()
-        # ble_obj.scan_on_ap_interface()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
 
@@ -662,12 +716,17 @@ def test_case_16(
 )
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.parametrize("ap_channel", [11])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 # @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 # @pytest.mark.end_state("wifi_dut", wifi=["reset"])
-def test_case_17(
+def test_wifi_sdk_ap_provisioning_in_loop_c887648(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify Soft AP provisioning in WPA2 security and also check WLAN connection to the third party home AP with the
+    received credentials on APUT for multiple iteration in loop(5 Iteration)"""
+
     try:
         test_name = request.node.name
         wifi_client = [wifi_client]
@@ -740,9 +799,13 @@ def test_case_17(
                     wifi={"ssid": "sharma@home_2GHz!", "passphrase": "P@ssw0rd#2025!", "security": "WPA2",
                           "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_case_19(
+def test_wifi_sdk_ap_provisioning_with_special_charac_ssid_psk_c887649(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify Soft AP provisioning in WPA2 security with special characters in credentials and also check WLAN
+    connection to the third party home AP with the received credentials on APUT."""
+
     try:
         test_name = request.node.name
         wifi_client = [wifi_client]
@@ -764,7 +827,6 @@ def test_case_19(
         ble_obj.firmware_version()
         time.sleep(10)
         ble_obj.check_beacon()
-        # ble_obj.scan_on_ap_interface()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
 
@@ -800,10 +862,15 @@ def test_case_19(
                     wifi={"ssid": 'sharma_test_sharma_t', "passphrase": 'thisistestnetworkthisistestnetwor',
                           "security": 'WPA2', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_case_23(
+def test_wifi_sdk_ap_provisioning_ssid_20bytes_psk_33bytes_c887652(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
-    """need yo add code for DNS IP in the DHCP Offer packet in AP mode"""
+
+    """Verify Soft AP provisioning with SSID 20bytes and PSK length 33bytes and also check whether we are getting DNS
+    IP in the DHCP Offer packet in AP mode"""
+
+    """Need to add code for sniffer check for DNS IP in DHCP offer Packet"""
+
     try:
         test_name = request.node.name
         wifi_client = [wifi_client]
@@ -824,7 +891,6 @@ def test_case_23(
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
         ble_obj.check_beacon()
-        # ble_obj.scan_on_ap_interface()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
 
@@ -856,15 +922,20 @@ def test_case_23(
 )
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.parametrize("ap_channel", [11])
-@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos", [('0xc8', 0)])
-def test_case_24(
+def test_wifi_sdk_ap_provisioning_and_iperf_run_in_sta_mode_c887653(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, protocol, net_perf_client, traffic,
         qos, sniffer_filter):
+
+    """Verify Soft AP provisioning and also check WLAN connection to the third party home AP with the received
+    credentials on APUT and run IPERF TCP TX"""
+
     try:
         test_name = request.node.name
         wifi_client = [wifi_client]
@@ -885,7 +956,6 @@ def test_case_24(
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
         ble_obj.check_beacon()
-        # ble_obj.scan_on_ap_interface()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
 
@@ -897,6 +967,551 @@ def test_case_24(
         wifi_dut.interfaces.wifi.scan()
         ble_obj.wifi_connect()
         ble_obj.run_iperf()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_testsharma_te",
+            "passphrase": "thisistestnetworkthisistestnetworkthisis",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma_testsharma_te', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_dut_ap_ssid_20bytes_psk_40bytes_c887666(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify Soft AP provisioning in WPA2 security and also check WLAN connection to the third party home AP with the
+    received credentials on APUT."""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_testsharma_te', security='wpa2', psk='thisistestnetworkthisistestnetworkthisis',
+            ap_channel=ap_channel, wifi_client=wifi_client, wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web,
+            sniffer_filter=sniffer_filter)
+
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        ble_obj.check_beacon()
+        ble_obj.http_server_provisioning()
+        ble_obj.sl_net_deinit()
+
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.scan()
+        ble_obj.wifi_connect()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_testsharma_testsharma_tes",
+            "passphrase": "thisistestnetworkthisistestnetworkthisistestnetworkthisistestne",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma_testsharma_te', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_dut_ap_ssid_32bytes_psk_63bytes_c887665(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify Soft AP provisioning in WPA2 security and also check WLAN connection to the third party home AP with the
+    received credentials on APUT."""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_testsharma_testsharma_tes', security='wpa2', psk='thisistestnetworkthisistestnetworkthisistestnetworkthisistestne',
+            ap_channel=ap_channel, wifi_client=wifi_client, wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web,
+            sniffer_filter=sniffer_filter)
+
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        ble_obj.check_beacon()
+        ble_obj.http_server_provisioning()
+        ble_obj.sl_net_deinit()
+
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.scan()
+        ble_obj.wifi_connect()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "thisistestnetworkthisistestnetworkthisistestnetworkthisistestne", #wrong PSK test
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma_testsharma_te', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_dut_ap_wrong_psk_c887664(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify DUT behavior via SoftAP provisioning when passing wrong PSK when trying to connect to 917 device"""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789',
+            ap_channel=ap_channel, wifi_client=wifi_client, wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web,
+            sniffer_filter=sniffer_filter)
+
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        ble_obj.check_beacon()
+        ble_obj.http_server_provisioning()
+        ble_obj.sl_net_deinit()
+
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.scan()
+        ble_obj.wifi_connect()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.skip("Skipping due to extended scan not supported in AP mode - SI91X-19675")
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_extended_scan_c887660(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify whether DUT is able to scan more than 11 scan results when SL_WIFI_SCAN_TYPE_EXTENDED is enabled"""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter)
+
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        ble_obj.check_beacon()
+        ble_obj.http_server_provisioning()
+        ble_obj.sl_net_deinit()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.skip("Skipping due to extended scan not supported in AP mode - SI91X-19675")
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_extended_scan_and_connect_third_party_ap_c887661(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify whether DUT is able to connect to AP which comes after 11 scan results when SL_WIFI_SCAN_TYPE_EXTENDED is
+    enabled"""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter)
+
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        ble_obj.check_beacon()
+        ble_obj.http_server_provisioning()
+        ble_obj.sl_net_deinit()
+
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.scan()
+        ble_obj.wifi_connect()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+                 HiddenSSID=Si91xCustomFeatureBitMap.HiddenSSID)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_with_hidden_ssid_c887659(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify Soft AP provisioning with hidden SSID and also check WLAN connection to the third party home AP with the
+    received credentials on APUT."""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter, test_case=887659)
+
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        ble_obj.check_beacon()
+        ble_obj.http_server_provisioning()
+        ble_obj.sl_net_deinit()
+
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.scan()
+        ble_obj.wifi_connect()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_client_conn_reconn_c887658(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify remote client connection and disconnection and reconnection to DUT AP in Soft AP provisioning path and
+    also check wifi connection to the third party home AP with the received credentials on APUT"""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter, test_case=887658)
+
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        ble_obj.check_beacon()
+        ble_obj.http_server_provisioning()
+        ble_obj.sl_net_deinit()
+
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.scan()
+        ble_obj.wifi_connect()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+        1: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_multi_client_connection_c887657(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify the behavior via Soft AP provisioning when connecting multiple clients on aput"""
+
+    try:
+        test_name = request.node.name
+        assert len(wifi_clients) == 2, f"Minimum 2 raspi devices needed for this test"
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter)
+
+        ble_obj.no_of_clients = 2
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        ble_obj.check_beacon()
+        ble_obj.http_server_provisioning()
+        ble_obj.sl_net_deinit()
+
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.scan()
+        ble_obj.wifi_connect()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+# @pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma_test', "security": 'WPAWPA2MixedMode', "passphrase": '123456789',
+                          "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_mixed_security_c887650(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify Soft AP provisioning in Mixed Mode security and also check WLAN connection to the third party home AP
+    with the received credentials on APUT"""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa_wpa2_mixed', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter,
+            test_case=887650)
+
+        ble_obj.ap_mode_start()
+        time.sleep(10)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        ble_obj.check_beacon()
+        ble_obj.http_server_provisioning()
+        ble_obj.sl_net_deinit()
+
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.scan()
+        ble_obj.wifi_connect_mixed_security()
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop the Sniffer")

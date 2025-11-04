@@ -148,7 +148,7 @@ class ProvisioningFunctionality(ThreadBase):
                 wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_dut_address=self.bt_dut_address,
                 services=[self.svc])
 
-            if self.test_case == 22:
+            if self.test_case == 887631:
                 for count in range(5):
                     self.sl_collections.connect_ble(wifi_dut=self.wifi_dut, ble_client=self.ble_client,
                                                     ble_dut_address=self.bt_dut_address,
@@ -296,7 +296,7 @@ class ProvisioningFunctionality(ThreadBase):
 
         logger().info(f".... scan result for ssid and security is : {scan_result_ssid_security} ....")
 
-        if self.test_case == 28:
+        if self.test_case == 887637:
             pass
         else:
             logger().info(f' *********************** subscribe to notifications ***********************')
@@ -325,7 +325,7 @@ class ProvisioningFunctionality(ThreadBase):
             time.sleep(5)
 
     def wifi_connect(self):
-        if self.test_case == 28:
+        if self.test_case == 887637:
             self.wifi_dut.interfaces.wifi.join(
                 ssid=self.result[1], passphrase=self.result[2], security=self.result[3].lower())
             logger().info("....Successfully connected to the AP....")
@@ -413,12 +413,12 @@ class ProvisioningFunctionality(ThreadBase):
         self.sl_collections.configure_dut_in_static_ip(
             self.wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0", static_gateway="192.168.100.76")
 
-        if self.test_case == 20:
+        if self.test_case == 887629:
             logger().info(" ********** Starting DUT as an AP ********* ")
             self.wifi_dut.interfaces.wifi.start_ap(
                 ssid=self.ssid, security='wpa3_transition', psk=self.psk, channel=self.ap_channel, dtim_beacon_count="1",
                 beacon_interval="100", beacon_stop=self.beacon_stop)
-        if self.test_case == 28:
+        if self.test_case == 887637:
             logger().info(" ********** Starting DUT as an AP ********* ")
             self.wifi_dut.interfaces.wifi.start_ap(
                 ssid='sharma_test', security='wpa2', psk='123456789', channel=11, dtim_beacon_count="1",
@@ -537,7 +537,7 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0):
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_Case_16(
+def test_wifi_sdk_ble_provision_path_mem_config_high_c887625(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
     """Verify BLE provisioning in WPA2 sercurity and also verify wifi connection to the third party home AP with the
@@ -599,7 +599,7 @@ def test_Case_16(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_Case_17(
+def test_wifi_sdk_ble_provision_path_mem_config_low_c887626(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
     """Verify BLE provisioning in WPA2 security and also verify wifi connection to the third party home AP with the
@@ -662,7 +662,7 @@ def test_Case_17(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_Case_18(
+def test_wifi_sdk_ble_provision_path_extended_scan_feature_c887627(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
     """Verify whether DUT is able to scan more than 11 scan results when SL_WIFI_SCAN_TYPE_EXTENDED is enabled"""
@@ -714,7 +714,7 @@ def test_Case_18(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_Case_19(
+def test_wifi_sdk_ble_provision_path_extended_scan_and_connect_access_point_c887628(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
     """Verify whether DUT is able connect to AP which comes after 11 scan results when SL_WIFI_SCAN_TYPE_EXTENDED is
@@ -769,7 +769,7 @@ def test_Case_19(
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2WPA3MixedMode', "cipher": "AES", "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_Case_20(
+def test_wifi_sdk_ble_provision_path_transition_mode_c887629(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
     """Verify BLE provisioning with Transition Mode security and also verify WLAN connection to the third party home
@@ -784,7 +784,7 @@ def test_Case_20(
         ble_obj = ProvisioningFunctionality(
             wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
             utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-            sniffer_filter=sniffer_filter, min_conn_interval=200, max_conn_interval=200, test_case=20)
+            sniffer_filter=sniffer_filter, min_conn_interval=200, max_conn_interval=200, test_case=887629)
 
         ble_obj.ap_mode_start()
         time.sleep(10)
@@ -836,11 +836,11 @@ def test_Case_20(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_Case_22(
+def test_wifi_sdk_ble_provision_path_conn_diconn_reconn_c887631(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
-    """Verify remote client connection and disconnection and reconnection to DUT AP in BLE provisioning path and also
-    check wifi connection to the third party home AP with the received credentials on APUT(5 Iteration)"""
+    """Verify remote client connection and disconnection and reconnection to DUT in BLE provisioning path and also
+    check wifi connection to the third party home AP with the received credentials on APUT"""
     try:
         test_name = request.node.name
 
@@ -851,7 +851,7 @@ def test_Case_22(
         ble_obj = ProvisioningFunctionality(
             wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
             utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-            sniffer_filter=sniffer_filter, min_conn_interval=200, max_conn_interval=200, test_case=22)
+            sniffer_filter=sniffer_filter, min_conn_interval=200, max_conn_interval=200, test_case=887631)
 
         ble_obj.ap_mode_start()
         time.sleep(10)
@@ -899,7 +899,7 @@ def test_Case_22(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_Case_26(
+def test_wifi_sdk_ble_provision_path_m4_enabled_c887635(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
     """Verify BLE provisioning in WPA2 sercurity and also verify wifi connection to the third party home AP with the
@@ -964,7 +964,7 @@ def test_Case_26(
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos", [('0xc8', 0)])
-def test_Case_27(
+def test_wifi_sdk_ble_provision_path_iperf_tcp_tx_c887636(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter, protocol, net_perf_client, traffic, qos, wifi_client):
     """Verify BLE provisioning and also check WLAN connection to the third party home AP with the received credentials
@@ -1031,7 +1031,7 @@ def test_Case_27(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_Case_24(
+def test_wifi_sdk_ble_provision_path_connect_access_point_with_abrupt_power_off_c887633(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
     """Verify the DUT behavior when it is operating in client-only mode and attempts to connect to a third-party home
@@ -1128,9 +1128,11 @@ def test_Case_24(
 @pytest.mark.parametrize("ap_channel", [11])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_case_28(
+def test_wifi_sdk_alternate_provisioning_path_c887637(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify alternative provisioning soft AP and BLE Path for 3 Iteration"""
     try:
         test_name = request.node.name
         wifi_client = [wifi_client]
@@ -1144,7 +1146,7 @@ def test_case_28(
             utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
             ssid_softap='sharma_test', security_softap='wpa2', psk_softap='123456789', ap_channel_softap=ap_channel,
             wifi_client=wifi_client, wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web,
-            sniffer_filter=sniffer_filter, test_case=28)
+            sniffer_filter=sniffer_filter, test_case=887637)
 
         ble_obj.ap_mode_start()
         ble_obj.ble_advertising()
