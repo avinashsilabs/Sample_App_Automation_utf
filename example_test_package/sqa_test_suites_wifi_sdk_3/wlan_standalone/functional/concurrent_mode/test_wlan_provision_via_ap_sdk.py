@@ -117,7 +117,7 @@ class http_server_provisioning(ThreadBase):
         self.webpage = webpage
 
     def join_to_ap(self, ssid, passphrase, security, ping_count=10, mode='power_save_low_latency', dtim_aligned_type=0,
-                   num_of_dtim_skip=0, listen_interval=0, monitor_interval=0, ):
+                   num_of_dtim_skip=0, listen_interval=1000, monitor_interval=50):
         join_status = False
         if self.testcase == "694947":
             self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
@@ -215,7 +215,7 @@ pytestmark = [
         {
             "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
             "oper_mode": Si91xOperatingMode.AccessPoint,
-            "coex_mode": Si91xCoexMode.WLANOnly,
+            "coex_mode": Si91xCoexMode.WLANBLE,
             "features": Si91xFeatureBitMap.Default,
             "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL |0,
@@ -345,8 +345,7 @@ def test_wifi_provisioning_via_ap_loop_c667577(wifi_dut, wifi_client, channel, w
                                                 wiseconnect_web=wiseconnect_web, wifi_access_point=wifi_access_point, ap_channel=channel, webpage=webpage1, testcase="667577")
 
         wifi_dut.interfaces.wifi.is_sl_net_enabled = True
-        # wifi_dut.interfaces.wifi.set_wifi_config()
-        for i in range(2):
+        for i in range(5):
             logger().info(f" \n ****************************************  Iteration {i+1} **************************************** \n")
             provision_obj.start()
             provision_obj.wait_for_exit()
