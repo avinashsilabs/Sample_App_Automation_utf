@@ -211,7 +211,7 @@ class WPA3Enterprise(ThreadBase):
 
     def run(self):
         try:
-            if self.test_case_no == "679996" or self.test_case_no == "680012" or self.test_case_no == "680014":
+            if self.test_case_no == "679996" or self.test_case_no == "680012" or self.test_case_no == "680014" or self.test_case_no == "680013" or self.test_case_no == "680009":
                 transfer_type = 1
                 protocol = 6
                 throughput_type = 1
@@ -3183,10 +3183,10 @@ def test_wifi_sdk_wpa3_enterprise_eap_peap_safe2_tcp_tx_c708573(wifi_dut, wifi_a
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_wifi_sdk_wpa3_enterprise_eap_with_4k_length_c113876(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
+def test_wifi_sdk_wpa3_enterprise_eap_with_4k_length_c680008(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                              radius_server, sl_collections, request, utf_constants,
                                                              net_perf_client, wifi_client, protocol):
-    """ This test case verifies the WPA2 Enterprise Connectivity while using EAP TLS Method when the 4096 Length
+    """ This test case verifies the WPA3 Enterprise Connectivity while using EAP TLS Method when the 4096 Length
         certificates were loaded """
     try:
         logger().info(
@@ -3290,7 +3290,7 @@ def test_wifi_sdk_wpa3_enterprise_eap_with_4k_length_c113876(wifi_dut, wifi_acce
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_wifi_sdk_wpa3_enterprise_eap_with_individual_4k_length_c113876(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
+def test_wifi_sdk_wpa3_enterprise_transition_eap_with_4k_individual_length_c680009(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                              radius_server, sl_collections, request, utf_constants,
                                                              net_perf_client, wifi_client, protocol):
     """ This test case verifies the WPA2 Enterprise Connectivity while using EAP TLS Method when the 4096 Length
@@ -3302,23 +3302,32 @@ def test_wifi_sdk_wpa3_enterprise_eap_with_individual_4k_length_c113876(wifi_dut
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-
-        wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
+        wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
         wifi_access_point.interfaces.wifi.start_ap()
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
-        wifi_dut.interfaces.wifi.load_certs(
-            eap_cert=["privatekey_4096.pem", "SL_NET_PRIVATE_KEY", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
-        wifi_dut.interfaces.wifi.load_certs(
-            eap_cert=["publickey_4096.pem", "SL_NET_PUBLIC_KEY", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+
+
         wifi_dut.interfaces.wifi.load_certs(
             eap_cert=["cas_4096.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+        wifi_dut.interfaces.wifi.load_certs(
+            ca_cert=["publickey_4096.pem", "SL_NET_PUBLIC_KEY", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
+        wifi_dut.interfaces.wifi.load_certs(
+            client_key=["privatekey_4096.pem", "SL_NET_PRIVATE_KEY", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"])
         wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
         wifi_dut.interfaces.wifi.set_eap_credentials()
 
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+        wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
+                                      passphrase=wifi_access_point.interfaces.wifi.passphrase,
+                                      security="wpa3_transition_enterprise", uid="user1", enc="tls")
+        wifi_dut.interfaces.wifi.start_ip()
         wifi_thread = WPA3Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                     eap_type="tls", sl_collections=sl_collections, test_name=test_name)
+                                     sl_collections=sl_collections, test_name=test_name,
+                                     traffic_type="TX", test_case_no="680009", net_perf_client=net_perf_client,
+                                     protocol=protocol, data_transfer=True, wifi_client=wifi_client)
         wifi_thread.start()
         wifi_thread.wait_for_exit()
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid

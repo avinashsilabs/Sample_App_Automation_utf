@@ -276,7 +276,8 @@ class WPA2Enterprise(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_client=None, sniffer_filter=None, wifi_sniffer=None,
                  sl_collections=None, test_name=None, eap_type=None, eap_type_tls_no_cert=None, http_Otaf=None,
                  data_transfer = False, traffic_type = None, protocol = None, time_period = None, data = None,
-                 net_perf_client = None, test_case_no = None, multicast_client = None):
+                 net_perf_client = None, test_case_no = None, multicast_client = None, test_type=None,
+                 http_server=None, index_path=None, https=0):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -298,6 +299,10 @@ class WPA2Enterprise(ThreadBase):
         self.net_perf_client = net_perf_client
         self.test_case_no = test_case_no
         self.multicast_client = multicast_client
+        self.http_server = http_server
+        self.index_path = index_path
+        self.https = https
+        self.test_type=test_type
 
     def run(self):
         try:
@@ -480,10 +485,22 @@ class WPA2Enterprise(ThreadBase):
                     logger().info("data received is successful")
                     time.sleep(3)
 
+            if self.test_type == "http":
+                self.run_http_download()
+
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
             raise e
 
+    def run_http_download(self):
+        logger().info("in http download method")
+        self.sl_collections.http_file_download(
+            wifi_dut=self.wifi_dut,
+            http_server=self.http_server,
+            index_path=self.index_path,
+            device_ip=self.device_ip,
+            https=self.https,
+        )
 
 @pytest.mark.config(
     "wifi_dut",
@@ -4240,6 +4257,107 @@ def test_wifi_sdk_wpa2_enterprise_eap_peap_safe2_tcp_tx_c708571(wifi_dut, wifi_a
         packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             da_addr=ap_mac_address,
             sa_addr=wifi_thread.dut_addr['dut_mac_address'], filter_name='eap_type_peap_verification')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
+            'packet_count'], 'Unable to find EAP frames sent from AP in sniffer'
+        packet_filter6 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wifi_thread.dut_addr['dut_mac_address'],
+            da_addr=ap_mac_address,
+            filter_name='eap_tls_cert_verification_1_2')
+        logger().info(f"Validating EAP frames TLS version 1.2 in sniffer")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter6)['packet_count'], \
+            'Unable to find EAP frames with TLS version 1.2 sent'
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity |
+                    Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid |
+                          Si91xTCPIPFeatureBitMap.HTTPClient |
+                          Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp |
+                           Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"5MB.htm"})
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2Enterprise", "passphrase": '12345678'}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+def test_wifi_sdk_https_file_download_wpa2_enterprise_c113799(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                              wifi_client, sniffer_filter, radius_server,
+                                                              sl_collections, request, http_server,
+                                                              index_path):
+    """
+    Test case to verify HTTPS file download (5MB index.html) in WPA2 Enterprise environment
+
+    Test Steps:
+    1. Connect to WPA2 Enterprise network using EAP-TLS
+    2. Initialize HTTPS client with TLS enabled
+    3. Download 1MB index.html file via HTTPS
+    4. Verify file integrity and size
+    5. Validate sniffer capture for EAP and TLS frames
+
+    Expected Result:
+    - Successful connection to WPA2 Enterprise network
+    - Successful HTTPS file download of 1MB file
+    - File integrity maintained during download
+    - Proper EAP-TLS handshake captured in sniffer
+    """
+    try:
+        test_name = request.node.name
+        logger().info(f"Starting HTTPS file download test: {test_name}")
+        test_type = "http"
+        # Configure and start sniffer capture
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     eap_type="tls", sl_collections=sl_collections, test_name=test_name,
+                                     test_type=test_type,
+                                     http_server=http_server,
+                                     index_path=index_path,
+                                     https=1
+                                     )
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.leave()
+        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                        wifi_access_point=wifi_access_point,
+                                                        dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
+                                                        ap_mac_address=ap_mac_address)
+        sniffer_verification.verify_sniffer_validation()
+        packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            da_addr=ap_mac_address,
+            sa_addr=wifi_thread.dut_addr['dut_mac_address'], filter_name='eap_type_tls_verification')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
             'packet_count'], 'Unable to find EAP frames sent from AP in sniffer'
         packet_filter6 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
