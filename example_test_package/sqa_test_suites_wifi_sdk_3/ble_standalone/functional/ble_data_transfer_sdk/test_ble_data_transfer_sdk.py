@@ -605,10 +605,12 @@ class Ble_Data_Transfer:
             tw = Stopwatch()
             while tw.elapsed_sec < 10:
                 events = self.ble_dut.interfaces.wifi.get_async_events(since_time=since_time)
+                time.sleep(1)
                 for event in events:
                     if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
                         logger().info(f"************** BLE EVENT DATA IS : {event.event_data} **************")
                         received_data = re.findall(r"att_value:\s*([^\s]+)", event.event_data)
+                        time.sleep(1)
                         logger().info(f"******* Received Data on DUT : {received_data} ********")
                         logger().info(f"******* Received Data on DUT : {len(received_data[0])} ********")
                         try:
