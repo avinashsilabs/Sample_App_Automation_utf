@@ -2883,7 +2883,7 @@ def test_wifi_sdk_long_icmp_packet_functionality_ipv4_c770034(wifi_dut, wifi_sni
 
         icmp_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=client_ip,
-            da_addr=device_ip,
+            da_addr=dut_ip,
             type=8,
             length=1400,
             filter_name='icmpv4_custom_len'
