@@ -3410,8 +3410,7 @@ def test_wifi_sdk_http_client_connection_wpa2_enterprise_c113806(wifi_dut, wifi_
                     Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
                           Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid |
-                           Si91xCustomFeatureBitMap.RealTimeClockFromHost,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
@@ -3422,15 +3421,16 @@ def test_wifi_sdk_http_client_connection_wpa2_enterprise_c113806(wifi_dut, wifi_
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "band": 0,
-        "eap_cert": ["cacert_encrypted.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
-        "client_cert": ["my_certification_signed", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
-        "client_key": ["my_privatekey", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "eap_cert": ["cacert_encrypted.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+        "ca_cert": ["my_certification_signed.key", "SL_NET_PUBLIC_KEY", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
+        "client_key": ["my_privatekey.key", "SL_NET_PRIVATE_KEY", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
     }
 )
-@pytest.mark.config("radius_server",
-                    radius_server={"private_key_file": 'my_privatekey', "certificate_file": 'my_certification_signed',
-                                   "ca_file": 'cacert_encrypted.pem'})
+
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.config("radius_server",
+                    radius_server={"private_key_file": 'my_privatekey.key', "certificate_file": 'my_certification_signed.key',
+                                   "ca_file": 'cacert_encrypted.pem', "private_key_password": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 def test_wifi_sdk_wpa2_enterprise_eap_tls_C113792(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, net_perf_client,
@@ -3441,14 +3441,12 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_C113792(wifi_dut, wifi_access_point, w
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_CERTIFICATE,
-                                                   cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
         dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"****** DUT MAC ADDRESS **** {dut_mac_address}")
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"**** AP mac address*****{ap_mac_address}")
-        key = '"'"\\"'"'"12345678\\"'"''"'
-        wifi_dut.interfaces.wifi.set_eap_credentials(credential_key=key)
+        wifi_dut.interfaces.wifi.set_eap_credentials(username='user1', password='12345678',
+                                                     credential_key='"'"\\"'"'"12345678\\"'"''"')
         for count in range(0, utf_constants.get('iter_count')):
             wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                          sl_collections=sl_collections, test_name=test_name, eap_type="tls", test_case_no="113792",
@@ -3882,6 +3880,10 @@ def test_wifi_sdk_wpa2_enterprise_eap_fast_1_0_udp_tx_11w_c679990(wifi_dut, wifi
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable |
+                                Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable |
+                                Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      eap_type="fast", sl_collections=sl_collections, test_name=test_name,
                                      traffic_type="TX", test_case_no="679990", net_perf_client=net_perf_client,

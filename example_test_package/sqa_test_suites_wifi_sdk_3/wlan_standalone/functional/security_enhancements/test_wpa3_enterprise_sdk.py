@@ -2098,6 +2098,8 @@ def test_wsdk_WPA3_EAP_transition_Conn_TLS_conn_with_sha512_C680015(wifi_dut, wi
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.config("radius_server", radius_server={"private_key_file": 'wifi-user.pem', "certificate_file": 'wifi-user.pem',
+                                                    "ca_file": 'wifi-user.pem'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
@@ -2127,7 +2129,7 @@ def test_wifi_sdk_wpa_3enterprise_eap_tls_C680024(wifi_dut, wifi_access_point, w
             wifi_dut.interfaces.wifi.join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                           passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                           security="wpa3_enterprise", uid="user1", enc="tls",
-                                          expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
+                                          expected_status=(SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION | SLStatus.SL_STATUS_SI91X_DEAUTH_REQUEST_FROM_SUPPLICANT))
             wifi_dut.interfaces.wifi.start_ip(
                 expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
             logger().info(
@@ -2146,7 +2148,7 @@ def test_wifi_sdk_wpa_3enterprise_eap_tls_C680024(wifi_dut, wifi_access_point, w
             result = output.strip().split(':')[1].lstrip()
             logger().info(f"\n\n Reason code:{result} \n\n")
             assert (result == '4D' or result == '53'), "Unable to get expected reason code hence test is failed"
-            logger().info(f"Observed Expected Error Code {result}, which means PEM Footer error and hence test cases is passed. Hence, Test Case PASSED")
+            logger().info(f"Observed Expected Error Code {result}, which means PEM Header error and hence test cases is passed. Hence, Test Case PASSED")
             ap_mac_address = wifi_access_point.interfaces.wifi.bssid
             logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
             dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
