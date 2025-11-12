@@ -1936,3 +1936,40 @@ def test_quick_disconnection_after_connection_C667572(wifi_dut, ble_client, sl_c
     assert disconnection_time < 5, "Disconnection time is more than 5 sec"
     logger().info(f"Disconnection Time: {disconnection_time}")
     ble_client.interfaces.bluetooth.close()
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_sdk_dut_master_unstable_connection_c667573(ble_dut, ble_client, sl_collections):
+    """ Check rsi_ble_connect_cancel returns 0x0103 and results in unusable connection """
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=f"reports/test_ble_sdk_dut_master_unstable_connection_c667573.logs_{int(time.time())}"):
+            logger().info("start ble...")
+            ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+            assert ble_dut_address, "unable to fetch bd address"
+            for i in range(5):
+                logger().info(f"Configuring Remote LE device in Undirected connectable advertising mode")
+                ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(
+                    bt_dut_address=ble_dut_address)
+                assert ble_client_address, "failed to initiate ble in remote device"
+                logger().info("Start scanning....")
+                ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
+                logger().info("enabling the power save modes ")
+                ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+                ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                             psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+                logger().info("stop scanning")
+                ble_dut.interfaces.bluetooth.ble_stop_scanning()
+                ble_dut.interfaces.bluetooth.ble_connect(
+                    ble_remote_dev_address=ble_client_address, ble_scan_interval=53, ble_scan_window=53,
+                    ble_conn_interval_min=3200, ble_conn_interval_max=3200, ble_supervision_timeout=805)
+                logger().info("Check connection status of BLE")
+                state = ble_dut.interfaces.wifi.ble_get_device_state()
+                state_int = int(state) if state.isdigit() else -1
+                logger().info(f"CONNECTION-STATUS: {state_int}")
+                logger().info(f"DUT initiating BLE connection with ble_client device")
+                ble_dut.interfaces.bluetooth.ble_connect_cancel(remote_dev_addr = ble_client_address)
+                ble_client.interfaces.bluetooth.close()
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)

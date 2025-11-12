@@ -2333,3 +2333,127 @@ def test_ble_sdk_validate_adding_service_in_slave_role_C19878(ble_dut, ble_clien
         sl_collections.cleanup_ble(ble_dut=ble_dut, ble_client=ble_client,
                                    ble_client_address=bt_client_address,
                                    ble_dut_address=bt_dut_address)
+
+
+pytestmark = [
+    pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                        Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                        Si91xFeatureBitMap.WPSSupportDisabled,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                              Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                                   Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                                   Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                                   Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
+                                   Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                               Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS == 2 | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE | Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS == 1,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                       Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        },
+    )
+]
+
+@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+def test_ble_dut_as_master_and_master_get_profiles_C19873(ble_dut, ble_clients, sl_collections,
+                                                                              ble_sniffer):
+    try:
+        ble_client1 = ble_clients[0]
+        ble_client2 = ble_clients[1]
+        bt_dut_address = ble_dut.interfaces.wifi.ble_gatt_start(set_smp=0)
+        logger().info("BLE-DUT-ADDRESS: {}".format(bt_dut_address))
+        assert bt_dut_address is not None, "gatt init failed in DUT"
+        ble_obj = BleFunctionality(ble_dut, ble_client1, bt_dut_address=bt_dut_address, ble_start=False, ht=True)
+        bt_client_address_1 = ble_obj.ble_gatt_scan()
+        logger().info("Ble Scan successful")
+        ble_obj.check_device_state_on_dut()
+        ble_obj_1 = BleFunctionality(ble_dut, ble_client2, bt_dut_address=bt_dut_address, ble_start=False, ht=True)
+        bt_client_address_2 = ble_obj_1.ble_gatt_scan()
+        ble_obj_1.check_device_state_on_dut()
+        logger().info(f"******************** get all profiles ********************")
+        uuids = ble_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address_1)
+        logger().info(f"UUIDs fetched from DUT: {uuids}")
+        assert HealthThermometerService.UUID.lower() and HeartRateService.UUID.lower() in uuids is not None, "Could not fetch the profile"
+        logger().info(" ******************** Resolving Profile ********************")
+        start_handle, end_handle, data = ble_dut.interfaces.wifi.ble_get_profile_async(
+            ble_remote_dev_address=bt_client_address_1, uuid=int(HealthThermometerService.UUID, 16))
+        assert start_handle is not None, "failed to fetch the start handle.."
+        assert end_handle is not None, "failed to fetch end handle.."
+        char_uuids, write_handles, char_properties = ble_dut.interfaces.wifi.ble_get_char_services_async(
+            ble_remote_dev_address=bt_client_address_1,
+            start_handle=int(start_handle, 16),
+            end_handle=int(end_handle, 16),
+            async_timeout=60)
+        logger().info(
+            f"characteristics uuids :{char_uuids}  write_handles{write_handles} : Characteristics_properties"
+            f"{char_properties}")
+        assert HealthThermometerMeasurementCharacteristic.Thermo_Level_UUID.lower() in char_uuids, "Unable to find {} uuid"
+        #Heart Rate Service
+        logger().info(" ******************** Resolving Profile ********************")
+        start_handle, end_handle, data = ble_dut.interfaces.wifi.ble_get_profile_async(
+            ble_remote_dev_address=bt_client_address_1, uuid=int(HeartRateService.UUID, 16))
+        assert start_handle is not None, "failed to fetch the start handle.."
+        assert end_handle is not None, "failed to fetch end handle.."
+        char_uuids, write_handles, char_properties = ble_dut.interfaces.wifi.ble_get_char_services_async(
+            ble_remote_dev_address=bt_client_address_1,
+            start_handle=int(start_handle, 16),
+            end_handle=int(end_handle, 16),
+            async_timeout=60)
+        logger().info(
+            f"characteristics uuids :{char_uuids}  write_handles{write_handles} : Characteristics_properties"
+            f"{char_properties}")
+        assert HeartRateMeasurementCharacterstic.HR_Measure_UUID.lower() in char_uuids, "Unable to find {} uuid"
+        logger().info("Fetched Profiles Successfully from DUT")
+        logger().info(f"******************** get all profiles ********************")
+        uuids = ble_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address_2)
+        logger().info(f"UUIDs fetched from DUT: {uuids}")
+        assert HealthThermometerService.UUID.lower() and HeartRateService.UUID.lower() in uuids is not None, "Could not fetch the profile"
+        logger().info(" ******************** Resolving Profile ********************")
+        start_handle, end_handle, data = ble_dut.interfaces.wifi.ble_get_profile_async(
+            ble_remote_dev_address=bt_client_address_2, uuid=int(HealthThermometerService.UUID, 16))
+        assert start_handle is not None, "failed to fetch the start handle.."
+        assert end_handle is not None, "failed to fetch end handle.."
+        char_uuids, write_handles, char_properties = ble_dut.interfaces.wifi.ble_get_char_services_async(
+            ble_remote_dev_address=bt_client_address_2,
+            start_handle=int(start_handle, 16),
+            end_handle=int(end_handle, 16),
+            async_timeout=60)
+        logger().info(
+            f"characteristics uuids :{char_uuids}  write_handles{write_handles} : Characteristics_properties"
+            f"{char_properties}")
+        assert HealthThermometerMeasurementCharacteristic.Thermo_Level_UUID.lower() in char_uuids, "Unable to find {} uuid"
+        # Heart Rate Service
+        logger().info(" ******************** Resolving Profile ********************")
+        start_handle, end_handle, data = ble_dut.interfaces.wifi.ble_get_profile_async(
+            ble_remote_dev_address=bt_client_address_2, uuid=int(HeartRateService.UUID, 16))
+        assert start_handle is not None, "failed to fetch the start handle.."
+        assert end_handle is not None, "failed to fetch end handle.."
+        char_uuids, write_handles, char_properties = ble_dut.interfaces.wifi.ble_get_char_services_async(
+            ble_remote_dev_address=bt_client_address_2,
+            start_handle=int(start_handle, 16),
+            end_handle=int(end_handle, 16),
+            async_timeout=60)
+        logger().info(
+            f"characteristics uuids :{char_uuids}  write_handles{write_handles} : Characteristics_properties"
+            f"{char_properties}")
+        assert HeartRateMeasurementCharacterstic.HR_Measure_UUID.lower() in char_uuids, "Unable to find {} uuid"
+        ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address_1)
+        ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address_2)
+        time.sleep(5)
+    finally:
+        ble_client1.interfaces.bluetooth.close()
+        ble_client2.interfaces.bluetooth.close()
