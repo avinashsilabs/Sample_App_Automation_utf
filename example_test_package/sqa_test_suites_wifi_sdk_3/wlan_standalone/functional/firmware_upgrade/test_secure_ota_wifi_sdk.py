@@ -214,6 +214,7 @@ class WifiJoin(ThreadBase):
                             ip_address=self.host_ip,
                             port=443,
                             host_name=self.host_ip,
+                            http_url=self.rps_path,
                             timeout=150
                         )
 
@@ -730,14 +731,15 @@ def test_wifi_sdk_m4_fw_upgrade_negative_with_no_file_c510713(firmware_loader, w
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.legacy_deployed
-def test_wifi_sdk_https_fw_upgrade_downgrade_overnight_c510707(firmware_loader, http_server, wifi_sniffer, wifi_client,
+def test_wifi_sdk_https_fw_upgrade_downgrade_overnight_c510707(firmware_loader, http_server, wifi_sniffer, wifi_client, utf_constants,
                                                                wifi_access_point, wifi_dut, sl_collections):
     """This Test case is validating Firmware update overnight"""
 
     try:
         test_case = '510707'
+        rps_path = utf_constants.get("rps_filename")
         wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer,sl_collections=sl_collections,wifi_client=wifi_client,
-                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case)
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case, rps_path=rps_path)
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
