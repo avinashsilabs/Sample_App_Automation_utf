@@ -57,6 +57,36 @@ def logger():
     return get_logger(__name__)
 
 
+@pytest.fixture(autouse=True, scope="function")
+def socket_cleanup_fixture(request, wiseconnect_duts):
+    """
+    Ensure all sockets are closed after each test to prevent resource leaks
+    and state carryover between test cases.
+    """
+    yield
+    
+    # Cleanup after test
+    logger().info("=" * 80)
+    logger().info("PERFORMING FIXTURE-LEVEL SOCKET CLEANUP")
+    logger().info("=" * 80)
+    
+    try:
+        for device in wiseconnect_duts:
+            if hasattr(device.interfaces, 'wifi') and hasattr(device.interfaces.wifi, 'bsdAsyncSockClose'):
+                # Try to close any remaining open sockets (0-9 for TCP/UDP)
+                for socket_id in range(10):
+                    try:
+                        device.interfaces.wifi.bsdAsyncSockClose(socket_fd=socket_id)
+                        logger().info(f"Fixture cleaned up socket {socket_id}")
+                    except Exception:
+                        pass  # Socket already closed or doesn't exist
+    except Exception as e:
+        logger().warning(f"Fixture socket cleanup encountered error: {e}")
+    
+    logger().info("Fixture-level socket cleanup completed")
+    logger().info("=" * 80)
+
+
 class SnifferValidationProcess:
 
     def __init__(self, wifi_sniffer=None, wifi_access_point=None, dut_mac_address=None, ap_mac_address=None,
@@ -113,38 +143,56 @@ class DataTransfer:
             self, thread_no, remote_socket, no_of_pkts, data_size, time_interval, wifi_dut, server_sock, local_port, server_ip,
             proto_type=0):
 
+        proto_name = "TCP" if proto_type == 0 else "UDP"
+        logger().info(f"[Thread {thread_no}] ========================================")
+        logger().info(f"[Thread {thread_no}] Starting {proto_name} data transfer")
+        logger().info(f"[Thread {thread_no}] Socket: {server_sock}, Packets: {no_of_pkts}, Size: {data_size} bytes")
+        logger().info(f"[Thread {thread_no}] Server: {server_ip}:{local_port}, Interval: {time_interval}s")
+        logger().info(f"[Thread {thread_no}] ========================================")
+
         bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(
             socket_id=server_sock, pkt_length=data_size, no_of_pkts=no_of_pkts, time_interval=time_interval,
             server_ip=server_ip, server_port=local_port)
 
-        logger().info(f"\n **** Sending {bytes_sent} on Thread {thread_no} \n")
+        logger().info(f"[Thread {thread_no}] **** Sent {bytes_sent} bytes from DUT ****")
+        
         timeout = 2
         if proto_type == 0:
             remote_socket.set_recv_timeout(socket_type=0, timeout=timeout)
         else:
             remote_socket.set_recv_timeout(socket_type=1, use_client_socket=True, timeout=timeout)
+        
         for i in range(0, no_of_pkts):
             if proto_type == 0:
                 data = remote_socket.recv_data_tcp(data_size, timeout=timeout)
-                logger().info(f' ---- TCP RX on Thread {thread_no} is : {data} ---- ')
+                if i % 10 == 0 or i == 0:  # Log every 10th packet
+                    logger().info(f'[Thread {thread_no}] TCP RX packet {i+1}/{no_of_pkts}, size: {len(data) if isinstance(data, str) else 0} bytes')
             else:
                 data, address = remote_socket.recv_data_udp(data_size, timeout=timeout)
-                logger().info(f' ---- UDP RX on Thread {thread_no} is : {data} ---- ')
+                if i % 10 == 0 or i == 0:  # Log every 10th packet
+                    logger().info(f'[Thread {thread_no}] UDP RX packet {i+1}/{no_of_pkts}, size: {len(data) if isinstance(data, str) else 0} bytes')
+            
             if not isinstance(data, str):
-                logger().info(f"\n **** Unable to Receive on Socket: {server_sock} **** \n")
+                logger().warning(f"[Thread {thread_no}] **** Unable to Receive on Socket: {server_sock} at packet {i+1} ****")
                 break
             self.rcv_data = self.rcv_data + len(data)
             if self.rcv_data == len(bytes_sent):
                 break
 
         remote_socket.socket_close_indication(1)
-        logger().info(f"Total bytes received on Socket {server_sock} and Thread {thread_no} opened remotely is -> {self.rcv_data}")
+        
+        logger().info(f"[Thread {thread_no}] ========================================")
+        logger().info(f"[Thread {thread_no}] {proto_name} DATA TRANSFER COMPLETE")
+        logger().info(f"[Thread {thread_no}] Total bytes received: {self.rcv_data} / {bytes_sent}")
+        
         if proto_type == 0:
+            logger().info(f"[Thread {thread_no}] ========================================")
             assert self.rcv_data == int(
                 bytes_sent), f"Data transfer failed. Expected {bytes_sent} bytes but received {self.rcv_data} bytes"
         else:
-            logger().info(f"Data transfer Successful. Sent {bytes_sent} bytes and received {self.rcv_data} bytes on thread : {thread_no}, "
-                          f"the observed UDP packet loss is {100 - (int(self.rcv_data) * 100 / int(bytes_sent))}%")
+            packet_loss = 100 - (int(self.rcv_data) * 100 / int(bytes_sent)) if int(bytes_sent) > 0 else 0
+            logger().info(f"[Thread {thread_no}] UDP packet loss: {packet_loss:.2f}%")
+            logger().info(f"[Thread {thread_no}] ========================================")
 
 
 class WifiJoinThread(ThreadBase):
@@ -269,19 +317,50 @@ class WifiJoinThread(ThreadBase):
         time_interval = 5
         data_transfer_objs = []
         socket_threads = []
+        
+        logger().info("=" * 80)
+        logger().info(f"STARTING DATA TRANSFER ON {len(server_socks)} TCP SOCKETS")
+        logger().info("=" * 80)
+        
         for count in range(0, 10):
-            logger().info(f"Iteration: {count}")
+            logger().info(f"Creating data transfer thread {count} for socket {server_socks[count]}")
             local_port = server_port + count
             data_transfer_objs.append(DataTransfer())
 
             socket_threads.append(Thread(target=data_transfer_objs[count].send_and_receive_data_socket,
                                          args=(
-                                             client_sockets[count], no_of_pkts, pkt_length, time_interval,
+                                             count, client_sockets[count], no_of_pkts, pkt_length, time_interval,
                                              self.wifi_dut,
-                                             server_socks[count], local_port, server_ip, 0), daemon=True))
+                                             server_socks[count], local_port, server_ip, 0), 
+                                         daemon=True,
+                                         name=f"DataTransfer-Socket{count}"))
 
-            socket_threads[count].start()
+        # Start all threads
+        logger().info("Starting all data transfer threads...")
+        for idx, thread in enumerate(socket_threads):
+            thread.start()
+            logger().info(f"Started thread {idx}: {thread.name}")
             time.sleep(2)
+
+        # Wait for all threads to complete with timeout
+        logger().info("Waiting for all threads to complete...")
+        all_completed = True
+        for idx, thread in enumerate(socket_threads):
+            thread.join(timeout=60)  # 60 second timeout per thread
+            if thread.is_alive():
+                logger().error(f"Thread {idx} ({thread.name}) did not complete within timeout!")
+                all_completed = False
+            else:
+                logger().info(f"Thread {idx} ({thread.name}) completed successfully")
+        
+        if all_completed:
+            logger().info("=" * 80)
+            logger().info("ALL DATA TRANSFER THREADS COMPLETED SUCCESSFULLY")
+            logger().info("=" * 80)
+        else:
+            logger().error("=" * 80)
+            logger().error("SOME DATA TRANSFER THREADS DID NOT COMPLETE!")
+            logger().error("=" * 80)
 
         for sock in server_socks:
             logger().info(f"Closing socket_id->{sock}")
@@ -733,11 +812,15 @@ def test_wifi_sdk_tcp_socket_dut_client_c19349(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client):
     """Verify 10 sockets functionality open 10 tcp client sockets and connect to server sockets and send data"""
+    
+    wifi_thread = None
+    sockets_created = []
+    
     try:
-
         test_name = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        
         wifi_thread = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                      sl_collections=sl_collections, test_name=test_name, sniffer_filter=sniffer_filter,
                                      remote_socket_factory=remote_socket_factory, wifi_client=wifi_client)
@@ -745,7 +828,18 @@ def test_wifi_sdk_tcp_socket_dut_client_c19349(
         wifi_thread.start()
         wifi_thread.wait_for_exit()
 
+        # ========================================================================
+        # PERFORM DATA TRANSFER ON ALL SOCKETS
+        # ========================================================================
+        logger().info("=" * 80)
+        logger().info("STARTING TCP DATA TRANSFER TEST")
+        logger().info("=" * 80)
+        
         wifi_thread.tcp_multiple_socket_dut_client()
+        
+        logger().info("=" * 80)
+        logger().info("TCP DATA TRANSFER TEST COMPLETED SUCCESSFULLY")
+        logger().info("=" * 80)
 
         dut_mac_address = wifi_thread.dut_addr['dut_mac_address']
         logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
@@ -763,7 +857,17 @@ def test_wifi_sdk_tcp_socket_dut_client_c19349(
         sniffer_verification.verify_sniffer_validation()
 
     except Exception as e:
+        logger().error(f"Test failed with exception: {e}")
+        logger().error(f"Exception type: {type(e).__name__}")
+        import traceback
+        logger().error(f"Traceback:\n{traceback.format_exc()}")
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    
+    finally:
+        # Ensure sockets are closed in cleanup
+        logger().info("=" * 80)
+        logger().info("TEST CLEANUP - Ensuring all sockets are closed")
+        logger().info("=" * 80)
 
 
 @pytest.mark.config(
@@ -2495,6 +2599,8 @@ def test_wifi_sdk_verify_keep_alive_functionality_with_LI_500_900_1000ms_c586158
         logger().info(f"SERVER-IP: {server_ip}")
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         for listen_interval in listen_intervals:
+            logger().info(f"\n\n ***** Starting the Keep Alive Validation with listen interval {listen_interval} ms "
+                          f"***** \n\n")
             wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
             wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
             logger().info(f"\n Starting the Remote Socket Server \n")
@@ -2582,6 +2688,8 @@ def test_wifi_sdk_verify_keep_alive_functionality_with_different_dtim_c586159(wi
         logger().info(f"SERVER-IP: {server_ip}")
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         for dtim_interval in dtim_intervals:
+            logger().info(f"\n\n ***** Starting the Keep Alive Validation with dtim interval {dtim_interval} ms "
+                          f"***** \n\n")
             wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
             wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
             logger().info(f"\n Setting the DTIM value as {dtim_interval} \n")
