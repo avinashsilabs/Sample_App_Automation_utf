@@ -2488,7 +2488,7 @@ def test_wifi_sdk_verify_keep_alive_functionality_with_LI_500_900_1000ms_c586158
         """
     try:
         port = 5001
-        keepalive_time = 60
+        keepalive_time = 300
         listen_intervals = [500, 700, 1000]
         test_name = request.node.name
         server_ip = wifi_client.interfaces.wifi.get_ip_address()
@@ -2575,7 +2575,7 @@ def test_wifi_sdk_verify_keep_alive_functionality_with_different_dtim_c586159(wi
         """
     try:
         port = 5001
-        keepalive_time = 60
+        keepalive_time = 300
         dtim_intervals = [1, 3, 5]
         test_name = request.node.name
         server_ip = wifi_client.interfaces.wifi.get_ip_address()
