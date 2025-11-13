@@ -156,11 +156,39 @@ class http_server_provisioning(ThreadBase):
                 assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
         return dut_sta_ip
 
+    def set_opermode_client(self):
+        self.wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            coex_mode=Si91xCoexMode.WLANBLE,
+            features=Si91xFeatureBitMap.Default,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                              | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.DHCPv4Client,
+            config_features= Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            custom_features= Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+            ext_custom_features=Si91xExtCustomFeatureBitMap.Default
+                                   | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+            ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+            bt_features= 0,
+            ble_features= 0,
+            ble_custom_ext_features= 0,)
+
+    def set_opermode_ap(self):
+        self.wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.AccessPoint,
+            coex_mode=Si91xCoexMode.WLANBLE,
+            features= Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+            custom_features= Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            ext_custom_features=Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+            ext_tcpip_features=0,
+            config_features=0,
+            bt_features= 0,
+            ble_features= 0,
+            ble_custom_ext_features= 0,)
+
     def run(self):
-        if self.testcase == "667577":
-            self.wifi_dut.interfaces.wifi.init(mode="ap")
-        else:
-            self.wifi_dut.interfaces.wifi.init(mode="ap")
+        self.set_opermode_ap()
+        self.wifi_dut.interfaces.wifi.init(config_required=False, mode="ap")
         logger().info(" ******************** Starting http server provisioning ******************** ")
         self.sl_collections.configure_dut_in_static_ip(self.wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
                                                   static_gateway="192.168.100.76")
@@ -201,36 +229,17 @@ class http_server_provisioning(ThreadBase):
         assert self.credentials, "Unable to fetch 3rd party AP details from DUT"
         self.wifi_dut.interfaces.wifi.http_server_stop()
         self.wifi_dut.interfaces.wifi.http_server_deinit()
-        self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="ap")
+        self.wifi_dut.interfaces.wifi.deinit()
 
-        self.wifi_dut.interfaces.wifi.set_wifi_config(oper_mode=Si91xOperatingMode.WiFiClient)
-        self.wifi_dut.interfaces.wifi.sl_net_init(mode="client", timeout=20)
+        self.set_opermode_client()
+        self.wifi_dut.interfaces.wifi.init(timeout=20, config_required=False)
         self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=1)
 
         self.dut_sta_ip = self.join_to_ap(self.credentials[1], self.credentials[2], self.credentials[3].lower())
 
 pytestmark = [
-    pytest.mark.config("wifi_dut",
-        wifi=
-        {
-            "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
-            "oper_mode": Si91xOperatingMode.AccessPoint,
-            "coex_mode": Si91xCoexMode.WLANBLE,
-            "features": Si91xFeatureBitMap.Default,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
-                          | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL |0,
-            "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | 0 | Si91xExtCustomFeatureBitMap.IEEE802_11W,
-            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | 0 | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
-            "bt_features": 0,
-            "ble_features": 0,
-            "ble_custom_ext_features": 0,
-            "security": "WPA2", "ssid": "SILABS_AP_MODE", "passphrase": "Automation@123", "channel": 1
-    })
+    pytest.mark.config("wifi_dut", wifi = {"thread_config": {"wifi": {"count": 1, "stack_len": 4096}},})
 ]
-
 
 @pytest.mark.config(
     "wifi_client",
@@ -260,7 +269,6 @@ def test_wifi_provisioning_via_ap_open_c667576(wifi_dut, wifi_client, channel, w
         provision_obj = http_server_provisioning(wifi_dut=wifi_dut, sl_collections=sl_collections, wifi_client=wifi_client,
                                     wiseconnect_web=wiseconnect_web, wifi_access_point=wifi_access_point, ap_channel=channel, webpage=webpage2)
 
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
         provision_obj.start()
         provision_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.leave()
@@ -268,7 +276,6 @@ def test_wifi_provisioning_via_ap_open_c667576(wifi_dut, wifi_client, channel, w
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
         wifi_dut.interfaces.wifi.stop_ap()
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -303,7 +310,6 @@ def test_wifi_provisioning_via_ap_WPA2_c694946(wifi_dut, wifi_client, channel, w
                                                 wiseconnect_web=wiseconnect_web, wifi_access_point=wifi_access_point, ap_channel=channel,
                                                 APUT_ssid="SILABS_AP_MODE", APUT_security="Open", webpage=webpage1)
 
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
         provision_obj.start()
         provision_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.leave()
@@ -311,7 +317,6 @@ def test_wifi_provisioning_via_ap_WPA2_c694946(wifi_dut, wifi_client, channel, w
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
         wifi_dut.interfaces.wifi.stop_ap()
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -344,19 +349,16 @@ def test_wifi_provisioning_via_ap_loop_c667577(wifi_dut, wifi_client, channel, w
         provision_obj = http_server_provisioning(wifi_dut=wifi_dut, sl_collections=sl_collections, wifi_client=wifi_client,
                                                 wiseconnect_web=wiseconnect_web, wifi_access_point=wifi_access_point, ap_channel=channel, webpage=webpage1, testcase="667577")
 
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
         for i in range(5):
             logger().info(f" \n ****************************************  Iteration {i+1} **************************************** \n")
             provision_obj.start()
             provision_obj.wait_for_exit()
-            wifi_dut.interfaces.wifi.leave()
-            wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+            wifi_dut.interfaces.wifi.deinit()
             time.sleep(10)
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
         wifi_dut.interfaces.wifi.stop_ap()
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -390,7 +392,6 @@ def test_wifi_provisioning_via_ap_WPA3_c694947(wifi_dut, wifi_client, channel, w
         provision_obj = http_server_provisioning(wifi_dut=wifi_dut, sl_collections=sl_collections, wifi_client=wifi_client,
                                                 wiseconnect_web=wiseconnect_web, wifi_access_point=wifi_access_point, ap_channel=channel, testcase="694947", webpage=webpage1)
 
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
         provision_obj.start()
         provision_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.leave()
@@ -398,7 +399,6 @@ def test_wifi_provisioning_via_ap_WPA3_c694947(wifi_dut, wifi_client, channel, w
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
         wifi_dut.interfaces.wifi.stop_ap()
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -432,7 +432,6 @@ def test_wifi_provisioning_via_ap_WPA3Transition_c783506(wifi_dut, wifi_client, 
         provision_obj = http_server_provisioning(wifi_dut=wifi_dut, sl_collections=sl_collections, wifi_client=wifi_client,
                                                 wiseconnect_web=wiseconnect_web, wifi_access_point=wifi_access_point, ap_channel=channel, testcase="783506", webpage=webpage2)
 
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
         provision_obj.start()
         provision_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.leave()
@@ -440,7 +439,6 @@ def test_wifi_provisioning_via_ap_WPA3Transition_c783506(wifi_dut, wifi_client, 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
         wifi_dut.interfaces.wifi.stop_ap()
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -474,7 +472,6 @@ def test_wifi_provisioning_via_ap_psk_len_more_than_32_c780931(wifi_dut, wifi_cl
         provision_obj = http_server_provisioning(wifi_dut=wifi_dut, sl_collections=sl_collections, wifi_client=wifi_client,
                                                 wiseconnect_web=wiseconnect_web, wifi_access_point=wifi_access_point, ap_channel=channel, webpage=webpage1)
 
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
         provision_obj.start()
         provision_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.leave()
@@ -482,7 +479,6 @@ def test_wifi_provisioning_via_ap_psk_len_more_than_32_c780931(wifi_dut, wifi_cl
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
         wifi_dut.interfaces.wifi.stop_ap()
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -517,7 +513,6 @@ def test_wifi_provisioning_via_ap_mixed_mode_c789510(wifi_dut, wifi_client, chan
                                                 wiseconnect_web=wiseconnect_web, wifi_access_point=wifi_access_point, ap_channel=channel,
                                                 APUT_ssid="SILABS_AP_MODE", APUT_security="Open", webpage=webpage1)
 
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
         provision_obj.start()
         provision_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.leave()
@@ -525,7 +520,6 @@ def test_wifi_provisioning_via_ap_mixed_mode_c789510(wifi_dut, wifi_client, chan
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
         wifi_dut.interfaces.wifi.stop_ap()
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
