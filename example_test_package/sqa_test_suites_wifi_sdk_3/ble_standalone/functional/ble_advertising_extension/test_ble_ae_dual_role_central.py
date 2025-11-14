@@ -1337,6 +1337,7 @@ def test_Indications(
         ("C768420", 3, 3, 20, 20, 23, 0xAABB, 0x1AA1),
         ("C768421", 1, 1, 230, 20, 233, 0xAABB, 0x1AA1),
         ("C768422", 1, 2, 230, 20, 233, 0xAABB, 0x1AA1),
+        ("C768423", 3, 3, 230, 20, 233, 0xAABB, 0x1AA1),
     ],
 )
 @pytest.mark.config(
