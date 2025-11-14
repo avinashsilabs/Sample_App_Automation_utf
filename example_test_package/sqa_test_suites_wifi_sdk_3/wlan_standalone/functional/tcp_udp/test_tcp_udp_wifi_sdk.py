@@ -1,5 +1,6 @@
 import time
 import pytest
+import re
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xCoexMode,
     Si91xTCPIPFeatureBitMap,
@@ -1168,12 +1169,19 @@ def test_wifi_sdk_tcp_TX_with_message_size_greater_size_than_tcp_window_size_c19
         sock = wifi_dut.interfaces.wifi.socket()
         wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=server_port, timeout=20)
         wifi_dut.interfaces.wifi.bsdSetSocketOptAsync(sock, option_name=Si91xCustomSyncSockOptParms.SL_SI91X_SO_MSS,
-                                                      cert_index=tcp_message_size)
+                                                      cert_index=tcp_window_size)
         wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=host_ip, server_port=server_port)
 
         tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=tcp_message_size))
         logger().info(f"*********** Sending packet with size --> {len(tx_buffer)} bytes ***********")
-        status, data = wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=tx_buffer, higher_data_len=1, timeout=60, expected_status=BSDErrnoStatus.EMSGSIZE)
+        status, data = wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=tx_buffer, higher_data_len=1, timeout=60, expected_status=SLStatus.SL_STATUS_FAIL)
+        error_code_pattern = r"errno:\s+(\d+)"
+        match = re.search(error_code_pattern, data)
+        error_code = 0
+        if match:
+            error_code = match.group(1)
+            logger().info(f"\n Encountered Error Code: {error_code}\n")
+        assert int(error_code) == 40, f"\n The Expected Error Code is 40, got {int(error_code)} \n"
         tp = net_perf_client.interfaces.net_perf.process_output()
         assert tp is not None, "Throughput not found"
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
